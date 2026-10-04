@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
-<title>BOAT EDGE v5</title>
+<title>BOAT EDGE v7 自動更新</title>
 <style>
 :root{--bg:#07111f;--panel:#0d1b2c;--panel2:#10243a;--ink:#f7fbff;--muted:#91a5ba;--line:rgba(255,255,255,.09);--aqua:#55e7d4;--blue:#55a8ff;--green:#55e39f;--amber:#ffc46b;--red:#ff7681;--violet:#9b8cff}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#081523,#07111f 60%);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;padding-bottom:92px}
@@ -19,10 +19,140 @@
 .bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;width:min(760px,calc(100% - 18px));display:grid;grid-template-columns:repeat(5,1fr);padding:6px;background:rgba(7,17,31,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:22px}.bottom button{border:0;background:transparent;color:var(--muted);padding:9px 3px;border-radius:15px;font-size:11px;font-weight:700}.bottom button.active{background:rgba(85,168,255,.14);color:#fff}
 .view{display:none}.view.active{display:block}.chip{display:inline-block;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);font-size:10px;margin:2px}.locked{opacity:.65}.memo{width:100%;min-height:100px;background:#081522;color:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}.oddsgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.odd{background:#0b1b2d;border:1px solid var(--line);border-radius:10px;padding:7px;text-align:center;font-size:11px}.badge{font-size:9px;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.07);display:inline-block}
 @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.table{min-width:1120px}.oddsgrid{grid-template-columns:repeat(3,1fr)}}
-</style></head>
+</style>
+<style id="v6-premium">
+:root{
+  --bg:#050b14;--bg2:#08131f;--panel:#0c1928;--panel2:#10243a;--panel3:#132c45;
+  --ink:#f5fbff;--muted:#8ea3b8;--line:rgba(255,255,255,.085);
+  --cyan:#59f0dc;--blue:#65a9ff;--violet:#9f8cff;--green:#67e5a8;
+  --amber:#ffc86f;--red:#ff7783;--glow:0 18px 60px rgba(0,0,0,.35);
+}
+html{background:var(--bg)}
+body{
+  background:
+    radial-gradient(800px 480px at 10% -8%,rgba(85,168,255,.18),transparent 60%),
+    radial-gradient(760px 460px at 100% 0%,rgba(89,240,220,.11),transparent 58%),
+    linear-gradient(180deg,#06101b 0%,#050b14 62%,#07101b 100%);
+}
+.app{max-width:1200px;padding:14px 14px 116px}
+.top{
+  margin:-14px -14px 16px;padding:14px 14px 12px;
+  background:linear-gradient(180deg,rgba(5,11,20,.92),rgba(5,11,20,.78));
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.brand{display:flex;align-items:center;gap:9px;letter-spacing:.04em}
+.brandword{font-size:16px;font-weight:900}
+.logo-mark{
+  width:34px;height:34px;border-radius:11px;position:relative;display:inline-grid;place-items:center;
+  background:linear-gradient(145deg,rgba(101,169,255,.24),rgba(89,240,220,.16));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 28px rgba(0,0,0,.25)
+}
+.logo-mark .wave,.logo-mark .edge{position:absolute;display:block}
+.logo-mark .wave{width:20px;height:8px;border:2px solid var(--cyan);border-left:0;border-right:0;border-radius:50%;transform:rotate(-9deg)}
+.logo-mark .edge{width:13px;height:13px;border-right:3px solid var(--blue);border-bottom:3px solid var(--blue);transform:rotate(-45deg);right:6px;top:6px;border-radius:1px}
+.badge{background:rgba(101,169,255,.1);color:#b9dbff;border:1px solid rgba(101,169,255,.18);padding:3px 7px;border-radius:999px}
+.pill{
+  background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)
+}
+.hero,.card{
+  background:
+    linear-gradient(180deg,rgba(16,35,55,.93),rgba(8,20,33,.96));
+  border-color:rgba(255,255,255,.08);
+  box-shadow:var(--glow),inset 0 1px 0 rgba(255,255,255,.025)
+}
+.hero{
+  position:relative;overflow:hidden;padding:20px;
+  background:
+    radial-gradient(380px 180px at 90% -10%,rgba(89,240,220,.13),transparent 65%),
+    linear-gradient(145deg,rgba(21,48,75,.96),rgba(8,25,41,.98))
+}
+.hero:after{
+  content:"";position:absolute;width:190px;height:190px;border-radius:50%;
+  right:-80px;bottom:-115px;border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 0 0 24px rgba(255,255,255,.018),0 0 0 48px rgba(255,255,255,.012)
+}
+.hero h1,.hero h2{letter-spacing:-.025em}
+.section-title h2{font-weight:850;letter-spacing:-.01em}
+.card{transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.card:active{transform:scale(.995)}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  border-color:rgba(255,255,255,.075);
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.018));
+  color:#91a5b8;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)
+}
+.tabs button.on{
+  color:#fff;border-color:rgba(89,240,220,.28);
+  background:linear-gradient(180deg,rgba(89,240,220,.15),rgba(101,169,255,.10));
+  box-shadow:0 0 24px rgba(89,240,220,.06),inset 0 1px 0 rgba(255,255,255,.07)
+}
+.racebtn{
+  min-width:62px;background:linear-gradient(180deg,#0d1e31,#091725);
+  border-color:rgba(255,255,255,.075);font-weight:800
+}
+.racebtn.on{outline:0;border-color:rgba(89,240,220,.45);box-shadow:0 0 0 1px rgba(89,240,220,.18),0 10px 26px rgba(0,0,0,.22)}
+.table th{background:#0e1d2e;color:#88a0b8;position:sticky;top:0;z-index:2}
+.table tr:hover td{background:rgba(255,255,255,.012)}
+.lane{box-shadow:inset 0 0 0 1px rgba(0,0,0,.16),0 6px 16px rgba(0,0,0,.18)}
+.callout{
+  background:linear-gradient(90deg,rgba(89,240,220,.08),rgba(89,240,220,.02));
+  border-left-color:var(--cyan)
+}
+.kpi{letter-spacing:-.04em}
+.bar{background:rgba(255,255,255,.055)}
+.bar i{background:linear-gradient(90deg,var(--blue),var(--cyan));box-shadow:0 0 12px rgba(89,240,220,.18)}
+.oddsgrid{gap:7px}
+.odd{
+  background:linear-gradient(180deg,rgba(16,36,58,.9),rgba(9,24,40,.92));
+  border-color:rgba(255,255,255,.075);padding:9px 7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)
+}
+.memo{background:#07111d;border-color:rgba(255,255,255,.08)}
+.bottom{
+  width:min(760px,calc(100% - 16px));bottom:9px;padding:6px;
+  background:rgba(5,12,21,.88);border-color:rgba(255,255,255,.09);
+  box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.045)
+}
+.bottom button{
+  display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;
+  min-height:51px;border-radius:16px;font-size:10px;font-weight:750
+}
+.bottom button .navicon{width:20px;height:20px;display:block;opacity:.84}
+.bottom button.active{
+  background:linear-gradient(180deg,rgba(101,169,255,.16),rgba(89,240,220,.08));
+  color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.055)
+}
+.bottom button.active .navicon{opacity:1;filter:drop-shadow(0 0 8px rgba(89,240,220,.2))}
+.meeting-card{
+  position:relative;overflow:hidden;background:
+  radial-gradient(230px 100px at 90% -20%,rgba(101,169,255,.11),transparent 60%),
+  linear-gradient(180deg,rgba(15,33,52,.96),rgba(8,21,35,.97))
+}
+.meeting-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.venue-mark{display:flex;align-items:center;gap:9px}
+.venue-icon{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(145deg,rgba(101,169,255,.17),rgba(89,240,220,.10));
+  border:1px solid rgba(255,255,255,.08)
+}
+.data-state{
+  display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--green);
+  background:rgba(103,229,168,.07);border:1px solid rgba(103,229,168,.13);padding:4px 7px;border-radius:999px
+}
+.playername{font-weight:850}.num{font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+  .app{padding-left:10px;padding-right:10px}
+  .top{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
+  .hero{padding:18px}
+  .bottom{width:calc(100% - 14px)}
+}
+</style>
+
+</head>
 <body>
 <div class="app">
-<header class="top"><div class="topline"><div><div class="brand">BOAT EDGE <span class="badge">v5 全項目版</span></div><div class="mini">すべて日本語 / PRE_RESULT優先 / 結果は解禁後のみ</div></div><span class="pill good">● 結果未参照</span></div></header>
+<header class="top"><div class="topline"><div><div class="brand"><span class="logo-mark" aria-hidden="true"><span class="wave"></span><span class="edge"></span></span><span class="brandword">BOAT EDGE</span> <span class="badge">v7 AUTO</span></div><div class="mini">全項目日本語・公式PRE_RESULT自動更新・結果は解禁後のみ</div></div><span class="pill good">● 結果未参照</span></div></header>
 
 <section id="home" class="view active">
 <div class="hero"><span class="pill">ホーム</span><h1>レースに必要な情報を、全部ここに。</h1><p>BOATERSで確認できる主要情報項目を網羅しつつ、BOAT EDGE独自の2パターン予想・監査・検証を追加。</p></div>
@@ -89,7 +219,7 @@ const players=[
 [4,"選手 D","A1","29歳 / 51.8kg","香川 / 香川","F0 / L0",".11 / .10","7.30 / 55.1 / 74.0","6.76 / 49.2 / 69.0","55 / 39.4 / 52.1","18 / 40.0 / 54.3","1-1-2-4","8R"],
 [5,"選手 E","A2","42歳 / 52.2kg","東京 / 東京","F0 / L0",".16 / .15","5.98 / 41.0 / 60.0","5.70 / 38.2 / 56.0","40 / 28.6 / 41.4","29 / 31.0 / 49.2","4-3-2-5","4R"],
 [6,"選手 F","B1","45歳 / 55.0kg","愛知 / 愛知","F0 / L0",".18 / .17","4.65 / 27.2 / 44.0","4.40 / 24.0 / 40.0","38 / 26.9 / 34.3","68 / 26.0 / 39.6","6-5-3-6","3R"]];
-document.getElementById("racers").innerHTML=players.map(p=>`<tr><td><span class="lane l${p[0]}">${p[0]}</span></td><td>写真</td><td><b>${p[1]}</b><div class="mini">${p[2]}</div></td><td>${p[3]}<br>${p[4]}</td><td>${p[5]}</td><td>${p[6].replace(" / ","<br>")}</td><td>${p[7].replaceAll(" / ","<br>")}</td><td>${p[8].replaceAll(" / ","<br>")}</td><td>${p[9].replaceAll(" / ","<br>")}</td><td>${p[10].replaceAll(" / ","<br>")}</td><td>${p[11]}</td><td>${p[12]}</td></tr>`).join("");
+document.getElementById("racers").innerHTML=players.map(p=>`<tr><td><span class="lane l${p[0]}">${p[0]}</span></td><td>写真</td><td><span class="playername">${p[1]}</span><div class="mini">${p[2]}</div></td><td>${p[3]}<br>${p[4]}</td><td>${p[5]}</td><td>${p[6].replace(" / ","<br>")}</td><td>${p[7].replaceAll(" / ","<br>")}</td><td>${p[8].replaceAll(" / ","<br>")}</td><td>${p[9].replaceAll(" / ","<br>")}</td><td>${p[10].replaceAll(" / ","<br>")}</td><td>${p[11]}</td><td>${p[12]}</td></tr>`).join("");
 document.getElementById("tabs").innerHTML=tabs.map((t,i)=>`<button class="${i===0?'on':''}" data-tab="${t[0]}">${t[1]}</button>`).join("");
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".subview").forEach(x=>x.classList.toggle("active",x.id==="t-"+b.dataset.tab))});
 document.getElementById("raceNav").innerHTML=Array.from({length:12},(_,i)=>`<button class="racebtn ${i===9?'on':''}">${i+1}R<small>${i<9?'解析済':'展示前'}</small></button>`).join("");
@@ -99,7 +229,7 @@ document.getElementById("secondProb").innerHTML=[["2号艇",29],["3号艇",24],[
 document.getElementById("periodBtns").innerHTML=["直近10走","直近6ヶ月","当地","今期","SG/G1〜3","一般戦"].map((x,i)=>`<button class="${i===0?'on':''}">${x}</button>`).join("");
 document.getElementById("frameStats").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${[48,18,12,21,9,5][i]}%</td><td>${[90.5,78.6,46.8,65.2,43.7,22.4][i]}%</td><td>${[70,40,0,20,20,0][i]}%</td><td>${[20,40,30,30,30,10][i]}%</td><td>${[0,20,20,20,0,10][i]}%</td><td>${i===3?'高':'標準'}</td></tr>`).join("");
 document.getElementById("leadRate").innerHTML=[["1先頭時",82],["2先頭時",68],["3先頭時",61],["4先頭時",73]].map(x=>`<div class="row"><b>${x[0]}</b><span>${x[1]}%</span></div>`).join("");
-document.getElementById("odds").innerHTML=["1-2-4","1-4-2","1-3-4","1-4-3","4-1-5","4-1-2","2-1-4","3-1-4","1-2-3","1-3-2","4-5-1","5-4-1"].map((x,i)=>`<div class="odd"><b>${x}</b><br>${[8.4,9.1,11.6,12.2,18.7,21.3,26.8,31.2,14.7,15.1,35.6,42.9][i]}倍</div>`).join("");
+document.getElementById("odds").innerHTML=["1-2-4","1-4-2","1-3-4","1-4-3","4-1-5","4-1-2","2-1-4","3-1-4","1-2-3","1-3-2","4-5-1","5-4-1"].map((x,i)=>`<div class="odd num"><b>${x}</b><br>${[8.4,9.1,11.6,12.2,18.7,21.3,26.8,31.2,14.7,15.1,35.6,42.9][i]}倍</div>`).join("");
 document.getElementById("weather").innerHTML=[["天候","晴れ"],["気温","28.0℃"],["水温","25.0℃"],["風向","北東"],["風速","3m/s"],["波高","2cm"]].map(x=>`<div class="card"><div class="mini">${x[0]}</div><div class="kpi">${x[1]}</div></div>`).join("");
 document.getElementById("beforeRows").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${i===3?'0.5kg':'-'}</td><td>${p[3].split('/')[1]}</td><td>${[6.72,6.78,6.74,6.68,6.76,6.80][i]}</td><td>${[-0.5,0,0,-0.5,0,0.5][i]}</td><td>-</td><td>${i===1?'ギヤ':'-'}</td></tr>`).join("");
 document.getElementById("startRows").innerHTML=players.map((p,i)=>`<div class="row"><span><span class="lane l${p[0]}">${p[0]}</span> ${i<3?'スロー':'ダッシュ'}</span><b>${[".12",".10",".08",".06",".11",".13"][i]}</b></div>`).join("");
@@ -110,11 +240,115 @@ document.getElementById("courseStats").innerHTML=players.map((p,i)=>`<tr><td>${p
 document.getElementById("sumRows").innerHTML=players.map((p,i)=>`<div class="row"><b>${p[0]}号艇</b><span class="${i===3?'good':''}">${[-0.08,-0.03,-0.06,-0.15,-0.04,0.02][i]}</span></div>`).join("");
 document.getElementById("motorRows").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>No.${[45,19,53,55,40,38][i]}</td><td>${[12,3,6,8,30,35][i]}位</td><td>${[42.5,51.5,41.9,39.4,28.6,26.9][i]}%</td><td>${[60.2,66.2,56.8,52.1,41.4,34.3][i]}%</td><td>${[24.0,29.4,27.0,21.1,11.4,14.9][i]}%</td><td>${[18.5,22.1,14.9,18.3,17.1,11.9][i]}%</td><td>${[17.7,14.7,14.9,12.7,12.9,7.5][i]}%</td><td>${[6.82,6.79,6.80,6.75,6.84,6.88][i]} / ${[3.1,2.8,3.5,2.2,4.8,5.1][i]}位</td><td>${[3,3,2,3,1,2][i]}回</td><td>${[1,2,1,0,1,1][i]}回</td><td>${[132,145,137,141,120,128][i]}回</td></tr>`).join("");
 document.getElementById("motorHistory").innerHTML=players.map((p,i)=>`<div class="card"><h3>${p[0]}号艇 / モーターNo.${[45,19,53,55,40,38][i]}</h3>${Array.from({length:5},(_,j)=>`<div class="row"><div>前${j+1}走 <span class="mini">選手${String.fromCharCode(65+j)}</span></div><span>展示 ${[6.88,6.92,6.84,6.90,6.86][j]} / ${j+1}位 / 進入${(j%6)+1} / ${((j+i)%6)+1}着</span></div>`).join("")}<div class="mini">※表示はサンプル。正式接続時は直近10走を全件表示。</div></div>`).join("");
-document.getElementById("meetings").innerHTML=["住之江","常滑","若松","福岡","宮島","平和島"].map(x=>`<div class="card"><div class="section-title"><h2>${x}</h2><span>12R</span></div><div class="races">${Array.from({length:12},(_,i)=>`<button class="racebtn" onclick="show('race')">${i+1}R</button>`).join("")}</div></div>`).join("");
+document.getElementById("meetings").innerHTML=["住之江","常滑","若松","福岡","宮島","平和島"].map((x,vi)=>`<div class="card meeting-card"><div class="meeting-head"><div class="venue-mark"><span class="venue-icon">${["◫","≈","◇","≋","⌁","◈"][vi]}</span><div><h2 style="margin:0;font-size:17px">${x}</h2><span class="mini">全12レース</span></div></div><span class="data-state">● 取得中</span></div><div class="races" style="margin-top:11px">${Array.from({length:12},(_,i)=>`<button class="racebtn" onclick="show('race')">${i+1}R<small>${i<8?'解析済':'展示前'}</small></button>`).join("")}</div></div>`).join("");
+const icons={
+home:`<svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/></svg>`,
+race:`<svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17h16"/><path d="M5 17 8.5 8h7L19 17"/><path d="M8.5 8 12 5l3.5 3"/><path d="M7 20c2 .9 3.3.9 5 0 1.7.9 3 .9 5 0"/></svg>`,
+analysis:`<svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,
+audit:`<svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 5 6v5c0 4.6 2.7 8 7 10 4.3-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>`,
+settings:`<svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-5L9.2 6a7 7 0 0 0-1.7 1L5 6l-2 3.5L5 11a7 7 0 0 0 0 2l-2 1.5L5 18l2.5-1a7 7 0 0 0 1.7 1l.3 3h5l.3-3a7 7 0 0 0 1.7-1l2.5 1 2-3.5L19 13a7 7 0 0 0 .1-1Z"/></svg>`
+};
 const navs=[["home","ホーム"],["race","レース"],["analysis","分析"],["audit","監査"],["settings","設定"]];
-document.getElementById("bottom").innerHTML=navs.map((x,i)=>`<button class="${i===0?'active':''}" data-id="${x[0]}">${x[1]}</button>`).join("");
+document.getElementById("bottom").innerHTML=navs.map((x,i)=>`<button class="${i===0?'active':''}" data-id="${x[0]}">${icons[x[0]]}<span>${x[1]}</span></button>`).join("");
 function show(id){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll("#bottom button").forEach(x=>x.classList.toggle("active",x.dataset.id===id));location.hash=id;window.scrollTo(0,0)}
 document.querySelectorAll("#bottom button").forEach(b=>b.onclick=()=>show(b.dataset.id));
 document.getElementById("memo").value=localStorage.getItem("boatMemo")||"";
 let h=(location.hash||"#home").slice(1);if(document.getElementById(h))show(h);
-</script></body></html>
+</script>
+<script id="boat-edge-config">
+window.BOAT_EDGE_CONFIG={
+  schema_version:"boat-edge-race-v1",
+  language:"ja",
+  refresh_seconds:60,
+  strict_missing:true,
+  source_status:true,
+  pre_result_guard:{results_seen:false,unlock:false,scoring:false}
+};
+</script>
+
+
+<script id="boat-edge-live">
+(function(){
+  const state={today:null,current:null,timer:null};
+  const laneClass=n=>"l"+n;
+  const fmt=v=>(v===null||v===undefined||v==="")?"－":v;
+
+  function liveMeetingCard(v){
+    const buttons=(v.races||[]).map(r=>{
+      const st=r.beforeinfo_status==="ok"?"展示反映":(r.beforeinfo_status==="published_wait"?"展示待ち":"出走表");
+      return `<button class="racebtn" data-racefile="${r.file}" data-racekey="${r.race_key}">${r.race_no}R<small>${fmt(r.deadline)} ${st}</small></button>`;
+    }).join("");
+    return `<div class="card meeting-card">
+      <div class="meeting-head"><div class="venue-mark"><span class="venue-icon">≈</span>
+      <div><h2 style="margin:0;font-size:17px">${v.venue}</h2><span class="mini">${v.event||""}</span></div></div>
+      <span class="data-state">● 自動取得</span></div><div class="races" style="margin-top:11px">${buttons}</div></div>`;
+  }
+
+  function renderToday(d){
+    state.today=d;
+    const m=document.getElementById("meetings");
+    if(!m||!d||!Array.isArray(d.venues)) return;
+    m.innerHTML=d.venues.filter(v=>!v.error).map(liveMeetingCard).join("");
+    m.querySelectorAll("[data-racefile]").forEach(b=>b.onclick=()=>loadRace(b.dataset.racefile));
+    const top=document.querySelector(".top .mini");
+    if(top) top.textContent=`公式PRE_RESULT自動更新 / 最終取得 ${new Date(d.updated_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})} / 結果未参照`;
+  }
+
+  function renderRace(d){
+    state.current=d;
+    if(!d||!d.meta)return;
+    const h=document.querySelector("#race .hero h2");
+    const p=document.querySelector("#race .hero p");
+    if(h)h.textContent=`${d.meta.venue} ${d.meta.race_no}R　締切 ${fmt(d.meta.deadline)}`;
+    if(p)p.innerHTML=`${d.meta.event||""}　<span class="chip">公式出走表: ${d.source_audit?.race_card?.status==="ok"?"取得済":"未取得"}</span><span class="chip">直前: ${d.source_audit?.beforeinfo?.status||"未取得"}</span>`;
+
+    const body=document.getElementById("racers");
+    if(body && Array.isArray(d.racers) && d.racers.length){
+      body.innerHTML=d.racers.map(r=>`<tr>
+        <td><span class="lane ${laneClass(r.lane)}">${fmt(r.lane)}</span></td><td>－</td>
+        <td><span class="playername">${fmt(r.name)}</span><div class="mini">${fmt(r.class)} / ${fmt(r.registration_no)}</div></td>
+        <td>${fmt(r.age)}歳 / ${fmt(r.weight_kg)}kg<br>${fmt(r.birthplace)} / ${fmt(r.branch)}</td>
+        <td>F${fmt(r.F)} / L${fmt(r.L)}</td><td>${fmt(r.avg_st)}<br>－</td>
+        <td>${fmt(r.national?.win_rate)}<br>${fmt(r.national?.quinella_rate)}<br>${fmt(r.national?.trio_rate)}</td>
+        <td>${fmt(r.local?.win_rate)}<br>${fmt(r.local?.quinella_rate)}<br>${fmt(r.local?.trio_rate)}</td>
+        <td colspan="4"><span class="mini">モーター/ボート/節間/早見は次段階の自動パーサーで接続</span></td>
+      </tr>`).join("");
+    }
+
+    const bf=d.beforeinfo||{};
+    if(Array.isArray(bf.racers)&&bf.racers.length){
+      const br=document.getElementById("beforeRows");
+      if(br)br.innerHTML=bf.racers.map(r=>`<tr><td>${fmt(r.lane)}</td><td>${fmt(r.name)}</td><td>－</td><td>－</td><td>${fmt(r.exhibition_time)}</td><td>${fmt(r.tilt)}</td><td>－</td><td>－</td></tr>`).join("");
+    }
+    const sr=document.getElementById("startRows");
+    if(sr && Array.isArray(bf.start_exhibition)&&bf.start_exhibition.length){
+      sr.innerHTML=bf.start_exhibition.map(r=>`<div class="row"><span><span class="lane ${laneClass(r.lane)}">${r.lane}</span></span><b>${fmt(r.st)}</b></div>`).join("");
+    }
+    show("race");
+  }
+
+  async function loadRace(file){
+    try{
+      const r=await fetch(`${file}?t=${Date.now()}`,{cache:"no-store"});
+      if(!r.ok)throw new Error(r.status);
+      renderRace(await r.json());
+    }catch(e){console.warn("race live load",e)}
+  }
+  async function refresh(){
+    try{
+      const r=await fetch(`./data/today.json?t=${Date.now()}`,{cache:"no-store"});
+      if(!r.ok)throw new Error(r.status);
+      renderToday(await r.json());
+    }catch(e){
+      console.warn("today live load",e);
+      const top=document.querySelector(".top .mini");
+      if(top) top.textContent="自動データ未生成 / 初回GitHub Actions実行後に切替";
+    }
+  }
+  window.BOAT_EDGE_LIVE={refresh,loadRace};
+  refresh();
+  state.timer=setInterval(refresh,60000);
+})();
+</script>
+
+</body></html>
