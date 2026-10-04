@@ -1,0 +1,311 @@
+name: BOAT EDGE 自動更新
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-auto-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: リポジトリ取得
+        uses: actions/checkout@v4
+
+      - name: Python準備
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 必要ライブラリ
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: PRE_RESULT自動取得
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json, re, hashlib, time
+          from pathlib import Path
+          from datetime import datetime, timedelta, timezone
+          from urllib.parse import urljoin, urlparse, parse_qs
+          import requests
+          from bs4 import BeautifulSoup
+
+          JST = timezone(timedelta(hours=9))
+          now = datetime.now(JST)
+          ymd = now.strftime("%Y%m%d")
+          iso_now = now.isoformat(timespec="seconds")
+
+          ROOT = Path(".")
+          DATA = ROOT / "data"
+          RACES = DATA / "races"
+          RAW = DATA / "raw" / ymd
+          RACES.mkdir(parents=True, exist_ok=True)
+          RAW.mkdir(parents=True, exist_ok=True)
+
+          BASE = "https://www.boatrace.jp"
+          INDEX = f"{BASE}/owpc/pc/race/index?hd={ymd}"
+          VENUES = {
+            "01":"桐生","02":"戸田","03":"江戸川","04":"平和島","05":"多摩川","06":"浜名湖",
+            "07":"蒲郡","08":"常滑","09":"津","10":"三国","11":"びわこ","12":"住之江",
+            "13":"尼崎","14":"鳴門","15":"丸亀","16":"児島","17":"宮島","18":"徳山",
+            "19":"下関","20":"若松","21":"芦屋","22":"福岡","23":"唐津","24":"大村"
+          }
+
+          S = requests.Session()
+          S.headers.update({
+            "User-Agent":"Mozilla/5.0 (compatible; BOAT-EDGE/1.0; personal research)",
+            "Accept-Language":"ja,en;q=0.8"
+          })
+
+          def get(url, timeout=18):
+              r = S.get(url, timeout=timeout)
+              r.raise_for_status()
+              r.encoding = r.apparent_encoding or "utf-8"
+              return r
+
+          def sha(b): return hashlib.sha256(b).hexdigest()
+
+          def save_raw(kind,jcd,rno,r):
+              p=RAW/f"{jcd}_{rno:02d}_{kind}.html"
+              p.write_bytes(r.content)
+              return str(p), sha(r.content)
+
+          def norm(s):
+              return re.sub(r"\s+"," ",s or "").strip()
+
+          def find_deadlines(soup):
+              # official race navigation table contains 12 deadline cells
+              for tr in soup.find_all("tr"):
+                  txt=norm(tr.get_text(" ",strip=True))
+                  if "締切予定時刻" in txt:
+                      vals=re.findall(r"\b(?:[01]?\d|2[0-3]):[0-5]\d\b",txt)
+                      if len(vals)>=12: return vals[:12]
+              # fallback: page text
+              txt=norm(soup.get_text(" ",strip=True))
+              m=re.search(r"締切予定時刻\s+((?:\d{1,2}:\d{2}\s+){11}\d{1,2}:\d{2})",txt)
+              return re.findall(r"\d{1,2}:\d{2}",m.group(1)) if m else []
+
+          def parse_racers(soup):
+              racers=[]
+              seen=set()
+              for tr in soup.find_all("tr"):
+                  txt=norm(tr.get_text(" ",strip=True))
+                  m=re.search(r"\b(\d{4})\s*/\s*(A1|A2|B1|B2)\b",txt)
+                  if not m: continue
+                  reg, cls=m.group(1),m.group(2)
+                  if reg in seen: continue
+                  # lane is normally first cell
+                  tds=tr.find_all(["th","td"])
+                  lane=None
+                  if tds:
+                      lm=re.match(r"\s*([1-6])\b",norm(tds[0].get_text(" ",strip=True)))
+                      if lm: lane=int(lm.group(1))
+                  # racer profile link
+                  name=None
+                  for a in tr.find_all("a"):
+                      at=norm(a.get_text(" ",strip=True))
+                      if at and not re.fullmatch(r"\d+R?",at):
+                          name=at; break
+                  age=None; weight=None
+                  aw=re.search(r"(\d{2})歳\s*/\s*([\d.]+)kg",txt)
+                  if aw: age=int(aw.group(1)); weight=float(aw.group(2))
+                  fl=re.search(r"F(\d+).*?L(\d+)",txt)
+                  avgst=None
+                  st=re.search(r"\b0\.(\d{2})\b",txt)
+                  if st: avgst=float("0."+st.group(1))
+                  # branch / birthplace after racer name is usually "大阪/大阪"
+                  bb=re.search(r"([^\s/]{1,6})/([^\s/]{1,6})\s+\d{2}歳",txt)
+                  branch=birthplace=None
+                  if bb: branch,birthplace=bb.group(1),bb.group(2)
+
+                  # collect numeric values after avg ST. Mapping is kept conservative.
+                  floats=[float(x) for x in re.findall(r"(?<!\d)(\d{1,2}\.\d{2})(?!\d)",txt)]
+                  vals=floats[1:] if avgst is not None and floats and abs(floats[0]-avgst)<1e-6 else floats
+                  national={"win_rate":None,"quinella_rate":None,"trio_rate":None}
+                  local={"win_rate":None,"quinella_rate":None,"trio_rate":None}
+                  if len(vals)>=6:
+                      national=dict(win_rate=vals[0],quinella_rate=vals[1],trio_rate=vals[2])
+                      local=dict(win_rate=vals[3],quinella_rate=vals[4],trio_rate=vals[5])
+
+                  racers.append({
+                      "lane":lane,"registration_no":reg,"name":name,"class":cls,
+                      "age":age,"weight_kg":weight,"branch":branch,"birthplace":birthplace,
+                      "F":int(fl.group(1)) if fl else None,"L":int(fl.group(2)) if fl else None,
+                      "avg_st":avgst,"national":national,"local":local,
+                      "raw_text":txt
+                  })
+                  seen.add(reg)
+              racers.sort(key=lambda x:(x["lane"] is None, x["lane"] or 9))
+              return racers[:6]
+
+          def parse_before(soup):
+              out={"racers":[],"start_exhibition":[],"weather":{}}
+              # racer rows
+              for tr in soup.find_all("tr"):
+                  txt=norm(tr.get_text(" ",strip=True))
+                  cells=[norm(x.get_text(" ",strip=True)) for x in tr.find_all(["th","td"])]
+                  if not cells: continue
+                  lm=re.fullmatch(r"[1-6]",cells[0])
+                  if not lm: continue
+                  lane=int(cells[0])
+                  name=None
+                  for a in tr.find_all("a"):
+                      at=norm(a.get_text(" ",strip=True))
+                      if at and not re.fullmatch(r"\d+R?",at):
+                          name=at;break
+                  # Extract exhibition-style values conservatively
+                  nums=re.findall(r"(?<!\d)(\d+\.\d+)(?!\d)",txt)
+                  ex_time=None
+                  for n in nums:
+                      v=float(n)
+                      if 6.0 <= v <= 8.5:
+                          ex_time=v;break
+                  tilt=None
+                  tm=re.search(r"(?<!\d)(-?0\.(?:0|5)|-?1\.(?:0|5)|2\.0|3\.0)(?!\d)",txt)
+                  if tm:
+                      try: tilt=float(tm.group(1))
+                      except: pass
+                  out["racers"].append({"lane":lane,"name":name,"exhibition_time":ex_time,"tilt":tilt,"raw_text":txt})
+
+              # start exhibition: find first table after heading text
+              tag=soup.find(string=re.compile("スタート展示"))
+              if tag:
+                  t=tag.parent.find_next("table") if tag.parent else None
+                  if t:
+                      for tr in t.find_all("tr"):
+                          txt=norm(tr.get_text(" ",strip=True))
+                          mm=re.search(r"\b([1-6])\b.*?(F?\.\d{2})\b",txt)
+                          if mm:
+                              out["start_exhibition"].append({"lane":int(mm.group(1)),"st":mm.group(2)})
+
+              full=norm(soup.get_text(" ",strip=True))
+              patterns={
+                "air_temp_c":r"気温\s*([\d.]+)\s*℃",
+                "wind_speed_ms":r"風速\s*([\d.]+)\s*m",
+                "water_temp_c":r"水温\s*([\d.]+)\s*℃",
+                "wave_cm":r"波高\s*([\d.]+)\s*cm",
+              }
+              for k,p in patterns.items():
+                  mm=re.search(p,full)
+                  out["weather"][k]=float(mm.group(1)) if mm else None
+              return out
+
+          # Discover active venues only from racelist links. Result links are ignored.
+          idx=get(INDEX)
+          idx_soup=BeautifulSoup(idx.text,"lxml")
+          active=set()
+          for a in idx_soup.find_all("a",href=True):
+              href=a["href"]
+              if "/race/racelist" not in href: continue
+              qs=parse_qs(urlparse(urljoin(BASE,href)).query)
+              j=(qs.get("jcd") or [None])[0]
+              if j and j.zfill(2) in VENUES: active.add(j.zfill(2))
+
+          summary={
+            "schema_version":"boat-edge-today-v1",
+            "date":now.strftime("%Y-%m-%d"),
+            "updated_at":iso_now,
+            "phase":"PRE_RESULT",
+            "results_seen":False,"unlock":False,"scoring":False,
+            "venues":[]
+          }
+
+          for jcd in sorted(active):
+              try:
+                  r1_url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={jcd}&rno=1"
+                  r1=get(r1_url)
+                  soup1=BeautifulSoup(r1.text,"lxml")
+                  deadlines=find_deadlines(soup1)
+                  h2=soup1.find("h2")
+                  event=norm(h2.get_text(" ",strip=True)) if h2 else None
+                  venue={"jcd":jcd,"venue":VENUES[jcd],"event":event,"races":[]}
+
+                  for rno in range(1,13):
+                      key=f"{ymd}-{jcd}-{rno:02d}"
+                      outp=RACES/f"{key}.json"
+                      existing={}
+                      if outp.exists():
+                          try: existing=json.loads(outp.read_text(encoding="utf-8"))
+                          except: existing={}
+
+                      deadline=deadlines[rno-1] if len(deadlines)>=rno else None
+                      doc={
+                        "schema_version":"boat-edge-race-v1","race_key":key,
+                        "meta":{"date":now.strftime("%Y-%m-%d"),"venue_code":jcd,"venue":VENUES[jcd],
+                                "event":event,"race_no":rno,"deadline":deadline,"updated_at":iso_now,
+                                "phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False},
+                        "source_audit":existing.get("source_audit",{}),
+                        "racers":existing.get("racers",[]),
+                        "beforeinfo":existing.get("beforeinfo",{}),
+                        "derived":existing.get("derived",{}),
+                        "validation":{"result_unlock_token":None,"result":None}
+                      }
+
+                      # Race card: fetch once per day/race, then reuse.
+                      if not doc["racers"]:
+                          url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={jcd}&rno={rno}"
+                          rr=get(url); _,dg=save_raw("racelist",jcd,rno,rr)
+                          sp=BeautifulSoup(rr.text,"lxml")
+                          doc["racers"]=parse_racers(sp)
+                          doc["source_audit"]["race_card"]={"status":"ok","source":url,"fetched_at":iso_now,"sha256":dg}
+                          time.sleep(.10)
+
+                      # Beforeinfo: only around upcoming/current races, reducing load.
+                      fetch_before=False
+                      if deadline:
+                          try:
+                              hh,mm=map(int,deadline.split(":"))
+                              dl=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
+                              delta=(dl-now).total_seconds()/60
+                              fetch_before=(-45 <= delta <= 180)
+                          except: pass
+                      if fetch_before:
+                          url=f"{BASE}/owpc/pc/race/beforeinfo?hd={ymd}&jcd={jcd}&rno={rno}"
+                          rb=get(url); _,dg=save_raw("beforeinfo",jcd,rno,rb)
+                          bp=BeautifulSoup(rb.text,"lxml")
+                          parsed=parse_before(bp)
+                          has_ex=any(x.get("exhibition_time") for x in parsed["racers"]) or bool(parsed["start_exhibition"])
+                          doc["beforeinfo"]=parsed
+                          doc["source_audit"]["beforeinfo"]={"status":"ok" if has_ex else "published_wait",
+                              "source":url,"fetched_at":iso_now,"sha256":dg}
+                          time.sleep(.10)
+                      elif "beforeinfo" not in doc["source_audit"]:
+                          doc["source_audit"]["beforeinfo"]={"status":"not_in_window","source":None,"fetched_at":None,"sha256":None}
+
+                      outp.write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
+                      venue["races"].append({
+                        "race_key":key,"race_no":rno,"deadline":deadline,
+                        "file":f"data/races/{key}.json",
+                        "racers_ready":len(doc["racers"])==6,
+                        "beforeinfo_status":doc["source_audit"].get("beforeinfo",{}).get("status","missing")
+                      })
+                  summary["venues"].append(venue)
+              except Exception as e:
+                  summary["venues"].append({"jcd":jcd,"venue":VENUES.get(jcd,jcd),"error":str(e),"races":[]})
+
+          (DATA/"today.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("venues",len(summary["venues"]),"updated",iso_now)
+          PY
+
+      - name: 更新内容を保存
+        shell: bash
+        run: |
+          git config user.name "boat-edge-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "変更なし"
+          else
+            git commit -m "自動更新: PRE_RESULT $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')"
+            git push
+          fi
