@@ -4,199 +4,117 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>BOAT EDGE v3</title>
+<title>BOAT EDGE v5</title>
 <style>
-:root{
-  --bg:#07111f;--panel:#0d1b2c;--panel2:#10243a;--ink:#f5f9fd;--muted:#91a5ba;
-  --line:rgba(255,255,255,.09);--aqua:#55e7d4;--blue:#55a8ff;--violet:#9b8cff;
-  --green:#55e39f;--amber:#ffc46b;--red:#ff7681;--safe:env(safe-area-inset-bottom)
-}
-*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:
-radial-gradient(circle at 15% -8%,rgba(85,168,255,.18),transparent 34%),
-radial-gradient(circle at 95% 2%,rgba(85,231,212,.12),transparent 28%),
-linear-gradient(180deg,#081523 0%,#07111f 60%);color:var(--ink);
-font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Sans","Yu Gothic",sans-serif;
-min-height:100vh;padding-bottom:calc(92px + var(--safe))}
-button{font:inherit}.app{max-width:980px;margin:auto;padding:14px 12px 110px}
-.top{position:sticky;top:0;z-index:40;margin:-14px -12px 14px;padding:13px 12px;
-background:rgba(7,17,31,.84);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
-.topline{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.brand{font-weight:900;letter-spacing:.06em}.sub{font-size:12px;color:var(--muted);margin-top:4px}
-.iconbtn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--line);
-border-radius:999px;font-size:11px;color:var(--muted);background:rgba(255,255,255,.035)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 16px rgba(85,227,159,.7)}
-.view{display:none}.view.active{display:block}.hero{padding:20px;border:1px solid var(--line);border-radius:26px;
-background:linear-gradient(145deg,rgba(20,46,74,.96),rgba(8,26,44,.96));box-shadow:0 18px 50px rgba(0,0,0,.25)}
-.hero h1,.hero h2{margin:8px 0 7px}.hero h1{font-size:27px}.hero h2{font-size:23px}.hero p{margin:0;color:var(--muted);line-height:1.65}
-.section{margin-top:16px}.section-title{display:flex;align-items:end;justify-content:space-between;margin:0 2px 9px}
-.section-title h2{font-size:17px;margin:0}.section-title span{font-size:11px;color:var(--muted)}
-.grid{display:grid;gap:10px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.card{background:linear-gradient(180deg,rgba(16,36,58,.94),rgba(9,24,40,.96));border:1px solid var(--line);
-border-radius:20px;padding:15px;box-shadow:0 12px 32px rgba(0,0,0,.15)}
-.card h3{margin:0 0 7px;font-size:15px}.mini{font-size:11px;color:var(--muted)}.kpi{font-size:30px;font-weight:900}
-.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.blue{color:var(--blue)}.aqua{color:var(--aqua)}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}.bar{height:8px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
-.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--aqua));border-radius:999px}
-.lane{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:900}
-.l1{background:#fff;color:#111}.l2{background:#3f3f3f}.l3{background:#e44}.l4{background:#4f78e6}.l5{background:#f2da47;color:#111}.l6{background:#4abf69;color:#111}
-.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:590px}.table th,.table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:12px}
-.table th{color:var(--muted);font-weight:600}.ticket{display:grid;grid-template-columns:38px 1fr 85px;align-items:center;gap:9px;padding:11px 0;border-bottom:1px solid var(--line)}
-.combo{font-size:17px;font-weight:900;letter-spacing:.07em}.callout{border-left:3px solid var(--aqua);background:rgba(85,231,212,.06);padding:11px 13px;border-radius:0 14px 14px 0}
-.worldA{border-color:rgba(85,231,212,.32)}.worldB{border-color:rgba(155,140,255,.32)}
-.meeting{padding:13px;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
-.races{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}.racebtn{border:1px solid var(--line);background:#0b1a2b;color:#fff;border-radius:11px;padding:9px 3px}
-.racebtn small{display:block;color:var(--muted);font-size:9px}.racebtn.hot{outline:1px solid rgba(85,231,212,.45)}
-.hubbtn{width:100%;text-align:left;border:1px solid var(--line);background:linear-gradient(145deg,#10243a,#0b1b2d);color:#fff;border-radius:18px;padding:16px}
-.hubbtn b{display:block;font-size:16px;margin-bottom:4px}.hubbtn span{font-size:11px;color:var(--muted)}
-.backbtn{border:0;background:transparent;color:var(--blue);padding:0;margin-bottom:10px}
-.bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;width:min(760px,calc(100% - 18px));display:grid;grid-template-columns:repeat(5,1fr);
-padding:6px;background:rgba(7,17,31,.92);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:22px;box-shadow:0 16px 40px rgba(0,0,0,.35)}
-.bottom button{border:0;background:transparent;color:var(--muted);padding:9px 3px;border-radius:15px;font-size:11px;font-weight:700}
-.bottom button.active{background:rgba(85,168,255,.14);color:#fff}
-.drawer{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.55);display:none}.drawer.open{display:block}
-.drawerbox{position:absolute;top:0;right:0;width:min(86%,370px);height:100%;background:#0a1726;border-left:1px solid var(--line);padding:18px}
-.drawerbox h2{margin:2px 0 14px}.drawerbtn{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;color:#fff;padding:15px 4px}
-.badge{font-size:10px;padding:4px 7px;border-radius:999px;background:rgba(255,196,107,.1);color:var(--amber);border:1px solid rgba(255,196,107,.25)}
-@media(max-width:700px){.g2,.g3{grid-template-columns:1fr}.races{grid-template-columns:repeat(4,1fr)}.hero h1{font-size:24px}}
-</style>
-</head>
+:root{--bg:#07111f;--panel:#0d1b2c;--panel2:#10243a;--ink:#f7fbff;--muted:#91a5ba;--line:rgba(255,255,255,.09);--aqua:#55e7d4;--blue:#55a8ff;--green:#55e39f;--amber:#ffc46b;--red:#ff7681;--violet:#9b8cff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#081523,#07111f 60%);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;padding-bottom:92px}
+.app{max-width:1180px;margin:auto;padding:12px}.top{position:sticky;top:0;z-index:50;margin:-12px -12px 12px;padding:12px;background:rgba(7,17,31,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}.brand{font-weight:900}.mini{font-size:11px;color:var(--muted)}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.035);font-size:11px;color:var(--muted)}
+.hero,.card{background:linear-gradient(180deg,rgba(16,36,58,.96),rgba(9,24,40,.98));border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 12px 30px rgba(0,0,0,.14)}.hero{border-radius:25px;background:linear-gradient(145deg,rgba(20,46,74,.98),rgba(8,26,44,.98))}
+.hero h1,.hero h2{margin:7px 0}.hero p{color:var(--muted);margin:0;line-height:1.6}.section{margin-top:14px}.section-title{display:flex;align-items:end;justify-content:space-between;margin:0 2px 8px}.section-title h2{font-size:17px;margin:0}.section-title span{font-size:11px;color:var(--muted)}
+.grid{display:grid;gap:10px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.blue{color:var(--blue)}.aqua{color:var(--aqua)}.kpi{font-size:29px;font-weight:900}.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0}.tabs button{white-space:nowrap;border:1px solid var(--line);background:#0c1c2e;color:var(--muted);padding:9px 11px;border-radius:999px}.tabs button.on{background:rgba(85,168,255,.15);color:#fff;border-color:rgba(85,168,255,.32)}
+.subview{display:none}.subview.active{display:block}.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:1040px}.table th,.table td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:left;font-size:11px;vertical-align:top}.table th{background:#0f2034;color:var(--muted);font-weight:700}.lane{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;font-weight:900}.l1{background:#fff;color:#111}.l2{background:#444}.l3{background:#e44}.l4{background:#4f78e6}.l5{background:#f2da47;color:#111}.l6{background:#4abf69;color:#111}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.bar{height:7px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--aqua));border-radius:99px}.callout{border-left:3px solid var(--aqua);padding:11px 13px;background:rgba(85,231,212,.06);border-radius:0 13px 13px 0}.ticket{display:grid;grid-template-columns:42px 1fr 82px;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid var(--line)}.combo{font-size:17px;font-weight:900;letter-spacing:.06em}
+.races{display:flex;gap:7px;overflow:auto}.racebtn{min-width:60px;border:1px solid var(--line);background:#0b1b2d;color:#fff;border-radius:12px;padding:9px}.racebtn.on{outline:1px solid var(--aqua)}.racebtn small{display:block;color:var(--muted);font-size:9px}
+.bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;width:min(760px,calc(100% - 18px));display:grid;grid-template-columns:repeat(5,1fr);padding:6px;background:rgba(7,17,31,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:22px}.bottom button{border:0;background:transparent;color:var(--muted);padding:9px 3px;border-radius:15px;font-size:11px;font-weight:700}.bottom button.active{background:rgba(85,168,255,.14);color:#fff}
+.view{display:none}.view.active{display:block}.chip{display:inline-block;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);font-size:10px;margin:2px}.locked{opacity:.65}.memo{width:100%;min-height:100px;background:#081522;color:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}.oddsgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.odd{background:#0b1b2d;border:1px solid var(--line);border-radius:10px;padding:7px;text-align:center;font-size:11px}.badge{font-size:9px;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.07);display:inline-block}
+@media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.table{min-width:1120px}.oddsgrid{grid-template-columns:repeat(3,1fr)}}
+</style></head>
 <body>
 <div class="app">
-<header class="top">
-  <div class="topline">
-    <div><div class="brand">BOAT EDGE <span class="badge">v3</span></div><div id="status" class="sub"></div></div>
-    <div style="display:flex;gap:8px;align-items:center"><span class="pill"><span class="dot"></span> PRE_RESULT LOCK</span><button class="iconbtn" onclick="toggleDrawer()">☰</button></div>
-  </div>
-</header>
+<header class="top"><div class="topline"><div><div class="brand">BOAT EDGE <span class="badge">v5 全項目版</span></div><div class="mini">すべて日本語 / PRE_RESULT優先 / 結果は解禁後のみ</div></div><span class="pill good">● 結果未参照</span></div></header>
 
 <section id="home" class="view active">
-  <div class="hero"><span class="pill">HOME</span><h1>今日の開催から、迷わず予想へ。</h1><p>開催 → レース → 2世界予想 → 分析 → 監査を分離。必要な画面だけ見る。</p></div>
-  <div class="section"><div class="section-title"><h2>今日の開催</h2><span>SAMPLE DATA</span></div><div id="meetings" class="grid g2"></div></div>
+<div class="hero"><span class="pill">ホーム</span><h1>レースに必要な情報を、全部ここに。</h1><p>BOATERSで確認できる主要情報項目を網羅しつつ、BOAT EDGE独自の2パターン予想・監査・検証を追加。</p></div>
+<div class="section"><div class="section-title"><h2>今日の開催</h2><span>サンプル</span></div><div id="meetings" class="grid g2"></div></div>
 </section>
 
 <section id="race" class="view">
-  <div class="hero"><span class="pill">RACE</span><h2 id="raceTitle"></h2><p id="verdict"></p></div>
-  <div class="section"><div id="raceKpis" class="grid g3"></div></div>
-  <div class="section"><div class="section-title"><h2>6艇比較</h2><span>直前情報反映</span></div><div class="card tablewrap"><table class="table"><thead><tr><th>艇</th><th>選手</th><th>ST</th><th>強み</th><th>score</th></tr></thead><tbody id="boats"></tbody></table></div></div>
-  <div class="section"><div class="section-title"><h2>重要判断材料</h2></div><div id="drivers" class="grid g3"></div></div>
-</section>
+<div class="hero"><span class="pill">レース詳細</span><h2>住之江 10R　締切 19:26</h2><p>予選特賞 / 1800m　<span class="chip">進入固定: なし</span><span class="chip">安定板: なし</span></p></div>
+<div class="section"><div class="races" id="raceNav"></div></div>
+<div class="section"><div class="tabs" id="tabs"></div></div>
 
-<section id="prediction" class="view">
-  <div class="hero"><span class="pill">PREDICTION</span><h2>2つの世界を完全分離。</h2><p>イン逃げ成立 / イン逃げ不成立を別々に4〜8点。合計8〜16点。</p></div>
-  <div class="section"><div id="worlds" class="grid g2"></div></div>
-  <div class="section"><div class="section-title"><h2>展開発火確率</h2></div><div id="triggers" class="card"></div></div>
-  <div class="section"><div class="section-title"><h2>レース選別</h2></div><div id="selectivity" class="card"></div></div>
-</section>
+<div id="t-racelist" class="subview active"><div class="section"><div class="section-title"><h2>出走表</h2><span>選手基本情報・成績・機歴</span></div><div class="card tablewrap"><table class="table"><thead><tr><th>枠</th><th>写真</th><th>レーサー</th><th>年齢/体重<br>出身/支部</th><th>F/L</th><th>平均ST<br>予測ST</th><th>全国<br>勝率/2連/3連</th><th>当地<br>勝率/2連/3連</th><th>モーター<br>No/2連/3連</th><th>ボート<br>No/2連/3連</th><th>節間成績</th><th>早見</th></tr></thead><tbody id="racers"></tbody></table></div></div></div>
 
-<section id="analysisHub" class="view">
-  <div class="hero"><span class="pill">ANALYSIS</span><h2>分析は目的別に分ける。</h2><p>時系列、検証、モデル比較、得意苦手を別ページで確認。</p></div>
-  <div class="section grid g2">
-    <button class="hubbtn" onclick="show('timeline')"><b>時系列</b><span>展示前 → 展示後 → 現在の変化</span></button>
-    <button class="hubbtn" onclick="show('validation')"><b>検証</b><span>unlock後だけ採点・外れ原因分類</span></button>
-    <button class="hubbtn" onclick="show('models')"><b>モデル比較</b><span>CURRENT vs challenger</span></button>
-    <button class="hubbtn" onclick="show('strengths')"><b>得意・苦手</b><span>買う条件 / 見送る条件</span></button>
-  </div>
-</section>
-
-<section id="timeline" class="view">
-  <button class="backbtn" onclick="show('analysisHub')">← 分析へ戻る</button>
-  <div class="hero"><span class="pill">TIMELINE</span><h2>評価の変化を見る。</h2><p>最終値だけでなく、展示や実進入でどこが動いたかを確認。</p></div>
-  <div class="section"><div id="timelineRows" class="card"></div></div>
-</section>
-
-<section id="validation" class="view">
-  <button class="backbtn" onclick="show('analysisHub')">← 分析へ戻る</button>
-  <div class="hero"><span class="pill">VALIDATION</span><h2>結果解禁後だけ採点。</h2><p>予想時点データを固定したまま、頭・3連単・外れ原因を分解。</p></div>
-  <div class="section"><div id="validationBox" class="card"></div></div>
-</section>
-
-<section id="models" class="view">
-  <button class="backbtn" onclick="show('analysisHub')">← 分析へ戻る</button>
-  <div class="hero"><span class="pill">MODEL H2H</span><h2>CURRENTと候補を直接比較。</h2><p>Top1/3/5/10、RESCUE/HARMを同一PRE_RESULTで比較。</p></div>
-  <div class="section"><div class="card tablewrap"><table class="table"><thead><tr><th>指標</th><th>親</th><th>候補</th><th>差</th></tr></thead><tbody id="modelRows"></tbody></table></div></div>
-</section>
-
-<section id="strengths" class="view">
-  <button class="backbtn" onclick="show('analysisHub')">← 分析へ戻る</button>
-  <div class="hero"><span class="pill">SEGMENTS</span><h2>得意条件と苦手条件。</h2><p>モデルが当たりやすい条件を自動分類して、レース選別に使う。</p></div>
-  <div class="section"><div class="card tablewrap"><table class="table"><thead><tr><th>条件</th><th>N</th><th>的中</th><th>lift</th><th>評価</th></tr></thead><tbody id="strengthRows"></tbody></table></div></div>
-</section>
-
-<section id="audit" class="view">
-  <div class="hero"><span class="pill">AUDIT</span><h2>結果を見ずに固定する。</h2><p>PRE_RESULT → SHA → freeze → Run1/Run2 → unlock を監査。</p></div>
-  <div class="section"><div id="auditKpis" class="grid g3"></div></div>
-  <div class="section"><div id="guard" class="card"></div></div>
-  <div class="section"><div class="section-title"><h2>データ信頼度</h2></div><div id="confidence" class="card"></div></div>
-</section>
+<div id="t-flow" class="subview">
+<div class="section grid g2"><div class="card"><h3>AI展開予想</h3><div id="aiFlow"></div></div><div class="card"><h3>先頭艇別2着確率</h3><div class="mini">先頭艇を選択</div><div class="tabs" id="leadBtns"></div><div id="secondProb"></div></div></div>
+<div class="section"><div class="section-title"><h2>AI3連対率・枠別勝率</h2><span>切替: 直近10走 / 6ヶ月 / 当地 / 今期 / SG・G1〜3 / 一般</span></div><div class="card"><div class="tabs" id="periodBtns"></div><div class="tablewrap"><table class="table" style="min-width:760px"><thead><tr><th>枠</th><th>レーサー</th><th>AI1着率</th><th>AI3連対率</th><th>1着率</th><th>2着率</th><th>3着率</th><th>オッズ妙味</th></tr></thead><tbody id="frameStats"></tbody></table></div></div></div>
+<div class="section grid g2"><div class="card"><h3>進入変更シミュレーション</h3><div class="callout">想定進入 1-2-3 / 4-5-6 → 前づけを手動変更して再計算</div><div class="row"><b>現在</b><span>1 2 3 / 4 5 6</span></div><div class="row"><b>前づけ警戒</b><span class="warn">6 → 2コース候補</span></div></div><div class="card"><h3>先頭艇別連対率</h3><div id="leadRate"></div></div></div>
 </div>
 
+<div id="t-odds" class="subview">
+<div class="section"><div class="section-title"><h2>オッズ</h2><span>更新 19:04</span></div><div class="card"><div class="tabs"><button class="on">3連単</button><button>3連複</button><button>2連単</button><button>2連複</button><button>拡連複</button><button>単勝</button><button>複勝</button></div><div class="tabs" style="margin-top:8px"><button class="on">通常</button><button>人気順</button><button>高配当順</button><button>合成オッズ</button><button>フォーメーション</button></div><div class="oddsgrid" id="odds"></div></div></div>
+<div class="section"><div class="section-title"><h2>買い目メモ</h2><span>端末保存</span></div><div class="card"><textarea id="memo" class="memo" placeholder="例: 1-2-4 1000円&#10;4-1-5 500円"></textarea><button onclick="localStorage.setItem('boatMemo',document.getElementById('memo').value)" style="margin-top:8px;padding:9px 12px;border:0;border-radius:10px">保存</button></div></div>
+</div>
+
+<div id="t-before" class="subview">
+<div class="section grid g3" id="weather"></div>
+<div class="section"><div class="section-title"><h2>直前情報</h2><span>調整重量・体重・展示・チルト・プロペラ・部品交換</span></div><div class="card tablewrap"><table class="table" style="min-width:850px"><thead><tr><th>艇</th><th>レーサー</th><th>調整重量</th><th>体重</th><th>展示タイム</th><th>チルト</th><th>プロペラ</th><th>部品交換</th></tr></thead><tbody id="beforeRows"></tbody></table></div></div>
+<div class="section"><div class="section-title"><h2>スタート展示</h2><span>並び・ST</span></div><div class="card" id="startRows"></div></div>
+<div class="section"><div class="section-title"><h2>オリジナル展示</h2><span>1周 / まわり足 / 直線</span></div><div class="card tablewrap"><table class="table" style="min-width:720px"><thead><tr><th>艇</th><th>展示進入</th><th>展示ST</th><th>展示タイム</th><th>1周</th><th>まわり足</th><th>直線</th><th>総合評価</th></tr></thead><tbody id="originalRows"></tbody></table></div></div>
+</div>
+
+<div id="t-prediction" class="subview">
+<div class="section grid g2" id="worlds"></div>
+<div class="section grid g3"><div class="card"><h3>AI万舟率</h3><div class="kpi warn">28%</div></div><div class="card"><h3>本命頭</h3><div class="kpi">1号艇</div><div class="good">48%</div></div><div class="card"><h3>警戒頭</h3><div class="kpi">4号艇</div><div class="warn">21%</div></div></div>
+<div class="section"><div class="section-title"><h2>予想印</h2></div><div class="card"><div class="row"><b>1号艇</b><span>◎ 本命</span></div><div class="row"><b>4号艇</b><span>○ 対抗</span></div><div class="row"><b>2号艇</b><span>△ 穴</span></div><div class="row"><b>6号艇</b><span class="bad">消</span></div></div></div>
+</div>
+
+<div id="t-data" class="subview">
+<div class="section"><div class="section-title"><h2>枠別場別実績</h2><span>直近10走 / 6ヶ月 / 当地 / 今期 / 重賞 / 一般</span></div><div class="card tablewrap"><table class="table" style="min-width:900px"><thead><tr><th>艇</th><th>実コース</th><th>1着率</th><th>2着率</th><th>3着率</th><th>逃げ</th><th>差し</th><th>まくり</th><th>まくり差し</th><th>逃がし率</th></tr></thead><tbody id="courseStats"></tbody></table></div></div>
+<div class="section grid g2"><div class="card"><h3>SUM系モーター評価</h3><div id="sumRows"></div></div><div class="card"><h3>スリットアラート</h3><div class="callout warn">4号艇の展示ST優勢。カド攻め警戒。</div><div class="row"><b>内3艇平均展示ST</b><span>.14</span></div><div class="row"><b>外3艇平均展示ST</b><span>.10</span></div></div></div>
+</div>
+
+<div id="t-motor" class="subview">
+<div class="section"><div class="section-title"><h2>モーター情報</h2><span>順位・連対率・着率・展示順位・優出/優勝・出走回数</span></div><div class="card tablewrap"><table class="table" style="min-width:1040px"><thead><tr><th>艇</th><th>No.</th><th>2連率順位</th><th>2連率</th><th>3連率</th><th>1着率</th><th>2着率</th><th>3着率</th><th>展示タイム/順位</th><th>優出</th><th>優勝</th><th>出走</th></tr></thead><tbody id="motorRows"></tbody></table></div></div>
+<div class="section"><div class="section-title"><h2>モーター直近10走</h2><span>選手・展示・進入・着順</span></div><div id="motorHistory" class="grid g2"></div></div>
+</div>
+
+<div id="t-result" class="subview"><div class="section"><div class="card locked"><h3>結果</h3><div class="callout">RESULT_UNLOCK_TOKEN発行後のみ表示。fresh検証中は結果データ自体を読み込まない。</div><div class="row"><b>results_seen</b><span>false</span></div><div class="row"><b>unlock</b><span>false</span></div><div class="row"><b>scoring</b><span>false</span></div></div></div></div>
+</section>
+
+<section id="analysis" class="view"><div class="hero"><span class="pill">分析</span><h2>BOAT EDGE独自分析</h2><p>時系列、得意条件、モデル比較、外れ原因をここで確認。</p></div><div class="section grid g2"><div class="card"><h3>時系列変化</h3><div class="row"><b>展示前</b><span>1逃げ 57%</span></div><div class="row"><b>展示直後</b><span>1逃げ 61%</span></div><div class="row"><b>現在</b><span>1逃げ 64%</span></div></div><div class="card"><h3>得意・苦手</h3><div class="row"><b>1強＋2壁</b><span class="good">得意</span></div><div class="row"><b>深イン＋前づけ</b><span class="bad">苦手</span></div></div><div class="card"><h3>CURRENT vs 候補</h3><div class="row"><b>Top1</b><span class="good">+3.0</span></div><div class="row"><b>Top3</b><span class="good">+3.5</span></div><div class="row"><b>Top10</b><span class="bad">-0.5</span></div></div><div class="card"><h3>外れ原因分類</h3><div class="mini">START / ENTRY / FOOT / WALL / SCENARIO / OUTER / DATA</div></div></div></section>
+
+<section id="audit" class="view"><div class="hero"><span class="pill">監査</span><h2>結果を見ずに検証。</h2><p>PRE_RESULT → SHA → freeze → Run1/Run2 → unlock。</p></div><div class="section grid g3"><div class="card"><div class="mini">取得率</div><div class="kpi">94%</div></div><div class="card"><div class="mini">freeze</div><div class="kpi good">READY</div></div><div class="card"><div class="mini">Run1/2</div><div class="kpi">READY</div></div></div><div class="section"><div class="card"><div class="row"><b>results_seen</b><span>false</span></div><div class="row"><b>unlock</b><span>false</span></div><div class="row"><b>scoring</b><span>false</span></div><div class="callout"><b>manifest SHA</b><div class="mini">076da8d0914ae23262b260731f0df077e6eb254b8b48faaa6ba42daa63680eb4</div></div></div></div></section>
+
+<section id="settings" class="view"><div class="hero"><span class="pill">設定</span><h2>表示とデータ更新</h2><p>今後はCURRENT更新とPRE_RESULT取得を自動反映。</p></div><div class="section"><div class="card"><div class="row"><b>自動更新</b><span class="good">ON</span></div><div class="row"><b>更新間隔</b><span>60秒</span></div><div class="row"><b>結果系ガード</b><span class="good">ON</span></div><div class="row"><b>表示言語</b><span>日本語</span></div></div></div></section>
+</div>
 <nav class="bottom" id="bottom"></nav>
-<div class="drawer" id="drawer" onclick="if(event.target===this)toggleDrawer()">
-  <div class="drawerbox">
-    <button class="iconbtn" style="float:right" onclick="toggleDrawer()">×</button>
-    <h2>ページ</h2>
-    <button class="drawerbtn" onclick="nav('home')">ホーム</button>
-    <button class="drawerbtn" onclick="nav('race')">レース詳細</button>
-    <button class="drawerbtn" onclick="nav('prediction')">2パターン予想</button>
-    <button class="drawerbtn" onclick="nav('timeline')">時系列</button>
-    <button class="drawerbtn" onclick="nav('validation')">検証</button>
-    <button class="drawerbtn" onclick="nav('models')">モデル比較</button>
-    <button class="drawerbtn" onclick="nav('strengths')">得意・苦手</button>
-    <button class="drawerbtn" onclick="nav('audit')">監査</button>
-  </div>
-</div>
-
 <script>
-const D={
-race:{date:"2026-10-05",venue:"住之江",race_no:10,deadline:"19:26",coverage:94,last_update:"14:37",boats:[
-{lane:1,name:"選手 A",st:".14",headline:"逃げ力",score:82,tag:"本命"},
-{lane:2,name:"選手 B",st:".15",headline:"壁性能",score:74,tag:"壁役"},
-{lane:3,name:"選手 C",st:".12",headline:"攻め力",score:71,tag:"中立"},
-{lane:4,name:"選手 D",st:".11",headline:"攻撃力",score:86,tag:"警戒"},
-{lane:5,name:"選手 E",st:".16",headline:"展開受益",score:72,tag:"連下"},
-{lane:6,name:"選手 F",st:".18",headline:"頭評価",score:31,tag:"押さえ"}]},
-model:{verdict:"1逃げが本線。崩れるなら4攻めから外連動。",head_top:{lane:1,prob:48},head_danger:{lane:4,prob:21},upset:61,grade:"B+",
-drivers:[["good","1号艇の逃げ土台は高い","インprior・能力・壁性能が本線側を支える。"],["warn","4号艇の攻めが崩れ世界の中心","展示伸びとSTが優位なら4頭・5連動を上げる。"],["bad","1号艇が後手なら世界を切替","展示ST・実進入で逃げ世界の比重を下げる。"]],
-worlds:[
-{label:"パターンA｜イン逃げ",confidence:64,flow:"1が先マイ → 2・3・4が相手",note:"2が壁になり1が後手を踏まない世界。",tickets:[["1-2-4",8.6,100],["1-4-2",7.9,92],["1-3-4",6.7,78],["1-4-3",6.1,71],["1-2-3",5.7,66],["1-3-2",5.2,60],["1-4-5",4.8,56],["1-2-5",4.3,50]]},
-{label:"パターンB｜イン逃げ以外",confidence:36,flow:"4が攻める → 5連動 / 1残し",note:"1が逃げ切れない世界だけを独立評価。",tickets:[["4-1-5",5.9,100],["4-1-2",5.2,88],["4-5-1",4.7,80],["4-2-1",4.2,71],["2-1-4",3.8,64],["3-1-4",3.4,58],["5-4-1",3.0,51],["4-5-2",2.8,47]]}]},
-triggers:[["1逃げ成立",64,"1の先マイ＋2壁","+7pt"],["2差し",11,"2差し率＋1差され率","-1pt"],["3まくり/まくり差し",9,"3ST・攻め位置","+1pt"],["4攻め起点",16,"4展示伸び＋カド","+4pt"]],
-selectivity:{grade:"B+",score:78,action:"買い候補",reasons:["PRE_RESULT取得率94%","本線と別展開の差が明瞭","実進入反映済み"],risk:"部品交換詳細が未取得"},
-timeline:[["展示前","1逃げ 57%","4頭 13%","coverage 80%"],["展示直後","1逃げ 61%","4頭 18%","coverage 91%"],["現在","1逃げ 64%","4頭 21%","coverage 94%"]],
-strengths:[["1号艇強＋2壁安定",184,38.6,8.4,"得意"],["展示ST一致＋インprior高",132,41.7,11.5,"得意"],["4カド伸び優勢",96,33.3,3.1,"普通"],["前づけあり＋深イン",58,20.7,-9.5,"苦手"],["強風＋展示ばらつき",74,18.9,-11.3,"苦手"]],
-models:[["Top1一致",43.0,46.0,3.0],["Top3内",68.0,71.5,3.5],["Top5内",79.0,81.0,2.0],["Top10内",91.0,90.5,-0.5]],
-audit:{results_seen:false,unlock:false,scoring:false,freeze:"READY",run:"READY",sha:"076da8d0914ae23262b260731f0df077e6eb254b8b48faaa6ba42daa63680eb4",
-confidence:[["race_card",100],["beforeinfo",100],["actual_entry",100],["original_exhibition",96],["racer_ability",100],["motor_boat",92],["venue_prior",100],["d1_prior",100],["live_water_prior",88],["weather_water",100]]},
-meetings:[["住之江",12],["常滑",12],["若松",12],["福岡",12],["宮島",12],["平和島",12]]
-};
-const $=s=>document.querySelector(s);
-const mainNav=[["home","ホーム"],["race","レース"],["prediction","予想"],["analysisHub","分析"],["audit","監査"]];
-function show(id){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll("#bottom button").forEach(x=>x.classList.toggle("active",x.dataset.id===id||(id.match(/timeline|validation|models|strengths/)&&x.dataset.id==="analysisHub")));location.hash=id;window.scrollTo(0,0)}
-function nav(id){toggleDrawer();show(id)}
-function toggleDrawer(){$("#drawer").classList.toggle("open")}
-$("#bottom").innerHTML=mainNav.map(x=>`<button data-id="${x[0]}">${x[1]}</button>`).join("");document.querySelectorAll("#bottom button").forEach(b=>b.onclick=()=>show(b.dataset.id));
-$("#status").textContent=`${D.race.date} ${D.race.venue}${D.race.race_no}R / 更新 ${D.race.last_update} / coverage ${D.race.coverage}%`;
-$("#raceTitle").textContent=`${D.race.venue} ${D.race.race_no}R　締切 ${D.race.deadline}`;$("#verdict").textContent=D.model.verdict;
-$("#raceKpis").innerHTML=`<div class="card"><div class="mini">本命頭</div><div class="kpi">${D.model.head_top.lane}号艇</div><div class="good">${D.model.head_top.prob}%</div></div><div class="card"><div class="mini">警戒頭</div><div class="kpi">${D.model.head_danger.lane}号艇</div><div class="warn">${D.model.head_danger.prob}%</div></div><div class="card"><div class="mini">勝負度</div><div class="kpi">${D.model.grade}</div><div class="mini">波乱 ${D.model.upset}</div></div>`;
-$("#boats").innerHTML=D.race.boats.map(b=>`<tr><td><span class="lane l${b.lane}">${b.lane}</span></td><td>${b.name}<div class="mini">${b.tag}</div></td><td>${b.st}</td><td>${b.headline}</td><td><b>${b.score}</b><div class="bar"><i style="width:${b.score}%"></i></div></td></tr>`).join("");
-$("#drivers").innerHTML=D.model.drivers.map(x=>`<div class="card"><b class="${x[0]}">${x[1]}</b><p class="mini">${x[2]}</p></div>`).join("");
-function world(w,i){return `<div class="card ${i===0?'worldA':'worldB'}"><div class="section-title"><h2>${w.label}</h2><span class="pill">${w.confidence}%</span></div><div class="callout">${w.flow}</div><p class="mini">${w.note}</p>${w.tickets.map((t,j)=>`<div class="ticket"><div class="lane l${t[0][0]}">${j+1}</div><div><div class="combo">${t[0]}</div><div class="mini">確率 ${t[1]}%</div></div><div class="bar"><i style="width:${t[2]}%"></i></div></div>`).join("")}</div>`}
-$("#worlds").innerHTML=D.model.worlds.map(world).join("");
-$("#triggers").innerHTML=D.triggers.map(x=>`<div class="row"><div><b>${x[0]}</b><div class="mini">${x[2]}</div></div><div><b>${x[1]}%</b><div class="${x[3].startsWith('+')?'good':'warn'}">${x[3]}</div></div></div>`).join("");
-$("#selectivity").innerHTML=`<div class="grid g3"><div><div class="mini">判定</div><div class="kpi good">${D.selectivity.grade}</div></div><div><div class="mini">score</div><div class="kpi">${D.selectivity.score}</div></div><div><div class="mini">行動</div><div class="kpi blue">${D.selectivity.action}</div></div></div><div class="callout">${D.selectivity.reasons.join(" / ")}</div><p class="mini">リスク: ${D.selectivity.risk}</p>`;
-$("#timelineRows").innerHTML=D.timeline.map(x=>`<div class="row"><div><b>${x[0]}</b><div class="mini">${x[3]}</div></div><div style="text-align:right">${x[1]}<div class="mini">${x[2]}</div></div></div>`).join("");
-$("#validationBox").innerHTML=`<div class="callout"><b>現在はLOCKED</b><div class="mini">RESULT_UNLOCK_TOKEN発行後のみ結果取込・採点</div></div><div class="row"><b>外れ原因 taxonomy</b><span class="mini">START / ENTRY / FOOT / WALL / SCENARIO / OUTER / DATA</span></div><div class="row"><b>採点</b><span>未開始</span></div>`;
-$("#modelRows").innerHTML=D.models.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td class="${x[3]>=0?'good':'bad'}">${x[3]>=0?'+':''}${x[3]}</td></tr>`).join("");
-$("#strengthRows").innerHTML=D.strengths.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}%</td><td class="${x[3]>=0?'good':'bad'}">${x[3]>=0?'+':''}${x[3]}</td><td>${x[4]}</td></tr>`).join("");
-$("#auditKpis").innerHTML=`<div class="card"><div class="mini">coverage</div><div class="kpi">${D.race.coverage}%</div></div><div class="card"><div class="mini">freeze</div><div class="kpi good">${D.audit.freeze}</div></div><div class="card"><div class="mini">Run1/Run2</div><div class="kpi">${D.audit.run}</div></div>`;
-$("#guard").innerHTML=`<div class="section-title"><h2>GUARD</h2><span class="pill">LOCKED</span></div><div class="row"><b>results_seen</b><span>${D.audit.results_seen}</span></div><div class="row"><b>unlock</b><span>${D.audit.unlock}</span></div><div class="row"><b>scoring</b><span>${D.audit.scoring}</span></div><div class="callout"><b>manifest SHA</b><div class="mini" style="word-break:break-all">${D.audit.sha}</div></div>`;
-$("#confidence").innerHTML=D.audit.confidence.map(x=>`<div class="row"><div><b>${x[0]}</b></div><div style="min-width:120px"><b>${x[1]}%</b><div class="bar"><i style="width:${x[1]}%"></i></div></div></div>`).join("");
-$("#meetings").innerHTML=D.meetings.map((m,mi)=>`<div class="meeting"><div class="section-title"><h2>${m[0]}</h2><span>${m[1]}R</span></div><div class="races">${Array.from({length:12},(_,i)=>`<button class="racebtn ${mi===0&&i===9?'hot':''}" onclick="show('race')">${i+1}R<small>${i>=8?'展示前':'解析済'}</small></button>`).join("")}</div></div>`).join("");
-let h=(location.hash||"#home").slice(1);show(document.getElementById(h)?h:"home");
-</script>
-</body>
-</html>
+const tabs=[["racelist","出走表"],["flow","連対率・展開"],["odds","オッズ"],["before","直前情報"],["prediction","予想"],["data","枠別場別実績"],["motor","モーター情報"],["result","結果"]];
+const players=[
+[1,"選手 A","A1","35歳 / 52.0kg","大阪 / 大阪","F0 / L0",".14 / .12","7.12 / 52.0 / 71.0","6.88 / 48.0 / 68.0","45 / 42.5 / 60.2","61 / 35.1 / 52.0","1-2-1-3","6R"],
+[2,"選手 B","A2","39歳 / 54.3kg","兵庫 / 兵庫","F0 / L0",".15 / .14","6.20 / 44.0 / 63.0","5.98 / 40.1 / 58.0","19 / 51.5 / 66.2","22 / 35.8 / 55.0","2-4-2-1","7R"],
+[3,"選手 C","B1","31歳 / 52.6kg","福岡 / 福岡","F1 / L0",".12 / .11","5.42 / 35.0 / 52.0","5.10 / 31.4 / 49.0","53 / 41.9 / 56.8","41 / 30.2 / 48.0","3-1-5-2","5R"],
+[4,"選手 D","A1","29歳 / 51.8kg","香川 / 香川","F0 / L0",".11 / .10","7.30 / 55.1 / 74.0","6.76 / 49.2 / 69.0","55 / 39.4 / 52.1","18 / 40.0 / 54.3","1-1-2-4","8R"],
+[5,"選手 E","A2","42歳 / 52.2kg","東京 / 東京","F0 / L0",".16 / .15","5.98 / 41.0 / 60.0","5.70 / 38.2 / 56.0","40 / 28.6 / 41.4","29 / 31.0 / 49.2","4-3-2-5","4R"],
+[6,"選手 F","B1","45歳 / 55.0kg","愛知 / 愛知","F0 / L0",".18 / .17","4.65 / 27.2 / 44.0","4.40 / 24.0 / 40.0","38 / 26.9 / 34.3","68 / 26.0 / 39.6","6-5-3-6","3R"]];
+document.getElementById("racers").innerHTML=players.map(p=>`<tr><td><span class="lane l${p[0]}">${p[0]}</span></td><td>写真</td><td><b>${p[1]}</b><div class="mini">${p[2]}</div></td><td>${p[3]}<br>${p[4]}</td><td>${p[5]}</td><td>${p[6].replace(" / ","<br>")}</td><td>${p[7].replaceAll(" / ","<br>")}</td><td>${p[8].replaceAll(" / ","<br>")}</td><td>${p[9].replaceAll(" / ","<br>")}</td><td>${p[10].replaceAll(" / ","<br>")}</td><td>${p[11]}</td><td>${p[12]}</td></tr>`).join("");
+document.getElementById("tabs").innerHTML=tabs.map((t,i)=>`<button class="${i===0?'on':''}" data-tab="${t[0]}">${t[1]}</button>`).join("");
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".subview").forEach(x=>x.classList.toggle("active",x.id==="t-"+b.dataset.tab))});
+document.getElementById("raceNav").innerHTML=Array.from({length:12},(_,i)=>`<button class="racebtn ${i===9?'on':''}">${i+1}R<small>${i<9?'解析済':'展示前'}</small></button>`).join("");
+document.getElementById("aiFlow").innerHTML=[["1が逃げ",64,"場平均54%"],["2が差し",11,"場平均9%"],["3がまくり",9,"場平均8%"],["4がまくり差し",16,"場平均7%"]].map(x=>`<div class="row"><div><b>${x[0]}</b><div class="mini">${x[2]}</div></div><b>${x[1]}%</b></div>`).join("");
+document.getElementById("leadBtns").innerHTML=[1,2,3,4,5,6].map((x,i)=>`<button class="${i===0?'on':''}">${x}号艇</button>`).join("");
+document.getElementById("secondProb").innerHTML=[["2号艇",29],["3号艇",24],["4号艇",22],["5号艇",16],["6号艇",9]].map(x=>`<div class="row"><b>${x[0]}</b><div style="width:45%"><span>${x[1]}%</span><div class="bar"><i style="width:${x[1]}%"></i></div></div></div>`).join("");
+document.getElementById("periodBtns").innerHTML=["直近10走","直近6ヶ月","当地","今期","SG/G1〜3","一般戦"].map((x,i)=>`<button class="${i===0?'on':''}">${x}</button>`).join("");
+document.getElementById("frameStats").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${[48,18,12,21,9,5][i]}%</td><td>${[90.5,78.6,46.8,65.2,43.7,22.4][i]}%</td><td>${[70,40,0,20,20,0][i]}%</td><td>${[20,40,30,30,30,10][i]}%</td><td>${[0,20,20,20,0,10][i]}%</td><td>${i===3?'高':'標準'}</td></tr>`).join("");
+document.getElementById("leadRate").innerHTML=[["1先頭時",82],["2先頭時",68],["3先頭時",61],["4先頭時",73]].map(x=>`<div class="row"><b>${x[0]}</b><span>${x[1]}%</span></div>`).join("");
+document.getElementById("odds").innerHTML=["1-2-4","1-4-2","1-3-4","1-4-3","4-1-5","4-1-2","2-1-4","3-1-4","1-2-3","1-3-2","4-5-1","5-4-1"].map((x,i)=>`<div class="odd"><b>${x}</b><br>${[8.4,9.1,11.6,12.2,18.7,21.3,26.8,31.2,14.7,15.1,35.6,42.9][i]}倍</div>`).join("");
+document.getElementById("weather").innerHTML=[["天候","晴れ"],["気温","28.0℃"],["水温","25.0℃"],["風向","北東"],["風速","3m/s"],["波高","2cm"]].map(x=>`<div class="card"><div class="mini">${x[0]}</div><div class="kpi">${x[1]}</div></div>`).join("");
+document.getElementById("beforeRows").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${i===3?'0.5kg':'-'}</td><td>${p[3].split('/')[1]}</td><td>${[6.72,6.78,6.74,6.68,6.76,6.80][i]}</td><td>${[-0.5,0,0,-0.5,0,0.5][i]}</td><td>-</td><td>${i===1?'ギヤ':'-'}</td></tr>`).join("");
+document.getElementById("startRows").innerHTML=players.map((p,i)=>`<div class="row"><span><span class="lane l${p[0]}">${p[0]}</span> ${i<3?'スロー':'ダッシュ'}</span><b>${[".12",".10",".08",".06",".11",".13"][i]}</b></div>`).join("");
+document.getElementById("originalRows").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>${p[0]}</td><td>${[".12",".10",".08",".06",".11",".13"][i]}</td><td>${[6.72,6.78,6.74,6.68,6.76,6.80][i]}</td><td>${[37.1,37.3,37.0,36.7,37.2,37.5][i]}</td><td>${[5.42,5.48,5.39,5.31,5.45,5.50][i]}</td><td>${[7.52,7.58,7.49,7.41,7.55,7.61][i]}</td><td>${i===3?'◎':i===0?'○':'△'}</td></tr>`).join("");
+const worlds=[["イン逃げ成立",64,["1-2-4","1-4-2","1-3-4","1-4-3","1-2-3","1-3-2","1-4-5","1-2-5"]],["イン逃げ不成立",36,["4-1-5","4-1-2","4-5-1","4-2-1","2-1-4","3-1-4","5-4-1","4-5-2"]]];
+document.getElementById("worlds").innerHTML=worlds.map(w=>`<div class="card"><div class="section-title"><h2>${w[0]}</h2><span>${w[1]}%</span></div>${w[2].map((x,i)=>`<div class="ticket"><span>#${i+1}</span><span class="combo">${x}</span><div class="bar"><i style="width:${100-i*8}%"></i></div></div>`).join("")}</div>`).join("");
+document.getElementById("courseStats").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>${p[0]}コース</td><td>${[70,18,16,21,8,4][i]}%</td><td>${[18,32,24,25,19,11][i]}%</td><td>${[8,24,25,21,22,14][i]}%</td><td>${i===0?'64%':'-'}</td><td>${i===1?'18%':(i===0?'12%':'-')}</td><td>${i>=2&&i<=4?[19,27,16][i-2]+'%':'-'}</td><td>${i>=2&&i<=5?[11,22,14,8][i-2]+'%':'-'}</td><td>${i===1?'72%':'-'}</td></tr>`).join("");
+document.getElementById("sumRows").innerHTML=players.map((p,i)=>`<div class="row"><b>${p[0]}号艇</b><span class="${i===3?'good':''}">${[-0.08,-0.03,-0.06,-0.15,-0.04,0.02][i]}</span></div>`).join("");
+document.getElementById("motorRows").innerHTML=players.map((p,i)=>`<tr><td>${p[0]}</td><td>No.${[45,19,53,55,40,38][i]}</td><td>${[12,3,6,8,30,35][i]}位</td><td>${[42.5,51.5,41.9,39.4,28.6,26.9][i]}%</td><td>${[60.2,66.2,56.8,52.1,41.4,34.3][i]}%</td><td>${[24.0,29.4,27.0,21.1,11.4,14.9][i]}%</td><td>${[18.5,22.1,14.9,18.3,17.1,11.9][i]}%</td><td>${[17.7,14.7,14.9,12.7,12.9,7.5][i]}%</td><td>${[6.82,6.79,6.80,6.75,6.84,6.88][i]} / ${[3.1,2.8,3.5,2.2,4.8,5.1][i]}位</td><td>${[3,3,2,3,1,2][i]}回</td><td>${[1,2,1,0,1,1][i]}回</td><td>${[132,145,137,141,120,128][i]}回</td></tr>`).join("");
+document.getElementById("motorHistory").innerHTML=players.map((p,i)=>`<div class="card"><h3>${p[0]}号艇 / モーターNo.${[45,19,53,55,40,38][i]}</h3>${Array.from({length:5},(_,j)=>`<div class="row"><div>前${j+1}走 <span class="mini">選手${String.fromCharCode(65+j)}</span></div><span>展示 ${[6.88,6.92,6.84,6.90,6.86][j]} / ${j+1}位 / 進入${(j%6)+1} / ${((j+i)%6)+1}着</span></div>`).join("")}<div class="mini">※表示はサンプル。正式接続時は直近10走を全件表示。</div></div>`).join("");
+document.getElementById("meetings").innerHTML=["住之江","常滑","若松","福岡","宮島","平和島"].map(x=>`<div class="card"><div class="section-title"><h2>${x}</h2><span>12R</span></div><div class="races">${Array.from({length:12},(_,i)=>`<button class="racebtn" onclick="show('race')">${i+1}R</button>`).join("")}</div></div>`).join("");
+const navs=[["home","ホーム"],["race","レース"],["analysis","分析"],["audit","監査"],["settings","設定"]];
+document.getElementById("bottom").innerHTML=navs.map((x,i)=>`<button class="${i===0?'active':''}" data-id="${x[0]}">${x[1]}</button>`).join("");
+function show(id){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll("#bottom button").forEach(x=>x.classList.toggle("active",x.dataset.id===id));location.hash=id;window.scrollTo(0,0)}
+document.querySelectorAll("#bottom button").forEach(b=>b.onclick=()=>show(b.dataset.id));
+document.getElementById("memo").value=localStorage.getItem("boatMemo")||"";
+let h=(location.hash||"#home").slice(1);if(document.getElementById(h))show(h);
+</script></body></html>
