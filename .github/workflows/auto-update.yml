@@ -34,7 +34,7 @@ jobs:
         run: |
           python - <<'PY'
           from __future__ import annotations
-          import json,re,hashlib,time,random
+          import json,re,hashlib,time,random,unicodedata
           from pathlib import Path
           from datetime import datetime,timedelta,timezone
           from urllib.parse import urljoin,urlparse,parse_qs
@@ -59,7 +59,7 @@ jobs:
                   "13":"尼崎","14":"鳴門","15":"丸亀","16":"児島","17":"宮島","18":"徳山",
                   "19":"下関","20":"若松","21":"芦屋","22":"福岡","23":"唐津","24":"大村"}
 
-          def txt(x): return re.sub(r"\s+"," ",x or "").strip()
+          def txt(x): return re.sub(r"\s+"," ",unicodedata.normalize("NFKC",x or "")).strip()
           def sha(b): return hashlib.sha256(b).hexdigest()
 
           def new_session():
@@ -103,29 +103,67 @@ jobs:
                   if not m: continue
                   reg,cls=m.group(1),m.group(2)
                   if reg in seen: continue
-                  cells=tr.find_all(["th","td"])
+
                   lane=None
-                  if cells:
-                      lm=re.match(r"\s*([1-6])\b",txt(cells[0].get_text(" ",strip=True)))
-                      if lm: lane=int(lm.group(1))
+                  lm=re.match(r"\s*([1-6])\b",t)
+                  if lm: lane=int(lm.group(1))
+
                   name=None
                   for a in tr.find_all("a"):
                       at=txt(a.get_text(" ",strip=True))
                       if at and not re.fullmatch(r"\d+R?",at):
                           name=at;break
+
                   aw=re.search(r"(\d{2})歳\s*/\s*([\d.]+)kg",t)
-                  fl=re.search(r"F(\d+).*?L(\d+)",t)
-                  sm=re.search(r"(?<!\d)(0\.\d{2})(?!\d)",t)
                   bb=re.search(r"([^\s/]{1,8})/([^\s/]{1,8})\s+\d{2}歳",t)
+
+                  flblock=re.search(r"\bF(\d+)\s+L(\d+)\s+(-|0\.\d{2})\s+(.*)$",t)
+                  fnum=lnum=None
+                  avg_st=None
+                  national={"win_rate":None,"quinella_rate":None,"trio_rate":None}
+                  local={"win_rate":None,"quinella_rate":None,"trio_rate":None}
+                  motor={"no":None,"quinella_rate":None,"trio_rate":None}
+                  boat={"no":None,"quinella_rate":None,"trio_rate":None}
+                  series_tokens=[]
+                  early_race=None
+
+                  if flblock:
+                      fnum=int(flblock.group(1)); lnum=int(flblock.group(2))
+                      avg_st=None if flblock.group(3)=="-" else float(flblock.group(3))
+                      rest=flblock.group(4).split()
+
+                      def fval(i):
+                          try:
+                              return None if rest[i]=="-" else float(rest[i])
+                          except Exception:
+                              return None
+                      def ival(i):
+                          try:
+                              return int(rest[i])
+                          except Exception:
+                              return None
+
+                      if len(rest)>=12:
+                          national={"win_rate":fval(0),"quinella_rate":fval(1),"trio_rate":fval(2)}
+                          local={"win_rate":fval(3),"quinella_rate":fval(4),"trio_rate":fval(5)}
+                          motor={"no":ival(6),"quinella_rate":fval(7),"trio_rate":fval(8)}
+                          boat={"no":ival(9),"quinella_rate":fval(10),"trio_rate":fval(11)}
+                          tail=rest[12:]
+                          if tail and re.fullmatch(r"\d{1,2}R",tail[-1]):
+                              early_race=int(tail[-1][:-1])
+                              tail=tail[:-1]
+                          series_tokens=tail
+
                   arr.append({
                       "lane":lane,"registration_no":reg,"name":name,"class":cls,
                       "age":int(aw.group(1)) if aw else None,
                       "weight_kg":float(aw.group(2)) if aw else None,
                       "branch":bb.group(1) if bb else None,
                       "birthplace":bb.group(2) if bb else None,
-                      "F":int(fl.group(1)) if fl else None,
-                      "L":int(fl.group(2)) if fl else None,
-                      "avg_st":float(sm.group(1)) if sm else None,
+                      "F":fnum,"L":lnum,"avg_st":avg_st,
+                      "national":national,"local":local,
+                      "motor":motor,"boat":boat,
+                      "series_tokens":series_tokens,"early_race":early_race,
                       "raw_text":t
                   })
                   seen.add(reg)
@@ -284,9 +322,9 @@ jobs:
               for fut in as_completed(futs):
                   k,v=fut.result();before[k]=v
 
-          summary={"schema_version":"boat-edge-today-v3","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
+          summary={"schema_version":"boat-edge-today-v4","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
                    "phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False,
-                   "collector":{"mode":"resilient-parallel","discovery_mode":discovery_mode,
+                   "collector":{"mode":"resilient-parallel-structured","discovery_mode":discovery_mode,
                                 "active_venues":len(active),"errors":errors[:20]},
                    "venues":[]}
 
@@ -299,7 +337,7 @@ jobs:
                   rr=race_results.get(key,{"ok":False,"racers":[],"error":"not returned"})
                   bf=before.get(key)
                   doc={
-                    "schema_version":"boat-edge-race-v3","race_key":key,
+                    "schema_version":"boat-edge-race-v4","race_key":key,
                     "meta":{"date":now.strftime("%Y-%m-%d"),"venue_code":j,"venue":VENUES[j],
                             "event":meta.get("event"),"race_no":rno,
                             "deadline":ds[rno-1] if len(ds)>=rno else None,
@@ -337,12 +375,271 @@ jobs:
             "race_cards_ok":sum(1 for x in race_results.values() if x.get("ok")),
             "race_cards_total":len(active)*12,
             "six_racer_races":sum(1 for x in race_results.values() if len(x.get("racers",[]))==6),
+            "structured_racer_rows":sum(
+                1 for x in race_results.values() for r in x.get("racers",[])
+                if r.get("lane") is not None
+                and r.get("national",{}).get("win_rate") is not None
+                and r.get("motor",{}).get("no") is not None
+                and r.get("boat",{}).get("no") is not None
+            ),
             "beforeinfo_ok":sum(1 for x in before.values() if x.get("status")=="ok"),
             "beforeinfo_targets":len(targets),
             "error_count":len(errors)
           }
           (DATA/"health.json").write_text(json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
           print(json.dumps(health,ensure_ascii=False))
+          PY
+
+      - name: 5ソース同期・CURRENT準備監査
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import csv, io, json, hashlib, math
+          from pathlib import Path
+          from datetime import datetime, timedelta, timezone
+          import requests
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST)
+          yyyy,mm,dd=now.strftime("%Y"),now.strftime("%m"),now.strftime("%d")
+          ymd=now.strftime("%Y%m%d")
+          iso=now.isoformat(timespec="seconds")
+          DATA=Path("data")
+          RACES=DATA/"races"
+
+          BASE="https://boatracecsv.github.io"
+          SOURCES={
+            "race_cards":f"{BASE}/data/programs/race_cards/{yyyy}/{mm}/{dd}.csv",
+            "stt":f"{BASE}/data/previews/stt/{yyyy}/{mm}/{dd}.csv",
+            "tkz":f"{BASE}/data/previews/tkz/{yyyy}/{mm}/{dd}.csv",
+            "sui":f"{BASE}/data/previews/sui/{yyyy}/{mm}/{dd}.csv",
+            "original_exhibition":f"{BASE}/data/previews/original_exhibition/{yyyy}/{mm}/{dd}.csv",
+          }
+
+          s=requests.Session()
+          s.headers.update({"User-Agent":"BOAT-EDGE/1.0 PRE_RESULT only"})
+          fetched={}
+          errors=[]
+
+          def fetch_csv(role,url):
+              try:
+                  r=s.get(url,timeout=(5,20))
+                  if r.status_code==404:
+                      return [],None,"not_published"
+                  r.raise_for_status()
+                  raw=r.content
+                  text=raw.decode("utf-8-sig")
+                  rows=list(csv.DictReader(io.StringIO(text)))
+                  return rows,hashlib.sha256(raw).hexdigest(),None
+              except Exception as e:
+                  return [],None,repr(e)
+
+          for role,url in SOURCES.items():
+              rows,digest,err=fetch_csv(role,url)
+              fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err}
+              if err and err!="not_published":
+                  errors.append({"role":role,"error":err})
+
+          def idx(role):
+              return {str(r.get("レースコード","")).strip():r for r in fetched[role]["rows"] if r.get("レースコード")}
+          I={role:idx(role) for role in SOURCES}
+
+          def num(v,typ=float):
+              if v is None:return None
+              x=str(v).strip()
+              if not x:return None
+              try:return typ(x)
+              except:return None
+
+          def st_parse(v):
+              raw=(str(v).strip() if v is not None else "")
+              if not raw:return None,False,None
+              if raw.upper().startswith("F"):
+                  try:return None,True,-abs(float(raw[1:]))
+                  except:return None,True,None
+              if raw.upper().startswith("L"):
+                  return None,False,None
+              try:return float(raw),False,float(raw)
+              except:return None,False,None
+
+          def row_get(row,*names):
+              if not row:return None
+              for n in names:
+                  if n in row and str(row[n]).strip()!="":
+                      return row[n]
+              return None
+
+          def core7_boat(rc,stt,tkz,b):
+              avg=num(row_get(rc,f"艇{b}_全国平均ST"))
+              fc=num(row_get(rc,f"艇{b}_F本数"),int)
+              n2=num(row_get(rc,f"艇{b}_全国2連対率"))
+              l2=num(row_get(rc,f"艇{b}_当地2連対率"))
+              m2=num(row_get(rc,f"艇{b}_モーター2連対率"))
+              et=num(row_get(tkz,f"艇{b}_展示タイム"))
+              est,ef,_=st_parse(row_get(stt,f"艇{b}_スタート展示"))
+              course=num(row_get(stt,f"艇{b}_コース"),int)
+              ok=(
+                isinstance(avg,(int,float)) and 0<=avg<=1
+                and isinstance(fc,int) and fc>=0
+                and all(isinstance(x,(int,float)) and 0<=x<=100 for x in (n2,l2,m2))
+                and isinstance(et,(int,float)) and 0<et<20
+                and (ef or (isinstance(est,(int,float)) and -1<=est<=1))
+                and isinstance(course,int) and 1<=course<=6
+              )
+              return ok
+
+          eligible=[]
+          merged_count=0
+          all_codes=sorted(set(I["race_cards"]))
+          for code in all_codes:
+              if not code.startswith(ymd) or len(code)!=12:continue
+              rc=I["race_cards"].get(code)
+              stt=I["stt"].get(code)
+              tkz=I["tkz"].get(code)
+              sui=I["sui"].get(code)
+              oe=I["original_exhibition"].get(code)
+
+              venue=code[8:10]; rno=int(code[10:12])
+              path=RACES/f"{ymd}-{venue}-{rno:02d}.json"
+              if not path.exists():
+                  continue
+              try:
+                  doc=json.loads(path.read_text(encoding="utf-8"))
+              except Exception:
+                  continue
+
+              audit=doc.setdefault("source_audit",{})
+              for role,row in [("stt",stt),("tkz",tkz),("sui",sui),("original_exhibition",oe)]:
+                  info=fetched[role]
+                  audit[role]={
+                    "status":"ok" if row else ("not_published" if info["error"]=="not_published" else "missing"),
+                    "source":info["url"],
+                    "fetched_at":iso if row else None,
+                    "sha256":info["sha256"],
+                  }
+
+              # stt: actual course + exhibition ST
+              actual=[]
+              if stt:
+                  for b in range(1,7):
+                      est,ef,rawst=st_parse(row_get(stt,f"艇{b}_スタート展示"))
+                      actual.append({
+                        "lane":b,
+                        "course":num(row_get(stt,f"艇{b}_コース"),int),
+                        "exhibition_st":est,
+                        "exhibition_f":ef,
+                        "exhibition_st_raw":row_get(stt,f"艇{b}_スタート展示"),
+                      })
+              doc["actual_entry"]=actual
+
+              # tkz: weight / adjustment / exhibition time / tilt
+              preview_boats=[]
+              if tkz:
+                  for b in range(1,7):
+                      preview_boats.append({
+                        "lane":b,
+                        "weight_kg":num(row_get(tkz,f"艇{b}_体重(kg)",f"艇{b}_体重")),
+                        "adjustment_kg":num(row_get(tkz,f"艇{b}_体重調整(kg)",f"艇{b}_調整体重")),
+                        "exhibition_time":num(row_get(tkz,f"艇{b}_展示タイム")),
+                        "tilt":num(row_get(tkz,f"艇{b}_チルト")),
+                      })
+
+              before=doc.setdefault("beforeinfo",{})
+              if preview_boats:
+                  before["racers"]=preview_boats
+              if actual:
+                  before["start_exhibition"]=[
+                    {"lane":x["lane"],"course":x["course"],
+                     "st":x["exhibition_st_raw"],"exhibition_f":x["exhibition_f"]}
+                    for x in actual
+                  ]
+
+              if sui:
+                  before["weather"]={
+                    "observed_at":row_get(sui,"気象観測時刻"),
+                    "wind_speed_ms":num(row_get(sui,"風速(m)")),
+                    "wind_direction":num(row_get(sui,"風向"),int),
+                    "wave_cm":num(row_get(sui,"波の高さ(cm)")),
+                    "weather_code":num(row_get(sui,"天候"),int),
+                    "air_temp_c":num(row_get(sui,"気温(℃)")),
+                    "water_temp_c":num(row_get(sui,"水温(℃)")),
+                  }
+
+              # original exhibition: labels + 6 boat values
+              if oe:
+                  labels=[]
+                  for k in ("計測項目1","計測項目2","計測項目3"):
+                      v=row_get(oe,k)
+                      if v: labels.append(str(v).strip())
+                  boats=[]
+                  for b in range(1,7):
+                      vals=[]
+                      for n in range(1,len(labels)+1):
+                          vals.append(num(row_get(oe,f"艇{b}_値{n}")))
+                      boats.append({"lane":b,"name":row_get(oe,f"艇{b}_選手名"),"values":vals})
+                  doc["original_exhibition"]={"labels":labels,"boats":boats}
+
+              source_presence={
+                "race_cards":rc is not None,
+                "stt":stt is not None,
+                "tkz":tkz is not None,
+                "sui":sui is not None,
+                "original_exhibition":oe is not None,
+              }
+              courses=[num(row_get(stt,f"艇{b}_コース"),int) for b in range(1,7)] if stt else []
+              core7=(
+                all(source_presence.values())
+                and all(core7_boat(rc,stt,tkz,b) for b in range(1,7))
+                and sorted(courses)==[1,2,3,4,5,6]
+              )
+              doc["current_model_input"]={
+                "model":"V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+                "source_presence":source_presence,
+                "core7_ready":core7,
+                "formal_prediction_ready":False,
+                "note":"CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
+              }
+              if core7:eligible.append(code)
+
+              path.write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
+              merged_count+=1
+
+          status={
+            "updated_at":iso,
+            "target_date":now.strftime("%Y-%m-%d"),
+            "model":"V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+            "formal_parent_sha256":"11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
+            "candidate_sha256":"30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
+            "source_rows":{k:len(v["rows"]) for k,v in fetched.items()},
+            "source_sha256":{k:v["sha256"] for k,v in fetched.items()},
+            "core7":{"eligible_count":len(eligible),"required_count":100,
+                     "formal_first100_ready":len(eligible)>=100,
+                     "first":eligible[0] if eligible else None,
+                     "last":eligible[-1] if eligible else None},
+            "site_races_merged":merged_count,
+            "guards":{"results_seen":False,"unlock":False,"scoring":False,
+                      "RESULT_UNLOCK_TOKEN":None,
+                      "results_endpoint_accessed":False,
+                      "result_pages_accessed":False,
+                      "payouts_accessed":False,
+                      "combined_api_v1_accessed":False},
+            "errors":errors,
+          }
+          (DATA/"model_status.json").write_text(json.dumps(status,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          hp=DATA/"health.json"
+          if hp.exists():
+              try:
+                  h=json.loads(hp.read_text(encoding="utf-8"))
+                  h["five_source_rows"]=status["source_rows"]
+                  h["core7_eligible_count"]=len(eligible)
+                  h["formal_first100_ready"]=len(eligible)>=100
+                  hp.write_text(json.dumps(h,ensure_ascii=False,indent=2),encoding="utf-8")
+              except Exception:
+                  pass
+
+          print(json.dumps(status,ensure_ascii=False))
           PY
 
       - name: 更新内容を保存
