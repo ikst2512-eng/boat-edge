@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v21</title>
+<title>BOAT EDGE v22</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v21 visual refinement ===== */
+/* ===== BOAT EDGE v22 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -643,6 +643,11 @@ tr:hover td{background:#f8fbff}
   .data-focus{grid-template-columns:1fr}
 }
 
+
+.formal-mini-ok{background:linear-gradient(180deg,#f1fcf8,#e9f8f2)!important;border-color:#ccefe2!important;color:#08795a!important}
+.formal-mini-wait{background:linear-gradient(180deg,#fffaf2,#fff5e8)!important;border-color:#f5ddb5!important;color:#9a6200!important}
+.formal-overlay-note{margin-top:7px;font-size:9px;color:var(--muted);line-height:1.55}
+
 </style>
 </head>
 <body>
@@ -650,7 +655,7 @@ tr:hover td{background:#f8fbff}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v21</small></div>
+      <div class="brandtext">BOAT EDGE <small>v22</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -691,6 +696,7 @@ tr:hover td{background:#f8fbff}
             <div class="hero-stat"><div class="label">予想モデル</div><div class="value" id="statModel">－</div></div>
           </div>
 <div id="sourceMini" class="source-mini">ソース状況読込中…</div>
+<div id="formalConnectMini" class="source-mini">正式CURRENT接続状態を確認中…</div>
         </div>
       </div>
     </section>
@@ -857,6 +863,7 @@ tr:hover td{background:#f8fbff}
           <li><b>展開予想</b> → 逃げるのか、誰が攻めるのかを見る</li><li><b>直前</b> → 実進入 / 展示ST / 展示タイムを見る</li>
           <li><b>データ</b> → 強い / 標準 / 弱めで6艇比較</li>
           <li><b>監査</b>で不足データやCURRENTの進捗を確認</li>
+          <li><b>正式CURRENT接続</b>: <span class="mono">data/formal_predictions/レースキー.json</span> が来れば自動優先表示</li>
         </ol>
       </div>
     </section>
@@ -997,10 +1004,60 @@ function formatUpdated(ts){
     return d.toLocaleString("ja-JP",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
   }catch(e){ return String(ts); }
 }
+
+function normalizeFormalOverlay(raw){
+  if(!raw || typeof raw!=="object") return null;
+  if(raw.derived) return {derived:raw.derived, formal_meta:raw.formal_meta||raw.meta||null};
+  if(raw.prediction?.derived) return {derived:raw.prediction.derived, formal_meta:raw.meta||null};
+  const wa = raw.world_a || raw.pattern_a || raw.prediction?.world_a || raw.prediction?.pattern_a || null;
+  const wb = raw.world_b || raw.pattern_b || raw.prediction?.world_b || raw.prediction?.pattern_b || null;
+  if(wa || wb){
+    return {
+      derived:{
+        world_a:wa,
+        world_b:wb,
+        decision:raw.decision || raw.prediction?.decision || null,
+        confidence_grade:raw.confidence_grade || raw.grade || raw.prediction?.confidence_grade || null,
+        model:raw.model || raw.prediction?.model || null
+      },
+      formal_meta:raw.meta||null
+    };
+  }
+  return null;
+}
+async function loadFormalOverlay(raceKey){
+  if(!raceKey) return null;
+  const paths=[
+    `./data/formal_predictions/${raceKey}.json`,
+    `./data/formal/${raceKey}.json`
+  ];
+  for(const p of paths){
+    try{
+      const r=await fetch(`${p}?t=${Date.now()}`,{cache:"no-store"});
+      if(!r.ok) continue;
+      const raw=await r.json();
+      const norm=normalizeFormalOverlay(raw);
+      if(norm) return norm;
+    }catch(_){}
+  }
+  return null;
+}
+function mergeFormalOverlay(raceData, overlay){
+  if(!overlay) return raceData;
+  return {
+    ...raceData,
+    derived:overlay.derived,
+    formal_meta:overlay.formal_meta || raceData.formal_meta || null
+  };
+}
+
 function hasFormalPrediction(d){
   const der=d?.derived||{};
   const worlds=[der.world_a,der.world_b,der.pattern_a,der.pattern_b].filter(Boolean);
-  return worlds.some(w => (w?.tickets||w?.bets||w?.combinations||[]).length);
+  const ticketsReady=worlds.some(w => (w?.tickets||w?.bets||w?.combinations||[]).length);
+  const g=d?.formal_meta?.guards || d?.derived?.guards || null;
+  const guardOK=!g || (g.results_seen===false && g.scoring!==true);
+  return ticketsReady && guardOK;
 }
 function getBeforeMap(d){
   const bf=d?.beforeinfo||{};
@@ -1299,6 +1356,13 @@ function renderModelPanels(){
   document.getElementById("dataCenterModel").innerHTML = text1;
   document.getElementById("statCore7").textContent = `${elig}/${req}`;
   document.getElementById("statModel").textContent = "PRE_RESULT";
+  const formalMini=document.getElementById("formalConnectMini");
+  if(formalMini){
+    const connected=Boolean(formal.connected || formal.formal_validation_connected || formal.predictions_ready);
+    formalMini.className=`source-mini ${connected?"formal-mini-ok":"formal-mini-wait"}`;
+    formalMini.innerHTML=`<b>正式CURRENT</b>　${connected?"接続済み":"接続待ち"} / ${formal.current || "CURRENT未同期"}<br><span class="formal-overlay-note">${connected?"正式prediction JSONを優先表示":"正式出力が data/formal_predictions に来たら自動で正式予想へ切替"}</span>`;
+  }
+
   const rows = model.source_rows || {}, h = state.health || {};
   const sourceMini=document.getElementById("sourceMini");
   if(sourceMini){
@@ -1706,7 +1770,7 @@ function renderScenario(d,pred){
       <div class="flow-arrow-row">↓</div>
       <div class="flow-step"><div class="flow-step-label">抜け出し</div><div class="flow-step-line"><div class="flow-boats">${laneHtml("after")}</div></div></div>
     </div>
-    <div class="flow-conclusion"><div class="k">展開結論</div><div class="v">${flowConclusion}</div><div class="s">正式CURRENT未接続時はサイト簡易スコア。未取得データの補完はしません。</div></div>
+    <div class="flow-conclusion"><div class="k">展開結論</div><div class="v">${flowConclusion}</div><div class="s">正式CURRENT overlay接続時は正式値を優先。未接続時はサイト簡易スコア。未取得データの補完はしません。</div></div>
   `;
 
   document.getElementById("scenarioLanes").innerHTML=`
@@ -1819,7 +1883,8 @@ function renderAuditTab(d, pred){
     ["scoring", String(d.meta?.scoring ?? false), (d.meta?.scoring ? "red":"green")],
     ["beforeinfo", source.beforeinfo?.status || "－", source.beforeinfo?.status==="ok" ? "green":"orange"],
     ["race_card", source.race_card?.status || "－", source.race_card?.status==="ok" ? "green":"orange"],
-    ["予想種別", pred.label, pred.mode==="formal" ? "green":"orange"]
+    ["予想種別", pred.label, pred.mode==="formal" ? "green":"orange"],
+    ["正式overlay", d.formal_meta ? "接続済み" : "なし", d.formal_meta ? "green":"gray"]
   ];
   document.getElementById("auditStatusList").innerHTML = items.map(x=>`
     <div class="status-item">
@@ -1828,7 +1893,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V21<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V22<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -1838,6 +1903,7 @@ function renderAuditTab(d, pred){
     mode = ${pred.mode}<br>
     reason = ${pred.reason}<br>
     leader = ${pred.reasoning?.leader || "－"}<br>
+    formal_overlay = ${d.formal_meta ? "connected" : "none"}<br>
   `;
 }
 function renderRace(d){
@@ -1874,7 +1940,10 @@ async function loadRace(file, jcd){
   try{
     const r = await fetch(`${file}?t=${Date.now()}`, {cache:"no-store"});
     if(!r.ok) throw new Error(r.status);
-    renderRace(await r.json());
+    let race=await r.json();
+    const overlay=await loadFormalOverlay(race.race_key);
+    race=mergeFormalOverlay(race,overlay);
+    renderRace(race);
   }catch(e){
     alert("レースデータを取得できませんでした");
   }
