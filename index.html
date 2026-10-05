@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08111f">
-<title>BOAT EDGE v12</title>
+<title>BOAT EDGE v13</title>
 <style>
 :root{
   --bg:#07101c;--panel:#0d1827;--panel2:#111f31;--line:#20344d;--text:#f5f8fc;
@@ -92,7 +92,7 @@ th{color:#8fa6bd;background:#0e1c2d;position:sticky;top:0}.namecell{text-align:l
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><div class="mark"></div><div>BOAT EDGE <span style="font-size:10px;color:#6ed3ff">v12</span></div></div><div class="live" id="live">PRE_RESULT</div></header>
+<header class="topbar"><div class="brand"><div class="mark"></div><div>BOAT EDGE <span style="font-size:10px;color:#6ed3ff">v13</span></div></div><div class="live" id="live">PRE_RESULT</div></header>
 
 <main id="home" class="view active">
   <div class="hero"><span class="pill">TODAY</span><h1>今日の全24場</h1><p>24場を固定表示。開催中だけ点灯し、締切と直前情報の状態まで一画面で確認。</p></div>
@@ -103,7 +103,13 @@ th{color:#8fa6bd;background:#0e1c2d;position:sticky;top:0}.namecell{text-align:l
   </div>
 
   <div class="section"><div class="title"><h2>レース場</h2><span id="updated">読込中</span></div><div id="venues" class="venues"></div></div>
-  <div class="section"><div class="card" style="padding:12px"><div class="audit" id="health">データ状態を確認中…</div></div></div>
+  <div class="section">
+    <div class="card" style="padding:12px;margin-bottom:9px">
+      <div class="title" style="margin-bottom:5px"><h2 style="font-size:14px">CURRENT接続状況</h2><span id="modelBadge">確認中</span></div>
+      <div class="audit" id="modelStatus">V1.21.33の入力監査を確認中…</div>
+    </div>
+    <div class="card" style="padding:12px"><div class="audit" id="health">データ状態を確認中…</div></div>
+  </div>
 </main>
 
 <main id="race" class="view">
@@ -128,7 +134,8 @@ th{color:#8fa6bd;background:#0e1c2d;position:sticky;top:0}.namecell{text-align:l
 
   <section id="tab-before" class="sub">
     <div class="section"><div class="title"><h2>直前情報</h2><span id="beforeStatus">未取得</span></div><div id="water" class="kpis"></div></div>
-    <div class="section"><div class="card tablewrap"><table><thead><tr><th>艇</th><th>選手</th><th>展示タイム</th><th>チルト</th><th>展示ST</th></tr></thead><tbody id="beforeRows"></tbody></table></div></div>
+    <div class="section"><div class="card tablewrap"><table><thead><tr><th>艇</th><th>選手</th><th>展示タイム</th><th>チルト</th><th>展示ST</th><th>実進入</th></tr></thead><tbody id="beforeRows"></tbody></table></div></div>
+    <div class="section"><div class="title"><h2>オリジナル展示</h2><span>場別計測</span></div><div id="originalExhibition" class="card" style="padding:12px"></div></div>
   </section>
 
   <section id="tab-detail" class="sub">
@@ -159,7 +166,7 @@ const VENUES=[
 ["19","下関"],["20","若松"],["21","芦屋"],["22","福岡"],["23","唐津"],["24","大村"]
 ];
 const tabs=[["pred","予想"],["card","出走表"],["before","直前"],["detail","データ"],["audit","監査"]];
-let state={today:null,race:null,currentVenue:null};
+let state={today:null,race:null,currentVenue:null,model:null};
 
 const f=v=>(v===null||v===undefined||v==="")?"－":v;
 const pct=v=>v===null||v===undefined?"－":`${Number(v).toFixed(Number(v)%1?1:0)}%`;
@@ -218,6 +225,35 @@ function renderDeadlineBoard(){
  document.querySelectorAll("#deadlineBoard [data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
 }
 
+
+function renderModelStatus(){
+ const m=state.model;
+ const box=document.getElementById("modelStatus");
+ const badge=document.getElementById("modelBadge");
+ if(!box||!badge)return;
+ if(!m){
+   badge.textContent="未取得";
+   box.textContent="model_status.json 待ち";
+   return;
+ }
+ const c=m.core7||{};
+ const ready=!!c.formal_first100_ready;
+ badge.textContent=ready?"100R到達":"待機中";
+ badge.className=ready?"good":"warn";
+ box.innerHTML=`モデル: ${m.model||"－"}<br>
+ CORE7: <b>${c.eligible_count??0} / ${c.required_count??100}R</b><br>
+ formal_first100_ready: <span class="${ready?"good":"warn"}">${String(ready)}</span><br>
+ results_seen=${String(m.guards?.results_seen??false)} / unlock=${String(m.guards?.unlock??false)} / scoring=${String(m.guards?.scoring??false)}`;
+}
+async function refreshModel(){
+ try{
+   const r=await fetch(`./data/model_status.json?t=${Date.now()}`,{cache:"no-store"});
+   if(!r.ok)throw new Error(r.status);
+   state.model=await r.json();
+ }catch(e){state.model=null}
+ renderModelStatus();
+}
+
 function renderHome(){
  renderDeadlineBoard();
  const active=new Map((state.today?.venues||[]).map(v=>[v.jcd,v]));
@@ -238,7 +274,11 @@ function renderHome(){
 
 function tickets(world){
  const bets=world?.tickets||world?.bets||world?.combinations||[];
- if(!bets.length)return `<div class="wait">CURRENT予想の接続待ち<br><span style="font-size:10px">実データ未計算のためサンプル買い目は表示しません</span></div>`;
+ if(!bets.length){
+   const c=state.model?.core7;
+   const progress=c?`${c.eligible_count??0}/${c.required_count??100}R`:"入力監査中";
+   return `<div class="wait">V1.21.33 CURRENT待機<br><span style="font-size:10px">CORE7 ${progress} / 正式入力が揃うまで仮買い目は表示しません</span></div>`;
+ }
  return bets.slice(0,8).map((b,i)=>{
    const combo=typeof b==="string"?b:(b.combo||b.ticket||b.bet||"－");
    const c=typeof b==="object"?(b.confidence ?? b.probability ?? b.p):null;
@@ -297,9 +337,19 @@ function renderBefore(d){
   ["波高",bf.weather?.wave_cm==null?"－":bf.weather.wave_cm+"cm"]
  ].map(x=>`<div class="card kpi"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
  const names=new Map((d.racers||[]).map((r,i)=>[laneNo(r,i),r.name]));
+ const actual=new Map((d.actual_entry||[]).map(x=>[x.lane,x.course]));
  document.getElementById("beforeRows").innerHTML=(bf.racers||[]).map((r,i)=>{
-   const n=r.lane??i+1;return `<tr><td><span class="lane l${n}">${n}</span></td><td class="namecell">${f(names.get(n))}</td><td>${f(r.exhibition_time)}</td><td>${f(r.tilt)}</td><td>${f(starts.get(n))}</td></tr>`;
- }).join("")||`<tr><td colspan="5">直前情報はまだ公開されていません</td></tr>`;
+   const n=r.lane??i+1;return `<tr><td><span class="lane l${n}">${n}</span></td><td class="namecell">${f(names.get(n))}</td><td>${f(r.exhibition_time)}</td><td>${f(r.tilt)}</td><td>${f(starts.get(n))}</td><td>${f(actual.get(n))}</td></tr>`;
+ }).join("")||`<tr><td colspan="6">直前情報はまだ公開されていません</td></tr>`;
+ const oe=d.original_exhibition;
+ const box=document.getElementById("originalExhibition");
+ if(!oe||!oe.labels?.length){
+   box.innerHTML=`<div class="empty">オリジナル展示は未取得</div>`;
+ }else{
+   const head=oe.labels.map(x=>`<th>${x}</th>`).join("");
+   const rows=(oe.boats||[]).map(x=>`<tr><td><span class="lane l${x.lane}">${x.lane}</span></td><td class="namecell">${f(x.name||names.get(x.lane))}</td>${(x.values||[]).map(v=>`<td>${f(v)}</td>`).join("")}</tr>`).join("");
+   box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>艇</th><th>選手</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+ }
 }
 function renderAudit(d){
  const a=d.source_audit||{};
@@ -341,8 +391,9 @@ async function refreshToday(force=false){
   document.getElementById("live").textContent="データ待ち";
  }
 }
-refreshToday();
+refreshToday();refreshModel();
 setInterval(()=>refreshToday(),60000);
+setInterval(()=>refreshModel(),60000);
 setInterval(()=>{if(state.today)renderDeadlineBoard()},30000);
 </script>
 </body>
