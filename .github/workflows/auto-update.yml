@@ -324,8 +324,8 @@ jobs:
 
           summary={"schema_version":"boat-edge-today-v5","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
                    "phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False,
-                   "collector_version":"BOAT_EDGE_V17",
-                   "collector":{"mode":"resilient-parallel-structured-v17","discovery_mode":discovery_mode,
+                   "collector_version":"BOAT_EDGE_V18",
+                   "collector":{"mode":"resilient-parallel-structured-v18","discovery_mode":discovery_mode,
                                 "active_venues":len(active),"errors":errors[:20]},
                    "venues":[]}
 
@@ -342,7 +342,7 @@ jobs:
                     "meta":{"date":now.strftime("%Y-%m-%d"),"venue_code":j,"venue":VENUES[j],
                             "event":meta.get("event"),"race_no":rno,
                             "deadline":ds[rno-1] if len(ds)>=rno else None,
-                            "updated_at":iso,"phase":"PRE_RESULT","collector_version":"BOAT_EDGE_V17",
+                            "updated_at":iso,"phase":"PRE_RESULT","collector_version":"BOAT_EDGE_V18",
                             "results_seen":False,"unlock":False,"scoring":False},
                     "source_audit":{
                       "race_card":{"status":"ok" if rr.get("ok") else "error","source":rr.get("url"),
@@ -368,7 +368,7 @@ jobs:
 
           health={
             "updated_at":iso,
-            "collector_version":"BOAT_EDGE_V17",
+            "collector_version":"BOAT_EDGE_V18",
             "phase":"PRE_RESULT",
             "results_seen":False,"unlock":False,"scoring":False,
             "status":"ok" if active else "source_unavailable",
@@ -639,6 +639,69 @@ jobs:
           status["formal_validation_connected"]=False
           status["formal_note"]="SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
           (DATA/"model_status.json").write_text(json.dumps(status,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # Keep formal_status synchronized with collector readiness WITHOUT claiming a formal freeze.
+          # This file is display/control-plane state only. Formal first100 / D-1 / Run1-Run2 remain separate.
+          fp=DATA/"formal_status.json"
+          try:
+              formal=json.loads(fp.read_text(encoding="utf-8")) if fp.exists() else {}
+          except Exception:
+              formal={}
+          today_iso=now.strftime("%Y-%m-%d")
+          today_compact=now.strftime("%Y%m%d")
+          source_rows=status["source_rows"]
+          five_published=all(int(source_rows.get(k,0) or 0)>0 for k in
+                             ("race_cards","stt","tkz","sui","original_exhibition"))
+          core_ready=len(eligible)>=100
+
+          if formal.get("connected") is not True:
+              # New untouched day: roll display state forward automatically.
+              if formal.get("target_date")!=today_iso:
+                  formal={
+                    "schema_version":"boat-edge-formal-status-v2",
+                    "asOf":iso,
+                    "connected":False,
+                    "predictions_ready":False,
+                    "current":f"V12133_{today_compact}_NEXT_UNTOUCHED_WAIT_5SOURCE",
+                    "stage":f"{today_iso} PRE_RESULT / 5ソース待ち",
+                    "target_date":today_iso,
+                    "formalFirst100":{"races":0,"racers":0,"pairs":0,
+                                      "freezeManifestSha":None,"coreSha":None},
+                    "formalParentSha":"11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
+                    "candidateSha":"30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
+                    "guards":{"results_seen":False,"unlock":False,"scoring":False,
+                              "RESULT_UNLOCK_TOKEN":None},
+                    "prediction_path_template":"data/formal_predictions/{race_key}.json",
+                    "last_cohort":formal.get("last_cohort"),
+                    "note":"SITE collector state only. Formal freeze is separate."
+                  }
+
+              formal["asOf"]=iso
+              formal["target_date"]=today_iso
+              formal["guards"]={"results_seen":False,"unlock":False,"scoring":False,
+                                "RESULT_UNLOCK_TOKEN":None}
+              formal["collector_snapshot"]={
+                "updated_at":iso,
+                "source_rows":source_rows,
+                "core7_eligible_count":len(eligible),
+                "core7_100_ready":core_ready,
+                "site_races_merged":merged_count,
+                "formal_freeze_claimed":False
+              }
+
+              if five_published and core_ready:
+                  formal["current"]=f"V12133_{today_compact}_SOURCE_READY_WAIT_FORMAL_FREEZE"
+                  formal["stage"]=f"{today_iso} PRE_RESULT / 5ソース取得済み / formal freeze待ち"
+              elif five_published:
+                  formal["current"]=f"V12133_{today_compact}_FIVE_SOURCE_PUBLISHED_WAIT_CORE7_100"
+                  formal["stage"]=f"{today_iso} PRE_RESULT / 5ソース取得済み / CORE7 100R待ち"
+              else:
+                  formal["current"]=f"V12133_{today_compact}_NEXT_UNTOUCHED_WAIT_5SOURCE"
+                  formal["stage"]=f"{today_iso} PRE_RESULT / 5ソース待ち"
+
+              formal["connected"]=False
+              formal["predictions_ready"]=False
+              fp.write_text(json.dumps(formal,ensure_ascii=False,indent=2),encoding="utf-8")
 
           hp=DATA/"health.json"
           if hp.exists():
