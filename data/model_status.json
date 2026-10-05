@@ -1,27 +1,28 @@
 {
-  "updated_at": "2026-10-05T22:05:21+09:00",
+  "updated_at": "2026-10-05T23:37:58+09:00",
   "target_date": "2026-10-05",
   "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
   "formal_parent_sha256": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
   "candidate_sha256": "30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
   "source_rows": {
     "race_cards": 144,
-    "stt": 142,
-    "tkz": 142,
-    "sui": 142,
-    "original_exhibition": 142
+    "stt": 144,
+    "tkz": 144,
+    "sui": 144,
+    "original_exhibition": 144
   },
   "source_sha256": {
     "race_cards": "7c92baeee8318dc9827cf04a545a3b1030ac0ab9194cb782409bc89502b5d938",
-    "stt": "f441c4887fd3cb755dbb1ff03f70398591840897166446abb5dbfae43ec27fd9",
-    "tkz": "d7292833c47627f5d006b5ddab957dd4c22c490270fda21fdc42f2fcb2686e4b",
-    "sui": "6fa055c7317eb4c21eb2f488dd4e43c17026ca0a6b3e8d86c693eae3c1e076df",
-    "original_exhibition": "b75649fee5292dbd417bdad1572a2dc54851b77fd65eddcfab2525c9f3da52b9"
+    "stt": "707a76a09c67a90ab6ef0eaaa6720743300a0dad6170e1b454b852bb86d132ad",
+    "tkz": "c57a70dc72c4de8cdccfd2a3bb889da837d2edb481342851e161fa1237483aef",
+    "sui": "a9b60e1eef4e04e23201e2f6feba749212bcaceec143e4162d16a3064a8d22e4",
+    "original_exhibition": "ec20aa28783b87dafc615ff2e9e1b07991990a051010699c00bd58f5ef8aa737"
   },
   "core7": {
     "eligible_count": 140,
     "required_count": 100,
-    "formal_first100_ready": true,
+    "core7_100_ready": true,
+    "formal_first100_ready": false,
     "first": "202610050201",
     "last": "202610052312"
   },
@@ -37,13 +38,7 @@
     "combined_api_v1_accessed": false
   },
   "errors": [],
-  "first100_freeze": {
-    "frozen": true,
-    "sha256": "3ba0da8d504a4f8db03bfb770875fc1f196011ee50b43e11c913d13dd5e572fa",
-    "count": 100,
-    "path": "data/current_first100_manifest.json",
-    "created_at": "2026-10-05T20:36:37+09:00",
-    "source_commit": "c368e4686d533191733f3775d27a588340bc80f7"
-  },
-  "formal_gate": "FIRST100_FROZEN_WAIT_EXACT_RUNTIME"
+  "collector_gate": "CORE7_100_READY_WAIT_FORMAL_PIPELINE",
+  "formal_validation_connected": false,
+  "formal_note": "SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
 }

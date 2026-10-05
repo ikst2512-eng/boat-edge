@@ -1,15 +1,16 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v5",
   "race_key": "20261005-13-10",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "13",
     "venue": "尼崎",
-    "event": "ＢＴＳ京丹後開設１１周年記念競走",
+    "event": "BTS京丹後開設11周年記念競走",
     "race_no": 10,
     "deadline": "15:15",
-    "updated_at": "2026-10-05T23:31:28+09:00",
+    "updated_at": "2026-10-05T23:35:05+09:00",
     "phase": "PRE_RESULT",
+    "collector_version": "BOAT_EDGE_V17",
     "results_seen": false,
     "unlock": false,
     "scoring": false
@@ -18,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=13&rno=10",
-      "fetched_at": "2026-10-05T23:31:28+09:00",
-      "sha256": "8b808deda1c8579701262c5f41e0f652b3d1f6992efd1ac36eedfee524b2d137",
+      "fetched_at": "2026-10-05T23:35:05+09:00",
+      "sha256": "2e2fbf49fc8378240333c2f6aeb4eec3a854994e45884c68560a010b76505e10",
       "error": null
     },
     "beforeinfo": {
@@ -28,11 +29,35 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "707a76a09c67a90ab6ef0eaaa6720743300a0dad6170e1b454b852bb86d132ad"
+    },
+    "tkz": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "c57a70dc72c4de8cdccfd2a3bb889da837d2edb481342851e161fa1237483aef"
+    },
+    "sui": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "a9b60e1eef4e04e23201e2f6feba749212bcaceec143e4162d16a3064a8d22e4"
+    },
+    "original_exhibition": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "ec20aa28783b87dafc615ff2e9e1b07991990a051010699c00bd58f5ef8aa737"
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "3654",
       "name": "武田 光史",
       "class": "A2",
@@ -43,10 +68,41 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "１ 3654 / A2 武田 光史 福井/福井 53歳/52.0kg F1 L0 0.16 6.66 53.27 72.90 6.00 38.46 51.28 45 33.85 50.00 69 30.83 50.00 4 10 1 8 11 4 9 4 4R"
+      "national": {
+        "win_rate": 6.66,
+        "quinella_rate": 53.27,
+        "trio_rate": 72.9
+      },
+      "local": {
+        "win_rate": 6.0,
+        "quinella_rate": 38.46,
+        "trio_rate": 51.28
+      },
+      "motor": {
+        "no": 45,
+        "quinella_rate": 33.85,
+        "trio_rate": 50.0
+      },
+      "boat": {
+        "no": 69,
+        "quinella_rate": 30.83,
+        "trio_rate": 50.0
+      },
+      "series_tokens": [
+        "4",
+        "10",
+        "1",
+        "8",
+        "11",
+        "4",
+        "9",
+        "4"
+      ],
+      "early_race": 4,
+      "raw_text": "1 3654 / A2 武田 光史 福井/福井 53歳/52.0kg F1 L0 0.16 6.66 53.27 72.90 6.00 38.46 51.28 45 33.85 50.00 69 30.83 50.00 4 10 1 8 11 4 9 4 4R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "4539",
       "name": "金子 賢志",
       "class": "A1",
@@ -57,10 +113,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.13,
-      "raw_text": "２ 4539 / A1 金子 賢志 群馬/群馬 35歳/52.0kg F0 L0 0.13 6.11 41.23 58.77 5.61 34.21 57.89 50 25.60 42.40 21 44.26 54.10 6 12 4 11 7 3 10 4 4R"
+      "national": {
+        "win_rate": 6.11,
+        "quinella_rate": 41.23,
+        "trio_rate": 58.77
+      },
+      "local": {
+        "win_rate": 5.61,
+        "quinella_rate": 34.21,
+        "trio_rate": 57.89
+      },
+      "motor": {
+        "no": 50,
+        "quinella_rate": 25.6,
+        "trio_rate": 42.4
+      },
+      "boat": {
+        "no": 21,
+        "quinella_rate": 44.26,
+        "trio_rate": 54.1
+      },
+      "series_tokens": [
+        "6",
+        "12",
+        "4",
+        "11",
+        "7",
+        "3",
+        "10",
+        "4"
+      ],
+      "early_race": 4,
+      "raw_text": "2 4539 / A1 金子 賢志 群馬/群馬 35歳/52.0kg F0 L0 0.13 6.11 41.23 58.77 5.61 34.21 57.89 50 25.60 42.40 21 44.26 54.10 6 12 4 11 7 3 10 4 4R"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "3614",
       "name": "谷 勝幸",
       "class": "B1",
@@ -71,10 +158,40 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "３ 3614 / B1 谷 勝幸 広島/広島 53歳/54.3kg F0 L0 0.17 4.26 21.15 35.58 2.29 0.00 0.00 63 40.31 59.69 18 32.52 48.78 4 9 3 4 11 11 5 5R"
+      "national": {
+        "win_rate": 4.26,
+        "quinella_rate": 21.15,
+        "trio_rate": 35.58
+      },
+      "local": {
+        "win_rate": 2.29,
+        "quinella_rate": 0.0,
+        "trio_rate": 0.0
+      },
+      "motor": {
+        "no": 63,
+        "quinella_rate": 40.31,
+        "trio_rate": 59.69
+      },
+      "boat": {
+        "no": 18,
+        "quinella_rate": 32.52,
+        "trio_rate": 48.78
+      },
+      "series_tokens": [
+        "4",
+        "9",
+        "3",
+        "4",
+        "11",
+        "11",
+        "5"
+      ],
+      "early_race": 5,
+      "raw_text": "3 3614 / B1 谷 勝幸 広島/広島 53歳/54.3kg F0 L0 0.17 4.26 21.15 35.58 2.29 0.00 0.00 63 40.31 59.69 18 32.52 48.78 4 9 3 4 11 11 5 5R"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "4675",
       "name": "井手 良太",
       "class": "A2",
@@ -85,10 +202,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.14,
-      "raw_text": "４ 4675 / A2 井手 良太 大阪/大阪 38歳/51.5kg F0 L0 0.14 5.59 34.21 56.58 4.79 42.86 42.86 38 22.41 43.10 33 31.40 51.24 7 2 7 6 11 3 8 1 1R"
+      "national": {
+        "win_rate": 5.59,
+        "quinella_rate": 34.21,
+        "trio_rate": 56.58
+      },
+      "local": {
+        "win_rate": 4.79,
+        "quinella_rate": 42.86,
+        "trio_rate": 42.86
+      },
+      "motor": {
+        "no": 38,
+        "quinella_rate": 22.41,
+        "trio_rate": 43.1
+      },
+      "boat": {
+        "no": 33,
+        "quinella_rate": 31.4,
+        "trio_rate": 51.24
+      },
+      "series_tokens": [
+        "7",
+        "2",
+        "7",
+        "6",
+        "11",
+        "3",
+        "8",
+        "1"
+      ],
+      "early_race": 1,
+      "raw_text": "4 4675 / A2 井手 良太 大阪/大阪 38歳/51.5kg F0 L0 0.14 5.59 34.21 56.58 4.79 42.86 42.86 38 22.41 43.10 33 31.40 51.24 7 2 7 6 11 3 8 1 1R"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "4962",
       "name": "畑 竜生",
       "class": "A2",
@@ -99,10 +247,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "５ 4962 / A2 畑 竜生 三重/三重 30歳/52.1kg F0 L0 0.17 5.36 36.52 50.43 6.80 50.00 80.00 21 24.19 48.39 13 32.52 51.22 8 5 9 4 9 5 11 6 6R"
+      "national": {
+        "win_rate": 5.36,
+        "quinella_rate": 36.52,
+        "trio_rate": 50.43
+      },
+      "local": {
+        "win_rate": 6.8,
+        "quinella_rate": 50.0,
+        "trio_rate": 80.0
+      },
+      "motor": {
+        "no": 21,
+        "quinella_rate": 24.19,
+        "trio_rate": 48.39
+      },
+      "boat": {
+        "no": 13,
+        "quinella_rate": 32.52,
+        "trio_rate": 51.22
+      },
+      "series_tokens": [
+        "8",
+        "5",
+        "9",
+        "4",
+        "9",
+        "5",
+        "11",
+        "6"
+      ],
+      "early_race": 6,
+      "raw_text": "5 4962 / A2 畑 竜生 三重/三重 30歳/52.1kg F0 L0 0.17 5.36 36.52 50.43 6.80 50.00 80.00 21 24.19 48.39 13 32.52 51.22 8 5 9 4 9 5 11 6 6R"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "3606",
       "name": "川北 浩貴",
       "class": "B1",
@@ -113,12 +292,247 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "６ 3606 / B1 川北 浩貴 滋賀/滋賀 54歳/52.2kg F0 L0 0.16 5.59 36.26 51.65 5.45 35.00 60.00 20 25.81 42.74 50 30.83 52.50 1 11 4 5 10 4 3 3R"
+      "national": {
+        "win_rate": 5.59,
+        "quinella_rate": 36.26,
+        "trio_rate": 51.65
+      },
+      "local": {
+        "win_rate": 5.45,
+        "quinella_rate": 35.0,
+        "trio_rate": 60.0
+      },
+      "motor": {
+        "no": 20,
+        "quinella_rate": 25.81,
+        "trio_rate": 42.74
+      },
+      "boat": {
+        "no": 50,
+        "quinella_rate": 30.83,
+        "trio_rate": 52.5
+      },
+      "series_tokens": [
+        "1",
+        "11",
+        "4",
+        "5",
+        "10",
+        "4",
+        "3"
+      ],
+      "early_race": 3,
+      "raw_text": "6 3606 / B1 川北 浩貴 滋賀/滋賀 54歳/52.2kg F0 L0 0.16 5.59 36.26 51.65 5.45 35.00 60.00 20 25.81 42.74 50 30.83 52.50 1 11 4 5 10 4 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "weight_kg": 52.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.81,
+        "tilt": -0.5
+      },
+      {
+        "lane": 2,
+        "weight_kg": 52.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.81,
+        "tilt": 0.0
+      },
+      {
+        "lane": 3,
+        "weight_kg": 54.3,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.82,
+        "tilt": -0.5
+      },
+      {
+        "lane": 4,
+        "weight_kg": 51.5,
+        "adjustment_kg": 0.5,
+        "exhibition_time": 6.8,
+        "tilt": 0.0
+      },
+      {
+        "lane": 5,
+        "weight_kg": 52.1,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.77,
+        "tilt": 0.0
+      },
+      {
+        "lane": 6,
+        "weight_kg": 52.2,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.8,
+        "tilt": -0.5
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "course": 1,
+        "st": "0.13",
+        "exhibition_f": false
+      },
+      {
+        "lane": 2,
+        "course": 2,
+        "st": "-0.02",
+        "exhibition_f": false
+      },
+      {
+        "lane": 3,
+        "course": 3,
+        "st": "-0.03",
+        "exhibition_f": false
+      },
+      {
+        "lane": 4,
+        "course": 4,
+        "st": "-0.01",
+        "exhibition_f": false
+      },
+      {
+        "lane": 5,
+        "course": 5,
+        "st": "-0.03",
+        "exhibition_f": false
+      },
+      {
+        "lane": 6,
+        "course": 6,
+        "st": "0.08",
+        "exhibition_f": false
+      }
+    ],
+    "weather": {
+      "observed_at": "1450",
+      "wind_speed_ms": 0.0,
+      "wind_direction": null,
+      "wave_cm": 0.0,
+      "weather_code": 3,
+      "air_temp_c": 20.5,
+      "water_temp_c": 21.3
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [
+    {
+      "lane": 1,
+      "course": 1,
+      "exhibition_st": 0.13,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.13"
+    },
+    {
+      "lane": 2,
+      "course": 2,
+      "exhibition_st": -0.02,
+      "exhibition_f": false,
+      "exhibition_st_raw": "-0.02"
+    },
+    {
+      "lane": 3,
+      "course": 3,
+      "exhibition_st": -0.03,
+      "exhibition_f": false,
+      "exhibition_st_raw": "-0.03"
+    },
+    {
+      "lane": 4,
+      "course": 4,
+      "exhibition_st": -0.01,
+      "exhibition_f": false,
+      "exhibition_st_raw": "-0.01"
+    },
+    {
+      "lane": 5,
+      "course": 5,
+      "exhibition_st": -0.03,
+      "exhibition_f": false,
+      "exhibition_st_raw": "-0.03"
+    },
+    {
+      "lane": 6,
+      "course": 6,
+      "exhibition_st": 0.08,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.08"
+    }
+  ],
+  "original_exhibition": {
+    "labels": [
+      "一周",
+      "まわり足"
+    ],
+    "boats": [
+      {
+        "lane": 1,
+        "name": "武田 光史",
+        "values": [
+          36.85,
+          11.42
+        ]
+      },
+      {
+        "lane": 2,
+        "name": "金子 賢志",
+        "values": [
+          37.28,
+          11.66
+        ]
+      },
+      {
+        "lane": 3,
+        "name": "谷 勝幸",
+        "values": [
+          37.7,
+          11.85
+        ]
+      },
+      {
+        "lane": 4,
+        "name": "井手 良太",
+        "values": [
+          37.11,
+          11.67
+        ]
+      },
+      {
+        "lane": 5,
+        "name": "畑 竜生",
+        "values": [
+          37.33,
+          11.34
+        ]
+      },
+      {
+        "lane": 6,
+        "name": "川北 浩貴",
+        "values": [
+          37.29,
+          11.75
+        ]
+      }
+    ]
+  },
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": true,
+      "tkz": true,
+      "sui": true,
+      "original_exhibition": true
+    },
+    "core7_ready": true,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

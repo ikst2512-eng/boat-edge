@@ -1,15 +1,16 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v5",
   "race_key": "20261005-18-01",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "18",
     "venue": "徳山",
-    "event": "スカパー！・ＪＬＣ杯徳山ルーキーシリーズ第１８戦",
+    "event": "スカパー!・JLC杯徳山ルーキーシリーズ第18戦",
     "race_no": 1,
     "deadline": "08:47",
-    "updated_at": "2026-10-05T23:31:28+09:00",
+    "updated_at": "2026-10-05T23:35:05+09:00",
     "phase": "PRE_RESULT",
+    "collector_version": "BOAT_EDGE_V17",
     "results_seen": false,
     "unlock": false,
     "scoring": false
@@ -18,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=18&rno=1",
-      "fetched_at": "2026-10-05T23:31:28+09:00",
-      "sha256": "7ffea3c16b6af14d1ab49018272d4a695d8a754661c5f42aad50b0c67f2f613d",
+      "fetched_at": "2026-10-05T23:35:05+09:00",
+      "sha256": "2ea6ef7d33f58d20e025792a2a226cb84e59f3719e6b3bc00e3c064828814912",
       "error": null
     },
     "beforeinfo": {
@@ -28,11 +29,35 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "707a76a09c67a90ab6ef0eaaa6720743300a0dad6170e1b454b852bb86d132ad"
+    },
+    "tkz": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "c57a70dc72c4de8cdccfd2a3bb889da837d2edb481342851e161fa1237483aef"
+    },
+    "sui": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "a9b60e1eef4e04e23201e2f6feba749212bcaceec143e4162d16a3064a8d22e4"
+    },
+    "original_exhibition": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "ec20aa28783b87dafc615ff2e9e1b07991990a051010699c00bd58f5ef8aa737"
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "5136",
       "name": "濱野 斗馬",
       "class": "A1",
@@ -43,10 +68,38 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.14,
-      "raw_text": "１ 5136 / A1 濱野 斗馬 香川/香川 26歳/52.6kg F0 L0 0.14 6.16 47.90 57.98 5.93 41.38 55.17 60 32.71 54.21 11 28.77 43.84 4 11 7 12 2 10R"
+      "national": {
+        "win_rate": 6.16,
+        "quinella_rate": 47.9,
+        "trio_rate": 57.98
+      },
+      "local": {
+        "win_rate": 5.93,
+        "quinella_rate": 41.38,
+        "trio_rate": 55.17
+      },
+      "motor": {
+        "no": 60,
+        "quinella_rate": 32.71,
+        "trio_rate": 54.21
+      },
+      "boat": {
+        "no": 11,
+        "quinella_rate": 28.77,
+        "trio_rate": 43.84
+      },
+      "series_tokens": [
+        "4",
+        "11",
+        "7",
+        "12",
+        "2"
+      ],
+      "early_race": 10,
+      "raw_text": "1 5136 / A1 濱野 斗馬 香川/香川 26歳/52.6kg F0 L0 0.14 6.16 47.90 57.98 5.93 41.38 55.17 60 32.71 54.21 11 28.77 43.84 4 11 7 12 2 10R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "5336",
       "name": "瀬川 大地",
       "class": "B1",
@@ -57,10 +110,38 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.15,
-      "raw_text": "２ 5336 / B1 瀬川 大地 山口/山口 20歳/54.9kg F1 L0 0.15 3.41 15.94 26.09 2.12 9.09 9.09 67 29.91 47.86 59 40.00 59.09 3 5 11 2 11 6R"
+      "national": {
+        "win_rate": 3.41,
+        "quinella_rate": 15.94,
+        "trio_rate": 26.09
+      },
+      "local": {
+        "win_rate": 2.12,
+        "quinella_rate": 9.09,
+        "trio_rate": 9.09
+      },
+      "motor": {
+        "no": 67,
+        "quinella_rate": 29.91,
+        "trio_rate": 47.86
+      },
+      "boat": {
+        "no": 59,
+        "quinella_rate": 40.0,
+        "trio_rate": 59.09
+      },
+      "series_tokens": [
+        "3",
+        "5",
+        "11",
+        "2",
+        "11"
+      ],
+      "early_race": 6,
+      "raw_text": "2 5336 / B1 瀬川 大地 山口/山口 20歳/54.9kg F1 L0 0.15 3.41 15.94 26.09 2.12 9.09 9.09 67 29.91 47.86 59 40.00 59.09 3 5 11 2 11 6R"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "5178",
       "name": "成貞 琳平",
       "class": "B1",
@@ -71,10 +152,38 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.19,
-      "raw_text": "３ 5178 / B1 成貞 琳平 愛知/岡山 30歳/53.5kg F0 L0 0.19 4.39 21.05 36.84 0.00 0.00 0.00 31 30.77 51.28 61 26.44 47.12 8 2 11 5 9 8R"
+      "national": {
+        "win_rate": 4.39,
+        "quinella_rate": 21.05,
+        "trio_rate": 36.84
+      },
+      "local": {
+        "win_rate": 0.0,
+        "quinella_rate": 0.0,
+        "trio_rate": 0.0
+      },
+      "motor": {
+        "no": 31,
+        "quinella_rate": 30.77,
+        "trio_rate": 51.28
+      },
+      "boat": {
+        "no": 61,
+        "quinella_rate": 26.44,
+        "trio_rate": 47.12
+      },
+      "series_tokens": [
+        "8",
+        "2",
+        "11",
+        "5",
+        "9"
+      ],
+      "early_race": 8,
+      "raw_text": "3 5178 / B1 成貞 琳平 愛知/岡山 30歳/53.5kg F0 L0 0.19 4.39 21.05 36.84 0.00 0.00 0.00 31 30.77 51.28 61 26.44 47.12 8 2 11 5 9 8R"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "5183",
       "name": "中野 孝二",
       "class": "B1",
@@ -85,10 +194,38 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "４ 5183 / B1 中野 孝二 三重/三重 27歳/53.9kg F1 L0 0.17 5.11 29.89 51.72 5.83 38.89 66.67 65 26.04 41.67 46 29.41 44.80 1 7 5 4 8 9R"
+      "national": {
+        "win_rate": 5.11,
+        "quinella_rate": 29.89,
+        "trio_rate": 51.72
+      },
+      "local": {
+        "win_rate": 5.83,
+        "quinella_rate": 38.89,
+        "trio_rate": 66.67
+      },
+      "motor": {
+        "no": 65,
+        "quinella_rate": 26.04,
+        "trio_rate": 41.67
+      },
+      "boat": {
+        "no": 46,
+        "quinella_rate": 29.41,
+        "trio_rate": 44.8
+      },
+      "series_tokens": [
+        "1",
+        "7",
+        "5",
+        "4",
+        "8"
+      ],
+      "early_race": 9,
+      "raw_text": "4 5183 / B1 中野 孝二 三重/三重 27歳/53.9kg F1 L0 0.17 5.11 29.89 51.72 5.83 38.89 66.67 65 26.04 41.67 46 29.41 44.80 1 7 5 4 8 9R"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "5288",
       "name": "尾道 佳諭",
       "class": "B1",
@@ -99,10 +236,37 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "５ 5288 / B1 尾道 佳諭 埼玉/長崎 26歳/52.2kg F1 L0 0.17 3.96 15.19 34.18 3.82 5.88 23.53 42 38.60 53.51 72 34.10 52.07 2 11 10 6 7R"
+      "national": {
+        "win_rate": 3.96,
+        "quinella_rate": 15.19,
+        "trio_rate": 34.18
+      },
+      "local": {
+        "win_rate": 3.82,
+        "quinella_rate": 5.88,
+        "trio_rate": 23.53
+      },
+      "motor": {
+        "no": 42,
+        "quinella_rate": 38.6,
+        "trio_rate": 53.51
+      },
+      "boat": {
+        "no": 72,
+        "quinella_rate": 34.1,
+        "trio_rate": 52.07
+      },
+      "series_tokens": [
+        "2",
+        "11",
+        "10",
+        "6"
+      ],
+      "early_race": 7,
+      "raw_text": "5 5288 / B1 尾道 佳諭 埼玉/長崎 26歳/52.2kg F1 L0 0.17 3.96 15.19 34.18 3.82 5.88 23.53 42 38.60 53.51 72 34.10 52.07 2 11 10 6 7R"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "5417",
       "name": "小柳 勝希",
       "class": "B1",
@@ -113,12 +277,244 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.2,
-      "raw_text": "６ 5417 / B1 小柳 勝希 佐賀/佐賀 20歳/52.7kg F1 L0 0.20 4.44 20.00 40.00 2.44 0.00 0.00 32 23.58 38.68 55 34.84 54.30 2 7 4 4 11R"
+      "national": {
+        "win_rate": 4.44,
+        "quinella_rate": 20.0,
+        "trio_rate": 40.0
+      },
+      "local": {
+        "win_rate": 2.44,
+        "quinella_rate": 0.0,
+        "trio_rate": 0.0
+      },
+      "motor": {
+        "no": 32,
+        "quinella_rate": 23.58,
+        "trio_rate": 38.68
+      },
+      "boat": {
+        "no": 55,
+        "quinella_rate": 34.84,
+        "trio_rate": 54.3
+      },
+      "series_tokens": [
+        "2",
+        "7",
+        "4",
+        "4"
+      ],
+      "early_race": 11,
+      "raw_text": "6 5417 / B1 小柳 勝希 佐賀/佐賀 20歳/52.7kg F1 L0 0.20 4.44 20.00 40.00 2.44 0.00 0.00 32 23.58 38.68 55 34.84 54.30 2 7 4 4 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "weight_kg": 52.6,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.86,
+        "tilt": -0.5
+      },
+      {
+        "lane": 2,
+        "weight_kg": 54.9,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.9,
+        "tilt": 0.0
+      },
+      {
+        "lane": 3,
+        "weight_kg": 53.5,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.94,
+        "tilt": 0.0
+      },
+      {
+        "lane": 4,
+        "weight_kg": 53.9,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.93,
+        "tilt": 0.0
+      },
+      {
+        "lane": 5,
+        "weight_kg": 52.2,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.92,
+        "tilt": 0.0
+      },
+      {
+        "lane": 6,
+        "weight_kg": 52.7,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.95,
+        "tilt": 0.0
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "course": 1,
+        "st": "0.07",
+        "exhibition_f": false
+      },
+      {
+        "lane": 2,
+        "course": 2,
+        "st": "0.09",
+        "exhibition_f": false
+      },
+      {
+        "lane": 3,
+        "course": 3,
+        "st": "0.1",
+        "exhibition_f": false
+      },
+      {
+        "lane": 4,
+        "course": 4,
+        "st": "0.26",
+        "exhibition_f": false
+      },
+      {
+        "lane": 5,
+        "course": 5,
+        "st": "0.13",
+        "exhibition_f": false
+      },
+      {
+        "lane": 6,
+        "course": 6,
+        "st": "0.05",
+        "exhibition_f": false
+      }
+    ],
+    "weather": {
+      "observed_at": "0805",
+      "wind_speed_ms": 1.0,
+      "wind_direction": 8,
+      "wave_cm": 1.0,
+      "weather_code": 2,
+      "air_temp_c": 17.0,
+      "water_temp_c": 24.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [
+    {
+      "lane": 1,
+      "course": 1,
+      "exhibition_st": 0.07,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.07"
+    },
+    {
+      "lane": 2,
+      "course": 2,
+      "exhibition_st": 0.09,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.09"
+    },
+    {
+      "lane": 3,
+      "course": 3,
+      "exhibition_st": 0.1,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.1"
+    },
+    {
+      "lane": 4,
+      "course": 4,
+      "exhibition_st": 0.26,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.26"
+    },
+    {
+      "lane": 5,
+      "course": 5,
+      "exhibition_st": 0.13,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.13"
+    },
+    {
+      "lane": 6,
+      "course": 6,
+      "exhibition_st": 0.05,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.05"
+    }
+  ],
+  "original_exhibition": {
+    "labels": [
+      "一周",
+      "まわり足"
+    ],
+    "boats": [
+      {
+        "lane": 1,
+        "name": "濱野 斗馬",
+        "values": [
+          37.7,
+          11.9
+        ]
+      },
+      {
+        "lane": 2,
+        "name": "瀬川 大地",
+        "values": [
+          37.48,
+          11.61
+        ]
+      },
+      {
+        "lane": 3,
+        "name": "成貞 琳平",
+        "values": [
+          38.14,
+          11.82
+        ]
+      },
+      {
+        "lane": 4,
+        "name": "中野 孝二",
+        "values": [
+          37.62,
+          11.88
+        ]
+      },
+      {
+        "lane": 5,
+        "name": "尾道 佳諭",
+        "values": [
+          37.57,
+          11.77
+        ]
+      },
+      {
+        "lane": 6,
+        "name": "小柳 勝希",
+        "values": [
+          38.25,
+          11.96
+        ]
+      }
+    ]
+  },
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": true,
+      "tkz": true,
+      "sui": true,
+      "original_exhibition": true
+    },
+    "core7_ready": true,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

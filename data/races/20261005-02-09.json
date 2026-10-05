@@ -1,15 +1,16 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v5",
   "race_key": "20261005-02-09",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "02",
     "venue": "戸田",
-    "event": "第７回日刊大衆杯",
+    "event": "第7回日刊大衆杯",
     "race_no": 9,
     "deadline": "14:54",
-    "updated_at": "2026-10-05T23:31:28+09:00",
+    "updated_at": "2026-10-05T23:35:05+09:00",
     "phase": "PRE_RESULT",
+    "collector_version": "BOAT_EDGE_V17",
     "results_seen": false,
     "unlock": false,
     "scoring": false
@@ -18,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=02&rno=9",
-      "fetched_at": "2026-10-05T23:31:28+09:00",
-      "sha256": "1d1f7f5d558a759644e6baf14a1abfe48369bd944bdae9bdd0325a3d6201acf6",
+      "fetched_at": "2026-10-05T23:35:05+09:00",
+      "sha256": "dccf5dd72b1070d1672b71a972f087682b0a3568226a75a53c831dd37fd85db7",
       "error": null
     },
     "beforeinfo": {
@@ -28,11 +29,35 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "707a76a09c67a90ab6ef0eaaa6720743300a0dad6170e1b454b852bb86d132ad"
+    },
+    "tkz": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "c57a70dc72c4de8cdccfd2a3bb889da837d2edb481342851e161fa1237483aef"
+    },
+    "sui": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "a9b60e1eef4e04e23201e2f6feba749212bcaceec143e4162d16a3064a8d22e4"
+    },
+    "original_exhibition": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:37:58+09:00",
+      "sha256": "ec20aa28783b87dafc615ff2e9e1b07991990a051010699c00bd58f5ef8aa737"
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "5075",
       "name": "中島 秀治",
       "class": "A2",
@@ -43,10 +68,37 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "１ 5075 / A2 中島 秀治 滋賀/京都 30歳/52.4kg F1 L0 0.16 5.99 34.38 60.42 4.57 28.57 42.86 60 39.02 53.66 23 38.46 58.97 10 6 11 4 4R"
+      "national": {
+        "win_rate": 5.99,
+        "quinella_rate": 34.38,
+        "trio_rate": 60.42
+      },
+      "local": {
+        "win_rate": 4.57,
+        "quinella_rate": 28.57,
+        "trio_rate": 42.86
+      },
+      "motor": {
+        "no": 60,
+        "quinella_rate": 39.02,
+        "trio_rate": 53.66
+      },
+      "boat": {
+        "no": 23,
+        "quinella_rate": 38.46,
+        "trio_rate": 58.97
+      },
+      "series_tokens": [
+        "10",
+        "6",
+        "11",
+        "4"
+      ],
+      "early_race": 4,
+      "raw_text": "1 5075 / A2 中島 秀治 滋賀/京都 30歳/52.4kg F1 L0 0.16 5.99 34.38 60.42 4.57 28.57 42.86 60 39.02 53.66 23 38.46 58.97 10 6 11 4 4R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "4175",
       "name": "川尻 泰輔",
       "class": "A2",
@@ -57,10 +109,37 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.14,
-      "raw_text": "２ 4175 / A2 川尻 泰輔 埼玉/埼玉 43歳/55.0kg F0 L0 0.14 5.77 44.57 56.52 5.67 35.80 59.26 65 26.67 36.67 33 33.33 43.33 5 11 4 11"
+      "national": {
+        "win_rate": 5.77,
+        "quinella_rate": 44.57,
+        "trio_rate": 56.52
+      },
+      "local": {
+        "win_rate": 5.67,
+        "quinella_rate": 35.8,
+        "trio_rate": 59.26
+      },
+      "motor": {
+        "no": 65,
+        "quinella_rate": 26.67,
+        "trio_rate": 36.67
+      },
+      "boat": {
+        "no": 33,
+        "quinella_rate": 33.33,
+        "trio_rate": 43.33
+      },
+      "series_tokens": [
+        "5",
+        "11",
+        "4",
+        "11"
+      ],
+      "early_race": null,
+      "raw_text": "2 4175 / A2 川尻 泰輔 埼玉/埼玉 43歳/55.0kg F0 L0 0.14 5.77 44.57 56.52 5.67 35.80 59.26 65 26.67 36.67 33 33.33 43.33 5 11 4 11"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "4216",
       "name": "星 栄爾",
       "class": "B1",
@@ -71,10 +150,37 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.15,
-      "raw_text": "３ 4216 / B1 星 栄爾 静岡/福島 41歳/54.7kg F0 L0 0.15 4.62 23.40 47.87 4.88 18.75 56.25 57 50.00 67.86 25 34.21 55.26 3 7 9 3 3R"
+      "national": {
+        "win_rate": 4.62,
+        "quinella_rate": 23.4,
+        "trio_rate": 47.87
+      },
+      "local": {
+        "win_rate": 4.88,
+        "quinella_rate": 18.75,
+        "trio_rate": 56.25
+      },
+      "motor": {
+        "no": 57,
+        "quinella_rate": 50.0,
+        "trio_rate": 67.86
+      },
+      "boat": {
+        "no": 25,
+        "quinella_rate": 34.21,
+        "trio_rate": 55.26
+      },
+      "series_tokens": [
+        "3",
+        "7",
+        "9",
+        "3"
+      ],
+      "early_race": 3,
+      "raw_text": "3 4216 / B1 星 栄爾 静岡/福島 41歳/54.7kg F0 L0 0.15 4.62 23.40 47.87 4.88 18.75 56.25 57 50.00 67.86 25 34.21 55.26 3 7 9 3 3R"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "5294",
       "name": "豊田 祥生",
       "class": "B1",
@@ -85,10 +191,36 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "４ 5294 / B1 豊田 祥生 静岡/静岡 24歳/51.0kg F0 L0 0.17 3.71 17.33 26.67 4.13 25.00 25.00 42 36.11 50.00 26 31.43 45.71 5 5 10"
+      "national": {
+        "win_rate": 3.71,
+        "quinella_rate": 17.33,
+        "trio_rate": 26.67
+      },
+      "local": {
+        "win_rate": 4.13,
+        "quinella_rate": 25.0,
+        "trio_rate": 25.0
+      },
+      "motor": {
+        "no": 42,
+        "quinella_rate": 36.11,
+        "trio_rate": 50.0
+      },
+      "boat": {
+        "no": 26,
+        "quinella_rate": 31.43,
+        "trio_rate": 45.71
+      },
+      "series_tokens": [
+        "5",
+        "5",
+        "10"
+      ],
+      "early_race": null,
+      "raw_text": "4 5294 / B1 豊田 祥生 静岡/静岡 24歳/51.0kg F0 L0 0.17 3.71 17.33 26.67 4.13 25.00 25.00 42 36.11 50.00 26 31.43 45.71 5 5 10"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "4991",
       "name": "宗行 治哉",
       "class": "A1",
@@ -99,10 +231,38 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.18,
-      "raw_text": "５ 4991 / A1 宗行 治哉 広島/広島 29歳/52.0kg F0 L0 0.18 6.49 42.00 62.00 6.73 45.45 72.73 1 15.38 30.77 17 14.71 38.24 7 12 3 12 2 2R"
+      "national": {
+        "win_rate": 6.49,
+        "quinella_rate": 42.0,
+        "trio_rate": 62.0
+      },
+      "local": {
+        "win_rate": 6.73,
+        "quinella_rate": 45.45,
+        "trio_rate": 72.73
+      },
+      "motor": {
+        "no": 1,
+        "quinella_rate": 15.38,
+        "trio_rate": 30.77
+      },
+      "boat": {
+        "no": 17,
+        "quinella_rate": 14.71,
+        "trio_rate": 38.24
+      },
+      "series_tokens": [
+        "7",
+        "12",
+        "3",
+        "12",
+        "2"
+      ],
+      "early_race": 2,
+      "raw_text": "5 4991 / A1 宗行 治哉 広島/広島 29歳/52.0kg F0 L0 0.18 6.49 42.00 62.00 6.73 45.45 72.73 1 15.38 30.77 17 14.71 38.24 7 12 3 12 2 2R"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "3999",
       "name": "大瀧 明日香",
       "class": "A2",
@@ -113,12 +273,251 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "６ 3999 / A2 大瀧 明日香 愛知/静岡 47歳/46.0kg F1 L0 0.16 6.13 47.62 63.81 6.52 42.86 76.19 50 44.12 64.71 19 20.00 31.43 6 11 8 12"
+      "national": {
+        "win_rate": 6.13,
+        "quinella_rate": 47.62,
+        "trio_rate": 63.81
+      },
+      "local": {
+        "win_rate": 6.52,
+        "quinella_rate": 42.86,
+        "trio_rate": 76.19
+      },
+      "motor": {
+        "no": 50,
+        "quinella_rate": 44.12,
+        "trio_rate": 64.71
+      },
+      "boat": {
+        "no": 19,
+        "quinella_rate": 20.0,
+        "trio_rate": 31.43
+      },
+      "series_tokens": [
+        "6",
+        "11",
+        "8",
+        "12"
+      ],
+      "early_race": null,
+      "raw_text": "6 3999 / A2 大瀧 明日香 愛知/静岡 47歳/46.0kg F1 L0 0.16 6.13 47.62 63.81 6.52 42.86 76.19 50 44.12 64.71 19 20.00 31.43 6 11 8 12"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "weight_kg": 52.4,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.7,
+        "tilt": -0.5
+      },
+      {
+        "lane": 2,
+        "weight_kg": 55.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.7,
+        "tilt": -0.5
+      },
+      {
+        "lane": 3,
+        "weight_kg": 54.7,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.78,
+        "tilt": 0.0
+      },
+      {
+        "lane": 4,
+        "weight_kg": 51.0,
+        "adjustment_kg": 1.0,
+        "exhibition_time": 6.75,
+        "tilt": -0.5
+      },
+      {
+        "lane": 5,
+        "weight_kg": 52.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.78,
+        "tilt": 0.0
+      },
+      {
+        "lane": 6,
+        "weight_kg": 46.0,
+        "adjustment_kg": 1.0,
+        "exhibition_time": 6.84,
+        "tilt": -0.5
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "course": 1,
+        "st": "0.15",
+        "exhibition_f": false
+      },
+      {
+        "lane": 2,
+        "course": 2,
+        "st": "0.04",
+        "exhibition_f": false
+      },
+      {
+        "lane": 3,
+        "course": 3,
+        "st": "0.04",
+        "exhibition_f": false
+      },
+      {
+        "lane": 4,
+        "course": 4,
+        "st": "0.08",
+        "exhibition_f": false
+      },
+      {
+        "lane": 5,
+        "course": 5,
+        "st": "0.09",
+        "exhibition_f": false
+      },
+      {
+        "lane": 6,
+        "course": 6,
+        "st": "0.15",
+        "exhibition_f": false
+      }
+    ],
+    "weather": {
+      "observed_at": "1426",
+      "wind_speed_ms": 1.0,
+      "wind_direction": 1,
+      "wave_cm": 1.0,
+      "weather_code": 2,
+      "air_temp_c": 21.0,
+      "water_temp_c": 22.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [
+    {
+      "lane": 1,
+      "course": 1,
+      "exhibition_st": 0.15,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.15"
+    },
+    {
+      "lane": 2,
+      "course": 2,
+      "exhibition_st": 0.04,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.04"
+    },
+    {
+      "lane": 3,
+      "course": 3,
+      "exhibition_st": 0.04,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.04"
+    },
+    {
+      "lane": 4,
+      "course": 4,
+      "exhibition_st": 0.08,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.08"
+    },
+    {
+      "lane": 5,
+      "course": 5,
+      "exhibition_st": 0.09,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.09"
+    },
+    {
+      "lane": 6,
+      "course": 6,
+      "exhibition_st": 0.15,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.15"
+    }
+  ],
+  "original_exhibition": {
+    "labels": [
+      "一周",
+      "まわり足",
+      "直線"
+    ],
+    "boats": [
+      {
+        "lane": 1,
+        "name": "中島 秀治",
+        "values": [
+          36.41,
+          5.51,
+          6.97
+        ]
+      },
+      {
+        "lane": 2,
+        "name": "川尻 泰輔",
+        "values": [
+          37.0,
+          5.57,
+          7.17
+        ]
+      },
+      {
+        "lane": 3,
+        "name": "星 栄爾",
+        "values": [
+          36.93,
+          5.63,
+          7.1
+        ]
+      },
+      {
+        "lane": 4,
+        "name": "豊田 祥生",
+        "values": [
+          37.6,
+          5.4,
+          7.13
+        ]
+      },
+      {
+        "lane": 5,
+        "name": "宗行 治哉",
+        "values": [
+          36.94,
+          5.53,
+          7.03
+        ]
+      },
+      {
+        "lane": 6,
+        "name": "大瀧 明日香",
+        "values": [
+          37.5,
+          5.4,
+          7.07
+        ]
+      }
+    ]
+  },
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": true,
+      "tkz": true,
+      "sui": true,
+      "original_exhibition": true
+    },
+    "core7_ready": true,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
