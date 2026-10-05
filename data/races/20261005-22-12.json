@@ -1,14 +1,14 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v4",
   "race_key": "20261005-22-12",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "22",
     "venue": "福岡",
-    "event": "マンスリーＢＯＡＴＲＡＣＥ杯",
+    "event": "マンスリーBOATRACE杯",
     "race_no": 12,
     "deadline": "16:41",
-    "updated_at": "2026-10-05T14:51:03+09:00",
+    "updated_at": "2026-10-05T15:18:09+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,21 +18,45 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=22&rno=12",
-      "fetched_at": "2026-10-05T14:51:03+09:00",
-      "sha256": "27cc98e32d1b5054dc55ce40575ffdceee6ca21697536fe064af04a651cf979b",
+      "fetched_at": "2026-10-05T15:18:09+09:00",
+      "sha256": "fbda6d541a87d039ac898fca1c239024c7983e4e709f89fa22abf14c4b3c877c",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=22&rno=12",
-      "fetched_at": "2026-10-05T14:51:03+09:00",
-      "sha256": "8a9d3783d33a67cfce96a15106ca173bb630ed563727b02cb4bfee268674089f",
+      "fetched_at": "2026-10-05T15:18:09+09:00",
+      "sha256": "d648f40a06d13bae23da827f37a3c42bdf98ed8a6de00aa9e5e3d171aad6be70",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "5db35db6239d860f4ff4642d72b6403eb9007029f0478703ffb40c71150e265c"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "766d7ecedf6475bdf5d5bcda12bdd4fdd68a4647eb66d42b0792fb198d83eb72"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "d18024536048857af9f17b87238be40fa2372f005614e372039680bb7804af6e"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "ac49cfd9726370bece56ab06d07df2a3897a9bd48b7a048c0d38153a29dcc2a0"
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "4184",
       "name": "渡邊 雄一郎",
       "class": "A1",
@@ -43,10 +67,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "１ 4184 / A1 渡邊 雄一郎 大阪/大阪 40歳/52.5kg F0 L0 0.17 7.17 55.43 73.91 6.93 58.62 68.97 39 40.00 64.00 154 16.83 37.62 1 12 10 5 9 3 12 4 4R"
+      "national": {
+        "win_rate": 7.17,
+        "quinella_rate": 55.43,
+        "trio_rate": 73.91
+      },
+      "local": {
+        "win_rate": 6.93,
+        "quinella_rate": 58.62,
+        "trio_rate": 68.97
+      },
+      "motor": {
+        "no": 39,
+        "quinella_rate": 40.0,
+        "trio_rate": 64.0
+      },
+      "boat": {
+        "no": 154,
+        "quinella_rate": 16.83,
+        "trio_rate": 37.62
+      },
+      "series_tokens": [
+        "1",
+        "12",
+        "10",
+        "5",
+        "9",
+        "3",
+        "12",
+        "4"
+      ],
+      "early_race": 4,
+      "raw_text": "1 4184 / A1 渡邊 雄一郎 大阪/大阪 40歳/52.5kg F0 L0 0.17 7.17 55.43 73.91 6.93 58.62 68.97 39 40.00 64.00 154 16.83 37.62 1 12 10 5 9 3 12 4 4R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "3473",
       "name": "石川 真二",
       "class": "A1",
@@ -57,10 +112,41 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.14,
-      "raw_text": "２ 3473 / A1 石川 真二 福岡/福岡 56歳/52.5kg F1 L0 0.14 6.97 56.20 71.07 6.89 50.60 73.49 34 42.47 54.79 174 40.17 52.99 8 12 6 3 12 6 10 5 5R"
+      "national": {
+        "win_rate": 6.97,
+        "quinella_rate": 56.2,
+        "trio_rate": 71.07
+      },
+      "local": {
+        "win_rate": 6.89,
+        "quinella_rate": 50.6,
+        "trio_rate": 73.49
+      },
+      "motor": {
+        "no": 34,
+        "quinella_rate": 42.47,
+        "trio_rate": 54.79
+      },
+      "boat": {
+        "no": 174,
+        "quinella_rate": 40.17,
+        "trio_rate": 52.99
+      },
+      "series_tokens": [
+        "8",
+        "12",
+        "6",
+        "3",
+        "12",
+        "6",
+        "10",
+        "5"
+      ],
+      "early_race": 5,
+      "raw_text": "2 3473 / A1 石川 真二 福岡/福岡 56歳/52.5kg F1 L0 0.14 6.97 56.20 71.07 6.89 50.60 73.49 34 42.47 54.79 174 40.17 52.99 8 12 6 3 12 6 10 5 5R"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "4220",
       "name": "深川 和仁",
       "class": "B1",
@@ -71,10 +157,40 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.18,
-      "raw_text": "３ 4220 / B1 深川 和仁 香川/香川 44歳/54.1kg F1 L0 0.18 5.58 38.89 48.89 4.81 25.93 40.74 18 34.55 51.82 101 31.15 47.54 3 10 11 7 11 7 3 3R"
+      "national": {
+        "win_rate": 5.58,
+        "quinella_rate": 38.89,
+        "trio_rate": 48.89
+      },
+      "local": {
+        "win_rate": 4.81,
+        "quinella_rate": 25.93,
+        "trio_rate": 40.74
+      },
+      "motor": {
+        "no": 18,
+        "quinella_rate": 34.55,
+        "trio_rate": 51.82
+      },
+      "boat": {
+        "no": 101,
+        "quinella_rate": 31.15,
+        "trio_rate": 47.54
+      },
+      "series_tokens": [
+        "3",
+        "10",
+        "11",
+        "7",
+        "11",
+        "7",
+        "3"
+      ],
+      "early_race": 3,
+      "raw_text": "3 4220 / B1 深川 和仁 香川/香川 44歳/54.1kg F1 L0 0.18 5.58 38.89 48.89 4.81 25.93 40.74 18 34.55 51.82 101 31.15 47.54 3 10 11 7 11 7 3 3R"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "4227",
       "name": "安達 裕樹",
       "class": "A2",
@@ -85,10 +201,40 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "４ 4227 / A2 安達 裕樹 三重/三重 43歳/52.0kg F1 L0 0.16 5.77 30.77 50.55 6.37 42.11 57.89 15 42.07 57.93 123 46.61 64.41 9 2 12 9 7 11 8R"
+      "national": {
+        "win_rate": 5.77,
+        "quinella_rate": 30.77,
+        "trio_rate": 50.55
+      },
+      "local": {
+        "win_rate": 6.37,
+        "quinella_rate": 42.11,
+        "trio_rate": 57.89
+      },
+      "motor": {
+        "no": 15,
+        "quinella_rate": 42.07,
+        "trio_rate": 57.93
+      },
+      "boat": {
+        "no": 123,
+        "quinella_rate": 46.61,
+        "trio_rate": 64.41
+      },
+      "series_tokens": [
+        "9",
+        "2",
+        "12",
+        "9",
+        "7",
+        "11",
+        "8"
+      ],
+      "early_race": 8,
+      "raw_text": "4 4227 / A2 安達 裕樹 三重/三重 43歳/52.0kg F1 L0 0.16 5.77 30.77 50.55 6.37 42.11 57.89 15 42.07 57.93 123 46.61 64.41 9 2 12 9 7 11 8 8R"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "4645",
       "name": "上村 純一",
       "class": "A1",
@@ -99,10 +245,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.14,
-      "raw_text": "５ 4645 / A1 上村 純一 群馬/千葉 46歳/52.6kg F0 L0 0.14 6.68 47.83 70.43 6.05 50.00 54.55 11 37.16 54.05 104 31.36 47.46 11 3 10 1 10 7 12 7 7R"
+      "national": {
+        "win_rate": 6.68,
+        "quinella_rate": 47.83,
+        "trio_rate": 70.43
+      },
+      "local": {
+        "win_rate": 6.05,
+        "quinella_rate": 50.0,
+        "trio_rate": 54.55
+      },
+      "motor": {
+        "no": 11,
+        "quinella_rate": 37.16,
+        "trio_rate": 54.05
+      },
+      "boat": {
+        "no": 104,
+        "quinella_rate": 31.36,
+        "trio_rate": 47.46
+      },
+      "series_tokens": [
+        "11",
+        "3",
+        "10",
+        "1",
+        "10",
+        "7",
+        "12",
+        "7"
+      ],
+      "early_race": 7,
+      "raw_text": "5 4645 / A1 上村 純一 群馬/千葉 46歳/52.6kg F0 L0 0.14 6.68 47.83 70.43 6.05 50.00 54.55 11 37.16 54.05 104 31.36 47.46 11 3 10 1 10 7 12 7 7R"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "5038",
       "name": "金田 智博",
       "class": "A2",
@@ -113,7 +290,37 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "６ 5038 / A2 金田 智博 福井/石川 28歳/52.0kg F0 L0 0.16 6.53 50.85 62.71 6.09 45.45 72.73 74 41.35 55.77 136 33.06 52.07 4 8 9 4 9 10 6 6R"
+      "national": {
+        "win_rate": 6.53,
+        "quinella_rate": 50.85,
+        "trio_rate": 62.71
+      },
+      "local": {
+        "win_rate": 6.09,
+        "quinella_rate": 45.45,
+        "trio_rate": 72.73
+      },
+      "motor": {
+        "no": 74,
+        "quinella_rate": 41.35,
+        "trio_rate": 55.77
+      },
+      "boat": {
+        "no": 136,
+        "quinella_rate": 33.06,
+        "trio_rate": 52.07
+      },
+      "series_tokens": [
+        "4",
+        "8",
+        "9",
+        "4",
+        "9",
+        "10",
+        "6"
+      ],
+      "early_race": 6,
+      "raw_text": "6 5038 / A2 金田 智博 福井/石川 28歳/52.0kg F0 L0 0.16 6.53 50.85 62.71 6.09 45.45 72.73 74 41.35 55.77 136 33.06 52.07 4 8 9 4 9 10 6 6R"
     }
   ],
   "beforeinfo": {
@@ -140,7 +347,7 @@
         "lane": 4,
         "exhibition_time": null,
         "tilt": null,
-        "raw_text": "4 安達 裕樹 52.0kg R"
+        "raw_text": "4 安達 裕樹 52.0kg R 8"
       },
       {
         "lane": 5,
@@ -157,8 +364,8 @@
     ],
     "start_exhibition": [],
     "weather": {
-      "air_temp_c": 26.0,
-      "water_temp_c": 25.0,
+      "air_temp_c": null,
+      "water_temp_c": null,
       "wind_speed_ms": 3.0,
       "wave_cm": 3.0
     }
@@ -166,5 +373,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
