@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v17</title>
+<title>BOAT EDGE v18</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -270,6 +270,275 @@ td .lane{margin:auto}
   .ticket{grid-template-columns:28px 1fr 60px 62px}
   .combo{font-size:18px}
 }
+
+/* ===== BOAT EDGE v18 visual refinement ===== */
+:root{
+  --blue-deep:#0b3a82;
+  --blue-mid:#1769e0;
+  --blue-soft:#eaf3ff;
+  --cyan-soft:#eefaff;
+  --ink:#143055;
+  --shadow-soft:0 10px 30px rgba(31,91,166,.08);
+  --shadow-card:0 6px 18px rgba(18,76,148,.07);
+}
+
+/* slightly smaller, denser typography */
+body{
+  font-size:13px;
+  letter-spacing:.005em;
+}
+.topbar{min-height:58px}
+.brandtext{font-size:17px}
+.brandtext small{font-size:10px}
+.primary-btn,.ghost-btn{font-size:11px;padding:9px 12px}
+.live-pill{font-size:10px}
+.hero h1{font-size:31px;line-height:1.18;letter-spacing:-.035em}
+.hero p{font-size:12px;line-height:1.75}
+.kicker{font-size:10px}
+.title h2{font-size:16px}
+.title span,.note{font-size:11px}
+.hero-stat .label{font-size:10px}
+.hero-stat .value{font-size:20px}
+.deadline-place{font-size:12px}
+.deadline-time{font-size:22px}
+.deadline-meta{font-size:10px}
+.vname{font-size:14px}
+.vstate{font-size:10px}
+.decision-title{font-size:10px}
+.decision-main{font-size:25px}
+.decision-grade{font-size:23px}
+.world h3{font-size:20px}
+.world .caption{font-size:11px}
+.world-prob{font-size:25px}
+.world-budget{font-size:10px}
+.combo{font-size:17px}
+.rank,.prob{font-size:10px}
+.amount{font-size:11px}
+.subreason{font-size:10px}
+.boat-name{font-size:12px}
+.boat-sub{font-size:10px}
+.metric .m-label{font-size:9px}
+.metric .m-value{font-size:12px}
+table{font-size:10.5px}
+th,td{padding:8px 7px}
+.auditbox{font-size:11px;line-height:1.7}
+.status-badge{font-size:9px}
+.tabbtn{font-size:11px}
+.race-title{font-size:24px}
+.race-meta{font-size:11px}
+
+/* premium blue/white visual system */
+body{
+  background:
+    radial-gradient(circle at 12% 0%, rgba(43,126,255,.10), transparent 24rem),
+    radial-gradient(circle at 88% 8%, rgba(79,197,255,.10), transparent 22rem),
+    linear-gradient(180deg,#f8fbff 0%,#f3f8ff 42%,#f8fbff 100%);
+  color:var(--ink);
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background-image:
+    linear-gradient(rgba(30,105,224,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,105,224,.035) 1px, transparent 1px);
+  background-size:28px 28px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.65),transparent 78%);
+}
+.topbar{
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(31,105,224,.12);
+  box-shadow:0 4px 20px rgba(31,91,166,.05);
+}
+.topbar::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,transparent,#1b70e8 24%,#63c7ff 50%,#1b70e8 76%,transparent);
+  opacity:.55;
+}
+.brand .mark{
+  box-shadow:0 0 0 5px rgba(25,105,224,.08),0 8px 18px rgba(25,105,224,.22);
+  position:relative;
+}
+.brand .mark::after{
+  content:"";
+  position:absolute;
+  inset:5px 4px;
+  border-radius:999px;
+  border-top:2px solid rgba(255,255,255,.95);
+  transform:rotate(-18deg);
+}
+.card,.deadline-card,.venue,.boat,.tablewrap{
+  border-color:rgba(31,105,224,.12);
+  box-shadow:var(--shadow-card);
+}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,252,255,.98));
+}
+.hero-main{
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.98),rgba(236,246,255,.98));
+}
+.hero-main::before{
+  content:"";
+  position:absolute;
+  width:240px;height:240px;
+  right:-85px;top:-105px;
+  border-radius:50%;
+  border:28px solid rgba(48,126,235,.07);
+  box-shadow:0 0 0 28px rgba(89,189,255,.045),0 0 0 56px rgba(89,189,255,.03);
+}
+.hero-main::after{
+  content:"BOAT EDGE";
+  position:absolute;
+  right:18px;bottom:10px;
+  font-size:10px;font-weight:900;letter-spacing:.22em;
+  color:rgba(20,77,151,.18);
+}
+.hero-side{
+  background:linear-gradient(160deg,#ffffff 0%,#eff7ff 100%);
+}
+.kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 9px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#eaf3ff,#eefaff);
+  border:1px solid #d7e9ff;
+}
+.kicker::before{
+  content:"";
+  width:6px;height:6px;border-radius:50%;
+  background:linear-gradient(135deg,#1769e0,#65c9ff);
+  box-shadow:0 0 0 4px rgba(23,105,224,.08);
+}
+.title h2{
+  position:relative;
+  padding-left:11px;
+}
+.title h2::before{
+  content:"";
+  position:absolute;
+  left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:15px;border-radius:99px;
+  background:linear-gradient(180deg,#1769e0,#68cbff);
+}
+.deadline-card{
+  position:relative;
+  overflow:hidden;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.deadline-card::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,#1769e0,#6acbff);
+  opacity:.35;
+}
+.deadline-card:hover,.venue.on:hover,.boat:hover{
+  transform:translateY(-1px);
+  border-color:rgba(31,105,224,.28);
+  box-shadow:0 10px 24px rgba(31,91,166,.11);
+}
+.hero-stat{
+  background:linear-gradient(180deg,#fff,#f4f9ff);
+  border:1px solid #deebfb;
+}
+.primary-btn{
+  background:linear-gradient(135deg,#0f5fd2,#2587f2);
+  box-shadow:0 7px 16px rgba(23,105,224,.18);
+}
+.ghost-btn{
+  background:linear-gradient(180deg,#fff,#f4f9ff);
+}
+.system-banner{
+  box-shadow:0 7px 20px rgba(31,91,166,.08);
+}
+.race-tabs{
+  background:rgba(255,255,255,.90);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.tabbtn.active{
+  background:linear-gradient(180deg,#eef6ff,#e5f1ff);
+  color:#0f5fd2;
+  box-shadow:inset 0 -2px 0 #1769e0;
+}
+.decision{
+  background:
+    radial-gradient(circle at 95% 5%,rgba(84,184,255,.10),transparent 9rem),
+    linear-gradient(180deg,#fff,#f8fbff);
+}
+.world{
+  position:relative;
+  overflow:hidden;
+}
+.world::before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,#1769e0,#69cfff);
+}
+.tablewrap{
+  background:rgba(255,255,255,.96);
+}
+th{
+  background:linear-gradient(180deg,#f4f8ff,#edf5ff);
+  color:#24496f;
+  font-weight:850;
+}
+tr:hover td{background:#f8fbff}
+.bottom-nav{
+  background:rgba(255,255,255,.93);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(31,105,224,.12);
+  box-shadow:0 -6px 24px rgba(31,91,166,.05);
+}
+.bottom-nav button{
+  font-size:10px;
+}
+.bottom-nav button.active{
+  color:#0f5fd2;
+}
+.mono{font-size:.92em}
+@media(max-width:700px){
+  body{font-size:12px}
+  .hero h1{font-size:25px}
+  .hero p{font-size:11px}
+  .decision-main{font-size:22px}
+  .decision-grade{font-size:20px}
+  .world h3{font-size:18px}
+  .world-prob{font-size:22px}
+  .combo{font-size:15px}
+  table{font-size:10px}
+  .primary-btn,.ghost-btn{font-size:10px;padding:8px 10px}
+}
+
+
+.edge-accent{
+  height:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  opacity:.6;
+}
+.edge-accent span{
+  display:block;
+  width:22px;height:2px;border-radius:99px;
+  background:linear-gradient(90deg,#1769e0,#63c9ff);
+}
+.edge-accent span:nth-child(2){width:44px}
+
 </style>
 </head>
 <body>
@@ -277,7 +546,7 @@ td .lane{margin:auto}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v17</small></div>
+      <div class="brandtext">BOAT EDGE <small>v18</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>AUTO 5分</span></div>
@@ -285,6 +554,9 @@ td .lane{margin:auto}
       <button class="ghost-btn" id="runCollectorBtn">収集を開始</button>
     </div>
   </header>
+  <div class="edge-accent" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
   <div id="systemBanner" class="system-banner"></div>
   <div id="refreshToast" class="refresh-toast"></div>
 
