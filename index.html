@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v18</title>
+<title>BOAT EDGE v19</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v18 visual refinement ===== */
+/* ===== BOAT EDGE v19 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -539,6 +539,14 @@ tr:hover td{background:#f8fbff}
 }
 .edge-accent span:nth-child(2){width:44px}
 
+
+.next-race-bar{margin:8px auto 0;max-width:1180px;padding:9px 12px;border:1px solid rgba(31,105,224,.13);border-radius:13px;background:rgba(255,255,255,.92);box-shadow:0 6px 18px rgba(31,91,166,.06);display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:64px;z-index:18;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.next-race-bar>div{display:flex;align-items:center;gap:8px;min-width:0}.next-kicker{font-size:8px;font-weight:950;letter-spacing:.12em;color:#1769e0;border:1px solid #cfe3ff;background:#edf6ff;padding:3px 5px;border-radius:6px}
+#nextRaceName{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#nextRaceDeadline{font-size:10px;color:#62758c;white-space:nowrap}
+#nextRaceOpenBtn{flex:0 0 auto;border:0;border-radius:9px;padding:7px 10px;font-size:10px;font-weight:900;color:#fff;background:linear-gradient(135deg,#0f5fd2,#2587f2)}
+.source-mini{margin-top:10px;padding:8px 10px;border-radius:10px;font-size:9.5px;line-height:1.55;color:#50657e;background:linear-gradient(180deg,#f8fbff,#eff6ff);border:1px solid #dceaff}
+@media(max-width:700px){.next-race-bar{margin:6px 10px 0;top:58px;padding:8px 9px}#nextRaceName{max-width:190px}}
+
 </style>
 </head>
 <body>
@@ -546,10 +554,10 @@ tr:hover td{background:#f8fbff}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v18</small></div>
+      <div class="brandtext">BOAT EDGE <small>v19</small></div>
     </div>
     <div class="header-actions">
-      <div class="live-pill" id="live"><span class="live-dot"></span><span>AUTO 5分</span></div>
+      <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
       <button class="primary-btn" id="refreshTopBtn">今すぐ更新</button>
       <button class="ghost-btn" id="runCollectorBtn">収集を開始</button>
     </div>
@@ -559,6 +567,11 @@ tr:hover td{background:#f8fbff}
   </div>
   <div id="systemBanner" class="system-banner"></div>
   <div id="refreshToast" class="refresh-toast"></div>
+  <div id="nextRaceBar" class="next-race-bar">
+    <div><span class="next-kicker">NEXT</span><b id="nextRaceName">次レース読込中</b><span id="nextRaceDeadline">－</span></div>
+    <button id="nextRaceOpenBtn" type="button">開く</button>
+  </div>
+
 
   <main id="homeView" class="view active">
     <section class="hero">
@@ -581,6 +594,7 @@ tr:hover td{background:#f8fbff}
             <div class="hero-stat"><div class="label">CORE7</div><div class="value" id="statCore7">－</div></div>
             <div class="hero-stat"><div class="label">CURRENT</div><div class="value" id="statModel">－</div></div>
           </div>
+<div id="sourceMini" class="source-mini">ソース状況読込中…</div>
         </div>
       </div>
     </section>
@@ -790,10 +804,11 @@ const raceTabs = [
   ["data","データ"],
   ["audit","監査"]
 ];
-const state = {today:null, model:null, race:null, currentVenue:null};
+const state = {today:null, model:null, formal:null, race:null, currentVenue:null};
 
+function formalState(){ return state.formal || FORMAL_VALIDATION; }
 const f = v => (v===null || v===undefined || v==="") ? "－" : v;
-const num = v => Number.isFinite(Number(v)) ? Number(v) : null;
+const num = v => (v===null || v===undefined || String(v).trim()==="") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
 const pct = v => v===null || v===undefined || isNaN(Number(v)) ? "－" : `${Number(v).toFixed(Number(v)%1?1:0)}%`;
 const laneNo = (r,i) => r?.lane ?? (i+1);
 
@@ -1042,12 +1057,12 @@ function buildFallbackPrediction(d){
     worlds:[
       {
         key:"A", title:"イン逃げ成立", probability:worldAProb, budget:budgetA,
-        caption:`1号艇中心。内残りを主軸に整理。`,
+        caption:`サイト簡易スコア。正式CURRENTとは別計算。1号艇中心の内残り。`,
         tickets:aTickets.map((x,idx)=>({rank:idx+1, combo:x.combo, probability:x.probability, amount:aAmounts[idx]}))
       },
       {
         key:"B", title:"イン逃げ不成立", probability:worldBProb, budget:budgetB,
-        caption:`攻め役は ${leader} 想定。まくり差し / 差し寄りも含む。`,
+        caption:`サイト簡易スコア。攻め役は ${leader} 想定。`,
         tickets:bTickets.map((x,idx)=>({rank:idx+1, combo:x.combo, probability:x.probability, amount:bAmounts[idx]}))
       }
     ],
@@ -1141,21 +1156,22 @@ renderTabs();
 
 function renderModelPanels(){
   const model = state.model || {};
+  const formal = formalState();
   const core = model.core7 || {};
   const guards = model.guards || {};
   const elig = core.eligible_count ?? "－";
   const req = core.required_count ?? 100;
   const collectorReady = Number(core.eligible_count||0) >= Number(req||100);
   const modelName = model.model || "V1.21.33-SCENARIO-DIVERSE-CONFIRM";
-  const fg = FORMAL_VALIDATION.guards;
+  const fg = formal.guards || {};
 
   const text1 = `<b>サイト収集 / 正式検証を分離表示</b><br>
     <b>サイト収集</b>: CORE7 <b>${elig}/${req}R</b> ${collectorReady?statusBadge("green","収集条件OK"):statusBadge("orange","収集中")}<br>
     <span class="note">このCORE7件数はサイト表示用の収集状況。正式freshのfirst100とは別物です。</span><br><br>
-    <b>正式検証CURRENT</b>: <span class="mono">${FORMAL_VALIDATION.current}</span><br>
-    stage: <b>${FORMAL_VALIDATION.stage}</b><br>
-    正式first100: <b>${FORMAL_VALIDATION.formalFirst100.races}R / ${FORMAL_VALIDATION.formalFirst100.racers} racers / ${FORMAL_VALIDATION.formalFirst100.pairs} pairs</b><br>
-    freeze SHA: <span class="mono">${FORMAL_VALIDATION.formalFirst100.freezeManifestSha.slice(0,16)}…</span><br>
+    <b>正式検証CURRENT</b>: <span class="mono">${formal.current || '正式CURRENT同期待ち'}</span><br>
+    stage: <b>${formal.stage || '正式検証同期待ち'}</b><br>
+    正式first100: <b>${formal.formalFirst100?.races ?? '－'}R / ${formal.formalFirst100?.racers ?? '－'} racers / ${formal.formalFirst100?.pairs ?? '－'} pairs</b><br>
+    freeze SHA: <span class="mono">${formal.formalFirst100?.freezeManifestSha ? formal.formalFirst100.freezeManifestSha.slice(0,16)+'…' : '－'}</span><br>
     guards: results_seen=<span class="${fg.results_seen?'bad':'good'}">${fg.results_seen}</span> /
     unlock=<span class="${fg.unlock?'bad':'good'}">${fg.unlock}</span> /
     scoring=<span class="${fg.scoring?'bad':'good'}">${fg.scoring}</span><br>
@@ -1166,9 +1182,17 @@ function renderModelPanels(){
   document.getElementById("dataCenterModel").innerHTML = text1;
   document.getElementById("statCore7").textContent = `${elig}/${req}`;
   document.getElementById("statModel").textContent = "PRE_RESULT";
+  const rows = model.source_rows || {}, h = state.health || {};
+  const sourceMini=document.getElementById("sourceMini");
+  if(sourceMini){
+    const five=["stt","tkz","sui","original_exhibition"].map(k=>Number(rows[k]||0));
+    const published=five.filter(x=>x>0).length;
+    const cards=h.race_cards_ok ?? rows.race_cards ?? 0, total=h.race_cards_total ?? "－";
+    sourceMini.innerHTML=`<b>取得状況</b>　公式出走表 ${cards}/${total}R　/　直前 ${h.beforeinfo_ok ?? 0}R　/　5ソース ${published}/4公開中`;
+  }
   document.getElementById("dcModel").textContent = modelName;
   document.getElementById("dcCore").textContent = `SITE CORE7 ${elig}/${req}`;
-  document.getElementById("dcReady").textContent = FORMAL_VALIDATION.stage;
+  document.getElementById("dcReady").textContent = formal.stage || "正式検証同期待ち";
 }
 function renderHealthPanels(){
   const d = state.today || {};
@@ -1205,6 +1229,14 @@ function collectRaces(){
   });
   return rows;
 }
+function updateNextRaceBar(){
+  const rows=collectRaces().filter(x=>x.mins!==null && x.mins>=0);
+  const n=rows[0], name=document.getElementById("nextRaceName"), dl=document.getElementById("nextRaceDeadline"), btn=document.getElementById("nextRaceOpenBtn");
+  if(!name||!dl||!btn) return;
+  if(!n){name.textContent="本日の締切対象なし";dl.textContent="－";btn.disabled=true;return;}
+  name.textContent=`${n.venue} ${n.race_no}R`;dl.textContent=`締切 ${n.deadline} / あと${Math.max(0,n.mins)}分`;btn.disabled=false;btn.onclick=()=>loadRace(n.file,n.jcd);
+}
+
 function renderDeadlineBoard(){
   const rows = collectRaces();
   const show = rows.filter(x=>x.mins===null || x.mins>=-5).slice(0,24);
@@ -1251,6 +1283,7 @@ function renderVenues(){
 }
 function renderHome(){
   renderDeadlineBoard();
+  updateNextRaceBar();
   renderVenues();
   renderModelPanels();
   renderHealthPanels();
@@ -1284,6 +1317,10 @@ function renderInputCompleteness(d, pred){
     <div class="note" style="margin-top:8px">${pred.mode==='formal'?'正式CURRENTを優先表示中':'不足分を勝手に補完せず、取得済み情報だけで暫定計算'}</div>
   `;
 }
+function ageMinutes(iso){
+  if(!iso) return null; const t=new Date(iso).getTime(); if(!Number.isFinite(t)) return null;
+  return Math.max(0,Math.floor((Date.now()-t)/60000));
+}
 function updateSystemBanner(){
   const box = document.getElementById("systemBanner");
   if(!box) return;
@@ -1299,7 +1336,7 @@ function updateSystemBanner(){
   }else{
     const core = state.model?.core7;
     box.className = "system-banner show good";
-    box.innerHTML = `<b>正常更新</b>　PRE_RESULT維持 / サイトCORE7 ${core?.eligible_count ?? '－'}/${core?.required_count ?? 100} / 正式検証 ${FORMAL_VALIDATION.stage}`;
+    box.innerHTML = `<b>正常更新</b>　PRE_RESULT維持 / サイトCORE7 ${core?.eligible_count ?? '－'}/${core?.required_count ?? 100} / 正式検証 ${formal.stage || '正式検証同期待ち'}`;
   }
 }
 
@@ -1465,7 +1502,7 @@ function renderDataTab(d, pred){
     <b>選択レースの見方</b><br>
     総合点は「全国/当地/機力/展示/平均ST」を足し合わせた比較用の目安です。<br>
     イン残り寄与は <b>1号艇残りや内有利</b> を重視した値、攻め寄与は <b>差し / まくり差し / まくり寄り</b> を重視した値です。<br>
-    実進入や展示STが未取得なら、その項目は 0 寄与のままです。
+    実進入や展示STが未取得なら、その項目は <b>0寄与</b>。平均値・代理値での補完はしません。
   `;
   document.getElementById("selectedReasoning").innerHTML = `
     <b>今回の整理</b><br>
@@ -1505,7 +1542,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V19<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -1555,6 +1592,13 @@ async function loadRace(file, jcd){
     alert("レースデータを取得できませんでした");
   }
 }
+async function refreshFormalStatus(){
+  try{
+    const r=await fetch(`./data/formal_status.json?t=${Date.now()}`,{cache:"no-store"});
+    if(r.ok) state.formal=await r.json();
+  }catch(_){}
+}
+
 async function refreshToday(){
   const live = document.getElementById("live");
   live.innerHTML = `<span class="live-dot"></span><span>更新中</span>`;
@@ -1564,7 +1608,7 @@ async function refreshToday(){
     state.today = await r.json();
     renderHome();
     updateSystemBanner();
-    live.innerHTML = `<span class="live-dot"></span><span>AUTO 5分</span>`;
+    live.innerHTML = `<span class="live-dot"></span><span>定期収集</span>`;
   }catch(e){
     live.innerHTML = `<span class="live-dot" style="background:var(--warn)"></span><span>データ待ち</span>`;
   }
@@ -1590,11 +1634,20 @@ function updateGlobalDataViews(){
     "読込後反映";
 }
 async function refreshAll(force=false){
+  await refreshFormalStatus();
   await refreshToday();
   await refreshModel();
   updateGlobalDataViews();
 }
+let passiveRefreshTimer=null;
+function startPassiveRefresh(){
+  clearInterval(passiveRefreshTimer);
+  passiveRefreshTimer=setInterval(async()=>{if(document.visibilityState==="visible") await refreshAll(true);},60000);
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible") refreshAll(true);});
+
 refreshAll();
+startPassiveRefresh();
 setInterval(refreshAll, 60000);
 setInterval(()=>{ if(state.today) renderDeadlineBoard(); }, 30000);
 </script>
