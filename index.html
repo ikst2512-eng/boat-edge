@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v23</title>
+<title>BOAT EDGE v24</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v23 visual refinement ===== */
+/* ===== BOAT EDGE v24 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -717,6 +717,45 @@ tr:hover td{background:#f8fbff}
   .spotlight-deadline{font-size:22px}
 }
 
+
+/* ===== BOAT EDGE v24 race command view ===== */
+.race-command{display:grid;grid-template-columns:1.25fr .9fr .9fr;gap:9px;margin-top:12px}
+.command-card{padding:11px;border-radius:14px;border:1px solid #dce8f8;background:linear-gradient(180deg,#fff,#f7fbff);min-width:0}
+.command-card.primary{background:linear-gradient(135deg,#0d5fd6,#2e8ff8);border-color:#1769e0;color:#fff;box-shadow:0 8px 20px rgba(23,105,224,.18)}
+.command-card .ck{font-size:8px;font-weight:950;letter-spacing:.08em;color:var(--muted)}
+.command-card.primary .ck{color:rgba(255,255,255,.78)}
+.command-card .cv{font-size:17px;font-weight:950;color:var(--navy);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.command-card.primary .cv{color:#fff}
+.command-card .cs{font-size:8.5px;color:var(--muted);line-height:1.45;margin-top:4px}
+.command-card.primary .cs{color:rgba(255,255,255,.88)}
+.ticket-mini-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.ticket-mini{font-size:9px;font-weight:950;padding:4px 6px;border-radius:8px;background:#eef5ff;color:#1769e0;border:1px solid #d8e7ff}
+.command-card.primary .ticket-mini{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.22);color:#fff}
+
+.race-quicknav{display:flex;gap:6px;overflow:auto;scrollbar-width:none;margin-top:9px;padding-bottom:2px}
+.race-quicknav::-webkit-scrollbar{display:none}
+.quicknav-btn{flex:0 0 auto;border:1px solid #dbe8f8;background:#fff;color:#4b6480;border-radius:999px;padding:7px 10px;font-size:9px;font-weight:900}
+.quicknav-btn.strong{background:#1769e0;border-color:#1769e0;color:#fff}
+
+.change-box{padding:11px}
+.change-title{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.change-title b{font-size:11px;color:var(--navy)}
+.change-title span{font-size:8px;color:var(--muted)}
+.change-list{display:grid;gap:6px;margin-top:8px}
+.change-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:7px 8px;border-radius:10px;background:#f7fbff;border:1px solid #e1ecfa}
+.change-item .what{font-size:9px;color:#4d6480;line-height:1.4}
+.change-item .delta{font-size:8.5px;font-weight:950;color:#1769e0;white-space:nowrap}
+.change-none{font-size:9px;color:var(--muted);margin-top:7px}
+.command-badge{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;font-size:8px;font-weight:950}
+.command-badge.formal{background:#e7f8f2;color:#087b5b}.command-badge.prov{background:#fff2e4;color:#a76000}
+.command-badge.ready{background:#edf5ff;color:#1769e0}
+
+@media(max-width:760px){
+  .race-command{grid-template-columns:1fr 1fr}
+  .command-card.primary{grid-column:1/-1}
+  .command-card .cv{font-size:15px}
+}
+
 </style>
 </head>
 <body>
@@ -724,7 +763,7 @@ tr:hover td{background:#f8fbff}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v23</small></div>
+      <div class="brandtext">BOAT EDGE <small>v24</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -829,6 +868,8 @@ tr:hover td{background:#f8fbff}
             </div>
           </div>
           <div id="summaryStrip" class="strip" style="margin-top:14px"></div>
+          <div id="raceCommand" class="race-command"></div>
+          <div id="raceQuickNav" class="race-quicknav"></div>
           <div id="raceNav" class="race-nav"></div>
         </div>
       </div>
@@ -2094,7 +2135,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V23<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V24<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -2107,6 +2148,110 @@ function renderAuditTab(d, pred){
     formal_overlay = ${d.formal_meta ? "connected" : "none"}<br>
   `;
 }
+
+function topPredictionTickets(pred){
+  const rows=[];
+  for(const w of (pred.worlds||[])){
+    for(const t of (w.tickets||[])){
+      rows.push({...t,world:w.key||""});
+    }
+  }
+  return rows.sort((a,b)=>(Number(b.probability)||0)-(Number(a.probability)||0)).slice(0,3);
+}
+function dataCompletenessLabel(d){
+  let got=0,total=4;
+  if((d.racers||[]).length===6) got++;
+  if((d.beforeinfo?.racers||[]).length) got++;
+  if((d.beforeinfo?.start_exhibition||[]).length) got++;
+  if((d.actual_entry||[]).length===6) got++;
+  return {got,total,pct:Math.round(got/total*100)};
+}
+function raceScenarioHeadline(d,pred){
+  const scores=pred.scores||computeScores(d);
+  const one=scores.find(x=>x.lane===1);
+  const atk=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore)[0];
+  const a=pred.worlds?.find(x=>x.key==="A")?.probability;
+  const b=pred.worlds?.find(x=>x.key==="B")?.probability;
+  if(a!=null && b!=null){
+    return Number(a)>=Number(b)
+      ? `1号艇 ${f(one?.name)} の逃げ優勢`
+      : `${atk?.lane||"外"}号艇 ${f(atk?.name)} の攻め優勢`;
+  }
+  return `${f(one?.name)}の逃げ vs ${f(atk?.name)}の攻め`;
+}
+function renderRaceCommand(d,pred){
+  const top=topPredictionTickets(pred);
+  const comp=dataCompletenessLabel(d);
+  const status=pred.mode==="formal"?"正式":"暫定";
+  document.getElementById("raceCommand").innerHTML=`
+    <div class="command-card primary">
+      <div class="ck">結論 <span class="command-badge ${pred.mode==="formal"?"formal":"prov"}">${status}</span></div>
+      <div class="cv">${f(pred.decision||"判断待ち")}</div>
+      <div class="cs">${raceScenarioHeadline(d,pred)}</div>
+      <div class="ticket-mini-row">${top.length?top.map(t=>`<span class="ticket-mini">${f(t.combo)}</span>`).join(""):`<span class="ticket-mini">買い目待ち</span>`}</div>
+    </div>
+    <div class="command-card">
+      <div class="ck">勝負度</div>
+      <div class="cv">${f(pred.grade)}</div>
+      <div class="cs">${pred.mode==="formal"?"正式CURRENT":"サイト簡易"} / 2世界評価</div>
+    </div>
+    <div class="command-card">
+      <div class="ck">直前データ</div>
+      <div class="cv">${comp.got}/${comp.total}</div>
+      <div class="cs">${comp.pct}%取得 / 欠損補完なし</div>
+    </div>`;
+  document.getElementById("raceQuickNav").innerHTML=`
+    <button class="quicknav-btn strong" data-tabgo="pred">買い目</button>
+    <button class="quicknav-btn" data-tabgo="scenario">展開</button>
+    <button class="quicknav-btn" data-tabgo="before">直前</button>
+    <button class="quicknav-btn" data-tabgo="data">データ</button>
+    <button class="quicknav-btn" data-tabgo="audit">監査</button>`;
+  document.querySelectorAll("#raceQuickNav [data-tabgo]").forEach(b=>b.onclick=()=>{
+    const target=b.dataset.tabgo;
+    document.querySelectorAll("#raceTabs [data-tab]").forEach(x=>x.classList.toggle("on",x.dataset.tab===target));
+    document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active",v.id===`tab-${target}`));
+    window.scrollTo({top:document.querySelector(".race-tabs")?.offsetTop||0,behavior:"smooth"});
+  });
+}
+function snapshotBeforeData(d){
+  const bf=d.beforeinfo||{};
+  const start={};
+  for(const x of (bf.start_exhibition||[])) start[String(x.lane)]=x.st;
+  const ex={};
+  for(const x of (bf.racers||[])) ex[String(x.lane)]={time:x.exhibition_time,tilt:x.tilt};
+  const entry=(d.actual_entry||[]).map(x=>`${x.lane}->${x.course}`);
+  return {ts:Date.now(),start,ex,entry};
+}
+function renderBeforeChanges(d){
+  const el=document.getElementById("beforeChanges"); if(!el) return;
+  const key=`boatEdgeBeforeSnap:${d.race_key}`;
+  const prev=readJSONLocal(key,null);
+  const now=snapshotBeforeData(d);
+  const changes=[];
+  if(prev){
+    if(JSON.stringify(prev.entry)!==JSON.stringify(now.entry) && now.entry.length){
+      changes.push({what:`実進入 ${prev.entry?.join(" ")||"未取得"} → ${now.entry.join(" ")}`,delta:"進入変更"});
+    }
+    for(let lane=1;lane<=6;lane++){
+      const p=prev.start?.[String(lane)], n=now.start?.[String(lane)];
+      if(p!=null && n!=null && Number(p)!==Number(n)){
+        const diff=(Number(n)-Number(p)).toFixed(2);
+        changes.push({what:`${lane}号艇 展示ST ${p} → ${n}`,delta:`${Number(diff)>0?"+":""}${diff}`});
+      }
+      const pt=prev.ex?.[String(lane)]?.time, nt=now.ex?.[String(lane)]?.time;
+      if(pt!=null && nt!=null && Number(pt)!==Number(nt)){
+        const diff=(Number(nt)-Number(pt)).toFixed(2);
+        changes.push({what:`${lane}号艇 展示タイム ${pt} → ${nt}`,delta:`${Number(diff)>0?"+":""}${diff}`});
+      }
+    }
+  }
+  writeJSONLocal(key,now);
+  el.innerHTML=`
+    <div class="change-title"><b>直前変化</b><span>この端末で前回見た時との比較</span></div>
+    ${changes.length?`<div class="change-list">${changes.slice(0,8).map(c=>`<div class="change-item"><div class="what">${c.what}</div><div class="delta">${c.delta}</div></div>`).join("")}</div>`:`<div class="change-none">前回比較できる変化はまだありません。次回更新時に差分を表示します。</div>`}
+  `;
+}
+
 function renderRace(d){
   state.race = d;
   pushRecentRace(d);
@@ -2123,6 +2268,7 @@ function renderRace(d){
   document.querySelectorAll("#raceNav [data-file]").forEach(btn=>btn.onclick=()=>loadRace(btn.dataset.file, btn.dataset.jcd));
 
   renderSummaryStrip(d, pred);
+  renderRaceCommand(d, pred);
   renderDecision(d, pred);
   renderInputCompleteness(d, pred);
   renderWorlds(pred);
@@ -2130,6 +2276,7 @@ function renderRace(d){
   renderBoats(d, pred);
   renderCard(d, pred);
   renderBefore(d, pred);
+  renderBeforeChanges(d);
   renderDataTab(d, pred);
   renderAuditTab(d, pred);
 
