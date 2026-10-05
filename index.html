@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v15</title>
+<title>BOAT EDGE v16</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -224,6 +224,8 @@ td .lane{margin:auto}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .data-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .small-table table{min-width:640px}
+.refresh-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:120;background:#0d3f92;color:#fff;padding:10px 14px;border-radius:999px;box-shadow:0 12px 30px rgba(13,63,146,.25);font-size:12px;font-weight:850;display:none;max-width:90vw;text-align:center}
+.refresh-toast.show{display:block}
 .system-banner{margin:10px 14px 0;padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;display:none;font-size:12px;line-height:1.55}
 .system-banner.show{display:block}
 .system-banner.warn{background:var(--warnbg);border-color:#ffd797;color:#9a5d00}
@@ -275,14 +277,16 @@ td .lane{margin:auto}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v15</small></div>
+      <div class="brandtext">BOAT EDGE <small>v16</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>AUTO 5分</span></div>
-      <button class="primary-btn" id="refreshTopBtn">更新</button>
+      <button class="primary-btn" id="refreshTopBtn">今すぐ更新</button>
+      <button class="ghost-btn" id="runCollectorBtn">収集を開始</button>
     </div>
   </header>
   <div id="systemBanner" class="system-banner"></div>
+  <div id="refreshToast" class="refresh-toast"></div>
 
   <main id="homeView" class="view active">
     <section class="hero">
@@ -292,6 +296,7 @@ td .lane{margin:auto}
           <h1>締切順で見やすく。<br>2分前でも暫定予想を止めない。</h1>
           <p>
             正式CURRENTが揃っていない時も、直前情報がある範囲で <b>暫定予想</b> を表示。
+            「今すぐ更新」はキャッシュを使わず即確認し、その後2分間は15秒ごとに新データを追跡。
             「イン逃げ成立」と「イン逃げ不成立」の2世界を分けて、買い目・配分・不足データを一目で確認できるようにしています。
           </p>
         </div>
@@ -440,6 +445,8 @@ td .lane{margin:auto}
       <div class="title"><h2>直前確認の見方</h2><span>BOATERSっぽく見やすく整理</span></div>
       <div class="card help">
         <ol>
+          <li><b>今すぐ更新</b>は公開済みJSONを即再読込し、その後2分間15秒ごとに追跡</li>
+          <li><b>収集を開始</b>はGitHub Actionsの実行画面を開き、元データ収集そのものを手動起動できる</li>
           <li><b>ホーム</b>で締切が近いレースを押す</li>
           <li><b>予想</b>で「正式」か「暫定」かを確認</li>
           <li><b>直前</b>で実進入 / 展示ST / 展示タイム / オリジナル展示を確認</li>
@@ -506,7 +513,47 @@ function showView(id){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".bottomnav [data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
-document.getElementById("refreshTopBtn").onclick = ()=>refreshAll(true);
+let refreshPollTimer=null;
+let refreshPollStopTimer=null;
+function showToast(msg, ms=2600){
+  const el=document.getElementById("refreshToast");
+  if(!el)return;
+  el.textContent=msg;
+  el.classList.add("show");
+  clearTimeout(el._hideTimer);
+  el._hideTimer=setTimeout(()=>el.classList.remove("show"),ms);
+}
+async function immediateRefresh(){
+  const before=state.today?.updated_at || null;
+  showToast("最新データを確認中…",1800);
+  await refreshAll(true);
+  const after=state.today?.updated_at || null;
+  if(after && after!==before){
+    showToast(`更新反映：${formatUpdated(after)}`,3200);
+  }else{
+    showToast("公開済みデータは最新です。新データを15秒ごとに追跡します",3600);
+  }
+
+  clearInterval(refreshPollTimer);
+  clearTimeout(refreshPollStopTimer);
+  refreshPollTimer=setInterval(async()=>{
+    const prev=state.today?.updated_at || null;
+    await refreshAll(true);
+    const now=state.today?.updated_at || null;
+    if(now && now!==prev){
+      showToast(`新データ反映：${formatUpdated(now)}`,3600);
+    }
+  },15000);
+  refreshPollStopTimer=setTimeout(()=>{
+    clearInterval(refreshPollTimer);
+    refreshPollTimer=null;
+    showToast("追跡更新を終了しました",2200);
+  },120000);
+}
+document.getElementById("refreshTopBtn").onclick = immediateRefresh;
+document.getElementById("runCollectorBtn").onclick = ()=>{
+  window.open("https://github.com/ikst2512-eng/boat-edge/actions/workflows/auto-update.yml","_blank");
+};
 
 function statusBadge(kind, text){
   const cls = kind || "gray";
