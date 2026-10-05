@@ -3,398 +3,1252 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08111f">
-<title>BOAT EDGE v13</title>
+<meta name="theme-color" content="#1f5eff">
+<title>BOAT EDGE v15</title>
 <style>
 :root{
-  --bg:#07101c;--panel:#0d1827;--panel2:#111f31;--line:#20344d;--text:#f5f8fc;
-  --muted:#8fa3bb;--accent:#58c7ff;--accent2:#69f0c0;--warn:#ffcc66;--bad:#ff7e8d;
-  --shadow:0 14px 40px rgba(0,0,0,.28);--radius:16px;
+  --bg:#f3f8ff;
+  --bg2:#e8f1ff;
+  --panel:#ffffff;
+  --panel2:#f7fbff;
+  --line:#d9e7ff;
+  --text:#15335f;
+  --muted:#627ca3;
+  --blue:#1f5eff;
+  --blue2:#4ea0ff;
+  --navy:#0d3f92;
+  --sky:#eaf4ff;
+  --green:#0ea678;
+  --greenbg:#e9fbf5;
+  --warn:#ff9f1a;
+  --warnbg:#fff5e6;
+  --bad:#e54866;
+  --badbg:#ffedf1;
+  --shadow:0 10px 30px rgba(31,94,255,.10);
+  --radius:18px;
 }
-*{box-sizing:border-box} html{background:var(--bg);color-scheme:dark}
-body{margin:0;background:
- radial-gradient(circle at 70% -10%,rgba(50,139,255,.12),transparent 30%),
- linear-gradient(180deg,#07101c,#091523 45%,#07101c);
- color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
- min-height:100vh;padding-bottom:86px}
-button{font:inherit}.app{max-width:1180px;margin:auto}
-.topbar{position:sticky;top:0;z-index:50;background:rgba(7,16,28,.93);backdrop-filter:blur(15px);
- border-bottom:1px solid rgba(255,255,255,.06);padding:11px 14px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.05em}
-.mark{width:31px;height:31px;border-radius:10px;background:linear-gradient(145deg,#0f3351,#0b1c2d);
- border:1px solid #2c6b95;position:relative;overflow:hidden}
-.mark:before,.mark:after{content:"";position:absolute;left:5px;right:5px;height:2px;border-radius:3px;
- background:#73d7ff;transform:skewX(-28deg)}
-.mark:before{top:11px}.mark:after{top:18px}
-.live{font-size:11px;color:var(--accent2);padding:6px 9px;border-radius:999px;background:rgba(76,230,175,.08);
- border:1px solid rgba(76,230,175,.25)}
-.hero{padding:18px 14px 8px}.hero h1{font-size:24px;margin:0 0 5px}.hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
-.section{padding:8px 14px 14px}.title{display:flex;align-items:end;justify-content:space-between;margin:0 0 9px}
-.title h2{margin:0;font-size:16px}.title span{color:var(--muted);font-size:11px}
-.card{background:linear-gradient(180deg,rgba(18,34,52,.98),rgba(11,24,38,.98));border:1px solid rgba(117,165,207,.14);
- border-radius:var(--radius);box-shadow:var(--shadow)}
-
-.deadlineboard{padding:4px 0 2px}
-.deadline-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
-.deadline-scroll::-webkit-scrollbar{display:none}
-.deadline-item{min-width:148px;padding:11px 12px;border-radius:14px;background:linear-gradient(180deg,#102036,#0b1828);
- border:1px solid #213a56;text-align:left;color:var(--text);position:relative}
-.deadline-item.soon{border-color:rgba(255,204,102,.7);box-shadow:0 0 0 1px rgba(255,204,102,.12) inset}
-.deadline-item.verysoon{border-color:rgba(255,126,141,.85);box-shadow:0 0 0 1px rgba(255,126,141,.14) inset}
-.deadline-time{font-size:21px;font-weight:950;letter-spacing:.02em}
-.deadline-place{font-size:12px;font-weight:900;margin-top:2px}
-.deadline-meta{font-size:10px;color:var(--muted);margin-top:4px}
-.deadline-badge{position:absolute;right:9px;top:9px;font-size:9px;padding:3px 6px;border-radius:999px;
- background:#0a2630;color:var(--accent2);border:1px solid rgba(105,240,192,.25)}
-.deadline-note{font-size:11px;color:var(--muted);margin:1px 0 7px}
-
-.venues{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.venue{padding:10px;min-height:72px;position:relative;overflow:hidden}
-.venue.off{opacity:.38;box-shadow:none}.venue.on{border-color:rgba(88,199,255,.36)}
-.vname{font-size:14px;font-weight:900}.vstate{font-size:10px;color:var(--muted);margin-top:4px}.venue.on .vstate{color:var(--accent2)}
-.racechips{display:flex;gap:5px;overflow:auto;padding:8px 0 2px;scrollbar-width:none}.racechips::-webkit-scrollbar{display:none}
-.racechip{min-width:58px;border:1px solid var(--line);background:#0a1624;color:#dce8f5;border-radius:10px;padding:7px 5px;font-weight:800}
-.racechip small{display:block;font-size:9px;color:var(--muted);font-weight:600;margin-top:2px}
-.racechip.ready{border-color:rgba(88,199,255,.38)}.racechip.before{border-color:rgba(105,240,192,.38)}
-.view{display:none}.view.active{display:block}
-.racehead{padding:13px 14px 8px;position:sticky;top:54px;z-index:40;background:rgba(7,16,28,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.05)}
-.raceheadrow{display:flex;justify-content:space-between;gap:12px;align-items:center}.racehead h1{font-size:20px;margin:0}.deadline{font-size:15px;font-weight:900;color:var(--warn)}
-.raceevent{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tabs{display:flex;gap:6px;overflow:auto;padding:9px 14px 4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
-.tabs button{white-space:nowrap;border:1px solid var(--line);background:#0b1725;color:#9db1c8;border-radius:999px;padding:8px 12px;font-weight:800;font-size:12px}
-.tabs button.on{color:#fff;border-color:#4bb4ee;background:#12324b}
-.sub{display:none}.sub.active{display:block}
-.decision{padding:13px;display:flex;justify-content:space-between;gap:12px;align-items:center}
-.decision .label{font-size:11px;color:var(--muted)}.decision strong{font-size:23px}.buy{color:var(--accent2)}.pass{color:var(--warn)}
-.worldgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.world{padding:14px}
-.worldtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.world h3{margin:0;font-size:16px}
-.worldprob{font-size:28px;font-weight:950}.world.a .worldprob{color:var(--accent)}.world.b .worldprob{color:#ff9ec3}
-.ticket{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,.06)}
-.rank{color:var(--muted);font-size:11px}.combo{font-weight:950;font-size:18px;letter-spacing:.04em}.confidence{font-size:12px;color:#b7c9dc}
-.wait{padding:18px 8px;color:var(--muted);text-align:center;font-size:13px}
-.boats{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.boat{padding:9px 7px;text-align:center;border-radius:12px;background:#0a1624;border:1px solid var(--line)}
-.lane{width:27px;height:27px;margin:auto;border-radius:8px;display:grid;place-items:center;font-weight:950;border:1px solid rgba(255,255,255,.2)}
-.l1{background:#f4f4f4;color:#111}.l2{background:#444;color:#fff}.l3{background:#e64249;color:#fff}.l4{background:#4b76e8;color:#fff}.l5{background:#e9c72f;color:#111}.l6{background:#43a967;color:#fff}
-.boatname{font-size:11px;font-weight:850;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.boatmeta{font-size:9px;color:var(--muted);line-height:1.45}.boatnum{font-weight:900;font-size:13px;color:#dbe9f7}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.kpi{padding:10px}.kpi b{display:block;font-size:16px;margin-top:3px}.kpi span{font-size:9px;color:var(--muted)}
-.tablewrap{overflow:auto;border-radius:var(--radius)}table{width:100%;border-collapse:collapse;min-width:840px;background:#0b1725}
-th,td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;text-align:center;white-space:nowrap}
-th{color:#8fa6bd;background:#0e1c2d;position:sticky;top:0}.namecell{text-align:left;font-weight:850}
-.audit{font-size:10px;color:var(--muted);line-height:1.65}.good{color:var(--accent2)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-.bottom{position:fixed;z-index:70;left:0;right:0;bottom:0;background:rgba(7,16,28,.96);backdrop-filter:blur(15px);
- border-top:1px solid rgba(255,255,255,.07);display:flex;justify-content:center;padding:7px 8px max(7px,env(safe-area-inset-bottom))}
-.bottom button{width:min(150px,25vw);border:0;background:none;color:#71869e;font-size:10px;padding:5px}.bottom button.on{color:#6ed3ff}.navicon{display:block;font-size:19px;margin-bottom:2px}
-.empty{padding:24px 12px;text-align:center;color:var(--muted)}
-.pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#0c2234;border:1px solid #1f4665;color:#91dfff;font-size:10px;font-weight:850}
-@media(max-width:760px){.venues{grid-template-columns:repeat(3,1fr)}.worldgrid{grid-template-columns:1fr}.boats{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:
+  radial-gradient(circle at 90% -10%, rgba(78,160,255,.14), transparent 28%),
+  radial-gradient(circle at 0% 0%, rgba(31,94,255,.08), transparent 24%),
+  linear-gradient(180deg,var(--bg),var(--bg2) 60%, #f7fbff);
+  color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+body{min-height:100vh;padding-bottom:92px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1240px;margin:0 auto}
+.topbar{
+  position:sticky;top:0;z-index:60;
+  background:rgba(255,255,255,.88);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px
+}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{
+  width:38px;height:38px;border-radius:12px;
+  background:linear-gradient(160deg,#2072ff,#4ec6ff);
+  box-shadow:0 10px 25px rgba(31,94,255,.22);
+  position:relative;overflow:hidden
+}
+.mark:before,.mark:after{
+  content:"";position:absolute;left:7px;right:7px;height:3px;border-radius:999px;background:#fff
+}
+.mark:before{top:12px}
+.mark:after{top:20px}
+.brandtext{font-weight:950;letter-spacing:.02em;font-size:20px;color:var(--navy)}
+.brandtext small{font-size:12px;color:var(--blue);margin-left:6px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.live-pill{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;
+  background:var(--greenbg);border:1px solid #c7f0e2;color:var(--green);font-weight:850;font-size:13px
+}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.primary-btn,.ghost-btn,.chip{
+  border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--navy);
+  padding:10px 14px;font-weight:850
+}
+.primary-btn{background:linear-gradient(180deg,#1f5eff,#2569ff);color:#fff;border-color:#1f5eff;box-shadow:0 10px 20px rgba(31,94,255,.18)}
+.ghost-btn{background:#fff}
+.chip{padding:6px 10px;font-size:12px;background:#fff}
+.hero{padding:18px 14px 8px}
+.hero-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow)
+}
+.hero-main{padding:18px}
+.kicker{display:inline-flex;padding:6px 10px;border-radius:999px;background:#eaf3ff;color:var(--blue);font-weight:900;font-size:12px}
+.hero-main h1{margin:12px 0 8px;font-size:28px;line-height:1.25;color:var(--navy)}
+.hero-main p{margin:0;color:var(--muted);line-height:1.7;font-size:14px}
+.hero-side{padding:16px}
+.hero-statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
+.hero-stat{padding:12px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.hero-stat .label{font-size:11px;color:var(--muted);font-weight:700}
+.hero-stat .value{margin-top:4px;font-size:20px;font-weight:950;color:var(--navy)}
+.section{padding:8px 14px 14px}
+.title{display:flex;align-items:end;justify-content:space-between;gap:8px;margin:0 0 10px}
+.title h2{margin:0;font-size:18px;color:var(--navy)}
+.title span{font-size:12px;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);line-height:1.6}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{padding:14px}
+.kpi .label{font-size:12px;color:var(--muted);font-weight:700}
+.kpi .value{font-size:24px;font-weight:950;color:var(--navy);margin-top:4px}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.deadline-board{display:flex;gap:10px;overflow:auto;padding-bottom:4px;scrollbar-width:none}
+.deadline-board::-webkit-scrollbar{display:none}
+.deadline-card{
+  min-width:205px;padding:14px;border-radius:18px;background:#fff;border:1px solid var(--line);
+  text-align:left;position:relative
+}
+.deadline-card.soon{border-color:#ffd89a;background:#fffaf2}
+.deadline-card.verysoon{border-color:#ffb7c2;background:#fff5f7}
+.deadline-top{display:flex;align-items:start;justify-content:space-between;gap:8px}
+.deadline-time{font-size:28px;font-weight:950;color:var(--navy)}
+.deadline-place{font-size:16px;font-weight:950;color:var(--navy)}
+.deadline-meta{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:900}
+.badge.blue{background:#eaf3ff;color:var(--blue)}
+.badge.green{background:var(--greenbg);color:var(--green)}
+.badge.orange{background:var(--warnbg);color:var(--warn)}
+.badge.red{background:var(--badbg);color:var(--bad)}
+.badge.gray{background:#f2f5fa;color:#617187}
+.venues{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.venue{padding:12px}
+.venue.off{opacity:.62}
+.venue-top{display:flex;align-items:start;justify-content:space-between;gap:8px}
+.vname{font-weight:950;font-size:15px;color:var(--navy)}
+.vstate{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.racechips{display:flex;gap:6px;overflow:auto;padding:10px 0 0;scrollbar-width:none}
+.racechips::-webkit-scrollbar{display:none}
+.racechip{
+  min-width:66px;padding:8px 6px;border-radius:12px;border:1px solid var(--line);
+  background:#fff;font-weight:900;color:var(--navy);text-align:center
+}
+.racechip small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}
+.racechip.ready{background:#f2f7ff}
+.racechip.before{background:#ebfff7;border-color:#c6f1e2}
+.view{display:none}
+.view.active{display:block}
+.race-head{position:sticky;top:63px;z-index:50;background:rgba(243,248,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.race-shell{padding:14px}
+.race-summary{padding:16px}
+.race-summary h1{font-size:34px;margin:0;color:var(--navy)}
+.race-subtitle{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.6}
+.summary-top{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.deadline-big{font-size:34px;font-weight:950;color:var(--blue)}
+.deadline-cap{font-size:11px;color:var(--muted);text-align:right}
+.race-nav{display:flex;gap:8px;overflow:auto;padding-top:12px;scrollbar-width:none}
+.race-nav::-webkit-scrollbar{display:none}
+.race-tabs{display:flex;gap:8px;overflow:auto;padding:0 14px 12px;scrollbar-width:none}
+.race-tabs::-webkit-scrollbar{display:none}
+.race-tabs button{
+  border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);
+  padding:10px 14px;font-weight:900;white-space:nowrap
+}
+.race-tabs button.on{background:linear-gradient(180deg,#1f5eff,#2e74ff);border-color:#1f5eff;color:#fff}
+.subview{display:none}
+.subview.active{display:block}
+.alert{
+  padding:14px 16px;border-radius:16px;border:1px solid #cde0ff;
+  background:linear-gradient(180deg,#f8fbff,#eef5ff);color:var(--navy)
+}
+.alert .small{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
+.decision{padding:18px}
+.decision-grid{display:grid;grid-template-columns:1.3fr .7fr .8fr;gap:12px;align-items:center}
+.decision-title{font-size:12px;color:var(--muted);font-weight:700}
+.decision-main{font-size:30px;font-weight:950;color:var(--navy);margin-top:4px}
+.decision-main.temp{color:var(--warn)}
+.decision-main.formal{color:var(--green)}
+.decision-grade{font-size:28px;font-weight:950;color:var(--blue)}
+.worlds{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.world{padding:16px}
+.world-head{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.world h3{margin:10px 0 4px;font-size:24px;color:var(--navy)}
+.world .caption{font-size:13px;color:var(--muted)}
+.world-prob{font-size:30px;font-weight:950}
+.world-worldA .world-prob{color:var(--blue)}
+.world-worldB .world-prob{color:#4864d9}
+.world-budget{margin-top:8px;font-size:12px;color:var(--muted)}
+.ticketlist{margin-top:12px;border-top:1px dashed var(--line)}
+.ticket{
+  display:grid;grid-template-columns:32px 1fr 70px 70px;gap:8px;align-items:center;
+  padding:11px 0;border-bottom:1px solid #eef4ff
+}
+.rank{font-size:12px;color:var(--muted);font-weight:800}
+.combo{font-size:20px;font-weight:950;color:var(--navy);letter-spacing:.04em}
+.prob{font-size:12px;color:var(--muted);text-align:right}
+.amount{font-size:13px;color:var(--blue);text-align:right;font-weight:950}
+.subreason{margin-top:12px;padding:10px;border-radius:12px;background:#f5f9ff;color:var(--muted);font-size:12px;line-height:1.65}
+.boats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.boat{
+  padding:12px;border-radius:16px;background:#fff;border:1px solid var(--line);text-align:left
+}
+.lane{
+  width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-weight:950;font-size:16px;
+  border:1px solid rgba(0,0,0,.08)
+}
+.l1{background:#fff;color:#111}
+.l2{background:#222;color:#fff}
+.l3{background:#ef404a;color:#fff}
+.l4{background:#396bf0;color:#fff}
+.l5{background:#ffd84c;color:#111}
+.l6{background:#2bb567;color:#fff}
+.boat-name{font-size:14px;font-weight:950;margin:10px 0 4px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boat-sub{font-size:12px;color:var(--muted);line-height:1.55}
+.boat-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.metric{padding:8px;border-radius:12px;background:#f7fbff;border:1px solid #e7f0ff}
+.metric .m-label{font-size:10px;color:var(--muted);font-weight:700}
+.metric .m-value{font-size:14px;font-weight:950;color:var(--navy);margin-top:3px}
+.strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.strip-card{padding:12px}
+.strip-card .label{font-size:11px;color:var(--muted)}
+.strip-card .value{font-size:20px;color:var(--navy);font-weight:950;margin-top:4px}
+.tablewrap{overflow:auto;border-radius:18px;border:1px solid var(--line);background:#fff}
+table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}
+th,td{padding:10px 9px;border-bottom:1px solid #edf3ff;font-size:12px;text-align:center;white-space:nowrap}
+th{background:#f5f9ff;color:var(--muted);font-weight:900;position:sticky;top:0;z-index:1}
+td.namecell{text-align:left;font-weight:900;color:var(--navy)}
+td .lane{margin:auto}
+.auditbox{padding:16px;font-size:12px;color:var(--muted);line-height:1.7}
+.auditbox b{color:var(--navy)}
+.status-list{display:grid;gap:10px}
+.status-item{
+  padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line);
+  display:flex;align-items:start;justify-content:space-between;gap:12px
+}
+.status-item strong{display:block;color:var(--navy)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.data-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.small-table table{min-width:640px}
+.system-banner{margin:10px 14px 0;padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;display:none;font-size:12px;line-height:1.55}
+.system-banner.show{display:block}
+.system-banner.warn{background:var(--warnbg);border-color:#ffd797;color:#9a5d00}
+.system-banner.bad{background:var(--badbg);border-color:#ffc1cd;color:#9b2940}
+.system-banner.good{background:var(--greenbg);border-color:#c7f0e2;color:#08795a}
+.completeness{height:7px;border-radius:999px;background:#eaf1ff;overflow:hidden;margin-top:7px}
+.completeness>span{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.source-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.source-chip{font-size:10px;font-weight:850;padding:5px 7px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.source-chip.ok{background:var(--greenbg);border-color:#c7f0e2;color:var(--green)}
+.source-chip.miss{background:var(--warnbg);border-color:#ffd797;color:var(--warn)}
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;z-index:80;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-top:1px solid var(--line);
+  display:flex;justify-content:center;gap:8px;padding:8px max(12px,env(safe-area-inset-right)) calc(max(8px,env(safe-area-inset-bottom)))
+}
+.bottomnav button{
+  flex:1;max-width:170px;border:0;background:none;color:var(--muted);
+  padding:7px 8px;border-radius:14px;font-size:11px;font-weight:800
+}
+.bottomnav button.on{color:var(--blue);background:#eef5ff}
+.navicon{display:block;font-size:18px;margin-bottom:2px}
+.empty{padding:22px 14px;text-align:center;color:var(--muted)}
+.good{color:var(--green)}
+.bad{color:var(--bad)}
+.warn{color:var(--warn)}
+.stack{display:grid;gap:14px}
+.help{padding:16px}
+.help ol{margin:10px 0 0 18px;color:var(--muted);line-height:1.7}
+@media (max-width:1080px){
+  .hero-grid,.grid-2,.data-panels,.worlds{grid-template-columns:1fr}
+  .venues{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .grid-3{grid-template-columns:1fr}
+  .grid-4,.strip{grid-template-columns:repeat(2,1fr)}
+  .boats{grid-template-columns:repeat(2,1fr)}
+  .venues{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .summary-top,.decision-grid{grid-template-columns:1fr;display:grid}
+  .race-summary h1{font-size:28px}
+  .deadline-big{font-size:28px}
+  .ticket{grid-template-columns:28px 1fr 60px 62px}
+  .combo{font-size:18px}
+}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><div class="mark"></div><div>BOAT EDGE <span style="font-size:10px;color:#6ed3ff">v13</span></div></div><div class="live" id="live">PRE_RESULT</div></header>
-
-<main id="home" class="view active">
-  <div class="hero"><span class="pill">TODAY</span><h1>今日の全24場</h1><p>24場を固定表示。開催中だけ点灯し、締切と直前情報の状態まで一画面で確認。</p></div>
-  <div class="section deadlineboard">
-    <div class="title"><h2>締切時間順</h2><span id="deadlineCount">－</span></div>
-    <div class="deadline-note">全開催場を横断して、締切が近い順に表示</div>
-    <div id="deadlineBoard" class="deadline-scroll"></div>
-  </div>
-
-  <div class="section"><div class="title"><h2>レース場</h2><span id="updated">読込中</span></div><div id="venues" class="venues"></div></div>
-  <div class="section">
-    <div class="card" style="padding:12px;margin-bottom:9px">
-      <div class="title" style="margin-bottom:5px"><h2 style="font-size:14px">CURRENT接続状況</h2><span id="modelBadge">確認中</span></div>
-      <div class="audit" id="modelStatus">V1.21.33の入力監査を確認中…</div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark"></div>
+      <div class="brandtext">BOAT EDGE <small>v15</small></div>
     </div>
-    <div class="card" style="padding:12px"><div class="audit" id="health">データ状態を確認中…</div></div>
-  </div>
-</main>
-
-<main id="race" class="view">
-  <div class="racehead">
-    <div class="raceheadrow"><div><h1 id="raceTitle">レース</h1><div id="raceEvent" class="raceevent"></div></div><div><div class="deadline" id="deadline">--:--</div><div style="font-size:9px;color:var(--muted);text-align:right">締切予定</div></div></div>
-    <div id="raceNav" class="racechips"></div>
-  </div>
-  <div class="tabs" id="tabs"></div>
-
-  <section id="tab-pred" class="sub active">
-    <div class="section"><div id="decision" class="card decision"></div></div>
-    <div class="section"><div id="worlds" class="worldgrid"></div></div>
-    <div class="section"><div class="title"><h2>6艇比較</h2><span>一目で比較</span></div><div id="boats" class="boats"></div></div>
-    <div class="section"><div id="quickKpis" class="kpis"></div></div>
-  </section>
-
-  <section id="tab-card" class="sub">
-    <div class="section"><div class="title"><h2>出走表</h2><span>全国 / 当地 / モーター / ボート</span></div>
-      <div class="card tablewrap"><table><thead><tr><th>枠</th><th>選手</th><th>級</th><th>平均ST</th><th>全国勝率</th><th>全国2連</th><th>当地勝率</th><th>当地2連</th><th>モーター</th><th>モーター2連</th><th>ボート</th><th>ボート2連</th></tr></thead><tbody id="cardRows"></tbody></table></div>
+    <div class="header-actions">
+      <div class="live-pill" id="live"><span class="live-dot"></span><span>AUTO 5分</span></div>
+      <button class="primary-btn" id="refreshTopBtn">更新</button>
     </div>
-  </section>
+  </header>
+  <div id="systemBanner" class="system-banner"></div>
 
-  <section id="tab-before" class="sub">
-    <div class="section"><div class="title"><h2>直前情報</h2><span id="beforeStatus">未取得</span></div><div id="water" class="kpis"></div></div>
-    <div class="section"><div class="card tablewrap"><table><thead><tr><th>艇</th><th>選手</th><th>展示タイム</th><th>チルト</th><th>展示ST</th><th>実進入</th></tr></thead><tbody id="beforeRows"></tbody></table></div></div>
-    <div class="section"><div class="title"><h2>オリジナル展示</h2><span>場別計測</span></div><div id="originalExhibition" class="card" style="padding:12px"></div></div>
-  </section>
-
-  <section id="tab-detail" class="sub">
-    <div class="section"><div class="title"><h2>詳細データ</h2><span>順次自動接続</span></div>
-      <div class="card" style="padding:13px">
-        <div class="audit">枠別場別実績 / 実コース / 逃がし率 / 決まり手 / オリジナル展示 / モーター直近10走 / D-1 prior / LIVE水面prior / CURRENT比較をここへ集約。未取得値は推定せず「－」表示。</div>
+  <main id="homeView" class="view active">
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="card hero-main">
+          <span class="kicker">白×青 / 直前重視 / 2パターン表示</span>
+          <h1>締切順で見やすく。<br>2分前でも暫定予想を止めない。</h1>
+          <p>
+            正式CURRENTが揃っていない時も、直前情報がある範囲で <b>暫定予想</b> を表示。
+            「イン逃げ成立」と「イン逃げ不成立」の2世界を分けて、買い目・配分・不足データを一目で確認できるようにしています。
+          </p>
+        </div>
+        <div class="card hero-side">
+          <div class="title" style="margin-bottom:8px"><h2>本日の状況</h2><span id="updatedHero">読込中</span></div>
+          <div class="hero-statgrid">
+            <div class="hero-stat"><div class="label">開催場</div><div class="value" id="statVenue">－</div></div>
+            <div class="hero-stat"><div class="label">締切間近</div><div class="value" id="statSoon">－</div></div>
+            <div class="hero-stat"><div class="label">CORE7</div><div class="value" id="statCore7">－</div></div>
+            <div class="hero-stat"><div class="label">CURRENT</div><div class="value" id="statModel">－</div></div>
+          </div>
+        </div>
       </div>
+    </section>
+
+    <section class="section">
+      <div class="title"><h2>締切時間順</h2><span id="deadlineCount">－</span></div>
+      <div class="note" style="margin-bottom:8px">締切が近い順で表示。<b>正式予想</b> / <b>暫定予想</b> / <b>準備中</b> がひと目で分かるようにしています。</div>
+      <div id="deadlineBoard" class="deadline-board"></div>
+    </section>
+
+    <section class="section">
+      <div class="title"><h2>開催場一覧</h2><span id="updatedHome">読込中</span></div>
+      <div id="venues" class="venues"></div>
+    </section>
+
+    <section class="section">
+      <div class="grid-2">
+        <div class="card auditbox" id="modelStatusBox">CURRENT監査を読込中…</div>
+        <div class="card auditbox" id="healthBox">データ監査を読込中…</div>
+      </div>
+    </section>
+  </main>
+
+  <main id="raceView" class="view">
+    <div class="race-head">
+      <div class="race-shell">
+        <div class="card race-summary">
+          <div class="summary-top">
+            <div>
+              <h1 id="raceTitle">レース</h1>
+              <div class="race-subtitle" id="raceSubtitle">読込中…</div>
+            </div>
+            <div>
+              <div class="deadline-big" id="deadlineBig">--:--</div>
+              <div class="deadline-cap">締切予定</div>
+            </div>
+          </div>
+          <div id="summaryStrip" class="strip" style="margin-top:14px"></div>
+          <div id="raceNav" class="race-nav"></div>
+        </div>
+      </div>
+      <div class="race-tabs" id="raceTabs"></div>
     </div>
-  </section>
 
-  <section id="tab-audit" class="sub">
-    <div class="section"><div class="card" style="padding:13px"><div id="auditBox" class="audit"></div></div></div>
-  </section>
-</main>
+    <section id="tab-pred" class="subview active">
+      <div class="section stack">
+        <div class="card decision" id="decision"></div>
+        <div class="alert" id="predictionAlert"></div>
+        <div class="card auditbox" id="inputCompleteness"></div>
+        <div class="worlds" id="worlds"></div>
+        <div>
+          <div class="title"><h2>6艇比較</h2><span>全国 / 当地 / モーター / ボート / 直前気配</span></div>
+          <div class="boats" id="boats"></div>
+        </div>
+      </div>
+    </section>
 
-<nav class="bottom">
-  <button class="on" data-view="home"><span class="navicon">⌂</span>ホーム</button>
-  <button data-view="race"><span class="navicon">≋</span>レース</button>
-  <button id="refreshBtn"><span class="navicon">↻</span>更新</button>
-</nav>
+    <section id="tab-card" class="subview">
+      <div class="section stack">
+        <div class="title"><h2>出走表</h2><span>選手情報 / 級別 / 成績 / 機力</span></div>
+        <div class="tablewrap"><table>
+          <thead>
+            <tr>
+              <th>枠</th><th>選手</th><th>級</th><th>平均ST</th><th>全国勝率</th><th>全国2連</th><th>当地勝率</th><th>当地2連</th><th>モーター</th><th>モーター2連</th><th>ボート</th><th>ボート2連</th><th>備考</th>
+            </tr>
+          </thead>
+          <tbody id="cardRows"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="tab-before" class="subview">
+      <div class="section stack">
+        <div class="title"><h2>直前情報</h2><span id="beforeStatus">未取得</span></div>
+        <div class="strip" id="waterStrip"></div>
+        <div class="tablewrap"><table>
+          <thead>
+            <tr>
+              <th>艇</th><th>選手</th><th>展示タイム</th><th>展示ST</th><th>チルト</th><th>実進入</th><th>評価メモ</th>
+            </tr>
+          </thead>
+          <tbody id="beforeRows"></tbody>
+        </table></div>
+
+        <div>
+          <div class="title"><h2>オリジナル展示</h2><span>BOAT EDGE取得分</span></div>
+          <div id="originalBox" class="tablewrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-data" class="subview">
+      <div class="section stack">
+        <div class="data-panels">
+          <div class="card auditbox" id="selectedDataSummary"></div>
+          <div class="card auditbox" id="selectedReasoning"></div>
+        </div>
+        <div class="title"><h2>比較データ</h2><span>選手 / 機力 / 直前 / 展開圧</span></div>
+        <div class="tablewrap small-table"><table>
+          <thead>
+            <tr>
+              <th>艇</th><th>選手</th><th>総合点</th><th>イン残り寄与</th><th>攻め寄与</th><th>全国</th><th>当地</th><th>機力</th><th>展示</th>
+            </tr>
+          </thead>
+          <tbody id="scoreRows"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="tab-audit" class="subview">
+      <div class="section stack">
+        <div class="title"><h2>監査</h2><span>PRE_RESULT / CURRENT / 取得状況</span></div>
+        <div class="status-list" id="auditStatusList"></div>
+        <div class="card auditbox" id="auditDetail"></div>
+      </div>
+    </section>
+  </main>
+
+  <main id="dataView" class="view">
+    <section class="section">
+      <div class="title"><h2>データセンター</h2><span>必要なものをまとめて表示</span></div>
+      <div class="grid-3">
+        <div class="card kpi"><div class="label">CURRENT</div><div class="value" id="dcModel">－</div><div class="sub" id="dcCore">－</div></div>
+        <div class="card kpi"><div class="label">5ソース</div><div class="value" id="dcSources">－</div><div class="sub">race_cards / stt / tkz / sui / original_exhibition</div></div>
+        <div class="card kpi"><div class="label">正式予想状態</div><div class="value" id="dcReady">－</div><div class="sub">100R到達可否</div></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="data-panels">
+        <div class="card auditbox" id="dataCenterModel"></div>
+        <div class="card auditbox" id="dataCenterHealth"></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="title"><h2>直前確認の見方</h2><span>BOATERSっぽく見やすく整理</span></div>
+      <div class="card help">
+        <ol>
+          <li><b>ホーム</b>で締切が近いレースを押す</li>
+          <li><b>予想</b>で「正式」か「暫定」かを確認</li>
+          <li><b>直前</b>で実進入 / 展示ST / 展示タイム / オリジナル展示を確認</li>
+          <li><b>データ</b>で6艇の総合点と展開圧を比較</li>
+          <li><b>監査</b>で不足データやCURRENTの進捗を確認</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <main id="auditView" class="view">
+    <section class="section">
+      <div class="title"><h2>全体監査</h2><span>結果未参照での準備状況</span></div>
+      <div class="grid-2">
+        <div class="card auditbox" id="globalAuditModel"></div>
+        <div class="card auditbox" id="globalAuditHealth"></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="card help">
+        <div style="font-weight:950;color:var(--navy);font-size:18px">今の表示ルール</div>
+        <ol>
+          <li>正式CURRENTの買い目がある時は <b>正式予想</b> を優先表示</li>
+          <li>正式がなくても、直前や出走表がある限り <b>暫定予想</b> を表示</li>
+          <li>不足ソースは明示し、空欄のまま誤魔化さない</li>
+          <li><span class="mono">results_seen=false / unlock=false / scoring=false</span> を維持</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottomnav">
+    <button class="on" data-view="homeView"><span class="navicon">⌂</span>ホーム</button>
+    <button data-view="raceView"><span class="navicon">≋</span>レース</button>
+    <button data-view="dataView"><span class="navicon">▣</span>データ</button>
+    <button data-view="auditView"><span class="navicon">✓</span>監査</button>
+  </nav>
 </div>
 
 <script>
-const VENUES=[
+const VENUES = [
 ["01","桐生"],["02","戸田"],["03","江戸川"],["04","平和島"],["05","多摩川"],["06","浜名湖"],
 ["07","蒲郡"],["08","常滑"],["09","津"],["10","三国"],["11","びわこ"],["12","住之江"],
 ["13","尼崎"],["14","鳴門"],["15","丸亀"],["16","児島"],["17","宮島"],["18","徳山"],
 ["19","下関"],["20","若松"],["21","芦屋"],["22","福岡"],["23","唐津"],["24","大村"]
 ];
-const tabs=[["pred","予想"],["card","出走表"],["before","直前"],["detail","データ"],["audit","監査"]];
-let state={today:null,race:null,currentVenue:null,model:null};
+const raceTabs = [
+  ["pred","予想"],
+  ["card","出走表"],
+  ["before","直前"],
+  ["data","データ"],
+  ["audit","監査"]
+];
+const state = {today:null, model:null, race:null, currentVenue:null};
 
-const f=v=>(v===null||v===undefined||v==="")?"－":v;
-const pct=v=>v===null||v===undefined?"－":`${Number(v).toFixed(Number(v)%1?1:0)}%`;
-function laneNo(r,i){return r?.lane ?? (i+1)}
+const f = v => (v===null || v===undefined || v==="") ? "－" : v;
+const num = v => Number.isFinite(Number(v)) ? Number(v) : null;
+const pct = v => v===null || v===undefined || isNaN(Number(v)) ? "－" : `${Number(v).toFixed(Number(v)%1?1:0)}%`;
+const laneNo = (r,i) => r?.lane ?? (i+1);
+
 function showView(id){
- document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===id));
- document.querySelectorAll(".bottom [data-view]").forEach(x=>x.classList.toggle("on",x.dataset.view===id));
- window.scrollTo(0,0);
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id===id));
+  document.querySelectorAll(".bottomnav [data-view]").forEach(v=>v.classList.toggle("on", v.dataset.view===id));
+  window.scrollTo({top:0,behavior:"smooth"});
 }
-document.querySelectorAll(".bottom [data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
-document.getElementById("refreshBtn").onclick=()=>refreshToday(true);
+document.querySelectorAll(".bottomnav [data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
+document.getElementById("refreshTopBtn").onclick = ()=>refreshAll(true);
 
-document.getElementById("tabs").innerHTML=tabs.map((x,i)=>`<button class="${i===0?"on":""}" data-tab="${x[0]}">${x[1]}</button>`).join("");
-document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
- document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
- document.querySelectorAll(".sub").forEach(x=>x.classList.toggle("active",x.id==="tab-"+b.dataset.tab));
-});
-
-
+function statusBadge(kind, text){
+  const cls = kind || "gray";
+  return `<span class="badge ${cls}">${text}</span>`;
+}
 function minutesToDeadline(deadline){
- if(!deadline)return null;
- const m=/^(\d{1,2}):(\d{2})$/.exec(deadline);
- if(!m)return null;
- const now=new Date();
- const target=new Date(now);
- target.setHours(Number(m[1]),Number(m[2]),0,0);
- return Math.floor((target-now)/60000);
+  if(!deadline) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(deadline);
+  if(!m) return null;
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(Number(m[1]), Number(m[2]), 0, 0);
+  return Math.floor((target - now)/60000);
+}
+function formatUpdated(ts){
+  if(!ts) return "－";
+  try{
+    const d = new Date(ts);
+    return d.toLocaleString("ja-JP",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+  }catch(e){ return String(ts); }
+}
+function hasFormalPrediction(d){
+  const der=d?.derived||{};
+  const worlds=[der.world_a,der.world_b,der.pattern_a,der.pattern_b].filter(Boolean);
+  return worlds.some(w => (w?.tickets||w?.bets||w?.combinations||[]).length);
+}
+function getBeforeMap(d){
+  const bf=d?.beforeinfo||{};
+  const starts = new Map((bf.start_exhibition||[]).map(x=>[Number(x.lane), num(x.st)]));
+  const racers = new Map((bf.racers||[]).map(x=>[Number(x.lane), x]));
+  const actual = new Map((d?.actual_entry||[]).map(x=>[Number(x.lane), Number(x.course)]));
+  return {bf, starts, racers, actual};
+}
+function normalizeExhibition(racers){
+  const times = racers.map(x=>num(x.exhibition_time)).filter(v=>v!==null);
+  if(!times.length) return {};
+  const min = Math.min(...times), max=Math.max(...times);
+  const range = Math.max(max-min, 0.01);
+  const out={};
+  racers.forEach(x=>{
+    const t=num(x.exhibition_time);
+    if(t===null) return;
+    out[x.lane]=Math.max(0, 1-((t-min)/range));
+  });
+  return out;
+}
+function computeScores(d){
+  const {bf, starts, racers:bfRacers, actual} = getBeforeMap(d);
+  const exNorm = normalizeExhibition(bf.racers||[]);
+  return (d.racers||[]).map((r,i)=>{
+    const lane = laneNo(r,i);
+    const nat = r.national||{}, loc=r.local||{}, mot=r.motor||{}, boat=r.boat||{};
+    const avgSt = num(r.avg_st) ?? 0.18;
+    const natWin = num(nat.win_rate) ?? 0;
+    const natQ = num(nat.quinella_rate) ?? 0;
+    const locWin = num(loc.win_rate) ?? 0;
+    const locQ = num(loc.quinella_rate) ?? 0;
+    const motQ = num(mot.quinella_rate) ?? 0;
+    const boatQ = num(boat.quinella_rate) ?? 0;
+    const before = bfRacers.get(lane) || {};
+    const exScore = (exNorm[lane] ?? 0.35) * 8;
+    const stEx = starts.get(lane);
+    const exStartScore = stEx===undefined || stEx===null ? 0 : Math.max(0, (0.25 - Number(stEx))*28);
+    const avgStScore = Math.max(0, (0.24 - avgSt)*42);
+    const laneBase = {1:9.5,2:7.0,3:5.8,4:5.2,5:3.2,6:2.2}[lane] || 0;
+    const tiltScore = num(before.tilt)===null ? 0 : Math.max(-1, Math.min(2.5, num(before.tilt)));
+    const actualCourse = actual.get(lane) || lane;
+    const attackBase = {1:0.5,2:5.4,3:6.2,4:6.8,5:4.0,6:3.0}[actualCourse] || 0;
+    const insideBase = lane===1 ? 8 : Math.max(0, 5 - Math.abs(actualCourse-2));
+    const machine = motQ*0.11 + boatQ*0.07;
+    const classBonus = /A1/.test(r.class||"") ? 2.4 : /A2/.test(r.class||"") ? 1.4 : /B1/.test(r.class||"") ? 0.5 : 0;
+    const base = natWin*2.8 + natQ*0.18 + locWin*1.9 + locQ*0.12 + machine + avgStScore + exScore + exStartScore + laneBase + classBonus + tiltScore;
+    return {
+      lane, actualCourse, name:r.name||`選手${lane}`, class:r.class||"－",
+      avgSt, natWin, natQ, locWin, locQ, motQ, boatQ,
+      exhibitionTime:num(before.exhibition_time), exhibitionSt:stEx, tilt:num(before.tilt),
+      baseScore:base,
+      insideScore:base + insideBase + (lane===1?6:0),
+      attackScore:base + attackBase + (actualCourse>=3 && actualCourse<=4 ? 2.5 : 0)
+    };
+  }).sort((a,b)=>a.lane-b.lane);
+}
+function gradeFromSpread(spread){
+  if(spread>=9) return "A";
+  if(spread>=6) return "B+";
+  if(spread>=4) return "B";
+  if(spread>=2.5) return "C+";
+  return "C";
+}
+function round100(v){
+  return Math.max(100, Math.round(v/100)*100);
+}
+function allocateByWeights(weights, total){
+  const sum = weights.reduce((a,b)=>a+b,0) || 1;
+  let amounts = weights.map(w=>round100(total*(w/sum)));
+  let diff = total - amounts.reduce((a,b)=>a+b,0);
+  let idx = 0;
+  while(diff !== 0 && amounts.length){
+    const step = diff > 0 ? 100 : -100;
+    const pos = idx % amounts.length;
+    if(amounts[pos] + step >= 100){
+      amounts[pos] += step;
+      diff -= step;
+    }
+    idx++;
+    if(idx>1000) break;
+  }
+  return amounts;
+}
+function topNUnique(arr, n){
+  const seen = new Set();
+  const out = [];
+  for(const x of arr){
+    if(seen.has(x.combo)) continue;
+    seen.add(x.combo);
+    out.push(x);
+    if(out.length>=n) break;
+  }
+  return out;
+}
+function buildFallbackPrediction(d){
+  const scores = computeScores(d);
+  const one = scores.find(x=>x.lane===1) || scores[0];
+  const challengers = [...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore);
+  const supporters = [...scores].sort((a,b)=>b.baseScore-a.baseScore);
+  const strongestChallenger = challengers[0] || supporters[1] || one;
+  const diff = (one?.insideScore || 0) - (strongestChallenger?.attackScore || 0);
+  const worldAProb = Math.max(35, Math.min(78, 55 + diff*2.2));
+  const worldBProb = 100 - worldAProb;
+
+  const aCandidates = [];
+  const secondsA = supporters.filter(x=>x.lane!==1).sort((a,b)=>(b.baseScore + (a.actualCourse<=3?0:0))-(a.baseScore));
+  for(let i=0;i<secondsA.length;i++){
+    for(let j=0;j<secondsA.length;j++){
+      if(i===j) continue;
+      const s = secondsA[i], t = secondsA[j];
+      const weight = (one.insideScore*1.2) + s.baseScore + t.baseScore + (s.lane<t.lane?0.5:0);
+      aCandidates.push({combo:`1-${s.lane}-${t.lane}`, weight});
+    }
+  }
+  const aTop = topNUnique(aCandidates.sort((a,b)=>b.weight-a.weight), 5);
+  const aWeightSum = aTop.reduce((a,b)=>a+b.weight,0)||1;
+  const aTickets = aTop.map(x=>({...x, probability:(x.weight/aWeightSum)*worldAProb}));
+
+  const headPoolB = challengers.slice(0,3);
+  const bCandidates = [];
+  for(const h of headPoolB){
+    const others = supporters.filter(x=>x.lane!==h.lane);
+    const pref = others.filter(x=>x.lane===1)[0];
+    const rest = others.filter(x=>x.lane!==1);
+    for(const s of others.slice(0,5)){
+      if(s.lane===h.lane) continue;
+      for(const t of others.slice(0,5)){
+        if(t.lane===h.lane || t.lane===s.lane) continue;
+        const preferIn = (s.lane===1 ? 1.2 : 0) + (t.lane===1 ? 0.8 : 0);
+        const weight = h.attackScore*1.25 + s.baseScore + t.baseScore + preferIn + (h.actualCourse>=3?1.5:0);
+        bCandidates.push({combo:`${h.lane}-${s.lane}-${t.lane}`, weight});
+      }
+    }
+    if(pref){
+      rest.slice(0,3).forEach(r=>{
+        bCandidates.push({combo:`${h.lane}-1-${r.lane}`, weight:h.attackScore*1.35 + pref.baseScore + r.baseScore + 3});
+        bCandidates.push({combo:`${h.lane}-${r.lane}-1`, weight:h.attackScore*1.2 + pref.baseScore + r.baseScore + 2.2});
+      });
+    }
+  }
+  const bTop = topNUnique(bCandidates.sort((a,b)=>b.weight-a.weight), 5);
+  const bWeightSum = bTop.reduce((a,b)=>a+b.weight,0)||1;
+  const bTickets = bTop.map(x=>({...x, probability:(x.weight/bWeightSum)*worldBProb}));
+
+  const missing = [];
+  if(!(d.actual_entry||[]).length) missing.push("実進入待ち");
+  if(!(d.beforeinfo?.racers||[]).length) missing.push("展示タイム待ち");
+  if(!(d.beforeinfo?.start_exhibition||[]).length) missing.push("展示ST待ち");
+  if(!(d.original_exhibition?.boats||[]).length) missing.push("オリジナル展示待ち");
+  if(!state.model?.core7?.formal_first100_ready) missing.push("CURRENT正式100R待ち");
+
+  const totalBudget = 5000;
+  const budgetA = round100(totalBudget * (worldAProb/100));
+  const budgetB = totalBudget - budgetA;
+  const aAmounts = allocateByWeights(aTickets.map(x=>x.probability), budgetA);
+  const bAmounts = allocateByWeights(bTickets.map(x=>x.probability), budgetB);
+
+  const grade = gradeFromSpread(Math.abs(diff));
+  const decision = worldAProb >= 60 || worldBProb >= 60 ? "暫定予想" : "慎重";
+  const updateLabel = d.meta?.updated_at ? `更新 ${formatUpdated(d.meta.updated_at)}` : "更新時刻なし";
+  const leader = strongestChallenger ? `${strongestChallenger.lane}号艇` : "外艇";
+
+  return {
+    mode:"temp",
+    label:"暫定予想",
+    decision,
+    grade,
+    updateLabel,
+    reason: missing.length ? `不足データ: ${missing.join(" / ")}` : "直前情報ベースで暫定算出",
+    worlds:[
+      {
+        key:"A", title:"イン逃げ成立", probability:worldAProb, budget:budgetA,
+        caption:`1号艇中心。内残りを主軸に整理。`,
+        tickets:aTickets.map((x,idx)=>({rank:idx+1, combo:x.combo, probability:x.probability, amount:aAmounts[idx]}))
+      },
+      {
+        key:"B", title:"イン逃げ不成立", probability:worldBProb, budget:budgetB,
+        caption:`攻め役は ${leader} 想定。まくり差し / 差し寄りも含む。`,
+        tickets:bTickets.map((x,idx)=>({rank:idx+1, combo:x.combo, probability:x.probability, amount:bAmounts[idx]}))
+      }
+    ],
+    reasoning:{
+      spread:Math.abs(diff).toFixed(1),
+      leader:leader,
+      note:`Pattern A/B 合計${aTickets.length + bTickets.length}点。締切直前でも空表示にせず、暫定でも買い目を出します。`
+    },
+    scores
+  };
+}
+function officialToPrediction(d){
+  const der = d.derived || {};
+  const wa = der.world_a || der.pattern_a || null;
+  const wb = der.world_b || der.pattern_b || null;
+  const decision = der.selectivity?.decision || der.decision || "正式予想";
+  const grade = der.selectivity?.grade || der.confidence_grade || "A";
+  const mapTickets = (world, budget) => {
+    const bets = (world?.tickets || world?.bets || world?.combinations || []).slice(0,8);
+    if(!bets.length) return [];
+    const items = bets.map((b,i)=>{
+      if(typeof b === "string") return {rank:i+1, combo:b, probability:null, amount:null};
+      return {
+        rank:i+1,
+        combo:b.combo || b.ticket || b.bet || "－",
+        probability:b.confidence ?? b.probability ?? b.p ?? null,
+        amount:b.amount ?? b.stake ?? null
+      };
+    });
+    const known = items.filter(x=>x.amount!==null).length;
+    if(!known){
+      const amounts = allocateByWeights(items.map(x=>num(x.probability) || 1), budget);
+      items.forEach((x,i)=>x.amount=amounts[i]);
+    }
+    return items;
+  };
+  const pA = num(wa?.probability ?? wa?.prob ?? wa?.rate);
+  const pB = num(wb?.probability ?? wb?.prob ?? wb?.rate);
+  const total = 5000;
+  const budgetA = pA!==null ? round100(total*(pA/Math.max(1,(pA||0)+(pB||0)||100))) : 2500;
+  const budgetB = total-budgetA;
+  return {
+    mode:"formal",
+    label:"正式予想",
+    decision,
+    grade,
+    updateLabel:d.meta?.updated_at ? `更新 ${formatUpdated(d.meta.updated_at)}` : "更新時刻なし",
+    reason:"CURRENT正式買い目を表示中",
+    worlds:[
+      {key:"A", title:"イン逃げ成立", probability:pA, budget:budgetA, caption:"正式CURRENT算出", tickets:mapTickets(wa,budgetA)},
+      {key:"B", title:"イン逃げ不成立", probability:pB, budget:budgetB, caption:"正式CURRENT算出", tickets:mapTickets(wb,budgetB)}
+    ],
+    reasoning:{spread:"－",leader:"－",note:"正式CURRENTが利用可能なため、暫定予想ではなく正式買い目を表示しています。"},
+    scores:computeScores(d)
+  };
+}
+function getPrediction(d){
+  return hasFormalPrediction(d) ? officialToPrediction(d) : buildFallbackPrediction(d);
+}
+function getPredictionStatus(d){
+  if(hasFormalPrediction(d)) return {kind:"green", text:"正式予想"};
+  const bf = d.beforeinfo || {};
+  const hasSome = (bf.racers||[]).length || (d.actual_entry||[]).length;
+  return hasSome ? {kind:"orange", text:"暫定予想"} : {kind:"gray", text:"準備中"};
+}
+function makeRaceSubtitle(d){
+  const meta = d.meta || {};
+  const w = d.beforeinfo?.weather || {};
+  const actual = (d.actual_entry || []).map(x=>`${x.lane}→${x.course}`).join("  ");
+  return [
+    meta.event || "",
+    w.weather ? `天候 ${w.weather}` : "",
+    w.wind_direction ? `風向 ${w.wind_direction}` : "",
+    w.wind_speed_ms!==undefined && w.wind_speed_ms!==null ? `風速 ${w.wind_speed_ms}m/s` : "",
+    w.wave_cm!==undefined && w.wave_cm!==null ? `波高 ${w.wave_cm}cm` : "",
+    actual ? `実進入 ${actual}` : ""
+  ].filter(Boolean).join(" / ");
+}
+function renderTabs(){
+  document.getElementById("raceTabs").innerHTML = raceTabs.map((t,i)=>
+    `<button class="${i===0?"on":""}" data-tab="${t[0]}">${t[1]}</button>`).join("");
+  document.querySelectorAll("#raceTabs [data-tab]").forEach(btn=>{
+    btn.onclick = () => {
+      document.querySelectorAll("#raceTabs [data-tab]").forEach(b=>b.classList.toggle("on", b===btn));
+      document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active", v.id===`tab-${btn.dataset.tab}`));
+      window.scrollTo({top:0,behavior:"smooth"});
+    };
+  });
+}
+renderTabs();
+
+function renderModelPanels(){
+  const model = state.model || {};
+  const core = model.core7 || {};
+  const guards = model.guards || {};
+  const ready = !!core.formal_first100_ready;
+  const elig = core.eligible_count ?? "－";
+  const req = core.required_count ?? 100;
+  const modelName = model.model || "V1.21.33";
+  const badge = ready ? statusBadge("green","正式準備完了") : statusBadge("orange","CURRENT待機");
+  const freeze = model.first100_freeze || {};
+  const freezeText = freeze.frozen ? `固定済み / SHA ${String(freeze.sha256||'').slice(0,12)}…` : (ready ? "固定処理待ち" : "100R待ち");
+  const text1 = `<b>CURRENT接続状況</b><br>
+    モデル: <span class="mono">${modelName}</span><br>
+    CORE7: <b>${elig} / ${req}R</b><br>
+    first100: <b>${freezeText}</b><br>
+    状態: ${badge}<br>
+    guards: results_seen=<span class="${guards.results_seen?'bad':'good'}">${String(guards.results_seen ?? false)}</span> /
+    unlock=<span class="${guards.unlock?'bad':'good'}">${String(guards.unlock ?? false)}</span> /
+    scoring=<span class="${guards.scoring?'bad':'good'}">${String(guards.scoring ?? false)}</span>`;
+  document.getElementById("modelStatusBox").innerHTML = text1;
+  document.getElementById("globalAuditModel").innerHTML = text1;
+  document.getElementById("dataCenterModel").innerHTML = text1;
+  document.getElementById("statCore7").textContent = `${elig}/${req}`;
+  document.getElementById("statModel").textContent = ready ? "正式" : "待機";
+  document.getElementById("dcModel").textContent = modelName;
+  document.getElementById("dcCore").textContent = `CORE7 ${elig}/${req}`;
+  document.getElementById("dcReady").textContent = ready ? "準備完了" : "待機中";
+}
+function renderHealthPanels(){
+  const d = state.today || {};
+  const venues = d.venues || [];
+  const near = collectRaces().filter(x=>x.mins!==null && x.mins>=0 && x.mins<=30);
+  const h1 = `<b>PRE_RESULT監査</b><br>
+    開催場: <b>${venues.length}/24場</b><br>
+    近い締切: <b>${near.length}R</b><br>
+    更新: ${formatUpdated(d.updated_at)}<br>
+    guards: results_seen=<span class="${d.results_seen?'bad':'good'}">${String(d.results_seen ?? false)}</span> /
+    unlock=<span class="${d.unlock?'bad':'good'}">${String(d.unlock ?? false)}</span> /
+    scoring=<span class="${d.scoring?'bad':'good'}">${String(d.scoring ?? false)}</span>`;
+  document.getElementById("healthBox").innerHTML = h1;
+  document.getElementById("globalAuditHealth").innerHTML = h1;
+  document.getElementById("dataCenterHealth").innerHTML = h1;
+  document.getElementById("updatedHero").textContent = `更新 ${formatUpdated(d.updated_at)}`;
+  document.getElementById("updatedHome").textContent = `更新 ${formatUpdated(d.updated_at)}`;
+  document.getElementById("statVenue").textContent = venues.length;
+  document.getElementById("statSoon").textContent = near.length;
+  const srcRows = state.model?.source_rows || state.model?.source_counts;
+  document.getElementById("dcSources").textContent = srcRows ? `${Object.values(srcRows).join(" / ")}` : "読込後反映";
+}
+function collectRaces(){
+  const rows = [];
+  (state.today?.venues || []).forEach(v=>{
+    (v.races || []).forEach(r=>{
+      rows.push({...r, venue:v.venue, event:v.event, jcd:v.jcd, mins:minutesToDeadline(r.deadline)});
+    });
+  });
+  rows.sort((a,b)=>{
+    const ax = a.mins===null ? 99999 : (a.mins<0 ? 10000 + Math.abs(a.mins) : a.mins);
+    const bx = b.mins===null ? 99999 : (b.mins<0 ? 10000 + Math.abs(b.mins) : b.mins);
+    return ax-bx;
+  });
+  return rows;
 }
 function renderDeadlineBoard(){
- const rows=[];
- for(const v of (state.today?.venues||[])){
-   for(const r of (v.races||[])){
-     if(!r.deadline)continue;
-     const mins=minutesToDeadline(r.deadline);
-     rows.push({...r,venue:v.venue,jcd:v.jcd,mins});
-   }
- }
- rows.sort((a,b)=>{
-   const ae=a.mins===null?99999:(a.mins<0?10000+Math.abs(a.mins):a.mins);
-   const be=b.mins===null?99999:(b.mins<0?10000+Math.abs(b.mins):b.mins);
-   return ae-be;
- });
- const upcoming=rows.filter(x=>x.mins!==null && x.mins>=0);
- const show=(upcoming.length?upcoming:rows).slice(0,18);
- document.getElementById("deadlineCount").textContent=`次の${show.length}R`;
- document.getElementById("deadlineBoard").innerHTML=show.map(r=>{
-   const cls=r.mins!==null && r.mins<=10?"verysoon":(r.mins!==null && r.mins<=30?"soon":"");
-   const note=r.mins===null?"":(r.mins<=0?"締切":r.mins+"分後");
-   const badge=r.beforeinfo_status==="ok"?`<span class="deadline-badge">直前OK</span>`:"";
-   return `<button class="deadline-item ${cls}" data-file="${r.file}" data-jcd="${r.jcd}">
-      ${badge}<div class="deadline-time">${r.deadline}</div>
-      <div class="deadline-place">${r.venue} ${r.race_no}R</div>
-      <div class="deadline-meta">${note}${r.beforeinfo_status==="published_wait"?" / 展示待ち":""}</div>
-   </button>`;
- }).join("") || `<div class="empty">締切データ待ち</div>`;
- document.querySelectorAll("#deadlineBoard [data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
+  const rows = collectRaces();
+  const show = rows.filter(x=>x.mins===null || x.mins>=-5).slice(0,24);
+  document.getElementById("deadlineCount").textContent = `次の${show.length}R`;
+  document.getElementById("deadlineBoard").innerHTML = show.map(r=>{
+    const cls = r.mins!==null && r.mins<=5 ? "verysoon" : (r.mins!==null && r.mins<=20 ? "soon" : "");
+    const status = r.prediction_status || (r.beforeinfo_status==="ok" ? {kind:"orange",text:"暫定可"} : {kind:"gray",text:"準備中"});
+    const note = r.mins===null ? "時刻未取得" : r.mins<0 ? "締切後" : `${r.mins}分後`;
+    return `<button class="deadline-card ${cls}" data-file="${r.file}" data-jcd="${r.jcd}">
+      <div class="deadline-top">
+        <div>
+          <div class="deadline-place">${f(r.venue)} ${f(r.race_no)}R</div>
+          <div class="deadline-time">${f(r.deadline)}</div>
+        </div>
+        ${statusBadge(status.kind, status.text)}
+      </div>
+      <div class="deadline-meta">${f(r.event||"開催中")}<br>${note}</div>
+    </button>`;
+  }).join("");
+  document.querySelectorAll("#deadlineBoard [data-file]").forEach(btn=>btn.onclick=()=>loadRace(btn.dataset.file, btn.dataset.jcd));
 }
-
-
-function renderModelStatus(){
- const m=state.model;
- const box=document.getElementById("modelStatus");
- const badge=document.getElementById("modelBadge");
- if(!box||!badge)return;
- if(!m){
-   badge.textContent="未取得";
-   box.textContent="model_status.json 待ち";
-   return;
- }
- const c=m.core7||{};
- const ready=!!c.formal_first100_ready;
- badge.textContent=ready?"100R到達":"待機中";
- badge.className=ready?"good":"warn";
- box.innerHTML=`モデル: ${m.model||"－"}<br>
- CORE7: <b>${c.eligible_count??0} / ${c.required_count??100}R</b><br>
- formal_first100_ready: <span class="${ready?"good":"warn"}">${String(ready)}</span><br>
- results_seen=${String(m.guards?.results_seen??false)} / unlock=${String(m.guards?.unlock??false)} / scoring=${String(m.guards?.scoring??false)}`;
+function renderVenues(){
+  const active = new Map((state.today?.venues || []).map(v=>[v.jcd,v]));
+  document.getElementById("venues").innerHTML = VENUES.map(([code,name])=>{
+    const v = active.get(code);
+    return `<div class="card venue ${v?'on':'off'}">
+      <div class="venue-top">
+        <div>
+          <div class="vname">${name}</div>
+          <div class="vstate">${v ? f(v.event||"開催中") : "本日非開催"}</div>
+        </div>
+        ${v ? statusBadge("blue", `${(v.races||[]).length}R`) : statusBadge("gray","休み")}
+      </div>
+      ${v ? `<div class="racechips">${(v.races||[]).map(r=>{
+        const mins = minutesToDeadline(r.deadline);
+        const extra = mins!==null && mins>=0 ? `${mins}分後` : f(r.deadline);
+        return `<button class="racechip ${r.beforeinfo_status==="ok"?"before":"ready"}" data-file="${r.file}" data-jcd="${code}">
+          ${f(r.race_no)}R<small>${extra}</small>
+        </button>`;
+      }).join("")}</div>` : ``}
+    </div>`;
+  }).join("");
+  document.querySelectorAll("#venues [data-file]").forEach(btn=>btn.onclick=()=>loadRace(btn.dataset.file, btn.dataset.jcd));
 }
-async function refreshModel(){
- try{
-   const r=await fetch(`./data/model_status.json?t=${Date.now()}`,{cache:"no-store"});
-   if(!r.ok)throw new Error(r.status);
-   state.model=await r.json();
- }catch(e){state.model=null}
- renderModelStatus();
-}
-
 function renderHome(){
- renderDeadlineBoard();
- const active=new Map((state.today?.venues||[]).map(v=>[v.jcd,v]));
- document.getElementById("venues").innerHTML=VENUES.map(([code,name])=>{
-   const v=active.get(code);
-   return `<div class="card venue ${v?"on":"off"}">
-    <div class="vname">${name}</div>
-    <div class="vstate">${v?`${v.event||"開催中"}`:"本日非開催"}</div>
-    ${v?`<div class="racechips">${(v.races||[]).map(r=>`<button class="racechip ${r.beforeinfo_status==="ok"?"before":"ready"}" data-file="${r.file}" data-jcd="${code}">
-      ${r.race_no}R<small>${f(r.deadline)}</small></button>`).join("")}</div>`:""}
-   </div>`;
- }).join("");
- document.querySelectorAll("[data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
- const d=state.today;
- document.getElementById("updated").textContent=d?.updated_at?`更新 ${new Date(d.updated_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}`:"未取得";
- document.getElementById("health").innerHTML=`開催 ${d?.venues?.length||0}/24場　<span class="good">PRE_RESULT</span>　results_seen=${String(d?.results_seen??false)} / unlock=${String(d?.unlock??false)} / scoring=${String(d?.scoring??false)}`;
+  renderDeadlineBoard();
+  renderVenues();
+  renderModelPanels();
+  renderHealthPanels();
+  updateSystemBanner();
 }
 
-function tickets(world){
- const bets=world?.tickets||world?.bets||world?.combinations||[];
- if(!bets.length){
-   const c=state.model?.core7;
-   const progress=c?`${c.eligible_count??0}/${c.required_count??100}R`:"入力監査中";
-   return `<div class="wait">V1.21.33 CURRENT待機<br><span style="font-size:10px">CORE7 ${progress} / 正式入力が揃うまで仮買い目は表示しません</span></div>`;
- }
- return bets.slice(0,8).map((b,i)=>{
-   const combo=typeof b==="string"?b:(b.combo||b.ticket||b.bet||"－");
-   const c=typeof b==="object"?(b.confidence ?? b.probability ?? b.p):null;
-   return `<div class="ticket"><span class="rank">#${i+1}</span><span class="combo">${combo}</span><span class="confidence">${c==null?"":pct(c)}</span></div>`;
- }).join("");
-}
-function worldProb(w){return w?.probability ?? w?.prob ?? w?.rate ?? null}
-function renderPrediction(d){
- const der=d.derived||{};
- const wa=der.world_a||der.pattern_a||null;
- const wb=der.world_b||der.pattern_b||null;
- const decision=der.selectivity?.decision||der.decision||null;
- const grade=der.selectivity?.grade||der.confidence_grade||null;
- document.getElementById("decision").innerHTML=`<div><div class="label">最終判断</div><strong class="${decision==="買い"?"buy":"pass"}">${decision||"予想計算待ち"}</strong></div>
- <div style="text-align:right"><div class="label">勝負度</div><strong>${grade||"－"}</strong></div>`;
 
- document.getElementById("worlds").innerHTML=[
-   ["a","Pattern A","イン逃げ成立",wa],["b","Pattern B","イン逃げ不成立",wb]
- ].map(([cls,label,title,w])=>`<div class="card world ${cls}">
-   <div class="worldtop"><div><span class="pill">${label}</span><h3 style="margin-top:7px">${title}</h3></div><div class="worldprob">${worldProb(w)==null?"－":pct(worldProb(w))}</div></div>
-   ${tickets(w)}
- </div>`).join("");
+function inputCompleteness(d){
+  const present = {
+    "出走表": !!(d.racers||[]).length,
+    "直前": !!(d.beforeinfo?.racers||[]).length,
+    "実進入": !!(d.actual_entry||[]).length,
+    "展示ST": !!(d.beforeinfo?.start_exhibition||[]).length,
+    "水面": !!d.beforeinfo?.weather,
+    "オリジナル展示": !!(d.original_exhibition?.boats||[]).length
+  };
+  const total = Object.keys(present).length;
+  const ok = Object.values(present).filter(Boolean).length;
+  return {present,total,ok,pct:Math.round(ok/total*100)};
 }
-function renderBoats(d){
- const rs=d.racers||[];
- document.getElementById("boats").innerHTML=rs.map((r,i)=>{
-  const n=laneNo(r,i), mot=r.motor||{}, nat=r.national||{};
-  return `<div class="boat"><div class="lane l${n}">${n}</div><div class="boatname">${f(r.name)}</div>
-   <div class="boatmeta">${f(r.class)} / ST ${f(r.avg_st)}</div>
-   <div class="boatnum">${f(nat.win_rate)}</div><div class="boatmeta">全国勝率</div>
-   <div class="boatnum">${f(mot.quinella_rate)}</div><div class="boatmeta">M2連率</div></div>`;
- }).join("");
- const bf=d.beforeinfo||{}, w=bf.weather||{};
- document.getElementById("quickKpis").innerHTML=[
-  ["直前情報",d.source_audit?.beforeinfo?.status||"未取得"],
-  ["気温",w.air_temp_c==null?"－":w.air_temp_c+"℃"],
-  ["風速",w.wind_speed_ms==null?"－":w.wind_speed_ms+"m/s"],
-  ["波高",w.wave_cm==null?"－":w.wave_cm+"cm"]
- ].map(x=>`<div class="card kpi"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
+function renderInputCompleteness(d, pred){
+  const c = inputCompleteness(d);
+  const box = document.getElementById("inputCompleteness");
+  if(!box) return;
+  box.innerHTML = `
+    <b>入力充足度 ${c.pct}%</b>
+    <div class="completeness"><span style="width:${c.pct}%"></span></div>
+    <div class="source-chips">
+      ${Object.entries(c.present).map(([k,v])=>`<span class="source-chip ${v?'ok':'miss'}">${k} ${v?'✓':'待ち'}</span>`).join("")}
+    </div>
+    <div class="note" style="margin-top:8px">${pred.mode==='formal'?'正式CURRENTを優先表示中':'不足分を勝手に補完せず、取得済み情報だけで暫定計算'}</div>
+  `;
 }
-function renderCard(d){
- document.getElementById("cardRows").innerHTML=(d.racers||[]).map((r,i)=>{
-  const n=laneNo(r,i), nat=r.national||{}, loc=r.local||{}, m=r.motor||{}, b=r.boat||{};
-  return `<tr><td><span class="lane l${n}">${n}</span></td><td class="namecell">${f(r.name)}</td><td>${f(r.class)}</td><td>${f(r.avg_st)}</td>
-  <td>${f(nat.win_rate)}</td><td>${f(nat.quinella_rate)}</td><td>${f(loc.win_rate)}</td><td>${f(loc.quinella_rate)}</td>
-  <td>${f(m.no)}</td><td>${f(m.quinella_rate)}</td><td>${f(b.no)}</td><td>${f(b.quinella_rate)}</td></tr>`;
- }).join("");
+function updateSystemBanner(){
+  const box = document.getElementById("systemBanner");
+  if(!box) return;
+  const t = state.today?.updated_at ? new Date(state.today.updated_at) : null;
+  const age = t ? Math.floor((Date.now()-t.getTime())/60000) : null;
+  const errs = state.today?.collector?.errors || [];
+  if(errs.length){
+    box.className = "system-banner show bad";
+    box.innerHTML = `<b>データ取得エラーあり</b>　${errs.length}件。最新成功データを表示しています。`;
+  }else if(age!==null && age>12){
+    box.className = "system-banner show warn";
+    box.innerHTML = `<b>更新遅延</b>　最終更新 ${age}分前。GitHub Actionsの遅延または取得待ちの可能性があります。`;
+  }else{
+    const core = state.model?.core7;
+    const freeze = state.model?.first100_freeze;
+    box.className = "system-banner show good";
+    box.innerHTML = `<b>正常更新</b>　PRE_RESULT維持 / CORE7 ${core?.eligible_count ?? '－'}/${core?.required_count ?? 100}${freeze?.frozen?' / first100固定済み':''}`;
+  }
 }
-function renderBefore(d){
- const bf=d.beforeinfo||{}, starts=new Map((bf.start_exhibition||[]).map(x=>[x.lane,x.st]));
- document.getElementById("beforeStatus").textContent=d.source_audit?.beforeinfo?.status||"未取得";
- document.getElementById("water").innerHTML=[
-  ["気温",bf.weather?.air_temp_c==null?"－":bf.weather.air_temp_c+"℃"],
-  ["水温",bf.weather?.water_temp_c==null?"－":bf.weather.water_temp_c+"℃"],
-  ["風速",bf.weather?.wind_speed_ms==null?"－":bf.weather.wind_speed_ms+"m/s"],
-  ["波高",bf.weather?.wave_cm==null?"－":bf.weather.wave_cm+"cm"]
- ].map(x=>`<div class="card kpi"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
- const names=new Map((d.racers||[]).map((r,i)=>[laneNo(r,i),r.name]));
- const actual=new Map((d.actual_entry||[]).map(x=>[x.lane,x.course]));
- document.getElementById("beforeRows").innerHTML=(bf.racers||[]).map((r,i)=>{
-   const n=r.lane??i+1;return `<tr><td><span class="lane l${n}">${n}</span></td><td class="namecell">${f(names.get(n))}</td><td>${f(r.exhibition_time)}</td><td>${f(r.tilt)}</td><td>${f(starts.get(n))}</td><td>${f(actual.get(n))}</td></tr>`;
- }).join("")||`<tr><td colspan="6">直前情報はまだ公開されていません</td></tr>`;
- const oe=d.original_exhibition;
- const box=document.getElementById("originalExhibition");
- if(!oe||!oe.labels?.length){
-   box.innerHTML=`<div class="empty">オリジナル展示は未取得</div>`;
- }else{
-   const head=oe.labels.map(x=>`<th>${x}</th>`).join("");
-   const rows=(oe.boats||[]).map(x=>`<tr><td><span class="lane l${x.lane}">${x.lane}</span></td><td class="namecell">${f(x.name||names.get(x.lane))}</td>${(x.values||[]).map(v=>`<td>${f(v)}</td>`).join("")}</tr>`).join("");
-   box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>艇</th><th>選手</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
- }
+
+function renderSummaryStrip(d, pred){
+  const w = d.beforeinfo?.weather || {};
+  const actual = (d.actual_entry || []).map(x=>x.course).join("-");
+  const strip = [
+    ["予想状態", pred.label],
+    ["更新", pred.updateLabel.replace("更新 ","")],
+    ["風 / 波", `${f(w.wind_speed_ms)}m/s / ${f(w.wave_cm)}cm`],
+    ["実進入", actual || "－"],
+    ["勝負度", pred.grade]
+  ];
+  document.getElementById("summaryStrip").innerHTML = strip.map(x=>
+    `<div class="card strip-card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`
+  ).join("");
 }
-function renderAudit(d){
- const a=d.source_audit||{};
- document.getElementById("auditBox").innerHTML=`<b>PRE_RESULT監査</b><br>
- race_key: ${f(d.race_key)}<br>
- updated_at: ${f(d.meta?.updated_at)}<br>
- results_seen: <span class="${d.meta?.results_seen?"bad":"good"}">${String(d.meta?.results_seen??false)}</span><br>
- unlock: <span class="${d.meta?.unlock?"bad":"good"}">${String(d.meta?.unlock??false)}</span><br>
- scoring: <span class="${d.meta?.scoring?"bad":"good"}">${String(d.meta?.scoring??false)}</span><br><br>
- race_card: ${f(a.race_card?.status)} / SHA ${f(a.race_card?.sha256)}<br>
- beforeinfo: ${f(a.beforeinfo?.status)} / SHA ${f(a.beforeinfo?.sha256)}`;
+function renderDecision(d, pred){
+  const formal = pred.mode === "formal";
+  document.getElementById("decision").innerHTML = `
+    <div class="decision-grid">
+      <div>
+        <div class="decision-title">最終判断</div>
+        <div class="decision-main ${formal?'formal':'temp'}">${pred.label}</div>
+        <div class="note" style="margin-top:8px">${pred.reason}</div>
+      </div>
+      <div>
+        <div class="decision-title">勝負度</div>
+        <div class="decision-grade">${pred.grade}</div>
+        <div class="note">${pred.updateLabel}</div>
+      </div>
+      <div>
+        <div class="decision-title">方針</div>
+        <div class="decision-main" style="font-size:24px">${pred.decision}</div>
+        <div class="note">${formal ? "正式CURRENT表示" : "直前ベース暫定表示"}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById("predictionAlert").innerHTML = `
+    <div style="font-weight:950;color:var(--navy);font-size:16px">${formal ? "正式予想を表示中" : "締切直前でも暫定予想を表示"}</div>
+    <div class="small">${formal ? "正式CURRENTの買い目を優先表示しています。" : "100R到達前でも、展示・実進入・出走表がある範囲で仮買い目を止めません。"}<br>${pred.reason}</div>
+  `;
+}
+function renderWorlds(pred){
+  const html = pred.worlds.map((w,idx)=>{
+    return `<div class="card world world-world${w.key}">
+      <div class="world-head">
+        <div>
+          ${statusBadge(idx===0 ? "blue":"gray", `Pattern ${w.key}`)}
+          <h3>${w.title}</h3>
+          <div class="caption">${w.caption}</div>
+        </div>
+        <div class="world-prob">${pct(w.probability)}</div>
+      </div>
+      <div class="world-budget">推奨配分：<b>${w.budget.toLocaleString()}円</b> / ${w.tickets.length}点</div>
+      <div class="ticketlist">
+        ${w.tickets.map(t=>`<div class="ticket">
+          <div class="rank">#${t.rank}</div>
+          <div class="combo">${t.combo}</div>
+          <div class="prob">${t.probability==null ? "－" : pct(t.probability)}</div>
+          <div class="amount">${t.amount==null ? "－" : `${Number(t.amount).toLocaleString()}円`}</div>
+        </div>`).join("")}
+      </div>
+      <div class="subreason">${pred.reasoning?.note || ""}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("worlds").innerHTML = html;
+}
+function renderBoats(d, pred){
+  const rows = pred.scores || computeScores(d);
+  document.getElementById("boats").innerHTML = rows.map(s=>{
+    return `<div class="boat">
+      <div class="lane l${s.lane}">${s.lane}</div>
+      <div class="boat-name">${f(s.name)}</div>
+      <div class="boat-sub">${f(s.class)} / 平均ST ${s.avgSt ?? "－"} / 実進入 ${s.actualCourse ?? "－"}</div>
+      <div class="boat-metrics">
+        <div class="metric"><div class="m-label">全国勝率</div><div class="m-value">${f(s.natWin)}</div></div>
+        <div class="metric"><div class="m-label">当地勝率</div><div class="m-value">${f(s.locWin)}</div></div>
+        <div class="metric"><div class="m-label">M2連率</div><div class="m-value">${f(s.motQ)}</div></div>
+        <div class="metric"><div class="m-label">展示/展示ST</div><div class="m-value">${s.exhibitionTime ?? "－"} / ${s.exhibitionSt ?? "－"}</div></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function renderCard(d, pred){
+  const scoreMap = new Map((pred.scores || []).map(x=>[x.lane, x]));
+  document.getElementById("cardRows").innerHTML = (d.racers || []).map((r,i)=>{
+    const lane = laneNo(r,i), nat=r.national||{}, loc=r.local||{}, m=r.motor||{}, b=r.boat||{};
+    const s = scoreMap.get(lane);
+    const memo = s ? `総合 ${s.baseScore.toFixed(1)}` : "－";
+    return `<tr>
+      <td><div class="lane l${lane}">${lane}</div></td>
+      <td class="namecell">${f(r.name)}</td>
+      <td>${f(r.class)}</td>
+      <td>${f(r.avg_st)}</td>
+      <td>${f(nat.win_rate)}</td>
+      <td>${f(nat.quinella_rate)}</td>
+      <td>${f(loc.win_rate)}</td>
+      <td>${f(loc.quinella_rate)}</td>
+      <td>${f(m.no)}</td>
+      <td>${f(m.quinella_rate)}</td>
+      <td>${f(b.no)}</td>
+      <td>${f(b.quinella_rate)}</td>
+      <td>${memo}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="13">出走表データがありません</td></tr>`;
+}
+function renderBefore(d, pred){
+  const {bf, starts, actual} = getBeforeMap(d);
+  document.getElementById("beforeStatus").innerHTML = `${f(d.source_audit?.beforeinfo?.status || "未取得")} / ${pred.label}`;
+  document.getElementById("waterStrip").innerHTML = [
+    ["天候", f(bf.weather?.weather)],
+    ["風向", f(bf.weather?.wind_direction)],
+    ["風速", bf.weather?.wind_speed_ms==null ? "－" : `${bf.weather.wind_speed_ms}m/s`],
+    ["波高", bf.weather?.wave_cm==null ? "－" : `${bf.weather.wave_cm}cm`],
+    ["気温 / 水温", `${f(bf.weather?.air_temp_c)}℃ / ${f(bf.weather?.water_temp_c)}℃`]
+  ].map(x=>`<div class="card strip-card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join("");
+  const names = new Map((d.racers||[]).map((r,i)=>[laneNo(r,i), r.name]));
+  document.getElementById("beforeRows").innerHTML = (bf.racers || []).map((r,i)=>{
+    const lane = r.lane ?? (i+1);
+    const s = (pred.scores || []).find(x=>x.lane===lane);
+    const memo = s ? (s.lane===1 ? "イン残り軸" : s.attackScore > s.insideScore ? "攻め候補" : "相手候補") : "－";
+    return `<tr>
+      <td><div class="lane l${lane}">${lane}</div></td>
+      <td class="namecell">${f(names.get(lane))}</td>
+      <td>${f(r.exhibition_time)}</td>
+      <td>${f(starts.get(lane))}</td>
+      <td>${f(r.tilt)}</td>
+      <td>${f(actual.get(lane))}</td>
+      <td>${memo}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="7">直前情報はまだ公開されていません</td></tr>`;
+
+  const oe = d.original_exhibition;
+  if(!oe || !(oe.labels||[]).length){
+    document.getElementById("originalBox").innerHTML = `<div class="empty">オリジナル展示は未取得です</div>`;
+  }else{
+    const names2 = new Map((d.racers||[]).map((r,i)=>[laneNo(r,i),r.name]));
+    document.getElementById("originalBox").innerHTML = `<table>
+      <thead><tr><th>艇</th><th>選手</th>${oe.labels.map(x=>`<th>${x}</th>`).join("")}</tr></thead>
+      <tbody>
+      ${(oe.boats||[]).map(b=>`<tr>
+        <td><div class="lane l${b.lane}">${b.lane}</div></td>
+        <td class="namecell">${f(b.name || names2.get(b.lane))}</td>
+        ${(b.values||[]).map(v=>`<td>${f(v)}</td>`).join("")}
+      </tr>`).join("")}
+      </tbody>
+    </table>`;
+  }
+}
+function renderDataTab(d, pred){
+  const scoreRows = pred.scores || computeScores(d);
+  document.getElementById("selectedDataSummary").innerHTML = `
+    <b>選択レースの見方</b><br>
+    総合点は「全国/当地/機力/展示/平均ST」を足し合わせた比較用の目安です。<br>
+    イン残り寄与は <b>1号艇残りや内有利</b> を重視した値、攻め寄与は <b>差し / まくり差し / まくり寄り</b> を重視した値です。<br>
+    実進入や展示STが未取得なら、その項目は 0 寄与のままです。
+  `;
+  document.getElementById("selectedReasoning").innerHTML = `
+    <b>今回の整理</b><br>
+    予想種別: <b>${pred.label}</b><br>
+    勝負度: <b>${pred.grade}</b><br>
+    展開主役: <b>${pred.reasoning?.leader || "－"}</b><br>
+    Spread: <b>${pred.reasoning?.spread || "－"}</b><br>
+    コメント: ${pred.reasoning?.note || "－"}
+  `;
+  document.getElementById("scoreRows").innerHTML = scoreRows.map(s=>`<tr>
+    <td><div class="lane l${s.lane}">${s.lane}</div></td>
+    <td class="namecell">${f(s.name)}</td>
+    <td>${s.baseScore.toFixed(1)}</td>
+    <td>${s.insideScore.toFixed(1)}</td>
+    <td>${s.attackScore.toFixed(1)}</td>
+    <td>${f(s.natWin)}</td>
+    <td>${f(s.locWin)}</td>
+    <td>${((s.motQ||0)+(s.boatQ||0)).toFixed(1)}</td>
+    <td>${[s.exhibitionTime ?? "－", s.exhibitionSt ?? "－"].join(" / ")}</td>
+  </tr>`).join("");
+}
+function renderAuditTab(d, pred){
+  const source = d.source_audit || {};
+  const items = [
+    ["race_key", d.race_key || "－", "blue"],
+    ["結果参照", `results_seen=${String(d.meta?.results_seen ?? false)}`, (d.meta?.results_seen ? "red":"green")],
+    ["unlock", String(d.meta?.unlock ?? false), (d.meta?.unlock ? "red":"green")],
+    ["scoring", String(d.meta?.scoring ?? false), (d.meta?.scoring ? "red":"green")],
+    ["beforeinfo", source.beforeinfo?.status || "－", source.beforeinfo?.status==="ok" ? "green":"orange"],
+    ["race_card", source.race_card?.status || "－", source.race_card?.status==="ok" ? "green":"orange"],
+    ["予想種別", pred.label, pred.mode==="formal" ? "green":"orange"]
+  ];
+  document.getElementById("auditStatusList").innerHTML = items.map(x=>`
+    <div class="status-item">
+      <div><strong>${x[0]}</strong><div class="note">${x[1]}</div></div>
+      <div>${statusBadge(x[2], x[1])}</div>
+    </div>
+  `).join("");
+  document.getElementById("auditDetail").innerHTML = `
+    <b>PRE_RESULT監査詳細</b><br>
+    venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
+    deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
+    <b>source_audit</b><br>
+    race_card.status = ${f(source.race_card?.status)}<br>
+    beforeinfo.status = ${f(source.beforeinfo?.status)}<br><br>
+    <b>prediction</b><br>
+    mode = ${pred.mode}<br>
+    reason = ${pred.reason}<br>
+    leader = ${pred.reasoning?.leader || "－"}<br>
+  `;
 }
 function renderRace(d){
- state.race=d;
- document.getElementById("raceTitle").textContent=`${f(d.meta?.venue)} ${f(d.meta?.race_no)}R`;
- document.getElementById("raceEvent").textContent=d.meta?.event||"";
- document.getElementById("deadline").textContent=f(d.meta?.deadline);
- const v=(state.today?.venues||[]).find(x=>x.jcd===d.meta?.venue_code);
- document.getElementById("raceNav").innerHTML=(v?.races||[]).map(r=>`<button class="racechip ${r.race_no===d.meta?.race_no?"before":""}" data-file="${r.file}" data-jcd="${v.jcd}">${r.race_no}R<small>${f(r.deadline)}</small></button>`).join("");
- document.querySelectorAll("#raceNav [data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
- renderPrediction(d);renderBoats(d);renderCard(d);renderBefore(d);renderAudit(d);
- showView("race");
+  state.race = d;
+  const pred = getPrediction(d);
+  document.getElementById("raceTitle").textContent = `${f(d.meta?.venue)} ${f(d.meta?.race_no)}R`;
+  document.getElementById("raceSubtitle").textContent = makeRaceSubtitle(d);
+  document.getElementById("deadlineBig").textContent = f(d.meta?.deadline);
+  const venue = (state.today?.venues||[]).find(x=>x.jcd===d.meta?.venue_code || x.jcd===state.currentVenue);
+  document.getElementById("raceNav").innerHTML = (venue?.races || []).map(r=>`
+    <button class="racechip ${String(r.race_no)===String(d.meta?.race_no) ? "before":"ready"}" data-file="${r.file}" data-jcd="${venue.jcd}">
+      ${r.race_no}R<small>${f(r.deadline)}</small>
+    </button>
+  `).join("");
+  document.querySelectorAll("#raceNav [data-file]").forEach(btn=>btn.onclick=()=>loadRace(btn.dataset.file, btn.dataset.jcd));
+
+  renderSummaryStrip(d, pred);
+  renderDecision(d, pred);
+  renderInputCompleteness(d, pred);
+  renderWorlds(pred);
+  renderBoats(d, pred);
+  renderCard(d, pred);
+  renderBefore(d, pred);
+  renderDataTab(d, pred);
+  renderAuditTab(d, pred);
+
+  document.querySelectorAll("#raceTabs [data-tab]").forEach((b,i)=>b.classList.toggle("on", i===0));
+  document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active", v.id==="tab-pred"));
+  showView("raceView");
 }
-async function loadRace(file,jcd){
- state.currentVenue=jcd;
- try{
-  const r=await fetch(`${file}?t=${Date.now()}`,{cache:"no-store"});
-  if(!r.ok)throw new Error(r.status); renderRace(await r.json());
- }catch(e){alert("レースデータを取得できませんでした");}
+async function loadRace(file, jcd){
+  state.currentVenue = jcd;
+  try{
+    const r = await fetch(`${file}?t=${Date.now()}`, {cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    renderRace(await r.json());
+  }catch(e){
+    alert("レースデータを取得できませんでした");
+  }
 }
-async function refreshToday(force=false){
- document.getElementById("live").textContent="更新中";
- try{
-  const r=await fetch(`./data/today.json?t=${Date.now()}`,{cache:"no-store"});
-  if(!r.ok)throw new Error(r.status);
-  state.today=await r.json();renderHome();
-  document.getElementById("live").textContent="AUTO 5分";
- }catch(e){
-  document.getElementById("live").textContent="データ待ち";
- }
+async function refreshToday(){
+  const live = document.getElementById("live");
+  live.innerHTML = `<span class="live-dot"></span><span>更新中</span>`;
+  try{
+    const r = await fetch(`./data/today.json?t=${Date.now()}`, {cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    state.today = await r.json();
+    renderHome();
+    updateSystemBanner();
+    live.innerHTML = `<span class="live-dot"></span><span>AUTO 5分</span>`;
+  }catch(e){
+    live.innerHTML = `<span class="live-dot" style="background:var(--warn)"></span><span>データ待ち</span>`;
+  }
 }
-refreshToday();refreshModel();
-setInterval(()=>refreshToday(),60000);
-setInterval(()=>refreshModel(),60000);
-setInterval(()=>{if(state.today)renderDeadlineBoard()},30000);
+async function refreshModel(){
+  try{
+    const r = await fetch(`./data/model_status.json?t=${Date.now()}`, {cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    state.model = await r.json();
+  }catch(e){
+    state.model = null;
+  }
+  renderModelPanels();
+  renderHealthPanels();
+  updateSystemBanner();
+}
+function updateGlobalDataViews(){
+  const model = state.model || {};
+  const core = model.core7 || {};
+  const sourceCounts = model.source_rows || model.source_counts || {};
+  document.getElementById("dcSources").textContent = Object.keys(sourceCounts).length ?
+    `rc ${sourceCounts.race_cards ?? "－"} / stt ${sourceCounts.stt ?? "－"} / tkz ${sourceCounts.tkz ?? "－"} / sui ${sourceCounts.sui ?? "－"} / oe ${sourceCounts.original_exhibition ?? "－"}` :
+    "読込後反映";
+}
+async function refreshAll(force=false){
+  await refreshToday();
+  await refreshModel();
+  updateGlobalDataViews();
+}
+refreshAll();
+setInterval(refreshAll, 60000);
+setInterval(()=>{ if(state.today) renderDeadlineBoard(); }, 30000);
 </script>
 </body>
 </html>
