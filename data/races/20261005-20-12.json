@@ -8,7 +8,7 @@
     "event": "MNBR若松4thかっぱくん杯",
     "race_no": 12,
     "deadline": "22:54",
-    "updated_at": "2026-10-05T20:33:32+09:00",
+    "updated_at": "2026-10-05T20:41:28+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,40 +18,16 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=20&rno=12",
-      "fetched_at": "2026-10-05T20:33:32+09:00",
-      "sha256": "2eeb7f27b28469127fa118c2a310f2d30e6b811c7a357847dc94181e83f05e99",
+      "fetched_at": "2026-10-05T20:41:28+09:00",
+      "sha256": "d7c00b7a6ced89aad3640c53207367bd5ab4b91f0281da04d205cb8164466506",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=20&rno=12",
-      "fetched_at": "2026-10-05T20:33:32+09:00",
-      "sha256": "712d377c668e9b983f7126cf7fdf82ec68280a1ae4078f8da1e8284c456865a0",
+      "fetched_at": "2026-10-05T20:41:28+09:00",
+      "sha256": "00e6c4ec5ebe84a15c917d2e045e51dc392585b6df703a67389badbba63de829",
       "error": null
-    },
-    "stt": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "91d79f9ed8a9a3f3af8d6cb0b81bbc8e7471a8327daca7dffa5506a0cf18187c"
-    },
-    "tkz": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "ca0ad07b90cde6b0a39998aedafb98c79c58bca2cdfb862392ad575eed7716a3"
-    },
-    "sui": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "c44680949f2ad3823aa14084904f962d129b9ed0fb64c2db253e7fdd89f36be3"
-    },
-    "original_exhibition": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "c125976c0704eb4096c71879dfedea6a1ac9471a83949477c3d366a89670c656"
     }
   },
   "racers": [
@@ -87,9 +63,11 @@
         "quinella_rate": 33.72,
         "trio_rate": 55.81
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "6"
+      ],
       "early_race": 6,
-      "raw_text": "1 4736 / A1 高倉 和士 福岡/福岡 35歳/53.3kg F0 L0 0.14 7.14 57.52 74.34 7.06 53.70 72.22 38 31.98 52.79 25 33.72 55.81 6R"
+      "raw_text": "1 4736 / A1 高倉 和士 福岡/福岡 35歳/53.3kg F0 L0 0.14 7.14 57.52 74.34 7.06 53.70 72.22 38 31.98 52.79 25 33.72 55.81 6 6R"
     },
     {
       "lane": 2,
@@ -286,7 +264,7 @@
         "lane": 1,
         "exhibition_time": null,
         "tilt": null,
-        "raw_text": "1 高倉 和士 53.3kg R"
+        "raw_text": "1 高倉 和士 53.3kg R 6"
       },
       {
         "lane": 2,
@@ -330,19 +308,5 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
-  },
-  "actual_entry": [],
-  "current_model_input": {
-    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
-    "source_presence": {
-      "race_cards": true,
-      "stt": false,
-      "tkz": false,
-      "sui": false,
-      "original_exhibition": false
-    },
-    "core7_ready": false,
-    "formal_prediction_ready": false,
-    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
