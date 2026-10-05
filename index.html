@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v28</title>
+<title>BOAT EDGE v29</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v28 visual refinement ===== */
+/* ===== BOAT EDGE v29 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -968,6 +968,37 @@ body{background:
   .urgency-ribbon .u-time{font-size:16px}
 }
 
+
+/* ===== BOAT EDGE v29 prediction delta tracking ===== */
+.prediction-diff{
+  display:none;margin-bottom:10px;border:1px solid #dce8f8;border-radius:15px;
+  background:linear-gradient(180deg,#fff,#f8fbff);padding:10px 11px
+}
+.prediction-diff.show{display:block}
+.prediction-diff-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.prediction-diff-title{font-size:11px;font-weight:950;color:#0d2f5e}
+.prediction-diff-time{font-size:8px;color:#7890aa}
+.prediction-diff-list{display:grid;gap:6px;margin-top:8px}
+.prediction-diff-item{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;
+  padding:7px 8px;border-radius:10px;border:1px solid #e3edf9;background:#fbfdff
+}
+.prediction-diff-item.add{background:#f0fbf6;border-color:#d0eee1}
+.prediction-diff-item.remove{background:#fff4f4;border-color:#f2d1d1}
+.prediction-diff-item.up{background:#eef6ff;border-color:#d6e7fb}
+.prediction-diff-item.down{background:#fff8ed;border-color:#f1dfbd}
+.diff-tag{font-size:7.5px;font-weight:950;border-radius:999px;padding:3px 6px;white-space:nowrap}
+.add .diff-tag{background:#dff6eb;color:#087c5b}
+.remove .diff-tag{background:#fde4e4;color:#bd2d2d}
+.up .diff-tag{background:#deedff;color:#1769e0}
+.down .diff-tag{background:#fff0d6;color:#9a6200}
+.diff-combo{font-size:10px;font-weight:950;color:#0d2f5e}
+.diff-note{font-size:8px;color:#6f859e;text-align:right}
+.diff-empty{font-size:8.5px;color:#6f859e;margin-top:7px}
+.buy-ticket.diff-new{box-shadow:inset 3px 0 0 #20b983}
+.buy-ticket.diff-up{box-shadow:inset 3px 0 0 #1769e0}
+.buy-ticket.diff-down{box-shadow:inset 3px 0 0 #e3a53a}
+
 </style>
 </head>
 <body>
@@ -975,7 +1006,7 @@ body{background:
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v28</small></div>
+      <div class="brandtext">BOAT EDGE <small>v29</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -1099,6 +1130,7 @@ body{background:
         <div class="card decision" id="decision"></div>
         <div class="alert" id="predictionAlert"></div>
         <div class="card auditbox" id="inputCompleteness"></div>
+        <div id="predictionDiff" class="prediction-diff"></div>
         <div id="buyBoard" class="buy-board"></div>
         <div class="worlds" id="worlds"></div>
         <div>
@@ -2107,6 +2139,90 @@ function moneyForTicket(t){
   if(t.amount!=null) return Number(t.amount)||0;
   return 0;
 }
+
+function predSnapshotKey(d){ return `boatEdgePredSnap:${d?.race_key||"unknown"}`; }
+function makePredictionSnapshot(pred){
+  const tickets=[];
+  for(const [wi,w] of (pred.worlds||[]).entries()){
+    const wk=w.key || (wi===0?"A":"B");
+    for(const [i,t] of (w.tickets||[]).entries()){
+      tickets.push({
+        id:`${wk}:${t.combo}`,
+        world:wk,
+        combo:t.combo,
+        rank:i+1,
+        probability:t.probability??null
+      });
+    }
+  }
+  return {
+    ts:Date.now(),
+    mode:pred.mode,
+    decision:pred.decision??null,
+    grade:pred.grade??null,
+    tickets
+  };
+}
+function diffPrediction(prev,cur){
+  if(!prev) return [];
+  const p=new Map((prev.tickets||[]).map(x=>[x.id,x]));
+  const c=new Map((cur.tickets||[]).map(x=>[x.id,x]));
+  const out=[];
+  for(const [id,x] of c){
+    if(!p.has(id)) out.push({type:"add",combo:x.combo,note:`${x.world} #${x.rank}`});
+    else{
+      const old=p.get(id);
+      if(x.rank<old.rank) out.push({type:"up",combo:x.combo,note:`#${old.rank} → #${x.rank}`});
+      else if(x.rank>old.rank) out.push({type:"down",combo:x.combo,note:`#${old.rank} → #${x.rank}`});
+    }
+  }
+  for(const [id,x] of p){
+    if(!c.has(id)) out.push({type:"remove",combo:x.combo,note:`${x.world} 圏外`});
+  }
+  if(prev.decision!==cur.decision) out.unshift({type:"up",combo:"結論",note:`${prev.decision||"－"} → ${cur.decision||"－"}`});
+  if(prev.grade!==cur.grade) out.unshift({type:"up",combo:"勝負度",note:`${prev.grade||"－"} → ${cur.grade||"－"}`});
+  return out.slice(0,12);
+}
+function renderPredictionDiff(d,pred){
+  const el=document.getElementById("predictionDiff"); if(!el) return;
+  const key=predSnapshotKey(d);
+  const prev=readJSONLocal(key,null);
+  const cur=makePredictionSnapshot(pred);
+  const diffs=diffPrediction(prev,cur);
+  writeJSONLocal(key,cur);
+
+  if(!prev){
+    el.className="prediction-diff";
+    el.innerHTML="";
+    return;
+  }
+  el.className="prediction-diff show";
+  const tag={add:"追加",remove:"消えた",up:"順位↑",down:"順位↓"};
+  el.innerHTML=`
+    <div class="prediction-diff-head">
+      <div class="prediction-diff-title">前回表示からの予想変化</div>
+      <div class="prediction-diff-time">${new Date(cur.ts).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</div>
+    </div>
+    ${diffs.length
+      ? `<div class="prediction-diff-list">${diffs.map(x=>`
+          <div class="prediction-diff-item ${x.type}">
+            <span class="diff-tag">${tag[x.type]||"変化"}</span>
+            <span class="diff-combo">${f(x.combo)}</span>
+            <span class="diff-note">${f(x.note)}</span>
+          </div>`).join("")}</div>`
+      : `<div class="diff-empty">前回表示から買い目・順位・結論に変化はありません。</div>`}
+  `;
+}
+function ticketDiffClass(d,worldKey,combo,rank){
+  const prev=readJSONLocal(predSnapshotKey(d),null);
+  if(!prev) return "";
+  const old=(prev.tickets||[]).find(x=>x.id===`${worldKey}:${combo}`);
+  if(!old) return "diff-new";
+  if(rank<old.rank) return "diff-up";
+  if(rank>old.rank) return "diff-down";
+  return "";
+}
+
 function renderBuyBoard(d,pred){
   const el=document.getElementById("buyBoard"); if(!el) return;
   const selected=selectedTicketSet(d);
@@ -2125,7 +2241,8 @@ function renderBuyBoard(d,pred){
       ${tickets.length?`<div class="buy-list">${tickets.map((t,i)=>{
         const id=ticketId(worldKey,t.combo);
         const isSel=selected.has(id);
-        return `<div class="buy-ticket ${isSel?"selected":""}" data-ticket-id="${id}">
+        const dcls=ticketDiffClass(d,worldKey,t.combo,i+1);
+        return `<div class="buy-ticket ${isSel?"selected":""} ${dcls}" data-ticket-id="${id}">
           <div class="buy-check">${isSel?"✓":""}</div>
           <div class="buy-rank">#${i+1}</div>
           <div class="buy-combo">${f(t.combo)}</div>
@@ -2541,7 +2658,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V28<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V29<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
