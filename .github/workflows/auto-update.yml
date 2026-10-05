@@ -626,6 +626,50 @@ jobs:
                       "combined_api_v1_accessed":False},
             "errors":errors,
           }
+          first100_path=DATA/"current_first100_manifest.json"
+          freeze_info={"frozen":False,"sha256":None,"count":0,"path":str(first100_path)}
+          if len(eligible)>=100:
+              if first100_path.exists():
+                  try:
+                      old=json.loads(first100_path.read_text(encoding="utf-8"))
+                      payload=old.get("first100",[])
+                      canonical=json.dumps(payload,ensure_ascii=False,separators=(",",":"),sort_keys=False).encode("utf-8")
+                      freeze_info={
+                          "frozen":len(payload)==100,
+                          "sha256":hashlib.sha256(canonical).hexdigest(),
+                          "count":len(payload),
+                          "path":str(first100_path),
+                          "created_at":old.get("created_at"),
+                          "source_commit":old.get("source_commit")
+                      }
+                  except Exception as e:
+                      errors.append({"role":"first100_existing","error":repr(e)})
+              else:
+                  first100=eligible[:100]
+                  canonical=json.dumps(first100,ensure_ascii=False,separators=(",",":"),sort_keys=False).encode("utf-8")
+                  digest=hashlib.sha256(canonical).hexdigest()
+                  manifest={
+                      "CURRENT":"V12133_20261005_FIRST100_SITE_FREEZE",
+                      "created_at":iso,
+                      "target_date":now.strftime("%Y-%m-%d"),
+                      "source_commit":__import__("os").environ.get("GITHUB_SHA"),
+                      "first100":first100,
+                      "count":100,
+                      "sha256":digest,
+                      "source_sha256":{k:v["sha256"] for k,v in fetched.items()},
+                      "formal_parent_sha256":"11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
+                      "candidate_sha256":"30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
+                      "guards":{"results_seen":False,"unlock":False,"scoring":False}
+                  }
+                  first100_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
+                  freeze_info={
+                      "frozen":True,"sha256":digest,"count":100,
+                      "path":str(first100_path),"created_at":iso,
+                      "source_commit":manifest["source_commit"]
+                  }
+
+          status["first100_freeze"]=freeze_info
+          status["formal_gate"]="FIRST100_FROZEN_WAIT_EXACT_RUNTIME" if freeze_info.get("frozen") else "WAIT_CORE7_100"
           (DATA/"model_status.json").write_text(json.dumps(status,ensure_ascii=False,indent=2),encoding="utf-8")
 
           hp=DATA/"health.json"
@@ -635,6 +679,8 @@ jobs:
                   h["five_source_rows"]=status["source_rows"]
                   h["core7_eligible_count"]=len(eligible)
                   h["formal_first100_ready"]=len(eligible)>=100
+                  h["first100_frozen"]=bool(status.get("first100_freeze",{}).get("frozen"))
+                  h["first100_sha256"]=status.get("first100_freeze",{}).get("sha256")
                   hp.write_text(json.dumps(h,ensure_ascii=False,indent=2),encoding="utf-8")
               except Exception:
                   pass
