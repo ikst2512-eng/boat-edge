@@ -8,7 +8,7 @@
     "event": "MNBR若松4thかっぱくん杯",
     "race_no": 12,
     "deadline": "22:54",
-    "updated_at": "2026-10-05T20:18:48+09:00",
+    "updated_at": "2026-10-05T20:33:32+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,16 +18,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=20&rno=12",
-      "fetched_at": "2026-10-05T20:18:48+09:00",
-      "sha256": "d437b09d6d5f7eb28cb78487393e5a88f930a12819c9821af751c9d068400a82",
+      "fetched_at": "2026-10-05T20:33:32+09:00",
+      "sha256": "2eeb7f27b28469127fa118c2a310f2d30e6b811c7a357847dc94181e83f05e99",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=20&rno=12",
+      "fetched_at": "2026-10-05T20:33:32+09:00",
+      "sha256": "712d377c668e9b983f7126cf7fdf82ec68280a1ae4078f8da1e8284c456865a0",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "91d79f9ed8a9a3f3af8d6cb0b81bbc8e7471a8327daca7dffa5506a0cf18187c"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "ca0ad07b90cde6b0a39998aedafb98c79c58bca2cdfb862392ad575eed7716a3"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "c44680949f2ad3823aa14084904f962d129b9ed0fb64c2db253e7fdd89f36be3"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "c125976c0704eb4096c71879dfedea6a1ac9471a83949477c3d366a89670c656"
     }
   },
   "racers": [
@@ -256,9 +280,69 @@
       "raw_text": "6 4123 / A1 細川 裕子 愛知/愛知 44歳/47.0kg F1 L0 0.19 6.56 47.66 68.22 7.48 52.17 91.30 57 29.02 47.15 18 20.59 32.35 4 4R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 高倉 和士 53.3kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 守田 俊介 52.8kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 山本 隆幸 52.2kg R 3"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 内堀 学 52.1kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 片橋 幸貴 52.6kg R 5"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 細川 裕子 47.0kg R 4"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
