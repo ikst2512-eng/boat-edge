@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: boat-edge-current-v12
+  group: boat-edge-current-v17
   cancel-in-progress: false
 
 jobs:
@@ -322,9 +322,10 @@ jobs:
               for fut in as_completed(futs):
                   k,v=fut.result();before[k]=v
 
-          summary={"schema_version":"boat-edge-today-v4","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
+          summary={"schema_version":"boat-edge-today-v5","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
                    "phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False,
-                   "collector":{"mode":"resilient-parallel-structured","discovery_mode":discovery_mode,
+                   "collector_version":"BOAT_EDGE_V17",
+                   "collector":{"mode":"resilient-parallel-structured-v17","discovery_mode":discovery_mode,
                                 "active_venues":len(active),"errors":errors[:20]},
                    "venues":[]}
 
@@ -337,11 +338,11 @@ jobs:
                   rr=race_results.get(key,{"ok":False,"racers":[],"error":"not returned"})
                   bf=before.get(key)
                   doc={
-                    "schema_version":"boat-edge-race-v4","race_key":key,
+                    "schema_version":"boat-edge-race-v5","race_key":key,
                     "meta":{"date":now.strftime("%Y-%m-%d"),"venue_code":j,"venue":VENUES[j],
                             "event":meta.get("event"),"race_no":rno,
                             "deadline":ds[rno-1] if len(ds)>=rno else None,
-                            "updated_at":iso,"phase":"PRE_RESULT",
+                            "updated_at":iso,"phase":"PRE_RESULT","collector_version":"BOAT_EDGE_V17",
                             "results_seen":False,"unlock":False,"scoring":False},
                     "source_audit":{
                       "race_card":{"status":"ok" if rr.get("ok") else "error","source":rr.get("url"),
@@ -367,6 +368,7 @@ jobs:
 
           health={
             "updated_at":iso,
+            "collector_version":"BOAT_EDGE_V17",
             "phase":"PRE_RESULT",
             "results_seen":False,"unlock":False,"scoring":False,
             "status":"ok" if active else "source_unavailable",
@@ -614,7 +616,8 @@ jobs:
             "source_rows":{k:len(v["rows"]) for k,v in fetched.items()},
             "source_sha256":{k:v["sha256"] for k,v in fetched.items()},
             "core7":{"eligible_count":len(eligible),"required_count":100,
-                     "formal_first100_ready":len(eligible)>=100,
+                     "core7_100_ready":len(eligible)>=100,
+                     "formal_first100_ready":False,
                      "first":eligible[0] if eligible else None,
                      "last":eligible[-1] if eligible else None},
             "site_races_merged":merged_count,
@@ -626,50 +629,15 @@ jobs:
                       "combined_api_v1_accessed":False},
             "errors":errors,
           }
-          first100_path=DATA/"current_first100_manifest.json"
-          freeze_info={"frozen":False,"sha256":None,"count":0,"path":str(first100_path)}
-          if len(eligible)>=100:
-              if first100_path.exists():
-                  try:
-                      old=json.loads(first100_path.read_text(encoding="utf-8"))
-                      payload=old.get("first100",[])
-                      canonical=json.dumps(payload,ensure_ascii=False,separators=(",",":"),sort_keys=False).encode("utf-8")
-                      freeze_info={
-                          "frozen":len(payload)==100,
-                          "sha256":hashlib.sha256(canonical).hexdigest(),
-                          "count":len(payload),
-                          "path":str(first100_path),
-                          "created_at":old.get("created_at"),
-                          "source_commit":old.get("source_commit")
-                      }
-                  except Exception as e:
-                      errors.append({"role":"first100_existing","error":repr(e)})
-              else:
-                  first100=eligible[:100]
-                  canonical=json.dumps(first100,ensure_ascii=False,separators=(",",":"),sort_keys=False).encode("utf-8")
-                  digest=hashlib.sha256(canonical).hexdigest()
-                  manifest={
-                      "CURRENT":"V12133_20261005_FIRST100_SITE_FREEZE",
-                      "created_at":iso,
-                      "target_date":now.strftime("%Y-%m-%d"),
-                      "source_commit":__import__("os").environ.get("GITHUB_SHA"),
-                      "first100":first100,
-                      "count":100,
-                      "sha256":digest,
-                      "source_sha256":{k:v["sha256"] for k,v in fetched.items()},
-                      "formal_parent_sha256":"11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
-                      "candidate_sha256":"30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
-                      "guards":{"results_seen":False,"unlock":False,"scoring":False}
-                  }
-                  first100_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
-                  freeze_info={
-                      "frozen":True,"sha256":digest,"count":100,
-                      "path":str(first100_path),"created_at":iso,
-                      "source_commit":manifest["source_commit"]
-                  }
+          # Site collector must never create or claim the formal fresh first100.
+          # Remove the obsolete site-only snapshot if it exists; formal validation is managed separately.
+          obsolete_site_freeze=DATA/"current_first100_manifest.json"
+          if obsolete_site_freeze.exists():
+              obsolete_site_freeze.unlink()
 
-          status["first100_freeze"]=freeze_info
-          status["formal_gate"]="FIRST100_FROZEN_WAIT_EXACT_RUNTIME" if freeze_info.get("frozen") else "WAIT_CORE7_100"
+          status["collector_gate"]="CORE7_100_READY_WAIT_FORMAL_PIPELINE" if len(eligible)>=100 else "WAIT_CORE7_100"
+          status["formal_validation_connected"]=False
+          status["formal_note"]="SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
           (DATA/"model_status.json").write_text(json.dumps(status,ensure_ascii=False,indent=2),encoding="utf-8")
 
           hp=DATA/"health.json"
@@ -678,9 +646,11 @@ jobs:
                   h=json.loads(hp.read_text(encoding="utf-8"))
                   h["five_source_rows"]=status["source_rows"]
                   h["core7_eligible_count"]=len(eligible)
-                  h["formal_first100_ready"]=len(eligible)>=100
-                  h["first100_frozen"]=bool(status.get("first100_freeze",{}).get("frozen"))
-                  h["first100_sha256"]=status.get("first100_freeze",{}).get("sha256")
+                  h["core7_100_ready"]=len(eligible)>=100
+                  h["formal_validation_connected"]=False
+                  h.pop("formal_first100_ready",None)
+                  h.pop("first100_frozen",None)
+                  h.pop("first100_sha256",None)
                   hp.write_text(json.dumps(h,ensure_ascii=False,indent=2),encoding="utf-8")
               except Exception:
                   pass
@@ -695,7 +665,7 @@ jobs:
           set -e
           git config user.name "boat-edge-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ || true
+          git add -A data/ || true
           if git diff --cached --quiet; then
             echo "変更なし"
             exit 0
