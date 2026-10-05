@@ -1,14 +1,14 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v4",
   "race_key": "20261005-22-11",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "22",
     "venue": "福岡",
-    "event": "マンスリーＢＯＡＴＲＡＣＥ杯",
+    "event": "マンスリーBOATRACE杯",
     "race_no": 11,
     "deadline": "16:05",
-    "updated_at": "2026-10-05T13:30:29+09:00",
+    "updated_at": "2026-10-05T13:44:35+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,21 +18,21 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=22&rno=11",
-      "fetched_at": "2026-10-05T13:30:29+09:00",
-      "sha256": "2c50bddf90d387fb68eea457861cace5cddf0e94ce1396b6086d04c7c5e083e0",
+      "fetched_at": "2026-10-05T13:44:35+09:00",
+      "sha256": "c00565add17e9d852b2b3bc6ca364de534cc4da7546545d583058c65201f9c51",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=22&rno=11",
+      "fetched_at": "2026-10-05T13:44:35+09:00",
+      "sha256": "97ba65a2e5bd549cbf17dc0c247bdddf7265f1050829c823c1de147a8af5cdc1",
       "error": null
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "5121",
       "name": "定松 勇樹",
       "class": "A1",
@@ -43,10 +43,41 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.13,
-      "raw_text": "１ 5121 / A1 定松 勇樹 佐賀/福岡 25歳/52.5kg F1 L0 0.13 7.32 46.67 62.67 7.38 75.00 75.00 19 34.35 51.91 138 44.07 62.71 3 12 4 12 4 11 11 5 5R"
+      "national": {
+        "win_rate": 7.32,
+        "quinella_rate": 46.67,
+        "trio_rate": 62.67
+      },
+      "local": {
+        "win_rate": 7.38,
+        "quinella_rate": 75.0,
+        "trio_rate": 75.0
+      },
+      "motor": {
+        "no": 19,
+        "quinella_rate": 34.35,
+        "trio_rate": 51.91
+      },
+      "boat": {
+        "no": 138,
+        "quinella_rate": 44.07,
+        "trio_rate": 62.71
+      },
+      "series_tokens": [
+        "3",
+        "12",
+        "4",
+        "12",
+        "4",
+        "11",
+        "11",
+        "5"
+      ],
+      "early_race": 5,
+      "raw_text": "1 5121 / A1 定松 勇樹 佐賀/福岡 25歳/52.5kg F1 L0 0.13 7.32 46.67 62.67 7.38 75.00 75.00 19 34.35 51.91 138 44.07 62.71 3 12 4 12 4 11 11 5 5R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "4798",
       "name": "浜先 真範",
       "class": "A1",
@@ -57,10 +88,40 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.13,
-      "raw_text": "２ 4798 / A1 浜先 真範 広島/広島 33歳/52.3kg F0 L0 0.13 6.94 50.00 69.17 6.07 44.44 59.26 70 34.23 47.65 116 33.33 50.43 7 12 2 9 11 8 12 6R"
+      "national": {
+        "win_rate": 6.94,
+        "quinella_rate": 50.0,
+        "trio_rate": 69.17
+      },
+      "local": {
+        "win_rate": 6.07,
+        "quinella_rate": 44.44,
+        "trio_rate": 59.26
+      },
+      "motor": {
+        "no": 70,
+        "quinella_rate": 34.23,
+        "trio_rate": 47.65
+      },
+      "boat": {
+        "no": 116,
+        "quinella_rate": 33.33,
+        "trio_rate": 50.43
+      },
+      "series_tokens": [
+        "7",
+        "12",
+        "2",
+        "9",
+        "11",
+        "8",
+        "12"
+      ],
+      "early_race": 6,
+      "raw_text": "2 4798 / A1 浜先 真範 広島/広島 33歳/52.3kg F0 L0 0.13 6.94 50.00 69.17 6.07 44.44 59.26 70 34.23 47.65 116 33.33 50.43 7 12 2 9 11 8 12 6R"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "4788",
       "name": "小池 哲也",
       "class": "A2",
@@ -71,10 +132,39 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "３ 4788 / A2 小池 哲也 大阪/大阪 37歳/52.8kg F0 L0 0.16 5.51 33.33 54.29 5.42 32.26 54.84 12 36.62 56.34 166 27.83 42.61 11 7 11 9 6 11 7R"
+      "national": {
+        "win_rate": 5.51,
+        "quinella_rate": 33.33,
+        "trio_rate": 54.29
+      },
+      "local": {
+        "win_rate": 5.42,
+        "quinella_rate": 32.26,
+        "trio_rate": 54.84
+      },
+      "motor": {
+        "no": 12,
+        "quinella_rate": 36.62,
+        "trio_rate": 56.34
+      },
+      "boat": {
+        "no": 166,
+        "quinella_rate": 27.83,
+        "trio_rate": 42.61
+      },
+      "series_tokens": [
+        "11",
+        "7",
+        "11",
+        "9",
+        "6",
+        "11"
+      ],
+      "early_race": 7,
+      "raw_text": "3 4788 / A2 小池 哲也 大阪/大阪 37歳/52.8kg F0 L0 0.16 5.51 33.33 54.29 5.42 32.26 54.84 12 36.62 56.34 166 27.83 42.61 11 7 11 9 6 11 7R"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "4902",
       "name": "山川 雄大",
       "class": "B1",
@@ -85,10 +175,40 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.2,
-      "raw_text": "４ 4902 / B1 山川 雄大 兵庫/兵庫 33歳/52.0kg F0 L0 0.20 4.38 30.61 40.82 4.64 32.14 53.57 51 28.79 46.97 113 21.01 36.13 7 4 11 7 3 10 1 1R"
+      "national": {
+        "win_rate": 4.38,
+        "quinella_rate": 30.61,
+        "trio_rate": 40.82
+      },
+      "local": {
+        "win_rate": 4.64,
+        "quinella_rate": 32.14,
+        "trio_rate": 53.57
+      },
+      "motor": {
+        "no": 51,
+        "quinella_rate": 28.79,
+        "trio_rate": 46.97
+      },
+      "boat": {
+        "no": 113,
+        "quinella_rate": 21.01,
+        "trio_rate": 36.13
+      },
+      "series_tokens": [
+        "7",
+        "4",
+        "11",
+        "7",
+        "3",
+        "10",
+        "1"
+      ],
+      "early_race": 1,
+      "raw_text": "4 4902 / B1 山川 雄大 兵庫/兵庫 33歳/52.0kg F0 L0 0.20 4.38 30.61 40.82 4.64 32.14 53.57 51 28.79 46.97 113 21.01 36.13 7 4 11 7 3 10 1 1R"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "5067",
       "name": "山田 真聖",
       "class": "B1",
@@ -99,10 +219,40 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "５ 5067 / B1 山田 真聖 山口/山口 27歳/57.7kg F1 L0 0.16 4.84 30.23 48.84 3.83 17.14 28.57 32 28.86 48.99 126 37.19 48.76 1 8 5 2 8 4 3 3R"
+      "national": {
+        "win_rate": 4.84,
+        "quinella_rate": 30.23,
+        "trio_rate": 48.84
+      },
+      "local": {
+        "win_rate": 3.83,
+        "quinella_rate": 17.14,
+        "trio_rate": 28.57
+      },
+      "motor": {
+        "no": 32,
+        "quinella_rate": 28.86,
+        "trio_rate": 48.99
+      },
+      "boat": {
+        "no": 126,
+        "quinella_rate": 37.19,
+        "trio_rate": 48.76
+      },
+      "series_tokens": [
+        "1",
+        "8",
+        "5",
+        "2",
+        "8",
+        "4",
+        "3"
+      ],
+      "early_race": 3,
+      "raw_text": "5 5067 / B1 山田 真聖 山口/山口 27歳/57.7kg F1 L0 0.16 4.84 30.23 48.84 3.83 17.14 28.57 32 28.86 48.99 126 37.19 48.76 1 8 5 2 8 4 3 3R"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "4579",
       "name": "中嶋 健一郎",
       "class": "A2",
@@ -113,10 +263,87 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "６ 4579 / A2 中嶋 健一郎 三重/三重 37歳/52.0kg F0 L0 0.16 6.12 40.78 60.19 6.35 29.41 52.94 47 19.83 42.24 159 35.90 56.41 7 11 9 7 12 5 10 2 2R"
+      "national": {
+        "win_rate": 6.12,
+        "quinella_rate": 40.78,
+        "trio_rate": 60.19
+      },
+      "local": {
+        "win_rate": 6.35,
+        "quinella_rate": 29.41,
+        "trio_rate": 52.94
+      },
+      "motor": {
+        "no": 47,
+        "quinella_rate": 19.83,
+        "trio_rate": 42.24
+      },
+      "boat": {
+        "no": 159,
+        "quinella_rate": 35.9,
+        "trio_rate": 56.41
+      },
+      "series_tokens": [
+        "7",
+        "11",
+        "9",
+        "7",
+        "12",
+        "5",
+        "10",
+        "2"
+      ],
+      "early_race": 2,
+      "raw_text": "6 4579 / A2 中嶋 健一郎 三重/三重 37歳/52.0kg F0 L0 0.16 6.12 40.78 60.19 6.35 29.41 52.94 47 19.83 42.24 159 35.90 56.41 7 11 9 7 12 5 10 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 定松 勇樹 52.5kg R 5"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 浜先 真範 52.3kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 小池 哲也 52.8kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 山川 雄大 52.0kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 山田 真聖 57.7kg R 3"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中嶋 健一郎 52.0kg R 2"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
