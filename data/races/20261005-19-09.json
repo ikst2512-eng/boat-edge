@@ -1,15 +1,16 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v5",
   "race_key": "20261005-19-09",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "19",
     "venue": "下関",
-    "event": "ヴィーナスシリーズ第１４戦 スターダム杯",
+    "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 9,
     "deadline": "19:17",
-    "updated_at": "2026-10-05T23:52:07+09:00",
+    "updated_at": "2026-10-05T23:55:19+09:00",
     "phase": "PRE_RESULT",
+    "collector_version": "BOAT_EDGE_V17",
     "results_seen": false,
     "unlock": false,
     "scoring": false
@@ -18,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=9",
-      "fetched_at": "2026-10-05T23:52:07+09:00",
-      "sha256": "070a8d380485670f6e71735212d97e1c384cf7422e466737f39577e9ed982f9f",
+      "fetched_at": "2026-10-05T23:55:19+09:00",
+      "sha256": "dd0169d44689eb51a7f5108893cb3ad79453da77335005395e87b7927e6e0b82",
       "error": null
     },
     "beforeinfo": {
@@ -28,11 +29,35 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:58:09+09:00",
+      "sha256": "707a76a09c67a90ab6ef0eaaa6720743300a0dad6170e1b454b852bb86d132ad"
+    },
+    "tkz": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:58:09+09:00",
+      "sha256": "c57a70dc72c4de8cdccfd2a3bb889da837d2edb481342851e161fa1237483aef"
+    },
+    "sui": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:58:09+09:00",
+      "sha256": "a9b60e1eef4e04e23201e2f6feba749212bcaceec143e4162d16a3064a8d22e4"
+    },
+    "original_exhibition": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": "2026-10-05T23:58:09+09:00",
+      "sha256": "ec20aa28783b87dafc615ff2e9e1b07991990a051010699c00bd58f5ef8aa737"
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "5165",
       "name": "小林 愛実",
       "class": "B1",
@@ -43,10 +68,40 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "１ 5165 / B1 小林 愛実 岡山/岡山 26歳/47.0kg F0 L0 0.16 5.01 28.40 49.38 3.13 0.00 25.00 69 42.11 58.95 45 42.42 63.64 1 4 9 3 11 5 1 1R"
+      "national": {
+        "win_rate": 5.01,
+        "quinella_rate": 28.4,
+        "trio_rate": 49.38
+      },
+      "local": {
+        "win_rate": 3.13,
+        "quinella_rate": 0.0,
+        "trio_rate": 25.0
+      },
+      "motor": {
+        "no": 69,
+        "quinella_rate": 42.11,
+        "trio_rate": 58.95
+      },
+      "boat": {
+        "no": 45,
+        "quinella_rate": 42.42,
+        "trio_rate": 63.64
+      },
+      "series_tokens": [
+        "1",
+        "4",
+        "9",
+        "3",
+        "11",
+        "5",
+        "1"
+      ],
+      "early_race": 1,
+      "raw_text": "1 5165 / B1 小林 愛実 岡山/岡山 26歳/47.0kg F0 L0 0.16 5.01 28.40 49.38 3.13 0.00 25.00 69 42.11 58.95 45 42.42 63.64 1 4 9 3 11 5 1 1R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "4556",
       "name": "竹井 奈美",
       "class": "A1",
@@ -57,10 +112,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "２ 4556 / A1 竹井 奈美 福岡/福岡 37歳/47.0kg F0 L0 0.16 6.55 50.54 66.67 6.27 43.24 62.16 12 51.52 64.65 41 44.44 63.64 5 12 7 12 8 3 11 4 4R"
+      "national": {
+        "win_rate": 6.55,
+        "quinella_rate": 50.54,
+        "trio_rate": 66.67
+      },
+      "local": {
+        "win_rate": 6.27,
+        "quinella_rate": 43.24,
+        "trio_rate": 62.16
+      },
+      "motor": {
+        "no": 12,
+        "quinella_rate": 51.52,
+        "trio_rate": 64.65
+      },
+      "boat": {
+        "no": 41,
+        "quinella_rate": 44.44,
+        "trio_rate": 63.64
+      },
+      "series_tokens": [
+        "5",
+        "12",
+        "7",
+        "12",
+        "8",
+        "3",
+        "11",
+        "4"
+      ],
+      "early_race": 4,
+      "raw_text": "2 4556 / A1 竹井 奈美 福岡/福岡 37歳/47.0kg F0 L0 0.16 6.55 50.54 66.67 6.27 43.24 62.16 12 51.52 64.65 41 44.44 63.64 5 12 7 12 8 3 11 4 4R"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "4387",
       "name": "平山 智加",
       "class": "A1",
@@ -71,10 +157,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.15,
-      "raw_text": "３ 4387 / A1 平山 智加 香川/香川 41歳/46.0kg F0 L0 0.15 6.90 51.72 71.55 6.33 45.45 54.55 55 33.68 54.74 14 31.63 46.94 7 12 9 4 12 7 11 3 3R"
+      "national": {
+        "win_rate": 6.9,
+        "quinella_rate": 51.72,
+        "trio_rate": 71.55
+      },
+      "local": {
+        "win_rate": 6.33,
+        "quinella_rate": 45.45,
+        "trio_rate": 54.55
+      },
+      "motor": {
+        "no": 55,
+        "quinella_rate": 33.68,
+        "trio_rate": 54.74
+      },
+      "boat": {
+        "no": 14,
+        "quinella_rate": 31.63,
+        "trio_rate": 46.94
+      },
+      "series_tokens": [
+        "7",
+        "12",
+        "9",
+        "4",
+        "12",
+        "7",
+        "11",
+        "3"
+      ],
+      "early_race": 3,
+      "raw_text": "3 4387 / A1 平山 智加 香川/香川 41歳/46.0kg F0 L0 0.15 6.90 51.72 71.55 6.33 45.45 54.55 55 33.68 54.74 14 31.63 46.94 7 12 9 4 12 7 11 3 3R"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "4893",
       "name": "渡邉 真奈美",
       "class": "B1",
@@ -85,10 +202,41 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "４ 4893 / B1 渡邉 真奈美 東京/千葉 36歳/46.5kg F0 L0 0.16 5.34 35.00 52.50 0.00 0.00 0.00 57 41.05 57.89 70 32.32 52.53 4 8 2 12 4 1 10 4 4R"
+      "national": {
+        "win_rate": 5.34,
+        "quinella_rate": 35.0,
+        "trio_rate": 52.5
+      },
+      "local": {
+        "win_rate": 0.0,
+        "quinella_rate": 0.0,
+        "trio_rate": 0.0
+      },
+      "motor": {
+        "no": 57,
+        "quinella_rate": 41.05,
+        "trio_rate": 57.89
+      },
+      "boat": {
+        "no": 70,
+        "quinella_rate": 32.32,
+        "trio_rate": 52.53
+      },
+      "series_tokens": [
+        "4",
+        "8",
+        "2",
+        "12",
+        "4",
+        "1",
+        "10",
+        "4"
+      ],
+      "early_race": 4,
+      "raw_text": "4 4893 / B1 渡邉 真奈美 東京/千葉 36歳/46.5kg F0 L0 0.16 5.34 35.00 52.50 0.00 0.00 0.00 57 41.05 57.89 70 32.32 52.53 4 8 2 12 4 1 10 4 4R"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "5287",
       "name": "滝沢 織寧",
       "class": "B1",
@@ -99,10 +247,40 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "５ 5287 / B1 滝沢 織寧 埼玉/埼玉 27歳/47.0kg F1 L0 0.16 3.65 11.11 26.98 3.22 11.11 22.22 73 25.00 41.35 22 31.18 48.39 2 11 9 5 9 5 2 2R"
+      "national": {
+        "win_rate": 3.65,
+        "quinella_rate": 11.11,
+        "trio_rate": 26.98
+      },
+      "local": {
+        "win_rate": 3.22,
+        "quinella_rate": 11.11,
+        "trio_rate": 22.22
+      },
+      "motor": {
+        "no": 73,
+        "quinella_rate": 25.0,
+        "trio_rate": 41.35
+      },
+      "boat": {
+        "no": 22,
+        "quinella_rate": 31.18,
+        "trio_rate": 48.39
+      },
+      "series_tokens": [
+        "2",
+        "11",
+        "9",
+        "5",
+        "9",
+        "5",
+        "2"
+      ],
+      "early_race": 2,
+      "raw_text": "5 5287 / B1 滝沢 織寧 埼玉/埼玉 27歳/47.0kg F1 L0 0.16 3.65 11.11 26.98 3.22 11.11 22.22 73 25.00 41.35 22 31.18 48.39 2 11 9 5 9 5 2 2R"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "4947",
       "name": "間庭 菜摘",
       "class": "B1",
@@ -113,12 +291,254 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.17,
-      "raw_text": "６ 4947 / B1 間庭 菜摘 福岡/福岡 34歳/47.0kg F0 L0 0.17 5.02 26.79 48.21 4.51 16.28 39.53 64 20.43 40.86 20 21.88 50.00 6 2 6 1 12 4 3 3R"
+      "national": {
+        "win_rate": 5.02,
+        "quinella_rate": 26.79,
+        "trio_rate": 48.21
+      },
+      "local": {
+        "win_rate": 4.51,
+        "quinella_rate": 16.28,
+        "trio_rate": 39.53
+      },
+      "motor": {
+        "no": 64,
+        "quinella_rate": 20.43,
+        "trio_rate": 40.86
+      },
+      "boat": {
+        "no": 20,
+        "quinella_rate": 21.88,
+        "trio_rate": 50.0
+      },
+      "series_tokens": [
+        "6",
+        "2",
+        "6",
+        "1",
+        "12",
+        "4",
+        "3"
+      ],
+      "early_race": 3,
+      "raw_text": "6 4947 / B1 間庭 菜摘 福岡/福岡 34歳/47.0kg F0 L0 0.17 5.02 26.79 48.21 4.51 16.28 39.53 64 20.43 40.86 20 21.88 50.00 6 2 6 1 12 4 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "weight_kg": 47.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.8,
+        "tilt": -0.5
+      },
+      {
+        "lane": 2,
+        "weight_kg": 47.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.78,
+        "tilt": 0.0
+      },
+      {
+        "lane": 3,
+        "weight_kg": 46.0,
+        "adjustment_kg": 1.0,
+        "exhibition_time": 6.81,
+        "tilt": 0.0
+      },
+      {
+        "lane": 4,
+        "weight_kg": 46.5,
+        "adjustment_kg": 0.5,
+        "exhibition_time": 6.82,
+        "tilt": -0.5
+      },
+      {
+        "lane": 5,
+        "weight_kg": 47.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.81,
+        "tilt": -0.5
+      },
+      {
+        "lane": 6,
+        "weight_kg": 47.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.81,
+        "tilt": 0.5
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "course": 1,
+        "st": "0.18",
+        "exhibition_f": false
+      },
+      {
+        "lane": 2,
+        "course": 2,
+        "st": "0.05",
+        "exhibition_f": false
+      },
+      {
+        "lane": 3,
+        "course": 3,
+        "st": "0.16",
+        "exhibition_f": false
+      },
+      {
+        "lane": 4,
+        "course": 4,
+        "st": "0.11",
+        "exhibition_f": false
+      },
+      {
+        "lane": 5,
+        "course": 5,
+        "st": "0.07",
+        "exhibition_f": false
+      },
+      {
+        "lane": 6,
+        "course": 6,
+        "st": "0.42",
+        "exhibition_f": false
+      }
+    ],
+    "weather": {
+      "observed_at": "1848",
+      "wind_speed_ms": 3.0,
+      "wind_direction": 1,
+      "wave_cm": 3.0,
+      "weather_code": 1,
+      "air_temp_c": 22.0,
+      "water_temp_c": 25.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [
+    {
+      "lane": 1,
+      "course": 1,
+      "exhibition_st": 0.18,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.18"
+    },
+    {
+      "lane": 2,
+      "course": 2,
+      "exhibition_st": 0.05,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.05"
+    },
+    {
+      "lane": 3,
+      "course": 3,
+      "exhibition_st": 0.16,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.16"
+    },
+    {
+      "lane": 4,
+      "course": 4,
+      "exhibition_st": 0.11,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.11"
+    },
+    {
+      "lane": 5,
+      "course": 5,
+      "exhibition_st": 0.07,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.07"
+    },
+    {
+      "lane": 6,
+      "course": 6,
+      "exhibition_st": 0.42,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.42"
+    }
+  ],
+  "original_exhibition": {
+    "labels": [
+      "一周",
+      "まわり足",
+      "直線"
+    ],
+    "boats": [
+      {
+        "lane": 1,
+        "name": "小林 愛実",
+        "values": [
+          36.53,
+          5.53,
+          7.33
+        ]
+      },
+      {
+        "lane": 2,
+        "name": "竹井 奈美",
+        "values": [
+          36.73,
+          5.27,
+          7.37
+        ]
+      },
+      {
+        "lane": 3,
+        "name": "平山 智加",
+        "values": [
+          37.61,
+          5.43,
+          7.39
+        ]
+      },
+      {
+        "lane": 4,
+        "name": "渡邉 真奈美",
+        "values": [
+          37.54,
+          5.69,
+          7.4
+        ]
+      },
+      {
+        "lane": 5,
+        "name": "滝沢 織寧",
+        "values": [
+          37.48,
+          5.6,
+          7.45
+        ]
+      },
+      {
+        "lane": 6,
+        "name": "間庭 菜摘",
+        "values": [
+          37.39,
+          5.61,
+          7.39
+        ]
+      }
+    ]
+  },
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": true,
+      "tkz": true,
+      "sui": true,
+      "original_exhibition": true
+    },
+    "core7_ready": true,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
