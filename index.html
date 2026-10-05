@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v20</title>
+<title>BOAT EDGE v21</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v20 visual refinement ===== */
+/* ===== BOAT EDGE v21 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -592,6 +592,57 @@ tr:hover td{background:#f8fbff}
   .why-grid,.data-guide,.data-row-metrics{grid-template-columns:repeat(2,1fr)}
 }
 
+
+/* ===== BOAT EDGE v21: visual scenario + intuitive data ===== */
+.scenario-flow{padding:14px;overflow:hidden}
+.flow-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.flow-title b{font-size:12px;color:var(--navy)}
+.flow-title span{font-size:9px;color:var(--muted)}
+.flow-track{margin-top:12px;display:grid;gap:8px}
+.flow-step{display:grid;grid-template-columns:58px 1fr;gap:8px;align-items:center}
+.flow-step-label{font-size:9px;font-weight:900;color:var(--muted);text-align:right}
+.flow-step-line{position:relative;min-height:48px;border-radius:13px;background:linear-gradient(90deg,#f4f8ff,#eef7ff);border:1px solid #dfebfb;padding:7px}
+.flow-boats{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;align-items:center}
+.flow-boat{position:relative;min-width:0;padding:7px 4px;border-radius:10px;background:#fff;border:1px solid #dce8f8;text-align:center;box-shadow:0 3px 10px rgba(26,80,147,.04)}
+.flow-boat.hot{border-color:#7bb4ff;background:#eef6ff;box-shadow:0 5px 15px rgba(23,105,224,.10)}
+.flow-boat.attack{border-color:#aa9df4;background:#f4f1ff}
+.flow-boat .n{font-size:12px;font-weight:950;color:var(--navy)}
+.flow-boat .r{font-size:7.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flow-boat .a{font-size:7.5px;font-weight:900;margin-top:3px;color:#1769e0}
+.flow-arrow-row{height:13px;display:flex;justify-content:center;align-items:center;color:#7ca9df;font-size:13px;font-weight:950}
+.flow-conclusion{margin-top:10px;padding:10px 11px;border-radius:11px;background:linear-gradient(135deg,#0f5fd2,#328cf5);color:#fff}
+.flow-conclusion .k{font-size:8px;opacity:.78;font-weight:900;letter-spacing:.1em}
+.flow-conclusion .v{font-size:14px;font-weight:950;margin-top:2px}
+.flow-conclusion .s{font-size:9px;line-height:1.5;opacity:.9;margin-top:3px}
+
+.data-focus{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.focus-card{padding:11px;border-radius:13px;border:1px solid #dbe8fa;background:linear-gradient(180deg,#fff,#f5f9ff)}
+.focus-card .k{font-size:8.5px;color:var(--muted);font-weight:850}
+.focus-card .v{font-size:15px;color:var(--navy);font-weight:950;margin-top:3px}
+.focus-card .s{font-size:8.5px;color:var(--muted);line-height:1.45;margin-top:3px}
+.metric-bars{display:grid;gap:5px;margin-top:9px}
+.metric-bar{display:grid;grid-template-columns:52px 1fr 34px;gap:6px;align-items:center}
+.metric-bar .mk{font-size:8px;color:var(--muted);font-weight:850}
+.metric-bar .track{height:5px;border-radius:999px;background:#e8f0fb;overflow:hidden}
+.metric-bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1769e0,#66c5ff)}
+.metric-bar .fill.purple{background:linear-gradient(90deg,#6b57df,#a899ff)}
+.metric-bar .mv{font-size:8px;text-align:right;color:#45627f;font-weight:850}
+
+.legend-inline{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.legend-chip{font-size:8px;padding:4px 6px;border-radius:999px;border:1px solid #dce8f8;background:#fff;color:#5d738e}
+.legend-chip b{color:var(--navy)}
+
+.data-row-card.best{border-color:#8fc0ff;background:linear-gradient(180deg,#fff,#f2f8ff)}
+.data-row-card.attack-best{border-color:#b2a6f6;background:linear-gradient(180deg,#fff,#f7f5ff)}
+.data-row-head .rank-mini{font-size:8px;font-weight:950;color:#1769e0;background:#eef5ff;border:1px solid #d5e6ff;border-radius:999px;padding:3px 6px}
+
+@media(max-width:760px){
+  .flow-step{grid-template-columns:42px 1fr}
+  .flow-boats{grid-template-columns:repeat(6, minmax(36px,1fr));gap:3px}
+  .flow-boat{padding:6px 2px}
+  .data-focus{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -599,7 +650,7 @@ tr:hover td{background:#f8fbff}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v20</small></div>
+      <div class="brandtext">BOAT EDGE <small>v21</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -705,6 +756,7 @@ tr:hover td{background:#f8fbff}
           <div class="card scenario-world scenario-a" id="scenarioA"></div>
           <div class="card scenario-world scenario-b" id="scenarioB"></div>
         </div>
+        <div class="card scenario-flow" id="scenarioFlow"></div>
         <div class="card scenario-lanes" id="scenarioLanes"></div>
         <div class="card scenario-why" id="scenarioWhy"></div>
       </div>
@@ -753,6 +805,7 @@ tr:hover td{background:#f8fbff}
           <div class="data-guide-card"><b>④ 直前気配</b><div>展示タイム・実進入。最後の上げ下げ。</div></div>
         </div>
         <div class="card auditbox" id="selectedDataSummary"></div>
+        <div class="data-focus" id="dataFocus"></div>
         <div class="data-readable" id="readableDataRows"></div>
         <div class="card auditbox" id="selectedReasoning"></div>
         <div class="title"><h2>詳細比較</h2><span>数字を全部見たい時だけ</span></div>
@@ -833,7 +886,7 @@ tr:hover td{background:#f8fbff}
   <nav class="bottomnav">
     <button class="on" data-view="homeView"><span class="navicon">⌂</span>ホーム</button>
     <button data-view="raceView"><span class="navicon">≋</span>レース</button>
-    <button data-view="dataView"><span class="navicon">▣</span>データ</button>
+    <button data-view="dataView"><span class="navicon">▣</span>データ状況</button>
     <button data-view="auditView"><span class="navicon">✓</span>監査</button>
   </nav>
 </div>
@@ -1574,20 +1627,45 @@ function scenarioRole(s){
   if(s.actualCourse>=5) return "展開待ち";
   return "相手候補";
 }
+
+function clamp01(v){ return Math.max(0,Math.min(1,v)); }
+function scorePercent(v,min,max){
+  if(v===null || v===undefined || !Number.isFinite(Number(v))) return 0;
+  if(max<=min) return 0;
+  return Math.round(clamp01((Number(v)-min)/(max-min))*100);
+}
+function laneRoleLabel(s, topAttackLane){
+  if(s.lane===1) return "逃げ";
+  if(s.lane===topAttackLane) return "攻め";
+  if(s.actualCourse===2) return "差し";
+  if(s.actualCourse===3 || s.actualCourse===4) return "連動";
+  return "展開待ち";
+}
+
 function renderScenario(d,pred){
   const scores=pred.scores||computeScores(d);
   const one=scores.find(x=>x.lane===1);
-  const attack=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore)[0];
+  const attacks=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore);
+  const attack=attacks[0]||scores[1];
+  const topAttackLane=attack?.lane;
   const worldA=pred.worlds?.find(x=>x.key==="A")||{};
   const worldB=pred.worlds?.find(x=>x.key==="B")||{};
   const actualKnown=(d.actual_entry||[]).length===6;
   const stKnown=(d.beforeinfo?.start_exhibition||[]).length>0;
   const exKnown=(d.beforeinfo?.racers||[]).some(x=>num(x.exhibition_time)!==null);
+
+  const pA=worldA.probability==null?null:Number(worldA.probability);
+  const pB=worldB.probability==null?null:Number(worldB.probability);
+  const headline=(pA!==null && pB!==null)
+    ? (pA>=pB ? `${one?.name||"1号艇"}の逃げ優勢` : `${attack?.name||"攻め艇"}起点の波乱寄り`)
+    : `${one?.name||"1号艇"}の逃げ vs ${attack?.name||"攻め艇"}の攻め`;
+
   document.getElementById("scenarioHero").innerHTML=`
     <div class="scenario-label">${pred.mode==="formal"?"正式CURRENT":"サイト簡易"} / 展開の要約</div>
-    <div class="scenario-main">${one?.name||"1号艇"}の逃げ vs ${attack?.name||"外艇"}の攻め</div>
+    <div class="scenario-main">${headline}</div>
     <div class="scenario-sub">${pred.mode==="formal"?"正式CURRENTの2世界をそのまま表示。":"取得済みデータだけで流れを可視化。正式CURRENTとは別計算です。"}</div>
   `;
+
   const build=(w,key)=>{
     const isA=key==="A";
     const p=w.probability==null?"－":`${Number(w.probability).toFixed(1)}%`;
@@ -1599,19 +1677,46 @@ function renderScenario(d,pred){
       <div class="scenario-prob">${p}</div>
       <div class="scenario-points">
         <div class="scenario-point"><span class="scenario-dot"></span><span>主役：<b>${lead}</b></span></div>
-        <div class="scenario-point"><span class="scenario-dot"></span><span>${isA?"1号艇が先マイ→内残り":"外/中枠の攻め→差し・まくり差し連動"}</span></div>
+        <div class="scenario-point"><span class="scenario-dot"></span><span>${isA?"1号艇が先マイ→内残り":"中外の攻め→差し・まくり差し連動"}</span></div>
         <div class="scenario-point"><span class="scenario-dot"></span><span>上位買い目：${t}</span></div>
       </div>`;
   };
   document.getElementById("scenarioA").innerHTML=build(worldA,"A");
   document.getElementById("scenarioB").innerHTML=build(worldB,"B");
+
+  const laneHtml=(stage)=>scores.map(s=>{
+    const role=laneRoleLabel(s,topAttackLane);
+    let cls="";
+    if(stage==="start" && s.lane===topAttackLane) cls="attack";
+    if(stage==="turn" && (s.lane===1 || s.lane===topAttackLane)) cls=s.lane===1?"hot":"attack";
+    if(stage==="after" && ((pA??50)>=(pB??50) ? [1,2,3].includes(s.lane) : s.lane===topAttackLane)) cls=s.lane===topAttackLane?"attack":"hot";
+    return `<div class="flow-boat ${cls}"><div class="n">${s.lane}</div><div class="r">${f(s.name)}</div><div class="a">${role}</div></div>`;
+  }).join("");
+
+  const flowConclusion=(pA!==null&&pB!==null)
+    ? (pA>=pB ? `1号艇先マイ → 2・3号艇の内残りを重視` : `${attack?.lane||"外"}号艇の攻め → その外・差し艇の連動を重視`)
+    : `直前データが増えると展開を更新`;
+
+  document.getElementById("scenarioFlow").innerHTML=`
+    <div class="flow-title"><b>1マークまでの流れ</b><span>矢印の順に見る</span></div>
+    <div class="flow-track">
+      <div class="flow-step"><div class="flow-step-label">スタート</div><div class="flow-step-line"><div class="flow-boats">${laneHtml("start")}</div></div></div>
+      <div class="flow-arrow-row">↓</div>
+      <div class="flow-step"><div class="flow-step-label">1マーク</div><div class="flow-step-line"><div class="flow-boats">${laneHtml("turn")}</div></div></div>
+      <div class="flow-arrow-row">↓</div>
+      <div class="flow-step"><div class="flow-step-label">抜け出し</div><div class="flow-step-line"><div class="flow-boats">${laneHtml("after")}</div></div></div>
+    </div>
+    <div class="flow-conclusion"><div class="k">展開結論</div><div class="v">${flowConclusion}</div><div class="s">正式CURRENT未接続時はサイト簡易スコア。未取得データの補完はしません。</div></div>
+  `;
+
   document.getElementById("scenarioLanes").innerHTML=`
     <div class="scenario-label">6艇の役割</div>
     <div class="flow-lanes">${scores.map(s=>`
       <div class="flow-lane">
         <div class="ln">${s.lane}</div><div class="nm">${f(s.name)}</div>
-        <div class="role">${scenarioRole(s)}</div>
+        <div class="role">${laneRoleLabel(s,topAttackLane)}</div>
       </div>`).join("")}</div>`;
+
   document.getElementById("scenarioWhy").innerHTML=`
     <div class="scenario-label">この展開を見る材料</div>
     <div class="why-grid">
@@ -1620,44 +1725,79 @@ function renderScenario(d,pred){
       <div class="why-card"><div class="k">展示タイム</div><div class="v">${exKnown?"取得済":"未取得"}</div></div>
       <div class="why-card"><div class="k">予想種別</div><div class="v">${pred.mode==="formal"?"正式":"暫定"}</div></div>
     </div>
-    <div class="scenario-sub">未取得項目は平均値で補完しません。データが増えるほど展開表示も更新されます。</div>`;
+    <div class="scenario-sub">未取得項目は平均値で補完しません。直前データが増えるたびに展開表示も更新されます。</div>`;
 }
-
 function renderDataTab(d, pred){
   const scoreRows = pred.scores || computeScores(d);
+  const sorted=[...scoreRows].sort((a,b)=>b.baseScore-a.baseScore);
+  const attackSorted=[...scoreRows].sort((a,b)=>b.attackScore-a.attackScore);
+  const best=sorted[0], bestAttack=attackSorted.find(x=>x.lane!==1)||attackSorted[0];
+  const one=scoreRows.find(x=>x.lane===1);
+
   document.getElementById("selectedDataSummary").innerHTML = `
     <b>まずここだけ見ればOK</b><br>
-    <b>選手力 → スタート → 機力 → 直前気配</b> の順で確認。<br>
-    「強い / 標準 / 弱め」でざっくり見て、必要なら下の詳細数字を開くイメージです。
+    <b>①選手力 → ②スタート → ③機力 → ④直前気配</b> の順で確認。<br>
+    下のバーが長いほど、その項目でプラス。細かい数字は最後の「詳細比較」で確認できます。
+    <div class="legend-inline"><span class="legend-chip"><b>青</b>＝通常評価</span><span class="legend-chip"><b>紫</b>＝攻め評価</span><span class="legend-chip">未取得は0寄与</span></div>
   `;
+
+  document.getElementById("dataFocus").innerHTML=`
+    <div class="focus-card"><div class="k">総合トップ</div><div class="v">${best?`${best.lane}号艇 ${f(best.name)}`:"－"}</div><div class="s">地力・ST・機力・直前の合計</div></div>
+    <div class="focus-card"><div class="k">攻め役</div><div class="v">${bestAttack?`${bestAttack.lane}号艇 ${f(bestAttack.name)}`:"－"}</div><div class="s">差し / まくり / まくり差し側</div></div>
+    <div class="focus-card"><div class="k">1号艇</div><div class="v">${one?`${f(one.name)} / ${one.insideScore.toFixed(1)}点`:"－"}</div><div class="s">イン残り評価</div></div>
+  `;
+
+  const mins={
+    base:Math.min(...scoreRows.map(s=>s.baseScore)),
+    inside:Math.min(...scoreRows.map(s=>s.insideScore)),
+    attack:Math.min(...scoreRows.map(s=>s.attackScore))
+  };
+  const maxs={
+    base:Math.max(...scoreRows.map(s=>s.baseScore)),
+    inside:Math.max(...scoreRows.map(s=>s.insideScore)),
+    attack:Math.max(...scoreRows.map(s=>s.attackScore))
+  };
+
   document.getElementById("readableDataRows").innerHTML = scoreRows.map(s=>{
-    const racer=(d.racers||[]).find((r,i)=>laneNo(r,i)===s.lane)||{};
-    const ability=evalClass((s.natWin||0)+(s.locWin||0),12,9);
-    const startVal=s.exhibitionSt!=null ? (0.30-Number(s.exhibitionSt))*100 : (s.avgSt!=null ? (0.24-Number(s.avgSt))*100 : null);
-    const start=evalClass(startVal,10,5);
-    const motor=evalClass(((s.motQ||0)+(s.boatQ||0))/2,38,30);
-    const ex=s.exhibitionTime==null?["未取得","eval-low"]:["取得済","eval-mid"];
-    return `<div class="data-row-card">
+    const abilityRaw=(s.natWin||0)+(s.locWin||0);
+    const stRaw=s.exhibitionSt!=null ? Math.max(0,(0.30-Number(s.exhibitionSt))*100) : (s.avgSt!=null ? Math.max(0,(0.24-Number(s.avgSt))*100) : 0);
+    const machineRaw=((s.motQ||0)+(s.boatQ||0))/2;
+    const exRaw=s.exhibitionTime==null?0:1;
+
+    const abilityP=scorePercent(abilityRaw,6,15);
+    const stP=scorePercent(stRaw,0,18);
+    const machineP=scorePercent(machineRaw,20,45);
+    const exP=exRaw?75:0;
+    const totalP=scorePercent(s.baseScore,mins.base,maxs.base);
+    const attackP=scorePercent(s.attackScore,mins.attack,maxs.attack);
+
+    const isBest=best && s.lane===best.lane;
+    const isAttack=bestAttack && s.lane===bestAttack.lane;
+    return `<div class="data-row-card ${isBest?"best":""} ${isAttack?"attack-best":""}">
       <div class="data-row-head">
         <div class="data-row-name"><div class="lane l${s.lane}">${s.lane}</div>${f(s.name)}</div>
-        <span class="eval-badge ${ability[1]}">総合 ${s.baseScore.toFixed(1)}</span>
+        <span class="rank-mini">${isBest?"総合1位":isAttack?"攻め1位":`総合 ${s.baseScore.toFixed(1)}`}</span>
       </div>
-      <div class="data-row-metrics">
-        <div class="data-pill"><div class="k">選手力</div><div class="v"><span class="eval-badge ${ability[1]}">${ability[0]}</span></div></div>
-        <div class="data-pill"><div class="k">スタート</div><div class="v"><span class="eval-badge ${start[1]}">${start[0]}</span></div></div>
-        <div class="data-pill"><div class="k">機力</div><div class="v"><span class="eval-badge ${motor[1]}">${motor[0]}</span></div></div>
-        <div class="data-pill"><div class="k">直前</div><div class="v"><span class="eval-badge ${ex[1]}">${ex[0]}</span></div></div>
+      <div class="metric-bars">
+        <div class="metric-bar"><div class="mk">選手力</div><div class="track"><div class="fill" style="width:${abilityP}%"></div></div><div class="mv">${abilityP}</div></div>
+        <div class="metric-bar"><div class="mk">スタート</div><div class="track"><div class="fill" style="width:${stP}%"></div></div><div class="mv">${stP}</div></div>
+        <div class="metric-bar"><div class="mk">機力</div><div class="track"><div class="fill" style="width:${machineP}%"></div></div><div class="mv">${machineP}</div></div>
+        <div class="metric-bar"><div class="mk">直前</div><div class="track"><div class="fill" style="width:${exP}%"></div></div><div class="mv">${s.exhibitionTime==null?"未":"済"}</div></div>
+        <div class="metric-bar"><div class="mk">総合</div><div class="track"><div class="fill" style="width:${totalP}%"></div></div><div class="mv">${s.baseScore.toFixed(1)}</div></div>
+        <div class="metric-bar"><div class="mk">攻め</div><div class="track"><div class="fill purple" style="width:${attackP}%"></div></div><div class="mv">${s.attackScore.toFixed(1)}</div></div>
       </div>
     </div>`;
   }).join("");
+
   document.getElementById("selectedReasoning").innerHTML = `
     <b>今回の整理</b><br>
     予想種別: <b>${pred.label}</b><br>
     勝負度: <b>${pred.grade}</b><br>
     展開主役: <b>${pred.reasoning?.leader || "－"}</b><br>
-    Spread: <b>${pred.reasoning?.spread || "－"}</b><br>
-    コメント: ${pred.reasoning?.note || "－"}
+    コメント: ${pred.reasoning?.note || "－"}<br>
+    <span class="note">この画面の点数は比較用。正式CURRENTがある場合は正式予想を優先します。</span>
   `;
+
   document.getElementById("scoreRows").innerHTML = scoreRows.map(s=>`<tr>
     <td><div class="lane l${s.lane}">${s.lane}</div></td>
     <td class="namecell">${f(s.name)}</td>
@@ -1688,7 +1828,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V20<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V21<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -1795,8 +1935,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 
 refreshAll();
 startPassiveRefresh();
-setInterval(refreshAll, 60000);
-setInterval(()=>{ if(state.today) renderDeadlineBoard(); }, 30000);
+setInterval(()=>{ if(state.today){ renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
 </script>
 </body>
 </html>
