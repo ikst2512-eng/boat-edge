@@ -8,7 +8,7 @@
     "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 9,
     "deadline": "19:17",
-    "updated_at": "2026-10-05T18:27:04+09:00",
+    "updated_at": "2026-10-05T18:35:55+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,16 +18,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=9",
-      "fetched_at": "2026-10-05T18:27:04+09:00",
-      "sha256": "ef6ecbbdfd41c2bc60094c8a6a115478ba2622a1e9796d532513bc9f5d9eeadb",
+      "fetched_at": "2026-10-05T18:35:55+09:00",
+      "sha256": "31a54e61835819ac285e0716295fa1c398dfb3cec44b0a4766b601d6910732c0",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=19&rno=9",
-      "fetched_at": "2026-10-05T18:27:04+09:00",
-      "sha256": "c4b968e2ae1cce9fafad2e5ddaec3d8b815e8bbd4e94b13db57fb40f03015f47",
+      "fetched_at": "2026-10-05T18:35:55+09:00",
+      "sha256": "ae58021b2f9924134bd71bd3e75a24db92ca3c9fda4cb6bbd6e97a6f1ba83d84",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "8a41c6aa749de0699807caa57bf50b9f65d2a32e12fe0c7acbe500ade98b32c1"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "3da67b4533cadce1aaee0a103df0537b08235894bf0931849ae6eebea39a0819"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "12317b1d9e3c72213fa6de80dfa6b60bd28d01fe7b8221a96df963bf7f651532"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "2168dc03827f3663c589ffcdbf5d415c72fcad82cb063cda198bbfa4701c1ee1"
     }
   },
   "racers": [
@@ -304,38 +328,38 @@
       {
         "lane": 1,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 小林 愛実 47.0kg R 1"
+        "tilt": -0.5,
+        "raw_text": "1 小林 愛実 47.0kg -0.5 R 1"
       },
       {
         "lane": 2,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 竹井 奈美 47.0kg R 4"
+        "tilt": 0.0,
+        "raw_text": "2 竹井 奈美 47.0kg 0.0 R 4"
       },
       {
         "lane": 3,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 平山 智加 46.0kg R 3"
+        "tilt": 0.0,
+        "raw_text": "3 平山 智加 46.0kg 0.0 R 3"
       },
       {
         "lane": 4,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 渡邉 真奈美 46.5kg R 4"
+        "tilt": -0.5,
+        "raw_text": "4 渡邉 真奈美 46.5kg -0.5 R 4"
       },
       {
         "lane": 5,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 滝沢 織寧 47.0kg R 2"
+        "tilt": -0.5,
+        "raw_text": "5 滝沢 織寧 47.0kg -0.5 R 2"
       },
       {
         "lane": 6,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 間庭 菜摘 47.0kg R 3"
+        "tilt": 0.5,
+        "raw_text": "6 間庭 菜摘 47.0kg 0.5 R 3"
       }
     ],
     "start_exhibition": [],
@@ -349,5 +373,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

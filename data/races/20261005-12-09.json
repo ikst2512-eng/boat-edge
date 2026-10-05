@@ -8,7 +8,7 @@
     "event": "2026東京・大阪・福岡三都市対抗戦",
     "race_no": 9,
     "deadline": "18:55",
-    "updated_at": "2026-10-05T18:27:04+09:00",
+    "updated_at": "2026-10-05T18:35:55+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,16 +18,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=12&rno=9",
-      "fetched_at": "2026-10-05T18:27:04+09:00",
-      "sha256": "68eee64a04589dfd99bff038462179946d94df05cc0d72bdd4e707e878df8212",
+      "fetched_at": "2026-10-05T18:35:55+09:00",
+      "sha256": "97c601956ecf45b691e61f2f9e87d62105960a90ea230d03632a11d9644f04bb",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=12&rno=9",
-      "fetched_at": "2026-10-05T18:27:04+09:00",
-      "sha256": "213d4ec6c8d312710eaa5b99293357efb9ecd3e42e3ad823e96850baea67708f",
+      "fetched_at": "2026-10-05T18:35:55+09:00",
+      "sha256": "c4006745e94e43408ffc469e3969d9617cc240418dce83e2318e0a34621eb753",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "8a41c6aa749de0699807caa57bf50b9f65d2a32e12fe0c7acbe500ade98b32c1"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "3da67b4533cadce1aaee0a103df0537b08235894bf0931849ae6eebea39a0819"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "12317b1d9e3c72213fa6de80dfa6b60bd28d01fe7b8221a96df963bf7f651532"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "2168dc03827f3663c589ffcdbf5d415c72fcad82cb063cda198bbfa4701c1ee1"
     }
   },
   "racers": [
@@ -304,39 +328,39 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
+        "exhibition_time": 6.78,
         "tilt": -0.5,
-        "raw_text": "1 原田 才一郎 52.0kg -0.5 R 5"
+        "raw_text": "1 原田 才一郎 52.0kg 6.78 -0.5 R 5"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
+        "exhibition_time": 6.85,
         "tilt": -0.5,
-        "raw_text": "2 竹間 隆晟 52.8kg -0.5 R 4"
+        "raw_text": "2 竹間 隆晟 52.8kg 6.85 -0.5 R 4"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
+        "exhibition_time": 6.91,
         "tilt": -0.5,
-        "raw_text": "3 今泉 友吾 52.0kg -0.5 R 5"
+        "raw_text": "3 今泉 友吾 52.0kg 6.91 -0.5 R 5"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
+        "exhibition_time": 6.87,
         "tilt": -0.5,
-        "raw_text": "4 佃 來紀 52.3kg -0.5 R 3"
+        "raw_text": "4 佃 來紀 52.3kg 6.87 -0.5 R 3"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
+        "exhibition_time": 6.88,
         "tilt": 0.0,
-        "raw_text": "5 佐藤 大騎 52.4kg 0.0 R 1"
+        "raw_text": "5 佐藤 大騎 52.4kg 6.88 0.0 R 1"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
+        "exhibition_time": 6.86,
         "tilt": 0.0,
-        "raw_text": "6 安東 幸治 53.8kg 0.0 R 2"
+        "raw_text": "6 安東 幸治 53.8kg 6.86 0.0 R 2"
       }
     ],
     "start_exhibition": [],
@@ -350,5 +374,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
