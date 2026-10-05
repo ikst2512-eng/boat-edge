@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v29</title>
+<title>BOAT EDGE v30</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v29 visual refinement ===== */
+/* ===== BOAT EDGE v30 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -999,6 +999,54 @@ body{background:
 .buy-ticket.diff-up{box-shadow:inset 3px 0 0 #1769e0}
 .buy-ticket.diff-down{box-shadow:inset 3px 0 0 #e3a53a}
 
+
+/* ===== BOAT EDGE v30 direct mode ===== */
+.direct-mode{display:grid;gap:10px}
+.direct-hero{
+  border-radius:18px;padding:14px;border:1px solid #bfd9fb;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(71,145,244,.17),transparent 34%),
+    linear-gradient(145deg,#ffffff,#eef6ff);
+  box-shadow:0 10px 28px rgba(23,105,224,.08)
+}
+.direct-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.direct-label{font-size:8px;font-weight:950;letter-spacing:.12em;color:#1769e0}
+.direct-title{font-size:20px;font-weight:950;color:#0d2f5e;margin-top:4px}
+.direct-count{font-size:25px;font-weight:950;color:#1769e0;white-space:nowrap}
+.direct-sub{font-size:9px;color:#6d829c;margin-top:4px;line-height:1.5}
+.direct-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:10px}
+.direct-card{border:1px solid #dce8f8;border-radius:15px;background:#fff;padding:11px}
+.direct-card h3{margin:0 0 8px;font-size:10px;color:#0d2f5e}
+.direct-worlds{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.direct-world{border-radius:12px;padding:10px;border:1px solid #e0eaf7;background:#f8fbff}
+.direct-world .wk{font-size:8px;font-weight:950;color:#7890aa}
+.direct-world .wv{font-size:20px;font-weight:950;color:#1769e0;margin-top:3px}
+.direct-world .ws{font-size:8px;color:#6f859e;margin-top:3px}
+.direct-tickets{display:grid;gap:6px}
+.direct-ticket{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:7px;align-items:center;
+  border:1px solid #e3edf9;border-radius:10px;background:#fbfdff;padding:7px 8px
+}
+.direct-ticket .rank{font-size:8px;font-weight:950;color:#7c92ab}
+.direct-ticket .combo{font-size:13px;font-weight:950;color:#0d2f5e}
+.direct-ticket .prob{font-size:8.5px;font-weight:900;color:#1769e0}
+.direct-ticket .memo{font-size:8px;font-weight:900;color:#0b7c5b}
+.direct-changes{display:grid;gap:6px}
+.direct-change{display:flex;justify-content:space-between;gap:8px;border-radius:9px;padding:7px 8px;background:#f7fbff;border:1px solid #e2ecf9}
+.direct-change b{font-size:8.5px;color:#0d2f5e}
+.direct-change span{font-size:8px;color:#7087a0;text-align:right}
+.direct-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.direct-action{
+  border:0;border-radius:12px;padding:10px;font-size:9px;font-weight:950;cursor:pointer
+}
+.direct-action.primary{background:#1769e0;color:#fff}
+.direct-action.secondary{background:#eef5ff;color:#1769e0;border:1px solid #dce8f8}
+.direct-note{font-size:8px;color:#7489a0;line-height:1.5}
+@media(max-width:760px){
+  .direct-grid{grid-template-columns:1fr}
+  .direct-worlds{grid-template-columns:1fr 1fr}
+}
+
 </style>
 </head>
 <body>
@@ -1006,7 +1054,7 @@ body{background:
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v29</small></div>
+      <div class="brandtext">BOAT EDGE <small>v30</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -1214,6 +1262,13 @@ body{background:
       </div>
     </section>
 
+    <section id="tab-direct" class="subview">
+      <div class="section stack">
+        <div class="title"><h2>直前モード</h2><span>締切前の判断を1画面に集約</span></div>
+        <div id="directMode" class="direct-mode"></div>
+      </div>
+    </section>
+
     <section id="tab-audit" class="subview">
       <div class="section stack">
         <div class="title"><h2>監査</h2><span>PRE_RESULT / CURRENT / 取得状況</span></div>
@@ -1249,6 +1304,7 @@ body{background:
           <li><b>ホーム</b> → 締切が近いレースを選ぶ</li>
           <li><b>予想</b> → 買い目を見る</li>
           <li><b>展開予想</b> → 逃げるのか、誰が攻めるのかを見る</li><li><b>直前</b> → 実進入 / 展示ST / 展示タイムを見る</li>
+          <li><b>直前モード</b> → 残り時間 / A-B確率 / 買い目 / 変化 / メモを1画面で確認</li>
           <li><b>データ</b> → 強い / 標準 / 弱めで6艇比較</li>
           <li><b>監査</b>で不足データやCURRENTの進捗を確認</li>
           <li><b>正式CURRENT接続</b>: <span class="mono">data/formal_predictions/レースキー.json</span> が来れば自動優先表示</li>
@@ -1314,6 +1370,7 @@ const raceTabs = [
   ["card","出走表"],
   ["before","直前"],
   ["data","データ"],
+  ["direct","直前モード"],
   ["audit","監査"]
 ];
 const state = {today:null, model:null, formal:null, race:null, currentVenue:null, venueFilter:"active", venueQuery:""};
@@ -2266,9 +2323,10 @@ function renderBuyBoard(d,pred){
   el.querySelectorAll("[data-ticket-id]").forEach(row=>row.onclick=()=>{
     toggleTicketMemo(d,row.dataset.ticketId);
     renderBuyBoard(d,pred);
+    renderDirectMode(d,pred);
   });
   const clear=document.getElementById("clearTicketMemo");
-  if(clear) clear.onclick=()=>{clearTicketMemo(d);renderBuyBoard(d,pred);};
+  if(clear) clear.onclick=()=>{clearTicketMemo(d);renderBuyBoard(d,pred);renderDirectMode(d,pred);};
 }
 
 function roleForScore(s,leaderLane,attackerLane){
@@ -2297,6 +2355,96 @@ function renderScenarioMap(d,pred){
       <div class="micro">${micro||"取得待ち"}</div>
     </div>`;
   }).join("");
+}
+
+
+function currentPredictionDiff(d,pred){
+  const prev=readJSONLocal(predSnapshotKey(d),null);
+  const cur=makePredictionSnapshot(pred);
+  return diffPrediction(prev,cur);
+}
+function selectedMemoRows(d,pred){
+  const selected=selectedTicketSet(d);
+  const out=[];
+  for(const [wi,w] of (pred.worlds||[]).entries()){
+    const wk=w.key || (wi===0?"A":"B");
+    for(const [i,t] of (w.tickets||[]).entries()){
+      if(selected.has(ticketId(wk,t.combo))){
+        out.push({world:wk,rank:i+1,...t});
+      }
+    }
+  }
+  return out;
+}
+function renderDirectMode(d,pred){
+  const el=document.getElementById("directMode"); if(!el) return;
+  const sec=deadlineDeltaSeconds(d.meta?.deadline);
+  const worlds=pred.worlds||[];
+  const A=worlds.find(x=>x.key==="A")||worlds[0]||{};
+  const B=worlds.find(x=>x.key==="B")||worlds[1]||{};
+  const tickets=topPredictionTickets(pred).slice(0,5);
+  const memo=selectedMemoRows(d,pred);
+  const diffs=currentPredictionDiff(d,pred).slice(0,5);
+  const {bf,starts,actual}=getBeforeMap(d);
+  const beforeReady=(bf.racers||[]).length>0 || starts.size>0 || actual.size>0;
+  const entryRows=[...actual.entries()].sort((a,b)=>a[0]-b[0]);
+  const entryChanged=entryRows.some(([lane,course])=>Number(lane)!==Number(course));
+  const mode=pred.mode==="formal"?"正式CURRENT":"サイト簡易";
+  el.innerHTML=`
+    <div class="direct-hero">
+      <div class="direct-top">
+        <div>
+          <div class="direct-label">DIRECT MODE / ${mode}</div>
+          <div class="direct-title">${f(d.meta?.venue)} ${f(d.meta?.race_no)}R　${f(pred.decision||"判断待ち")}</div>
+          <div class="direct-sub">${raceScenarioHeadline(d,pred)} / 勝負度 ${f(pred.grade)} / ${beforeReady?"直前データあり":"直前データ待ち"}</div>
+        </div>
+        <div class="direct-count">${formatCountdown(sec)}</div>
+      </div>
+    </div>
+    <div class="direct-grid">
+      <div class="direct-card">
+        <h3>世界確率</h3>
+        <div class="direct-worlds">
+          <div class="direct-world"><div class="wk">Pattern A / イン逃げ成立</div><div class="wv">${A.probability!=null?Math.round(Number(A.probability)*100)+"%":"－"}</div><div class="ws">${f(A.lead||A.reason||"1号艇残し")}</div></div>
+          <div class="direct-world"><div class="wk">Pattern B / イン逃げ不成立</div><div class="wv">${B.probability!=null?Math.round(Number(B.probability)*100)+"%":"－"}</div><div class="ws">${f(B.lead||B.reason||"差し・まくり・外連動")}</div></div>
+        </div>
+      </div>
+      <div class="direct-card">
+        <h3>直前状態</h3>
+        <div class="direct-changes">
+          <div class="direct-change"><b>実進入</b><span>${entryRows.length?(entryChanged?"変化あり ":"枠なり ")+entryRows.map(([l,c])=>`${l}→${c}`).join(" "):"未取得"}</span></div>
+          <div class="direct-change"><b>展示/スタート</b><span>${starts.size?"取得済み":"公開待ち"}</span></div>
+          <div class="direct-change"><b>正式予想</b><span>${pred.mode==="formal"?"接続済み":"未接続"}</span></div>
+        </div>
+      </div>
+      <div class="direct-card">
+        <h3>上位買い目</h3>
+        <div class="direct-tickets">${tickets.length?tickets.map((t,i)=>`
+          <div class="direct-ticket"><span class="rank">#${i+1}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</span><span class="memo">${memo.some(m=>m.combo===t.combo)?"メモ済":""}</span></div>`).join(""):`<div class="direct-note">買い目待ち</div>`}</div>
+      </div>
+      <div class="direct-card">
+        <h3>前回からの変化</h3>
+        <div class="direct-changes">${diffs.length?diffs.map(x=>`<div class="direct-change"><b>${x.combo}</b><span>${x.note}</span></div>`).join(""):`<div class="direct-note">買い目・順位・結論に変化なし</div>`}</div>
+      </div>
+      <div class="direct-card">
+        <h3>買い目メモ</h3>
+        <div class="direct-tickets">${memo.length?memo.map((t,i)=>`
+          <div class="direct-ticket"><span class="rank">${t.world}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</span><span class="memo">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</span></div>`).join(""):`<div class="direct-note">予想タブで買い目をタップすると、ここにまとめて表示します。</div>`}</div>
+      </div>
+      <div class="direct-card">
+        <h3>すぐ見る</h3>
+        <div class="direct-actions">
+          <button class="direct-action primary" data-direct-go="pred">買い目詳細</button>
+          <button class="direct-action secondary" data-direct-go="before">直前データ</button>
+        </div>
+        <div class="direct-note" style="margin-top:8px">直前モードは表示専用。正式モデル・PRE_RESULT監査・買い目計算は変更しません。</div>
+      </div>
+    </div>`;
+  el.querySelectorAll("[data-direct-go]").forEach(b=>b.onclick=()=>{
+    const target=b.dataset.directGo;
+    document.querySelectorAll("#raceTabs [data-tab]").forEach(x=>x.classList.toggle("on",x.dataset.tab===target));
+    document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active",v.id===`tab-${target}`));
+  });
 }
 
 function renderDecision(d, pred){
@@ -2658,7 +2806,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V29<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V30<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -2728,6 +2876,7 @@ function renderRaceCommand(d,pred){
     <button class="quicknav-btn" data-tabgo="scenario">展開</button>
     <button class="quicknav-btn" data-tabgo="before">直前</button>
     <button class="quicknav-btn" data-tabgo="data">データ</button>
+    <button class="quicknav-btn strong" data-tabgo="direct">直前モード</button>
     <button class="quicknav-btn" data-tabgo="audit">監査</button>`;
   document.querySelectorAll("#raceQuickNav [data-tabgo]").forEach(b=>b.onclick=()=>{
     const target=b.dataset.tabgo;
@@ -2852,6 +3001,8 @@ function renderRace(d){
   renderUrgency(d,pred);
   renderFreshness(d);
   renderDecision(d, pred);
+  renderDirectMode(d, pred);
+  renderPredictionDiff(d, pred);
   renderBuyBoard(d, pred);
   renderInputCompleteness(d, pred);
   renderWorlds(pred);
@@ -2938,7 +3089,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 refreshAll();
 startPassiveRefresh();
 setInterval(()=>{ if(state.today){ renderSpotlightRaces(); renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
-setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUrgency(state.race,pred); } },1000);
+setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUrgency(state.race,pred); if(document.getElementById("tab-direct")?.classList.contains("active")) renderDirectMode(state.race,pred); } },1000);
 </script>
 </body>
 </html>
