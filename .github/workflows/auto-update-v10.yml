@@ -1,0 +1,405 @@
+name: BOAT EDGE 自動更新
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-auto-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: リポジトリ取得
+        uses: actions/checkout@v4
+
+      - name: Python準備
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 必要ライブラリ
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: PRE_RESULT耐障害取得
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json,re,hashlib,time,random,unicodedata
+          from pathlib import Path
+          from datetime import datetime,timedelta,timezone
+          from urllib.parse import urljoin,urlparse,parse_qs
+          from concurrent.futures import ThreadPoolExecutor,as_completed
+          import requests
+          from bs4 import BeautifulSoup
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST)
+          ymd=now.strftime("%Y%m%d")
+          iso=now.isoformat(timespec="seconds")
+
+          DATA=Path("data")
+          RACES=DATA/"races"
+          RAW=DATA/"raw"/ymd
+          RACES.mkdir(parents=True,exist_ok=True)
+          RAW.mkdir(parents=True,exist_ok=True)
+
+          BASE="https://www.boatrace.jp"
+          VENUES={"01":"桐生","02":"戸田","03":"江戸川","04":"平和島","05":"多摩川","06":"浜名湖",
+                  "07":"蒲郡","08":"常滑","09":"津","10":"三国","11":"びわこ","12":"住之江",
+                  "13":"尼崎","14":"鳴門","15":"丸亀","16":"児島","17":"宮島","18":"徳山",
+                  "19":"下関","20":"若松","21":"芦屋","22":"福岡","23":"唐津","24":"大村"}
+
+          def txt(x): return re.sub(r"\s+"," ",unicodedata.normalize("NFKC",x or "")).strip()
+          def sha(b): return hashlib.sha256(b).hexdigest()
+
+          def new_session():
+              s=requests.Session()
+              s.headers.update({
+                  "User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36",
+                  "Accept-Language":"ja-JP,ja;q=0.9,en;q=0.7",
+                  "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                  "Connection":"close"
+              })
+              return s
+
+          def fetch(url, attempts=3):
+              err=None
+              for i in range(attempts):
+                  try:
+                      with new_session() as s:
+                          r=s.get(url,timeout=(5,20),allow_redirects=True)
+                          r.raise_for_status()
+                          r.encoding=r.apparent_encoding or r.encoding or "utf-8"
+                          return r
+                  except Exception as e:
+                      err=e
+                      if i+1<attempts:
+                          time.sleep(1.2*(i+1)+random.random())
+              raise err
+
+          def deadlines_from(soup):
+              for tr in soup.find_all("tr"):
+                  t=txt(tr.get_text(" ",strip=True))
+                  if "締切予定時刻" in t:
+                      vals=re.findall(r"\b(?:[01]?\d|2[0-3]):[0-5]\d\b",t)
+                      if len(vals)>=12:return vals[:12]
+              return []
+
+          def parse_racers(soup):
+              arr=[];seen=set()
+              for tr in soup.find_all("tr"):
+                  t=txt(tr.get_text(" ",strip=True))
+                  m=re.search(r"\b(\d{4})\s*/\s*(A1|A2|B1|B2)\b",t)
+                  if not m: continue
+                  reg,cls=m.group(1),m.group(2)
+                  if reg in seen: continue
+
+                  lane=None
+                  lm=re.match(r"\s*([1-6])\b",t)
+                  if lm: lane=int(lm.group(1))
+
+                  name=None
+                  for a in tr.find_all("a"):
+                      at=txt(a.get_text(" ",strip=True))
+                      if at and not re.fullmatch(r"\d+R?",at):
+                          name=at;break
+
+                  aw=re.search(r"(\d{2})歳\s*/\s*([\d.]+)kg",t)
+                  bb=re.search(r"([^\s/]{1,8})/([^\s/]{1,8})\s+\d{2}歳",t)
+
+                  flblock=re.search(r"\bF(\d+)\s+L(\d+)\s+(-|0\.\d{2})\s+(.*)$",t)
+                  fnum=lnum=None
+                  avg_st=None
+                  national={"win_rate":None,"quinella_rate":None,"trio_rate":None}
+                  local={"win_rate":None,"quinella_rate":None,"trio_rate":None}
+                  motor={"no":None,"quinella_rate":None,"trio_rate":None}
+                  boat={"no":None,"quinella_rate":None,"trio_rate":None}
+                  series_tokens=[]
+                  early_race=None
+
+                  if flblock:
+                      fnum=int(flblock.group(1)); lnum=int(flblock.group(2))
+                      avg_st=None if flblock.group(3)=="-" else float(flblock.group(3))
+                      rest=flblock.group(4).split()
+
+                      def fval(i):
+                          try:
+                              return None if rest[i]=="-" else float(rest[i])
+                          except Exception:
+                              return None
+                      def ival(i):
+                          try:
+                              return int(rest[i])
+                          except Exception:
+                              return None
+
+                      if len(rest)>=12:
+                          national={"win_rate":fval(0),"quinella_rate":fval(1),"trio_rate":fval(2)}
+                          local={"win_rate":fval(3),"quinella_rate":fval(4),"trio_rate":fval(5)}
+                          motor={"no":ival(6),"quinella_rate":fval(7),"trio_rate":fval(8)}
+                          boat={"no":ival(9),"quinella_rate":fval(10),"trio_rate":fval(11)}
+                          tail=rest[12:]
+                          if tail and re.fullmatch(r"\d{1,2}R",tail[-1]):
+                              early_race=int(tail[-1][:-1])
+                              tail=tail[:-1]
+                          series_tokens=tail
+
+                  arr.append({
+                      "lane":lane,"registration_no":reg,"name":name,"class":cls,
+                      "age":int(aw.group(1)) if aw else None,
+                      "weight_kg":float(aw.group(2)) if aw else None,
+                      "branch":bb.group(1) if bb else None,
+                      "birthplace":bb.group(2) if bb else None,
+                      "F":fnum,"L":lnum,"avg_st":avg_st,
+                      "national":national,"local":local,
+                      "motor":motor,"boat":boat,
+                      "series_tokens":series_tokens,"early_race":early_race,
+                      "raw_text":t
+                  })
+                  seen.add(reg)
+              arr.sort(key=lambda x:(x["lane"] is None,x["lane"] or 9))
+              return arr[:6]
+
+          def parse_before(soup):
+              racers=[]
+              for tr in soup.find_all("tr"):
+                  cells=tr.find_all(["th","td"])
+                  if not cells: continue
+                  c0=txt(cells[0].get_text(" ",strip=True))
+                  if not re.fullmatch(r"[1-6]",c0): continue
+                  lane=int(c0); t=txt(tr.get_text(" ",strip=True))
+                  ex=None
+                  for n in re.findall(r"(?<!\d)(\d+\.\d+)(?!\d)",t):
+                      v=float(n)
+                      if 6.0<=v<=8.5: ex=v;break
+                  tilt=None
+                  tm=re.search(r"(?<!\d)(-?0\.(?:0|5)|-?1\.(?:0|5)|2\.0|3\.0)(?!\d)",t)
+                  if tm:
+                      try: tilt=float(tm.group(1))
+                      except: pass
+                  racers.append({"lane":lane,"exhibition_time":ex,"tilt":tilt,"raw_text":t})
+              starts=[]
+              tag=soup.find(string=re.compile("スタート展示"))
+              if tag and tag.parent:
+                  table=tag.parent.find_next("table")
+                  if table:
+                      for tr in table.find_all("tr"):
+                          t=txt(tr.get_text(" ",strip=True))
+                          mm=re.search(r"\b([1-6])\b.*?(F?\.\d{2})\b",t)
+                          if mm: starts.append({"lane":int(mm.group(1)),"st":mm.group(2)})
+              full=txt(soup.get_text(" ",strip=True))
+              weather={}
+              for k,p in {
+                  "air_temp_c":r"気温\s*([\d.]+)\s*℃",
+                  "water_temp_c":r"水温\s*([\d.]+)\s*℃",
+                  "wind_speed_ms":r"風速\s*([\d.]+)\s*m",
+                  "wave_cm":r"波高\s*([\d.]+)\s*cm"}.items():
+                  mm=re.search(p,full)
+                  weather[k]=float(mm.group(1)) if mm else None
+              return {"racers":racers,"start_exhibition":starts,"weather":weather}
+
+          errors=[]
+          discovery_mode="index"
+
+          # 1) normal index discovery
+          active=set()
+          try:
+              url=f"{BASE}/owpc/pc/race/index?hd={ymd}"
+              r=fetch(url,attempts=3)
+              sp=BeautifulSoup(r.text,"lxml")
+              for a in sp.find_all("a",href=True):
+                  href=a["href"]
+                  if "/race/racelist" not in href: continue
+                  q=parse_qs(urlparse(urljoin(BASE,href)).query)
+                  j=(q.get("jcd") or [None])[0]
+                  if j and j.zfill(2) in VENUES: active.add(j.zfill(2))
+          except Exception as e:
+              errors.append({"stage":"index","error":repr(e)})
+              discovery_mode="venue-probe"
+
+          # 2) fallback: probe 24 venues in parallel; a page with six racers means active
+          probe_cache={}
+          if not active:
+              def probe(j):
+                  url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno=1"
+                  try:
+                      r=fetch(url,attempts=2)
+                      sp=BeautifulSoup(r.text,"lxml")
+                      racers=parse_racers(sp)
+                      return j, r, sp, racers, None
+                  except Exception as e:
+                      return j,None,None,[],repr(e)
+
+              with ThreadPoolExecutor(max_workers=8) as ex:
+                  futs=[ex.submit(probe,j) for j in VENUES]
+                  for fut in as_completed(futs):
+                      j,r,sp,racers,err=fut.result()
+                      if len(racers)>=1:
+                          active.add(j)
+                          probe_cache[j]=(r,sp,racers)
+                      elif err:
+                          errors.append({"stage":"venue-probe","jcd":j,"error":err})
+
+          venue_meta={}
+          def meta_task(j):
+              if j in probe_cache:
+                  r,sp,_=probe_cache[j]
+              else:
+                  url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno=1"
+                  try:
+                      r=fetch(url,attempts=2);sp=BeautifulSoup(r.text,"lxml")
+                  except Exception as e:
+                      return j,{"deadlines":[],"event":None,"error":repr(e)}
+              h2=sp.find("h2")
+              return j,{"deadlines":deadlines_from(sp),"event":txt(h2.get_text(" ",strip=True)) if h2 else None}
+
+          with ThreadPoolExecutor(max_workers=8) as ex:
+              futs=[ex.submit(meta_task,j) for j in active]
+              for fut in as_completed(futs):
+                  j,m=fut.result();venue_meta[j]=m
+
+          # race cards
+          def race_task(j,rno):
+              key=f"{ymd}-{j}-{rno:02d}"
+              url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno={rno}"
+              if rno==1 and j in probe_cache:
+                  r,sp,racers=probe_cache[j]
+                  try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  except:pass
+                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content)}
+              try:
+                  r=fetch(url,attempts=2)
+                  (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  racers=parse_racers(BeautifulSoup(r.text,"lxml"))
+                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content)}
+              except Exception as e:
+                  return key,{"ok":False,"racers":[],"url":url,"error":repr(e)}
+
+          race_results={}
+          with ThreadPoolExecutor(max_workers=10) as ex:
+              futs=[ex.submit(race_task,j,r) for j in active for r in range(1,13)]
+              for fut in as_completed(futs):
+                  k,v=fut.result();race_results[k]=v
+
+          # beforeinfo only near deadline
+          targets=[]
+          for j in active:
+              ds=venue_meta.get(j,{}).get("deadlines",[])
+              for rno in range(1,13):
+                  if len(ds)<rno: continue
+                  try:
+                      hh,mm=map(int,ds[rno-1].split(":"))
+                      dl=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
+                      delta=(dl-now).total_seconds()/60
+                      if -30<=delta<=150:targets.append((j,rno))
+                  except: pass
+
+          def before_task(j,rno):
+              key=f"{ymd}-{j}-{rno:02d}"
+              url=f"{BASE}/owpc/pc/race/beforeinfo?hd={ymd}&jcd={j}&rno={rno}"
+              try:
+                  r=fetch(url,attempts=2)
+                  (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
+                  parsed=parse_before(BeautifulSoup(r.text,"lxml"))
+                  ready=any(x.get("exhibition_time") for x in parsed["racers"]) or bool(parsed["start_exhibition"])
+                  return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content)}
+              except Exception as e:
+                  return key,{"ok":False,"status":"error","parsed":{},"url":url,"error":repr(e)}
+
+          before={}
+          with ThreadPoolExecutor(max_workers=8) as ex:
+              futs=[ex.submit(before_task,j,r) for j,r in targets]
+              for fut in as_completed(futs):
+                  k,v=fut.result();before[k]=v
+
+          summary={"schema_version":"boat-edge-today-v4","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
+                   "phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False,
+                   "collector":{"mode":"resilient-parallel-structured","discovery_mode":discovery_mode,
+                                "active_venues":len(active),"errors":errors[:20]},
+                   "venues":[]}
+
+          for j in sorted(active):
+              meta=venue_meta.get(j,{})
+              ds=meta.get("deadlines",[])
+              venue={"jcd":j,"venue":VENUES[j],"event":meta.get("event"),"races":[]}
+              for rno in range(1,13):
+                  key=f"{ymd}-{j}-{rno:02d}"
+                  rr=race_results.get(key,{"ok":False,"racers":[],"error":"not returned"})
+                  bf=before.get(key)
+                  doc={
+                    "schema_version":"boat-edge-race-v4","race_key":key,
+                    "meta":{"date":now.strftime("%Y-%m-%d"),"venue_code":j,"venue":VENUES[j],
+                            "event":meta.get("event"),"race_no":rno,
+                            "deadline":ds[rno-1] if len(ds)>=rno else None,
+                            "updated_at":iso,"phase":"PRE_RESULT",
+                            "results_seen":False,"unlock":False,"scoring":False},
+                    "source_audit":{
+                      "race_card":{"status":"ok" if rr.get("ok") else "error","source":rr.get("url"),
+                                   "fetched_at":iso if rr.get("ok") else None,"sha256":rr.get("sha256"),
+                                   "error":rr.get("error")},
+                      "beforeinfo":{"status":bf.get("status") if bf else "not_in_window",
+                                    "source":bf.get("url") if bf else None,
+                                    "fetched_at":iso if bf and bf.get("ok") else None,
+                                    "sha256":bf.get("sha256") if bf else None,
+                                    "error":bf.get("error") if bf else None}},
+                    "racers":rr.get("racers",[]),
+                    "beforeinfo":bf.get("parsed",{}) if bf else {},
+                    "validation":{"result_unlock_token":None,"result":None}
+                  }
+                  (RACES/f"{key}.json").write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
+                  venue["races"].append({
+                    "race_key":key,"race_no":rno,"deadline":doc["meta"]["deadline"],
+                    "file":f"data/races/{key}.json","racers_ready":len(doc["racers"])==6,
+                    "beforeinfo_status":doc["source_audit"]["beforeinfo"]["status"]})
+              summary["venues"].append(venue)
+
+          (DATA/"today.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          health={
+            "updated_at":iso,
+            "phase":"PRE_RESULT",
+            "results_seen":False,"unlock":False,"scoring":False,
+            "status":"ok" if active else "source_unavailable",
+            "discovery_mode":discovery_mode,
+            "active_venues":len(active),
+            "race_cards_ok":sum(1 for x in race_results.values() if x.get("ok")),
+            "race_cards_total":len(active)*12,
+            "six_racer_races":sum(1 for x in race_results.values() if len(x.get("racers",[]))==6),
+            "structured_racer_rows":sum(
+                1 for x in race_results.values() for r in x.get("racers",[])
+                if r.get("lane") is not None
+                and r.get("national",{}).get("win_rate") is not None
+                and r.get("motor",{}).get("no") is not None
+                and r.get("boat",{}).get("no") is not None
+            ),
+            "beforeinfo_ok":sum(1 for x in before.values() if x.get("status")=="ok"),
+            "beforeinfo_targets":len(targets),
+            "error_count":len(errors)
+          }
+          (DATA/"health.json").write_text(json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(health,ensure_ascii=False))
+          PY
+
+      - name: 更新内容を保存
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "boat-edge-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ || true
+          if git diff --cached --quiet; then
+            echo "変更なし"
+          else
+            git commit -m "自動更新: PRE_RESULT $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')"
+            git push
+          fi
