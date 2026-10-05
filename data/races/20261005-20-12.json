@@ -8,7 +8,7 @@
     "event": "MNBR若松4thかっぱくん杯",
     "race_no": 12,
     "deadline": "22:54",
-    "updated_at": "2026-10-05T21:29:44+09:00",
+    "updated_at": "2026-10-05T21:38:05+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,16 +18,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=20&rno=12",
-      "fetched_at": "2026-10-05T21:29:44+09:00",
-      "sha256": "fd7634e08a78e66b5d687ac117badbc5c5d5e62d01490a886c54a063ca91a885",
+      "fetched_at": "2026-10-05T21:38:05+09:00",
+      "sha256": "2130a37149ada91eaba6305daa61173bff798aae0f9a8d6117c6b139c80ed225",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=20&rno=12",
-      "fetched_at": "2026-10-05T21:29:44+09:00",
-      "sha256": "2d8e5711baf1d8870e9f4631c511b0c90d7b72ceed32c842e47d1f2d462617eb",
+      "fetched_at": "2026-10-05T21:38:05+09:00",
+      "sha256": "ec94b3f3367e2cab093128ed9ee59aba684092218f8b2aa2ed0ccd9b5f8ed771",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "77e0a68ebf82f8a49e904f797e6dac9e61aaf2dfe68483a6ec4b6b2ffad18ccc"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "008616526b3d4c0a939e02baf1041df4cdf90bdd1b173909a51992a87cd29160"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "b22a8dd2b62fc4aa9e5fe7b0343bb3489aa2035a37b15adf6713e5490c75c0ab"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "bc37ab355dab61b18fb2b48f2b79b795cbdd427e6b252829d47ddfbf316bfeee"
     }
   },
   "racers": [
@@ -310,5 +334,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

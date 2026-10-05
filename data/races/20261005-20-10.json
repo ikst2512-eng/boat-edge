@@ -8,7 +8,7 @@
     "event": "MNBR若松4thかっぱくん杯",
     "race_no": 10,
     "deadline": "22:05",
-    "updated_at": "2026-10-05T21:29:44+09:00",
+    "updated_at": "2026-10-05T21:38:05+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,16 +18,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=20&rno=10",
-      "fetched_at": "2026-10-05T21:29:44+09:00",
-      "sha256": "1343f55fceef6772bdfd2832ab909dafc9d417624bedc08d05bd160ffae64d2c",
+      "fetched_at": "2026-10-05T21:38:05+09:00",
+      "sha256": "e275018a088f5f7c19140961c5a911bbe629302cf5d30a956a7e317916852935",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=20&rno=10",
-      "fetched_at": "2026-10-05T21:29:44+09:00",
-      "sha256": "4f390a4fb1852451865ed2f9a59925813dbd6dd9b617c7459d40cdf6f20a2f49",
+      "fetched_at": "2026-10-05T21:38:05+09:00",
+      "sha256": "664445f52876e895581775d68b1f93f5802b83062ed1b386abf212572c102ee6",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "77e0a68ebf82f8a49e904f797e6dac9e61aaf2dfe68483a6ec4b6b2ffad18ccc"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "008616526b3d4c0a939e02baf1041df4cdf90bdd1b173909a51992a87cd29160"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "b22a8dd2b62fc4aa9e5fe7b0343bb3489aa2035a37b15adf6713e5490c75c0ab"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "bc37ab355dab61b18fb2b48f2b79b795cbdd427e6b252829d47ddfbf316bfeee"
     }
   },
   "racers": [
@@ -263,38 +287,38 @@
       {
         "lane": 1,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 松崎 祐太郎 52.0kg R 5"
+        "tilt": 0.0,
+        "raw_text": "1 松崎 祐太郎 52.0kg 0.0 R 5"
       },
       {
         "lane": 2,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 木村 亮太 52.1kg R 1"
+        "tilt": -0.5,
+        "raw_text": "2 木村 亮太 52.1kg -0.5 R 1"
       },
       {
         "lane": 3,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 藤田 靖弘 52.1kg R 4"
+        "tilt": 0.0,
+        "raw_text": "3 藤田 靖弘 52.1kg 0.0 R 4"
       },
       {
         "lane": 4,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 喜多須 杏奈 48.6kg R"
+        "tilt": -0.5,
+        "raw_text": "4 喜多須 杏奈 48.6kg -0.5 R"
       },
       {
         "lane": 5,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 江藤 敦宏 52.5kg R 2"
+        "tilt": -0.5,
+        "raw_text": "5 江藤 敦宏 52.5kg -0.5 R 2"
       },
       {
         "lane": 6,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 堤 啓輔 52.0kg R 3"
+        "tilt": -0.5,
+        "raw_text": "6 堤 啓輔 52.0kg -0.5 R 3"
       }
     ],
     "start_exhibition": [],
@@ -308,5 +332,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
