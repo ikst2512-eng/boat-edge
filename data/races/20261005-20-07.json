@@ -1,14 +1,14 @@
 {
-  "schema_version": "boat-edge-race-v3",
+  "schema_version": "boat-edge-race-v4",
   "race_key": "20261005-20-07",
   "meta": {
     "date": "2026-10-05",
     "venue_code": "20",
     "venue": "若松",
-    "event": "ＭＮＢＲ若松４ｔｈかっぱくん杯",
+    "event": "MNBR若松4thかっぱくん杯",
     "race_no": 7,
     "deadline": "20:53",
-    "updated_at": "2026-10-05T20:05:44+09:00",
+    "updated_at": "2026-10-05T20:11:43+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,21 +18,45 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=20&rno=7",
-      "fetched_at": "2026-10-05T20:05:44+09:00",
-      "sha256": "6c8886e75bbf4e6028dd8cf3aa62a6df8adce72db88ef34818d15bed52ef68c6",
+      "fetched_at": "2026-10-05T20:11:43+09:00",
+      "sha256": "9cb7e33eddd4e836cfdcf3e0d98de220cf8e82846b61b44c782b282f0c78f6c5",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=20&rno=7",
-      "fetched_at": "2026-10-05T20:05:44+09:00",
-      "sha256": "e299ab027c88d52308d83e09ff1c6985e3c74e1d32294167e17d913b9a55cb2c",
+      "fetched_at": "2026-10-05T20:11:43+09:00",
+      "sha256": "bb41dc9b3fb2a1f2afb224d0179b778fdbf4a2f5fa86a6732c3a489e3ddf077b",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "ef5f93b172896075d21e08070aab7e7d16a4fc0e8a2c86e5767623c505fd8528"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "0002fca934791ab7cfc308a51fe4b55fb7efc72d615661362a2550d374c75234"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "227b3838b0788637c51ad929711826847e083363515fed3daa76abd5c7fa7bb0"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "3d02ee6da7b6d6a832826f7d440a6f87339d97765946856790f44077ff53a8d3"
     }
   },
   "racers": [
     {
-      "lane": null,
+      "lane": 1,
       "registration_no": "3721",
       "name": "守田 俊介",
       "class": "A1",
@@ -43,10 +67,32 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.13,
-      "raw_text": "１ 3721 / A1 守田 俊介 滋賀/京都 51歳/52.8kg F0 L0 0.13 6.90 51.69 60.17 6.07 37.04 48.15 45 37.98 53.85 43 39.68 49.21 12R"
+      "national": {
+        "win_rate": 6.9,
+        "quinella_rate": 51.69,
+        "trio_rate": 60.17
+      },
+      "local": {
+        "win_rate": 6.07,
+        "quinella_rate": 37.04,
+        "trio_rate": 48.15
+      },
+      "motor": {
+        "no": 45,
+        "quinella_rate": 37.98,
+        "trio_rate": 53.85
+      },
+      "boat": {
+        "no": 43,
+        "quinella_rate": 39.68,
+        "trio_rate": 49.21
+      },
+      "series_tokens": [],
+      "early_race": 12,
+      "raw_text": "1 3721 / A1 守田 俊介 滋賀/京都 51歳/52.8kg F0 L0 0.13 6.90 51.69 60.17 6.07 37.04 48.15 45 37.98 53.85 43 39.68 49.21 12R"
     },
     {
-      "lane": null,
+      "lane": 2,
       "registration_no": "3340",
       "name": "池田 雷太",
       "class": "B1",
@@ -57,10 +103,34 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.18,
-      "raw_text": "２ 3340 / B1 池田 雷太 東京/東京 61歳/53.3kg F0 L0 0.18 3.82 17.78 28.89 5.56 33.33 55.56 16 31.38 42.55 52 23.38 35.06 1 1R"
+      "national": {
+        "win_rate": 3.82,
+        "quinella_rate": 17.78,
+        "trio_rate": 28.89
+      },
+      "local": {
+        "win_rate": 5.56,
+        "quinella_rate": 33.33,
+        "trio_rate": 55.56
+      },
+      "motor": {
+        "no": 16,
+        "quinella_rate": 31.38,
+        "trio_rate": 42.55
+      },
+      "boat": {
+        "no": 52,
+        "quinella_rate": 23.38,
+        "trio_rate": 35.06
+      },
+      "series_tokens": [
+        "1"
+      ],
+      "early_race": 1,
+      "raw_text": "2 3340 / B1 池田 雷太 東京/東京 61歳/53.3kg F0 L0 0.18 3.82 17.78 28.89 5.56 33.33 55.56 16 31.38 42.55 52 23.38 35.06 1 1R"
     },
     {
-      "lane": null,
+      "lane": 3,
       "registration_no": "5148",
       "name": "松本 怜",
       "class": "B1",
@@ -71,10 +141,32 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.18,
-      "raw_text": "３ 5148 / B1 松本 怜 福岡/福岡 32歳/46.5kg F1 L0 0.18 4.77 24.56 42.11 4.02 25.86 34.48 27 27.17 38.04 15 45.12 62.20"
+      "national": {
+        "win_rate": 4.77,
+        "quinella_rate": 24.56,
+        "trio_rate": 42.11
+      },
+      "local": {
+        "win_rate": 4.02,
+        "quinella_rate": 25.86,
+        "trio_rate": 34.48
+      },
+      "motor": {
+        "no": 27,
+        "quinella_rate": 27.17,
+        "trio_rate": 38.04
+      },
+      "boat": {
+        "no": 15,
+        "quinella_rate": 45.12,
+        "trio_rate": 62.2
+      },
+      "series_tokens": [],
+      "early_race": null,
+      "raw_text": "3 5148 / B1 松本 怜 福岡/福岡 32歳/46.5kg F1 L0 0.18 4.77 24.56 42.11 4.02 25.86 34.48 27 27.17 38.04 15 45.12 62.20"
     },
     {
-      "lane": null,
+      "lane": 4,
       "registration_no": "3776",
       "name": "横井 健太",
       "class": "B1",
@@ -85,10 +177,32 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.2,
-      "raw_text": "４ 3776 / B1 横井 健太 愛知/愛知 51歳/57.3kg F0 L0 0.20 3.13 8.89 23.33 1.71 0.00 0.00 55 21.69 43.37 56 23.29 43.84"
+      "national": {
+        "win_rate": 3.13,
+        "quinella_rate": 8.89,
+        "trio_rate": 23.33
+      },
+      "local": {
+        "win_rate": 1.71,
+        "quinella_rate": 0.0,
+        "trio_rate": 0.0
+      },
+      "motor": {
+        "no": 55,
+        "quinella_rate": 21.69,
+        "trio_rate": 43.37
+      },
+      "boat": {
+        "no": 56,
+        "quinella_rate": 23.29,
+        "trio_rate": 43.84
+      },
+      "series_tokens": [],
+      "early_race": null,
+      "raw_text": "4 3776 / B1 横井 健太 愛知/愛知 51歳/57.3kg F0 L0 0.20 3.13 8.89 23.33 1.71 0.00 0.00 55 21.69 43.37 56 23.29 43.84"
     },
     {
-      "lane": null,
+      "lane": 5,
       "registration_no": "3578",
       "name": "塩田 雄一",
       "class": "B1",
@@ -99,10 +213,32 @@
       "F": 0,
       "L": 0,
       "avg_st": 0.18,
-      "raw_text": "５ 3578 / B1 塩田 雄一 香川/香川 53歳/52.0kg F0 L0 0.18 3.77 13.33 23.33 4.56 27.78 44.44 15 33.50 51.50 20 28.05 53.66"
+      "national": {
+        "win_rate": 3.77,
+        "quinella_rate": 13.33,
+        "trio_rate": 23.33
+      },
+      "local": {
+        "win_rate": 4.56,
+        "quinella_rate": 27.78,
+        "trio_rate": 44.44
+      },
+      "motor": {
+        "no": 15,
+        "quinella_rate": 33.5,
+        "trio_rate": 51.5
+      },
+      "boat": {
+        "no": 20,
+        "quinella_rate": 28.05,
+        "trio_rate": 53.66
+      },
+      "series_tokens": [],
+      "early_race": null,
+      "raw_text": "5 3578 / B1 塩田 雄一 香川/香川 53歳/52.0kg F0 L0 0.18 3.77 13.33 23.33 4.56 27.78 44.44 15 33.50 51.50 20 28.05 53.66"
     },
     {
-      "lane": null,
+      "lane": 6,
       "registration_no": "4748",
       "name": "渡邉 雄朗",
       "class": "A1",
@@ -113,7 +249,29 @@
       "F": 1,
       "L": 0,
       "avg_st": 0.16,
-      "raw_text": "６ 4748 / A1 渡邉 雄朗 東京/千葉 40歳/51.5kg F1 L0 0.16 6.19 43.18 67.05 6.89 55.56 77.78 20 39.47 59.47 49 21.67 38.33"
+      "national": {
+        "win_rate": 6.19,
+        "quinella_rate": 43.18,
+        "trio_rate": 67.05
+      },
+      "local": {
+        "win_rate": 6.89,
+        "quinella_rate": 55.56,
+        "trio_rate": 77.78
+      },
+      "motor": {
+        "no": 20,
+        "quinella_rate": 39.47,
+        "trio_rate": 59.47
+      },
+      "boat": {
+        "no": 49,
+        "quinella_rate": 21.67,
+        "trio_rate": 38.33
+      },
+      "series_tokens": [],
+      "early_race": null,
+      "raw_text": "6 4748 / A1 渡邉 雄朗 東京/千葉 40歳/51.5kg F1 L0 0.16 6.19 43.18 67.05 6.89 55.56 77.78 20 39.47 59.47 49 21.67 38.33"
     }
   ],
   "beforeinfo": {
@@ -121,50 +279,64 @@
       {
         "lane": 1,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 守田 俊介 52.8kg R"
+        "tilt": 0.0,
+        "raw_text": "1 守田 俊介 52.8kg 0.0 R"
       },
       {
         "lane": 2,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 池田 雷太 53.3kg R 1"
+        "tilt": 0.0,
+        "raw_text": "2 池田 雷太 53.3kg 0.0 R 1"
       },
       {
         "lane": 3,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 松本 怜 46.5kg R"
+        "tilt": -0.5,
+        "raw_text": "3 松本 怜 46.5kg -0.5 R"
       },
       {
         "lane": 4,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 横井 健太 57.3kg R"
+        "tilt": -0.5,
+        "raw_text": "4 横井 健太 57.3kg -0.5 R"
       },
       {
         "lane": 5,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 塩田 雄一 52.0kg R"
+        "tilt": -0.5,
+        "raw_text": "5 塩田 雄一 52.0kg -0.5 R"
       },
       {
         "lane": 6,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 渡邉 雄朗 51.5kg R"
+        "tilt": 0.0,
+        "raw_text": "6 渡邉 雄朗 51.5kg 0.0 R"
       }
     ],
     "start_exhibition": [],
     "weather": {
-      "air_temp_c": 22.0,
-      "water_temp_c": 25.0,
-      "wind_speed_ms": 1.0,
-      "wave_cm": 1.0
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
     }
   },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
