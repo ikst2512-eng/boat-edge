@@ -8,7 +8,7 @@
     "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 10,
     "deadline": "19:47",
-    "updated_at": "2026-10-05T16:28:42+09:00",
+    "updated_at": "2026-10-05T16:32:25+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,8 +18,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=10",
-      "fetched_at": "2026-10-05T16:28:42+09:00",
-      "sha256": "08c73f6a9822ee1983a57016d4a5dcf54701f003b43aac5e91677022ce193ff0",
+      "fetched_at": "2026-10-05T16:32:25+09:00",
+      "sha256": "614a3e22ebfe6bb99d19fe64df5d7fa644650f39f7b4018c1eba96fe7b81c859",
       "error": null
     },
     "beforeinfo": {
@@ -28,6 +28,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "327582287fb4f0d0019e7af5c8e5eeab94a3c80543bf3b0441e9f3ab0c295320"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "9cf26eba75fab972e60cebc0313e63f70f8198b78e5f734fd0792a461471a183"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "060d66637e2dd4638f86dc401f3fcd10407ac252d59777e51edc811cd86771a2"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "e2fd37834abfb61f4daf29d0305b5b057488fd02c9a65e2bec1101196c130966"
     }
   },
   "racers": [
@@ -114,10 +138,11 @@
         "5",
         "10",
         "4",
-        "12"
+        "12",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "2 4938 / A1 小芦 るり華 佐賀/佐賀 29歳/47.0kg F0 L0 0.14 6.33 40.65 63.41 5.41 29.73 59.46 51 28.13 36.46 17 35.11 56.38 8 12 4 5 10 4 12 3R"
+      "raw_text": "2 4938 / A1 小芦 るり華 佐賀/佐賀 29歳/47.0kg F0 L0 0.14 6.33 40.65 63.41 5.41 29.73 59.46 51 28.13 36.46 17 35.11 56.38 8 12 4 5 10 4 12 3 3R"
     },
     {
       "lane": 3,
@@ -299,5 +324,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

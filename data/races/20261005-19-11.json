@@ -8,7 +8,7 @@
     "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 11,
     "deadline": "20:15",
-    "updated_at": "2026-10-05T16:28:42+09:00",
+    "updated_at": "2026-10-05T16:32:25+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,8 +18,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=11",
-      "fetched_at": "2026-10-05T16:28:42+09:00",
-      "sha256": "487ae6f4eda0b1fcdcc69b0c8dafb55bffb0121a2f48c38c91572fb8ed56cdb3",
+      "fetched_at": "2026-10-05T16:32:25+09:00",
+      "sha256": "7ea3e1a39521807b2d765a914a39bd45bb5c561a7407f7f7d8296c219026cfc6",
       "error": null
     },
     "beforeinfo": {
@@ -28,6 +28,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "327582287fb4f0d0019e7af5c8e5eeab94a3c80543bf3b0441e9f3ab0c295320"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "9cf26eba75fab972e60cebc0313e63f70f8198b78e5f734fd0792a461471a183"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "060d66637e2dd4638f86dc401f3fcd10407ac252d59777e51edc811cd86771a2"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "e2fd37834abfb61f4daf29d0305b5b057488fd02c9a65e2bec1101196c130966"
     }
   },
   "racers": [
@@ -202,10 +226,11 @@
         "12",
         "9",
         "6",
-        "10"
+        "10",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "4 4372 / A2 原田 佑実 大阪/愛知 39歳/46.5kg F0 L0 0.17 6.28 46.39 58.76 5.95 40.91 63.64 27 38.00 59.00 55 37.89 52.63 4 11 5 12 9 6 10 3R"
+      "raw_text": "4 4372 / A2 原田 佑実 大阪/愛知 39歳/46.5kg F0 L0 0.17 6.28 46.39 58.76 5.95 40.91 63.64 27 38.00 59.00 55 37.89 52.63 4 11 5 12 9 6 10 3 3R"
     },
     {
       "lane": 5,
@@ -300,5 +325,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

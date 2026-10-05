@@ -8,7 +8,7 @@
     "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 9,
     "deadline": "19:17",
-    "updated_at": "2026-10-05T16:28:42+09:00",
+    "updated_at": "2026-10-05T16:32:25+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,8 +18,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=9",
-      "fetched_at": "2026-10-05T16:28:42+09:00",
-      "sha256": "7a2c3db5ccf4c6bc4e41feb6b46aa6d8b86140c1151819c29c28df74e05ba0bb",
+      "fetched_at": "2026-10-05T16:32:25+09:00",
+      "sha256": "ad29c105edc367a3230b6f1c79c843f1577660f88c827edbe0aa78d88e21d5be",
       "error": null
     },
     "beforeinfo": {
@@ -28,6 +28,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "327582287fb4f0d0019e7af5c8e5eeab94a3c80543bf3b0441e9f3ab0c295320"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "9cf26eba75fab972e60cebc0313e63f70f8198b78e5f734fd0792a461471a183"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "060d66637e2dd4638f86dc401f3fcd10407ac252d59777e51edc811cd86771a2"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "e2fd37834abfb61f4daf29d0305b5b057488fd02c9a65e2bec1101196c130966"
     }
   },
   "racers": [
@@ -158,10 +182,11 @@
         "4",
         "12",
         "7",
-        "11"
+        "11",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "3 4387 / A1 平山 智加 香川/香川 41歳/46.0kg F0 L0 0.15 6.90 51.72 71.55 6.33 45.45 54.55 55 33.68 54.74 14 31.63 46.94 7 12 9 4 12 7 11 3R"
+      "raw_text": "3 4387 / A1 平山 智加 香川/香川 41歳/46.0kg F0 L0 0.15 6.90 51.72 71.55 6.33 45.45 54.55 55 33.68 54.74 14 31.63 46.94 7 12 9 4 12 7 11 3 3R"
     },
     {
       "lane": 4,
@@ -289,15 +314,30 @@
         "6",
         "1",
         "12",
-        "4"
+        "4",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "6 4947 / B1 間庭 菜摘 福岡/福岡 34歳/47.0kg F0 L0 0.17 5.02 26.79 48.21 4.51 16.28 39.53 64 20.43 40.86 20 21.88 50.00 6 2 6 1 12 4 3R"
+      "raw_text": "6 4947 / B1 間庭 菜摘 福岡/福岡 34歳/47.0kg F0 L0 0.17 5.02 26.79 48.21 4.51 16.28 39.53 64 20.43 40.86 20 21.88 50.00 6 2 6 1 12 4 3 3R"
     }
   ],
   "beforeinfo": {},
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

@@ -8,7 +8,7 @@
     "event": "2026東京・大阪・福岡三都市対抗戦",
     "race_no": 1,
     "deadline": "15:17",
-    "updated_at": "2026-10-05T16:28:42+09:00",
+    "updated_at": "2026-10-05T16:32:25+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,8 +18,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=12&rno=1",
-      "fetched_at": "2026-10-05T16:28:42+09:00",
-      "sha256": "158306dbfebe3eebce93e68adb2242db29f5e5cadb11a26cf372f4ac5b2ea6ea",
+      "fetched_at": "2026-10-05T16:32:25+09:00",
+      "sha256": "c0b5961376780d04fa3b1e7feaabef8bd1ee05034c1eb07e3d4b7e97f7a02132",
       "error": null
     },
     "beforeinfo": {
@@ -28,6 +28,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": "2026-10-05T16:35:44+09:00",
+      "sha256": "327582287fb4f0d0019e7af5c8e5eeab94a3c80543bf3b0441e9f3ab0c295320"
+    },
+    "tkz": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": "2026-10-05T16:35:44+09:00",
+      "sha256": "9cf26eba75fab972e60cebc0313e63f70f8198b78e5f734fd0792a461471a183"
+    },
+    "sui": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": "2026-10-05T16:35:44+09:00",
+      "sha256": "060d66637e2dd4638f86dc401f3fcd10407ac252d59777e51edc811cd86771a2"
+    },
+    "original_exhibition": {
+      "status": "ok",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": "2026-10-05T16:35:44+09:00",
+      "sha256": "e2fd37834abfb61f4daf29d0305b5b057488fd02c9a65e2bec1101196c130966"
     }
   },
   "racers": [
@@ -289,9 +313,214 @@
       "raw_text": "6 3432 / B1 宮迫 暢彦 大阪/大阪 58歳/51.5kg F2 L0 0.18 3.96 18.06 36.11 4.86 25.00 46.43 35 36.45 55.14 50 36.36 56.57 3 2 7 3 4"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "weight_kg": 52.4,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.8,
+        "tilt": 0.0
+      },
+      {
+        "lane": 2,
+        "weight_kg": 53.8,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.9,
+        "tilt": -0.5
+      },
+      {
+        "lane": 3,
+        "weight_kg": 52.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.89,
+        "tilt": -0.5
+      },
+      {
+        "lane": 4,
+        "weight_kg": 51.5,
+        "adjustment_kg": 0.5,
+        "exhibition_time": 6.89,
+        "tilt": -0.5
+      },
+      {
+        "lane": 5,
+        "weight_kg": 52.5,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.94,
+        "tilt": -0.5
+      },
+      {
+        "lane": 6,
+        "weight_kg": 51.5,
+        "adjustment_kg": 0.5,
+        "exhibition_time": 6.85,
+        "tilt": -0.5
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "course": 1,
+        "st": "0.2",
+        "exhibition_f": false
+      },
+      {
+        "lane": 2,
+        "course": 2,
+        "st": "0.29",
+        "exhibition_f": false
+      },
+      {
+        "lane": 3,
+        "course": 3,
+        "st": "0.16",
+        "exhibition_f": false
+      },
+      {
+        "lane": 4,
+        "course": 4,
+        "st": "0.03",
+        "exhibition_f": false
+      },
+      {
+        "lane": 5,
+        "course": 5,
+        "st": "0.15",
+        "exhibition_f": false
+      },
+      {
+        "lane": 6,
+        "course": 6,
+        "st": "0.04",
+        "exhibition_f": false
+      }
+    ],
+    "weather": {
+      "observed_at": "1359",
+      "wind_speed_ms": 2.0,
+      "wind_direction": 1,
+      "wave_cm": 1.0,
+      "weather_code": 3,
+      "air_temp_c": 21.0,
+      "water_temp_c": 22.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [
+    {
+      "lane": 1,
+      "course": 1,
+      "exhibition_st": 0.2,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.2"
+    },
+    {
+      "lane": 2,
+      "course": 2,
+      "exhibition_st": 0.29,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.29"
+    },
+    {
+      "lane": 3,
+      "course": 3,
+      "exhibition_st": 0.16,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.16"
+    },
+    {
+      "lane": 4,
+      "course": 4,
+      "exhibition_st": 0.03,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.03"
+    },
+    {
+      "lane": 5,
+      "course": 5,
+      "exhibition_st": 0.15,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.15"
+    },
+    {
+      "lane": 6,
+      "course": 6,
+      "exhibition_st": 0.04,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.04"
+    }
+  ],
+  "original_exhibition": {
+    "labels": [
+      "一周",
+      "まわり足"
+    ],
+    "boats": [
+      {
+        "lane": 1,
+        "name": "佐藤 大騎",
+        "values": [
+          36.95,
+          11.46
+        ]
+      },
+      {
+        "lane": 2,
+        "name": "下河 雅史",
+        "values": [
+          37.45,
+          11.53
+        ]
+      },
+      {
+        "lane": 3,
+        "name": "伏島 祐介",
+        "values": [
+          37.48,
+          11.4
+        ]
+      },
+      {
+        "lane": 4,
+        "name": "中井 俊祐",
+        "values": [
+          37.93,
+          11.8
+        ]
+      },
+      {
+        "lane": 5,
+        "name": "奥平 拓也",
+        "values": [
+          37.74,
+          11.48
+        ]
+      },
+      {
+        "lane": 6,
+        "name": "宮迫 暢彦",
+        "values": [
+          37.27,
+          11.58
+        ]
+      }
+    ]
+  },
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": true,
+      "tkz": true,
+      "sui": true,
+      "original_exhibition": true
+    },
+    "core7_ready": true,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
