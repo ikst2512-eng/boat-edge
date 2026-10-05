@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v16</title>
+<title>BOAT EDGE v17</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -277,7 +277,7 @@ td .lane{margin:auto}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v16</small></div>
+      <div class="brandtext">BOAT EDGE <small>v17</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>AUTO 5分</span></div>
@@ -295,9 +295,10 @@ td .lane{margin:auto}
           <span class="kicker">白×青 / 直前重視 / 2パターン表示</span>
           <h1>締切順で見やすく。<br>2分前でも暫定予想を止めない。</h1>
           <p>
-            正式CURRENTが揃っていない時も、直前情報がある範囲で <b>暫定予想</b> を表示。
+            正式CURRENT未接続でも、取得済み直前情報だけで <b>暫定予想（サイト簡易）</b> を表示。
+            欠損値を勝手に平均値で埋めず、未取得項目は0寄与として明示します。
             「今すぐ更新」はキャッシュを使わず即確認し、その後2分間は15秒ごとに新データを追跡。
-            「イン逃げ成立」と「イン逃げ不成立」の2世界を分けて、買い目・配分・不足データを一目で確認できるようにしています。
+            正式V1.21.33が接続されたレースだけ自動的に <b>正式予想</b> へ切り替えます。
           </p>
         </div>
         <div class="card hero-side">
@@ -371,7 +372,7 @@ td .lane{margin:auto}
         <div class="tablewrap"><table>
           <thead>
             <tr>
-              <th>枠</th><th>選手</th><th>級</th><th>平均ST</th><th>全国勝率</th><th>全国2連</th><th>当地勝率</th><th>当地2連</th><th>モーター</th><th>モーター2連</th><th>ボート</th><th>ボート2連</th><th>備考</th>
+              <th>枠</th><th>選手</th><th>登録</th><th>級</th><th>年齢/支部</th><th>体重</th><th>F/L</th><th>平均ST</th><th>全国勝率</th><th>全国2連</th><th>全国3連</th><th>当地勝率</th><th>当地2連</th><th>当地3連</th><th>モーター</th><th>M2連</th><th>M3連</th><th>ボート</th><th>B2連</th><th>B3連</th><th>早見</th><th>備考</th>
             </tr>
           </thead>
           <tbody id="cardRows"></tbody>
@@ -447,6 +448,8 @@ td .lane{margin:auto}
         <ol>
           <li><b>今すぐ更新</b>は公開済みJSONを即再読込し、その後2分間15秒ごとに追跡</li>
           <li><b>収集を開始</b>はGitHub Actionsの実行画面を開き、元データ収集そのものを手動起動できる</li>
+          <li><b>現在接続済み</b>: 出走表 / 選手基本 / 全国・当地 / モーター・ボート2連3連 / F・L / 直前 / 実進入 / 展示ST / オリジナル展示 / 水面</li>
+          <li><b>未接続</b>: オッズ / 選手写真 / 詳細コース別長期成績 / AI予測ST / モーター詳細ランキング。未接続値は作らず「未取得」で表示</li>
           <li><b>ホーム</b>で締切が近いレースを押す</li>
           <li><b>予想</b>で「正式」か「暫定」かを確認</li>
           <li><b>直前</b>で実進入 / 展示ST / 展示タイム / オリジナル展示を確認</li>
@@ -487,6 +490,21 @@ td .lane{margin:auto}
 </div>
 
 <script>
+
+const FORMAL_VALIDATION = {
+  asOf:"2026-10-05 21:43 JST",
+  current:"V12133_V27_20261005_EXACT_D1_SOURCE_VERIFIED_T12_BRIDGE_BLOCKED",
+  stage:"T1/T2 bridge 復旧中",
+  formalFirst100:{
+    races:100, racers:413, pairs:591,
+    freezeManifestSha:"693fa6f8f262058fa4c5fa3738a1e783de8fb945fc470c81164aa6c5606bcb34",
+    coreSha:"0425b8be8c66d9526d20ae72d34a8a48b7f437a8fdada74b2e555dce119380dd"
+  },
+  guards:{results_seen:false,unlock:false,scoring:false},
+  formalParentSha:"11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
+  candidateSha:"30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1"
+};
+
 const VENUES = [
 ["01","桐生"],["02","戸田"],["03","江戸川"],["04","平和島"],["05","多摩川"],["06","浜名湖"],
 ["07","蒲郡"],["08","常滑"],["09","津"],["10","三国"],["11","びわこ"],["12","住之江"],
@@ -606,7 +624,7 @@ function computeScores(d){
   return (d.racers||[]).map((r,i)=>{
     const lane = laneNo(r,i);
     const nat = r.national||{}, loc=r.local||{}, mot=r.motor||{}, boat=r.boat||{};
-    const avgSt = num(r.avg_st) ?? 0.18;
+    const avgSt = num(r.avg_st);
     const natWin = num(nat.win_rate) ?? 0;
     const natQ = num(nat.quinella_rate) ?? 0;
     const locWin = num(loc.win_rate) ?? 0;
@@ -614,15 +632,15 @@ function computeScores(d){
     const motQ = num(mot.quinella_rate) ?? 0;
     const boatQ = num(boat.quinella_rate) ?? 0;
     const before = bfRacers.get(lane) || {};
-    const exScore = (exNorm[lane] ?? 0.35) * 8;
+    const exScore = exNorm[lane]===undefined ? 0 : exNorm[lane] * 8;
     const stEx = starts.get(lane);
     const exStartScore = stEx===undefined || stEx===null ? 0 : Math.max(0, (0.25 - Number(stEx))*28);
-    const avgStScore = Math.max(0, (0.24 - avgSt)*42);
+    const avgStScore = avgSt===null ? 0 : Math.max(0, (0.24 - avgSt)*42);
     const laneBase = {1:9.5,2:7.0,3:5.8,4:5.2,5:3.2,6:2.2}[lane] || 0;
     const tiltScore = num(before.tilt)===null ? 0 : Math.max(-1, Math.min(2.5, num(before.tilt)));
-    const actualCourse = actual.get(lane) || lane;
-    const attackBase = {1:0.5,2:5.4,3:6.2,4:6.8,5:4.0,6:3.0}[actualCourse] || 0;
-    const insideBase = lane===1 ? 8 : Math.max(0, 5 - Math.abs(actualCourse-2));
+    const actualCourse = actual.has(lane) ? actual.get(lane) : null;
+    const attackBase = actualCourse===null ? 0 : ({1:0.5,2:5.4,3:6.2,4:6.8,5:4.0,6:3.0}[actualCourse] || 0);
+    const insideBase = lane===1 ? 8 : (actualCourse===null ? 0 : Math.max(0, 5 - Math.abs(actualCourse-2)));
     const machine = motQ*0.11 + boatQ*0.07;
     const classBonus = /A1/.test(r.class||"") ? 2.4 : /A2/.test(r.class||"") ? 1.4 : /B1/.test(r.class||"") ? 0.5 : 0;
     const base = natWin*2.8 + natQ*0.18 + locWin*1.9 + locQ*0.12 + machine + avgStScore + exScore + exStartScore + laneBase + classBonus + tiltScore;
@@ -729,7 +747,7 @@ function buildFallbackPrediction(d){
   if(!(d.beforeinfo?.racers||[]).length) missing.push("展示タイム待ち");
   if(!(d.beforeinfo?.start_exhibition||[]).length) missing.push("展示ST待ち");
   if(!(d.original_exhibition?.boats||[]).length) missing.push("オリジナル展示待ち");
-  if(!state.model?.core7?.formal_first100_ready) missing.push("CURRENT正式100R待ち");
+  if(!state.model?.core7?.formal_first100_ready) missing.push("正式CURRENT未接続");
 
   const totalBudget = 5000;
   const budgetA = round100(totalBudget * (worldAProb/100));
@@ -744,11 +762,11 @@ function buildFallbackPrediction(d){
 
   return {
     mode:"temp",
-    label:"暫定予想",
+    label:"暫定予想（サイト簡易）",
     decision,
     grade,
     updateLabel,
-    reason: missing.length ? `不足データ: ${missing.join(" / ")}` : "直前情報ベースで暫定算出",
+    reason: `正式CURRENTとは別計算。${missing.length ? `不足データ: ${missing.join(" / ")}` : "取得済み直前情報のみで暫定算出"}`,
     worlds:[
       {
         key:"A", title:"イン逃げ成立", probability:worldAProb, budget:budgetA,
@@ -853,29 +871,32 @@ function renderModelPanels(){
   const model = state.model || {};
   const core = model.core7 || {};
   const guards = model.guards || {};
-  const ready = !!core.formal_first100_ready;
   const elig = core.eligible_count ?? "－";
   const req = core.required_count ?? 100;
-  const modelName = model.model || "V1.21.33";
-  const badge = ready ? statusBadge("green","正式準備完了") : statusBadge("orange","CURRENT待機");
-  const freeze = model.first100_freeze || {};
-  const freezeText = freeze.frozen ? `固定済み / SHA ${String(freeze.sha256||'').slice(0,12)}…` : (ready ? "固定処理待ち" : "100R待ち");
-  const text1 = `<b>CURRENT接続状況</b><br>
-    モデル: <span class="mono">${modelName}</span><br>
-    CORE7: <b>${elig} / ${req}R</b><br>
-    first100: <b>${freezeText}</b><br>
-    状態: ${badge}<br>
-    guards: results_seen=<span class="${guards.results_seen?'bad':'good'}">${String(guards.results_seen ?? false)}</span> /
-    unlock=<span class="${guards.unlock?'bad':'good'}">${String(guards.unlock ?? false)}</span> /
-    scoring=<span class="${guards.scoring?'bad':'good'}">${String(guards.scoring ?? false)}</span>`;
+  const collectorReady = Number(core.eligible_count||0) >= Number(req||100);
+  const modelName = model.model || "V1.21.33-SCENARIO-DIVERSE-CONFIRM";
+  const fg = FORMAL_VALIDATION.guards;
+
+  const text1 = `<b>サイト収集 / 正式検証を分離表示</b><br>
+    <b>サイト収集</b>: CORE7 <b>${elig}/${req}R</b> ${collectorReady?statusBadge("green","収集条件OK"):statusBadge("orange","収集中")}<br>
+    <span class="note">このCORE7件数はサイト表示用の収集状況。正式freshのfirst100とは別物です。</span><br><br>
+    <b>正式検証CURRENT</b>: <span class="mono">${FORMAL_VALIDATION.current}</span><br>
+    stage: <b>${FORMAL_VALIDATION.stage}</b><br>
+    正式first100: <b>${FORMAL_VALIDATION.formalFirst100.races}R / ${FORMAL_VALIDATION.formalFirst100.racers} racers / ${FORMAL_VALIDATION.formalFirst100.pairs} pairs</b><br>
+    freeze SHA: <span class="mono">${FORMAL_VALIDATION.formalFirst100.freezeManifestSha.slice(0,16)}…</span><br>
+    guards: results_seen=<span class="${fg.results_seen?'bad':'good'}">${fg.results_seen}</span> /
+    unlock=<span class="${fg.unlock?'bad':'good'}">${fg.unlock}</span> /
+    scoring=<span class="${fg.scoring?'bad':'good'}">${fg.scoring}</span><br>
+    <span class="note">正式予想は検証パイプラインの出力がrace JSONへ接続された場合だけ「正式予想」と表示します。</span>`;
+
   document.getElementById("modelStatusBox").innerHTML = text1;
   document.getElementById("globalAuditModel").innerHTML = text1;
   document.getElementById("dataCenterModel").innerHTML = text1;
   document.getElementById("statCore7").textContent = `${elig}/${req}`;
-  document.getElementById("statModel").textContent = ready ? "正式" : "待機";
+  document.getElementById("statModel").textContent = "PRE_RESULT";
   document.getElementById("dcModel").textContent = modelName;
-  document.getElementById("dcCore").textContent = `CORE7 ${elig}/${req}`;
-  document.getElementById("dcReady").textContent = ready ? "準備完了" : "待機中";
+  document.getElementById("dcCore").textContent = `SITE CORE7 ${elig}/${req}`;
+  document.getElementById("dcReady").textContent = FORMAL_VALIDATION.stage;
 }
 function renderHealthPanels(){
   const d = state.today || {};
@@ -1005,9 +1026,8 @@ function updateSystemBanner(){
     box.innerHTML = `<b>更新遅延</b>　最終更新 ${age}分前。GitHub Actionsの遅延または取得待ちの可能性があります。`;
   }else{
     const core = state.model?.core7;
-    const freeze = state.model?.first100_freeze;
     box.className = "system-banner show good";
-    box.innerHTML = `<b>正常更新</b>　PRE_RESULT維持 / CORE7 ${core?.eligible_count ?? '－'}/${core?.required_count ?? 100}${freeze?.frozen?' / first100固定済み':''}`;
+    box.innerHTML = `<b>正常更新</b>　PRE_RESULT維持 / サイトCORE7 ${core?.eligible_count ?? '－'}/${core?.required_count ?? 100} / 正式検証 ${FORMAL_VALIDATION.stage}`;
   }
 }
 
@@ -1097,23 +1117,32 @@ function renderCard(d, pred){
   document.getElementById("cardRows").innerHTML = (d.racers || []).map((r,i)=>{
     const lane = laneNo(r,i), nat=r.national||{}, loc=r.local||{}, m=r.motor||{}, b=r.boat||{};
     const s = scoreMap.get(lane);
-    const memo = s ? `総合 ${s.baseScore.toFixed(1)}` : "－";
+    const memo = s ? `比較点 ${s.baseScore.toFixed(1)}` : "－";
     return `<tr>
       <td><div class="lane l${lane}">${lane}</div></td>
       <td class="namecell">${f(r.name)}</td>
+      <td>${f(r.registration_no)}</td>
       <td>${f(r.class)}</td>
+      <td>${f(r.age)} / ${f(r.branch)}</td>
+      <td>${r.weight_kg==null?"－":`${r.weight_kg}kg`}</td>
+      <td>F${f(r.F)} / L${f(r.L)}</td>
       <td>${f(r.avg_st)}</td>
       <td>${f(nat.win_rate)}</td>
       <td>${f(nat.quinella_rate)}</td>
+      <td>${f(nat.trio_rate)}</td>
       <td>${f(loc.win_rate)}</td>
       <td>${f(loc.quinella_rate)}</td>
+      <td>${f(loc.trio_rate)}</td>
       <td>${f(m.no)}</td>
       <td>${f(m.quinella_rate)}</td>
+      <td>${f(m.trio_rate)}</td>
       <td>${f(b.no)}</td>
       <td>${f(b.quinella_rate)}</td>
+      <td>${f(b.trio_rate)}</td>
+      <td>${r.early_race ? `${r.early_race}R` : "－"}</td>
       <td>${memo}</td>
     </tr>`;
-  }).join("") || `<tr><td colspan="13">出走表データがありません</td></tr>`;
+  }).join("") || `<tr><td colspan="22">出走表データがありません</td></tr>`;
 }
 function renderBefore(d, pred){
   const {bf, starts, actual} = getBeforeMap(d);
