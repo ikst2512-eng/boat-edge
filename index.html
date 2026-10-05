@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v19</title>
+<title>BOAT EDGE v20</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v19 visual refinement ===== */
+/* ===== BOAT EDGE v20 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -547,6 +547,51 @@ tr:hover td{background:#f8fbff}
 .source-mini{margin-top:10px;padding:8px 10px;border-radius:10px;font-size:9.5px;line-height:1.55;color:#50657e;background:linear-gradient(180deg,#f8fbff,#eff6ff);border:1px solid #dceaff}
 @media(max-width:700px){.next-race-bar{margin:6px 10px 0;top:58px;padding:8px 9px}#nextRaceName{max-width:190px}}
 
+
+/* ===== v20 scenario + readable data ===== */
+.scenario-hero{padding:14px 15px;background:linear-gradient(135deg,#fff,#eef6ff);position:relative;overflow:hidden}
+.scenario-hero::after{content:"FLOW";position:absolute;right:14px;top:10px;font-size:26px;font-weight:950;letter-spacing:.08em;color:rgba(20,87,175,.06)}
+.scenario-main{font-size:21px;font-weight:950;color:var(--navy);margin-top:5px}
+.scenario-sub{font-size:10.5px;color:var(--muted);line-height:1.65;margin-top:5px}
+.scenario-world-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scenario-world{padding:14px;position:relative;overflow:hidden}
+.scenario-world::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.scenario-a::before{background:#1769e0}.scenario-b::before{background:#7357e8}
+.scenario-label{font-size:9px;font-weight:950;letter-spacing:.08em;color:var(--muted)}
+.scenario-title{font-size:18px;font-weight:950;color:var(--navy);margin:4px 0}
+.scenario-prob{font-size:24px;font-weight:950;color:#1769e0}
+.scenario-b .scenario-prob{color:#7357e8}
+.scenario-points{display:grid;gap:6px;margin-top:10px}
+.scenario-point{display:flex;gap:8px;align-items:flex-start;font-size:10.5px;color:#4d6480;line-height:1.5}
+.scenario-dot{width:7px;height:7px;border-radius:50%;background:#4e9cff;flex:0 0 auto;margin-top:4px}
+.scenario-b .scenario-dot{background:#8068ec}
+.scenario-lanes{padding:14px}
+.flow-lanes{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:10px}
+.flow-lane{padding:9px 6px;border:1px solid #dce9fb;border-radius:12px;background:#fff;text-align:center}
+.flow-lane .ln{font-size:15px;font-weight:950}.flow-lane .nm{font-size:9px;color:#49617e;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flow-lane .role{font-size:8.5px;font-weight:850;margin-top:5px;padding:3px 5px;border-radius:999px;background:#eef5ff;color:#1769e0}
+.flow-arrow{text-align:center;color:#70a8ea;font-size:17px;font-weight:950;line-height:1}
+.scenario-why{padding:14px}.why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.why-card{padding:9px;border-radius:11px;background:#f7fbff;border:1px solid #e1ecfb}
+.why-card .k{font-size:8.5px;color:var(--muted);font-weight:800}.why-card .v{font-size:13px;color:var(--navy);font-weight:950;margin-top:3px}
+.data-readable{display:grid;gap:10px}
+.data-row-card{padding:12px;border-radius:14px;background:#fff;border:1px solid #dce8f8;box-shadow:0 4px 14px rgba(24,82,150,.05)}
+.data-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.data-row-name{display:flex;align-items:center;gap:8px;font-weight:950;color:var(--navy);font-size:12px}
+.data-row-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
+.data-pill{padding:7px;border-radius:9px;background:#f5f9ff;border:1px solid #e5eefb}
+.data-pill .k{font-size:8px;color:var(--muted)}.data-pill .v{font-size:11px;font-weight:950;color:var(--navy);margin-top:2px}
+.eval-badge{font-size:8.5px;font-weight:950;padding:4px 7px;border-radius:999px}
+.eval-high{background:#e6f8f2;color:#088563}.eval-mid{background:#eef5ff;color:#1769e0}.eval-low{background:#fff2e7;color:#b56a00}
+.data-guide{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.data-guide-card{padding:11px;border-radius:13px;background:linear-gradient(180deg,#fff,#f6faff);border:1px solid #dce8f8}
+.data-guide-card b{font-size:10px;color:var(--navy)}.data-guide-card div{font-size:9px;color:var(--muted);line-height:1.55;margin-top:4px}
+@media(max-width:760px){
+  .scenario-world-grid{grid-template-columns:1fr}
+  .flow-lanes{grid-template-columns:repeat(3,1fr)}
+  .why-grid,.data-guide,.data-row-metrics{grid-template-columns:repeat(2,1fr)}
+}
+
 </style>
 </head>
 <body>
@@ -554,7 +599,7 @@ tr:hover td{background:#f8fbff}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v19</small></div>
+      <div class="brandtext">BOAT EDGE <small>v20</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -592,7 +637,7 @@ tr:hover td{background:#f8fbff}
             <div class="hero-stat"><div class="label">開催場</div><div class="value" id="statVenue">－</div></div>
             <div class="hero-stat"><div class="label">締切間近</div><div class="value" id="statSoon">－</div></div>
             <div class="hero-stat"><div class="label">CORE7</div><div class="value" id="statCore7">－</div></div>
-            <div class="hero-stat"><div class="label">CURRENT</div><div class="value" id="statModel">－</div></div>
+            <div class="hero-stat"><div class="label">予想モデル</div><div class="value" id="statModel">－</div></div>
           </div>
 <div id="sourceMini" class="source-mini">ソース状況読込中…</div>
         </div>
@@ -652,6 +697,19 @@ tr:hover td{background:#f8fbff}
       </div>
     </section>
 
+    <section id="tab-scenario" class="subview">
+      <div class="section stack">
+        <div class="title"><h2>展開予想</h2><span>レースの流れを一目で</span></div>
+        <div class="card scenario-hero" id="scenarioHero"></div>
+        <div class="scenario-world-grid">
+          <div class="card scenario-world scenario-a" id="scenarioA"></div>
+          <div class="card scenario-world scenario-b" id="scenarioB"></div>
+        </div>
+        <div class="card scenario-lanes" id="scenarioLanes"></div>
+        <div class="card scenario-why" id="scenarioWhy"></div>
+      </div>
+    </section>
+
     <section id="tab-card" class="subview">
       <div class="section stack">
         <div class="title"><h2>出走表</h2><span>選手情報 / 級別 / 成績 / 機力</span></div>
@@ -688,11 +746,16 @@ tr:hover td{background:#f8fbff}
 
     <section id="tab-data" class="subview">
       <div class="section stack">
-        <div class="data-panels">
-          <div class="card auditbox" id="selectedDataSummary"></div>
-          <div class="card auditbox" id="selectedReasoning"></div>
+        <div class="data-guide">
+          <div class="data-guide-card"><b>① 選手力</b><div>全国・当地成績。まず地力を見る。</div></div>
+          <div class="data-guide-card"><b>② スタート</b><div>平均ST・展示ST。攻め始動の速さ。</div></div>
+          <div class="data-guide-card"><b>③ 機力</b><div>モーター・ボート。伸びや押し感の土台。</div></div>
+          <div class="data-guide-card"><b>④ 直前気配</b><div>展示タイム・実進入。最後の上げ下げ。</div></div>
         </div>
-        <div class="title"><h2>比較データ</h2><span>選手 / 機力 / 直前 / 展開圧</span></div>
+        <div class="card auditbox" id="selectedDataSummary"></div>
+        <div class="data-readable" id="readableDataRows"></div>
+        <div class="card auditbox" id="selectedReasoning"></div>
+        <div class="title"><h2>詳細比較</h2><span>数字を全部見たい時だけ</span></div>
         <div class="tablewrap small-table"><table>
           <thead>
             <tr>
@@ -715,11 +778,11 @@ tr:hover td{background:#f8fbff}
 
   <main id="dataView" class="view">
     <section class="section">
-      <div class="title"><h2>データセンター</h2><span>必要なものをまとめて表示</span></div>
+      <div class="title"><h2>データ状況</h2><span>専門用語を減らして表示</span></div>
       <div class="grid-3">
         <div class="card kpi"><div class="label">CURRENT</div><div class="value" id="dcModel">－</div><div class="sub" id="dcCore">－</div></div>
-        <div class="card kpi"><div class="label">5ソース</div><div class="value" id="dcSources">－</div><div class="sub">race_cards / stt / tkz / sui / original_exhibition</div></div>
-        <div class="card kpi"><div class="label">正式予想状態</div><div class="value" id="dcReady">－</div><div class="sub">100R到達可否</div></div>
+        <div class="card kpi"><div class="label">直前データ</div><div class="value" id="dcSources">－</div><div class="sub">race_cards / stt / tkz / sui / original_exhibition</div></div>
+        <div class="card kpi"><div class="label">正式予想</div><div class="value" id="dcReady">－</div><div class="sub">検証パイプラインの状態</div></div>
       </div>
     </section>
     <section class="section">
@@ -729,17 +792,17 @@ tr:hover td{background:#f8fbff}
       </div>
     </section>
     <section class="section">
-      <div class="title"><h2>直前確認の見方</h2><span>BOATERSっぽく見やすく整理</span></div>
+      <div class="title"><h2>見方</h2><span>迷ったらこの順番</span></div>
       <div class="card help">
         <ol>
           <li><b>今すぐ更新</b>は公開済みJSONを即再読込し、その後2分間15秒ごとに追跡</li>
           <li><b>収集を開始</b>はGitHub Actionsの実行画面を開き、元データ収集そのものを手動起動できる</li>
           <li><b>現在接続済み</b>: 出走表 / 選手基本 / 全国・当地 / モーター・ボート2連3連 / F・L / 直前 / 実進入 / 展示ST / オリジナル展示 / 水面</li>
           <li><b>未接続</b>: オッズ / 選手写真 / 詳細コース別長期成績 / AI予測ST / モーター詳細ランキング。未接続値は作らず「未取得」で表示</li>
-          <li><b>ホーム</b>で締切が近いレースを押す</li>
-          <li><b>予想</b>で「正式」か「暫定」かを確認</li>
-          <li><b>直前</b>で実進入 / 展示ST / 展示タイム / オリジナル展示を確認</li>
-          <li><b>データ</b>で6艇の総合点と展開圧を比較</li>
+          <li><b>ホーム</b> → 締切が近いレースを選ぶ</li>
+          <li><b>予想</b> → 買い目を見る</li>
+          <li><b>展開予想</b> → 逃げるのか、誰が攻めるのかを見る</li><li><b>直前</b> → 実進入 / 展示ST / 展示タイムを見る</li>
+          <li><b>データ</b> → 強い / 標準 / 弱めで6艇比較</li>
           <li><b>監査</b>で不足データやCURRENTの進捗を確認</li>
         </ol>
       </div>
@@ -799,6 +862,7 @@ const VENUES = [
 ];
 const raceTabs = [
   ["pred","予想"],
+  ["scenario","展開予想"],
   ["card","出走表"],
   ["before","直前"],
   ["data","データ"],
@@ -1496,14 +1560,96 @@ function renderBefore(d, pred){
     </table>`;
   }
 }
+
+function evalClass(v, hi, mid){
+  if(v===null || v===undefined) return ["未取得","eval-low"];
+  if(v>=hi) return ["強い","eval-high"];
+  if(v>=mid) return ["標準","eval-mid"];
+  return ["弱め","eval-low"];
+}
+function scenarioRole(s){
+  if(s.lane===1) return "逃げ軸";
+  if(s.actualCourse===2) return "差し候補";
+  if(s.actualCourse===3 || s.actualCourse===4) return "攻め役";
+  if(s.actualCourse>=5) return "展開待ち";
+  return "相手候補";
+}
+function renderScenario(d,pred){
+  const scores=pred.scores||computeScores(d);
+  const one=scores.find(x=>x.lane===1);
+  const attack=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore)[0];
+  const worldA=pred.worlds?.find(x=>x.key==="A")||{};
+  const worldB=pred.worlds?.find(x=>x.key==="B")||{};
+  const actualKnown=(d.actual_entry||[]).length===6;
+  const stKnown=(d.beforeinfo?.start_exhibition||[]).length>0;
+  const exKnown=(d.beforeinfo?.racers||[]).some(x=>num(x.exhibition_time)!==null);
+  document.getElementById("scenarioHero").innerHTML=`
+    <div class="scenario-label">${pred.mode==="formal"?"正式CURRENT":"サイト簡易"} / 展開の要約</div>
+    <div class="scenario-main">${one?.name||"1号艇"}の逃げ vs ${attack?.name||"外艇"}の攻め</div>
+    <div class="scenario-sub">${pred.mode==="formal"?"正式CURRENTの2世界をそのまま表示。":"取得済みデータだけで流れを可視化。正式CURRENTとは別計算です。"}</div>
+  `;
+  const build=(w,key)=>{
+    const isA=key==="A";
+    const p=w.probability==null?"－":`${Number(w.probability).toFixed(1)}%`;
+    const lead=isA?(one?.name||"1号艇"):(attack?.name||"攻め艇");
+    const t=(w.tickets||[]).slice(0,3).map(x=>x.combo).join(" / ")||"買い目待ち";
+    return `
+      <div class="scenario-label">PATTERN ${key}</div>
+      <div class="scenario-title">${isA?"イン逃げ成立":"イン逃げ不成立"}</div>
+      <div class="scenario-prob">${p}</div>
+      <div class="scenario-points">
+        <div class="scenario-point"><span class="scenario-dot"></span><span>主役：<b>${lead}</b></span></div>
+        <div class="scenario-point"><span class="scenario-dot"></span><span>${isA?"1号艇が先マイ→内残り":"外/中枠の攻め→差し・まくり差し連動"}</span></div>
+        <div class="scenario-point"><span class="scenario-dot"></span><span>上位買い目：${t}</span></div>
+      </div>`;
+  };
+  document.getElementById("scenarioA").innerHTML=build(worldA,"A");
+  document.getElementById("scenarioB").innerHTML=build(worldB,"B");
+  document.getElementById("scenarioLanes").innerHTML=`
+    <div class="scenario-label">6艇の役割</div>
+    <div class="flow-lanes">${scores.map(s=>`
+      <div class="flow-lane">
+        <div class="ln">${s.lane}</div><div class="nm">${f(s.name)}</div>
+        <div class="role">${scenarioRole(s)}</div>
+      </div>`).join("")}</div>`;
+  document.getElementById("scenarioWhy").innerHTML=`
+    <div class="scenario-label">この展開を見る材料</div>
+    <div class="why-grid">
+      <div class="why-card"><div class="k">実進入</div><div class="v">${actualKnown?"取得済":"未取得"}</div></div>
+      <div class="why-card"><div class="k">展示ST</div><div class="v">${stKnown?"取得済":"未取得"}</div></div>
+      <div class="why-card"><div class="k">展示タイム</div><div class="v">${exKnown?"取得済":"未取得"}</div></div>
+      <div class="why-card"><div class="k">予想種別</div><div class="v">${pred.mode==="formal"?"正式":"暫定"}</div></div>
+    </div>
+    <div class="scenario-sub">未取得項目は平均値で補完しません。データが増えるほど展開表示も更新されます。</div>`;
+}
+
 function renderDataTab(d, pred){
   const scoreRows = pred.scores || computeScores(d);
   document.getElementById("selectedDataSummary").innerHTML = `
-    <b>選択レースの見方</b><br>
-    総合点は「全国/当地/機力/展示/平均ST」を足し合わせた比較用の目安です。<br>
-    イン残り寄与は <b>1号艇残りや内有利</b> を重視した値、攻め寄与は <b>差し / まくり差し / まくり寄り</b> を重視した値です。<br>
-    実進入や展示STが未取得なら、その項目は <b>0寄与</b>。平均値・代理値での補完はしません。
+    <b>まずここだけ見ればOK</b><br>
+    <b>選手力 → スタート → 機力 → 直前気配</b> の順で確認。<br>
+    「強い / 標準 / 弱め」でざっくり見て、必要なら下の詳細数字を開くイメージです。
   `;
+  document.getElementById("readableDataRows").innerHTML = scoreRows.map(s=>{
+    const racer=(d.racers||[]).find((r,i)=>laneNo(r,i)===s.lane)||{};
+    const ability=evalClass((s.natWin||0)+(s.locWin||0),12,9);
+    const startVal=s.exhibitionSt!=null ? (0.30-Number(s.exhibitionSt))*100 : (s.avgSt!=null ? (0.24-Number(s.avgSt))*100 : null);
+    const start=evalClass(startVal,10,5);
+    const motor=evalClass(((s.motQ||0)+(s.boatQ||0))/2,38,30);
+    const ex=s.exhibitionTime==null?["未取得","eval-low"]:["取得済","eval-mid"];
+    return `<div class="data-row-card">
+      <div class="data-row-head">
+        <div class="data-row-name"><div class="lane l${s.lane}">${s.lane}</div>${f(s.name)}</div>
+        <span class="eval-badge ${ability[1]}">総合 ${s.baseScore.toFixed(1)}</span>
+      </div>
+      <div class="data-row-metrics">
+        <div class="data-pill"><div class="k">選手力</div><div class="v"><span class="eval-badge ${ability[1]}">${ability[0]}</span></div></div>
+        <div class="data-pill"><div class="k">スタート</div><div class="v"><span class="eval-badge ${start[1]}">${start[0]}</span></div></div>
+        <div class="data-pill"><div class="k">機力</div><div class="v"><span class="eval-badge ${motor[1]}">${motor[0]}</span></div></div>
+        <div class="data-pill"><div class="k">直前</div><div class="v"><span class="eval-badge ${ex[1]}">${ex[0]}</span></div></div>
+      </div>
+    </div>`;
+  }).join("");
   document.getElementById("selectedReasoning").innerHTML = `
     <b>今回の整理</b><br>
     予想種別: <b>${pred.label}</b><br>
@@ -1542,7 +1688,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V19<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V20<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -1572,6 +1718,7 @@ function renderRace(d){
   renderDecision(d, pred);
   renderInputCompleteness(d, pred);
   renderWorlds(pred);
+  renderScenario(d, pred);
   renderBoats(d, pred);
   renderCard(d, pred);
   renderBefore(d, pred);
