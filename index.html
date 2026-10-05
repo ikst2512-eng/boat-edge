@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v26</title>
+<title>BOAT EDGE v27</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v26 visual refinement ===== */
+/* ===== BOAT EDGE v27 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -878,6 +878,50 @@ body{background:
   .race-masthead{grid-template-columns:1fr}
 }
 
+
+/* ===== BOAT EDGE v27: pre-race intelligence + ticket memo ===== */
+.before-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.before-quick-card{
+  border:1px solid #dce8f8;border-radius:14px;padding:10px;background:linear-gradient(180deg,#fff,#f7fbff)
+}
+.before-quick-card .qk{font-size:8px;font-weight:950;color:#7790aa;letter-spacing:.06em}
+.before-quick-card .qv{font-size:15px;font-weight:950;color:#0d2f5e;margin-top:4px;line-height:1.25}
+.before-quick-card .qs{font-size:8px;color:#6d839d;margin-top:3px;line-height:1.4}
+.before-quick-card.hot{border-color:#a8cffb;background:linear-gradient(180deg,#fdfefe,#edf6ff)}
+.before-quick-card.warn{border-color:#f2d49f;background:linear-gradient(180deg,#fffdfa,#fff8eb)}
+
+.buy-ticket{cursor:pointer;transition:.15s ease}
+.buy-ticket:hover{border-color:#bcd7f8;background:#f7fbff}
+.buy-ticket.selected{
+  border-color:#7db5f8;background:linear-gradient(180deg,#f2f8ff,#eaf4ff);
+  box-shadow:0 0 0 2px rgba(23,105,224,.06)
+}
+.buy-check{
+  width:18px;height:18px;border-radius:6px;border:1px solid #c9d9ed;background:#fff;
+  display:grid;place-items:center;font-size:10px;color:#fff;font-weight:950
+}
+.buy-ticket.selected .buy-check{background:#1769e0;border-color:#1769e0}
+.buy-list .buy-ticket{grid-template-columns:20px 24px minmax(0,1fr) auto auto}
+.buy-memo-bar{
+  margin-top:8px;border:1px solid #dce8f8;background:#fff;border-radius:13px;padding:8px 10px;
+  display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap
+}
+.buy-memo-bar .left{font-size:8.5px;color:#6d829c}
+.buy-memo-bar .right{font-size:9px;font-weight:950;color:#0d2f5e}
+.buy-clear{
+  border:1px solid #dce8f8;background:#fff;color:#6b819c;border-radius:999px;padding:5px 8px;
+  font-size:8px;font-weight:900
+}
+.rank-tag{
+  display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 6px;
+  background:#eef5ff;color:#1769e0;font-size:7.5px;font-weight:950
+}
+@media(max-width:760px){
+  .before-quick{grid-template-columns:1fr 1fr}
+  .buy-list .buy-ticket{grid-template-columns:18px 22px minmax(0,1fr) auto}
+  .buy-money{grid-column:4}
+}
+
 </style>
 </head>
 <body>
@@ -885,7 +929,7 @@ body{background:
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v26</small></div>
+      <div class="brandtext">BOAT EDGE <small>v27</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -1047,6 +1091,7 @@ body{background:
     <section id="tab-before" class="subview">
       <div class="section stack">
         <div class="title"><h2>直前情報</h2><span id="beforeStatus">未取得</span></div>
+        <div id="beforeQuick" class="before-quick"></div>
         <div class="strip" id="waterStrip"></div>
         <div class="tablewrap"><table>
           <thead>
@@ -1959,16 +2004,66 @@ function renderSummaryStrip(d, pred){
   ).join("");
 }
 
+
+function ticketMemoKey(d){ return `boatEdgeTicketMemo:${d?.race_key||"unknown"}`; }
+function selectedTicketSet(d){ return new Set(readJSONLocal(ticketMemoKey(d),[])); }
+function ticketId(worldKey,combo){ return `${worldKey}:${combo}`; }
+function toggleTicketMemo(d,id){
+  const s=selectedTicketSet(d);
+  if(s.has(id)) s.delete(id); else s.add(id);
+  writeJSONLocal(ticketMemoKey(d),[...s]);
+}
+function clearTicketMemo(d){ writeJSONLocal(ticketMemoKey(d),[]); }
+
+function renderBeforeQuick(d,pred){
+  const el=document.getElementById("beforeQuick"); if(!el) return;
+  const {bf,starts,actual}=getBeforeMap(d);
+  const racers=bf.racers||[];
+  const stRows=[...starts.entries()].filter(([,v])=>v!=null && Number.isFinite(Number(v)))
+    .sort((a,b)=>Number(a[1])-Number(b[1]));
+  const exRows=racers.filter(x=>x.exhibition_time!=null && Number.isFinite(Number(x.exhibition_time)))
+    .map((x,i)=>[x.lane??(i+1),Number(x.exhibition_time)]).sort((a,b)=>a[1]-b[1]);
+  const names=new Map((d.racers||[]).map((r,i)=>[laneNo(r,i),r.name]));
+  const bestST=stRows[0], bestEx=exRows[0];
+  const entryRows=[...actual.entries()].sort((a,b)=>a[0]-b[0]);
+  const entryChanged=entryRows.some(([lane,course])=>Number(lane)!==Number(course));
+  const entryText=entryRows.length?entryRows.map(([lane,course])=>`${lane}→${course}`).join(" "):"未取得";
+  const beforeReady=racers.length>0 || stRows.length>0 || entryRows.length>0;
+  el.innerHTML=`
+    <div class="before-quick-card ${bestST?"hot":""}">
+      <div class="qk">展示STトップ</div>
+      <div class="qv">${bestST?`${bestST[0]}号艇 ${Number(bestST[1]).toFixed(2)}`:"－"}</div>
+      <div class="qs">${bestST?f(names.get(bestST[0])):"公開待ち"}</div>
+    </div>
+    <div class="before-quick-card ${bestEx?"hot":""}">
+      <div class="qk">展示タイムトップ</div>
+      <div class="qv">${bestEx?`${bestEx[0]}号艇 ${bestEx[1].toFixed(2)}`:"－"}</div>
+      <div class="qs">${bestEx?f(names.get(bestEx[0])):"公開待ち"}</div>
+    </div>
+    <div class="before-quick-card ${entryChanged?"warn":""}">
+      <div class="qk">実進入</div>
+      <div class="qv">${entryChanged?"進入変化あり":(entryRows.length?"枠なり":"－")}</div>
+      <div class="qs">${entryText}</div>
+    </div>
+    <div class="before-quick-card">
+      <div class="qk">直前準備</div>
+      <div class="qv">${beforeReady?"取得中":"待機中"}</div>
+      <div class="qs">${pred.mode==="formal"?"正式予想":"暫定予想"} / 欠損補完なし</div>
+    </div>`;
+}
+
 function moneyForTicket(t){
   if(t.amount!=null) return Number(t.amount)||0;
   return 0;
 }
 function renderBuyBoard(d,pred){
   const el=document.getElementById("buyBoard"); if(!el) return;
+  const selected=selectedTicketSet(d);
   const worlds=(pred.worlds||[]).slice(0,2);
   const blocks=worlds.map((w,wi)=>{
     const tickets=(w.tickets||[]).slice(0,8);
     const total=tickets.reduce((s,t)=>s+moneyForTicket(t),0);
+    const worldKey=w.key || (wi===0?"A":"B");
     const title=wi===0?"Pattern A｜イン逃げ成立":"Pattern B｜イン逃げ不成立";
     const desc=wi===0?"1号艇が先マイから残す世界":"差し・まくり・まくり差し・外連動の世界";
     return `<div class="buy-world">
@@ -1976,19 +2071,38 @@ function renderBuyBoard(d,pred){
         <div class="topline"><div class="label">${title}</div><div class="prob">${w.probability!=null?Math.round(Number(w.probability)*100)+"%":"－"}</div></div>
         <div class="desc">${desc}</div>
       </div>
-      ${tickets.length?`<div class="buy-list">${tickets.map((t,i)=>`
-        <div class="buy-ticket">
+      ${tickets.length?`<div class="buy-list">${tickets.map((t,i)=>{
+        const id=ticketId(worldKey,t.combo);
+        const isSel=selected.has(id);
+        return `<div class="buy-ticket ${isSel?"selected":""}" data-ticket-id="${id}">
+          <div class="buy-check">${isSel?"✓":""}</div>
           <div class="buy-rank">#${i+1}</div>
           <div class="buy-combo">${f(t.combo)}</div>
           <div class="buy-prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</div>
           <div class="buy-money">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</div>
-        </div>`).join("")}</div>`:`<div class="buy-empty">正式/暫定の買い目待ち</div>`}
+        </div>`}).join("")}</div>`:`<div class="buy-empty">正式/暫定の買い目待ち</div>`}
       <div class="buy-footer">${pred.mode==="formal"?"正式CURRENTの世界別出力":"サイト簡易スコアの世界別出力"}${total?` / 配分 ${total.toLocaleString()}円`:""}</div>
     </div>`;
   }).join("");
-  const grand=worlds.flatMap(w=>w.tickets||[]).reduce((s,t)=>s+moneyForTicket(t),0);
-  el.innerHTML=blocks + `<div class="buy-total" style="grid-column:1/-1"><b>結論：${f(pred.decision||"判断待ち")}</b><span>${grand?`合計 ${grand.toLocaleString()}円`:`${(worlds.flatMap(w=>w.tickets||[])).length}点`}</span></div>`;
+  const all=worlds.flatMap((w,wi)=>(w.tickets||[]).map(t=>({w:w.key||(wi===0?"A":"B"),...t})));
+  const grand=all.reduce((s,t)=>s+moneyForTicket(t),0);
+  const selectedRows=all.filter(t=>selected.has(ticketId(t.w,t.combo)));
+  const selectedMoney=selectedRows.reduce((s,t)=>s+moneyForTicket(t),0);
+  el.innerHTML=blocks
+    + `<div class="buy-total" style="grid-column:1/-1"><b>結論：${f(pred.decision||"判断待ち")}</b><span>${grand?`合計 ${grand.toLocaleString()}円`:`${all.length}点`}</span></div>`
+    + `<div class="buy-memo-bar" style="grid-column:1/-1">
+        <div class="left">タップで「買い目メモ」に保存（この端末だけ）</div>
+        <div class="right">${selectedRows.length}点選択${selectedMoney?` / ${selectedMoney.toLocaleString()}円`:""}</div>
+        <button class="buy-clear" id="clearTicketMemo">メモ解除</button>
+      </div>`;
+  el.querySelectorAll("[data-ticket-id]").forEach(row=>row.onclick=()=>{
+    toggleTicketMemo(d,row.dataset.ticketId);
+    renderBuyBoard(d,pred);
+  });
+  const clear=document.getElementById("clearTicketMemo");
+  if(clear) clear.onclick=()=>{clearTicketMemo(d);renderBuyBoard(d,pred);};
 }
+
 function roleForScore(s,leaderLane,attackerLane){
   if(s.lane===leaderLane) return "主導";
   if(s.lane===attackerLane) return "攻め";
@@ -2118,6 +2232,7 @@ function renderCard(d, pred){
 }
 function renderBefore(d, pred){
   const {bf, starts, actual} = getBeforeMap(d);
+  renderBeforeQuick(d,pred);
   document.getElementById("beforeStatus").innerHTML = `${f(d.source_audit?.beforeinfo?.status || "未取得")} / ${pred.label}`;
   document.getElementById("waterStrip").innerHTML = [
     ["天候", f(bf.weather?.weather)],
@@ -2375,7 +2490,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V26<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V27<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
