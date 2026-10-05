@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v27</title>
+<title>BOAT EDGE v28</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v27 visual refinement ===== */
+/* ===== BOAT EDGE v28 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -922,6 +922,52 @@ body{background:
   .buy-money{grid-column:4}
 }
 
+
+/* ===== BOAT EDGE v28 urgency + freshness ===== */
+.urgency-ribbon{
+  margin-top:9px;border-radius:13px;padding:10px 11px;border:1px solid #dce8f8;
+  background:linear-gradient(180deg,#fff,#f7fbff);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap
+}
+.urgency-ribbon .u-left{display:flex;align-items:center;gap:8px;min-width:0}
+.urgency-ribbon .u-dot{width:10px;height:10px;border-radius:50%;background:#5f91c9;box-shadow:0 0 0 4px rgba(95,145,201,.10)}
+.urgency-ribbon .u-main{font-size:12px;font-weight:950;color:#0d2f5e}
+.urgency-ribbon .u-sub{font-size:8px;color:#6d829c;margin-top:2px}
+.urgency-ribbon .u-time{font-size:18px;font-weight:950;color:#1769e0}
+.urgency-ribbon.warn{border-color:#f0cf91;background:linear-gradient(180deg,#fffdf8,#fff8eb)}
+.urgency-ribbon.warn .u-dot{background:#f0a52b;box-shadow:0 0 0 4px rgba(240,165,43,.12)}
+.urgency-ribbon.warn .u-time{color:#b86c00}
+.urgency-ribbon.hot{border-color:#f0a8a8;background:linear-gradient(180deg,#fff9f9,#fff1f1)}
+.urgency-ribbon.hot .u-dot{background:#e23f3f;box-shadow:0 0 0 4px rgba(226,63,63,.12);animation:pulseHot 1.25s infinite}
+.urgency-ribbon.hot .u-time{color:#c52222}
+@keyframes pulseHot{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
+
+.freshness-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:7px}
+.fresh-card{border:1px solid #dce8f8;border-radius:11px;background:#fff;padding:8px}
+.fresh-card .fk{font-size:7.5px;color:#7790aa;font-weight:900}
+.fresh-card .fv{font-size:10px;color:#0d2f5e;font-weight:950;margin-top:2px}
+.fresh-card .fs{font-size:7.5px;color:#788da5;margin-top:2px}
+.fresh-card.good{background:#f2fbf7;border-color:#d5eee3}
+.fresh-card.warn{background:#fffaf1;border-color:#f1dfbc}
+
+.update-pulse{
+  margin-top:7px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 9px;
+  border:1px solid #dce8f8;background:#fff;color:#6c829a;font-size:8px;font-weight:900
+}
+.update-pulse::before{content:"";width:7px;height:7px;border-radius:50%;background:#8aa4bf}
+.update-pulse.flash{color:#0b7c5b;border-color:#cdece0;background:#f0fbf6}
+.update-pulse.flash::before{background:#20b983;animation:updateBlink .9s 2}
+@keyframes updateBlink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.racechip.hot-soon{border-color:#f0a8a8!important;background:#fff3f3!important}
+.racechip.warn-soon{border-color:#f0cf91!important;background:#fff9ec!important}
+.spotlight-card.hot-soon{border-color:#f0a8a8!important;background:linear-gradient(145deg,#fff,#fff1f1)!important}
+.spotlight-card.warn-soon{border-color:#f0cf91!important;background:linear-gradient(145deg,#fff,#fff9ec)!important}
+
+@media(max-width:760px){
+  .freshness-strip{grid-template-columns:1fr}
+  .urgency-ribbon .u-time{font-size:16px}
+}
+
 </style>
 </head>
 <body>
@@ -929,7 +975,7 @@ body{background:
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v27</small></div>
+      <div class="brandtext">BOAT EDGE <small>v28</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -971,6 +1017,7 @@ body{background:
 <div id="sourceMini" class="source-mini">ソース状況読込中…</div>
 <div id="formalConnectMini" class="source-mini">正式CURRENT接続状態を確認中…</div>
 <div id="liveTicker" class="live-ticker"><span class="dot"></span><span>LIVE STATUS</span><b id="liveTickerText">読込中</b></div>
+          <div id="updatePulse" class="update-pulse">更新待ち</div>
         </div>
       </div>
     </section>
@@ -1038,6 +1085,8 @@ body{background:
           <div id="summaryStrip" class="strip" style="margin-top:14px"></div>
           <div id="raceCommand" class="race-command"></div>
 <div id="raceMasthead" class="race-masthead"></div>
+          <div id="urgencyRibbon" class="urgency-ribbon"></div>
+          <div id="freshnessStrip" class="freshness-strip"></div>
           <div id="raceQuickNav" class="race-quicknav"></div>
           <div id="raceNav" class="race-nav"></div>
         </div>
@@ -1785,7 +1834,8 @@ function renderSpotlightRaces(){
     const hasBefore=r.beforeinfo_status==="ok";
     const pred=hasBefore ? "直前あり" : (r.racers_ready ? "出走表あり" : "準備中");
     const cls=r.mins<=5?"red":r.mins<=20?"orange":"blue";
-    return `<button class="spotlight-card" data-file="${r.file}" data-jcd="${r.jcd}">
+    const urgentCls=r.mins<=2?"hot-soon":(r.mins<=5?"warn-soon":"");
+    return `<button class="spotlight-card ${urgentCls}" data-file="${r.file}" data-jcd="${r.jcd}">
       <div class="spotlight-rank">WATCH ${i+1}</div>
       <div class="spotlight-place">${f(r.venue)} ${f(r.race_no)}R</div>
       <div class="spotlight-deadline">${f(r.deadline)}</div>
@@ -1864,7 +1914,8 @@ function renderVenues(){
       ${v ? `<div class="racechips">${(v.races||[]).map(r=>{
         const mins = minutesToDeadline(r.deadline);
         const extra = mins!==null && mins>=0 ? `${mins}分後` : f(r.deadline);
-        return `<button class="racechip ${r.beforeinfo_status==="ok"?"before":"ready"}" data-file="${r.file}" data-jcd="${code}">
+        const urgentCls=mins!==null&&mins>=0&&mins<=2?"hot-soon":(mins!==null&&mins<=5&&mins>=0?"warn-soon":"");
+        return `<button class="racechip ${r.beforeinfo_status==="ok"?"before":"ready"} ${urgentCls}" data-file="${r.file}" data-jcd="${code}">
           ${f(r.race_no)}R<small>${extra}</small>
         </button>`;
       }).join("")}</div>` : ``}
@@ -2490,7 +2541,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V27<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V28<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -2607,6 +2658,62 @@ function renderBeforeChanges(d){
   `;
 }
 
+
+function parseDeadlineToday(deadline){
+  if(!deadline) return null;
+  const m=String(deadline).match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return null;
+  const now=new Date();
+  const dt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),Number(m[1]),Number(m[2]),0,0);
+  return dt;
+}
+function deadlineDeltaSeconds(deadline){
+  const dt=parseDeadlineToday(deadline); if(!dt) return null;
+  return Math.floor((dt.getTime()-Date.now())/1000);
+}
+function formatCountdown(sec){
+  if(sec==null) return "－";
+  if(sec<0) return "締切済";
+  const m=Math.floor(sec/60), s=sec%60;
+  return m>0?`${m}分${String(s).padStart(2,"0")}秒`:`${s}秒`;
+}
+function freshnessLabel(ts){
+  if(!ts) return {text:"時刻不明",cls:"warn"};
+  const t=new Date(ts).getTime(); if(!Number.isFinite(t)) return {text:"時刻不明",cls:"warn"};
+  const mins=Math.max(0,Math.round((Date.now()-t)/60000));
+  if(mins<=5) return {text:`${mins}分前`,cls:"good"};
+  if(mins<=15) return {text:`${mins}分前`,cls:""};
+  return {text:`${mins}分前`,cls:"warn"};
+}
+function renderUrgency(d,pred){
+  const el=document.getElementById("urgencyRibbon"); if(!el) return;
+  const sec=deadlineDeltaSeconds(d.meta?.deadline);
+  let cls="",main="締切まで余裕あり";
+  if(sec!=null && sec<=120 && sec>=0){cls="hot";main="締切2分前"; }
+  else if(sec!=null && sec<=300 && sec>=0){cls="warn";main="締切5分前"; }
+  else if(sec!=null && sec<0){main="締切済";}
+  const beforeReady=(d.beforeinfo?.racers||[]).length>0 || (d.beforeinfo?.start_exhibition||[]).length>0;
+  el.className=`urgency-ribbon ${cls}`;
+  el.innerHTML=`<div class="u-left"><span class="u-dot"></span><div><div class="u-main">${main}</div><div class="u-sub">${beforeReady?"直前データ取得済み":"直前データ公開待ち"} / ${pred.mode==="formal"?"正式予想":"暫定予想"}</div></div></div><div class="u-time">${formatCountdown(sec)}</div>`;
+}
+function renderFreshness(d){
+  const el=document.getElementById("freshnessStrip"); if(!el) return;
+  const raceFresh=freshnessLabel(d.updated_at||d.meta?.updated_at);
+  const modelFresh=freshnessLabel(state.model?.updated_at);
+  const formalFresh=freshnessLabel(state.formal?.asOf);
+  const formalState=state.formal?.connected===true?"接続済み":"接続待ち";
+  el.innerHTML=`
+    <div class="fresh-card ${raceFresh.cls}"><div class="fk">レースデータ</div><div class="fv">${raceFresh.text}</div><div class="fs">出走表・直前</div></div>
+    <div class="fresh-card ${modelFresh.cls}"><div class="fk">モデル状態</div><div class="fv">${modelFresh.text}</div><div class="fs">${f(state.model?.model||"－")}</div></div>
+    <div class="fresh-card ${formalFresh.cls}"><div class="fk">正式CURRENT</div><div class="fv">${formalState}</div><div class="fs">${formalFresh.text}</div></div>`;
+}
+function flashUpdatePulse(){
+  const el=document.getElementById("updatePulse"); if(!el) return;
+  el.textContent=`更新 ${new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}`;
+  el.classList.add("flash");
+  setTimeout(()=>el.classList.remove("flash"),1800);
+}
+
 function renderRace(d){
   state.race = d;
   pushRecentRace(d);
@@ -2625,6 +2732,8 @@ function renderRace(d){
   renderSummaryStrip(d, pred);
   renderRaceCommand(d, pred);
   renderRaceMasthead(d, pred);
+  renderUrgency(d,pred);
+  renderFreshness(d);
   renderDecision(d, pred);
   renderBuyBoard(d, pred);
   renderInputCompleteness(d, pred);
@@ -2712,6 +2821,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 refreshAll();
 startPassiveRefresh();
 setInterval(()=>{ if(state.today){ renderSpotlightRaces(); renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
+setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUrgency(state.race,pred); } },1000);
 </script>
 </body>
 </html>
