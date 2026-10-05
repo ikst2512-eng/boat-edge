@@ -8,7 +8,7 @@
     "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 10,
     "deadline": "19:47",
-    "updated_at": "2026-10-05T18:54:51+09:00",
+    "updated_at": "2026-10-05T19:10:46+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,40 +18,16 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=10",
-      "fetched_at": "2026-10-05T18:54:51+09:00",
-      "sha256": "17f318437b2a7c635274805295960f43ebefe4f8a8b85aa897e43a3608cb7adf",
+      "fetched_at": "2026-10-05T19:10:46+09:00",
+      "sha256": "73fa234f595527c2defa453ff8fc0e17b8be912015dd5506aa6b48dc38af8f80",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=19&rno=10",
-      "fetched_at": "2026-10-05T18:54:51+09:00",
-      "sha256": "f365d30e0c60a45a9bda49497e4a71c4c83af207a04395389d309a98d9cf223e",
+      "fetched_at": "2026-10-05T19:10:46+09:00",
+      "sha256": "fabc40da12382c0aac079f81efd98b435eace237aa2a38ad0bc1c7e3bcbee379",
       "error": null
-    },
-    "stt": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "7f83011903d4bc3b7c019030e59553dbca50c60901917d3cd3ec618ae5265cd5"
-    },
-    "tkz": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "80cb99b9c7f8c24b54e66acfa591046c815f409432d1786f7666c75b2d21ad52"
-    },
-    "sui": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "ebb68cd4f4633bf036c7752b0faef55bfd6274a469668ee6c9afebc35f88bca9"
-    },
-    "original_exhibition": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "2f5c1d5e06ce1a488f93eee9c422211f4a460aa0b42f8a777e5e3e0ac8b484d5"
     }
   },
   "racers": [
@@ -329,64 +305,50 @@
       {
         "lane": 1,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 若狭 奈美子 46.0kg R 6"
+        "tilt": -0.5,
+        "raw_text": "1 若狭 奈美子 46.0kg -0.5 R 6"
       },
       {
         "lane": 2,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 小芦 るり華 47.0kg R 3"
+        "tilt": 0.0,
+        "raw_text": "2 小芦 るり華 47.0kg 0.0 R 3"
       },
       {
         "lane": 3,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 藤原 早菜 45.5kg R 6"
+        "tilt": 0.0,
+        "raw_text": "3 藤原 早菜 45.5kg 0.0 R 6"
       },
       {
         "lane": 4,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 角 ひとみ 45.0kg R 4"
+        "tilt": -0.5,
+        "raw_text": "4 角 ひとみ 45.0kg -0.5 R 4"
       },
       {
         "lane": 5,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 関野 文 44.5kg R 5"
+        "tilt": -0.5,
+        "raw_text": "5 関野 文 44.5kg -0.5 R 5"
       },
       {
         "lane": 6,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 大廣 咲季 45.0kg R 1"
+        "tilt": 0.5,
+        "raw_text": "6 大廣 咲季 45.0kg 0.5 R 1"
       }
     ],
     "start_exhibition": [],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 2.0,
-      "wave_cm": 2.0
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
     }
   },
   "validation": {
     "result_unlock_token": null,
     "result": null
-  },
-  "actual_entry": [],
-  "current_model_input": {
-    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
-    "source_presence": {
-      "race_cards": true,
-      "stt": false,
-      "tkz": false,
-      "sui": false,
-      "original_exhibition": false
-    },
-    "core7_ready": false,
-    "formal_prediction_ready": false,
-    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
