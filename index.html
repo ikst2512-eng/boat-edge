@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f5eff">
-<title>BOAT EDGE v22</title>
+<title>BOAT EDGE v23</title>
 <style>
 :root{
   --bg:#f3f8ff;
@@ -271,7 +271,7 @@ td .lane{margin:auto}
   .combo{font-size:18px}
 }
 
-/* ===== BOAT EDGE v22 visual refinement ===== */
+/* ===== BOAT EDGE v23 visual refinement ===== */
 :root{
   --blue-deep:#0b3a82;
   --blue-mid:#1769e0;
@@ -648,6 +648,75 @@ tr:hover td{background:#f8fbff}
 .formal-mini-wait{background:linear-gradient(180deg,#fffaf2,#fff5e8)!important;border-color:#f5ddb5!important;color:#9a6200!important}
 .formal-overlay-note{margin-top:7px;font-size:9px;color:var(--muted);line-height:1.55}
 
+
+/* ===== BOAT EDGE v23 premium command center ===== */
+.home-command{padding-top:12px}
+.spotlight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.spotlight-card{
+  text-align:left;border:1px solid rgba(31,105,224,.14);border-radius:17px;padding:14px;
+  background:linear-gradient(145deg,#ffffff 0%,#f2f8ff 100%);
+  box-shadow:0 8px 24px rgba(20,86,164,.07);position:relative;overflow:hidden
+}
+.spotlight-card::after{content:"";position:absolute;width:100px;height:100px;border-radius:50%;right:-45px;top:-50px;background:rgba(39,127,244,.06)}
+.spotlight-rank{font-size:8px;font-weight:950;letter-spacing:.12em;color:#1769e0}
+.spotlight-place{font-size:17px;font-weight:950;color:var(--navy);margin-top:4px}
+.spotlight-deadline{font-size:25px;font-weight:950;color:#0b3a82;margin-top:4px}
+.spotlight-meta{font-size:9px;color:var(--muted);line-height:1.55;margin-top:5px}
+.spotlight-status{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.spotlight-empty{grid-column:1/-1;padding:18px;border:1px dashed #cfe0f5;border-radius:15px;color:var(--muted);text-align:center;font-size:10px;background:rgba(255,255,255,.6)}
+
+.recent-wrap{margin-top:10px}
+.mini-section-title{font-size:9px;font-weight:900;color:var(--muted);margin:0 0 6px 2px}
+.recent-row{display:flex;gap:7px;overflow:auto;scrollbar-width:none;padding-bottom:2px}
+.recent-row::-webkit-scrollbar{display:none}
+.recent-chip{
+  flex:0 0 auto;border:1px solid #dce8f8;background:#fff;color:var(--navy);border-radius:999px;
+  padding:7px 10px;font-size:9px;font-weight:850;box-shadow:0 3px 10px rgba(20,80,150,.04)
+}
+.recent-empty{font-size:9px;color:var(--muted);padding:5px 2px}
+
+.venue-toolbar{padding:10px;display:grid;grid-template-columns:minmax(180px,280px) 1fr;gap:10px;align-items:center}
+.venue-search-wrap{position:relative}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#7a94b4;font-size:15px;pointer-events:none}
+.venue-search{
+  width:100%;border:1px solid #dce8f8;background:#f8fbff;color:var(--navy);border-radius:11px;
+  padding:9px 10px 9px 31px;outline:none;font-size:10px;font-weight:750
+}
+.venue-search:focus{border-color:#8ebfff;background:#fff;box-shadow:0 0 0 3px rgba(37,120,235,.08)}
+.filter-chips{display:flex;gap:6px;overflow:auto;scrollbar-width:none}
+.filter-chips::-webkit-scrollbar{display:none}
+.filter-chip{
+  flex:0 0 auto;border:1px solid #dce8f8;background:#fff;color:#607793;border-radius:999px;
+  padding:7px 10px;font-size:9px;font-weight:900
+}
+.filter-chip.on{background:#1769e0;border-color:#1769e0;color:#fff;box-shadow:0 5px 12px rgba(23,105,224,.18)}
+
+.venue{position:relative}
+.venue-fav{
+  border:0;background:transparent;color:#9cb0c7;font-size:16px;line-height:1;padding:4px;border-radius:8px
+}
+.venue-fav.on{color:#f3a712;background:#fff9e8}
+.venue-actions{display:flex;align-items:center;gap:5px}
+.venue.no-match{display:none}
+
+.status-key{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.status-key span{font-size:8px;color:var(--muted);background:#f6f9fd;border:1px solid #e2ecf9;border-radius:999px;padding:4px 6px}
+
+.hero-main h1{max-width:720px}
+.hero-main p{max-width:760px}
+.hero-statgrid{position:relative;z-index:2}
+
+@media(max-width:900px){.spotlight-grid{grid-template-columns:1fr 1fr}.spotlight-card:nth-child(3){grid-column:1/-1}}
+@media(max-width:760px){
+  .spotlight-grid{grid-template-columns:1fr}
+  .spotlight-card:nth-child(3){grid-column:auto}
+  .venue-toolbar{grid-template-columns:1fr}
+  .filter-chips{padding-bottom:1px}
+  .spotlight-card{padding:12px}
+  .spotlight-place{font-size:15px}
+  .spotlight-deadline{font-size:22px}
+}
+
 </style>
 </head>
 <body>
@@ -655,7 +724,7 @@ tr:hover td{background:#f8fbff}
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v22</small></div>
+      <div class="brandtext">BOAT EDGE <small>v23</small></div>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
@@ -678,13 +747,12 @@ tr:hover td{background:#f8fbff}
     <section class="hero">
       <div class="hero-grid">
         <div class="card hero-main">
-          <span class="kicker">白×青 / 直前重視 / 2パターン表示</span>
-          <h1>締切順で見やすく。<br>2分前でも暫定予想を止めない。</h1>
+          <span class="kicker">BOAT EDGE / LIVE PRE-RACE COMMAND CENTER</span>
+          <h1>締切・展開・データを、<br>ひと目で判断できる画面へ。</h1>
           <p>
-            正式CURRENT未接続でも、取得済み直前情報だけで <b>暫定予想（サイト簡易）</b> を表示。
-            欠損値を勝手に平均値で埋めず、未取得項目は0寄与として明示します。
-            「今すぐ更新」はキャッシュを使わず即確認し、その後2分間は15秒ごとに新データを追跡。
-            正式V1.21.33が接続されたレースだけ自動的に <b>正式予想</b> へ切り替えます。
+            まず見るべきレースを前に出し、<b>予想 → 展開 → 直前 → データ</b>を迷わず辿れる構成。
+            正式V1.21.33があるレースは自動で正式予想を優先し、未接続時は取得済み情報だけでサイト簡易表示。
+            欠損は補完せず、そのまま見える形にしています。
           </p>
         </div>
         <div class="card hero-side">
@@ -701,14 +769,40 @@ tr:hover td{background:#f8fbff}
       </div>
     </section>
 
+    <section class="section home-command">
+      <div class="title"><h2>今見るべきレース</h2><span>締切 × 直前データ × 準備状況</span></div>
+      <div id="spotlightRaces" class="spotlight-grid"></div>
+      <div id="recentRacesWrap" class="recent-wrap">
+        <div class="mini-section-title">最近見たレース</div>
+        <div id="recentRaces" class="recent-row"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="venue-toolbar card">
+        <div class="venue-search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="venueSearch" class="venue-search" type="search" inputmode="search" placeholder="開催場を検索" autocomplete="off">
+        </div>
+        <div class="filter-chips" id="venueFilters">
+          <button class="filter-chip on" data-filter="active">開催中</button>
+          <button class="filter-chip" data-filter="before">直前あり</button>
+          <button class="filter-chip" data-filter="fav">お気に入り</button>
+          <button class="filter-chip" data-filter="all">全24場</button>
+        </div>
+      </div>
+    </section>
+
     <section class="section">
       <div class="title"><h2>締切時間順</h2><span id="deadlineCount">－</span></div>
-      <div class="note" style="margin-bottom:8px">締切が近い順で表示。<b>正式予想</b> / <b>暫定予想</b> / <b>準備中</b> がひと目で分かるようにしています。</div>
+      <div class="note" style="margin-bottom:8px">締切が近い順で表示。必要な状態だけを短く表示します。
+        <div class="status-key"><span><b>正式</b>＝V1.21.33接続</span><span><b>直前あり</b>＝展示・実進入が取得可能</span><span><b>準備中</b>＝公開待ち</span></div>
+      </div>
       <div id="deadlineBoard" class="deadline-board"></div>
     </section>
 
     <section class="section">
-      <div class="title"><h2>開催場一覧</h2><span id="updatedHome">読込中</span></div>
+      <div class="title"><h2 id="venueListTitle">開催中の場</h2><span id="updatedHome">読込中</span></div>
       <div id="venues" class="venues"></div>
     </section>
 
@@ -928,7 +1022,7 @@ const raceTabs = [
   ["data","データ"],
   ["audit","監査"]
 ];
-const state = {today:null, model:null, formal:null, race:null, currentVenue:null};
+const state = {today:null, model:null, formal:null, race:null, currentVenue:null, venueFilter:"active", venueQuery:""};
 
 function formalState(){ return state.formal || FORMAL_VALIDATION; }
 const f = v => (v===null || v===undefined || v==="") ? "－" : v;
@@ -936,12 +1030,53 @@ const num = v => (v===null || v===undefined || String(v).trim()==="") ? null : (
 const pct = v => v===null || v===undefined || isNaN(Number(v)) ? "－" : `${Number(v).toFixed(Number(v)%1?1:0)}%`;
 const laneNo = (r,i) => r?.lane ?? (i+1);
 
+
+function readJSONLocal(key,fallback){
+  try{ const v=JSON.parse(localStorage.getItem(key)||"null"); return v ?? fallback; }catch(_){ return fallback; }
+}
+function writeJSONLocal(key,v){ try{ localStorage.setItem(key,JSON.stringify(v)); }catch(_){} }
+function favoriteVenues(){ return new Set(readJSONLocal("boatEdgeFavVenues",[])); }
+function toggleFavoriteVenue(code){
+  const fav=favoriteVenues();
+  if(fav.has(code)) fav.delete(code); else fav.add(code);
+  writeJSONLocal("boatEdgeFavVenues",[...fav]);
+  renderVenues();
+}
+function pushRecentRace(d){
+  if(!d?.race_key) return;
+  const item={race_key:d.race_key,file:`data/races/${d.race_key}.json`,jcd:d.meta?.venue_code,venue:d.meta?.venue,race_no:d.meta?.race_no,deadline:d.meta?.deadline};
+  let rows=readJSONLocal("boatEdgeRecentRaces",[]).filter(x=>x.race_key!==item.race_key);
+  rows.unshift(item); rows=rows.slice(0,8);
+  writeJSONLocal("boatEdgeRecentRaces",rows);
+  renderRecentRaces();
+}
+function renderRecentRaces(){
+  const el=document.getElementById("recentRaces"); if(!el) return;
+  const rows=readJSONLocal("boatEdgeRecentRaces",[]);
+  if(!rows.length){el.innerHTML=`<div class="recent-empty">まだ閲覧履歴はありません</div>`;return;}
+  el.innerHTML=rows.map(x=>`<button class="recent-chip" data-file="${x.file}" data-jcd="${x.jcd}">${f(x.venue)} ${f(x.race_no)}R · ${f(x.deadline)}</button>`).join("");
+  el.querySelectorAll("[data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
+}
+
 function showView(id){
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id===id));
   document.querySelectorAll(".bottomnav [data-view]").forEach(v=>v.classList.toggle("on", v.dataset.view===id));
   window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".bottomnav [data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
+
+const venueSearch=document.getElementById("venueSearch");
+if(venueSearch){
+  venueSearch.addEventListener("input",e=>{state.venueQuery=e.target.value;renderVenues();});
+}
+document.querySelectorAll("#venueFilters [data-filter]").forEach(btn=>{
+  btn.onclick=()=>{
+    state.venueFilter=btn.dataset.filter;
+    document.querySelectorAll("#venueFilters [data-filter]").forEach(b=>b.classList.toggle("on",b===btn));
+    renderVenues();
+  };
+});
+
 let refreshPollTimer=null;
 let refreshPollStopTimer=null;
 function showToast(msg, ms=2600){
@@ -1410,6 +1545,47 @@ function collectRaces(){
   });
   return rows;
 }
+
+function raceReadinessScore(r){
+  let s=0;
+  if(r.beforeinfo_status==="ok") s+=50;
+  if(r.racers_ready) s+=20;
+  if(r.mins!==null && r.mins>=0){
+    if(r.mins<=15) s+=25;
+    else if(r.mins<=45) s+=18;
+    else if(r.mins<=120) s+=10;
+  }
+  return s;
+}
+function renderSpotlightRaces(){
+  const el=document.getElementById("spotlightRaces"); if(!el) return;
+  const rows=collectRaces()
+    .filter(r=>r.mins!==null && r.mins>=0)
+    .map(r=>({...r,readyScore:raceReadinessScore(r)}))
+    .sort((a,b)=>b.readyScore-a.readyScore || a.mins-b.mins)
+    .slice(0,3);
+  if(!rows.length){
+    el.innerHTML=`<div class="spotlight-empty">表示できるレースを待っています</div>`;
+    return;
+  }
+  el.innerHTML=rows.map((r,i)=>{
+    const hasBefore=r.beforeinfo_status==="ok";
+    const pred=hasBefore ? "直前あり" : (r.racers_ready ? "出走表あり" : "準備中");
+    const cls=r.mins<=5?"red":r.mins<=20?"orange":"blue";
+    return `<button class="spotlight-card" data-file="${r.file}" data-jcd="${r.jcd}">
+      <div class="spotlight-rank">WATCH ${i+1}</div>
+      <div class="spotlight-place">${f(r.venue)} ${f(r.race_no)}R</div>
+      <div class="spotlight-deadline">${f(r.deadline)}</div>
+      <div class="spotlight-meta">${Math.max(0,r.mins)}分後 / ${f(r.event||"開催中")}</div>
+      <div class="spotlight-status">
+        ${statusBadge(cls, pred)}
+        ${r.racers_ready?statusBadge("green","6艇取得"):statusBadge("gray","艇情報待ち")}
+      </div>
+    </button>`;
+  }).join("");
+  el.querySelectorAll("[data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
+}
+
 function updateNextRaceBar(){
   const rows=collectRaces().filter(x=>x.mins!==null && x.mins>=0);
   const n=rows[0], name=document.getElementById("nextRaceName"), dl=document.getElementById("nextRaceDeadline"), btn=document.getElementById("nextRaceOpenBtn");
@@ -1441,15 +1617,36 @@ function renderDeadlineBoard(){
 }
 function renderVenues(){
   const active = new Map((state.today?.venues || []).map(v=>[v.jcd,v]));
-  document.getElementById("venues").innerHTML = VENUES.map(([code,name])=>{
+  const fav=favoriteVenues();
+  const q=(state.venueQuery||"").trim().toLowerCase();
+  const filter=state.venueFilter||"active";
+
+  const visible=VENUES.filter(([code,name])=>{
+    const v=active.get(code);
+    const matches=!q || name.toLowerCase().includes(q) || String(code).includes(q);
+    if(!matches) return false;
+    if(filter==="active") return Boolean(v);
+    if(filter==="before") return Boolean(v && (v.races||[]).some(r=>r.beforeinfo_status==="ok"));
+    if(filter==="fav") return fav.has(code);
+    return true;
+  });
+
+  const titleMap={active:"開催中の場",before:"直前情報あり",fav:"お気に入り",all:"全24場"};
+  const title=document.getElementById("venueListTitle"); if(title) title.textContent=titleMap[filter]||"開催場一覧";
+
+  document.getElementById("venues").innerHTML = visible.map(([code,name])=>{
     const v = active.get(code);
+    const isFav=fav.has(code);
     return `<div class="card venue ${v?'on':'off'}">
       <div class="venue-top">
         <div>
           <div class="vname">${name}</div>
           <div class="vstate">${v ? f(v.event||"開催中") : "本日非開催"}</div>
         </div>
-        ${v ? statusBadge("blue", `${(v.races||[]).length}R`) : statusBadge("gray","休み")}
+        <div class="venue-actions">
+          ${v ? statusBadge("blue", `${(v.races||[]).length}R`) : statusBadge("gray","休み")}
+          <button class="venue-fav ${isFav?"on":""}" data-fav="${code}" aria-label="${name}をお気に入り">${isFav?"★":"☆"}</button>
+        </div>
       </div>
       ${v ? `<div class="racechips">${(v.races||[]).map(r=>{
         const mins = minutesToDeadline(r.deadline);
@@ -1459,10 +1656,14 @@ function renderVenues(){
         </button>`;
       }).join("")}</div>` : ``}
     </div>`;
-  }).join("");
+  }).join("") || `<div class="empty" style="grid-column:1/-1">条件に合う開催場がありません</div>`;
+
   document.querySelectorAll("#venues [data-file]").forEach(btn=>btn.onclick=()=>loadRace(btn.dataset.file, btn.dataset.jcd));
+  document.querySelectorAll("#venues [data-fav]").forEach(btn=>btn.onclick=(e)=>{e.stopPropagation();toggleFavoriteVenue(btn.dataset.fav);});
 }
 function renderHome(){
+  renderSpotlightRaces();
+  renderRecentRaces();
   renderDeadlineBoard();
   updateNextRaceBar();
   renderVenues();
@@ -1893,7 +2094,7 @@ function renderAuditTab(d, pred){
     </div>
   `).join("");
   document.getElementById("auditDetail").innerHTML = `
-    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V22<br>
+    <b>PRE_RESULT監査詳細</b><br>site_build: BOAT_EDGE_V23<br>
     venue: ${f(d.meta?.venue)} / race: ${f(d.meta?.race_no)}R<br>
     deadline: ${f(d.meta?.deadline)} / updated: ${formatUpdated(d.meta?.updated_at)}<br><br>
     <b>source_audit</b><br>
@@ -1908,6 +2109,7 @@ function renderAuditTab(d, pred){
 }
 function renderRace(d){
   state.race = d;
+  pushRecentRace(d);
   const pred = getPrediction(d);
   document.getElementById("raceTitle").textContent = `${f(d.meta?.venue)} ${f(d.meta?.race_no)}R`;
   document.getElementById("raceSubtitle").textContent = makeRaceSubtitle(d);
@@ -2004,7 +2206,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 
 refreshAll();
 startPassiveRefresh();
-setInterval(()=>{ if(state.today){ renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
+setInterval(()=>{ if(state.today){ renderSpotlightRaces(); renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
 </script>
 </body>
 </html>
