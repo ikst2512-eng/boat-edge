@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08111f">
-<title>BOAT EDGE v11</title>
+<title>BOAT EDGE v12</title>
 <style>
 :root{
   --bg:#07101c;--panel:#0d1827;--panel2:#111f31;--line:#20344d;--text:#f5f8fc;
@@ -33,6 +33,21 @@ button{font:inherit}.app{max-width:1180px;margin:auto}
 .title h2{margin:0;font-size:16px}.title span{color:var(--muted);font-size:11px}
 .card{background:linear-gradient(180deg,rgba(18,34,52,.98),rgba(11,24,38,.98));border:1px solid rgba(117,165,207,.14);
  border-radius:var(--radius);box-shadow:var(--shadow)}
+
+.deadlineboard{padding:4px 0 2px}
+.deadline-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.deadline-scroll::-webkit-scrollbar{display:none}
+.deadline-item{min-width:148px;padding:11px 12px;border-radius:14px;background:linear-gradient(180deg,#102036,#0b1828);
+ border:1px solid #213a56;text-align:left;color:var(--text);position:relative}
+.deadline-item.soon{border-color:rgba(255,204,102,.7);box-shadow:0 0 0 1px rgba(255,204,102,.12) inset}
+.deadline-item.verysoon{border-color:rgba(255,126,141,.85);box-shadow:0 0 0 1px rgba(255,126,141,.14) inset}
+.deadline-time{font-size:21px;font-weight:950;letter-spacing:.02em}
+.deadline-place{font-size:12px;font-weight:900;margin-top:2px}
+.deadline-meta{font-size:10px;color:var(--muted);margin-top:4px}
+.deadline-badge{position:absolute;right:9px;top:9px;font-size:9px;padding:3px 6px;border-radius:999px;
+ background:#0a2630;color:var(--accent2);border:1px solid rgba(105,240,192,.25)}
+.deadline-note{font-size:11px;color:var(--muted);margin:1px 0 7px}
+
 .venues{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .venue{padding:10px;min-height:72px;position:relative;overflow:hidden}
 .venue.off{opacity:.38;box-shadow:none}.venue.on{border-color:rgba(88,199,255,.36)}
@@ -77,10 +92,16 @@ th{color:#8fa6bd;background:#0e1c2d;position:sticky;top:0}.namecell{text-align:l
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><div class="mark"></div><div>BOAT EDGE <span style="font-size:10px;color:#6ed3ff">v11</span></div></div><div class="live" id="live">PRE_RESULT</div></header>
+<header class="topbar"><div class="brand"><div class="mark"></div><div>BOAT EDGE <span style="font-size:10px;color:#6ed3ff">v12</span></div></div><div class="live" id="live">PRE_RESULT</div></header>
 
 <main id="home" class="view active">
   <div class="hero"><span class="pill">TODAY</span><h1>今日の全24場</h1><p>24場を固定表示。開催中だけ点灯し、締切と直前情報の状態まで一画面で確認。</p></div>
+  <div class="section deadlineboard">
+    <div class="title"><h2>締切時間順</h2><span id="deadlineCount">－</span></div>
+    <div class="deadline-note">全開催場を横断して、締切が近い順に表示</div>
+    <div id="deadlineBoard" class="deadline-scroll"></div>
+  </div>
+
   <div class="section"><div class="title"><h2>レース場</h2><span id="updated">読込中</span></div><div id="venues" class="venues"></div></div>
   <div class="section"><div class="card" style="padding:12px"><div class="audit" id="health">データ状態を確認中…</div></div></div>
 </main>
@@ -157,7 +178,48 @@ document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
  document.querySelectorAll(".sub").forEach(x=>x.classList.toggle("active",x.id==="tab-"+b.dataset.tab));
 });
 
+
+function minutesToDeadline(deadline){
+ if(!deadline)return null;
+ const m=/^(\d{1,2}):(\d{2})$/.exec(deadline);
+ if(!m)return null;
+ const now=new Date();
+ const target=new Date(now);
+ target.setHours(Number(m[1]),Number(m[2]),0,0);
+ return Math.floor((target-now)/60000);
+}
+function renderDeadlineBoard(){
+ const rows=[];
+ for(const v of (state.today?.venues||[])){
+   for(const r of (v.races||[])){
+     if(!r.deadline)continue;
+     const mins=minutesToDeadline(r.deadline);
+     rows.push({...r,venue:v.venue,jcd:v.jcd,mins});
+   }
+ }
+ rows.sort((a,b)=>{
+   const ae=a.mins===null?99999:(a.mins<0?10000+Math.abs(a.mins):a.mins);
+   const be=b.mins===null?99999:(b.mins<0?10000+Math.abs(b.mins):b.mins);
+   return ae-be;
+ });
+ const upcoming=rows.filter(x=>x.mins!==null && x.mins>=0);
+ const show=(upcoming.length?upcoming:rows).slice(0,18);
+ document.getElementById("deadlineCount").textContent=`次の${show.length}R`;
+ document.getElementById("deadlineBoard").innerHTML=show.map(r=>{
+   const cls=r.mins!==null && r.mins<=10?"verysoon":(r.mins!==null && r.mins<=30?"soon":"");
+   const note=r.mins===null?"":(r.mins<=0?"締切":r.mins+"分後");
+   const badge=r.beforeinfo_status==="ok"?`<span class="deadline-badge">直前OK</span>`:"";
+   return `<button class="deadline-item ${cls}" data-file="${r.file}" data-jcd="${r.jcd}">
+      ${badge}<div class="deadline-time">${r.deadline}</div>
+      <div class="deadline-place">${r.venue} ${r.race_no}R</div>
+      <div class="deadline-meta">${note}${r.beforeinfo_status==="published_wait"?" / 展示待ち":""}</div>
+   </button>`;
+ }).join("") || `<div class="empty">締切データ待ち</div>`;
+ document.querySelectorAll("#deadlineBoard [data-file]").forEach(b=>b.onclick=()=>loadRace(b.dataset.file,b.dataset.jcd));
+}
+
 function renderHome(){
+ renderDeadlineBoard();
  const active=new Map((state.today?.venues||[]).map(v=>[v.jcd,v]));
  document.getElementById("venues").innerHTML=VENUES.map(([code,name])=>{
    const v=active.get(code);
@@ -281,6 +343,7 @@ async function refreshToday(force=false){
 }
 refreshToday();
 setInterval(()=>refreshToday(),60000);
+setInterval(()=>{if(state.today)renderDeadlineBoard()},30000);
 </script>
 </body>
 </html>
