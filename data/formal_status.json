@@ -1,16 +1,17 @@
 {
-  "schema_version": "boat-edge-formal-status-v1",
-  "asOf": "2026-10-06T01:30:00+09:00",
+  "schema_version": "boat-edge-formal-status-v2",
+  "asOf": "2026-10-06T01:40:00+09:00",
   "connected": false,
   "predictions_ready": false,
-  "current": "V12133_V27_20261005_EXACT_D1_SOURCE_VERIFIED_T12_BRIDGE_BLOCKED",
-  "stage": "T1/T2 bridge 復旧中",
+  "current": "V12133_20261006_NEXT_UNTOUCHED_WAIT_5SOURCE",
+  "stage": "2026-10-06 PRE_RESULT / 5ソース待ち",
+  "target_date": "2026-10-06",
   "formalFirst100": {
-    "races": 100,
-    "racers": 413,
-    "pairs": 591,
-    "freezeManifestSha": "693fa6f8f262058fa4c5fa3738a1e783de8fb945fc470c81164aa6c5606bcb34",
-    "coreSha": "0425b8be8c66d9526d20ae72d34a8a48b7f437a8fdada74b2e555dce119380dd"
+    "races": 0,
+    "racers": 0,
+    "pairs": 0,
+    "freezeManifestSha": null,
+    "coreSha": null
   },
   "formalParentSha": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
   "candidateSha": "30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
@@ -21,5 +22,13 @@
     "RESULT_UNLOCK_TOKEN": null
   },
   "prediction_path_template": "data/formal_predictions/{race_key}.json",
-  "note": "正式V1.21.33出力が配置されたレースだけフロントで正式予想へ自動切替"
+  "last_cohort": {
+    "date": "2026-10-05",
+    "acceptance": "NOT_ACCEPTED_AS_FORMAL_RESULT",
+    "formal_status": "INVALID_UNVERIFIED_DO_NOT_ACCEPT_AS_FORMAL_SCORING",
+    "current": "V12133_20261005_FORMAL_PROVENANCE_GATE_FAILED_SCORING_UNVERIFIED",
+    "reason": "Provenance discrepancies remained unresolved before RESULT_UNLOCK_TOKEN and result access. The 2026-10-05 metrics are diagnostic only and must not be promoted as formal."
+  },
+  "next_exact_action": "Wait for 2026-10-06 PRE_RESULT five-source publication; freeze only the new untouched lexical first100; build D-1 through 2026-10-05; run exact V1.21.32/V1.21.33 twice; require byte-identical and final PRE_RESULT audit before unlock.",
+  "note": "2026-10-05 is not a formal accepted scoring result. 2026-10-06 is the next untouched target."
 }
