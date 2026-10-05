@@ -8,7 +8,7 @@
     "event": "2026東京・大阪・福岡三都市対抗戦",
     "race_no": 10,
     "deadline": "19:38",
-    "updated_at": "2026-10-05T18:35:55+09:00",
+    "updated_at": "2026-10-05T18:50:48+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,40 +18,16 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=12&rno=10",
-      "fetched_at": "2026-10-05T18:35:55+09:00",
-      "sha256": "5a4b476cafa017b40fdeab1f33051d2b53b80f79d047f107c4ac7088647a3a3a",
+      "fetched_at": "2026-10-05T18:50:48+09:00",
+      "sha256": "b70716b493f8b260e2f5412020be3fc61af628f35e479233978e3094aba41dc7",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=12&rno=10",
-      "fetched_at": "2026-10-05T18:35:55+09:00",
-      "sha256": "57b9ab1c81e1cb0ced6124c21ac9957666d0062ff901d647e971fe54c9510798",
+      "fetched_at": "2026-10-05T18:50:48+09:00",
+      "sha256": "d5fa87305e36e10174585f12834e54738077d3c53c84132a137b95f28fbf21ee",
       "error": null
-    },
-    "stt": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "8a41c6aa749de0699807caa57bf50b9f65d2a32e12fe0c7acbe500ade98b32c1"
-    },
-    "tkz": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "3da67b4533cadce1aaee0a103df0537b08235894bf0931849ae6eebea39a0819"
-    },
-    "sui": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "12317b1d9e3c72213fa6de80dfa6b60bd28d01fe7b8221a96df963bf7f651532"
-    },
-    "original_exhibition": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "2168dc03827f3663c589ffcdbf5d415c72fcad82cb063cda198bbfa4701c1ee1"
     }
   },
   "racers": [
@@ -326,64 +302,50 @@
       {
         "lane": 1,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 奈須 啓太 52.0kg R 4"
+        "tilt": -0.5,
+        "raw_text": "1 奈須 啓太 52.0kg -0.5 R 4"
       },
       {
         "lane": 2,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 寺本 重宣 50.0kg R 3"
+        "tilt": -0.5,
+        "raw_text": "2 寺本 重宣 50.0kg -0.5 R 3"
       },
       {
         "lane": 3,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 前沢 丈史 56.3kg R 5"
+        "tilt": -0.5,
+        "raw_text": "3 前沢 丈史 56.3kg -0.5 R 5"
       },
       {
         "lane": 4,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 里岡 右貴 52.0kg R 3"
+        "tilt": 0.0,
+        "raw_text": "4 里岡 右貴 52.0kg 0.0 R 3"
       },
       {
         "lane": 5,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 江夏 満 52.0kg R 4"
+        "tilt": 0.0,
+        "raw_text": "5 江夏 満 52.0kg 0.0 R 4"
       },
       {
         "lane": 6,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 森 貴洋 53.5kg R 2"
+        "tilt": 0.0,
+        "raw_text": "6 森 貴洋 53.5kg 0.0 R 2"
       }
     ],
     "start_exhibition": [],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 1.0,
+      "wind_speed_ms": 0.0,
       "wave_cm": 1.0
     }
   },
   "validation": {
     "result_unlock_token": null,
     "result": null
-  },
-  "actual_entry": [],
-  "current_model_input": {
-    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
-    "source_presence": {
-      "race_cards": true,
-      "stt": false,
-      "tkz": false,
-      "sui": false,
-      "original_exhibition": false
-    },
-    "core7_ready": false,
-    "formal_prediction_ready": false,
-    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

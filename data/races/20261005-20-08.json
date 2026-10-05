@@ -8,7 +8,7 @@
     "event": "MNBR若松4thかっぱくん杯",
     "race_no": 8,
     "deadline": "21:17",
-    "updated_at": "2026-10-05T18:35:55+09:00",
+    "updated_at": "2026-10-05T18:50:48+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,40 +18,16 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=20&rno=8",
-      "fetched_at": "2026-10-05T18:35:55+09:00",
-      "sha256": "457c33745d83fae4629fd2c38273d4354706aeacf757fc5b678ae26dd245cbda",
+      "fetched_at": "2026-10-05T18:50:48+09:00",
+      "sha256": "483b6b72f3d967e55703b07a40cd1e9657fe69656a6ec5ff3f058593f63dd3e8",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=20&rno=8",
+      "fetched_at": "2026-10-05T18:50:48+09:00",
+      "sha256": "b1442d943caf1f953ef0ac1ea302f47d21906a9f21a9983bf859f10d45a850d5",
       "error": null
-    },
-    "stt": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "8a41c6aa749de0699807caa57bf50b9f65d2a32e12fe0c7acbe500ade98b32c1"
-    },
-    "tkz": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "3da67b4533cadce1aaee0a103df0537b08235894bf0931849ae6eebea39a0819"
-    },
-    "sui": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "12317b1d9e3c72213fa6de80dfa6b60bd28d01fe7b8221a96df963bf7f651532"
-    },
-    "original_exhibition": {
-      "status": "missing",
-      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
-      "fetched_at": null,
-      "sha256": "2168dc03827f3663c589ffcdbf5d415c72fcad82cb063cda198bbfa4701c1ee1"
     }
   },
   "racers": [
@@ -159,9 +135,11 @@
         "quinella_rate": 24.19,
         "trio_rate": 40.32
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "2"
+      ],
       "early_race": 2,
-      "raw_text": "3 4261 / A2 岡 祐臣 三重/三重 42歳/54.2kg F0 L0 0.16 6.28 46.02 63.72 7.75 60.00 95.00 49 52.22 69.44 19 24.19 40.32 2R"
+      "raw_text": "3 4261 / A2 岡 祐臣 三重/三重 42歳/54.2kg F0 L0 0.16 6.28 46.02 63.72 7.75 60.00 95.00 49 52.22 69.44 19 24.19 40.32 2 2R"
     },
     {
       "lane": 4,
@@ -272,23 +250,55 @@
       "raw_text": "6 5380 / B2 野田 亜湖 徳島/徳島 22歳/50.8kg F0 L0 0.28 1.24 0.00 0.00 1.33 0.00 0.00 9 29.27 51.71 24 27.91 46.51"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 天野 友和 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 大神 康司 53.2kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 岡 祐臣 54.2kg R 2"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 中田 夕貴 47.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 高橋 龍治 52.7kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 野田 亜湖 50.8kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
-  },
-  "actual_entry": [],
-  "current_model_input": {
-    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
-    "source_presence": {
-      "race_cards": true,
-      "stt": false,
-      "tkz": false,
-      "sui": false,
-      "original_exhibition": false
-    },
-    "core7_ready": false,
-    "formal_prediction_ready": false,
-    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
