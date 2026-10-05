@@ -8,7 +8,7 @@
     "event": "ヴィーナスシリーズ第14戦 スターダム杯",
     "race_no": 10,
     "deadline": "19:47",
-    "updated_at": "2026-10-05T18:50:48+09:00",
+    "updated_at": "2026-10-05T18:54:51+09:00",
     "phase": "PRE_RESULT",
     "results_seen": false,
     "unlock": false,
@@ -18,16 +18,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261005&jcd=19&rno=10",
-      "fetched_at": "2026-10-05T18:50:48+09:00",
-      "sha256": "86b58df5340c497a1980b2da600b99537b96fa9f975d2b7eef6c27a271f2858b",
+      "fetched_at": "2026-10-05T18:54:51+09:00",
+      "sha256": "17f318437b2a7c635274805295960f43ebefe4f8a8b85aa897e43a3608cb7adf",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261005&jcd=19&rno=10",
-      "fetched_at": "2026-10-05T18:50:48+09:00",
-      "sha256": "8461911fde81d4e36dc49190924aea562a62207d49c7c1f8401c0e3a4e48ed0c",
+      "fetched_at": "2026-10-05T18:54:51+09:00",
+      "sha256": "f365d30e0c60a45a9bda49497e4a71c4c83af207a04395389d309a98d9cf223e",
       "error": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "7f83011903d4bc3b7c019030e59553dbca50c60901917d3cd3ec618ae5265cd5"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "80cb99b9c7f8c24b54e66acfa591046c815f409432d1786f7666c75b2d21ad52"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "ebb68cd4f4633bf036c7752b0faef55bfd6274a469668ee6c9afebc35f88bca9"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/05.csv",
+      "fetched_at": null,
+      "sha256": "2f5c1d5e06ce1a488f93eee9c422211f4a460aa0b42f8a777e5e3e0ac8b484d5"
     }
   },
   "racers": [
@@ -350,5 +374,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
