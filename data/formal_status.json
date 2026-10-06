@@ -1,11 +1,11 @@
 {
   "schema_version": "boat-edge-formal-status-v2",
-  "asOf": "2026-10-06T23:52:31+09:00",
+  "asOf": "2026-10-07T00:07:56+09:00",
   "connected": false,
   "predictions_ready": false,
-  "current": "V12133_20261006_SOURCE_READY_WAIT_FORMAL_FREEZE",
-  "stage": "2026-10-06 PRE_RESULT / 5ソース取得済み / formal freeze待ち",
-  "target_date": "2026-10-06",
+  "current": "V12133_20261007_NEXT_UNTOUCHED_WAIT_5SOURCE",
+  "stage": "2026-10-07 PRE_RESULT / 5ソース待ち",
+  "target_date": "2026-10-07",
   "formalFirst100": {
     "races": 0,
     "racers": 0,
@@ -29,20 +29,19 @@
     "current": "V12133_20261005_FORMAL_PROVENANCE_GATE_FAILED_SCORING_UNVERIFIED",
     "reason": "Provenance discrepancies remained unresolved before RESULT_UNLOCK_TOKEN and result access. The 2026-10-05 metrics are diagnostic only and must not be promoted as formal."
   },
-  "next_exact_action": "Wait for 2026-10-06 PRE_RESULT five-source publication; freeze only the new untouched lexical first100; build D-1 through 2026-10-05; run exact V1.21.32/V1.21.33 twice; require byte-identical and final PRE_RESULT audit before unlock.",
-  "note": "2026-10-05 is not a formal accepted scoring result. 2026-10-06 is the next untouched target.",
+  "note": "SITE collector state only. Formal freeze is separate.",
   "collector_snapshot": {
-    "updated_at": "2026-10-06T23:52:31+09:00",
+    "updated_at": "2026-10-07T00:07:56+09:00",
     "source_rows": {
-      "race_cards": 156,
-      "stt": 156,
-      "tkz": 156,
-      "sui": 156,
-      "original_exhibition": 156
+      "race_cards": 0,
+      "stt": 0,
+      "tkz": 0,
+      "sui": 0,
+      "original_exhibition": 0
     },
-    "core7_eligible_count": 141,
-    "core7_100_ready": true,
-    "site_races_merged": 156,
+    "core7_eligible_count": 0,
+    "core7_100_ready": false,
+    "site_races_merged": 0,
     "formal_freeze_claimed": false
   }
 }
