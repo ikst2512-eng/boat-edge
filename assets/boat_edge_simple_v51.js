@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V70_BATCH_LEARNING_PURCHASE */
+/* BOAT_EDGE_SITE_V73_SELF_HEALING_HOME */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -448,6 +448,103 @@ function hook(){
  window.addEventListener("boat-edge-formal120",()=>render());
  if(typeof renderRace==="function"&&!renderRace.__be70){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(render);return x};renderRace.__be70=true}
  if(race())render();setInterval(()=>{if(document.visibilityState==="visible"&&race())render()},60000);
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
+
+/* BOAT_EDGE_SITE_V73_SELF_HEALING_HOME */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V73";
+const $=(q,r=document)=>r.querySelector(q);
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let lastTodayError=null,lastTodayOK=null,busy=false;
+
+function getState(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
+function venueName(v){return v?.venue||v?.name||v?.jcd||"開催場"}
+function mins(dl){
+ const m=/^(\d{1,2}):(\d{2})/.exec(String(dl||""));if(!m)return null;
+ const n=new Date(),t=new Date(n);t.setHours(+m[1],+m[2],0,0);return Math.floor((t-n)/60000);
+}
+async function getJSON(url){
+ try{
+  const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  return await r.json();
+ }catch(e){throw e}
+}
+function ensureStatus(){
+ let x=$("#be73Status");if(x)return x;
+ x=document.createElement("section");x.id="be73Status";
+ x.style.cssText="margin:10px 18px;padding:10px 12px;border:1px solid #dbe6f4;border-radius:12px;background:#fff;font-size:12px;line-height:1.5";
+ const h=$("#be51Home")||$("#homeView")||document.body;
+ h.prepend(x);return x;
+}
+function renderStatus(today,health){
+ const x=ensureStatus();
+ const venues=(today?.venues||[]).length;
+ const odds=health?.odds||{},learn=health?.learning||{},res=health?.results||{};
+ const ok=!!today;
+ x.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+ <b>BOAT EDGE V73 ● ${ok?"データ接続":"再接続中"}</b><span>${lastTodayOK||"—"}</span></div>
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:5px">
+ <span>開催 ${venues}場</span>
+ <span>オッズ ${odds.updated||0}R</span>
+ <span>結果 ${res.updated||0}R</span>
+ <span>学習 ${learn.evaluated||0}R</span>
+ ${lastTodayError?`<span style="color:#b54708">再取得: ${esc(lastTodayError)}</span>`:""}
+ </div>`;
+}
+function renderFallback(today){
+ let a=$("#be51Home");
+ if(!a){const home=$("#homeView");if(!home)return;a=document.createElement("div");a.id="be51Home";home.prepend(a)}
+ const vs=(today?.venues||[]).filter(v=>(v.races||[]).length);
+ let sel=a.dataset.venue;if(!vs.some(v=>String(v.jcd)===sel))sel=String(vs[0]?.jcd||"");a.dataset.venue=sel;
+ const v=vs.find(x=>String(x.jcd)===sel),rs=(v?.races||[]).filter(r=>{const m=mins(r.deadline);return m==null||m>=0});
+ a.innerHTML=`<section class="be51-head"><div><small>BOAT EDGE</small><h1>今日のレース</h1></div>
+ <div class="be57-headright"><span>${today?.updated_at?"更新済み":"読込中"}</span><button id="be73Refresh" type="button">↻ 更新</button></div></section>
+ <section class="be51-venues">${vs.map(x=>`<button data-v="${esc(x.jcd)}" class="${String(x.jcd)===sel?"on":""}">${esc(venueName(x))}</button>`).join("")||'<div class="be51-empty">開催データを再取得中</div>'}</section>
+ <section class="be51-box"><div class="be51-title"><b>${esc(venueName(v))}</b><span>レースを選択</span></div>
+ <div class="be51-grid">${rs.map(r=>{const m=mins(r.deadline);return `<button class="be51-race" data-file="${esc(r.file)}" data-jcd="${esc(v?.jcd)}"><b>${esc(r.race_no)}R</b><strong>${esc(r.deadline)}</strong><small>${m==null?"":m===0?"締切間近":m>0?`あと${m}分`:"締切済"}</small></button>`}).join("")||'<div class="be51-empty">表示できるレースがありません</div>'}</div></section>`;
+ $('[id="be73Refresh"]',a)?.addEventListener("click",()=>bootstrap(true));
+ a.querySelectorAll("[data-v]").forEach(b=>b.addEventListener("click",()=>{a.dataset.venue=b.dataset.v;renderFallback(today);renderStatus(today,window.__be73Health||null)}));
+ a.querySelectorAll("[data-file]").forEach(b=>b.addEventListener("click",()=>{try{if(typeof loadRace==="function")loadRace(b.dataset.file,b.dataset.jcd)}catch(_){}}));
+}
+async function bootstrap(force=false){
+ if(busy&&!force)return;busy=true;
+ let today=null,health=null;
+ try{
+  today=await getJSON("./data/today.json");
+  lastTodayOK=new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+  lastTodayError=null;
+  const st=getState();if(st)st.today=today;
+ }catch(e){lastTodayError=e?.message||String(e);today=getState()?.today||null}
+ try{health=await getJSON("./data/site_health.json")}catch(_){health=null}
+ window.__be73Health=health;
+ if(today){
+  try{if(typeof renderHome==="function")renderHome()}catch(_){}
+  // Always render an independent fallback after the legacy renderer.
+  renderFallback(today);
+ }
+ renderStatus(today,health);
+ busy=false;
+}
+function hardenLegacy(){
+ try{
+  if(typeof renderHome==="function"&&!renderHome.__be73safe){
+    const old=renderHome;
+    renderHome=function(...a){
+      let y;try{y=old.apply(this,a)}catch(e){lastTodayError="旧表示エラー";console.warn("BOAT EDGE legacy renderHome error",e)}
+      queueMicrotask(()=>{const t=getState()?.today;if(t){renderFallback(t);renderStatus(t,window.__be73Health||null)}});return y;
+    };renderHome.__be73safe=true;
+  }
+ }catch(_){}
+}
+function hook(){
+ hardenLegacy();
+ bootstrap();
+ setTimeout(()=>bootstrap(),3000);
+ setInterval(()=>{if(document.visibilityState==="visible")bootstrap()},30000);
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")bootstrap(true)});
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
