@@ -1,0 +1,60 @@
+name: BOAT EDGE V78 ブランドタイトル
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-brand-v78.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: V78タイトル反映
+        shell: bash
+        env:
+          BE78_JS: "LyogQk9BVF9FREdFX1NJVEVfVjc4X0JSQU5EX1RJVExFICovCigoKT0+eyJ1c2Ugc3RyaWN0IjsKd2luZG93LkJPQVRfRURHRV9TSVRFX1ZFUlNJT049IlY3OCI7CmZ1bmN0aW9uIGJyYW5kKCl7CiAgY29uc3QgY2FuZGlkYXRlcz1bLi4uZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgiaGVhZGVyLCAuaGVhZGVyLCAuYnJhbmQsIC5sb2dvLCBib2R5ICoiKV07CiAgZm9yKGNvbnN0IGVsIG9mIGNhbmRpZGF0ZXMpewogICAgaWYoZWwuY2hpbGRyZW4ubGVuZ3RoPjgpIGNvbnRpbnVlOwogICAgY29uc3QgdHh0PShlbC50ZXh0Q29udGVudHx8IiIpLnRyaW0oKS5yZXBsYWNlKC9ccysvZywiICIpOwogICAgaWYodHh0IT09IkJPQVQgRURHRSIpIGNvbnRpbnVlOwogICAgaWYoZWwuZGF0YXNldC5iZTc4QnJhbmQpIGNvbnRpbnVlOwogICAgZWwuZGF0YXNldC5iZTc4QnJhbmQ9IjEiOwogICAgZWwuY2xhc3NMaXN0LmFkZCgiYmU3OC1icmFuZC10aXRsZSIpOwogICAgZWwuaW5uZXJIVE1MPSc8c3BhbiBjbGFzcz0iYmU3OC1ib2F0Ij5CT0FUPC9zcGFuPjxzcGFuIGNsYXNzPSJiZTc4LWVkZ2UiPkVER0U8L3NwYW4+PGk+PC9pPic7CiAgfQogIGNvbnN0IHN0YXR1cz1kb2N1bWVudC5xdWVyeVNlbGVjdG9yKCIjYmU3M1N0YXR1cyIpOwogIGlmKHN0YXR1cylzdGF0dXMuaW5uZXJIVE1MPXN0YXR1cy5pbm5lckhUTUwucmVwbGFjZSgvQk9BVCBFREdFIFY3WzMtN10vZywiQk9BVCBFREdFIFY3OCIpOwp9CmZ1bmN0aW9uIGJvb3QoKXsKICBicmFuZCgpOwogIG5ldyBNdXRhdGlvbk9ic2VydmVyKCgpPT5yZXF1ZXN0QW5pbWF0aW9uRnJhbWUoYnJhbmQpKS5vYnNlcnZlKGRvY3VtZW50LmJvZHkse2NoaWxkTGlzdDp0cnVlLHN1YnRyZWU6dHJ1ZX0pOwp9CmRvY3VtZW50LnJlYWR5U3RhdGU9PT0ibG9hZGluZyI/ZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigiRE9NQ29udGVudExvYWRlZCIsYm9vdCk6Ym9vdCgpOwp9KSgpOw=="
+          BE78_CSS: "LyogQk9BVF9FREdFX1NJVEVfVjc4X0JSQU5EX1RJVExFICovCi5iZTc4LWJyYW5kLXRpdGxlewogIHBvc2l0aW9uOnJlbGF0aXZlIWltcG9ydGFudDsKICBkaXNwbGF5OmlubGluZS1mbGV4IWltcG9ydGFudDsKICBhbGlnbi1pdGVtczpjZW50ZXIhaW1wb3J0YW50OwogIGdhcDouMjBlbSFpbXBvcnRhbnQ7CiAgcGFkZGluZzoycHggMnB4IDdweCFpbXBvcnRhbnQ7CiAgZm9udC1mYW1pbHk6QXJpYWwsIkhlbHZldGljYSBOZXVlIixzYW5zLXNlcmlmIWltcG9ydGFudDsKICBmb250LXNpemU6Y2xhbXAoMjFweCw1Ljh2dywzMHB4KSFpbXBvcnRhbnQ7CiAgZm9udC13ZWlnaHQ6OTUwIWltcG9ydGFudDsKICBsaW5lLWhlaWdodDoxIWltcG9ydGFudDsKICBsZXR0ZXItc3BhY2luZzotLjA1NWVtIWltcG9ydGFudDsKICB3aGl0ZS1zcGFjZTpub3dyYXAhaW1wb3J0YW50OwogIGNvbG9yOiMwODJmNjchaW1wb3J0YW50OwogIHRleHQtc2hhZG93OjAgMXB4IDAgI2ZmZiwwIDVweCAxNnB4IHJnYmEoMTksOTMsMTg4LC4xMCkhaW1wb3J0YW50Owp9Ci5iZTc4LWJyYW5kLXRpdGxlIC5iZTc4LWJvYXR7Y29sb3I6IzBiMzc2ZiFpbXBvcnRhbnR9Ci5iZTc4LWJyYW5kLXRpdGxlIC5iZTc4LWVkZ2V7CiAgY29sb3I6IzEzNzZlOCFpbXBvcnRhbnQ7CiAgbGV0dGVyLXNwYWNpbmc6LS4wNjVlbSFpbXBvcnRhbnQ7Cn0KLmJlNzgtYnJhbmQtdGl0bGU+aXsKICBwb3NpdGlvbjphYnNvbHV0ZSFpbXBvcnRhbnQ7CiAgbGVmdDoycHghaW1wb3J0YW50OwogIGJvdHRvbTowIWltcG9ydGFudDsKICB3aWR0aDoxMDAlIWltcG9ydGFudDsKICBoZWlnaHQ6M3B4IWltcG9ydGFudDsKICBib3JkZXItcmFkaXVzOjk5cHghaW1wb3J0YW50OwogIGJhY2tncm91bmQ6bGluZWFyLWdyYWRpZW50KDkwZGVnLCMwYTNkODAgMCAzNyUsIzE2ODhmNSAzNyUgNzglLHJnYmEoMjIsMTM2LDI0NSwwKSAxMDAlKSFpbXBvcnRhbnQ7CiAgdHJhbnNmb3JtOnNrZXdYKC0yNWRlZykhaW1wb3J0YW50OwogIHRyYW5zZm9ybS1vcmlnaW46bGVmdCBjZW50ZXIhaW1wb3J0YW50Owp9"
+        run: |
+          python - <<'PY'
+          import os,base64
+          from pathlib import Path
+          jp=Path("assets/boat_edge_simple_v51.js")
+          cp=Path("assets/boat_edge_simple_v51.css")
+          js=jp.read_text(encoding="utf-8")
+          css=cp.read_text(encoding="utf-8")
+          if "BOAT_EDGE_SITE_V78_BRAND_TITLE" not in js:
+              js=js.rstrip()+"\n\n"+base64.b64decode(os.environ["BE78_JS"]).decode()+"\n"
+          if "BOAT_EDGE_SITE_V78_BRAND_TITLE" not in css:
+              css=css.rstrip()+"\n\n"+base64.b64decode(os.environ["BE78_CSS"]).decode()+"\n"
+          jp.write_text(js,encoding="utf-8")
+          cp.write_text(css,encoding="utf-8")
+          PY
+
+      - name: V78キャッシュ更新
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html");s=p.read_text(encoding="utf-8")
+          s=re.sub(r'boat_edge_simple_v51\.js(?:\?v=\d+)?','boat_edge_simple_v51.js?v=78',s)
+          s=re.sub(r'boat_edge_simple_v51\.css(?:\?v=\d+)?','boat_edge_simple_v51.css?v=78',s)
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js assets/boat_edge_simple_v51.css index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Update BOAT EDGE V78 brand title"
+          git push
