@@ -1,0 +1,60 @@
+name: BOAT EDGE V75 キャッシュ更新
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-cache-v75.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: V75キャッシュバスター反映
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+
+          # Force browsers (especially iOS Safari / in-app webviews) to fetch
+          # the latest BOAT EDGE JS instead of a cached V73 copy.
+          s=re.sub(
+              r'<script src="\./assets/boat_edge_simple_v51\.js(?:\?v=[^"]*)?"></script>',
+              '<script src="./assets/boat_edge_simple_v51.js?v=75"></script>',
+              s
+          )
+
+          # Also cache-bust the simple CSS so mobile layout changes arrive together.
+          s=re.sub(
+              r'<link rel="stylesheet" href="\./assets/boat_edge_simple_v51\.css(?:\?v=[^"]*)?">',
+              '<link rel="stylesheet" href="./assets/boat_edge_simple_v51.css?v=75">',
+              s
+          )
+
+          marker='<!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->'
+          if marker not in s:
+              s=s.replace('</head>', marker+'\n</head>', 1)
+
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "BOAT EDGE V75 cache bust"
+          git push
