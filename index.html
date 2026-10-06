@@ -1048,6 +1048,9 @@ body{background:
 }
 
 </style>
+<!-- BOAT_EDGE_FINAL_UI_V48 -->
+<link rel="stylesheet" href="./assets/boat_edge_final_v48.css">
+<link rel="stylesheet" href="./assets/boat_edge_simple_v51.css"><!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 </head>
 <body>
 <div class="app">
@@ -3091,5 +3094,7 @@ startPassiveRefresh();
 setInterval(()=>{ if(state.today){ renderSpotlightRaces(); renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
 setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUrgency(state.race,pred); if(document.getElementById("tab-direct")?.classList.contains("active")) renderDirectMode(state.race,pred); } },1000);
 </script>
+<script src="./assets/boat_edge_final_v48.js"></script>
+<script src="./assets/boat_edge_simple_v51.js"></script>
 </body>
 </html>
