@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V74_DEADLINE_SPOTLIGHT */
+/* BOAT_EDGE_SITE_V76_PERSISTENT_PRIORITY */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -680,6 +680,140 @@ function hook(){
  render();
  setInterval(()=>{if(document.visibilityState==="visible")render()},60000);
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")render()});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
+
+/* BOAT_EDGE_SITE_V76_PERSISTENT_PRIORITY */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V76";
+const $=(q,r=document)=>r.querySelector(q);
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let rendering=false,lastKey="",recCache={key:"",row:null,at:0};
+
+function st(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
+function mins(dl){
+ const m=/^(\d{1,2}):(\d{2})/.exec(String(dl||""));if(!m)return null;
+ const n=new Date(),t=new Date(n);t.setHours(+m[1],+m[2],0,0);
+ return Math.floor((t-n)/60000);
+}
+function upcoming(today){
+ const rows=[];
+ for(const v of (today?.venues||[]))for(const r of (v.races||[])){
+   const m=mins(r.deadline); if(m===null||m<0)continue;
+   rows.push({...r,jcd:v.jcd,venue:v.venue||v.name||v.jcd,event:v.event||"",mins:m});
+ }
+ return rows.sort((a,b)=>a.mins-b.mins || Number(a.race_no)-Number(b.race_no));
+}
+function attachHost(){
+ const home=$("#be51Home"); if(!home)return null;
+ let box=$("#be76Priority",home);
+ if(!box){
+   box=document.createElement("section"); box.id="be76Priority";
+   const head=$(".be51-head",home);
+   if(head?.nextSibling)home.insertBefore(box,head.nextSibling); else home.prepend(box);
+ }
+ return box;
+}
+function bind(root){
+ root.querySelectorAll("[data-file]").forEach(b=>b.onclick=()=>{try{if(typeof loadRace==="function")loadRace(b.dataset.file,b.dataset.jcd)}catch(_){}});
+}
+function raceCard(r){
+ return `<button data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}" style="width:100%;border:1px solid #dce7f5;border-radius:12px;background:#fff;padding:9px 10px;text-align:left">
+ <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+ <b style="font-size:14px">${esc(r.venue)} ${esc(r.race_no)}R</b><strong style="font-size:14px;color:#176bd6">${esc(r.deadline)}</strong></div>
+ <div style="font-size:11px;color:#6b7f97;margin-top:3px">${r.mins===0?"締切間近":`あと${r.mins}分`}</div></button>`;
+}
+function pval(v){const n=Number(v);if(!Number.isFinite(n))return null;return n<=1?n*100:n}
+function top(pred){
+ const a=[];
+ for(const w of (pred?.worlds||[]))for(const t of (w?.tickets||[])){
+   const p=pval(t?.probability);if(Number.isFinite(p))a.push({combo:t.combo,p,world:w.key});
+ }
+ a.sort((x,y)=>y.p-x.p);return a[0]||null;
+}
+function complete(d){
+ let n=0;
+ if((d?.beforeinfo?.racers||[]).length)n++;
+ if((d?.beforeinfo?.start_exhibition||[]).length)n++;
+ if((d?.actual_entry||[]).length)n++;
+ if((d?.original_exhibition?.boats||[]).length)n++;
+ return n/4;
+}
+async function fetchRace(row){
+ try{
+  const r=await fetch(`${row.file}?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)return null;
+  let d=await r.json();
+  try{
+    if(typeof loadFormalOverlay==="function"&&typeof mergeFormalOverlay==="function"){
+      d=mergeFormalOverlay(d,await loadFormalOverlay(d.race_key));
+    }
+  }catch(_){}
+  return d;
+ }catch(_){return null}
+}
+async function recommend(today){
+ const key=String(today?.updated_at||"");
+ if(recCache.key===key&&Date.now()-recCache.at<120000)return recCache.row;
+ const cand=upcoming(today).filter(x=>x.mins<=180).slice(0,12), scored=[];
+ for(let i=0;i<cand.length;i+=3){
+   const batch=await Promise.all(cand.slice(i,i+3).map(async row=>{
+     const d=await fetchRace(row);if(!d)return null;
+     let pred=null;try{pred=typeof getPrediction==="function"?getPrediction(d):null}catch(_){}
+     if(!pred)return null;
+     const t=top(pred),c=complete(d),decision=String(pred.decision||""),grade=String(pred.grade||"");
+     if(!t)return null;
+     const eligible=t.p>=10&&c>=0.5&&!/見送り|慎重|SKIP/i.test(decision);
+     const score=t.p+c*20+(pred.mode==="formal"?8:0)+(/^A|S/.test(grade)?5:0);
+     return {...row,t,c,decision,grade,formal:pred.mode==="formal",eligible,score};
+   }));
+   scored.push(...batch.filter(Boolean));
+ }
+ const row=scored.filter(x=>x.eligible).sort((a,b)=>b.score-a.score||a.mins-b.mins)[0]||null;
+ recCache={key,row,at:Date.now()};return row;
+}
+function recommendationHTML(r){
+ if(!r)return `<div style="padding:11px 12px;border:1px solid #dce7f5;border-radius:13px;background:#fff">
+ <div style="font-size:11px;font-weight:900;color:#176bd6">★ 一押しレース</div>
+ <b style="display:block;margin-top:3px">現時点なし</b>
+ <div style="font-size:11px;color:#6b7f97;margin-top:3px">条件が揃った時だけ表示</div></div>`;
+ return `<button data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}" style="width:100%;padding:12px;border:1px solid #b9d7fb;border-radius:13px;background:linear-gradient(135deg,#fff,#eef7ff);text-align:left">
+ <div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:900;color:#176bd6">★ 一押しレース</span><span style="font-size:11px">${r.formal?"正式":"暫定"}</span></div>
+ <div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><b>${esc(r.venue)} ${esc(r.race_no)}R</b><strong>${esc(r.deadline)} / あと${r.mins}分</strong></div>
+ <div style="font-size:11px;color:#5d728c;margin-top:4px">1位候補 ${esc(r.t.combo)} ${r.t.p.toFixed(1)}% / 勝負度 ${esc(r.grade||"—")} / 直前 ${Math.round(r.c*100)}%</div></button>`;
+}
+async function render(force=false){
+ if(rendering)return; rendering=true;
+ try{
+  const today=st()?.today;if(!today)return;
+  const host=attachHost();if(!host)return;
+  const rows=upcoming(today),key=(today.updated_at||"")+"|"+rows[0]?.race_key+"|"+rows.length;
+  if(force||host.dataset.key!==key){
+    host.dataset.key=key;
+    const first=rows.slice(0,8),rest=rows.slice(8);
+    host.innerHTML=`<div id="be76Rec">${recommendationHTML(recCache.row)}</div>
+    <div style="margin-top:10px;padding:11px;border:1px solid #dce7f5;border-radius:13px;background:#f8fbff">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px"><b>締切順</b><span style="font-size:11px;color:#6b7f97">全12場横断</span></div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">${first.map(raceCard).join("")}</div>
+      ${rest.length?`<details style="margin-top:7px"><summary style="font-size:12px">この後も見る（${rest.length}R）</summary><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px">${rest.map(raceCard).join("")}</div></details>`:""}
+    </div>`;
+    bind(host);
+  }
+  const rec=await recommend(today),recHost=$("#be76Rec",host);
+  if(recHost){recHost.innerHTML=recommendationHTML(rec);bind(recHost)}
+  const status=$("#be73Status");
+  if(status)status.innerHTML=status.innerHTML.replace(/BOAT EDGE V73/g,"BOAT EDGE V76").replace(/BOAT EDGE V74/g,"BOAT EDGE V76");
+ }finally{rendering=false}
+}
+function observe(){
+ const root=$("#homeView")||document.body;
+ const mo=new MutationObserver(()=>{if(!$("#be76Priority"))queueMicrotask(()=>render(true));else{const s=$("#be73Status");if(s&&/BOAT EDGE V7[34]/.test(s.innerHTML))s.innerHTML=s.innerHTML.replace(/BOAT EDGE V7[34]/g,"BOAT EDGE V76")}});
+ mo.observe(root,{childList:true,subtree:true});
+}
+function hook(){
+ observe();render(true);setTimeout(()=>render(true),1500);setTimeout(()=>render(true),4000);
+ setInterval(()=>{if(document.visibilityState==="visible")render()},30000);
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")render(true)});
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
