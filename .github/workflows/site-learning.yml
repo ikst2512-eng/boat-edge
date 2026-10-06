@@ -1,0 +1,178 @@
+name: BOAT EDGE 学習・購入分析 V70
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-learning.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-site-learning-v70
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: リポジトリ取得
+        uses: actions/checkout@v4
+
+      - name: Python準備
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: V70一括反映 + 学習集計
+        shell: bash
+        env:
+          BE70_ADDON_B64: "LyogQk9BVF9FREdFX1NJVEVfVjcwX0JBVENIX0xFQVJOSU5HX1BVUkNIQVNFICovCigoKT0+eyJ1c2Ugc3RyaWN0IjsKY29uc3QgS0VZPSJib2F0X2VkZ2VfdjU3X2xlYXJuaW5nX2xvZyIsIENGRz0iYm9hdF9lZGdlX3Y3MF9wdXJjaGFzZV9jZmciOwpjb25zdCAkPShxLHI9ZG9jdW1lbnQpPT5yLnF1ZXJ5U2VsZWN0b3IocSk7CmNvbnN0IHJhY2U9KCk9Pnt0cnl7cmV0dXJuIHR5cGVvZiBzdGF0ZSE9PSJ1bmRlZmluZWQiP3N0YXRlLnJhY2U6bnVsbH1jYXRjaChfKXtyZXR1cm4gbnVsbH19Owpjb25zdCBub3JtPXY9PntpZihBcnJheS5pc0FycmF5KHYpKXJldHVybiB2LnNsaWNlKDAsMykuam9pbigiLSIpO2NvbnN0IG09U3RyaW5nKHY/PyIiKS5tYXRjaCgvKFsxLTZdKVxEKyhbMS02XSlcRCsoWzEtNl0pLyk7cmV0dXJuIG0/YCR7bVsxXX0tJHttWzJdfS0ke21bM119YDpudWxsfTsKY29uc3QgbG9ncz0oKT0+e3RyeXtyZXR1cm4gSlNPTi5wYXJzZShsb2NhbFN0b3JhZ2UuZ2V0SXRlbShLRVkpfHwiW10iKX1jYXRjaChfKXtyZXR1cm5bXX19Owpjb25zdCBzYXZlTG9ncz1hPT57dHJ5e2xvY2FsU3RvcmFnZS5zZXRJdGVtKEtFWSxKU09OLnN0cmluZ2lmeShhLnNsaWNlKC0xNjAwKSkpfWNhdGNoKF8pe319Owpjb25zdCBjZmc9KCk9Pnt0cnl7cmV0dXJuIHsuLi57YnVkZ2V0OjUwMDAsY3V0b2ZmOjEwfSwuLi5KU09OLnBhcnNlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKENGRyl8fCJ7fSIpfX1jYXRjaChfKXtyZXR1cm4ge2J1ZGdldDo1MDAwLGN1dG9mZjoxMH19fTsKY29uc3Qgc2F2ZUNmZz12PT57dHJ5e2xvY2FsU3RvcmFnZS5zZXRJdGVtKENGRyxKU09OLnN0cmluZ2lmeSh2KSl9Y2F0Y2goXyl7fX07CmZ1bmN0aW9uIGRpc3Qocil7Y29uc3QgZD1yPy5fX2Zvcm1hbDEyMHx8d2luZG93Ll9fYm9hdEVkZ2VGb3JtYWwxMjA/LltyPy5yYWNlX2tleV07cmV0dXJuIEFycmF5LmlzQXJyYXkoZD8uZGlzdHJpYnV0aW9uMTIwKT9kLmRpc3RyaWJ1dGlvbjEyMDpbXX0KYXN5bmMgZnVuY3Rpb24gZ2V0SlNPTih1cmwpe3RyeXtjb25zdCB4PWF3YWl0IGZldGNoKHVybCsodXJsLmluY2x1ZGVzKCI/Iik/IiYiOiI/IikrInQ9IitEYXRlLm5vdygpLHtjYWNoZToibm8tc3RvcmUifSk7cmV0dXJuIHgub2s/YXdhaXQgeC5qc29uKCk6bnVsbH1jYXRjaChfKXtyZXR1cm4gbnVsbH19CmFzeW5jIGZ1bmN0aW9uIHJlc3VsdChrZXkpe2NvbnN0IGQ9YXdhaXQgZ2V0SlNPTihgLi9kYXRhL3NpdGVfcmVzdWx0cy8ke2tleX0uanNvbmApO3JldHVybiBkPy5zdGF0dXM9PT0iY29uZmlybWVkIj9kOm51bGx9CmZ1bmN0aW9uIG9kZHNNYXAocmF3KXsKIGNvbnN0IHNyYz1yYXc/LnRyaWZlY3RhX29kZHN8fHJhdz8ub2Rkc3x8cmF3Py5vZGRzM3R8fHJhdz8uZGF0YXx8cmF3OwogY29uc3Qgb3V0PXt9OwogaWYoQXJyYXkuaXNBcnJheShzcmMpKXtmb3IoY29uc3QgeCBvZiBzcmMpe2NvbnN0IGM9bm9ybSh4Py5jb21ib3x8eD8udHJpZmVjdGF8fHg/Lm9yZGVyKSxvPU51bWJlcih4Py5vZGRzPz94Py52YWx1ZT8/eD8ucmF0ZSk7aWYoYyYmbz4wKW91dFtjXT1vfX0KIGVsc2UgaWYoc3JjJiZ0eXBlb2Ygc3JjPT09Im9iamVjdCIpe2Zvcihjb25zdCBbayx2XSBvZiBPYmplY3QuZW50cmllcyhzcmMpKXtjb25zdCBjPW5vcm0oayksbz1OdW1iZXIodHlwZW9mIHY9PT0ib2JqZWN0Ij8odi5vZGRzPz92LnZhbHVlPz92LnJhdGUpOnYpO2lmKGMmJm8+MClvdXRbY109b319CiByZXR1cm4gb3V0Owp9CmFzeW5jIGZ1bmN0aW9uIGxvYWRPZGRzKHIpe2NvbnN0IHg9YXdhaXQgZ2V0SlNPTihgLi9kYXRhL3NpdGVfb2Rkcy8ke3IucmFjZV9rZXl9Lmpzb25gKTtyZXR1cm4gey4uLm9kZHNNYXAocj8ub2RkcyksLi4ub2Rkc01hcCh4KX19CmZ1bmN0aW9uIHVuaXRzQWxsb2Mocm93cyxidWRnZXQsd2VpZ2h0Rm4pewogY29uc3QgdW5pdHM9TWF0aC5tYXgoMSxNYXRoLmZsb29yKE51bWJlcihidWRnZXR8fDUwMDApLzEwMCkpLCB3cz1yb3dzLm1hcCgoeCxpKT0+TWF0aC5tYXgoMCxOdW1iZXIod2VpZ2h0Rm4oeCxpKSl8fDApKTsKIGxldCBzdW09d3MucmVkdWNlKChhLGIpPT5hK2IsMCk7IGlmKCFzdW0pe3dzLmZpbGwoMSk7c3VtPXdzLmxlbmd0aH0KIGNvbnN0IHJhdz13cy5tYXAodz0+dW5pdHMqdy9zdW0pLCBiYXNlPXJhdy5tYXAoTWF0aC5mbG9vciksIGxlZnQ9dW5pdHMtYmFzZS5yZWR1Y2UoKGEsYik9PmErYiwwKTsKIFsuLi5yYXcua2V5cygpXS5zb3J0KChhLGIpPT4ocmF3W2JdLWJhc2VbYl0pLShyYXdbYV0tYmFzZVthXSkpLnNsaWNlKDAsbGVmdCkuZm9yRWFjaChpPT5iYXNlW2ldKyspOwogcmV0dXJuIHJvd3MubWFwKCh4LGkpPT4oey4uLngsc3Rha2U6YmFzZVtpXSoxMDB9KSk7Cn0KZnVuY3Rpb24gc3RyYXRlZ3lSb3dzKHJvd3MsYnVkZ2V0LG9kZHMpewogY29uc3QgZXE9dW5pdHNBbGxvYyhyb3dzLGJ1ZGdldCwoKT0+MSksIHBwPXVuaXRzQWxsb2Mocm93cyxidWRnZXQseD0+eC5wcm9iYWJpbGl0eSk7CiBjb25zdCBhbGxPZGRzPXJvd3MubGVuZ3RoJiZyb3dzLmV2ZXJ5KHg9Pk51bWJlcihvZGRzW3guY29tYm9dKT4wKTsKIGNvbnN0IGR1PWFsbE9kZHM/dW5pdHNBbGxvYyhyb3dzLGJ1ZGdldCx4PT4xL051bWJlcihvZGRzW3guY29tYm9dKSk6bnVsbDsKIHJldHVybiBbe2lkOiJlcXVhbCIsbGFiZWw6IuWdh+etiSIscm93czplcX0se2lkOiJwcm9iIixsYWJlbDoi56K6546H5q+U5L6LIixyb3dzOnBwfSx7aWQ6ImR1dGNoIixsYWJlbDoi5omV5oi75Z2H562J5YyWIixyb3dzOmR1fV07Cn0KZnVuY3Rpb24gc3RhdHMoc3Qsb2Rkcyl7CiBpZighc3Qucm93cylyZXR1cm4gbnVsbDsgbGV0IGV2PTAsbWluPW51bGwsbWF4PW51bGwsaGF2ZT0wOwogZm9yKGNvbnN0IHggb2Ygc3Qucm93cyl7Y29uc3Qgbz1OdW1iZXIob2Rkc1t4LmNvbWJvXSk7aWYobz4wKXtoYXZlKys7Y29uc3QgZ3Jvc3M9eC5zdGFrZSpvO2V2Kz0oTnVtYmVyKHgucHJvYmFiaWxpdHkpfHwwKS8xMDAqZ3Jvc3M7bWluPW1pbj09PW51bGw/Z3Jvc3M6TWF0aC5taW4obWluLGdyb3NzKTttYXg9bWF4PT09bnVsbD9ncm9zczpNYXRoLm1heChtYXgsZ3Jvc3MpfX0KIHJldHVybiB7c3Rha2U6c3Qucm93cy5yZWR1Y2UoKGEseCk9PmEreC5zdGFrZSwwKSxldjpoYXZlPT09c3Qucm93cy5sZW5ndGg/TWF0aC5yb3VuZChldik6bnVsbCxtaW46aGF2ZT09PXN0LnJvd3MubGVuZ3RoP01hdGgucm91bmQobWluKTpudWxsLG1heDpoYXZlPT09c3Qucm93cy5sZW5ndGg/TWF0aC5yb3VuZChtYXgpOm51bGx9Owp9CmZ1bmN0aW9uIHllbih2KXtyZXR1cm4gdj09bnVsbD8i4oCUIjpOdW1iZXIodikudG9Mb2NhbGVTdHJpbmcoImphLUpQIikrIuWGhiJ9CmFzeW5jIGZ1bmN0aW9uIHBlcnNpc3RQbGFuKHIsc2VsZWN0ZWQsc3RyYXRlZ2llcyxvZGRzLGMpewogaWYoYXdhaXQgcmVzdWx0KHIucmFjZV9rZXkpKXJldHVybjsKIGNvbnN0IGE9bG9ncygpLGk9YS5maW5kSW5kZXgoeD0+eC50eXBlPT09InB1cmNoYXNlX3BsYW5fdjcwIiYmeC5rZXk9PT1yLnJhY2Vfa2V5KTsKIGNvbnN0IHJvdz17dHlwZToicHVyY2hhc2VfcGxhbl92NzAiLGtleTpyLnJhY2Vfa2V5LHNhdmVkX2F0Om5ldyBEYXRlKCkudG9JU09TdHJpbmcoKSxidWRnZXQ6Yy5idWRnZXQsY3V0b2ZmOmMuY3V0b2ZmLG9kZHMsY292ZXJhZ2U6c2VsZWN0ZWQucmVkdWNlKCh6LHgpPT56KyhOdW1iZXIoeC5wcm9iYWJpbGl0eSl8fDApLDApLHN0cmF0ZWdpZXM6c3RyYXRlZ2llcy5maWx0ZXIoeD0+eC5yb3dzKS5tYXAoeD0+KHtpZDp4LmlkLGxhYmVsOngubGFiZWwscm93czp4LnJvd3N9KSl9OwogaWYoaT49MClyZXR1cm47IGEucHVzaChyb3cpO3NhdmVMb2dzKGEpOwp9CmFzeW5jIGZ1bmN0aW9uIHNldHRsZVBsYW4ocil7CiBjb25zdCByZXM9YXdhaXQgcmVzdWx0KHIucmFjZV9rZXkpO2lmKCFyZXMpcmV0dXJuO2NvbnN0IGE9bG9ncygpLHBsYW49YS5maW5kKHg9PngudHlwZT09PSJwdXJjaGFzZV9wbGFuX3Y3MCImJngua2V5PT09ci5yYWNlX2tleSk7aWYoIXBsYW4pcmV0dXJuOwogaWYoYS5zb21lKHg9PngudHlwZT09PSJwdXJjaGFzZV9yZXN1bHRfdjcwIiYmeC5rZXk9PT1yLnJhY2Vfa2V5KSlyZXR1cm47CiBjb25zdCB3aW49bm9ybShyZXMudHJpZmVjdGF8fHJlcy5maW5pc2hfb3JkZXIpLHBheT1OdW1iZXIocmVzLnRyaWZlY3RhX3BheW91dF95ZW5fcGVyXzEwMCk7CiBjb25zdCBvdXRjb21lcz0ocGxhbi5zdHJhdGVnaWVzfHxbXSkubWFwKHM9Pntjb25zdCB0PShzLnJvd3N8fFtdKS5maW5kKHg9PnguY29tYm89PT13aW4pLHN0YWtlPShzLnJvd3N8fFtdKS5yZWR1Y2UoKHoseCk9PnorKE51bWJlcih4LnN0YWtlKXx8MCksMCksZ3Jvc3M9dCYmcGF5PjA/TWF0aC5mbG9vcihwYXkqKE51bWJlcih0LnN0YWtlKXx8MCkvMTAwKTowO3JldHVybiB7aWQ6cy5pZCxsYWJlbDpzLmxhYmVsLHdpbm5pbmdfc3Rha2U6dD8uc3Rha2V8fDAsdG90YWxfc3Rha2U6c3Rha2UscGF5b3V0Omdyb3NzLHByb2ZpdDpncm9zcy1zdGFrZX19KTsKIGEucHVzaCh7dHlwZToicHVyY2hhc2VfcmVzdWx0X3Y3MCIsa2V5OnIucmFjZV9rZXksZXZhbHVhdGVkX2F0Om5ldyBEYXRlKCkudG9JU09TdHJpbmcoKSx3aW5uaW5nX2NvbWJvOndpbixwYXlvdXQxMDA6cGF5fHxudWxsLG91dGNvbWVzfSk7c2F2ZUxvZ3MoYSk7Cn0KYXN5bmMgZnVuY3Rpb24gbGVhcm5pbmdTdW1tYXJ5KCl7CiBjb25zdCByZW1vdGU9YXdhaXQgZ2V0SlNPTigiLi9kYXRhL3NpdGVfbGVhcm5pbmcvc3VtbWFyeS5qc29uIik7IGlmKHJlbW90ZT8uZXZhbHVhdGVkIT1udWxsKXJldHVybiByZW1vdGU7CiBjb25zdCBhPWxvZ3MoKS5maWx0ZXIoeD0+eC50eXBlPT09ImRpc3RyaWJ1dGlvbjEyMF9yZXN1bHRfdjY1IiYmTnVtYmVyLmlzRmluaXRlKE51bWJlcih4Lndpbm5pbmdfcmFuaykpKSxyYW5rcz1hLm1hcCh4PT5OdW1iZXIoeC53aW5uaW5nX3JhbmspKTsKIGNvbnN0IG49cmFua3MubGVuZ3RoLHJhdGU9az0+bj9NYXRoLnJvdW5kKDEwMDAqcmFua3MuZmlsdGVyKHg9Png8PWspLmxlbmd0aC9uKS8xMDpudWxsOwogcmV0dXJuIHtldmFsdWF0ZWQ6bix0b3AxMF9yYXRlOnJhdGUoMTApLHRvcDMwX3JhdGU6cmF0ZSgzMCksdG9wNjBfcmF0ZTpyYXRlKDYwKSxhdmdfcmFuazpuP01hdGgucm91bmQoMTAqcmFua3MucmVkdWNlKCh4LHkpPT54K3ksMCkvbikvMTA6bnVsbCxzb3VyY2U6ImJyb3dzZXIifTsKfQpmdW5jdGlvbiBlbnN1cmVIb3N0KCl7CiBjb25zdCBoPSQoIiN0YWItcHJlZCAuc2VjdGlvbiIpfHwkKCIjdGFiLXByZWQiKTtpZighaClyZXR1cm4gbnVsbDtsZXQgeD0kKCIjYmU3MExhYiIpO2lmKCF4KXt4PWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoInNlY3Rpb24iKTt4LmlkPSJiZTcwTGFiIjtoLmFwcGVuZCh4KX1yZXR1cm4geDsKfQphc3luYyBmdW5jdGlvbiByZW5kZXIoKXsKIGNvbnN0IHI9cmFjZSgpLGhvc3Q9ZW5zdXJlSG9zdCgpO2lmKCFyfHwhaG9zdClyZXR1cm47Y29uc3QgZD1kaXN0KHIpLGM9Y2ZnKCksc3VtPWF3YWl0IGxlYXJuaW5nU3VtbWFyeSgpOwogaWYoIWQubGVuZ3RoKXtob3N0LmlubmVySFRNTD0nPGRpdiBjbGFzcz0iYmU2Mi1ib3giPjxkaXYgY2xhc3M9ImJlNjItdGl0bGUiPjxiPuizvOWFpeaIpueVpeODu+Wtpue/kuWIhuaekDwvYj48L2Rpdj48cD7mraPlvI8xMjDpgJrjgorliIbluIPjgpLlvoXjgaPjgabjgYTjgb7jgZnjgILnorrnjofjga/jgrXjgqTjg4jlgbTjgafkvZzjgorjgb7jgZvjgpPjgII8L3A+PC9kaXY+JztyZXR1cm59CiBjb25zdCBjdXRvZmY9TWF0aC5taW4oZC5sZW5ndGgsTWF0aC5tYXgoMSxOdW1iZXIoYy5jdXRvZmYpfHwxMCkpLHNlbGVjdGVkPWQuc2xpY2UoMCxjdXRvZmYpLG9kPWF3YWl0IGxvYWRPZGRzKHIpLHN0cmF0ZWdpZXM9c3RyYXRlZ3lSb3dzKHNlbGVjdGVkLGMuYnVkZ2V0LG9kKSxzcz1zdHJhdGVnaWVzLm1hcCh4PT4oey4uLngsc3RhdDpzdGF0cyh4LG9kKX0pKTsKIGNvbnN0IGNvdmVyYWdlPXNlbGVjdGVkLnJlZHVjZSgoeix4KT0+eisoTnVtYmVyKHgucHJvYmFiaWxpdHkpfHwwKSwwKTsKIGNvbnN0IHZhbGlkPXNzLmZpbHRlcih4PT54LnN0YXQ/LmV2IT1udWxsKS5zb3J0KChhLGIpPT5iLnN0YXQuZXYtYS5zdGF0LmV2KSxiZXN0PXZhbGlkWzBdfHxudWxsOwogY29uc3QgcmVjPWJlc3Q/YEFJ5o6o5aWo77yI6LO85YWl5q+U6LyD77yJOiAke2Jlc3QubGFiZWx9YDoiQUnmjqjlpag6IOOCquODg+OCuuW+heOBoSI7CiBjb25zdCBvcHRzPVszLDUsMTAsMjAsMzAsNjAsMTIwXS5tYXAobj0+YDxvcHRpb24gdmFsdWU9IiR7bn0iICR7bj09PWN1dG9mZj8ic2VsZWN0ZWQiOiIifT7kuIrkvY0ke25954K5PC9vcHRpb24+YCkuam9pbigiIik7CiBjb25zdCBzcm93PXg9PmA8ZGl2IGNsYXNzPSJiZTYyLXJvdyI+PGI+JHt4LmxhYmVsfTwvYj48c3Ryb25nPuaKleizhyAke3llbih4LnN0YXQ/LnN0YWtlKX08L3N0cm9uZz48c3Bhbj4ke3guc3RhdD8uZXY9PW51bGw/IkVW5pyq6KiI566XIjoi5pyf5b6F5omV5oi7ICIreWVuKHguc3RhdC5ldil9PC9zcGFuPjxzbWFsbD4ke3guc3RhdD8ubWluPT1udWxsPyLnj77lnKjjgqrjg4PjgrrmnKrlj5blvpciOiLmg7PlrprmiZXmiLvluYUgIit5ZW4oeC5zdGF0Lm1pbikrIuOAnCIreWVuKHguc3RhdC5tYXgpfTwvc21hbGw+PC9kaXY+YDsKIGhvc3QuaW5uZXJIVE1MPWA8ZGl2IGNsYXNzPSJiZTYyLWJveCI+CiA8ZGl2IGNsYXNzPSJiZTYyLXRpdGxlIj48Yj7os7zlhaXmiKbnlaXjg7vlrabnv5LliIbmnpA8L2I+PHNwYW4+5LqI5oOz6aCG5L2N44Gv56K6546H44Gu44G/PC9zcGFuPjwvZGl2PgogPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2dhcDo4cHg7ZmxleC13cmFwOndyYXA7bWFyZ2luOjEwcHggMCI+PGxhYmVsPuS6iOeulyA8aW5wdXQgaWQ9ImJlNzBCdWRnZXQiIHR5cGU9Im51bWJlciIgbWluPSIxMDAiIHN0ZXA9IjEwMCIgdmFsdWU9IiR7Yy5idWRnZXR9IiBzdHlsZT0id2lkdGg6MTAwcHgiPuWGhjwvbGFiZWw+PGxhYmVsPuWAmeijnCA8c2VsZWN0IGlkPSJiZTcwQ3V0b2ZmIj4ke29wdHN9PC9zZWxlY3Q+PC9sYWJlbD48L2Rpdj4KIDxwPjxiPiR7cmVjfTwvYj48YnI+6YG45oqe56+E5Zuy44Gu56K6546H5ZCI6KiIICR7Y292ZXJhZ2UudG9GaXhlZCgyKX0lIO+8jyDjgqrjg4Pjgrrjga/os7zlhaXliKTmlq3jgaDjgZHjgavkvb/nlKjjgZfjgb7jgZnjgII8L3A+CiAke3NzLm1hcChzcm93KS5qb2luKCIiKX0KIDxkZXRhaWxzPjxzdW1tYXJ5PuWtpue/kuaIkOe4vuOCkuimi+OCizwvc3VtbWFyeT48ZGl2IGNsYXNzPSJiZTU5LWdyaWQiPjxkaXY+PHNwYW4+5o6h54K55riI44G/PC9zcGFuPjxzdHJvbmc+JHtzdW0uZXZhbHVhdGVkfHwwfVI8L3N0cm9uZz48L2Rpdj48ZGl2PjxzcGFuPuato+ino1RPUDEwPC9zcGFuPjxzdHJvbmc+JHtzdW0udG9wMTBfcmF0ZT09bnVsbD8i4oCUIjpzdW0udG9wMTBfcmF0ZSsiJSJ9PC9zdHJvbmc+PC9kaXY+PGRpdj48c3Bhbj7mraPop6NUT1AzMDwvc3Bhbj48c3Ryb25nPiR7c3VtLnRvcDMwX3JhdGU9PW51bGw/IuKAlCI6c3VtLnRvcDMwX3JhdGUrIiUifTwvc3Ryb25nPjwvZGl2PjxkaXY+PHNwYW4+5q2j6KejVE9QNjA8L3NwYW4+PHN0cm9uZz4ke3N1bS50b3A2MF9yYXRlPT1udWxsPyLigJQiOnN1bS50b3A2MF9yYXRlKyIlIn08L3N0cm9uZz48L2Rpdj48ZGl2PjxzcGFuPuW5s+Wdh+ato+ino+mghuS9jTwvc3Bhbj48c3Ryb25nPiR7c3VtLmF2Z19yYW5rPz8i4oCUIn08L3N0cm9uZz48L2Rpdj48L2Rpdj48L2RldGFpbHM+CiA8L2Rpdj5gOwogJCgiI2JlNzBCdWRnZXQiKT8uYWRkRXZlbnRMaXN0ZW5lcigiY2hhbmdlIixlPT57c2F2ZUNmZyh7YnVkZ2V0Ok1hdGgubWF4KDEwMCxNYXRoLmZsb29yKE51bWJlcihlLnRhcmdldC52YWx1ZXx8NTAwMCkvMTAwKSoxMDApLGN1dG9mZjpOdW1iZXIoJCgiI2JlNzBDdXRvZmYiKT8udmFsdWV8fGN1dG9mZil9KTtyZW5kZXIoKX0pOwogJCgiI2JlNzBDdXRvZmYiKT8uYWRkRXZlbnRMaXN0ZW5lcigiY2hhbmdlIixlPT57c2F2ZUNmZyh7YnVkZ2V0Ok51bWJlcigkKCIjYmU3MEJ1ZGdldCIpPy52YWx1ZXx8NTAwMCksY3V0b2ZmOk51bWJlcihlLnRhcmdldC52YWx1ZSl9KTtyZW5kZXIoKX0pOwogYXdhaXQgcGVyc2lzdFBsYW4ocixzZWxlY3RlZCxzdHJhdGVnaWVzLG9kLHtidWRnZXQ6TnVtYmVyKGMuYnVkZ2V0KSxjdXRvZmZ9KTsgYXdhaXQgc2V0dGxlUGxhbihyKTsKfQpmdW5jdGlvbiBob29rKCl7CiB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigiYm9hdC1lZGdlLWZvcm1hbDEyMCIsKCk9PnJlbmRlcigpKTsKIGlmKHR5cGVvZiByZW5kZXJSYWNlPT09ImZ1bmN0aW9uIiYmIXJlbmRlclJhY2UuX19iZTcwKXtjb25zdCBvbGQ9cmVuZGVyUmFjZTtyZW5kZXJSYWNlPWZ1bmN0aW9uKC4uLmEpe2NvbnN0IHg9b2xkLmFwcGx5KHRoaXMsYSk7cXVldWVNaWNyb3Rhc2socmVuZGVyKTtyZXR1cm4geH07cmVuZGVyUmFjZS5fX2JlNzA9dHJ1ZX0KIGlmKHJhY2UoKSlyZW5kZXIoKTtzZXRJbnRlcnZhbCgoKT0+e2lmKGRvY3VtZW50LnZpc2liaWxpdHlTdGF0ZT09PSJ2aXNpYmxlIiYmcmFjZSgpKXJlbmRlcigpfSw2MDAwMCk7Cn0KZG9jdW1lbnQucmVhZHlTdGF0ZT09PSJsb2FkaW5nIj9kb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJET01Db250ZW50TG9hZGVkIixob29rKTpob29rKCk7Cn0pKCk7"
+        run: |
+          python - <<'PY'
+          import os, re, json, base64, statistics
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST).isoformat(timespec="seconds")
+
+          # 1) SITE V70 addon install (idempotent)
+          js=Path("assets/boat_edge_simple_v51.js")
+          s=js.read_text(encoding="utf-8")
+          marker="BOAT_EDGE_SITE_V70_BATCH_LEARNING_PURCHASE"
+          if marker not in s:
+              addon=base64.b64decode(os.environ["BE70_ADDON_B64"]).decode("utf-8")
+              s=re.sub(r'^/\* BOAT_EDGE_SITE_V\d+_[^*]+ \*/',
+                       '/* BOAT_EDGE_SITE_V70_BATCH_LEARNING_PURCHASE */',s,count=1)
+              s=s.rstrip()+"\n\n"+addon+"\n"
+              js.write_text(s,encoding="utf-8")
+
+          # 2) Durable server learning ledger. Prediction files are read-only.
+          roots=[Path("data/formal_predictions"),Path("data/formal")]
+          results=Path("data/site_results")
+          out=Path("data/site_learning/evaluations")
+          out.mkdir(parents=True,exist_ok=True)
+
+          def load(p):
+              try:return json.loads(p.read_text(encoding="utf-8"))
+              except:return None
+
+          def combo(v):
+              if isinstance(v,list): return "-".join(map(str,v[:3]))
+              m=re.search(r"([1-6])\D+([1-6])\D+([1-6])",str(v or ""))
+              return "-".join(m.groups()) if m else None
+
+          def safe_pre_result(d):
+              g=((d.get("formal_meta") or {}).get("guards") or
+                 (d.get("derived") or {}).get("guards") or {})
+              rs=g.get("results_seen",d.get("results_seen"))
+              sc=g.get("scoring",d.get("scoring"))
+              return rs is False and sc is not True
+
+          def distribution(d):
+              candidates=[
+                d.get("distribution120"),d.get("distribution_120"),
+                d.get("all_combinations"),d.get("trifecta_distribution"),
+                d.get("probabilities"),
+                (d.get("derived") or {}).get("distribution120"),
+                (d.get("derived") or {}).get("distribution_120")
+              ]
+              src=next((x for x in candidates if x),None)
+              if isinstance(src,dict):
+                  src=[dict(v,combo=k) if isinstance(v,dict)
+                       else {"combo":k,"probability":v} for k,v in src.items()]
+              if not isinstance(src,list): return []
+              a=[]
+              for t in src:
+                  if not isinstance(t,dict): continue
+                  c=combo(t.get("combo") or t.get("trifecta") or t.get("order"))
+                  try:p=float(t.get("probability",t.get("prob",t.get("p",t.get("rate")))))
+                  except:continue
+                  if c:a.append({"combo":c,"probability":p,
+                                  "world":t.get("world") or t.get("scenario") or t.get("pattern"),
+                                  "reasons":t.get("reasons") or t.get("reason")})
+              a.sort(key=lambda x:x["probability"],reverse=True)
+              for i,x in enumerate(a,1):x["rank"]=i
+              return a
+
+          preds={}
+          for root in roots:
+              if root.exists():
+                  for p in root.glob("*.json"):
+                      d=load(p)
+                      if d and safe_pre_result(d):
+                          preds[d.get("race_key") or p.stem]=d
+
+          rows=[]
+          skipped_no_dist=0
+          for key,d in sorted(preds.items()):
+              rp=results/f"{key}.json"
+              r=load(rp) if rp.exists() else None
+              if not r or r.get("status")!="confirmed": continue
+              a=distribution(d)
+              if not a:
+                  skipped_no_dist+=1
+                  continue
+              win=combo(r.get("trifecta") or r.get("finish_order"))
+              hit=next((x for x in a if x["combo"]==win),None)
+              row={
+                "schema_version":"boat-edge-site-learning-v70",
+                "race_key":key,
+                "evaluated_at":now,
+                "model":d.get("model") or (d.get("formal_meta") or {}).get("model") or d.get("current"),
+                "distribution_count":len(a),
+                "winning_combo":win,
+                "winning_rank":hit.get("rank") if hit else None,
+                "winning_probability":hit.get("probability") if hit else None,
+                "winning_world":hit.get("world") if hit else None,
+                "winning_reasons":hit.get("reasons") if hit else None,
+                "trifecta_payout_yen_per_100":r.get("trifecta_payout_yen_per_100"),
+                "prediction_guard":{"results_seen":False,"scoring":False}
+              }
+              (out/f"{key}.json").write_text(
+                  json.dumps(row,ensure_ascii=False,indent=2),encoding="utf-8")
+              rows.append(row)
+
+          ranks=[x["winning_rank"] for x in rows if isinstance(x.get("winning_rank"),int)]
+          def rate(k):
+              return round(100*sum(r<=k for r in ranks)/len(ranks),1) if ranks else None
+
+          summary={
+            "schema_version":"boat-edge-site-learning-summary-v70",
+            "updated_at":now,
+            "evaluated":len(rows),
+            "ranked":len(ranks),
+            "skipped_no_distribution":skipped_no_dist,
+            "top3_rate":rate(3),
+            "top5_rate":rate(5),
+            "top10_rate":rate(10),
+            "top20_rate":rate(20),
+            "top30_rate":rate(30),
+            "top60_rate":rate(60),
+            "top120_rate":rate(120),
+            "avg_rank":round(sum(ranks)/len(ranks),2) if ranks else None,
+            "median_rank":statistics.median(ranks) if ranks else None,
+            "source":"server_durable_ledger",
+            "results_seen_in_prediction":False
+          }
+          root=Path("data/site_learning")
+          root.mkdir(parents=True,exist_ok=True)
+          (root/"summary.json").write_text(
+              json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(summary,ensure_ascii=False))
+          PY
+
+      - name: 変更保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js data/site_learning
+          git diff --cached --quiet && exit 0
+          git commit -m "Update BOAT EDGE V70 learning and purchase layer"
+          git push
