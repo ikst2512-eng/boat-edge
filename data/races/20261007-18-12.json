@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯徳山ルーキーシリーズ第18戦",
     "race_no": 12,
     "deadline": "14:29",
-    "updated_at": "2026-10-07T07:18:09+09:00",
+    "updated_at": "2026-10-07T07:35:53+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261007&jcd=18&rno=12",
-      "fetched_at": "2026-10-07T07:18:09+09:00",
-      "sha256": "5da104633804cf207dd247b11670fd791f00acaddafc1aab8e51081f808126b7",
+      "fetched_at": "2026-10-07T07:35:53+09:00",
+      "sha256": "8685dc5290d98a98591c64d6abe601938f8915df20b420f8db9070a806f333ce",
       "error": null
     },
     "beforeinfo": {
@@ -29,6 +29,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/07.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/07.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/07.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/07.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -176,7 +200,7 @@
       "name": "加藤 優弥",
       "class": "B1",
       "age": 26,
-      "weight_kg": 51.5,
+      "weight_kg": 52.0,
       "branch": "福井",
       "birthplace": "福井",
       "F": 1,
@@ -214,7 +238,7 @@
         "11"
       ],
       "early_race": null,
-      "raw_text": "4 5185 / B1 加藤 優弥 福井/福井 26歳/51.5kg F1 L0 0.13 5.26 32.86 48.57 5.33 33.33 61.90 33 52.54 74.58 28 28.29 48.29 6 11 8 5 12 7 12 4 11"
+      "raw_text": "4 5185 / B1 加藤 優弥 福井/福井 26歳/52.0kg F1 L0 0.13 5.26 32.86 48.57 5.33 33.33 61.90 33 52.54 74.58 28 28.29 48.29 6 11 8 5 12 7 12 4 11"
     },
     {
       "lane": 5,
@@ -313,5 +337,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
