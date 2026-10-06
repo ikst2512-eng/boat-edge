@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V63_FULL_DISTRIBUTION_VERIFIED */
+/* BOAT_EDGE_SITE_V64_FORMAL120_BRIDGE */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -223,7 +223,7 @@ document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hoo
 const $=(s,r=document)=>r.querySelector(s);
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const getRace=()=>{try{return typeof state!=="undefined"?state.race:null}catch(_){return null}};
-const getPred=r=>{try{return typeof getPrediction==="function"&&r?getPrediction(r):null}catch(_){return null}};
+const getPred=r=>{try{const f=r?.__formal120||window.__boatEdgeFormal120?.[r?.race_key];if(f?.distribution120)return f;return typeof getPrediction==="function"&&r?getPrediction(r):null}catch(_){return null}};
 function combo(v){if(Array.isArray(v))return v.slice(0,3).join("-");const m=String(v??"").match(/([1-6])\D+([1-6])\D+([1-6])/);return m?`${m[1]}-${m[2]}-${m[3]}`:null}
 function why(t){const v=t?.reasons??t?.reason??t?.why??t?.explanation??t?.rationale;if(Array.isArray(v))return v.filter(Boolean).join(" / ");if(v&&typeof v==="object")return Object.values(v).filter(Boolean).join(" / ");return v?String(v):"理由データ未生成"}
 function rows(p){
@@ -242,3 +242,55 @@ function render(){
 function hook(){if(typeof renderRace==="function"&&!renderRace.__be63){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(render);return x};renderRace.__be63=true}if(getRace())render()}
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
+
+/* BOAT_EDGE_SITE_V64_FORMAL120_BRIDGE */
+(()=>{"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const KEY="boat_edge_v57_learning_log";
+const getRace=()=>{try{return typeof state!=="undefined"?state.race:null}catch(_){return null}};
+function logs(){try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch(_){return[]}}
+function save(a){try{localStorage.setItem(KEY,JSON.stringify(a.slice(-1000)))}catch(_){}}
+function norm(v){if(Array.isArray(v))return v.slice(0,3).join("-");const m=String(v??"").match(/([1-6])\D+([1-6])\D+([1-6])/);return m?`${m[1]}-${m[2]}-${m[3]}`:null}
+function normalize(raw,key){
+ const src=raw?.distribution120||raw?.distribution_120||raw?.all_combinations||raw?.trifecta_distribution||raw?.probabilities;
+ let a=Array.isArray(src)?src:(src&&typeof src==="object"?Object.entries(src).map(([combo,v])=>typeof v==="object"?{combo,...v}:{combo,probability:v}):[]);
+ a=a.map(t=>({combo:norm(t?.combo||t?.combination||t?.ticket||t?.trifecta||t?.order||t),probability:Number(t?.probability??t?.prob??t?.p??t?.rate),world:t?.world??t?.scenario??t?.pattern??null,reasons:t?.reasons??t?.reason??t?.why??t?.explanation??t?.rationale??null})).filter(x=>x.combo&&Number.isFinite(x.probability)).sort((a,b)=>b.probability-a.probability).map((x,i)=>({...x,rank:i+1}));
+ if(!a.length)return null;
+ return {race_key:raw?.race_key||key,model:raw?.model||raw?.formal_meta?.model||raw?.current||null,generated_at:raw?.generated_at||raw?.updated_at||null,distribution120:a};
+}
+async function fetchFormal120(key){
+ for(const path of [`./data/formal_predictions/${key}.json`,`./data/formal/${key}.json`]){
+  try{const r=await fetch(`${path}?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)continue;const n=normalize(await r.json(),key);if(n)return n}catch(_){}
+ }
+ return null;
+}
+function attachToPrediction(race,formal){
+ if(!race||!formal)return;
+ race.__formal120=formal;
+ const old=window.__boatEdgeFormal120||{};old[race.race_key]=formal;window.__boatEdgeFormal120=old;
+}
+function snapshotFormal(formal){
+ const key=formal?.race_key;if(!key)return;
+ const a=logs();if(a.some(x=>x.type==="prediction_distribution120_v64"&&x.key===key))return;
+ a.push({type:"prediction_distribution120_v64",key,saved_at:new Date().toISOString(),model:formal.model,generated_at:formal.generated_at,tickets:formal.distribution120});
+ save(a);
+}
+async function resultExists(key){
+ try{const r=await fetch(`./data/site_results/${key}.json?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)return false;return (await r.json())?.status==="confirmed"}catch(_){return false}
+}
+async function run(){
+ const race=getRace();if(!race?.race_key)return;
+ const formal=await fetchFormal120(race.race_key);if(!formal)return;
+ attachToPrediction(race,formal);
+ // PRE_RESULT only: never create the central 120 snapshot after a confirmed result exists.
+ if(!(await resultExists(race.race_key)))snapshotFormal(formal);
+ window.dispatchEvent(new CustomEvent("boat-edge-formal120",{detail:{race_key:race.race_key,count:formal.distribution120.length}}));
+}
+function hook(){
+ if(typeof renderRace==="function"&&!renderRace.__be64){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(run);return x};renderRace.__be64=true}
+ if(getRace())run();
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")run()});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();/* BOAT_EDGE_SITE_V64_RERENDER_SIGNAL */
+window.addEventListener("boat-edge-formal120",()=>{try{if(typeof renderRace==="function"&&typeof state!=="undefined"&&state.race)renderRace(state.race)}catch(_){}});
