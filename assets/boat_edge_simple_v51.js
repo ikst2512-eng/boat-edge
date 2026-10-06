@@ -971,3 +971,121 @@ function boot(){
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
 })();
+
+/* BOAT_EDGE_SITE_V79_RACE_COMMAND_CENTER */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V79";
+const $=(q,r=document)=>r.querySelector(q);
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen=n=>Number.isFinite(+n)?Math.round(+n).toLocaleString("ja-JP")+"円":"—";
+function stateObj(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
+function currentRace(){const s=stateObj();return s?.race||s?.currentRace||s?.raceData||null}
+function keyOf(d){return d?.race_key||d?.raceKey||d?.key||""}
+function pval(v){const n=Number(v);return Number.isFinite(n)?(n<=1?n*100:n):null}
+function getPred(d){try{return typeof getPrediction==="function"?getPrediction(d):null}catch(_){return null}}
+function tickets(pred){
+ const a=[];
+ for(const w of (pred?.worlds||[]))for(const t of (w?.tickets||[])){
+  const p=pval(t?.probability);
+  if(t?.combo&&Number.isFinite(p))a.push({...t,p,world:w.key||w.name||""});
+ }
+ return a.sort((x,y)=>y.p-x.p);
+}
+async function json(url){try{const r=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});return r.ok?await r.json():null}catch(_){return null}}
+function raceRoot(){
+ return $("#raceView")||$("#detailView")||$("#raceDetail")||document.querySelector('[data-view="race"]')||null;
+}
+function host(){
+ const root=raceRoot();if(!root)return null;
+ let h=$("#be79Command",root);
+ if(!h){h=document.createElement("section");h.id="be79Command";h.className="be79-command";root.prepend(h)}
+ return h;
+}
+function reason(t){
+ const r=t?.reason||t?.reasons||t?.rationale;
+ if(Array.isArray(r))return r.filter(Boolean).join(" / ");
+ if(r)return String(r);
+ return "理由データ未生成";
+}
+function oddsFor(o,combo){
+ const m=o?.trifecta_odds||o?.odds||{};
+ const v=m?.[combo]; return Number.isFinite(+v)?+v:null;
+}
+function stakePlan(ts,budget=5000){
+ if(!ts.length)return[];
+ const weights=ts.map(x=>Math.max(.01,x.p)),sum=weights.reduce((a,b)=>a+b,0);
+ let used=0;
+ return ts.map((x,i)=>{
+  let stake=i===ts.length-1?budget-used:Math.max(100,Math.round((budget*weights[i]/sum)/100)*100);
+  used+=stake;return {...x,stake};
+ });
+}
+function resultFinish(r){return r?.trifecta||((r?.finish_order||[]).slice(0,3).join("-"))||""}
+function topHTML(ts,o){
+ const show=ts.slice(0,10);
+ return show.map((t,i)=>{
+  const od=oddsFor(o,t.combo),est=od?Math.round(100*od):null;
+  return `<div class="be79-ticket"><div class="be79-rank">${i+1}</div><div class="be79-ticket-main"><b>${esc(t.combo)}</b><small>${esc(t.world)} / ${t.p.toFixed(1)}%</small><em>${esc(reason(t))}</em></div><div class="be79-odds">${od?od.toFixed(1)+"倍":"—"}<small>${est?yen(est)+"/100円":"オッズ待ち"}</small></div></div>`;
+ }).join("");
+}
+function purchaseHTML(ts,o,budget){
+ const plan=stakePlan(ts.slice(0,Math.min(10,ts.length)),budget);
+ return plan.map(x=>{
+  const od=oddsFor(o,x.combo),ret=od?Math.round(x.stake*od):null;
+  return `<div class="be79-buyrow"><b>${esc(x.combo)}</b><span>${yen(x.stake)}</span><span>${od?od.toFixed(1)+"倍":"—"}</span><strong>${ret?yen(ret):"—"}</strong></div>`;
+ }).join("");
+}
+async function render(force=false){
+ const d=currentRace(),h=host();if(!d||!h)return;
+ const k=keyOf(d);if(!k)return;
+ if(!force&&h.dataset.key===k&&Date.now()-(+h.dataset.at||0)<15000)return;
+ h.dataset.key=k;h.dataset.at=Date.now();
+ const pred=getPred(d),ts=tickets(pred);
+ const [o,r]=await Promise.all([json(`./data/site_odds/${k}.json`),json(`./data/site_results/${k}.json`)]);
+ const actual=resultFinish(r),hit=actual&&ts.some(x=>x.combo===actual);
+ const budget=5000;
+ const formal=pred?.mode==="formal";
+ h.innerHTML=`
+ <div class="be79-top">
+  <div><small>RACE COMMAND</small><h2>実戦パネル</h2></div>
+  <button id="be79Refresh">最新に更新</button>
+ </div>
+ <div class="be79-strip">
+  <span>予想 <b>${formal?"正式":"暫定"}</b></span>
+  <span>120通り <b>${ts.length>=120?"取得":"未取得"}</b></span>
+  <span>オッズ <b>${o?.available_count||Object.keys(o?.trifecta_odds||{}).length||0}/120</b></span>
+  <span>結果 <b>${actual?(hit?"的中":"不的中"):"未確定"}</b></span>
+ </div>
+ ${actual?`<div class="be79-result ${hit?"hit":"miss"}"><b>${hit?"的中":"不的中"}</b><span>確定 ${esc(actual)}</span><span>100円払戻 ${yen(r?.trifecta_payout_yen_per_100)}</span></div>`:""}
+ <details open class="be79-box"><summary>予想確率・理由</summary><div class="be79-tickets">${ts.length?topHTML(ts,o):'<p class="be79-empty">予想データ待ち</p>'}</div>${ts.length>10?`<small class="be79-note">上位10点を表示。全120通りは既存の確率一覧で確認できます。</small>`:""}</details>
+ <details class="be79-box"><summary>5,000円 購入シミュレーション</summary>
+  <div class="be79-buyhead"><span>買い目</span><span>金額</span><span>オッズ</span><span>想定払戻</span></div>
+  <div>${ts.length?purchaseHTML(ts,o,budget):'<p class="be79-empty">予想データ待ち</p>'}</div>
+  <div class="be79-note">予想順位は確率ベースのまま。オッズは購入シミュレーションにだけ使用。</div>
+ </details>
+ <details class="be79-box"><summary>結果・学習</summary>
+  <div class="be79-learn">
+   <span>事前予想スナップショットを固定</span><span>→</span><span>結果を自動照合</span><span>→</span><span>順位・的中・収支を記録</span>
+  </div>
+  <div class="be79-note">結果を見て予想を作り直さず、検証用ログとして分離保存。</div>
+ </details>`;
+ $("#be79Refresh",h)?.addEventListener("click",async e=>{
+  const b=e.currentTarget;b.disabled=true;b.textContent="更新中…";
+  try{
+   if(typeof loadRace==="function"){
+    const s=stateObj(),file=s?.raceFile||d?.file||d?.source_file;
+    if(file)await loadRace(file,d?.jcd);
+   }
+   h.dataset.at="0";await render(true);
+  }finally{b.disabled=false;b.textContent="最新に更新"}
+ });
+ const st=$("#be73Status");if(st)st.innerHTML=st.innerHTML.replace(/BOAT EDGE V7[3-8]/g,"BOAT EDGE V79");
+}
+function boot(){
+ render(true);
+ new MutationObserver(()=>{if(currentRace())requestAnimationFrame(()=>render())}).observe(document.body,{childList:true,subtree:true});
+ setInterval(()=>{if(document.visibilityState==="visible"&&currentRace())render()},30000);
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")render(true)});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+})();
