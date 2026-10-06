@@ -1,0 +1,104 @@
+name: BOAT EDGE 自己復旧ホーム V73
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-recovery.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-site-recovery-v73
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: V73自己復旧ホーム反映
+        shell: bash
+        env:
+          BE73_ADDON_B64: "LyogQk9BVF9FREdFX1NJVEVfVjczX1NFTEZfSEVBTElOR19IT01FICovCigoKT0+eyJ1c2Ugc3RyaWN0IjsKd2luZG93LkJPQVRfRURHRV9TSVRFX1ZFUlNJT049IlY3MyI7CmNvbnN0ICQ9KHEscj1kb2N1bWVudCk9PnIucXVlcnlTZWxlY3RvcihxKTsKY29uc3QgZXNjPXY9PlN0cmluZyh2Pz8i4oCUIikucmVwbGFjZSgvWyY8PiInXS9nLGM9Pih7IiYiOiImYW1wOyIsIjwiOiImbHQ7IiwiPiI6IiZndDsiLCciJzoiJnF1b3Q7IiwiJyI6IiYjMzk7In1bY10pKTsKbGV0IGxhc3RUb2RheUVycm9yPW51bGwsbGFzdFRvZGF5T0s9bnVsbCxidXN5PWZhbHNlOwoKZnVuY3Rpb24gZ2V0U3RhdGUoKXt0cnl7cmV0dXJuIHR5cGVvZiBzdGF0ZSE9PSJ1bmRlZmluZWQiP3N0YXRlOm51bGx9Y2F0Y2goXyl7cmV0dXJuIG51bGx9fQpmdW5jdGlvbiB2ZW51ZU5hbWUodil7cmV0dXJuIHY/LnZlbnVlfHx2Py5uYW1lfHx2Py5qY2R8fCLplovlgqzloLQifQpmdW5jdGlvbiBtaW5zKGRsKXsKIGNvbnN0IG09L14oXGR7MSwyfSk6KFxkezJ9KS8uZXhlYyhTdHJpbmcoZGx8fCIiKSk7aWYoIW0pcmV0dXJuIG51bGw7CiBjb25zdCBuPW5ldyBEYXRlKCksdD1uZXcgRGF0ZShuKTt0LnNldEhvdXJzKCttWzFdLCttWzJdLDAsMCk7cmV0dXJuIE1hdGguZmxvb3IoKHQtbikvNjAwMDApOwp9CmFzeW5jIGZ1bmN0aW9uIGdldEpTT04odXJsKXsKIHRyeXsKICBjb25zdCByPWF3YWl0IGZldGNoKHVybCsodXJsLmluY2x1ZGVzKCI/Iik/IiYiOiI/IikrInQ9IitEYXRlLm5vdygpLHtjYWNoZToibm8tc3RvcmUifSk7CiAgaWYoIXIub2spdGhyb3cgbmV3IEVycm9yKCJIVFRQICIrci5zdGF0dXMpOwogIHJldHVybiBhd2FpdCByLmpzb24oKTsKIH1jYXRjaChlKXt0aHJvdyBlfQp9CmZ1bmN0aW9uIGVuc3VyZVN0YXR1cygpewogbGV0IHg9JCgiI2JlNzNTdGF0dXMiKTtpZih4KXJldHVybiB4OwogeD1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCJzZWN0aW9uIik7eC5pZD0iYmU3M1N0YXR1cyI7CiB4LnN0eWxlLmNzc1RleHQ9Im1hcmdpbjoxMHB4IDE4cHg7cGFkZGluZzoxMHB4IDEycHg7Ym9yZGVyOjFweCBzb2xpZCAjZGJlNmY0O2JvcmRlci1yYWRpdXM6MTJweDtiYWNrZ3JvdW5kOiNmZmY7Zm9udC1zaXplOjEycHg7bGluZS1oZWlnaHQ6MS41IjsKIGNvbnN0IGg9JCgiI2JlNTFIb21lIil8fCQoIiNob21lVmlldyIpfHxkb2N1bWVudC5ib2R5OwogaC5wcmVwZW5kKHgpO3JldHVybiB4Owp9CmZ1bmN0aW9uIHJlbmRlclN0YXR1cyh0b2RheSxoZWFsdGgpewogY29uc3QgeD1lbnN1cmVTdGF0dXMoKTsKIGNvbnN0IHZlbnVlcz0odG9kYXk/LnZlbnVlc3x8W10pLmxlbmd0aDsKIGNvbnN0IG9kZHM9aGVhbHRoPy5vZGRzfHx7fSxsZWFybj1oZWFsdGg/LmxlYXJuaW5nfHx7fSxyZXM9aGVhbHRoPy5yZXN1bHRzfHx7fTsKIGNvbnN0IG9rPSEhdG9kYXk7CiB4LmlubmVySFRNTD1gPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2p1c3RpZnktY29udGVudDpzcGFjZS1iZXR3ZWVuO2dhcDo4cHg7ZmxleC13cmFwOndyYXAiPgogPGI+Qk9BVCBFREdFIFY3MyDil48gJHtvaz8i44OH44O844K/5o6l57aaIjoi5YaN5o6l57aa5LitIn08L2I+PHNwYW4+JHtsYXN0VG9kYXlPS3x8IuKAlCJ9PC9zcGFuPjwvZGl2PgogPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2dhcDoxMHB4O2ZsZXgtd3JhcDp3cmFwO21hcmdpbi10b3A6NXB4Ij4KIDxzcGFuPumWi+WCrCAke3ZlbnVlc33loLQ8L3NwYW4+CiA8c3Bhbj7jgqrjg4PjgrogJHtvZGRzLnVwZGF0ZWR8fDB9Ujwvc3Bhbj4KIDxzcGFuPue1kOaenCAke3Jlcy51cGRhdGVkfHwwfVI8L3NwYW4+CiA8c3Bhbj7lrabnv5IgJHtsZWFybi5ldmFsdWF0ZWR8fDB9Ujwvc3Bhbj4KICR7bGFzdFRvZGF5RXJyb3I/YDxzcGFuIHN0eWxlPSJjb2xvcjojYjU0NzA4Ij7lho3lj5blvpc6ICR7ZXNjKGxhc3RUb2RheUVycm9yKX08L3NwYW4+YDoiIn0KIDwvZGl2PmA7Cn0KZnVuY3Rpb24gcmVuZGVyRmFsbGJhY2sodG9kYXkpewogbGV0IGE9JCgiI2JlNTFIb21lIik7CiBpZighYSl7Y29uc3QgaG9tZT0kKCIjaG9tZVZpZXciKTtpZighaG9tZSlyZXR1cm47YT1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTthLmlkPSJiZTUxSG9tZSI7aG9tZS5wcmVwZW5kKGEpfQogY29uc3QgdnM9KHRvZGF5Py52ZW51ZXN8fFtdKS5maWx0ZXIodj0+KHYucmFjZXN8fFtdKS5sZW5ndGgpOwogbGV0IHNlbD1hLmRhdGFzZXQudmVudWU7aWYoIXZzLnNvbWUodj0+U3RyaW5nKHYuamNkKT09PXNlbCkpc2VsPVN0cmluZyh2c1swXT8uamNkfHwiIik7YS5kYXRhc2V0LnZlbnVlPXNlbDsKIGNvbnN0IHY9dnMuZmluZCh4PT5TdHJpbmcoeC5qY2QpPT09c2VsKSxycz0odj8ucmFjZXN8fFtdKS5maWx0ZXIocj0+e2NvbnN0IG09bWlucyhyLmRlYWRsaW5lKTtyZXR1cm4gbT09bnVsbHx8bT49MH0pOwogYS5pbm5lckhUTUw9YDxzZWN0aW9uIGNsYXNzPSJiZTUxLWhlYWQiPjxkaXY+PHNtYWxsPkJPQVQgRURHRTwvc21hbGw+PGgxPuS7iuaXpeOBruODrOODvOOCuTwvaDE+PC9kaXY+CiA8ZGl2IGNsYXNzPSJiZTU3LWhlYWRyaWdodCI+PHNwYW4+JHt0b2RheT8udXBkYXRlZF9hdD8i5pu05paw5riI44G/Ijoi6Kqt6L685LitIn08L3NwYW4+PGJ1dHRvbiBpZD0iYmU3M1JlZnJlc2giIHR5cGU9ImJ1dHRvbiI+4oa7IOabtOaWsDwvYnV0dG9uPjwvZGl2Pjwvc2VjdGlvbj4KIDxzZWN0aW9uIGNsYXNzPSJiZTUxLXZlbnVlcyI+JHt2cy5tYXAoeD0+YDxidXR0b24gZGF0YS12PSIke2VzYyh4LmpjZCl9IiBjbGFzcz0iJHtTdHJpbmcoeC5qY2QpPT09c2VsPyJvbiI6IiJ9Ij4ke2VzYyh2ZW51ZU5hbWUoeCkpfTwvYnV0dG9uPmApLmpvaW4oIiIpfHwnPGRpdiBjbGFzcz0iYmU1MS1lbXB0eSI+6ZaL5YKs44OH44O844K/44KS5YaN5Y+W5b6X5LitPC9kaXY+J308L3NlY3Rpb24+CiA8c2VjdGlvbiBjbGFzcz0iYmU1MS1ib3giPjxkaXYgY2xhc3M9ImJlNTEtdGl0bGUiPjxiPiR7ZXNjKHZlbnVlTmFtZSh2KSl9PC9iPjxzcGFuPuODrOODvOOCueOCkumBuOaKnjwvc3Bhbj48L2Rpdj4KIDxkaXYgY2xhc3M9ImJlNTEtZ3JpZCI+JHtycy5tYXAocj0+e2NvbnN0IG09bWlucyhyLmRlYWRsaW5lKTtyZXR1cm4gYDxidXR0b24gY2xhc3M9ImJlNTEtcmFjZSIgZGF0YS1maWxlPSIke2VzYyhyLmZpbGUpfSIgZGF0YS1qY2Q9IiR7ZXNjKHY/LmpjZCl9Ij48Yj4ke2VzYyhyLnJhY2Vfbm8pfVI8L2I+PHN0cm9uZz4ke2VzYyhyLmRlYWRsaW5lKX08L3N0cm9uZz48c21hbGw+JHttPT1udWxsPyIiOm09PT0wPyLnt6DliIfplpPov5EiOm0+MD9g44GC44GoJHttfeWIhmA6Iue3oOWIh+a4iCJ9PC9zbWFsbD48L2J1dHRvbj5gfSkuam9pbigiIil8fCc8ZGl2IGNsYXNzPSJiZTUxLWVtcHR5Ij7ooajnpLrjgafjgY3jgovjg6zjg7zjgrnjgYzjgYLjgorjgb7jgZvjgpM8L2Rpdj4nfTwvZGl2Pjwvc2VjdGlvbj5gOwogJCgnW2lkPSJiZTczUmVmcmVzaCJdJyxhKT8uYWRkRXZlbnRMaXN0ZW5lcigiY2xpY2siLCgpPT5ib290c3RyYXAodHJ1ZSkpOwogYS5xdWVyeVNlbGVjdG9yQWxsKCJbZGF0YS12XSIpLmZvckVhY2goYj0+Yi5hZGRFdmVudExpc3RlbmVyKCJjbGljayIsKCk9PnthLmRhdGFzZXQudmVudWU9Yi5kYXRhc2V0LnY7cmVuZGVyRmFsbGJhY2sodG9kYXkpO3JlbmRlclN0YXR1cyh0b2RheSx3aW5kb3cuX19iZTczSGVhbHRofHxudWxsKX0pKTsKIGEucXVlcnlTZWxlY3RvckFsbCgiW2RhdGEtZmlsZV0iKS5mb3JFYWNoKGI9PmIuYWRkRXZlbnRMaXN0ZW5lcigiY2xpY2siLCgpPT57dHJ5e2lmKHR5cGVvZiBsb2FkUmFjZT09PSJmdW5jdGlvbiIpbG9hZFJhY2UoYi5kYXRhc2V0LmZpbGUsYi5kYXRhc2V0LmpjZCl9Y2F0Y2goXyl7fX0pKTsKfQphc3luYyBmdW5jdGlvbiBib290c3RyYXAoZm9yY2U9ZmFsc2UpewogaWYoYnVzeSYmIWZvcmNlKXJldHVybjtidXN5PXRydWU7CiBsZXQgdG9kYXk9bnVsbCxoZWFsdGg9bnVsbDsKIHRyeXsKICB0b2RheT1hd2FpdCBnZXRKU09OKCIuL2RhdGEvdG9kYXkuanNvbiIpOwogIGxhc3RUb2RheU9LPW5ldyBEYXRlKCkudG9Mb2NhbGVUaW1lU3RyaW5nKCJqYS1KUCIse2hvdXI6IjItZGlnaXQiLG1pbnV0ZToiMi1kaWdpdCJ9KTsKICBsYXN0VG9kYXlFcnJvcj1udWxsOwogIGNvbnN0IHN0PWdldFN0YXRlKCk7aWYoc3Qpc3QudG9kYXk9dG9kYXk7CiB9Y2F0Y2goZSl7bGFzdFRvZGF5RXJyb3I9ZT8ubWVzc2FnZXx8U3RyaW5nKGUpO3RvZGF5PWdldFN0YXRlKCk/LnRvZGF5fHxudWxsfQogdHJ5e2hlYWx0aD1hd2FpdCBnZXRKU09OKCIuL2RhdGEvc2l0ZV9oZWFsdGguanNvbiIpfWNhdGNoKF8pe2hlYWx0aD1udWxsfQogd2luZG93Ll9fYmU3M0hlYWx0aD1oZWFsdGg7CiBpZih0b2RheSl7CiAgdHJ5e2lmKHR5cGVvZiByZW5kZXJIb21lPT09ImZ1bmN0aW9uIilyZW5kZXJIb21lKCl9Y2F0Y2goXyl7fQogIC8vIEFsd2F5cyByZW5kZXIgYW4gaW5kZXBlbmRlbnQgZmFsbGJhY2sgYWZ0ZXIgdGhlIGxlZ2FjeSByZW5kZXJlci4KICByZW5kZXJGYWxsYmFjayh0b2RheSk7CiB9CiByZW5kZXJTdGF0dXModG9kYXksaGVhbHRoKTsKIGJ1c3k9ZmFsc2U7Cn0KZnVuY3Rpb24gaGFyZGVuTGVnYWN5KCl7CiB0cnl7CiAgaWYodHlwZW9mIHJlbmRlckhvbWU9PT0iZnVuY3Rpb24iJiYhcmVuZGVySG9tZS5fX2JlNzNzYWZlKXsKICAgIGNvbnN0IG9sZD1yZW5kZXJIb21lOwogICAgcmVuZGVySG9tZT1mdW5jdGlvbiguLi5hKXsKICAgICAgbGV0IHk7dHJ5e3k9b2xkLmFwcGx5KHRoaXMsYSl9Y2F0Y2goZSl7bGFzdFRvZGF5RXJyb3I9IuaXp+ihqOekuuOCqOODqeODvCI7Y29uc29sZS53YXJuKCJCT0FUIEVER0UgbGVnYWN5IHJlbmRlckhvbWUgZXJyb3IiLGUpfQogICAgICBxdWV1ZU1pY3JvdGFzaygoKT0+e2NvbnN0IHQ9Z2V0U3RhdGUoKT8udG9kYXk7aWYodCl7cmVuZGVyRmFsbGJhY2sodCk7cmVuZGVyU3RhdHVzKHQsd2luZG93Ll9fYmU3M0hlYWx0aHx8bnVsbCl9fSk7cmV0dXJuIHk7CiAgICB9O3JlbmRlckhvbWUuX19iZTczc2FmZT10cnVlOwogIH0KIH1jYXRjaChfKXt9Cn0KZnVuY3Rpb24gaG9vaygpewogaGFyZGVuTGVnYWN5KCk7CiBib290c3RyYXAoKTsKIHNldFRpbWVvdXQoKCk9PmJvb3RzdHJhcCgpLDMwMDApOwogc2V0SW50ZXJ2YWwoKCk9PntpZihkb2N1bWVudC52aXNpYmlsaXR5U3RhdGU9PT0idmlzaWJsZSIpYm9vdHN0cmFwKCl9LDMwMDAwKTsKIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoInZpc2liaWxpdHljaGFuZ2UiLCgpPT57aWYoZG9jdW1lbnQudmlzaWJpbGl0eVN0YXRlPT09InZpc2libGUiKWJvb3RzdHJhcCh0cnVlKX0pOwp9CmRvY3VtZW50LnJlYWR5U3RhdGU9PT0ibG9hZGluZyI/ZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigiRE9NQ29udGVudExvYWRlZCIsaG9vayk6aG9vaygpOwp9KSgpOw=="
+        run: |
+          python - <<'PY'
+          import os,re,json,base64,hashlib
+          from pathlib import Path
+          from datetime import datetime,timezone,timedelta
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST).isoformat(timespec="seconds")
+          js=Path("assets/boat_edge_simple_v51.js")
+          s=js.read_text(encoding="utf-8")
+          marker="BOAT_EDGE_SITE_V73_SELF_HEALING_HOME"
+          if marker not in s:
+              addon=base64.b64decode(os.environ["BE73_ADDON_B64"]).decode("utf-8")
+              s=re.sub(r'^/\* BOAT_EDGE_SITE_V\d+_[^*]+ \*/',
+                       '/* BOAT_EDGE_SITE_V73_SELF_HEALING_HOME */',s,count=1)
+              s=s.rstrip()+"\n\n"+addon+"\n"
+              js.write_text(s,encoding="utf-8")
+
+          def load(p):
+              try:return json.loads(Path(p).read_text(encoding="utf-8"))
+              except:return {}
+
+          today=load("data/today.json")
+          odds=load("data/site_odds/index.json")
+          results=load("data/site_results/index.json")
+          learning=load("data/site_learning/summary.json")
+          health={
+            "schema_version":"boat-edge-site-health-v73",
+            "site_version":"V73",
+            "generated_at":now,
+            "site_asset_v73":marker in js.read_text(encoding="utf-8"),
+            "asset_sha256":hashlib.sha256(js.read_bytes()).hexdigest(),
+            "today":{
+              "date":today.get("date"),
+              "updated_at":today.get("updated_at"),
+              "active_venues":len(today.get("venues",[])),
+              "results_seen":today.get("results_seen"),
+              "unlock":today.get("unlock"),
+              "scoring":today.get("scoring")
+            },
+            "odds":{
+              "updated_at":odds.get("updated_at"),
+              "checked":odds.get("checked",0),
+              "updated":odds.get("updated",0),
+              "errors":len(odds.get("errors",[])),
+              "prediction_logic_uses_odds":odds.get("prediction_logic_uses_odds",False)
+            },
+            "results":{
+              "updated_at":results.get("updated_at"),
+              "checked":results.get("checked",0),
+              "updated":results.get("updated",0),
+              "errors":len(results.get("errors",[]))
+            },
+            "learning":{
+              "updated_at":learning.get("updated_at"),
+              "evaluated":learning.get("evaluated",0),
+              "ranked":learning.get("ranked",0),
+              "results_seen_in_prediction":learning.get("results_seen_in_prediction",False)
+            }
+          }
+          Path("data/site_health.json").write_text(json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(health,ensure_ascii=False))
+          PY
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js data/site_health.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update BOAT EDGE V73 self-healing home"
+          git push
