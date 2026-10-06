@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V57 */
+/* BOAT_EDGE_SITE_V60_SAFE_SNAPSHOT */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -198,9 +198,19 @@ function renderResult(ev,res,snap){
 }
 async function run(){
  const race=currentRace(); if(!race?.race_key)return;
- const snap=ensureStructuredSnapshot(); const res=await fetchResult(race.race_key);
- if(!res){renderPending();return}
- const ev=evaluation(snap,res);persistEval(race.race_key,ev,res);renderResult(ev,res,snap);
+ // V60: result first. Never create a new prediction snapshot after result confirmation.
+ const res=await fetchResult(race.race_key);
+ const a=logs();
+ let snap=a.find(x=>x.type==="prediction_snapshot_v59"&&x.key===race.race_key);
+ if(res){
+   if(!snap){
+     const p=panel(); if(p)p.innerHTML=`<div class="be59-card miss"><small>確定結果</small><strong>${esc(normCombo(res?.trifecta||res?.finish_order)||"—")}</strong><p>予想時点スナップショットなし。結果確定後の予想は学習データとして保存しません。</p></div>`;
+     return;
+   }
+   const ev=evaluation(snap,res);persistEval(race.race_key,ev,res);renderResult(ev,res,snap);return;
+ }
+ snap=ensureStructuredSnapshot();
+ renderPending();
 }
 function hook(){
  if(typeof renderRace==="function"&&!renderRace.__be59){
