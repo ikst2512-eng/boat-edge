@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V61_SINGLE_SAFE_LEDGER */
+/* BOAT_EDGE_SITE_V62_FULL_DISTRIBUTION_UI */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
