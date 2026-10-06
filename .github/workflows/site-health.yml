@@ -1,0 +1,117 @@
+name: BOAT EDGE 稼働ステータス V72
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-health.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-site-health-v72
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: リポジトリ取得
+        uses: actions/checkout@v4
+
+      - name: Python準備
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: V72反映・稼働状況生成
+        shell: bash
+        env:
+          BE72_ADDON_B64: "LyogQk9BVF9FREdFX1NJVEVfVjcyX0xJVkVfU1RBVFVTICovCigoKT0+eyJ1c2Ugc3RyaWN0IjsKd2luZG93LkJPQVRfRURHRV9TSVRFX1ZFUlNJT049IlY3MiI7CmNvbnN0ICQ9KHEscj1kb2N1bWVudCk9PnIucXVlcnlTZWxlY3RvcihxKTsKYXN5bmMgZnVuY3Rpb24gZ2V0KCl7CiB0cnl7CiAgY29uc3Qgcj1hd2FpdCBmZXRjaChgLi9kYXRhL3NpdGVfaGVhbHRoLmpzb24/dD0ke0RhdGUubm93KCl9YCx7Y2FjaGU6Im5vLXN0b3JlIn0pOwogIHJldHVybiByLm9rP2F3YWl0IHIuanNvbigpOm51bGw7CiB9Y2F0Y2goXyl7cmV0dXJuIG51bGx9Cn0KZnVuY3Rpb24gc3RhdHVzVGV4dChkKXsKIGNvbnN0IG89ZD8ub2Rkc3x8e30sIGw9ZD8ubGVhcm5pbmd8fHt9LCBycz1kPy5yZXN1bHRzfHx7fTsKIGxldCBvZGRzPSLjgqrjg4Pjgrog5b6F5qmf5LitIjsKIGlmKChvLmVycm9yc3x8MCk+MCkgb2Rkcz1g44Kq44OD44K6IOS4gOmDqOOCqOODqeODvCAke28uZXJyb3JzfeS7tmA7CiBlbHNlIGlmKChvLnVwZGF0ZWR8fDApPjApIG9kZHM9YOWun+OCquODg+OCuuWPluW+lyAke28udXBkYXRlZH1SYDsKIGVsc2UgaWYoKG8uY2hlY2tlZHx8MCk+MCkgb2Rkcz1g44Kq44OD44K656K66KqNICR7by5jaGVja2VkfVJgOwogY29uc3QgbGVhcm49YOWtpue/kuaOoeeCuSAke2wuZXZhbHVhdGVkfHwwfVJgOwogY29uc3QgcmVzdWx0PShycy51cGRhdGVkfHwwKT4wP2DntZDmnpzlj43mmKAgJHtycy51cGRhdGVkfVJgOiLntZDmnpzlvoXjgaEiOwogcmV0dXJuIHtvZGRzLGxlYXJuLHJlc3VsdH07Cn0KZnVuY3Rpb24gZW5zdXJlKCl7CiBsZXQgeD0kKCIjYmU3MlN0YXR1cyIpOwogaWYoeClyZXR1cm4geDsKIHg9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgic2VjdGlvbiIpO3guaWQ9ImJlNzJTdGF0dXMiOwogeC5zdHlsZS5jc3NUZXh0PSJtYXJnaW46MTBweCAwO3BhZGRpbmc6MTBweCAxMnB4O2JvcmRlcjoxcHggc29saWQgI2RmZTVlYztib3JkZXItcmFkaXVzOjEycHg7YmFja2dyb3VuZDojZmZmO2ZvbnQtc2l6ZToxMnB4O2xpbmUtaGVpZ2h0OjEuNSI7CiBjb25zdCBob21lPSQoIiNiZTUxSG9tZSIpOwogY29uc3QgcHJlZD0kKCIjdGFiLXByZWQgLnNlY3Rpb24iKXx8JCgiI3RhYi1wcmVkIik7CiAoaG9tZXx8cHJlZHx8ZG9jdW1lbnQuYm9keSkucHJlcGVuZCh4KTsKIHJldHVybiB4Owp9CmFzeW5jIGZ1bmN0aW9uIHJlbmRlcigpewogY29uc3QgeD1lbnN1cmUoKSxkPWF3YWl0IGdldCgpOwogaWYoIWQpe3guaW5uZXJIVE1MPSc8Yj5CT0FUIEVER0UgVjcyPC9iPuOAgOeovOWDjeeKtuazgeOCkuWPluW+l+S4rSc7cmV0dXJufQogY29uc3Qgcz1zdGF0dXNUZXh0KGQpOwogY29uc3QgYmFkZ2U9ZC5zaXRlX2Fzc2V0X3Y3Mj8i5Y+N5pig5riI44G/Ijoi56K66KqN5LitIjsKIHguaW5uZXJIVE1MPWA8ZGl2IHN0eWxlPSJkaXNwbGF5OmZsZXg7anVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW47Z2FwOjhweDthbGlnbi1pdGVtczpjZW50ZXI7ZmxleC13cmFwOndyYXAiPgogPGI+Qk9BVCBFREdFICR7ZC5zaXRlX3ZlcnNpb258fCJWNzIifSA8c3BhbiBzdHlsZT0iZm9udC13ZWlnaHQ6NjAwIj7il48gJHtiYWRnZX08L3NwYW4+PC9iPgogPHNwYW4+JHtkLmdlbmVyYXRlZF9hdHx8IuKAlCJ9PC9zcGFuPjwvZGl2PgogPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2dhcDoxMHB4O2ZsZXgtd3JhcDp3cmFwO21hcmdpbi10b3A6NXB4Ij4KIDxzcGFuPiR7cy5vZGRzfTwvc3Bhbj48c3Bhbj4ke3MucmVzdWx0fTwvc3Bhbj48c3Bhbj4ke3MubGVhcm59PC9zcGFuPjwvZGl2PmA7Cn0KZnVuY3Rpb24gaG9vaygpewogcmVuZGVyKCk7CiBzZXRJbnRlcnZhbCgoKT0+e2lmKGRvY3VtZW50LnZpc2liaWxpdHlTdGF0ZT09PSJ2aXNpYmxlIilyZW5kZXIoKX0sNjAwMDApOwogd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoImJvYXQtZWRnZS1mb3JtYWwxMjAiLHJlbmRlcik7CiBpZih0eXBlb2YgcmVuZGVySG9tZT09PSJmdW5jdGlvbiImJiFyZW5kZXJIb21lLl9fYmU3Mil7CiAgY29uc3Qgb2xkPXJlbmRlckhvbWU7cmVuZGVySG9tZT1mdW5jdGlvbiguLi5hKXtjb25zdCB5PW9sZC5hcHBseSh0aGlzLGEpO3F1ZXVlTWljcm90YXNrKHJlbmRlcik7cmV0dXJuIHl9O3JlbmRlckhvbWUuX19iZTcyPXRydWU7CiB9CiBpZih0eXBlb2YgcmVuZGVyUmFjZT09PSJmdW5jdGlvbiImJiFyZW5kZXJSYWNlLl9fYmU3Mil7CiAgY29uc3Qgb2xkPXJlbmRlclJhY2U7cmVuZGVyUmFjZT1mdW5jdGlvbiguLi5hKXtjb25zdCB5PW9sZC5hcHBseSh0aGlzLGEpO3F1ZXVlTWljcm90YXNrKHJlbmRlcik7cmV0dXJuIHl9O3JlbmRlclJhY2UuX19iZTcyPXRydWU7CiB9Cn0KZG9jdW1lbnQucmVhZHlTdGF0ZT09PSJsb2FkaW5nIj9kb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJET01Db250ZW50TG9hZGVkIixob29rKTpob29rKCk7Cn0pKCk7"
+        run: |
+          python - <<'PY'
+          import os, re, json, base64, hashlib
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST).isoformat(timespec="seconds")
+
+          def load(path):
+              p=Path(path)
+              try:return json.loads(p.read_text(encoding="utf-8"))
+              except:return {}
+
+          js=Path("assets/boat_edge_simple_v51.js")
+          s=js.read_text(encoding="utf-8")
+          marker="BOAT_EDGE_SITE_V72_LIVE_STATUS"
+          if marker not in s:
+              addon=base64.b64decode(os.environ["BE72_ADDON_B64"]).decode("utf-8")
+              s=re.sub(r'^/\* BOAT_EDGE_SITE_V\d+_[^*]+ \*/',
+                       '/* BOAT_EDGE_SITE_V72_LIVE_STATUS */',s,count=1)
+              s=s.rstrip()+"\n\n"+addon+"\n"
+              js.write_text(s,encoding="utf-8")
+
+          odds=load("data/site_odds/index.json")
+          learning=load("data/site_learning/summary.json")
+          results=load("data/site_results/index.json")
+          today=load("data/today.json")
+
+          health={
+            "schema_version":"boat-edge-site-health-v72",
+            "site_version":"V72",
+            "generated_at":now,
+            "site_asset_v72":marker in js.read_text(encoding="utf-8"),
+            "asset_sha256":hashlib.sha256(js.read_bytes()).hexdigest(),
+            "today":{
+              "date":today.get("date"),
+              "updated_at":today.get("updated_at"),
+              "phase":today.get("phase"),
+              "results_seen":today.get("results_seen"),
+              "unlock":today.get("unlock"),
+              "scoring":today.get("scoring"),
+              "active_venues":len(today.get("venues",[]))
+            },
+            "odds":{
+              "updated_at":odds.get("updated_at"),
+              "checked":odds.get("checked",0),
+              "updated":odds.get("updated",0),
+              "errors":len(odds.get("errors",[])),
+              "prediction_logic_uses_odds":odds.get("prediction_logic_uses_odds",False),
+              "source":odds.get("source")
+            },
+            "results":{
+              "updated_at":results.get("updated_at"),
+              "checked":results.get("checked",0),
+              "updated":results.get("updated",0),
+              "errors":len(results.get("errors",[]))
+            },
+            "learning":{
+              "updated_at":learning.get("updated_at"),
+              "evaluated":learning.get("evaluated",0),
+              "ranked":learning.get("ranked",0),
+              "top10_rate":learning.get("top10_rate"),
+              "top30_rate":learning.get("top30_rate"),
+              "avg_rank":learning.get("avg_rank"),
+              "results_seen_in_prediction":learning.get("results_seen_in_prediction",False)
+            }
+          }
+          Path("data/site_health.json").write_text(
+              json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(health,ensure_ascii=False))
+          PY
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js data/site_health.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update BOAT EDGE V72 live status"
+          git push
