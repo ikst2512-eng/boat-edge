@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V64_FORMAL120_BRIDGE */
+/* BOAT_EDGE_SITE_V65_120_RESULT_SCORING */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -294,3 +294,70 @@ function hook(){
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();/* BOAT_EDGE_SITE_V64_RERENDER_SIGNAL */
 window.addEventListener("boat-edge-formal120",()=>{try{if(typeof renderRace==="function"&&typeof state!=="undefined"&&state.race)renderRace(state.race)}catch(_){}});
+
+/* BOAT_EDGE_SITE_V65_120_RESULT_SCORING */
+(()=>{"use strict";
+const KEY="boat_edge_v57_learning_log";
+const getRace=()=>{try{return typeof state!=="undefined"?state.race:null}catch(_){return null}};
+function logs(){try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch(_){return[]}}
+function save(a){try{localStorage.setItem(KEY,JSON.stringify(a.slice(-1200)))}catch(_){}}
+function norm(v){if(Array.isArray(v))return v.slice(0,3).join("-");const m=String(v??"").match(/([1-6])\D+([1-6])\D+([1-6])/);return m?`${m[1]}-${m[2]}-${m[3]}`:null}
+async function result(key){
+ try{const r=await fetch(`./data/site_results/${key}.json?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)return null;const d=await r.json();return d?.status==="confirmed"?d:null}catch(_){return null}
+}
+function classify(rank){
+ if(!Number.isFinite(rank))return "distribution_missing";
+ if(rank<=10)return "top10";
+ if(rank<=30)return "rank11_30";
+ if(rank<=60)return "rank31_60";
+ return "rank61_120";
+}
+function score(snap,res){
+ const win=norm(res?.trifecta||res?.finish_order);
+ const ts=Array.isArray(snap?.tickets)?snap.tickets:[];
+ const hit=ts.find(x=>norm(x?.combo)===win)||null;
+ const rank=hit?Number(hit.rank)||ts.indexOf(hit)+1:null;
+ const probability=hit&&Number.isFinite(Number(hit.probability))?Number(hit.probability):null;
+ return {
+  winning_combo:win,
+  winning_rank:Number.isFinite(rank)?rank:null,
+  winning_probability:probability,
+  winning_world:hit?.world??null,
+  winning_reasons:hit?.reasons??null,
+  rank_bucket:classify(rank),
+  distribution_count:ts.length,
+  model:snap?.model??null,
+  snapshot_saved_at:snap?.saved_at??null,
+  result_fetched_at:res?.fetched_at??null,
+  payout100:Number.isFinite(Number(res?.trifecta_payout_yen_per_100))?Number(res.trifecta_payout_yen_per_100):null
+ };
+}
+function persist(key,row,res){
+ const a=logs(),i=a.findIndex(x=>x.type==="distribution120_result_v65"&&x.key===key);
+ const v={type:"distribution120_result_v65",key,evaluated_at:new Date().toISOString(),version:"V65",...row,result:res};
+ if(i>=0)a[i]=v;else a.push(v);save(a);
+}
+function render(row){
+ const host=document.querySelector("#be59Result .be59-card");if(!host)return;
+ let el=document.querySelector("#be65RankAudit");
+ if(!el){el=document.createElement("p");el.id="be65RankAudit";el.className="be59-note";host.append(el)}
+ const rank=row.winning_rank?`${row.winning_rank}位 / ${row.distribution_count}通り`:"120通りスナップ未取得";
+ const prob=row.winning_probability===null?"未取得":`${row.winning_probability}%`;
+ el.textContent=`全確率分布での正解順位: ${rank} / 予測確率: ${prob}${row.winning_world?` / 世界 ${row.winning_world}`:""}`;
+}
+async function run(){
+ const race=getRace();if(!race?.race_key)return;
+ const res=await result(race.race_key);if(!res)return;
+ const a=logs();
+ const snap=a.find(x=>x.type==="prediction_distribution120_v64"&&x.key===race.race_key);
+ if(!snap)return; // never rebuild a pre-result snapshot after result.
+ const row=score(snap,res);persist(race.race_key,row,res);render(row);
+}
+function hook(){
+ window.addEventListener("boat-edge-formal120",()=>run());
+ if(typeof renderRace==="function"&&!renderRace.__be65){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(run);return x};renderRace.__be65=true}
+ if(getRace())run();
+ setInterval(()=>{if(document.visibilityState==="visible")run()},60000);
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
