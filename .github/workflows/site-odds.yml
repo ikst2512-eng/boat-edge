@@ -1,0 +1,226 @@
+name: BOAT EDGE 3連単オッズ更新 V71
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-odds.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-site-odds-v71
+  cancel-in-progress: false
+
+jobs:
+  odds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+
+    steps:
+      - name: リポジトリ取得
+        uses: actions/checkout@v4
+
+      - name: Python準備
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 必要ライブラリ
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: 公式3連単オッズ取得
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json, re, time, random
+          from pathlib import Path
+          from datetime import datetime, timedelta, timezone
+          import requests
+          from bs4 import BeautifulSoup
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST)
+          ymd=now.strftime("%Y%m%d")
+          iso=now.isoformat(timespec="seconds")
+
+          DATA=Path("data")
+          TODAY=DATA/"today.json"
+          OUT=DATA/"site_odds"
+          OUT.mkdir(parents=True,exist_ok=True)
+
+          def load(p):
+              try:
+                  return json.loads(p.read_text(encoding="utf-8"))
+              except Exception:
+                  return None
+
+          today=load(TODAY) or {}
+          races=[]
+          for v in today.get("venues",[]):
+              jcd=str(v.get("jcd") or "").zfill(2)
+              for r in v.get("races",[]):
+                  key=r.get("race_key")
+                  rno=r.get("race_no")
+                  dl=r.get("deadline")
+                  if not key or not rno or not dl:
+                      continue
+                  m=re.fullmatch(r"(\d{1,2}):(\d{2})",str(dl).strip())
+                  if not m:
+                      continue
+                  deadline=now.replace(hour=int(m.group(1)),minute=int(m.group(2)),second=0,microsecond=0)
+                  delta=(deadline-now).total_seconds()/60
+                  # Current purchase layer only needs near-race odds.
+                  # Keep official-site load low: 45 min before deadline through 5 min after.
+                  if -5 <= delta <= 45:
+                      races.append({
+                          "race_key":key,
+                          "jcd":jcd,
+                          "race_no":int(rno),
+                          "deadline":dl,
+                          "minutes_to_deadline":round(delta,1)
+                      })
+
+          session=requests.Session()
+          session.headers.update({
+              "User-Agent":"Mozilla/5.0 (compatible; BOAT-EDGE-SITE-ODDS/1.0)",
+              "Accept-Language":"ja-JP,ja;q=0.9,en;q=0.5",
+              "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Connection":"close"
+          })
+
+          def fetch(url,tries=2):
+              last=None
+              for i in range(tries):
+                  try:
+                      res=session.get(url,timeout=(5,20),allow_redirects=True)
+                      res.raise_for_status()
+                      res.encoding=res.apparent_encoding or res.encoding or "utf-8"
+                      return res
+                  except Exception as e:
+                      last=e
+                      if i+1<tries:
+                          time.sleep(0.7+random.random())
+              raise last
+
+          def parse_odds(html):
+              soup=BeautifulSoup(html,"lxml")
+              cells=soup.select("td.oddsPoint")
+              if len(cells) != 120:
+                  # Some pages use oddsPoint on a non-td element; keep a safe fallback.
+                  cells=soup.select(".oddsPoint")
+              texts=[re.sub(r"\s+","",c.get_text("",strip=True)) for c in cells]
+              if len(texts) != 120:
+                  raise ValueError(f"oddsPoint_count={len(texts)}")
+
+              # Official table is 20 rows x 6 first-course columns.
+              # DOM order is row-major; transpose to get the 20 values for
+              # 1st=1, then 1st=2 ... 1st=6.
+              matrix=[texts[i*6:(i+1)*6] for i in range(20)]
+              ordered=[]
+              for col in range(6):
+                  ordered.extend(matrix[row][col] for row in range(20))
+
+              combos=[]
+              for fst in range(1,7):
+                  for snd in range(1,7):
+                      if snd==fst: continue
+                      for trd in range(1,7):
+                          if trd in (fst,snd): continue
+                          combos.append(f"{fst}-{snd}-{trd}")
+
+              if len(combos)!=120 or len(ordered)!=120:
+                  raise ValueError("mapping_size_error")
+
+              odds={}
+              unavailable=[]
+              for combo,raw in zip(combos,ordered):
+                  raw=raw.replace(",","")
+                  try:
+                      v=float(raw)
+                      if v>0:
+                          odds[combo]=v
+                      else:
+                          unavailable.append(combo)
+                  except Exception:
+                      unavailable.append(combo)
+
+              # Do not publish a suspicious partial scrape.
+              if len(odds) < 80:
+                  raise ValueError(f"valid_odds_too_few={len(odds)}")
+              return odds, unavailable
+
+          updated=0
+          errors=[]
+          checked=0
+
+          for item in races:
+              checked+=1
+              key=item["race_key"]
+              url=(
+                  "https://www.boatrace.jp/owpc/pc/race/odds3t"
+                  f"?hd={ymd}&jcd={item['jcd']}&rno={item['race_no']}"
+              )
+              try:
+                  res=fetch(url)
+                  odds,unavailable=parse_odds(res.text)
+                  doc={
+                      "schema_version":"boat-edge-site-odds-v71",
+                      "race_key":key,
+                      "fetched_at":datetime.now(JST).isoformat(timespec="seconds"),
+                      "source":"BOAT RACE オフィシャルウェブサイト 3連単オッズ",
+                      "source_url":url,
+                      "phase":"PRE_RESULT_PURCHASE_ONLY",
+                      "results_seen":False,
+                      "scoring":False,
+                      "deadline":item["deadline"],
+                      "minutes_to_deadline":item["minutes_to_deadline"],
+                      "trifecta_odds":odds,
+                      "available_count":len(odds),
+                      "unavailable_count":len(unavailable),
+                      "unavailable_combinations":unavailable
+                  }
+                  (OUT/f"{key}.json").write_text(
+                      json.dumps(doc,ensure_ascii=False,indent=2),
+                      encoding="utf-8"
+                  )
+                  updated+=1
+              except Exception as e:
+                  errors.append({
+                      "race_key":key,
+                      "error":repr(e),
+                      "url":url
+                  })
+              time.sleep(0.35)
+
+          index={
+              "schema_version":"boat-edge-site-odds-index-v71",
+              "updated_at":datetime.now(JST).isoformat(timespec="seconds"),
+              "date":now.strftime("%Y-%m-%d"),
+              "checked":checked,
+              "updated":updated,
+              "errors":errors[:30],
+              "window":"deadline -45min to +5min",
+              "source":"official odds3t only",
+              "prediction_logic_uses_odds":False
+          }
+          (OUT/"index.json").write_text(
+              json.dumps(index,ensure_ascii=False,indent=2),
+              encoding="utf-8"
+          )
+          print(json.dumps(index,ensure_ascii=False))
+          PY
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_odds
+          git diff --cached --quiet && exit 0
+          git commit -m "Update BOAT EDGE live trifecta odds V71"
+          git push
