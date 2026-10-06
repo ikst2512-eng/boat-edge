@@ -947,3 +947,27 @@ function boot(){
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
 })();
+
+/* BOAT_EDGE_SITE_V78_BRAND_TITLE */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V78";
+function brand(){
+  const candidates=[...document.querySelectorAll("header, .header, .brand, .logo, body *")];
+  for(const el of candidates){
+    if(el.children.length>8) continue;
+    const txt=(el.textContent||"").trim().replace(/\s+/g," ");
+    if(txt!=="BOAT EDGE") continue;
+    if(el.dataset.be78Brand) continue;
+    el.dataset.be78Brand="1";
+    el.classList.add("be78-brand-title");
+    el.innerHTML='<span class="be78-boat">BOAT</span><span class="be78-edge">EDGE</span><i></i>';
+  }
+  const status=document.querySelector("#be73Status");
+  if(status)status.innerHTML=status.innerHTML.replace(/BOAT EDGE V7[3-7]/g,"BOAT EDGE V78");
+}
+function boot(){
+  brand();
+  new MutationObserver(()=>requestAnimationFrame(brand)).observe(document.body,{childList:true,subtree:true});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+})();
