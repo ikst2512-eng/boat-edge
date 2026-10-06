@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V65_120_RESULT_SCORING */
+/* BOAT_EDGE_SITE_V70_BATCH_LEARNING_PURCHASE */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -358,6 +358,96 @@ function hook(){
  if(typeof renderRace==="function"&&!renderRace.__be65){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(run);return x};renderRace.__be65=true}
  if(getRace())run();
  setInterval(()=>{if(document.visibilityState==="visible")run()},60000);
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
+
+/* BOAT_EDGE_SITE_V70_BATCH_LEARNING_PURCHASE */
+(()=>{"use strict";
+const KEY="boat_edge_v57_learning_log", CFG="boat_edge_v70_purchase_cfg";
+const $=(q,r=document)=>r.querySelector(q);
+const race=()=>{try{return typeof state!=="undefined"?state.race:null}catch(_){return null}};
+const norm=v=>{if(Array.isArray(v))return v.slice(0,3).join("-");const m=String(v??"").match(/([1-6])\D+([1-6])\D+([1-6])/);return m?`${m[1]}-${m[2]}-${m[3]}`:null};
+const logs=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch(_){return[]}};
+const saveLogs=a=>{try{localStorage.setItem(KEY,JSON.stringify(a.slice(-1600)))}catch(_){}};
+const cfg=()=>{try{return {...{budget:5000,cutoff:10},...JSON.parse(localStorage.getItem(CFG)||"{}")}}catch(_){return {budget:5000,cutoff:10}}};
+const saveCfg=v=>{try{localStorage.setItem(CFG,JSON.stringify(v))}catch(_){}};
+function dist(r){const d=r?.__formal120||window.__boatEdgeFormal120?.[r?.race_key];return Array.isArray(d?.distribution120)?d.distribution120:[]}
+async function getJSON(url){try{const x=await fetch(url+(url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});return x.ok?await x.json():null}catch(_){return null}}
+async function result(key){const d=await getJSON(`./data/site_results/${key}.json`);return d?.status==="confirmed"?d:null}
+function oddsMap(raw){
+ const src=raw?.trifecta_odds||raw?.odds||raw?.odds3t||raw?.data||raw;
+ const out={};
+ if(Array.isArray(src)){for(const x of src){const c=norm(x?.combo||x?.trifecta||x?.order),o=Number(x?.odds??x?.value??x?.rate);if(c&&o>0)out[c]=o}}
+ else if(src&&typeof src==="object"){for(const [k,v] of Object.entries(src)){const c=norm(k),o=Number(typeof v==="object"?(v.odds??v.value??v.rate):v);if(c&&o>0)out[c]=o}}
+ return out;
+}
+async function loadOdds(r){const x=await getJSON(`./data/site_odds/${r.race_key}.json`);return {...oddsMap(r?.odds),...oddsMap(x)}}
+function unitsAlloc(rows,budget,weightFn){
+ const units=Math.max(1,Math.floor(Number(budget||5000)/100)), ws=rows.map((x,i)=>Math.max(0,Number(weightFn(x,i))||0));
+ let sum=ws.reduce((a,b)=>a+b,0); if(!sum){ws.fill(1);sum=ws.length}
+ const raw=ws.map(w=>units*w/sum), base=raw.map(Math.floor), left=units-base.reduce((a,b)=>a+b,0);
+ [...raw.keys()].sort((a,b)=>(raw[b]-base[b])-(raw[a]-base[a])).slice(0,left).forEach(i=>base[i]++);
+ return rows.map((x,i)=>({...x,stake:base[i]*100}));
+}
+function strategyRows(rows,budget,odds){
+ const eq=unitsAlloc(rows,budget,()=>1), pp=unitsAlloc(rows,budget,x=>x.probability);
+ const allOdds=rows.length&&rows.every(x=>Number(odds[x.combo])>0);
+ const du=allOdds?unitsAlloc(rows,budget,x=>1/Number(odds[x.combo])):null;
+ return [{id:"equal",label:"均等",rows:eq},{id:"prob",label:"確率比例",rows:pp},{id:"dutch",label:"払戻均等化",rows:du}];
+}
+function stats(st,odds){
+ if(!st.rows)return null; let ev=0,min=null,max=null,have=0;
+ for(const x of st.rows){const o=Number(odds[x.combo]);if(o>0){have++;const gross=x.stake*o;ev+=(Number(x.probability)||0)/100*gross;min=min===null?gross:Math.min(min,gross);max=max===null?gross:Math.max(max,gross)}}
+ return {stake:st.rows.reduce((a,x)=>a+x.stake,0),ev:have===st.rows.length?Math.round(ev):null,min:have===st.rows.length?Math.round(min):null,max:have===st.rows.length?Math.round(max):null};
+}
+function yen(v){return v==null?"—":Number(v).toLocaleString("ja-JP")+"円"}
+async function persistPlan(r,selected,strategies,odds,c){
+ if(await result(r.race_key))return;
+ const a=logs(),i=a.findIndex(x=>x.type==="purchase_plan_v70"&&x.key===r.race_key);
+ const row={type:"purchase_plan_v70",key:r.race_key,saved_at:new Date().toISOString(),budget:c.budget,cutoff:c.cutoff,odds,coverage:selected.reduce((z,x)=>z+(Number(x.probability)||0),0),strategies:strategies.filter(x=>x.rows).map(x=>({id:x.id,label:x.label,rows:x.rows}))};
+ if(i>=0)return; a.push(row);saveLogs(a);
+}
+async function settlePlan(r){
+ const res=await result(r.race_key);if(!res)return;const a=logs(),plan=a.find(x=>x.type==="purchase_plan_v70"&&x.key===r.race_key);if(!plan)return;
+ if(a.some(x=>x.type==="purchase_result_v70"&&x.key===r.race_key))return;
+ const win=norm(res.trifecta||res.finish_order),pay=Number(res.trifecta_payout_yen_per_100);
+ const outcomes=(plan.strategies||[]).map(s=>{const t=(s.rows||[]).find(x=>x.combo===win),stake=(s.rows||[]).reduce((z,x)=>z+(Number(x.stake)||0),0),gross=t&&pay>0?Math.floor(pay*(Number(t.stake)||0)/100):0;return {id:s.id,label:s.label,winning_stake:t?.stake||0,total_stake:stake,payout:gross,profit:gross-stake}});
+ a.push({type:"purchase_result_v70",key:r.race_key,evaluated_at:new Date().toISOString(),winning_combo:win,payout100:pay||null,outcomes});saveLogs(a);
+}
+async function learningSummary(){
+ const remote=await getJSON("./data/site_learning/summary.json"); if(remote?.evaluated!=null)return remote;
+ const a=logs().filter(x=>x.type==="distribution120_result_v65"&&Number.isFinite(Number(x.winning_rank))),ranks=a.map(x=>Number(x.winning_rank));
+ const n=ranks.length,rate=k=>n?Math.round(1000*ranks.filter(x=>x<=k).length/n)/10:null;
+ return {evaluated:n,top10_rate:rate(10),top30_rate:rate(30),top60_rate:rate(60),avg_rank:n?Math.round(10*ranks.reduce((x,y)=>x+y,0)/n)/10:null,source:"browser"};
+}
+function ensureHost(){
+ const h=$("#tab-pred .section")||$("#tab-pred");if(!h)return null;let x=$("#be70Lab");if(!x){x=document.createElement("section");x.id="be70Lab";h.append(x)}return x;
+}
+async function render(){
+ const r=race(),host=ensureHost();if(!r||!host)return;const d=dist(r),c=cfg(),sum=await learningSummary();
+ if(!d.length){host.innerHTML='<div class="be62-box"><div class="be62-title"><b>購入戦略・学習分析</b></div><p>正式120通り分布を待っています。確率はサイト側で作りません。</p></div>';return}
+ const cutoff=Math.min(d.length,Math.max(1,Number(c.cutoff)||10)),selected=d.slice(0,cutoff),od=await loadOdds(r),strategies=strategyRows(selected,c.budget,od),ss=strategies.map(x=>({...x,stat:stats(x,od)}));
+ const coverage=selected.reduce((z,x)=>z+(Number(x.probability)||0),0);
+ const valid=ss.filter(x=>x.stat?.ev!=null).sort((a,b)=>b.stat.ev-a.stat.ev),best=valid[0]||null;
+ const rec=best?`AI推奨（購入比較）: ${best.label}`:"AI推奨: オッズ待ち";
+ const opts=[3,5,10,20,30,60,120].map(n=>`<option value="${n}" ${n===cutoff?"selected":""}>上位${n}点</option>`).join("");
+ const srow=x=>`<div class="be62-row"><b>${x.label}</b><strong>投資 ${yen(x.stat?.stake)}</strong><span>${x.stat?.ev==null?"EV未計算":"期待払戻 "+yen(x.stat.ev)}</span><small>${x.stat?.min==null?"現在オッズ未取得":"想定払戻幅 "+yen(x.stat.min)+"〜"+yen(x.stat.max)}</small></div>`;
+ host.innerHTML=`<div class="be62-box">
+ <div class="be62-title"><b>購入戦略・学習分析</b><span>予想順位は確率のみ</span></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><label>予算 <input id="be70Budget" type="number" min="100" step="100" value="${c.budget}" style="width:100px">円</label><label>候補 <select id="be70Cutoff">${opts}</select></label></div>
+ <p><b>${rec}</b><br>選択範囲の確率合計 ${coverage.toFixed(2)}% ／ オッズは購入判断だけに使用します。</p>
+ ${ss.map(srow).join("")}
+ <details><summary>学習成績を見る</summary><div class="be59-grid"><div><span>採点済み</span><strong>${sum.evaluated||0}R</strong></div><div><span>正解TOP10</span><strong>${sum.top10_rate==null?"—":sum.top10_rate+"%"}</strong></div><div><span>正解TOP30</span><strong>${sum.top30_rate==null?"—":sum.top30_rate+"%"}</strong></div><div><span>正解TOP60</span><strong>${sum.top60_rate==null?"—":sum.top60_rate+"%"}</strong></div><div><span>平均正解順位</span><strong>${sum.avg_rank??"—"}</strong></div></div></details>
+ </div>`;
+ $("#be70Budget")?.addEventListener("change",e=>{saveCfg({budget:Math.max(100,Math.floor(Number(e.target.value||5000)/100)*100),cutoff:Number($("#be70Cutoff")?.value||cutoff)});render()});
+ $("#be70Cutoff")?.addEventListener("change",e=>{saveCfg({budget:Number($("#be70Budget")?.value||5000),cutoff:Number(e.target.value)});render()});
+ await persistPlan(r,selected,strategies,od,{budget:Number(c.budget),cutoff}); await settlePlan(r);
+}
+function hook(){
+ window.addEventListener("boat-edge-formal120",()=>render());
+ if(typeof renderRace==="function"&&!renderRace.__be70){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(render);return x};renderRace.__be70=true}
+ if(race())render();setInterval(()=>{if(document.visibilityState==="visible"&&race())render()},60000);
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
