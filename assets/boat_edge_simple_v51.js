@@ -872,3 +872,78 @@ function hook(){
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
+
+/* BOAT_EDGE_SITE_V77_HOME_POLISH */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V77";
+const $=(q,r=document)=>r.querySelector(q);
+function cleanLegacy(){
+  // V72 health/status is useful internally but duplicate on the public home.
+  document.querySelectorAll("body *").forEach(el=>{
+    if(el.children.length>12)return;
+    const t=(el.textContent||"").trim();
+    if(/^BOAT EDGE V72\s*[●・]/.test(t) && /反映済み|オッズ|結果|学習/.test(t)){
+      el.style.display="none";
+      el.dataset.be77Hidden="legacy-v72";
+    }
+  });
+}
+function urgency(){
+  const root=$("#be76Priority"); if(!root)return;
+  root.querySelectorAll("button[data-file]").forEach(b=>{
+    const txt=b.textContent||"";
+    const m=/あと\s*(\d+)分/.exec(txt);
+    if(!m)return;
+    const n=+m[1];
+    b.style.transition="border-color .15s,background .15s";
+    if(n<=5){
+      b.style.borderColor="#ff9b8f"; b.style.background="#fff6f4";
+      let x=b.querySelector(".be77-urgent");
+      if(!x){x=document.createElement("div");x.className="be77-urgent";x.style.cssText="font-size:10px;font-weight:900;color:#d7442f;margin-top:3px";b.appendChild(x)}
+      x.textContent=n<=1?"まもなく締切":"締切5分以内";
+    }else if(n<=15){
+      b.style.borderColor="#f2c36b"; b.style.background="#fffaf0";
+    }
+  });
+}
+function polish(){
+  cleanLegacy();
+  const status=$("#be73Status");
+  if(status){
+    status.innerHTML=status.innerHTML.replace(/BOAT EDGE V7[3-6]/g,"BOAT EDGE V77");
+    status.style.marginBottom="12px";
+  }
+  const pri=$("#be76Priority");
+  if(pri){
+    pri.style.marginTop="8px";
+    pri.style.marginBottom="12px";
+    urgency();
+    const rec=pri.querySelector("#be76Rec");
+    if(rec){
+      const t=(rec.textContent||"");
+      if(/現時点なし/.test(t)){
+        const note=rec.querySelector(".be77-rec-note");
+        if(!note){
+          const d=document.createElement("div");
+          d.className="be77-rec-note";
+          d.style.cssText="font-size:10px;color:#7890aa;margin-top:5px";
+          d.textContent="無理に選ばず、条件成立時だけAI推奨を表示";
+          rec.firstElementChild?.appendChild(d);
+        }
+      }
+    }
+  }
+  const h=$("#homeView");
+  if(h){
+    h.querySelectorAll("h1,h2").forEach(x=>{x.style.marginBottom="10px"});
+  }
+}
+function boot(){
+  polish();
+  const mo=new MutationObserver(()=>requestAnimationFrame(polish));
+  mo.observe(document.body,{childList:true,subtree:true});
+  setInterval(polish,15000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")polish()});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+})();
