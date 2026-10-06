@@ -1,0 +1,114 @@
+name: BOAT EDGE サイト結果更新
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-site-results-v1
+  cancel-in-progress: false
+
+jobs:
+  update-results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests beautifulsoup4 lxml
+      - name: サイト用POST_RESULT取得
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,re,time
+          from pathlib import Path
+          from datetime import datetime,timedelta,timezone
+          import requests
+          from bs4 import BeautifulSoup
+          JST=timezone(timedelta(hours=9)); now=datetime.now(JST)
+          ymd=now.strftime('%Y%m%d'); iso=now.isoformat(timespec='seconds')
+          races=Path('data/races'); out=Path('data/site_results'); out.mkdir(parents=True,exist_ok=True)
+          s=requests.Session(); s.headers.update({'User-Agent':'Mozilla/5.0 BOAT-EDGE-SITE-RESULT/1.0','Accept-Language':'ja-JP,ja;q=0.9'})
+          def clean(x): return re.sub(r'\s+',' ',x or '').strip()
+          def yen(x):
+              m=re.search(r'([0-9,]+)\s*円',x or '')
+              return int(m.group(1).replace(',','')) if m else None
+          def fetch(url):
+              for n in range(3):
+                  try:
+                      r=s.get(url,timeout=(5,20)); r.raise_for_status(); r.encoding=r.apparent_encoding or r.encoding; return r
+                  except Exception:
+                      if n==2: raise
+                      time.sleep(1+n)
+          updated=0; checked=0; errors=[]
+          for p in sorted(races.glob(f'{ymd}-*.json')):
+              try: doc=json.loads(p.read_text(encoding='utf-8'))
+              except Exception: continue
+              meta=doc.get('meta',{}); dl=meta.get('deadline'); key=doc.get('race_key') or p.stem
+              if not dl: continue
+              try:
+                  hh,mm=map(int,dl.split(':')); deadline=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
+              except Exception: continue
+              if now < deadline + timedelta(minutes=3): continue
+              target=out/f'{key}.json'
+              if target.exists():
+                  try:
+                      old=json.loads(target.read_text(encoding='utf-8'))
+                      if old.get('status')=='confirmed': continue
+                  except Exception: pass
+              checked+=1
+              jcd=str(meta.get('venue_code') or key.split('-')[1]).zfill(2); rno=int(meta.get('race_no') or key.split('-')[2])
+              url=f'https://www.boatrace.jp/owpc/pc/race/raceresult?hd={ymd}&jcd={jcd}&rno={rno}'
+              try:
+                  r=fetch(url); soup=BeautifulSoup(r.text,'lxml')
+                  finish=[]
+                  for tr in soup.find_all('tr'):
+                      cells=[clean(x.get_text(' ',strip=True)) for x in tr.find_all(['th','td'])]
+                      if len(cells)>=2 and re.fullmatch(r'[1-6]',cells[0]) and re.fullmatch(r'[1-6]',cells[1]):
+                          finish.append((int(cells[0]),int(cells[1])))
+                  order=[]
+                  if finish:
+                      by_place={a:b for a,b in finish}; order=[by_place[x] for x in sorted(by_place) if x in by_place][:3]
+                  combo=None; payout=None
+                  for tr in soup.find_all('tr'):
+                      t=clean(tr.get_text(' ',strip=True))
+                      if '3連単' not in t: continue
+                      m=re.search(r'([1-6])\s*[-－]\s*([1-6])\s*[-－]\s*([1-6])',t)
+                      if m:
+                          combo='-'.join(m.groups()); payout=yen(t); break
+                  if not combo and len(order)>=3: combo='-'.join(map(str,order[:3]))
+                  if combo:
+                      if len(order)<3: order=[int(x) for x in combo.split('-')]
+                      result={'schema_version':'boat-edge-site-result-v1','race_key':key,'status':'confirmed','fetched_at':iso,
+                              'source':url,'finish_order':order[:3],'trifecta':combo,'trifecta_payout_yen_per_100':payout}
+                      target.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8'); updated+=1
+                  else:
+                      target.write_text(json.dumps({'schema_version':'boat-edge-site-result-v1','race_key':key,'status':'pending','fetched_at':iso,'source':url},ensure_ascii=False,indent=2),encoding='utf-8')
+              except Exception as e:
+                  errors.append({'race_key':key,'error':repr(e)})
+          idx={'schema_version':'boat-edge-site-results-index-v1','updated_at':iso,'date':now.strftime('%Y-%m-%d'),'checked':checked,'updated':updated,'errors':errors[:20]}
+          (out/'index.json').write_text(json.dumps(idx,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(idx,ensure_ascii=False))
+          PY
+      - name: 結果データ保存
+        shell: bash
+        run: |
+          set -e
+          git config user.name "boat-edge-site-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_results/ || true
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "サイト結果更新: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
