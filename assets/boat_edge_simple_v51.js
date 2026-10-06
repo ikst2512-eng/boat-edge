@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V60_SAFE_SNAPSHOT */
+/* BOAT_EDGE_SITE_V61_SINGLE_SAFE_LEDGER */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -45,13 +45,8 @@ function simplifyChrome(){
  let rr=$("#be57RaceRefresh");if(!rr){rr=refreshButton().cloneNode(true);rr.id="be57RaceRefresh";rr.onclick=()=>{rr.disabled=true;rr.textContent="更新中…";location.reload()};rv.prepend(rr)}
 }
 function snapshot(){
- const k=raceKey(); if(!k||k==="--")return;
- const pred=$("#tab-pred"); if(!pred)return;
- const text=(pred.innerText||"").trim(); if(!text)return;
- const logs=readLog(); const old=logs.find(x=>x.key===k&&x.type==="prediction_snapshot");
- if(old)return;
- logs.push({type:"prediction_snapshot",key:k,saved_at:now(),prediction_text:text.slice(0,30000),version:"V57"});
- writeLog(logs);
+ // V61: legacy V57 snapshot is disabled. V59/V60 structured snapshot is the only learning source.
+ return null;
 }
 function detectRecommendation(){
  const pred=$("#tab-pred"); const t=(pred?.innerText||"");
@@ -66,7 +61,7 @@ function ensureDecision(){
  const p=$("#tab-pred .section")||$("#tab-pred"); if(!p)return;
  let w=$("#be57Decision"); if(w)w.remove();
  const rec=detectRecommendation(); w=document.createElement("section");w.id="be57Decision";
- const count=readLog().filter(x=>x.type==="prediction_snapshot").length;
+ const count=readLog().filter(x=>x.type==="prediction_snapshot_v59").length;
  w.innerHTML=`<div class="be57-rec ${rec.cls}"><small>購入判断</small><strong>${esc(rec.label)}</strong><p>${esc(rec.reason)}</p><div class="be57-meta"><span>学習保存 ${count}R</span><span>予想順位はオッズ非依存</span></div></div><div class="be57-note">購入額・現在オッズ・確定払戻は、元データに取得値がある場合だけ表示します。値が無い場合は推測しません。</div>`;
  p.prepend(w);
 }
