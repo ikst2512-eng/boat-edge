@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V62_FULL_DISTRIBUTION_UI */
+/* BOAT_EDGE_SITE_V63_FULL_DISTRIBUTION_VERIFIED */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -215,5 +215,30 @@ function hook(){
  setInterval(()=>{if(document.visibilityState==="visible"&&currentRace())run()},60000);
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")run()});
 }
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
+
+/* BOAT_EDGE_SITE_V63_DISTRIBUTION_BLOCK */
+(()=>{"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const getRace=()=>{try{return typeof state!=="undefined"?state.race:null}catch(_){return null}};
+const getPred=r=>{try{return typeof getPrediction==="function"&&r?getPrediction(r):null}catch(_){return null}};
+function combo(v){if(Array.isArray(v))return v.slice(0,3).join("-");const m=String(v??"").match(/([1-6])\D+([1-6])\D+([1-6])/);return m?`${m[1]}-${m[2]}-${m[3]}`:null}
+function why(t){const v=t?.reasons??t?.reason??t?.why??t?.explanation??t?.rationale;if(Array.isArray(v))return v.filter(Boolean).join(" / ");if(v&&typeof v==="object")return Object.values(v).filter(Boolean).join(" / ");return v?String(v):"理由データ未生成"}
+function rows(p){
+ const src=p?.distribution120||p?.distribution_120||p?.all_combinations||p?.allCombinations||p?.trifecta_distribution||p?.probabilities;
+ let a=Array.isArray(src)?src:(src&&typeof src==="object"?Object.entries(src).map(([k,v])=>typeof v==="object"?{combo:k,...v}:{combo:k,probability:v}):[]);
+ return a.map(t=>({combo:combo(t?.combo||t?.combination||t?.ticket||t?.trifecta||t?.order||t),probability:Number(t?.probability??t?.prob??t?.p??t?.rate),world:t?.world??t?.scenario??t?.pattern??null,reason:why(t)})).filter(x=>x.combo&&Number.isFinite(x.probability)).sort((a,b)=>b.probability-a.probability).map((x,i)=>({...x,rank:i+1}));
+}
+function render(){
+ const r=getRace();if(!r)return;const host=$("#tab-pred .section")||$("#tab-pred");if(!host)return;
+ let box=$("#be63Distribution");if(!box){box=document.createElement("section");box.id="be63Distribution";host.append(box)}
+ const a=rows(getPred(r));
+ if(!a.length){box.innerHTML='<div class="be62-box"><div class="be62-title"><b>全3連単 確率順位</b><span>最大120通り</span></div><p>120通りの確率分布はまだ予想データ側で生成されていません。サイト側では確率を作りません。</p></div>';return}
+ const row=x=>`<div class="be62-row"><b>${x.rank}位</b><strong>${esc(x.combo)}</strong><span>${esc(x.probability)}%</span><small>${x.world?`世界 ${esc(x.world)} / `:""}${esc(x.reason)}</small></div>`;
+ box.innerHTML=`<div class="be62-box"><div class="be62-title"><b>全3連単 確率順位</b><span>${a.length}/120通り</span></div>${a.slice(0,10).map(row).join("")}${a.length>10?`<details><summary>11位以下を全部見る</summary>${a.slice(10).map(row).join("")}</details>`:""}</div>`;
+}
+function hook(){if(typeof renderRace==="function"&&!renderRace.__be63){const old=renderRace;renderRace=function(...a){const x=old.apply(this,a);queueMicrotask(render);return x};renderRace.__be63=true}if(getRace())render()}
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
