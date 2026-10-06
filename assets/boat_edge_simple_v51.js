@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V73_SELF_HEALING_HOME */
+/* BOAT_EDGE_SITE_V74_DEADLINE_SPOTLIGHT */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -545,6 +545,141 @@ function hook(){
  setTimeout(()=>bootstrap(),3000);
  setInterval(()=>{if(document.visibilityState==="visible")bootstrap()},30000);
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")bootstrap(true)});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
+
+/* BOAT_EDGE_SITE_V74_DEADLINE_SPOTLIGHT */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V74";
+const $=(q,r=document)=>r.querySelector(q);
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let recCache={at:0,key:null,row:null,busy:false};
+
+function st(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
+function mins(dl){
+ const m=/^(\d{1,2}):(\d{2})/.exec(String(dl||""));if(!m)return null;
+ const n=new Date(),t=new Date(n);t.setHours(+m[1],+m[2],0,0);
+ return Math.floor((t-n)/60000);
+}
+function allUpcoming(today){
+ const out=[];
+ for(const v of (today?.venues||[])){
+  for(const r of (v.races||[])){
+   const m=mins(r.deadline);
+   if(m===null||m<0)continue;
+   out.push({...r,jcd:v.jcd,venue:v.venue||v.name||v.jcd,event:v.event||"",mins:m});
+  }
+ }
+ return out.sort((a,b)=>a.mins-b.mins || String(a.jcd).localeCompare(String(b.jcd)) || Number(a.race_no)-Number(b.race_no));
+}
+function ensure(){
+ let box=$("#be74Priority");if(box)return box;
+ box=document.createElement("section");box.id="be74Priority";
+ box.style.cssText="margin:12px 18px 16px";
+ const home=$("#homeView")||document.body;
+ const ref=$("#be51Home",home);
+ if(ref)home.insertBefore(box,ref);else home.prepend(box);
+ return box;
+}
+function raceButton(r,extra=""){
+ return `<button class="be74-race" data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}" style="border:1px solid #d9e5f3;border-radius:12px;background:#fff;padding:10px;text-align:left;min-width:0">
+ <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.venue)} ${esc(r.race_no)}R</b><strong>${esc(r.deadline)}</strong></div>
+ <div style="font-size:12px;color:#60738c;margin-top:4px">${r.mins===0?"締切間近":`あと${r.mins}分`}${extra?` / ${extra}`:""}</div>
+ </button>`;
+}
+function bind(root){
+ root.querySelectorAll("[data-file]").forEach(b=>b.onclick=()=>{try{if(typeof loadRace==="function")loadRace(b.dataset.file,b.dataset.jcd)}catch(_){}});
+}
+function pct(v){
+ const n=Number(v);if(!Number.isFinite(n))return null;
+ return n<=1?n*100:n;
+}
+function topTicket(pred){
+ const rows=[];
+ for(const w of (pred?.worlds||[]))for(const t of (w?.tickets||[])){
+  const p=pct(t?.probability);
+  if(Number.isFinite(p))rows.push({combo:t.combo,probability:p,world:w.key});
+ }
+ rows.sort((a,b)=>b.probability-a.probability);return rows[0]||null;
+}
+function completeness(race){
+ let n=0,total=4;
+ if((race?.beforeinfo?.racers||[]).length)n++;
+ if((race?.beforeinfo?.start_exhibition||[]).length)n++;
+ if((race?.actual_entry||[]).length)n++;
+ if((race?.original_exhibition?.boats||[]).length)n++;
+ return n/total;
+}
+async function fetchRace(row){
+ try{
+  const r=await fetch(`${row.file}?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)return null;
+  let d=await r.json();
+  try{
+   if(typeof loadFormalOverlay==="function"&&typeof mergeFormalOverlay==="function"){
+    const o=await loadFormalOverlay(d.race_key);d=mergeFormalOverlay(d,o);
+   }
+  }catch(_){}
+  return d;
+ }catch(_){return null}
+}
+async function assess(row){
+ const d=await fetchRace(row);if(!d)return null;
+ let pred=null;try{pred=typeof getPrediction==="function"?getPrediction(d):null}catch(_){}
+ if(!pred)return null;
+ const t=topTicket(pred),comp=completeness(d),decision=String(pred.decision||"");
+ if(!t)return null;
+ const formal=pred.mode==="formal";
+ const grade=String(pred.grade||"");
+ const gradeBonus=/A\+|S/.test(grade)?8:/^A/.test(grade)?5:/^B\+/.test(grade)?3:0;
+ const score=t.probability + comp*20 + (formal?8:0) + gradeBonus;
+ const eligible=t.probability>=10 && comp>=0.5 && !/見送り|慎重|SKIP/i.test(decision);
+ return {...row,pred,top:t,comp,score,eligible,formal,grade,decision};
+}
+async function chooseRecommendation(today){
+ const now=Date.now(),key=String(today?.updated_at||"");
+ if(recCache.row && recCache.key===key && now-recCache.at<120000)return recCache.row;
+ if(recCache.busy)return recCache.row;
+ recCache.busy=true;
+ const candidates=allUpcoming(today).filter(r=>r.mins<=180).slice(0,18);
+ const out=[];
+ for(let i=0;i<candidates.length;i+=4){
+  const batch=await Promise.all(candidates.slice(i,i+4).map(assess));
+  out.push(...batch.filter(Boolean));
+ }
+ const eligible=out.filter(x=>x.eligible).sort((a,b)=>b.score-a.score || a.mins-b.mins);
+ const row=eligible[0]||null;
+ recCache={at:Date.now(),key,row,busy:false};return row;
+}
+function recHTML(r){
+ if(!r)return `<div style="padding:13px;border:1px solid #dce6f2;border-radius:14px;background:#fff"><div style="font-size:12px;font-weight:800;color:#3172c9">一押しレース</div><b style="display:block;margin-top:4px">現時点なし</b><div style="font-size:12px;color:#60738c;margin-top:3px">直前データと確率の集中が条件を満たした時だけ表示します。</div></div>`;
+ return `<button data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}" style="width:100%;padding:14px;border:1px solid #bad8fb;border-radius:14px;background:linear-gradient(135deg,#fff,#eef7ff);text-align:left">
+ <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:12px;font-weight:900;color:#176bd6">★ 一押しレース</span><span style="font-size:12px">${r.formal?"正式":"暫定"}</span></div>
+ <div style="display:flex;justify-content:space-between;gap:10px;margin-top:5px"><b style="font-size:18px">${esc(r.venue)} ${esc(r.race_no)}R</b><strong>${esc(r.deadline)} / あと${r.mins}分</strong></div>
+ <div style="font-size:12px;color:#50657f;margin-top:5px">1位候補 ${esc(r.top.combo)} ${r.top.probability.toFixed(1)}% / 勝負度 ${esc(r.grade||"—")} / 直前充足 ${Math.round(r.comp*100)}%</div>
+ </button>`;
+}
+async function render(){
+ const today=st()?.today;if(!today)return;
+ const box=ensure(),rows=allUpcoming(today);
+ const first=rows.slice(0,12),rest=rows.slice(12);
+ box.innerHTML=`<div id="be74Rec">${recHTML(recCache.row)}</div>
+ <div style="margin-top:12px;border:1px solid #dce6f2;border-radius:14px;background:#f8fbff;padding:12px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:16px">締切順</b><span style="font-size:12px;color:#60738c">全開催場を横断</span></div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">${first.map(r=>raceButton(r)).join("")||'<div style="grid-column:1/-1">表示できるレースがありません</div>'}</div>
+  ${rest.length?`<details style="margin-top:9px"><summary>この後のレースも見る（${rest.length}R）</summary><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px">${rest.map(r=>raceButton(r)).join("")}</div></details>`:""}
+ </div>`;
+ bind(box);
+ const rec=await chooseRecommendation(today);
+ const h=$("#be74Rec",box);if(h){h.innerHTML=recHTML(rec);bind(h)}
+}
+function hook(){
+ if(typeof renderHome==="function"&&!renderHome.__be74){
+  const old=renderHome;renderHome=function(...a){let y;try{y=old.apply(this,a)}catch(e){throw e}queueMicrotask(render);return y};renderHome.__be74=true;
+ }
+ render();
+ setInterval(()=>{if(document.visibilityState==="visible")render()},60000);
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")render()});
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
