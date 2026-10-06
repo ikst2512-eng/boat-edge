@@ -1,0 +1,55 @@
+name: BOAT EDGE V77 トップ仕上げ
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-home-v77.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: V77トップ仕上げ反映
+        shell: bash
+        env:
+          BE77_ADDON_B64: "LyogQk9BVF9FREdFX1NJVEVfVjc3X0hPTUVfUE9MSVNIICovCigoKT0+eyJ1c2Ugc3RyaWN0IjsKd2luZG93LkJPQVRfRURHRV9TSVRFX1ZFUlNJT049IlY3NyI7CmNvbnN0ICQ9KHEscj1kb2N1bWVudCk9PnIucXVlcnlTZWxlY3RvcihxKTsKZnVuY3Rpb24gY2xlYW5MZWdhY3koKXsKICAvLyBWNzIgaGVhbHRoL3N0YXR1cyBpcyB1c2VmdWwgaW50ZXJuYWxseSBidXQgZHVwbGljYXRlIG9uIHRoZSBwdWJsaWMgaG9tZS4KICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJib2R5ICoiKS5mb3JFYWNoKGVsPT57CiAgICBpZihlbC5jaGlsZHJlbi5sZW5ndGg+MTIpcmV0dXJuOwogICAgY29uc3QgdD0oZWwudGV4dENvbnRlbnR8fCIiKS50cmltKCk7CiAgICBpZigvXkJPQVQgRURHRSBWNzJccypb4peP44O7XS8udGVzdCh0KSAmJiAv5Y+N5pig5riI44G/fOOCquODg+OCunzntZDmnpx85a2m57+SLy50ZXN0KHQpKXsKICAgICAgZWwuc3R5bGUuZGlzcGxheT0ibm9uZSI7CiAgICAgIGVsLmRhdGFzZXQuYmU3N0hpZGRlbj0ibGVnYWN5LXY3MiI7CiAgICB9CiAgfSk7Cn0KZnVuY3Rpb24gdXJnZW5jeSgpewogIGNvbnN0IHJvb3Q9JCgiI2JlNzZQcmlvcml0eSIpOyBpZighcm9vdClyZXR1cm47CiAgcm9vdC5xdWVyeVNlbGVjdG9yQWxsKCJidXR0b25bZGF0YS1maWxlXSIpLmZvckVhY2goYj0+ewogICAgY29uc3QgdHh0PWIudGV4dENvbnRlbnR8fCIiOwogICAgY29uc3QgbT0v44GC44GoXHMqKFxkKynliIYvLmV4ZWModHh0KTsKICAgIGlmKCFtKXJldHVybjsKICAgIGNvbnN0IG49K21bMV07CiAgICBiLnN0eWxlLnRyYW5zaXRpb249ImJvcmRlci1jb2xvciAuMTVzLGJhY2tncm91bmQgLjE1cyI7CiAgICBpZihuPD01KXsKICAgICAgYi5zdHlsZS5ib3JkZXJDb2xvcj0iI2ZmOWI4ZiI7IGIuc3R5bGUuYmFja2dyb3VuZD0iI2ZmZjZmNCI7CiAgICAgIGxldCB4PWIucXVlcnlTZWxlY3RvcigiLmJlNzctdXJnZW50Iik7CiAgICAgIGlmKCF4KXt4PWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImRpdiIpO3guY2xhc3NOYW1lPSJiZTc3LXVyZ2VudCI7eC5zdHlsZS5jc3NUZXh0PSJmb250LXNpemU6MTBweDtmb250LXdlaWdodDo5MDA7Y29sb3I6I2Q3NDQyZjttYXJnaW4tdG9wOjNweCI7Yi5hcHBlbmRDaGlsZCh4KX0KICAgICAgeC50ZXh0Q29udGVudD1uPD0xPyLjgb7jgoLjgarjgY/nt6DliIciOiLnt6DliIc15YiG5Lul5YaFIjsKICAgIH1lbHNlIGlmKG48PTE1KXsKICAgICAgYi5zdHlsZS5ib3JkZXJDb2xvcj0iI2YyYzM2YiI7IGIuc3R5bGUuYmFja2dyb3VuZD0iI2ZmZmFmMCI7CiAgICB9CiAgfSk7Cn0KZnVuY3Rpb24gcG9saXNoKCl7CiAgY2xlYW5MZWdhY3koKTsKICBjb25zdCBzdGF0dXM9JCgiI2JlNzNTdGF0dXMiKTsKICBpZihzdGF0dXMpewogICAgc3RhdHVzLmlubmVySFRNTD1zdGF0dXMuaW5uZXJIVE1MLnJlcGxhY2UoL0JPQVQgRURHRSBWN1szLTZdL2csIkJPQVQgRURHRSBWNzciKTsKICAgIHN0YXR1cy5zdHlsZS5tYXJnaW5Cb3R0b209IjEycHgiOwogIH0KICBjb25zdCBwcmk9JCgiI2JlNzZQcmlvcml0eSIpOwogIGlmKHByaSl7CiAgICBwcmkuc3R5bGUubWFyZ2luVG9wPSI4cHgiOwogICAgcHJpLnN0eWxlLm1hcmdpbkJvdHRvbT0iMTJweCI7CiAgICB1cmdlbmN5KCk7CiAgICBjb25zdCByZWM9cHJpLnF1ZXJ5U2VsZWN0b3IoIiNiZTc2UmVjIik7CiAgICBpZihyZWMpewogICAgICBjb25zdCB0PShyZWMudGV4dENvbnRlbnR8fCIiKTsKICAgICAgaWYoL+ePvuaZgueCueOBquOBly8udGVzdCh0KSl7CiAgICAgICAgY29uc3Qgbm90ZT1yZWMucXVlcnlTZWxlY3RvcigiLmJlNzctcmVjLW5vdGUiKTsKICAgICAgICBpZighbm90ZSl7CiAgICAgICAgICBjb25zdCBkPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImRpdiIpOwogICAgICAgICAgZC5jbGFzc05hbWU9ImJlNzctcmVjLW5vdGUiOwogICAgICAgICAgZC5zdHlsZS5jc3NUZXh0PSJmb250LXNpemU6MTBweDtjb2xvcjojNzg5MGFhO21hcmdpbi10b3A6NXB4IjsKICAgICAgICAgIGQudGV4dENvbnRlbnQ9IueEoeeQhuOBq+mBuOOBsOOBmuOAgeadoeS7tuaIkOeri+aZguOBoOOBkUFJ5o6o5aWo44KS6KGo56S6IjsKICAgICAgICAgIHJlYy5maXJzdEVsZW1lbnRDaGlsZD8uYXBwZW5kQ2hpbGQoZCk7CiAgICAgICAgfQogICAgICB9CiAgICB9CiAgfQogIGNvbnN0IGg9JCgiI2hvbWVWaWV3Iik7CiAgaWYoaCl7CiAgICBoLnF1ZXJ5U2VsZWN0b3JBbGwoImgxLGgyIikuZm9yRWFjaCh4PT57eC5zdHlsZS5tYXJnaW5Cb3R0b209IjEwcHgifSk7CiAgfQp9CmZ1bmN0aW9uIGJvb3QoKXsKICBwb2xpc2goKTsKICBjb25zdCBtbz1uZXcgTXV0YXRpb25PYnNlcnZlcigoKT0+cmVxdWVzdEFuaW1hdGlvbkZyYW1lKHBvbGlzaCkpOwogIG1vLm9ic2VydmUoZG9jdW1lbnQuYm9keSx7Y2hpbGRMaXN0OnRydWUsc3VidHJlZTp0cnVlfSk7CiAgc2V0SW50ZXJ2YWwocG9saXNoLDE1MDAwKTsKICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJ2aXNpYmlsaXR5Y2hhbmdlIiwoKT0+e2lmKGRvY3VtZW50LnZpc2liaWxpdHlTdGF0ZT09PSJ2aXNpYmxlIilwb2xpc2goKX0pOwp9CmRvY3VtZW50LnJlYWR5U3RhdGU9PT0ibG9hZGluZyI/ZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigiRE9NQ29udGVudExvYWRlZCIsYm9vdCk6Ym9vdCgpOwp9KSgpOw=="
+        run: |
+          python - <<'PY'
+          import os,base64
+          from pathlib import Path
+          p=Path("assets/boat_edge_simple_v51.js")
+          s=p.read_text(encoding="utf-8")
+          marker="BOAT_EDGE_SITE_V77_HOME_POLISH"
+          if marker not in s:
+              s=s.rstrip()+"\n\n"+base64.b64decode(os.environ["BE77_ADDON_B64"]).decode("utf-8")+"\n"
+              p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: V77キャッシュ更新
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html");s=p.read_text(encoding="utf-8")
+          s=re.sub(r'boat_edge_simple_v51\.js(?:\?v=\d+)?','boat_edge_simple_v51.js?v=77',s)
+          s=re.sub(r'boat_edge_simple_v51\.css(?:\?v=\d+)?','boat_edge_simple_v51.css?v=77',s)
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Update BOAT EDGE V77 home polish"
+          git push
