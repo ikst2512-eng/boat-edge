@@ -1,4 +1,4 @@
-/* BOAT_EDGE_SITE_V76_PERSISTENT_PRIORITY */
+/* BOAT_EDGE_SITE_V72_LIVE_STATUS */
 (()=>{"use strict";
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -814,6 +814,61 @@ function hook(){
  observe();render(true);setTimeout(()=>render(true),1500);setTimeout(()=>render(true),4000);
  setInterval(()=>{if(document.visibilityState==="visible")render()},30000);
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")render(true)});
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
+})();
+
+/* BOAT_EDGE_SITE_V72_LIVE_STATUS */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V72";
+const $=(q,r=document)=>r.querySelector(q);
+async function get(){
+ try{
+  const r=await fetch(`./data/site_health.json?t=${Date.now()}`,{cache:"no-store"});
+  return r.ok?await r.json():null;
+ }catch(_){return null}
+}
+function statusText(d){
+ const o=d?.odds||{}, l=d?.learning||{}, rs=d?.results||{};
+ let odds="オッズ 待機中";
+ if((o.errors||0)>0) odds=`オッズ 一部エラー ${o.errors}件`;
+ else if((o.updated||0)>0) odds=`実オッズ取得 ${o.updated}R`;
+ else if((o.checked||0)>0) odds=`オッズ確認 ${o.checked}R`;
+ const learn=`学習採点 ${l.evaluated||0}R`;
+ const result=(rs.updated||0)>0?`結果反映 ${rs.updated}R`:"結果待ち";
+ return {odds,learn,result};
+}
+function ensure(){
+ let x=$("#be72Status");
+ if(x)return x;
+ x=document.createElement("section");x.id="be72Status";
+ x.style.cssText="margin:10px 0;padding:10px 12px;border:1px solid #dfe5ec;border-radius:12px;background:#fff;font-size:12px;line-height:1.5";
+ const home=$("#be51Home");
+ const pred=$("#tab-pred .section")||$("#tab-pred");
+ (home||pred||document.body).prepend(x);
+ return x;
+}
+async function render(){
+ const x=ensure(),d=await get();
+ if(!d){x.innerHTML='<b>BOAT EDGE V72</b>　稼働状況を取得中';return}
+ const s=statusText(d);
+ const badge=d.site_asset_v72?"反映済み":"確認中";
+ x.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
+ <b>BOAT EDGE ${d.site_version||"V72"} <span style="font-weight:600">● ${badge}</span></b>
+ <span>${d.generated_at||"—"}</span></div>
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:5px">
+ <span>${s.odds}</span><span>${s.result}</span><span>${s.learn}</span></div>`;
+}
+function hook(){
+ render();
+ setInterval(()=>{if(document.visibilityState==="visible")render()},60000);
+ window.addEventListener("boat-edge-formal120",render);
+ if(typeof renderHome==="function"&&!renderHome.__be72){
+  const old=renderHome;renderHome=function(...a){const y=old.apply(this,a);queueMicrotask(render);return y};renderHome.__be72=true;
+ }
+ if(typeof renderRace==="function"&&!renderRace.__be72){
+  const old=renderRace;renderRace=function(...a){const y=old.apply(this,a);queueMicrotask(render);return y};renderRace.__be72=true;
+ }
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",hook):hook();
 })();
