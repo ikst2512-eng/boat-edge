@@ -227,6 +227,14 @@ Current UI target: V122
 
 - V123 does not modify V122 production UI.
 
+- V124 audits every V123 FINAL_15M snapshot without changing production prediction logic.
+
+- V124 records snapshot/race/odds SHA-256, PRE_RESULT guards, used inputs, deadline timing and hit-mode top10.
+
+- V124 fails if a snapshot is outside FINAL_15M, guard-invalid, hash-mismatched or not V122/formal policy.
+
+- V124 is evidence-only; production UI remains V122 and server snapshot generation remains V123.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - DONE V112: four modes rerender from the newly selected race key on every race change.
