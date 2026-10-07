@@ -1053,14 +1053,8 @@ body{background:
 <!-- V89: orphaned V51 CSS disabled -->
 <!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 <!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->
-  <meta name="boat-edge-site-version" content="V107-TABS-SITE-BACK">
-<link rel="stylesheet" href="./assets/boat_edge_v90.css?v=94">
-<link rel="stylesheet" href="./assets/boat_edge_v96.css?v=96">
-<link rel="stylesheet" href="./assets/boat_edge_v97.css?v=97">
-<link rel="stylesheet" href="./assets/boat_edge_v100.css?v=100">
-<link rel="stylesheet" href="./assets/boat_edge_v101.css?v=101">
-<link rel="stylesheet" href="./assets/boat_edge_v105.css?v=105">
-<link rel="stylesheet" href="./assets/boat_edge_v107.css?v=107">
+  <meta name="boat-edge-site-version" content="V108-PERFORMANCE-CONSOLIDATED">
+<link rel="stylesheet" href="./assets/boat_edge_v108.css?v=108">
 </head>
 <body>
 <div class="app">
@@ -3096,25 +3090,17 @@ async function refreshAll(force=false){
 let passiveRefreshTimer=null;
 function startPassiveRefresh(){
   clearInterval(passiveRefreshTimer);
-  passiveRefreshTimer=setInterval(async()=>{if(document.visibilityState==="visible") await refreshAll(true);},60000);
+  passiveRefreshTimer=setInterval(async()=>{if(document.visibilityState==="visible") await refreshAll(true);},120000);
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible") refreshAll(true);});
 
 refreshAll();
 startPassiveRefresh();
-setInterval(()=>{ if(state.today){ renderSpotlightRaces(); renderDeadlineBoard(); updateNextRaceBar(); } }, 30000);
-setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUrgency(state.race,pred); if(document.getElementById("tab-direct")?.classList.contains("active")) renderDirectMode(state.race,pred); } },1000);
+/* V108: hidden legacy-home 30s redraw disabled */
+/* V108: hidden direct-mode 1s redraw disabled */
 </script>
 <script src="./assets/boat_edge_final_v48.js"></script>
 <!-- BOAT_EDGE_V85_SAFE_MODE: accumulated simple JS disabled -->
-<script src="./assets/boat_edge_v86_interaction.js?v=87"></script>
-<script src="./assets/boat_edge_v88.js?v=88"></script>
-<script src="./assets/boat_edge_v90.js?v=94"></script>
-<script src="./assets/boat_edge_v96.js?v=96"></script>
-<script src="./assets/boat_edge_v97.js?v=97"></script>
-<script src="./assets/boat_edge_v100.js?v=100"></script>
-<script src="./assets/boat_edge_v101.js?v=101"></script>
-<script src="./assets/boat_edge_v105.js?v=105"></script>
-<script src="./assets/boat_edge_v107.js?v=107"></script>
+<script src="./assets/boat_edge_v108.js?v=108"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V107
+Current UI target: V108
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -70,6 +70,18 @@ Current UI target: V107
 - V107 site-local back stack replaces browser-history back for internal views.
 
 - V107 becomes the only scheduled CURRENT stabilizer/archive builder.
+
+- V108 performance consolidation: legacy V86/V88/V90/V96/V97/V100/V101/V105/V107 JS removed from page.
+
+- V108 keeps only base V48 + consolidated V108 external runtime.
+
+- V108 removes extension MutationObservers and extension setInterval loops.
+
+- V108 disables hidden legacy-home 30s redraw and hidden direct-mode 1s redraw.
+
+- V108 preserves date/venue/race navigation, prediction modes, hit history, odds/payout, racer-head picks and standout highlighting.
+
+- V108 archive scheduler writes only when saved archive content changes.
 
 ## NEXT
 - Verify V101 iPhone layout.
