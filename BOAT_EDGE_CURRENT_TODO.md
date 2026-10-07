@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V106
+Current UI target: V107
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -60,6 +60,16 @@ Current UI target: V106
 - V106 removes V103/V104 navigation overlays from index.html to avoid duplicate controls.
 
 - Historical archive remains available from 2026-10-05 using saved source data.
+
+- V107 race tabs fixed to 予想 / 展開 / 選手 / 直前 / データ / 監査.
+
+- V107 hides legacy 直前モード tab.
+
+- V107 bottom navigation レース -> 予想.
+
+- V107 site-local back stack replaces browser-history back for internal views.
+
+- V107 becomes the only scheduled CURRENT stabilizer/archive builder.
 
 ## NEXT
 - Verify V101 iPhone layout.
