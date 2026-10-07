@@ -13,7 +13,7 @@ const VENUES=[["01","桐生"],["02","戸田"],["03","江戸川"],["04","平和�
 const LABELS={
   hit:{name:"的中重視",desc:"展開確率の上位を広めに残して取りこぼしを減らす",icon:"◎"},
   balance:{name:"バランス",desc:"展開確率の上位6点。オッズでは順位を変えない",icon:"◐"},
-  hole:{name:"波乱展開",desc:"本線と違う頭の展開候補を見る。オッズでは選ばない",icon:"◆"},
+  hole:{name:"波乱展開",desc:"別頭を先に、展開分岐の強さで8〜10点。オッズでは増減しない",icon:"◆"},
   narrow:{name:"激絞り3点",desc:"展開確率の上位3点だけに絞る",icon:"⚡"}
 };
 
@@ -470,18 +470,32 @@ async function be122ScenarioAdjusted(race,pred){
   if(orig.out.size>=4)stage="ORIGINAL_EXHIBITION";
   return {tickets,stage,used,applied:true};
 }
+function be129WaveRows(all){
+  if(!all.length)return [];
+  const primaryHead=String(all[0]?.combo||"").split("-")[0]||null;
+  const alt=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+  const primary=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]===primaryHead):all;
+  const altHeads=new Set(alt.map(x=>String(x.combo||"").split("-")[0]).filter(Boolean));
+  const total=all.reduce((a,b)=>a+(Number(b?.p)||0),0)||1;
+  const altShare=alt.reduce((a,b)=>a+(Number(b?.p)||0),0)/total;
+  const target=(altHeads.size>=2||altShare>=.38)?10:8;
+  const ordered=[...alt,...primary];
+  const out=[],seen=new Set();
+  for(const x of ordered){
+    if(!x?.combo||seen.has(x.combo))continue;
+    seen.add(x.combo);out.push(x);
+    if(out.length>=Math.min(target,all.length))break;
+  }
+  return out;
+}
 function be122ModesFromTickets(all,odds){
   const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
-  const primaryHead=all[0]?.combo?.split("-")?.[0]||null;
-  const altHead=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
-  const variancePool=altHead.length?altHead:all.slice(3);
   const modes={
     hit:all.slice(0,Math.min(10,all.length)),
     balance:all.slice(0,Math.min(6,all.length)),
-    hole:variancePool.slice(0,Math.min(8,variancePool.length)),
+    hole:be129WaveRows(all),
     narrow:all.slice(0,Math.min(3,all.length))
   };
-  if(!modes.hole.length)modes.hole=all.slice(0,Math.min(6,all.length));
   for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
   return modes;
 }
@@ -643,14 +657,28 @@ async function renderPredictionModes(race,pred){
   else if(mins!==null&&mins<0)snapStatus=finalSnap?"締切済み・保存した最終予想を固定中":"締切済み・締切前スナップショットなし";
 
   const modeHit=Boolean(settled?.mode_hits?.[mode]);
-  let resultBar="";
-  if(resultConfirmed){
+  let cls="pending",status="🎯 判定待ち",detail="締切15分前に最終予想を保存して判定",resultText="結果未確定";
+  if(inFinalWindow){
+    status="🎯 判定待ち・最終予想保存中";
+    detail=`締切まで${mins}分 / 保存済み最終予想で判定`;
+  }else if(!resultConfirmed&&mins!==null&&mins<0){
+    status="🎯 判定待ち・結果待ち";
+    detail=effectiveSnap?"締切前の最終予想は保存済み":"締切前snapshotなし";
+  }else if(resultConfirmed){
     const pay=Number(result?.trifecta_payout_yen_per_100);
     const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";
-    let verdict="締切前予想なし・判定対象外",cls="neutral";
-    if(settled){verdict=modeHit?"🎯 この予想モード的中":"この予想モードは不的中";cls=modeHit?"hit":"miss"}
-    resultBar=`<div class="be118-resultbar ${cls}"><div><small>確定結果</small><b>${esc(officialResult||"確定")}</b></div><div><strong>${verdict}</strong><span>${payText}</span></div></div>`;
+    resultText=`結果 ${esc(officialResult||"確定")}`;
+    if(settled){
+      status=modeHit?"🎯 的中":"✕ 不的中";
+      detail=`${LABELS[mode]?.name||mode} / ${payText}`;
+      cls=modeHit?"hit":"miss";
+    }else{
+      status="— 判定対象外";
+      detail=`締切前の最終予想snapshotなし / ${payText}`;
+      cls="neutral";
+    }
   }
+  const resultBar=`<div id="be128HitStatus" class="be118-resultbar ${cls}" data-hit-status="${modeHit?"hit":resultConfirmed?"settled":"pending"}"><div><small>🎯 判定ステータス</small><b>${status}</b></div><div><strong>${resultText}</strong><span>${detail}</span></div></div>`;
 
   const stageText=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   const sourceBar=pred.mode==="formal"

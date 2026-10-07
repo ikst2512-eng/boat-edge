@@ -71,3 +71,16 @@
   .be118-source.reference{grid-template-columns:1fr}
   .be118-source.reference span,.be118-source.reference small{grid-column:1}
 }
+
+/* BOAT_EDGE_V128_HIT_STATUS */
+.be118-resultbar.pending{background:#f5f8fc;border-color:#c9d6e5}
+.be118-resultbar.pending b{font-size:13px;color:#173d6b}
+.be118-resultbar.neutral{background:#f7f7f7;border-color:#d7d7d7}
+#be128HitStatus{margin-top:7px}
+#be128HitStatus>div:first-child{min-width:42%}
+@media(max-width:640px){
+  #be128HitStatus{padding:8px 9px;gap:7px}
+  #be128HitStatus b{font-size:11px}
+  #be128HitStatus strong{font-size:9px}
+  #be128HitStatus span{font-size:7px}
+}

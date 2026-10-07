@@ -1,0 +1,55 @@
+{
+  "schema_version": "boat-edge-current-state-v130",
+  "as_of": "2026-10-08",
+  "ui": {
+    "version": "V130",
+    "status": "ACTIVE"
+  },
+  "latest_prediction_policy": {
+    "version": "V127+V129-wave",
+    "status": "ACTIVE",
+    "file": "data/site_prediction_policy.json"
+  },
+  "final15m_snapshot": {
+    "version": "V130",
+    "status": "ACTIVE",
+    "script": "scripts/site_final_history_v130.py"
+  },
+  "audit": {
+    "version": "V125",
+    "status": "ACTIVE_SCHEDULE_FALLBACK"
+  },
+  "parity": {
+    "version": "V130",
+    "status": "PASS",
+    "report": "data/site_prediction_parity/v130.json"
+  },
+  "formal_current": {
+    "connected": false,
+    "predictions_ready": false,
+    "current": "V12133_20261008_NEXT_UNTOUCHED_WAIT_5SOURCE",
+    "stage": "2026-10-08 PRE_RESULT / 5ソース待ち",
+    "guards": {
+      "results_seen": false,
+      "unlock": false,
+      "scoring": false,
+      "RESULT_UNLOCK_TOKEN": null
+    }
+  },
+  "hit_status_ui": {
+    "always_visible": true,
+    "states": [
+      "判定待ち",
+      "最終予想保存中",
+      "結果待ち",
+      "🎯的中",
+      "✕不的中",
+      "判定対象外"
+    ]
+  },
+  "wave_mode": {
+    "min_tickets": 8,
+    "max_tickets": 10,
+    "odds_rank_weight": false
+  }
+}

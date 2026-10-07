@@ -46,5 +46,13 @@
   ],
   "missing_data_rule": "未取得値は0・平均・proxyで補完しない。利用可能な入力だけで参考予想を出し、正式CURRENT接続時は正式CURRENTを優先。",
   "formal_current_status_rule": "formal_predictions が有効かつ PRE_RESULT guard を満たす場合のみ正式CURRENTとして表示。",
-  "original_exhibition_formal_requirement": "正式最新予想ではBOATERS + 競艇日和を確認し、一周・まわり足・直線・展示ST/タイムを実値/艇間差で評価する。"
+  "original_exhibition_formal_requirement": "正式最新予想ではBOATERS + 競艇日和を確認し、一周・まわり足・直線・展示ST/タイムを実値/艇間差で評価する。",
+  "wave_mode": {
+    "name": "波乱展開",
+    "ticket_count": "8〜10",
+    "rule": "別頭候補を確率順で優先し、分岐が強い場合は10点。足りない分は本命頭の2・3着崩れ上位確率筋を追加。",
+    "ten_ticket_condition": "別頭が2系統以上、または別頭確率シェアが38%以上",
+    "odds_used_for_selection": false,
+    "probabilities_modified": false
+  }
 }
