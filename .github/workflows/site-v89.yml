@@ -1,0 +1,51 @@
+name: BOAT EDGE V89 Home Visibility Fix
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v89.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove orphaned legacy CSS
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html")
+          h=p.read_text(encoding="utf-8")
+          h=re.sub(r'\s*<link[^>]+href=["\']\./assets/boat_edge_simple_v51\.css(?:\?v=\d+)?["\'][^>]*>\s*','\n<!-- V89: orphaned V51 CSS disabled -->\n',h)
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V89-HOME-VISIBILITY-FIX">',h)
+          p.write_text(h,encoding="utf-8")
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          grep -q 'V89-HOME-VISIBILITY-FIX' index.html
+          grep -q 'V89: orphaned V51 CSS disabled' index.html
+          if grep -Eq '<link[^>]+boat_edge_simple_v51\.css' index.html; then
+            echo "legacy V51 CSS still active"
+            exit 1
+          fi
+          if grep -Eq '<script[[:space:]]+src=["'\'']\./assets/boat_edge_simple_v51\.js' index.html; then
+            echo "legacy V51 JS unexpectedly active"
+            exit 1
+          fi
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix BOAT EDGE V89 hidden home"
+          git push
