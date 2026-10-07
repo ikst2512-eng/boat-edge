@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V114
+Current UI target: V115
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -134,6 +134,16 @@ Current UI target: V114
 - V114 labels these snapshots SITE_FALLBACK; they are not formal predictions.
 
 - V114 adds no browser MutationObserver or setInterval.
+
+- V115 disables obsolete V111/V72/V73/V95/V83 workflows.
+
+- V115 cancels queued/in-progress runs from those obsolete workflows.
+
+- V115 leaves V109 result/payout collection, V114 server final-history, odds, learning and auto-update active.
+
+- V115 does not modify the V114 production UI runtime.
+
+- V115 removes obsolete workflow churn that caused unnecessary failed Actions and Pages rebuilds.
 
 ## NEXT
 - Verify V101 iPhone layout.
