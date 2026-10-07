@@ -1,0 +1,345 @@
+name: BOAT EDGE V98 Course Stats
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v98.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "10 21 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v98-course-stats
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml pyyaml
+
+      - name: Collect official venue course stats
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json,re,time
+          from pathlib import Path
+          from datetime import datetime,timedelta,timezone
+          import requests
+          from bs4 import BeautifulSoup
+
+          JST=timezone(timedelta(hours=9))
+          now=datetime.now(JST)
+          out=Path("data/site_course_stats")
+          out.mkdir(parents=True,exist_ok=True)
+
+          VENUES={
+            "01":"桐生","02":"戸田","03":"江戸川","04":"平和島","05":"多摩川","06":"浜名湖",
+            "07":"蒲郡","08":"常滑","09":"津","10":"三国","11":"びわこ","12":"住之江",
+            "13":"尼崎","14":"鳴門","15":"丸亀","16":"児島","17":"宮島","18":"徳山",
+            "19":"下関","20":"若松","21":"芦屋","22":"福岡","23":"唐津","24":"大村"
+          }
+
+          s=requests.Session()
+          s.headers.update({
+            "User-Agent":"Mozilla/5.0 (compatible; BOAT-EDGE-V98/1.0)",
+            "Accept-Language":"ja-JP,ja;q=0.9",
+            "Connection":"close",
+          })
+
+          def norm(x):
+            return re.sub(r"\s+"," ",str(x or "")).strip()
+
+          def parse_table(html):
+            soup=BeautifulSoup(html,"lxml")
+            candidates=[]
+            for table in soup.find_all("table"):
+              t=norm(table.get_text(" ",strip=True))
+              if "決まり手" in t and ("1着" in t or "１着" in t) and ("逃げ" in t or "捲り" in t or "まくり" in t):
+                candidates.append(table)
+            if not candidates:
+              raise ValueError("course_stats_table_not_found")
+            table=max(candidates,key=lambda x:len(norm(x.get_text(" ",strip=True))))
+            courses={}
+            for tr in table.find_all("tr"):
+              t=norm(tr.get_text(" ",strip=True))
+              nums=re.findall(r"(?<!\d)(\d+(?:\.\d+)?)(?!\d)",t)
+              if len(nums)<13:
+                continue
+              try:
+                course=int(float(nums[0]))
+              except:
+                continue
+              if course not in range(1,7):
+                continue
+              vals=[float(x) for x in nums[1:13]]
+              if len(vals)!=12 or any(x<0 or x>100 for x in vals):
+                continue
+              courses[str(course)]={
+                "first_rate":vals[0],
+                "second_rate":vals[1],
+                "third_rate":vals[2],
+                "fourth_rate":vals[3],
+                "fifth_rate":vals[4],
+                "sixth_rate":vals[5],
+                "escape":vals[6],
+                "makuri":vals[7],
+                "sashi":vals[8],
+                "makuri_sashi":vals[9],
+                "nuki":vals[10],
+                "megumare":vals[11],
+              }
+            if len(courses)!=6:
+              raise ValueError(f"course_count={len(courses)}")
+            text=norm(soup.get_text(" ",strip=True))
+            m=re.search(r"集計期間[：:]?\s*(\d{4}[/-]\d{1,2}[/-]\d{1,2})\s*[〜～~\-]\s*(\d{4}[/-]\d{1,2}[/-]\d{1,2})",text)
+            period={"from":m.group(1),"to":m.group(2)} if m else None
+            return courses,period
+
+          errors=[]
+          ok=0
+          for jcd,name in VENUES.items():
+            url=f"https://www.boatrace.jp/owpc/pc/data/stadium?jcd={jcd}"
+            try:
+              r=s.get(url,timeout=(5,20))
+              r.raise_for_status()
+              r.encoding=r.apparent_encoding or r.encoding or "utf-8"
+              courses,period=parse_table(r.text)
+              doc={
+                "schema_version":"boat-edge-site-course-stats-v98",
+                "venue_code":jcd,
+                "venue":name,
+                "fetched_at":datetime.now(JST).isoformat(timespec="seconds"),
+                "source":"BOAT RACE オフィシャルウェブサイト ボートレース場データ",
+                "source_url":url,
+                "period":period,
+                "unit":"percent",
+                "scope":"venue_recent_3_months",
+                "prediction_logic_uses_course_stats":False,
+                "courses":courses,
+              }
+              (out/f"{jcd}.json").write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
+              ok+=1
+            except Exception as e:
+              errors.append({"jcd":jcd,"venue":name,"error":repr(e)})
+            time.sleep(.15)
+
+          idx={
+            "schema_version":"boat-edge-site-course-stats-index-v98",
+            "updated_at":datetime.now(JST).isoformat(timespec="seconds"),
+            "venues_ok":ok,
+            "venues_total":24,
+            "errors":errors,
+            "source":"BOAT RACE official stadium pages",
+            "prediction_logic_uses_course_stats":False,
+          }
+          (out/"index.json").write_text(json.dumps(idx,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(idx,ensure_ascii=False))
+          if ok < 20:
+            raise SystemExit(f"too_few_venues_ok={ok}")
+          PY
+
+      - name: Install V98 UI
+        shell: bash
+        run: |
+          cat > assets/boat_edge_v98.js <<'JS'
+          /* BOAT_EDGE_V98_COURSE_STATS */
+          (()=>{"use strict";
+          const esc=x=>String(x??"－").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+          const cache=new Map();
+          const pct=x=>Number.isFinite(Number(x))?Number(x).toFixed(1)+"%":"－";
+          const raceFile=()=>window.be90cur?.f||null;
+          const raceKey=f=>String(f||"").match(/(\d{8}-\d{2}-\d{2})/)?.[1]||null;
+          async function J(u){
+            const r=await fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+            if(!r.ok)throw Error(r.status);return r.json();
+          }
+          async function load(f){
+            const k=raceKey(f);if(!k)return null;
+            const hit=cache.get(k);if(hit&&Date.now()-hit.at<30000)return hit.v;
+            const race=await J(f);
+            const jcd=String(race?.meta?.venue_code||"").padStart(2,"0");
+            const stats=await J("./data/site_course_stats/"+jcd+".json").catch(()=>null);
+            const v={race,stats};cache.set(k,{at:Date.now(),v});return v;
+          }
+          function courseMap(race){
+            const m=new Map();
+            for(const x of race?.actual_entry||[]){
+              const lane=Number(x.lane),course=Number(x.course);
+              if(lane>=1&&lane<=6&&course>=1&&course<=6)m.set(lane,course);
+            }
+            return m;
+          }
+          function dominant(c){
+            const rows=[
+              ["逃げ",c?.escape],["まくり",c?.makuri],["差し",c?.sashi],["まくり差し",c?.makuri_sashi]
+            ].filter(x=>Number.isFinite(Number(x[1])));
+            rows.sort((a,b)=>Number(b[1])-Number(a[1]));
+            return rows[0]||["－",null];
+          }
+          function ensure(){
+            let el=document.getElementById("be98CourseStats");
+            if(el)return el;
+            const anchor=document.getElementById("be96flow")||document.getElementById("be90pred")||document.getElementById("buyBoard");
+            if(!anchor)return null;
+            el=document.createElement("section");
+            el.id="be98CourseStats";
+            el.className="be98-course";
+            anchor.after(el);
+            return el;
+          }
+          function clearWinner(nodes,minGap=5,minRelative=.1){
+            const a=[...nodes].map(n=>({n,v:Number(n.dataset.value)})).filter(x=>Number.isFinite(x.v)).sort((x,y)=>y.v-x.v);
+            a.forEach(x=>x.n.classList.remove("be98-best"));
+            if(a.length<4||a.length<2)return;
+            const gap=a[0].v-a[1].v,rel=gap/Math.max(Math.abs(a[1].v),1);
+            if(gap>=minGap&&rel>=minRelative)a[0].n.classList.add("be98-best");
+          }
+          function render(race,stats){
+            const el=ensure();if(!el)return;
+            if(!stats?.courses){
+              el.innerHTML='<h3>当地コース傾向</h3><p class="be98-miss">公式コース別データ未取得</p>';return;
+            }
+            const actual=courseMap(race),actualReady=actual.size>0;
+            const rows=[];
+            for(let lane=1;lane<=6;lane++){
+              const course=actual.get(lane)||lane,c=stats.courses[String(course)]||{},dom=dominant(c);
+              rows.push({lane,course,c,dom});
+            }
+            const period=stats.period?`${esc(stats.period.from)}〜${esc(stats.period.to)}`:"最近3か月";
+            el.innerHTML=`<div class="be98-head"><div><h3>当地コース傾向</h3><p>BOAT RACE公式 / ${period} / ${actualReady?"実進入":"枠＝想定コース"}</p></div><span>予想ロジックには未使用</span></div>
+            <div class="be98-grid">${rows.map(x=>`<article class="be98-card lane-${x.lane}">
+              <div class="be98-title"><b>${x.lane}号艇</b><span>${x.course}コース</span></div>
+              <div class="be98-first" data-be98="first" data-value="${Number(x.c.first_rate)}"><small>当地コース1着率</small><strong>${pct(x.c.first_rate)}</strong></div>
+              <div class="be98-dom"><small>主な決まり手</small><strong>${esc(x.dom[0])} ${pct(x.dom[1])}</strong></div>
+              <div class="be98-methods">
+                <span data-method="escape" data-value="${Number(x.c.escape)}">逃 ${pct(x.c.escape)}</span>
+                <span data-method="makuri" data-value="${Number(x.c.makuri)}">捲 ${pct(x.c.makuri)}</span>
+                <span data-method="sashi" data-value="${Number(x.c.sashi)}">差 ${pct(x.c.sashi)}</span>
+                <span data-method="makuri_sashi" data-value="${Number(x.c.makuri_sashi)}">捲差 ${pct(x.c.makuri_sashi)}</span>
+              </div>
+            </article>`).join("")}</div>
+            <p class="be98-note">※選手個人のコース別成績ではなく、このボートレース場の最近3か月のコース傾向です。実進入取得後は実コースへ自動切替します。</p>`;
+            clearWinner(el.querySelectorAll('[data-be98="first"]'),5,.10);
+            for(const m of ["escape","makuri","sashi","makuri_sashi"]){
+              clearWinner(el.querySelectorAll(`[data-method="${m}"]`),8,.10);
+            }
+          }
+          let last="";
+          async function run(){
+            const f=raceFile();if(!f)return;
+            const k=raceKey(f);if(!k)return;
+            const sig=k+"|"+f;
+            if(sig===last&&document.getElementById("be98CourseStats"))return;
+            last=sig;
+            try{const d=await load(f);if(d)render(d.race,d.stats)}catch(_){}
+          }
+          new MutationObserver(()=>run()).observe(document.documentElement,{subtree:true,childList:true});
+          setInterval(run,1800);run();
+          })();
+          JS
+
+          cat > assets/boat_edge_v98.css <<'CSS'
+          /* BOAT_EDGE_V98_COURSE_STATS */
+          .be98-course{margin:12px 14px;padding:12px;border:1px solid #dce7f5;border-radius:14px;background:#fff}
+          .be98-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}
+          .be98-head h3{margin:0;color:#173d6b;font-size:14px}.be98-head p,.be98-note{margin:3px 0 0;color:#71859c;font-size:8.5px;line-height:1.5}
+          .be98-head>span{font-size:8px;font-weight:900;color:#71859c;background:#f4f7fb;border-radius:999px;padding:5px 7px;white-space:nowrap}
+          .be98-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+          .be98-card{border:1px solid #e0e9f5;border-radius:11px;padding:8px;background:#fbfdff;min-width:0}
+          .be98-title{display:flex;justify-content:space-between;align-items:center;gap:5px}.be98-title b{font-size:10px;color:#173d6b}.be98-title span{font-size:8px;color:#71859c}
+          .be98-first,.be98-dom{margin-top:6px;border-radius:8px;padding:6px;background:#fff;border:1px solid #e8eef6}
+          .be98-first small,.be98-dom small{display:block;font-size:7px;color:#71859c}.be98-first strong,.be98-dom strong{display:block;margin-top:2px;color:#173d6b;font-size:11px}
+          .be98-methods{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}.be98-methods span{font-size:7.5px;padding:4px 5px;border-radius:7px;background:#f4f8fd;color:#506982;white-space:nowrap}
+          .be98-best{background:#fff0f2!important;border-color:#ff9bad!important;color:#d92f4f!important;box-shadow:0 0 0 1px rgba(217,47,79,.06)}
+          .be98-best strong{color:#d92f4f!important}.be98-best:after{content:"6艇比較で突出";display:block;font-size:6.5px;font-weight:900;color:#d92f4f;margin-top:2px}
+          .be98-miss{font-size:9px;color:#71859c}
+          @media(max-width:640px){.be98-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.be98-head{display:block}.be98-head>span{display:inline-block;margin-top:5px}}
+          CSS
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+          s=re.sub(r'\s*<script src=["\']\./assets/boat_edge_v98\.js(?:\?v=\d+)?["\']></script>\s*','\n',s)
+          s=re.sub(r'\s*<link[^>]+boat_edge_v98\.css(?:\?v=\d+)?[^>]*>\s*','\n',s)
+          s=s.replace("</head>",'<link rel="stylesheet" href="./assets/boat_edge_v98.css?v=98">\n</head>')
+          s=s.replace("</body>",'<script src="./assets/boat_edge_v98.js?v=98"></script>\n</body>')
+          s=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V98-COURSE-STATS">',s)
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: Persist CURRENT TODO
+        shell: bash
+        run: |
+          cat > BOAT_EDGE_CURRENT_TODO.md <<'MD'
+          # BOAT EDGE CURRENT TODO
+
+          Last updated: V98
+
+          ## Fixed operating rules
+          - Before every change, review and update this TODO.
+          - When a user upload is required, provide the required file as a single file whenever possible.
+          - Always provide the exact GitHub upload destination URL together with the file.
+          - Use ZIP only when multiple files are genuinely required.
+          - After upload, verify Actions, generated files, and GitHub Pages deployment.
+          - Never fabricate missing values; show 未取得.
+          - Do not revert to old formal_predictions dependency for racer-head picks.
+          - Highlight only clearly standout values, not every maximum.
+
+          ## DONE
+          - V96 racer tap -> head-pick prediction from current on-screen prediction.
+          - V96 four-stage race-flow display.
+          - V96 bottom navigation レース -> 予想.
+          - V96 standout highlighting for national/local/motor.
+          - V97 official trifecta odds connected.
+          - V97 stake / odds / payout / profit-loss / ROI display.
+          - V98 official venue recent-3-month course 1st-place rates.
+          - V98 official venue course winning-method rates: 逃げ / まくり / 差し / まくり差し.
+          - V98 actual-course mapping when actual entry exists; lane-as-expected-course fallback otherwise.
+          - V98 clear-gap highlighting only.
+          - V98 course stats kept display-only and not used by prediction logic.
+
+          ## NEXT
+          - Verify V98 collector succeeds for at least 20/24 venues.
+          - Verify V98 JS/CSS/index generation.
+          - Verify GitHub Pages deployment.
+          - Check real iPhone layout and readability.
+          - Add player-specific course 1st-place / winning-method data only if a reliable source is found.
+          - Review motor / national / local / quinella / trio display balance.
+          - Continue improving scenario readability without adding jargon.
+          MD
+
+      - name: Validate
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v98.js
+          python - <<'PY'
+          import yaml
+          yaml.safe_load(open(".github/workflows/site-v98.yml",encoding="utf-8"))
+          PY
+          grep -q 'V98-COURSE-STATS' index.html
+          grep -q 'BOAT_EDGE_V98_COURSE_STATS' assets/boat_edge_v98.js
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_course_stats assets/boat_edge_v98.js assets/boat_edge_v98.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V98 official course stats"
+          git push
