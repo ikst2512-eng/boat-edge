@@ -217,6 +217,16 @@ Current UI target: V122
 
 - V122 adds no MutationObserver and no setInterval.
 
+- V123 replaces V114/V120 history schedulers and disables both obsolete workflows.
+
+- V123 saves FINAL_15M with the same scenario-aware ordering as V122.
+
+- V123 prefers formal CURRENT server snapshots automatically when a valid formal overlay exists.
+
+- V123 keeps odds display/payout-only and never uses odds to rank tickets.
+
+- V123 does not modify V122 production UI.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - DONE V112: four modes rerender from the newly selected race key on every race change.
