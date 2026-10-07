@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V108
+Current UI target: V111
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -92,6 +92,18 @@ Current UI target: V108
 - V109 backfills historical confirmed payout gaps from 2026-10-07.
 
 - V109 keeps result/trifecta data factual; missing payout is never fabricated.
+
+- V109 repaired all 144/144 missing 2026-10-07 trifecta payouts with zero errors.
+
+- V110 failure cause: GitHub returns 403 when disabling an already-disabled workflow.
+
+- V111 checks workflow state first and disables only active legacy UI workflows.
+
+- V111 disables V103/V104/V106/V107/V108/V110 and cancels their queued/in-progress runs.
+
+- V111 reasserts exactly V48 + V108 runtime for lightweight production UI.
+
+- V111 owns archive refresh; V109 owns result/payout collection.
 
 ## NEXT
 - Verify V101 iPhone layout.
