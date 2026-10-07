@@ -21,8 +21,8 @@ const KDATE="boatEdgeV108Date";
 const KVENUE="boatEdgeV108Venue";
 const KSCROLL="boatEdgeV108HomeScroll";
 const KVIEW="boatEdgeV108ViewStack";
-const SNAP="boatEdgeV101Snapshot:";
-const HISTORY="boatEdgeV101History";
+const SNAP="boatEdgeV113FinalSnapshot:";
+const HISTORY="boatEdgeV113FinalHistory";
 const ACTIVE_MODE="boatEdgeV101ActiveMode";
 
 let archiveIndex=null;
@@ -281,7 +281,7 @@ function readLocal(k,f=null){try{return JSON.parse(localStorage.getItem(k)||"nul
 function writeLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}}
 function saveFinalSnapshot(key,race,pred,modes,mins){
   const snap={
-    schema:"boat-edge-v112-final-snapshot-v1",
+    schema:"boat-edge-v113-final-snapshot-v1",
     snapshot_window:"FINAL_15M",
     race_key:key,
     saved_at:new Date().toISOString(),
@@ -302,19 +302,19 @@ function saveFinalSnapshot(key,race,pred,modes,mins){
   return snap;
 }
 function isFinalSnapshot(snap){
-  return snap?.schema==="boat-edge-v112-final-snapshot-v1"
+  return snap?.schema==="boat-edge-v113-final-snapshot-v1"
     && snap?.snapshot_window==="FINAL_15M";
 }
 function settle(snapshot,result){
   if(!snapshot||result?.status!=="confirmed")return null;
   const win=normalizeCombo(result.trifecta||result.finish_order);if(!win)return null;
   const mode_hits={};for(const [k,v] of Object.entries(snapshot.modes||{}))mode_hits[k]=(v.tickets||[]).some(x=>x.combo===win);
-  const item={race_key:snapshot.race_key,venue:snapshot.venue,race_no:snapshot.race_no,winning_combo:win,payout:result.trifecta_payout_yen_per_100??null,mode_hits,hit_any:Object.values(mode_hits).some(Boolean)};
+  const item={race_key:snapshot.race_key,venue:snapshot.venue,race_no:snapshot.race_no,deadline:snapshot.deadline??null,final_saved_at:snapshot.saved_at??null,snapshot_schema:snapshot.schema,snapshot_window:snapshot.snapshot_window,winning_combo:win,payout:result.trifecta_payout_yen_per_100??null,mode_hits,hit_any:Object.values(mode_hits).some(Boolean)};
   const h=(readLocal(HISTORY,[])||[]).filter(x=>x.race_key!==item.race_key);h.unshift(item);writeLocal(HISTORY,h.slice(0,120));return item;
 }
 function historyHtml(){
-  const hits=(readLocal(HISTORY,[])||[]).filter(x=>x.hit_any);
-  if(!hits.length)return '<div class="be108-emptyline">まだ🎯的中履歴はありません。</div>';
+  const hits=(readLocal(HISTORY,[])||[]).filter(x=>x.hit_any&&x.snapshot_window==="FINAL_15M"&&x.snapshot_schema==="boat-edge-v113-final-snapshot-v1");
+  if(!hits.length)return '<div class="be108-emptyline">締切15分前の最終予想による🎯履歴はまだありません。</div>';
   return hits.slice(0,30).map(x=>`<div class="be108-history-row"><div><b>🎯 ${esc(x.venue)} ${esc(x.race_no)}R</b><span>${esc(x.winning_combo)}</span></div><div><small>${Object.entries(x.mode_hits||{}).filter(([,v])=>v).map(([k])=>LABELS[k]?.name||k).join(" / ")}</small>${x.payout?`<strong>${yen(x.payout)}/100円</strong>`:""}</div></div>`).join("");
 }
 function renderTicketRows(rows,win){

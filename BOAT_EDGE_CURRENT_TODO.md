@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V112
+Current UI target: V113
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -112,6 +112,16 @@ Current UI target: V112
 - V112 reloads the current race JSON on app resume or manual refresh without adding polling timers.
 
 - V112 keeps V111 lightweight runtime architecture: no MutationObserver and no new setInterval.
+
+- V113 isolates FINAL_15M snapshots from legacy V101/V108 local snapshot storage.
+
+- V113 isolates final-only hit history from legacy local hit history.
+
+- V113 hit-history rows require FINAL_15M provenance and v113 snapshot schema.
+
+- V113 stores final snapshot saved time/deadline provenance with each settled hit.
+
+- V113 adds no MutationObserver and no setInterval.
 
 ## NEXT
 - Verify V101 iPhone layout.
