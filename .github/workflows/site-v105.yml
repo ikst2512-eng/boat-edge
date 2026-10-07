@@ -1,0 +1,214 @@
+name: BOAT EDGE V105 BOATERS Home Cleanup
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v105.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install V105 UI
+        shell: bash
+        run: |
+          mkdir -p assets
+          cat > assets/boat_edge_v105.js <<'JS'
+          /* BOAT_EDGE_V105_BOATERS_HOME */
+          (()=>{"use strict";
+          const $=(s,r=document)=>r.querySelector(s);
+          const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+          const esc=v=>String(v??"－").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+          const VENUES=[["01","桐生"],["02","戸田"],["03","江戸川"],["04","平和島"],["05","多摩川"],["06","浜名湖"],["07","蒲郡"],["08","常滑"],["09","津"],["10","三国"],["11","びわこ"],["12","住之江"],["13","尼崎"],["14","鳴門"],["15","丸亀"],["16","児島"],["17","宮島"],["18","徳山"],["19","下関"],["20","若松"],["21","芦屋"],["22","福岡"],["23","唐津"],["24","大村"]];
+          let idx=null,date=null,venue=null;
+          const KDATE="boatEdgeV105Date",KVENUE="boatEdgeV105Venue";
+          async function J(u){try{const r=await fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});return r.ok?await r.json():null}catch(_){return null}}
+          function dObj(s){return /^\d{8}$/.test(String(s||""))?new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8)):null}
+          function dLabel(s){const d=dObj(s);if(!d)return s;const w=["日","月","火","水","木","金","土"][d.getDay()];return `${d.getMonth()+1}月${d.getDate()}日(${w})`}
+          function todayYmd(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`}
+          function activeView(){return $(".view.active")?.id||"homeView"}
+          function ensure(){
+            const home=$("#homeView");if(!home)return null;
+            let el=$("#be105Hub");
+            if(!el){el=document.createElement("section");el.id="be105Hub";el.className="be105-hub";home.insertBefore(el,home.firstChild)}
+            return el;
+          }
+          function save(){try{if(date)localStorage.setItem(KDATE,date);if(venue)localStorage.setItem(KVENUE,venue);else localStorage.removeItem(KVENUE)}catch(_){}}
+          function raceStatus(r){
+            if(r.result_status==="confirmed"){
+              const p=r.payout?` ${Number(r.payout).toLocaleString("ja-JP")}円`:"";
+              return `結果 ${r.trifecta||"確定"}${p}`;
+            }
+            if(r.has_odds)return "オッズあり";
+            return "保存データ";
+          }
+          function raceStrip(v,currentKey=null){
+            return `<div class="be105-race-strip">${(v?.races||[]).map(r=>`<button type="button" class="be105-race-chip ${r.race_key===currentKey?"on":""}" data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}"><b>${r.race_no}R</b><span>${esc(r.deadline||"－")}</span></button>`).join("")}</div>`;
+          }
+          function venueGrid(day){
+            const m=new Map((day?.venues||[]).map(v=>[String(v.jcd),v]));
+            return `<div class="be105-venue-grid">${VENUES.map(([code,name])=>{
+              const v=m.get(code),on=String(venue)===code;
+              return `<button type="button" class="be105-venue ${v?"active":"off"} ${on?"selected":""}" ${v?`data-venue="${code}"`:"disabled"}>
+                ${v?'<span class="be105-grade">一般</span>':""}<b>${name}</b>
+                <small>${v?(v.races?.length||0)+"R":"非開催"}</small>
+              </button>`;
+            }).join("")}</div>`;
+          }
+          function venuePanel(day){
+            const v=(day?.venues||[]).find(x=>String(x.jcd)===String(venue));if(!v)return "";
+            return `<section class="be105-place">
+              <div class="be105-place-head"><div><b>${esc(v.venue)}</b><span>${esc(v.event||"開催中")}</span></div><button id="be105VenueClose" type="button">場一覧</button></div>
+              ${raceStrip(v)}
+              <div class="be105-race-list">${(v.races||[]).map(r=>`<button type="button" class="be105-race-row" data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}">
+                <div><b>${r.race_no}R</b><small>予選</small></div>
+                <div><strong>締切 ${esc(r.deadline||"－")}</strong><span>${esc(raceStatus(r))}</span></div>
+                <em>開く ›</em>
+              </button>`).join("")}</div>
+            </section>`;
+          }
+          async function render(){
+            const el=ensure();if(!el)return;
+            idx=idx||await J("./data/site_archive/index.json");
+            const dates=[...(idx?.dates||[])].map(x=>x.ymd).sort();
+            if(!dates.length){el.innerHTML='<div class="be105-empty">保存データ準備中</div>';return}
+            if(!date||!dates.includes(date))date=dates.includes(todayYmd())?todayYmd():dates[dates.length-1];
+            const day=await J(`./data/site_archive/${date}.json`);
+            if(venue&&!(day?.venues||[]).some(v=>String(v.jcd)===String(venue)))venue=null;
+            const i=dates.indexOf(date),prev=dates[i-1]||"",next=dates[i+1]||"";
+            el.innerHTML=`<div class="be105-shell">
+              <div class="be105-date-nav">
+                <button type="button" data-day="${prev}" ${prev?"":"disabled"}>‹ 前日</button>
+                <div><b>${date===todayYmd()?"本日 ":""}${dLabel(date)}のレース</b><span>保存済みのレースを日付で切替</span></div>
+                <button type="button" data-day="${next}" ${next?"":"disabled"}>翌日 ›</button>
+              </div>
+              ${venueGrid(day)}
+              ${venuePanel(day)}
+            </div>`;
+            save();
+            $$("[data-day]",el).forEach(b=>b.onclick=async()=>{if(!b.dataset.day)return;date=b.dataset.day;venue=null;save();await render();window.scrollTo({top:0,behavior:"smooth"})});
+            $$("[data-venue]",el).forEach(b=>b.onclick=async()=>{venue=b.dataset.venue;save();await render();setTimeout(()=>$(".be105-place",el)?.scrollIntoView({behavior:"smooth",block:"start"}),30)});
+            $("#be105VenueClose",el)?.addEventListener("click",async()=>{venue=null;save();await render()});
+            $$("[data-file]",el).forEach(b=>b.onclick=()=>{venue=b.dataset.jcd;save();if(typeof loadRace==="function")loadRace(b.dataset.file,b.dataset.jcd)});
+          }
+          async function enhanceRace(){
+            let race=null;try{race=state?.race||null}catch(_){}
+            if(!race?.race_key)return;
+            const ymd=String(race.race_key).slice(0,8),jcd=String(race.meta?.venue_code||"").padStart(2,"0");
+            date=ymd;venue=jcd;save();
+            const day=await J(`./data/site_archive/${ymd}.json`);
+            const v=(day?.venues||[]).find(x=>String(x.jcd)===jcd);if(!v)return;
+            const summary=$(".race-summary");if(!summary)return;
+            let nav=$("#be105RaceNav");
+            if(!nav){nav=document.createElement("div");nav.id="be105RaceNav";nav.className="be105-race-nav";const top=$(".summary-top",summary);top?.insertAdjacentElement("afterend",nav)}
+            nav.innerHTML=`<div class="be105-race-nav-head"><button id="be105BackPlace" type="button">← ${esc(v.venue)} ${dLabel(ymd)}</button><span>${esc(v.event||"")}</span></div>${raceStrip(v,race.race_key)}`;
+            $("#be105BackPlace",nav).onclick=()=>{document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id==="homeView"));venue=jcd;date=ymd;save();render();setTimeout(()=>$(".be105-place")?.scrollIntoView({behavior:"smooth",block:"start"}),60)};
+            $$("[data-file]",nav).forEach(b=>b.onclick=()=>{if(typeof loadRace==="function")loadRace(b.dataset.file,b.dataset.jcd)});
+            const tabs=$("#raceTabs");if(tabs){summary.appendChild(tabs);tabs.classList.add("be105-tabs")}
+          }
+          function hideOldHome(){
+            const home=$("#homeView");if(!home)return;
+            [...home.children].forEach(ch=>{if(ch.id!=="be105Hub")ch.classList.add("be105-old-home")});
+          }
+          function repairOtherBack(){
+            for(const [id,label] of [["dataView","データ状況"],["auditView","監査"]]){
+              const v=$("#"+id);if(!v)continue;
+              let b=$(".be105-back",v);
+              if(!b){b=document.createElement("button");b.className="be105-back";b.type="button";b.textContent="← 戻る";v.insertBefore(b,v.firstChild)}
+              b.onclick=()=>history.length>1?history.back():document.querySelector('.bottomnav [data-view="homeView"]')?.click();
+            }
+          }
+          try{date=localStorage.getItem(KDATE)||null;venue=localStorage.getItem(KVENUE)||null}catch(_){}
+          hideOldHome();render();repairOtherBack();enhanceRace();
+          new MutationObserver(()=>{hideOldHome();repairOtherBack();enhanceRace()}).observe(document.documentElement,{subtree:true,childList:true});
+          setInterval(enhanceRace,1500);
+          })();
+          JS
+
+          cat > assets/boat_edge_v105.css <<'CSS'
+          /* BOAT_EDGE_V105_BOATERS_HOME */
+          #be104Hub{display:none!important}.be105-old-home{display:none!important}
+          .be105-hub{display:block!important;padding:8px;background:#f3f5f8;min-height:calc(100vh - 110px)}
+          .be105-shell{max-width:980px;margin:auto}
+          .be105-date-nav{display:grid;grid-template-columns:84px minmax(0,1fr) 84px;gap:8px;align-items:center;padding:4px 0 10px}
+          .be105-date-nav button{height:42px;border:1px solid #dde3ea;background:#fff;border-radius:22px;color:#53687d;font-weight:900;font-size:10px}
+          .be105-date-nav button:disabled{opacity:.28}.be105-date-nav div{text-align:center}.be105-date-nav b{display:block;color:#172f50;font-size:15px}.be105-date-nav span{display:block;margin-top:2px;color:#7c8998;font-size:7.5px}
+          .be105-venue-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-left:1px solid #dfe4ea;border-top:1px solid #dfe4ea;background:#edf0f4}
+          .be105-venue{position:relative;min-height:84px;border:0;border-right:1px solid #dfe4ea;border-bottom:1px solid #dfe4ea;padding:9px 8px;text-align:left}
+          .be105-venue.active{background:#fff}.be105-venue.off{background:#eef1f4;color:#b9c1ca}.be105-venue.selected{box-shadow:inset 0 0 0 2px #1c6fc4;background:#f5faff}
+          .be105-grade{display:inline-block;padding:3px 5px;border-radius:4px;background:#8eabc8;color:#fff;font-size:7px;font-weight:900}.be105-venue b{display:block;margin-top:5px;font-size:12px}.be105-venue.active b{color:#172f50}.be105-venue small{display:block;margin-top:4px;font-size:8px;color:#7b8998}
+          .be105-place{margin-top:11px;background:#fff;border:1px solid #dfe5ec;border-radius:12px;overflow:hidden}
+          .be105-place-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid #edf1f5}.be105-place-head b{display:block;color:#172f50;font-size:18px}.be105-place-head span{display:block;margin-top:3px;color:#718296;font-size:9px}.be105-place-head button{border:1px solid #dce3ea;background:#f7f9fb;color:#53687d;border-radius:9px;padding:7px 9px;font-size:8px;font-weight:900}
+          .be105-race-strip{display:flex;gap:6px;overflow:auto;padding:9px 10px;scrollbar-width:none}.be105-race-strip::-webkit-scrollbar{display:none}
+          .be105-race-chip{flex:0 0 66px;border:1px solid #dfe4ea;background:#f4f6f9;border-radius:7px;padding:8px 5px;text-align:center}.be105-race-chip b{display:block;font-size:13px;color:#202833}.be105-race-chip span{display:block;margin-top:4px;font-size:7px;color:#778596}.be105-race-chip.on{background:#22252b;border-color:#22252b}.be105-race-chip.on b,.be105-race-chip.on span{color:#fff}
+          .be105-race-list{border-top:1px solid #edf1f5}.be105-race-row{width:100%;display:grid;grid-template-columns:70px 1fr 50px;gap:8px;align-items:center;border:0;border-bottom:1px solid #e4e9ef;background:#fff;padding:11px 12px;text-align:left}.be105-race-row>div:first-child b{font-size:16px;color:#172f50}.be105-race-row>div:first-child small{display:inline-block;margin-left:5px;padding:3px 5px;border-radius:4px;background:#f1f3f6;color:#6c7b8b;font-size:7px}.be105-race-row strong{display:block;font-size:11px;color:#27384a}.be105-race-row span{display:block;margin-top:3px;font-size:8px;color:#718296}.be105-race-row em{text-align:right;color:#1773d3;font-size:9px;font-style:normal;font-weight:900}
+          #be105RaceNav{margin-top:8px;border-top:1px solid #edf1f5;padding-top:7px}.be105-race-nav-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 2px}.be105-race-nav-head button{border:0;background:transparent;color:#1769bf;padding:5px 0;font-size:9px;font-weight:900}.be105-race-nav-head span{color:#718296;font-size:8px}
+          #raceNav,#raceQuickNav,#summaryStrip,#raceCommand,#raceMasthead,#urgencyRibbon,#freshnessStrip{display:none!important}
+          #raceTabs.be105-tabs{display:flex!important;gap:5px;overflow:auto;margin:7px 0 0;padding:7px 0 0;border-top:1px solid #edf1f5;scrollbar-width:none}#raceTabs.be105-tabs::-webkit-scrollbar{display:none}#raceTabs.be105-tabs button{flex:0 0 auto;min-width:68px}
+          .be105-back{margin:9px 12px 0;border:1px solid #dce3ea;background:#fff;color:#173d6b;border-radius:10px;padding:8px 10px;font-size:9px;font-weight:900}
+          .be105-empty{padding:18px;background:#fff;border-radius:12px;text-align:center;color:#718296;font-size:10px}
+          @media(max-width:640px){.be105-hub{padding:7px}.be105-date-nav{grid-template-columns:78px 1fr 78px}.be105-date-nav b{font-size:14px}.be105-venue{min-height:78px;padding:7px}.be105-venue b{font-size:11px}.be105-race-chip{flex-basis:62px}.be105-race-row{grid-template-columns:64px 1fr 44px;padding:10px 9px}}
+          CSS
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html');s=p.read_text(encoding='utf-8')
+          s=re.sub(r'\s*<script src=["\']\./assets/boat_edge_v105\.js(?:\?v=\d+)?["\']></script>\s*','\n',s)
+          s=re.sub(r'\s*<link[^>]+boat_edge_v105\.css(?:\?v=\d+)?[^>]*>\s*','\n',s)
+          s=s.replace('</head>','<link rel="stylesheet" href="./assets/boat_edge_v105.css?v=105">\n</head>')
+          s=s.replace('</body>','<script src="./assets/boat_edge_v105.js?v=105"></script>\n</body>')
+          if re.search(r'<meta name="boat-edge-site-version" content="[^"]+">',s):
+              s=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V105-BOATERS-HOME">',s)
+          else:s=s.replace('</head>','<meta name="boat-edge-site-version" content="V105-BOATERS-HOME">\n</head>')
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Update TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('BOAT_EDGE_CURRENT_TODO.md')
+          s=p.read_text(encoding='utf-8') if p.exists() else '# BOAT EDGE CURRENT TODO\n'
+          s=re.sub(r'Current UI target: V\d+','Current UI target: V105',s)
+          lines=[
+            '- V105 BOATERS-style 24-venue grid with inactive venues grayed out.',
+            '- V105 previous/current/next day navigation remains at top.',
+            '- V105 venue selection immediately exposes 1R-12R and deadline times.',
+            '- V105 old home panels hidden to keep the top page focused.',
+            '- V105 race selector stays directly above prediction tabs.'
+          ]
+          marker='## NEXT'
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+'\n\n'+marker,1) if marker in s else s+'\n'+line+'\n'
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v105.js
+          grep -q 'V105-BOATERS-HOME' index.html
+          grep -q 'boat_edge_v105.js?v=105' index.html
+          test -f data/site_archive/index.json
+
+      - name: Save
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v105.js assets/boat_edge_v105.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Refine BOAT EDGE V105 BOATERS-style home"
+          git push
