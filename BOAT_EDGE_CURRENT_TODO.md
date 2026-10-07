@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V105
+Current UI target: V106
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -48,6 +48,18 @@ Current UI target: V105
 - V105 old home panels hidden to keep the top page focused.
 
 - V105 race selector stays directly above prediction tabs.
+
+- V106 fixes V105 as the CURRENT UI.
+
+- V106 disables legacy scheduled V98/V103/V104 UI installers.
+
+- V106 cancels legacy queued/in-progress runs when first installed.
+
+- V106 keeps only archive rebuilding on a 5-minute schedule.
+
+- V106 removes V103/V104 navigation overlays from index.html to avoid duplicate controls.
+
+- Historical archive remains available from 2026-10-05 using saved source data.
 
 ## NEXT
 - Verify V101 iPhone layout.
