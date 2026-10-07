@@ -1,0 +1,53 @@
+name: BOAT EDGE V91 Readability
+on:
+  push:
+    paths: [".github/workflows/site-v91.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch V90 UI to V91
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("assets/boat_edge_v90.js")
+          s=p.read_text(encoding="utf-8")
+          old='$("#be90racers").innerHTML="<h3>6艇比較</h3><div class=be90racers>"+(d.racers||[]).map(r=>"<div><b>"+r.lane+" "+E(r.name)+"</b><small>"+E(r.class)+" / ST "+E(r.avg_st)+"</small><span>全国 "+E(r.national?.win_rate)+"　当地 "+E(r.local?.win_rate)+"</span><span>M "+E(r.motor?.quinella_rate)+"%　B "+E(r.boat?.quinella_rate)+"%</span></div>").join("")+"</div>";'
+          new='$("#be90racers").innerHTML="<h3>選手情報</h3><div class=be90racers>"+(d.racers||[]).sort((a,b)=>a.lane-b.lane).map(r=>"<details class=be91racer><summary><b>"+r.lane+"　"+E(r.name)+"</b><span>"+E(r.class)+"　ST "+E(r.avg_st)+"</span></summary><div class=be91detail><span>全国勝率 <b>"+E(r.national?.win_rate)+"</b></span><span>当地勝率 <b>"+E(r.local?.win_rate)+"</b></span><span>モーター2連率 <b>"+E(r.motor?.quinella_rate)+"%</b></span><span>ボート2連率 <b>"+E(r.boat?.quinella_rate)+"%</b></span><span>全国2連率 <b>"+E(r.national?.quinella_rate)+"%</b></span><span>当地2連率 <b>"+E(r.local?.quinella_rate)+"%</b></span></div></details>").join("")+"</div>";'
+          if old not in s: raise SystemExit("racers target not found")
+          s=s.replace(old,new,1)
+          old2='$("#be90odds").innerHTML="<h3>3連単オッズ</h3><div class=be90odds>"+Object.entries(om).map(([c,v])=>"<div><b>"+c+"</b><span>"+v+"倍</span></div>").join("")+"</div>";'
+          new2='$("#be90odds").innerHTML="<details class=be91odds><summary>オッズを見る <span>"+Object.keys(om).length+"/120</span></summary><div class=be90odds>"+Object.entries(om).map(([c,v])=>"<div><b>"+c+"</b><span>"+v+"倍</span></div>").join("")+"</div></details>";'
+          if old2 not in s: raise SystemExit("odds target not found")
+          s=s.replace(old2,new2,1).replace("BOAT_EDGE_V90_RACE_HUB","BOAT_EDGE_V91_READABILITY",1)
+          p.write_text(s,encoding="utf-8")
+          css=Path("assets/boat_edge_v90.css")
+          c=css.read_text(encoding="utf-8")
+          c += "\n/* BOAT_EDGE_V91_READABILITY */\n.be90racers{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}.be91racer{background:#fff;border:1px solid #dce7f5;border-radius:13px;overflow:hidden}.be91racer summary{list-style:none;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 14px;cursor:pointer}.be91racer summary::-webkit-details-marker{display:none}.be91racer summary b{font-size:15px;color:#173d6b}.be91racer summary span{font-size:11px;color:#71859c;font-weight:700}.be91racer[open] summary{border-bottom:1px solid #edf2f8}.be91detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:11px 14px;background:#fbfdff}.be91detail span{font-size:11px;color:#71859c}.be91detail b{color:#173d6b}.be91odds{margin-top:20px;background:#fff;border:1px solid #dce7f5;border-radius:14px;overflow:hidden}.be91odds>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:14px;color:#1264d9;font-weight:900;cursor:pointer}.be91odds>summary::-webkit-details-marker{display:none}.be91odds>summary span{font-size:11px;color:#71859c}.be91odds .be90odds{padding:8px}\n"
+          css.write_text(c,encoding="utf-8")
+          hp=Path("index.html");h=hp.read_text(encoding="utf-8")
+          h=h.replace("boat_edge_v90.js?v=90","boat_edge_v90.js?v=91").replace("boat_edge_v90.css?v=90","boat_edge_v90.css?v=91")
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V91-READABILITY">',h)
+          hp.write_text(h,encoding="utf-8")
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v90.js
+          grep -q 'BOAT_EDGE_V91_READABILITY' assets/boat_edge_v90.js
+          grep -q 'V91-READABILITY' index.html
+          grep -q 'boat_edge_v90.js?v=91' index.html
+          grep -q 'boat_edge_v90.css?v=91' index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v90.js assets/boat_edge_v90.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Improve BOAT EDGE V91 race readability"
+          git push
