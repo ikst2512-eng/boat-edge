@@ -1,0 +1,35 @@
+/* BOAT_EDGE_V100_TOP_NAVIGATION_UX */
+#raceView .race-head{background:#f6f8fb}
+#raceView .race-shell{padding-bottom:0}
+#raceView .race-summary{padding:12px 12px 10px;border-radius:0 0 16px 16px;box-shadow:none;border-left:0;border-right:0;background:#fff}
+#raceView .summary-top{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+#raceView .summary-top>div:first-of-type{min-width:0}
+.be100-back{border:1px solid #d9e1eb;background:#fff;color:#183b67;border-radius:10px;padding:9px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+#raceTitle{font-size:19px!important;margin:0!important}.race-subtitle{font-size:9px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#deadlineBig{font-size:21px!important}.deadline-cap{font-size:8px!important}
+.be100-nav-shell{margin-top:10px;border-top:1px solid #e7ebf1;padding-top:10px}
+#raceNav{display:flex!important;gap:7px!important;overflow-x:auto!important;padding:0 0 8px!important;margin:0!important;scrollbar-width:none;flex-wrap:nowrap!important}
+#raceNav::-webkit-scrollbar{display:none}
+#raceNav .racechip{flex:0 0 76px!important;min-width:76px!important;height:auto!important;border:1px solid #d9dee7!important;background:#f4f5f7!important;color:#222!important;border-radius:7px!important;padding:8px 5px!important;font-size:14px!important;font-weight:900!important;box-shadow:none!important}
+#raceNav .racechip small{display:block!important;margin-top:4px!important;font-size:8px!important;font-weight:700!important;color:#66758a!important;line-height:1.1!important}
+#raceNav .racechip.before{background:#22252b!important;border-color:#22252b!important;color:#fff!important}
+#raceNav .racechip.before small{color:#fff!important;opacity:.8}
+#raceTabs{display:flex!important;gap:0!important;overflow-x:auto!important;background:#fff!important;border-top:1px solid #eceff3!important;border-bottom:1px solid #dfe4eb!important;margin:2px -12px 0!important;padding:0 12px!important;scrollbar-width:none}
+#raceTabs::-webkit-scrollbar{display:none}
+#raceTabs button{flex:0 0 auto!important;border:0!important;background:transparent!important;color:#6e7887!important;padding:11px 14px 9px!important;border-radius:0!important;font-size:11px!important;font-weight:900!important;position:relative!important;box-shadow:none!important}
+#raceTabs button.on{color:#111!important}
+#raceTabs button.on:after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px;background:#222}
+#raceTabs .be100-hidden-tab{display:none!important}
+.be100-hide-top,.be100-hide-duplicate{display:none!important}
+.be100-mainpick{margin:10px 14px 0;background:#fff;border:1px solid #dde5ef;border-radius:14px;padding:12px 13px;box-shadow:0 4px 14px rgba(31,56,88,.04)}
+.be100-main-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.be100-main-label{font-size:11px;font-weight:1000;color:#173d6b}.be100-mode{font-size:8px;font-weight:900;padding:4px 7px;border-radius:999px}.be100-mode.formal{background:#e9f8f1;color:#08795a}.be100-mode.temp{background:#fff3db;color:#9b6200}
+.be100-main-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:8px}.be100-race-name{font-size:9px;color:#71859c;font-weight:800}.be100-combo{font-size:27px;line-height:1.1;font-weight:1000;letter-spacing:1px;color:#172f50;margin-top:3px}.be100-main-metrics{display:flex;gap:7px}.be100-main-metrics span{min-width:62px;text-align:center;background:#f6f8fb;border-radius:9px;padding:6px}.be100-main-metrics small{display:block;font-size:7px;color:#71859c}.be100-main-metrics b{display:block;margin-top:2px;font-size:12px;color:#173d6b}.be100-main-sub{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #edf1f5;font-size:9px;color:#64778d}.be100-main-sub b{color:#173d6b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.be100-main-sub span{white-space:nowrap}
+#tab-pred>.section{padding-top:10px!important}
+#buyBoard{margin-top:0!important}
+@media(max-width:640px){
+  #raceView .race-summary{padding:10px 10px 8px}.be100-nav-shell{margin-top:8px}
+  #raceNav .racechip{flex-basis:70px!important;min-width:70px!important;padding:7px 4px!important;font-size:13px!important}
+  #raceTabs{margin-left:-10px!important;margin-right:-10px!important;padding:0 6px!important}
+  #raceTabs button{padding:10px 12px 8px!important;font-size:10px!important}
+  .be100-mainpick{margin:8px 10px 0;padding:11px}.be100-combo{font-size:24px}.be100-main-metrics span{min-width:54px;padding:5px}
+}
