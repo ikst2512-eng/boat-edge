@@ -1,0 +1,127 @@
+name: BOAT EDGE V115 Legacy Workflow Cleanup
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v115.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Disable obsolete workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # workflow_id:name
+          targets="
+          377623916:V111
+          376819530:V72
+          376825083:V73
+          377308549:V95
+          377045804:V83
+          "
+
+          failed=""
+
+          for item in $targets; do
+            id="${item%%:*}"
+            name="${item##*:}"
+
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${id}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "$name workflow_id=$id initial_state=$state"
+
+            if [ "$state" = "active" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${id}/disable" >/dev/null
+            fi
+
+            final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${id}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "$name workflow_id=$id final_state=$final"
+
+            if [ "$final" = "active" ]; then
+              failed="$failed $name:$id"
+            fi
+
+            for status in in_progress queued waiting requested pending; do
+              run_ids="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${id}/runs?status=${status}&per_page=100" --jq '.workflow_runs[].id' 2>/dev/null || true)"
+              for run_id in $run_ids; do
+                echo "cancel $name run=$run_id"
+                gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" >/dev/null 2>&1 || true
+              done
+            done
+          done
+
+          if [ -n "$failed" ]; then
+            echo "Still active:$failed"
+            exit 1
+          fi
+
+      - name: Verify current runtime untouched
+        shell: bash
+        run: |
+          set -e
+          grep -q 'V114-SERVER-FINAL-HISTORY' index.html
+          grep -q 'boat_edge_final_v48.js' index.html
+          grep -q 'boat_edge_v108.js?v=114' index.html
+          ! grep -q 'boat_edge_simple_v51' index.html
+          ! grep -q 'site_health.json' assets/boat_edge_v108.js
+          node --check assets/boat_edge_v108.js
+
+      - name: Update TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('BOAT_EDGE_CURRENT_TODO.md')
+          s=p.read_text(encoding='utf-8') if p.exists() else '# BOAT EDGE CURRENT TODO\n'
+          s=re.sub(r'Current UI target: V\d+','Current UI target: V115',s)
+
+          lines=[
+              '- V115 disables obsolete V111/V72/V73/V95/V83 workflows.',
+              '- V115 cancels queued/in-progress runs from those obsolete workflows.',
+              '- V115 leaves V109 result/payout collection, V114 server final-history, odds, learning and auto-update active.',
+              '- V115 does not modify the V114 production UI runtime.',
+              '- V115 removes obsolete workflow churn that caused unnecessary failed Actions and Pages rebuilds.'
+          ]
+
+          marker='## NEXT'
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+'\n\n'+marker,1) if marker in s else s+'\n'+line+'\n'
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Save cleanup state
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add BOAT_EDGE_CURRENT_TODO.md
+
+          git diff --cached --quiet && exit 0
+          git commit -m "Disable obsolete BOAT EDGE workflows V115"
+
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
