@@ -1,0 +1,65 @@
+name: BOAT EDGE V88 Safe Boot Formal Adapter
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v88.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install V88 safe boot and formal display contract
+        shell: bash
+        env:
+          V88_JS: "LyogQk9BVF9FREdFX1Y4OF9TQUZFX0JPT1RfQU5EX0ZPUk1BTF9BREFQVEVSICovCigoKT0+ewoidXNlIHN0cmljdCI7CndpbmRvdy5CT0FUX0VER0VfU0lURV9WRVJTSU9OPSJWODgiOwoKZnVuY3Rpb24gc2FmZUNhbGwobmFtZSl7CiAgdHJ5ewogICAgY29uc3QgZm49d2luZG93W25hbWVdOwogICAgaWYodHlwZW9mIGZuPT09ImZ1bmN0aW9uIikgZm4oKTsKICAgIHJldHVybiB0cnVlOwogIH1jYXRjaChlKXsKICAgIGNvbnNvbGUuZXJyb3IoIlY4OCIsbmFtZSxlKTsKICAgIHJldHVybiBmYWxzZTsKICB9Cn0KZnVuY3Rpb24gYm9vdEZhbGxiYWNrKCl7CiAgY29uc3QgaG9tZT1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiaG9tZVZpZXciKTsKICBpZighaG9tZSlyZXR1cm47CiAgY29uc3QgdmVudWVzPXdpbmRvdy5zdGF0ZT8udG9kYXk/LnZlbnVlc3x8W107CiAgaWYodmVudWVzLmxlbmd0aCAmJiAhZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3ZlbnVlR3JpZCBbZGF0YS1jb2RlXSwjZGVhZGxpbmVCb2FyZCBbZGF0YS1maWxlXSIpKXsKICAgIGNvbnN0IGhvc3Q9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImRlYWRsaW5lQm9hcmQiKXx8ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInZlbnVlR3JpZCIpfHxob21lOwogICAgaG9zdC5pbm5lckhUTUw9dmVudWVzLm1hcCh2PT5gPHNlY3Rpb24gc3R5bGU9Im1hcmdpbjoxMHB4IDA7cGFkZGluZzoxMnB4O2JhY2tncm91bmQ6I2ZmZjtib3JkZXItcmFkaXVzOjE0cHgiPjxiPiR7di52ZW51ZXx8di5uYW1lfHwi6ZaL5YKs5aC0In08L2I+PGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2dhcDo3cHg7b3ZlcmZsb3c6YXV0bzttYXJnaW4tdG9wOjhweCI+JHsodi5yYWNlc3x8W10pLm1hcChyPT5gPGJ1dHRvbiB0eXBlPSJidXR0b24iIGRhdGEtZmlsZT0iJHtyLmZpbGV8fCIifSIgZGF0YS1qY2Q9IiR7di5qY2R8fCIifSIgc3R5bGU9Im1pbi13aWR0aDo2MnB4O3BhZGRpbmc6MTBweDtib3JkZXI6MXB4IHNvbGlkICNkY2U2ZjU7Ym9yZGVyLXJhZGl1czoxMHB4O2JhY2tncm91bmQ6I2ZmZiI+JHtyLnJhY2Vfbm98fCItIn1SPGJyPjxzbWFsbD4ke3IuZGVhZGxpbmV8fCIifTwvc21hbGw+PC9idXR0b24+YCkuam9pbigiIil9PC9kaXY+PC9zZWN0aW9uPmApLmpvaW4oIiIpOwogIH0KfQp3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigibG9hZCIsKCk9PnsKICBzZXRUaW1lb3V0KCgpPT57CiAgICBbInJlbmRlckxpdmVUaWNrZXIiLCJyZW5kZXJWZW51ZVN0YXRzIiwicmVuZGVyU3BvdGxpZ2h0UmFjZXMiLCJyZW5kZXJSZWNlbnRSYWNlcyIsInJlbmRlckRlYWRsaW5lQm9hcmQiLCJ1cGRhdGVOZXh0UmFjZUJhciIsInJlbmRlclZlbnVlcyIsInJlbmRlck1vZGVsUGFuZWxzIiwicmVuZGVySGVhbHRoUGFuZWxzIiwidXBkYXRlU3lzdGVtQmFubmVyIl0uZm9yRWFjaChzYWZlQ2FsbCk7CiAgICBib290RmFsbGJhY2soKTsKICB9LDUwMCk7CiAgc2V0VGltZW91dChib290RmFsbGJhY2ssMTgwMCk7Cn0pOwp9KSgpOw=="
+        run: |
+          python - <<'PY'
+          import os,base64,re
+          from pathlib import Path
+          js=Path("assets/boat_edge_v88.js")
+          js.write_text(base64.b64decode(os.environ["V88_JS"]).decode()+"\n",encoding="utf-8")
+          p=Path("index.html"); h=p.read_text(encoding="utf-8")
+
+          # Never present the legacy site-side calculator as the latest/formal model.
+          h=h.replace('label:"暫定予想（サイト簡易）"','label:"旧サイト簡易（参考）"')
+          h=h.replace('reason: `正式CURRENTとは別計算。','reason: `【最新モデルではありません】正式CURRENTとは別計算。')
+          h=h.replace('caption:`サイト簡易スコア。正式CURRENTとは別計算。1号艇中心の内残り。`',
+                      'caption:`旧サイト簡易スコア（参考表示）。正式CURRENTとは別計算。`')
+          h=h.replace('caption:`サイト簡易スコア。攻め役は ${leader} 想定。`',
+                      'caption:`旧サイト簡易スコア（参考表示）。正式CURRENTとは別計算。`')
+
+          # Formal display: do not arbitrarily truncate formal tickets at 8.
+          h=h.replace('const bets = (world?.tickets || world?.bets || world?.combinations || []).slice(0,8);',
+                      'const bets = (world?.tickets || world?.bets || world?.combinations || []);')
+
+          # Add V88 script after V86 guard.
+          h=re.sub(r'\s*<script src=["\']\./assets/boat_edge_v88\.js(?:\?v=\d+)?["\']></script>\s*','\n',h)
+          h=h.replace('</body>','<script src="./assets/boat_edge_v88.js?v=88"></script>\n</body>')
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                   '<meta name="boat-edge-site-version" content="V88-SAFE-BOOT">',h)
+          p.write_text(h,encoding="utf-8")
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v88.js
+          grep -q 'V88-SAFE-BOOT' index.html
+          grep -q '旧サイト簡易（参考）' index.html
+          grep -q 'boat_edge_v88.js?v=88' index.html
+          if grep -Eq '<script[[:space:]]+src=["'\'']\./assets/boat_edge_simple_v51\.js' index.html; then exit 1; fi
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v88.js
+          git diff --cached --quiet && exit 0
+          git commit -m "BOAT EDGE V88 safe boot and formal adapter"
+          git push
