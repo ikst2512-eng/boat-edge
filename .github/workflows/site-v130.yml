@@ -1,0 +1,303 @@
+name: BOAT EDGE V130 Adaptive Wave FIXED
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v130.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v130-current
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install V130 from V129 fixed design
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import subprocess, textwrap, re, json
+
+          wf=Path(".github/workflows/site-v129.yml").read_text(encoding="utf-8")
+          step=wf.find("      - name: Install V129 UI server policy and live TODO")
+          assert step>=0, "V129 install step missing"
+          hs=wf.find("python - <<'PY'",step)
+          assert hs>=0
+          start=wf.find("\n",hs)+1
+          end=wf.find("\n          PY",start)
+          assert end>=0
+          src=textwrap.dedent(wf[start:end])
+
+          runner=Path("/tmp/v130_apply_v129.py")
+          runner.write_text(src,encoding="utf-8")
+          r=subprocess.run(["python",str(runner)],text=True)
+          if r.returncode!=0:
+              raise SystemExit(r.returncode)
+
+          # Promote installed assets/state from V129 label to V130 fixed label.
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=html.replace("V129-ADAPTIVE-WAVE-HIT-TODO","V130-ADAPTIVE-WAVE-HIT-TODO-FIXED")
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=130',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=130',html)
+          idx.write_text(html,encoding="utf-8")
+
+          src129=Path("scripts/site_final_history_v129.py")
+          assert src129.exists(), "V129 server script was not generated"
+          server=src129.read_text(encoding="utf-8")
+          server=server.replace("MATCH_CURRENT_UI_V129_OR_FORMAL_CURRENT","MATCH_CURRENT_UI_V130_OR_FORMAL_CURRENT")
+          Path("scripts/site_final_history_v130.py").write_text(server,encoding="utf-8")
+
+          state_path=Path("data/site_current_state.json")
+          state=json.loads(state_path.read_text(encoding="utf-8"))
+          state["schema_version"]="boat-edge-current-state-v130"
+          state["ui"]={"version":"V130","status":"INSTALLING"}
+          state["final15m_snapshot"]={"version":"V130","status":"ACTIVE","script":"scripts/site_final_history_v130.py"}
+          state["parity"]={"version":"V130","status":"PENDING"}
+          state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("V129-ADAPTIVE-WAVE-HIT-TODO","V130-ADAPTIVE-WAVE-HIT-TODO-FIXED")
+          t=t.replace("FINAL_15M server generator: V129 ACTIVE","FINAL_15M server generator: V130 ACTIVE")
+          t=t.replace("Browser/server parity: V129 PENDING until install validation","Browser/server parity: V130 PENDING until install validation")
+          t=t.replace("First live V129 FINAL_15M snapshot","First live V130 FINAL_15M snapshot")
+          t=t.replace("V129 波乱展開 changed","V130 波乱展開 changed")
+          t += "\n- [x] V130 fixes V129 regression harness by extracting be129WaveRows before parity execution.\n"
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Disable obsolete V129 scheduler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in site-v123.yml site-v129.yml; do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} initial_state=${state}"
+            if [ "${state}" = "active" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null
+            fi
+            final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} final_state=${final}"
+            [ "${final}" != "active" ]
+          done
+
+      - name: V130 browser server parity
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, subprocess, textwrap, re
+
+          # Use the V126 parity harness, but extend its actual browser extraction
+          # to include the new adaptive-wave helper.
+          v126=Path(".github/workflows/site-v126.yml").read_text(encoding="utf-8")
+          step=v126.find("      - name: Run browser-server parity regression")
+          assert step>=0, "V126 parity step missing"
+          hs=v126.find("python - <<'PY'",step)
+          assert hs>=0
+          start=v126.find("\n",hs)+1
+          end=v126.find("\n          PY",start)
+          assert end>=0
+          src=textwrap.dedent(v126[start:end])
+
+          needle='"be122ScenarioAdjusted","be122ModesFromTickets"'
+          if needle in src:
+              src=src.replace(needle,'"be122ScenarioAdjusted","be129WaveRows","be122ModesFromTickets"',1)
+          else:
+              # tolerate formatting used by the saved V126 workflow
+              src=src.replace(
+                  '"be122ScenarioAdjusted","be122ModesFromTickets"',
+                  '"be122ScenarioAdjusted","be129WaveRows","be122ModesFromTickets"',
+                  1
+              )
+          assert '"be129WaveRows"' in src, "could not extend V126 browser function extraction"
+
+          # Temporarily point the V126 server extractor at the exact V130 server implementation.
+          v123_path=Path(".github/workflows/site-v123.yml")
+          orig=v123_path.read_text(encoding="utf-8")
+          server=Path("scripts/site_final_history_v130.py").read_text(encoding="utf-8")
+          s=orig.find("      - name: Build UI-matched FINAL_15M history")
+          assert s>=0
+          py=orig.find("python - <<'PY'",s)
+          body_start=orig.find("\n",py)+1
+          body_end=orig.find("\n          PY",body_start)
+          assert body_end>=0
+          temp=orig[:body_start]+textwrap.indent(server,"          ")+orig[body_end:]
+          v123_path.write_text(temp,encoding="utf-8")
+
+          try:
+              runner=Path("/tmp/v130_parity.py")
+              runner.write_text(src,encoding="utf-8")
+              r=subprocess.run(["python",str(runner)],text=True)
+              if r.returncode!=0:
+                  raise SystemExit(r.returncode)
+          finally:
+              v123_path.write_text(orig,encoding="utf-8")
+
+          base=Path("data/site_prediction_parity/v126.json")
+          d=json.loads(base.read_text(encoding="utf-8"))
+          assert d.get("pass") is True and not d.get("errors"), d.get("errors")
+          d["schema_version"]="boat-edge-v130-browser-server-parity"
+          d["ui_version"]="V130-ADAPTIVE-WAVE-HIT-TODO-FIXED"
+          d["server_history_version"]="V130"
+          d["mode_policy"]="ADAPTIVE_WAVE_8_10"
+          d["regression_harness_fix"]="be129WaveRows included"
+          Path("data/site_prediction_parity/v130.json").write_text(
+              json.dumps(d,ensure_ascii=False,indent=2),encoding="utf-8"
+          )
+
+          PY
+
+      - name: Finalize V130 state
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json,re
+
+          p=json.loads(Path("data/site_prediction_parity/v130.json").read_text(encoding="utf-8"))
+          assert p["pass"] is True and not p["errors"]
+
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+          wave=re.search(r'function be129WaveRows\(all\)\{.*?\n\}',js,re.S)
+          assert wave, "adaptive wave helper missing"
+          assert 'const target=(altHeads.size>=2||altShare>=.38)?10:8;' in wave.group(0)
+          assert "odds" not in wave.group(0)
+          assert 'hole:be129WaveRows(all)' in js
+          assert 'id="be128HitStatus"' in js
+          assert "🎯 判定待ち" in js and "🎯 的中" in js and "✕ 不的中" in js
+
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["ui"]["status"]="ACTIVE"
+          st["parity"]={"version":"V130","status":"PASS","report":"data/site_prediction_parity/v130.json"}
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("Browser/server parity: V130 PENDING until install validation","Browser/server parity: V130 PASS")
+          # Keep active TODO strictly unfinished.
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Validate V130
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_final_history_v130.py
+          grep -q 'V130-ADAPTIVE-WAVE-HIT-TODO-FIXED' index.html
+          grep -q 'boat_edge_v108.js?v=130' index.html
+          grep -q 'function be129WaveRows' assets/boat_edge_v108.js
+          grep -q '8〜10点' assets/boat_edge_v108.js
+          grep -q 'id="be128HitStatus"' assets/boat_edge_v108.js
+          test -f data/site_current_state.json
+          test -f data/site_prediction_parity/v130.json
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          p=json.loads(Path("data/site_prediction_parity/v130.json").read_text(encoding="utf-8"))
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          assert st["ui"]=={"version":"V130","status":"ACTIVE"}
+          assert st["final15m_snapshot"]["version"]=="V130"
+          assert st["parity"]["status"]=="PASS"
+          assert p["pass"] is True and not p["errors"]
+          assert p["mode_policy"]=="ADAPTIVE_WAVE_8_10"
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "[ ]" in active
+          assert "Verify V101 iPhone layout" not in t
+          print({"ui":"V130","parity":"PASS","wave":"8-10","todo_guard":"PASS"})
+          PY
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V130
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js assets/boat_edge_v108.css index.html scripts/site_final_history_v129.py scripts/site_final_history_v130.py data/site_prediction_policy.json data/site_current_state.json data/site_prediction_parity/v130.json BOAT_EDGE_CURRENT_TODO.md BOAT_EDGE_TODO_ARCHIVE_PRE_V129.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix adaptive wave current V130"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
+
+  history:
+    needs: [install]
+    if: always() && (github.event_name == 'schedule' || needs.install.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build V130 FINAL_15M history
+        shell: bash
+        run: |
+          test -f scripts/site_final_history_v130.py
+          python scripts/site_final_history_v130.py
+
+      - name: Validate V130 history
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_history/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-server-site-history-index-v123"
+          assert d["selection_policy"]=="MATCH_CURRENT_UI_V130_OR_FORMAL_CURRENT"
+          print({"history_count":len(d.get("races",{})),"policy":d["selection_policy"]})
+          PY
+
+      - name: Save V130 history
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_snapshots data/site_prediction_history
+          git diff --cached --quiet && exit 0
+          git commit -m "Update V130 FINAL15M history"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
