@@ -1,0 +1,69 @@
+name: BOAT EDGE V85 Safe Mode Recovery
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-recovery-v85.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Disable accumulated legacy UI layer
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          p = Path("index.html")
+          h = p.read_text(encoding="utf-8")
+
+          # Remove the accumulated V51-V84 enhancement JS from the live page.
+          h = re.sub(
+              r'\s*<script\s+src=["\']\./assets/boat_edge_simple_v51\.js(?:\?v=\d+)?["\']\s*></script>\s*',
+              '\n<!-- BOAT_EDGE_V85_SAFE_MODE: accumulated simple JS disabled -->\n',
+              h
+          )
+
+          # Keep CSS for appearance only; CSS cannot run the recursive DOM observers.
+          h = re.sub(
+              r'boat_edge_simple_v51\.css(?:\?v=\d+)?',
+              'boat_edge_simple_v51.css?v=85',
+              h
+          )
+
+          marker = '<meta name="boat-edge-site-version" content="V85-SAFE-MODE">'
+          if marker not in h:
+              h = h.replace('</head>', f'  {marker}\n</head>')
+
+          p.write_text(h, encoding="utf-8")
+          PY
+
+      - name: Validate safe mode
+        shell: bash
+        run: |
+          grep -q 'V85-SAFE-MODE' index.html
+          grep -q 'BOAT_EDGE_V85_SAFE_MODE' index.html
+          if grep -Eq '<script[[:space:]]+src=["'\'']\./assets/boat_edge_simple_v51\.js' index.html; then
+            echo "ERROR: accumulated JS is still live"
+            exit 1
+          fi
+          grep -q 'boat_edge_simple_v51.css?v=85' index.html
+
+      - name: Commit recovery
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Recover BOAT EDGE V85 safe mode"
+          git push
