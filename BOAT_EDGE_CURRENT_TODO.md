@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V104
+Current UI target: V105
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -38,6 +38,16 @@ Current UI target: V104
 - V104 site back navigation restores date / venue / scroll context.
 
 - Historical odds/results are shown only when saved; missing values remain unavailable.
+
+- V105 BOATERS-style 24-venue grid with inactive venues grayed out.
+
+- V105 previous/current/next day navigation remains at top.
+
+- V105 venue selection immediately exposes 1R-12R and deadline times.
+
+- V105 old home panels hidden to keep the top page focused.
+
+- V105 race selector stays directly above prediction tabs.
 
 ## NEXT
 - Verify V101 iPhone layout.
