@@ -286,7 +286,10 @@ function confidence(pred,mode,rows){
 
 function be122Clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function be122Mean(arr){
-  const v=arr.map(Number).filter(Number.isFinite);
+  const v=arr
+    .filter(x=>x!==null&&x!==undefined&&String(x).trim()!=="")
+    .map(Number)
+    .filter(Number.isFinite);
   return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
 }
 function be122ActualCourseMap(race){
@@ -652,7 +655,7 @@ async function renderPredictionModes(race,pred){
   const stageText=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   const sourceBar=pred.mode==="formal"
     ? `<div class="be118-source formal">正式CURRENTを使用中</div>`
-    : `<div class="be118-source reference"><b>最新方針準拠・参考予想</b><span>${esc(stageText)}</span><small>正式CURRENTは未接続。実データが増えるたび展開確率を更新。オッズは順位に使いません。</small></div>`;
+    : `<div class="be118-source reference"><b>最新予想CURRENT方針・参考</b><span>${esc(stageText)}</span><small>取得済み入力だけ使用。未取得値は補完しません。正式CURRENT接続時はそちらを最優先。オッズは順位に使いません。</small></div>`;
 
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
@@ -671,7 +674,7 @@ async function renderMainPick(race,pred,preAdjusted=null){
   const formal=pred.mode==="formal";
   const stage=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   box.classList.toggle("be118-reference",!formal);
-  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"最新方針準拠・参考予想"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")} / ${esc(stage)}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
+  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"最新予想CURRENT方針・参考"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")} / ${esc(stage)}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
 }
 async function augmentBuyBoard(race){
   const key=race?.race_key;if(!key)return;

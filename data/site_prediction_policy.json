@@ -1,0 +1,50 @@
+{
+  "schema_version": "boat-edge-latest-prediction-policy-v127",
+  "as_of": "2026-10-08",
+  "name": "LATEST_PREDICTION_CURRENT_POLICY",
+  "objective": "展開を正しく読み、3連単的中率を最大化する。少点数化は二次目的。",
+  "ticket_policy": {
+    "solid": "3〜4点を目安",
+    "split_or_rough": "展開が割れる・中穴/大穴筋が複数なら最大10点まで拡張可",
+    "ranking": "120通りの勝率/着順確率を軸に上位から選ぶ",
+    "odds_rank_weight": false,
+    "manual_hole_boost": false
+  },
+  "priority": [
+    "実進入 / 前づけ / 深イン / スロー・ダッシュ / カド",
+    "場prior + 選手の実コース能力",
+    "1号艇の逃げ耐性 + 2コースの壁/逃がし",
+    "3/4コース攻撃艇と届き方",
+    "5/6コースを含む展開受益艇",
+    "実コース平均ST / 隣艇ST差 / 展示ST差 / 平均STと展示STの乖離",
+    "モーター直近節状態 / 今節気配 / 部品交換",
+    "オリジナル展示の一周・まわり足・直線・展示タイムを実タイム差で評価",
+    "風 / 波 / 潮 / 水面条件との相互作用",
+    "同日LIVE水面傾向",
+    "逃げ / 差し / まくり系 / 受益の複数展開世界",
+    "買い目"
+  ],
+  "site_reference_active_inputs": [
+    "全国・当地選手力",
+    "モーター/ボート基礎成績",
+    "当地最近3か月コース1着率・決まり手",
+    "実進入（6艇揃った時のみ枠より優先）",
+    "平均ST（欠損除外）",
+    "展示STと隣艇ST差",
+    "展示タイム",
+    "オリジナル展示の取得済み実値",
+    "4コース攻撃傾向の一部"
+  ],
+  "not_yet_fully_connected_to_site_reference": [
+    "選手×実コースの1年/6か月/3か月詳細成績",
+    "2コース逃がし率 + 1コース差され率/壁性能",
+    "攻撃艇→受益艇の完全な局所相互作用",
+    "モーター直近節/今節推移/部品交換",
+    "venue×season×course / venue×wind×course / venue×tide×course",
+    "同日終了レースだけから作るLIVE水面傾向",
+    "BOATERS + 競艇日和双方のオリ展source-binding確認"
+  ],
+  "missing_data_rule": "未取得値は0・平均・proxyで補完しない。利用可能な入力だけで参考予想を出し、正式CURRENT接続時は正式CURRENTを優先。",
+  "formal_current_status_rule": "formal_predictions が有効かつ PRE_RESULT guard を満たす場合のみ正式CURRENTとして表示。",
+  "original_exhibition_formal_requirement": "正式最新予想ではBOATERS + 競艇日和を確認し、一周・まわり足・直線・展示ST/タイムを実値/艇間差で評価する。"
+}

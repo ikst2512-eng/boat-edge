@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V122
+Current UI target: V127
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -246,6 +246,22 @@ Current UI target: V122
 - V125 treats current-vs-snapshot hash divergence as informational evidence, not a historical integrity failure.
 
 - V125 does not modify V122 UI or V123 prediction generation.
+
+- V126 detected a real V122/V123 parity mismatch only on fixture 20261005-09-08; top7 matched but positions 8/9 swapped.
+
+- V127 fixes the root cause: browser be122Mean no longer converts missing avg_st null into numeric zero.
+
+- V127 enforces the latest-prediction rule that missing inputs are excluded, never proxy/imputed as zero.
+
+- V127 locks latest prediction priority in data/site_prediction_policy.json: actual entry -> venue/actual-course -> 1 escape/2 wall -> 3/4 attack -> 5/6 beneficiary -> ST -> motor -> exhibition -> water -> LIVE -> scenario worlds -> tickets.
+
+- V127 objective is trifecta hit-rate through scenario reading; fewer tickets are secondary, with up to 10 when scenarios genuinely split.
+
+- V127 keeps odds out of ranking and keeps manual hole boosting disabled.
+
+- V127 clearly distinguishes active site-reference inputs from latest-policy inputs not yet fully connected.
+
+- V127 formal CURRENT remains higher priority than the reference calculation whenever valid formal_predictions are available.
 
 ## NEXT
 - Verify V101 iPhone layout.
