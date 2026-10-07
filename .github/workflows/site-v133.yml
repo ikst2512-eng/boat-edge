@@ -1,0 +1,478 @@
+name: BOAT EDGE V133 Balance10 Wave18 FIXED
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v133.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v133-current
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install V133 fixed four-mode policy
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import subprocess, textwrap, re, json
+
+          # Apply V132 design first (it installs V131 wave expansion + balance10 locally).
+          wf=Path(".github/workflows/site-v132.yml").read_text(encoding="utf-8")
+          step=wf.find("      - name: Install V132 balance10 and wave12 15 18")
+          assert step>=0, "V132 install step missing"
+          hs=wf.find("python - <<'PY'",step)
+          assert hs>=0
+          start=wf.find("\n",hs)+1
+          end=wf.find("\n          PY",start)
+          assert end>=0
+          src=textwrap.dedent(wf[start:end])
+          runner=Path("/tmp/v133_apply_v132.py")
+          runner.write_text(src,encoding="utf-8")
+          r=subprocess.run(["python",str(runner)],text=True)
+          if r.returncode!=0:
+              raise SystemExit(r.returncode)
+
+          # V132 browser logic is the intended source of truth:
+          # balance primary head = top ticket head from the normal adjusted list.
+          # Fix server to use that exact same reference head for balance mode.
+          server_path=Path("scripts/site_final_history_v132.py")
+          server=server_path.read_text(encoding="utf-8")
+
+          old='''    balance=[];balance_seen=set()
+              def add_balance(x):
+                  if not x or x["combo"] in balance_seen or len(balance)>=10:return
+                  balance_seen.add(x["combo"]);balance.append(x)
+
+              for x in allrows[:7]:
+                  add_balance(x)
+              alt_balance=[x for x in source if x["combo"].split("-")[0]!=primary] if primary else []
+              for x in alt_balance:
+                  add_balance(x)
+                  if len(balance)>=10:break'''
+          new='''    balance=[];balance_seen=set()
+              def add_balance(x):
+                  if not x or x["combo"] in balance_seen or len(balance)>=10:return
+                  balance_seen.add(x["combo"]);balance.append(x)
+
+              balance_primary=(allrows[0]["combo"].split("-")[0] if allrows else primary)
+              for x in allrows[:7]:
+                  add_balance(x)
+              alt_balance=[x for x in source if x["combo"].split("-")[0]!=balance_primary] if balance_primary else []
+              for x in alt_balance:
+                  add_balance(x)
+                  if len(balance)>=10:break'''
+          if old not in server:
+              raise SystemExit("V132 server balance anchor missing")
+          server=server.replace(old,new,1)
+
+          server=server.replace('"mode_policy":"BALANCE10_WAVE12_15_18"',
+                                '"mode_policy":"BALANCE10_WAVE12_15_18_V133_FIXED"')
+          server=server.replace('"selection_policy":"MATCH_CURRENT_UI_V132_OR_FORMAL_CURRENT"',
+                                '"selection_policy":"MATCH_CURRENT_UI_V133_OR_FORMAL_CURRENT"')
+          Path("scripts/site_final_history_v133.py").write_text(server,encoding="utf-8")
+
+          # Promote browser/UI labels from V132 to V133.
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=html.replace("V132-BALANCE10-WAVE12-15-18","V133-BALANCE10-WAVE12-15-18-FIXED")
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=133',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=133',html)
+          idx.write_text(html,encoding="utf-8")
+
+          # State.
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["schema_version"]="boat-edge-current-state-v133"
+          st["ui"]={"version":"V133","status":"INSTALLING"}
+          st["latest_prediction_policy"]["version"]="V127+V133-modes"
+          st["final15m_snapshot"]={"version":"V133","status":"ACTIVE","script":"scripts/site_final_history_v133.py"}
+          st["parity"]={"version":"V133","status":"PENDING"}
+          st["balance_mode"]={
+              "ticket_count":10,
+              "top_probability":7,
+              "diversified":3,
+              "diversification_reference":"normal_top_ticket_head",
+              "odds_rank_weight":False
+          }
+          st["wave_mode"]={
+              "candidate_pool":20,
+              "ticket_counts":[12,15,18],
+              "max_tickets":18,
+              "odds_rank_weight":False
+          }
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # Policy.
+          policy_path=Path("data/site_prediction_policy.json")
+          policy=json.loads(policy_path.read_text(encoding="utf-8"))
+          policy["balance_mode"]["diversification_reference"]="通常調整済み予想の1位頭"
+          policy["balance_mode"]["ticket_count"]=10
+          policy_path.write_text(json.dumps(policy,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # TODO.
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("V132-BALANCE10-WAVE12-15-18","V133-BALANCE10-WAVE12-15-18-FIXED")
+          t=t.replace("Latest prediction policy: V127 + V132 mode policy ACTIVE",
+                      "Latest prediction policy: V127 + V133 mode policy ACTIVE")
+          t=t.replace("FINAL_15M server generator: V132 ACTIVE","FINAL_15M server generator: V133 ACTIVE")
+          t=t.replace("Browser/server parity: V132 PENDING","Browser/server parity: V133 PENDING")
+          t=t.replace("First live V132 FINAL_15M snapshot","First live V133 FINAL_15M snapshot")
+          if "- [x] V133 fixes" not in t:
+              t=t.replace("## RECENT DONE\n",
+                          "## RECENT DONE\n- [x] V133 fixes the only V132 parity mismatch: balance-mode alternate-head reference now uses the normal top-ticket head on both browser and server.\n"
+                          "- [x] V133 keeps 的中重視=10 / バランス=10 / 波乱=12・15・18 / 激絞り=3.\n",1)
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Browser server parity all modes
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, subprocess, re
+
+          ROOT=Path(".")
+          FIXTURES=["20261005-09-08","20261005-20-11","20261005-20-06","20261005-23-05"]
+
+          idx=Path("index.html").read_text(encoding="utf-8")
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+
+          def extract_function(src,name):
+              starts=[src.find(f"function {name}("),src.find(f"async function {name}(")]
+              starts=[x for x in starts if x>=0]
+              assert starts,f"missing JS function {name}"
+              start=min(starts);brace=src.find("{",start);depth=0;quote=None;esc=False;i=brace
+              while i<len(src):
+                  ch=src[i]
+                  if quote:
+                      if esc:esc=False
+                      elif ch=="\\":esc=True
+                      elif ch==quote:quote=None
+                      i+=1;continue
+                  if ch in ("'",'"',"`"):quote=ch;i+=1;continue
+                  if ch=="{":depth+=1
+                  elif ch=="}":
+                      depth-=1
+                      if depth==0:return src[start:i+1]
+                  i+=1
+              raise AssertionError(f"unclosed {name}")
+
+          idx_funcs=["getBeforeMap","normalizeExhibition","computeScores","gradeFromSpread","round100","allocateByWeights","topNUnique","buildFallbackPrediction"]
+          js_funcs=[
+              "normalizeCombo","allTickets","be122Clamp","be122Mean","be122ActualCourseMap","be122ExStMap",
+              "be122ExTimeMap","be122OriginalMap","be122MetricScores","be122MethodFit","be122ScenarioAdjusted",
+              "be131ExpandedReferencePrediction","be131WaveRows","be132BalanceRows","be122ModesFromTickets"
+          ]
+          defs="\n".join(extract_function(idx,n) for n in idx_funcs)+"\n"+"\n".join(extract_function(js,n) for n in js_funcs)
+
+          node=r'''
+          const fs=require("fs"),path=require("path");
+          const num=v=>(v===null||v===undefined||String(v).trim()==="")?null:(Number.isFinite(Number(v))?Number(v):null);
+          const n=num;
+          const laneNo=(r,i)=>r?.lane??(i+1);
+          const state={model:null};
+          const formatUpdated=()=> "";
+          async function courseStatsFor(jcd){
+            const p=path.join("data","site_course_stats",String(jcd).padStart(2,"0")+".json");
+            try{return JSON.parse(fs.readFileSync(p,"utf8"))}catch(_){return null}
+          }
+          __DEFS__
+
+          function permsForHead(head,count,share){
+            const others=[1,2,3,4,5,6].filter(x=>x!==head);
+            const combos=[];
+            for(const s of others){
+              for(const t of others){
+                if(t===s)continue;
+                combos.push(`${head}-${s}-${t}`);
+              }
+            }
+            return combos.slice(0,count).map((combo,i)=>({combo,p:share/count,world:"X",rank:i+1}));
+          }
+          function synthetic(shares){
+            const rows=[];
+            for(const [h,share] of Object.entries(shares)){
+              rows.push(...permsForHead(Number(h),10,share));
+            }
+            return rows;
+          }
+          async function run(){
+            const fixtures=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+            const out={};
+            for(const key of fixtures){
+              const race=JSON.parse(fs.readFileSync(path.join("data","races",key+".json"),"utf8"));
+              const pred=buildFallbackPrediction(race);
+              const adjusted=await be122ScenarioAdjusted(race,pred);
+              const wavePred=be131ExpandedReferencePrediction(race,pred);
+              const waveAdjusted=await be122ScenarioAdjusted(race,wavePred);
+              const modes=be122ModesFromTickets(adjusted.tickets,{},waveAdjusted.tickets);
+              out[key]=Object.fromEntries(Object.entries(modes).map(([k,v])=>[k,v.map(x=>({combo:x.combo,p:x.p}))]));
+            }
+            const syn12=synthetic({"1":70,"2":30});
+            const syn15=synthetic({"1":50,"2":30,"3":20});
+            const syn18=synthetic({"1":35,"2":25,"3":20,"4":20});
+            const synbal=synthetic({"1":60,"2":25,"3":15});
+            out.synthetic={
+              twelve:be131WaveRows(syn12).length,
+              fifteen:be131WaveRows(syn15).length,
+              eighteen:be131WaveRows(syn18).length,
+              balance:be132BalanceRows(synbal.slice(0,20),synbal).length
+            };
+            process.stdout.write(JSON.stringify(out));
+          }
+          run().catch(e=>{console.error(e);process.exit(1)});
+          '''.replace("__DEFS__",defs)
+
+          node_path=Path("/tmp/v133_browser.js")
+          node_path.write_text(node,encoding="utf-8")
+          Path("/tmp/v133_fixtures.json").write_text(json.dumps(FIXTURES),encoding="utf-8")
+          chk=subprocess.run(["node","--check",str(node_path)],capture_output=True,text=True)
+          assert chk.returncode==0,chk.stderr
+          run=subprocess.run(["node",str(node_path),"/tmp/v133_fixtures.json"],capture_output=True,text=True)
+          assert run.returncode==0,run.stderr
+          browser=json.loads(run.stdout)
+
+          server_src=Path("scripts/site_final_history_v133.py").read_text(encoding="utf-8")
+          cut=server_src.find("changed=0;snapshots=0;settled=0")
+          assert cut>=0
+          ns={"__name__":"v133_parity"}
+          exec(compile(server_src[:cut],"v133_server_defs.py","exec"),ns)
+
+          server={}
+          for key in FIXTURES:
+              race=json.loads((ROOT/"data/races"/f"{key}.json").read_text(encoding="utf-8"))
+              pred=ns["build_fallback"](race)
+              adjusted=ns["scenario_adjust"](race,pred)
+              wave_pred=ns["build_fallback_expanded"](race,pred)
+              wave_adjusted=ns["scenario_adjust"](race,wave_pred)
+              modes=ns["modes_from_tickets"](adjusted["tickets"],{},wave_adjusted["tickets"])
+              server[key]={k:[{"combo":x["combo"],"p":x["p"]} for x in v] for k,v in modes.items()}
+
+          def perms_py(head,count,share):
+              others=[x for x in range(1,7) if x!=head]
+              combos=[]
+              for s in others:
+                  for t in others:
+                      if t==s:continue
+                      combos.append(f"{head}-{s}-{t}")
+              return [{"combo":c,"p":share/count,"world":"X","rank":i+1} for i,c in enumerate(combos[:count])]
+
+          def synthetic_py(shares):
+              rows=[]
+              for h,share in shares.items():
+                  rows.extend(perms_py(int(h),10,share))
+              return rows
+
+          syn12=synthetic_py({"1":70,"2":30})
+          syn15=synthetic_py({"1":50,"2":30,"3":20})
+          syn18=synthetic_py({"1":35,"2":25,"3":20,"4":20})
+          synbal=synthetic_py({"1":60,"2":25,"3":15})
+          server["synthetic"]={
+              "twelve":len(ns["modes_from_tickets"]([],{},syn12)["hole"]),
+              "fifteen":len(ns["modes_from_tickets"]([],{},syn15)["hole"]),
+              "eighteen":len(ns["modes_from_tickets"]([],{},syn18)["hole"]),
+              "balance":len(ns["modes_from_tickets"](synbal[:20],{},synbal)["balance"])
+          }
+
+          errors=[];cases={};distinct_balance=False
+          for key in FIXTURES:
+              cases[key]={}
+              for mode in ["hit","balance","hole","narrow"]:
+                  b=browser[key][mode];sv=server[key][mode]
+                  bc=[x["combo"] for x in b];sc=[x["combo"] for x in sv]
+                  maxdiff=max([abs(float(x["p"])-float(y["p"])) for x,y in zip(b,sv)] or [0])
+                  ok=bc==sc and maxdiff<=1e-9
+                  cases[key][mode]={"pass":ok,"count":len(b),"browser":bc,"server":sc,"max_probability_abs_diff":maxdiff}
+                  if not ok:errors.append({"race":key,"mode":mode})
+              if len(browser[key]["balance"])!=10:
+                  errors.append({"race":key,"mode":"balance","count":len(browser[key]["balance"])})
+              if len(browser[key]["hole"]) not in (12,15,18):
+                  errors.append({"race":key,"mode":"hole","count":len(browser[key]["hole"])})
+              if [x["combo"] for x in browser[key]["balance"]] != [x["combo"] for x in browser[key]["hit"]]:
+                  distinct_balance=True
+
+          expected={"twelve":12,"fifteen":15,"eighteen":18,"balance":10}
+          if browser["synthetic"]!=expected or server["synthetic"]!=expected:
+              errors.append({"synthetic":True,"browser":browser["synthetic"],"server":server["synthetic"],"expected":expected})
+          if not distinct_balance:
+              errors.append({"balance_distinct":False})
+
+          report={
+              "schema_version":"boat-edge-v133-browser-server-parity",
+              "ui_version":"V133-BALANCE10-WAVE12-15-18-FIXED",
+              "server_history_version":"V133",
+              "mode_policy":"BALANCE10_WAVE12_15_18_V133_FIXED",
+              "balance_policy":"TOP7_PLUS_3_DIVERSIFIED_NORMAL_TOP_HEAD",
+              "synthetic_branches":browser["synthetic"],
+              "balance_distinct_from_hit_on_fixed_fixture":distinct_balance,
+              "cases":cases,
+              "errors":errors,
+              "pass":not errors
+          }
+          Path("data/site_prediction_parity/v133.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          if errors:raise SystemExit("V133 parity failed")
+
+          PY
+
+      - name: Finalize V133 state
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json
+
+          p=json.loads(Path("data/site_prediction_parity/v133.json").read_text(encoding="utf-8"))
+          assert p["pass"] is True and not p["errors"]
+          assert p["synthetic_branches"]=={"twelve":12,"fifteen":15,"eighteen":18,"balance":10}
+          assert p["balance_distinct_from_hit_on_fixed_fixture"] is True
+
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["ui"]["status"]="ACTIVE"
+          st["parity"]={"version":"V133","status":"PASS","report":"data/site_prediction_parity/v133.json"}
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("Browser/server parity: V133 PENDING","Browser/server parity: V133 PASS")
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Validate V133
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_final_history_v133.py
+          grep -q 'V133-BALANCE10-WAVE12-15-18-FIXED' index.html
+          grep -q 'boat_edge_v108.js?v=133' index.html
+          grep -q 'function be132BalanceRows' assets/boat_edge_v108.js
+          grep -q 'function be131WaveRows' assets/boat_edge_v108.js
+          grep -q '上位7点＋別頭/別展開3点を基本に10点' assets/boat_edge_v108.js
+          grep -q 'BALANCE10_WAVE12_15_18_V133_FIXED' scripts/site_final_history_v133.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          p=json.loads(Path("data/site_prediction_parity/v133.json").read_text(encoding="utf-8"))
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          assert st["ui"]=={"version":"V133","status":"ACTIVE"}
+          assert st["final15m_snapshot"]["version"]=="V133"
+          assert st["parity"]["status"]=="PASS"
+          assert st["balance_mode"]["ticket_count"]==10
+          assert st["wave_mode"]["ticket_counts"]==[12,15,18]
+          assert p["pass"] is True and not p["errors"]
+          assert p["synthetic_branches"]=={"twelve":12,"fifteen":15,"eighteen":18,"balance":10}
+          assert p["balance_distinct_from_hit_on_fixed_fixture"] is True
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "[ ]" in active
+          print({"ui":"V133","hit":10,"balance":10,"wave":[12,15,18],"narrow":3,"parity":"PASS"})
+          PY
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V133
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js index.html scripts/site_final_history_v131.py scripts/site_final_history_v132.py scripts/site_final_history_v133.py data/site_prediction_policy.json data/site_current_state.json data/site_prediction_parity/v133.json BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix balance10 server parity V133"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
+
+      - name: Disable obsolete V130 V131 V132 schedulers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in site-v130.yml site-v131.yml site-v132.yml; do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} initial_state=${state}"
+            if [ "${state}" = "active" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null
+            fi
+            final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} final_state=${final}"
+            [ "${final}" != "active" ]
+          done
+
+  history:
+    needs: [install]
+    if: always() && (github.event_name == 'schedule' || needs.install.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build V133 FINAL_15M history
+        shell: bash
+        run: |
+          test -f scripts/site_final_history_v133.py
+          python scripts/site_final_history_v133.py
+
+      - name: Validate V133 history
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_history/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-server-site-history-index-v123"
+          assert d["selection_policy"]=="MATCH_CURRENT_UI_V133_OR_FORMAL_CURRENT"
+          print({"history_count":len(d.get("races",{})),"policy":d["selection_policy"]})
+          PY
+
+      - name: Save V133 history
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_snapshots data/site_prediction_history
+          git diff --cached --quiet && exit 0
+          git commit -m "Update V133 FINAL15M history"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
