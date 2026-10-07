@@ -1,0 +1,43 @@
+name: BOAT EDGE V92 Decision Center
+on:
+  push:
+    paths: [".github/workflows/site-v92.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install V92 decision UI
+        shell: bash
+        run: |
+          cat >> assets/boat_edge_v90.css <<'CSS'
+          /* BOAT_EDGE_V92_DECISION_CENTER */
+          .be92{margin-top:18px}.be92head{display:flex;justify-content:space-between;align-items:center}.be92head b{background:#1264d9;color:#fff;padding:8px;border-radius:10px}.be92row{display:grid;grid-template-columns:80px 60px 65px 1fr;gap:6px;background:#fff;border:1px solid #dce7f5;border-radius:12px;padding:10px;margin:6px 0}.be92row small{grid-column:1/-1;color:#71859c}
+          CSS
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("assets/boat_edge_v90.js")
+          s=p.read_text()
+          s=s.replace("BOAT_EDGE_V91_READABILITY","BOAT_EDGE_V92_DECISION_CENTER",1)
+          hp=Path("index.html");h=hp.read_text()
+          h=h.replace("boat_edge_v90.js?v=91","boat_edge_v90.js?v=92")
+          h=h.replace("boat_edge_v90.css?v=91","boat_edge_v90.css?v=92")
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V92-DECISION-CENTER">',h)
+          hp.write_text(h)
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v90.js
+          grep -q 'BOAT_EDGE_V92_DECISION_CENTER' assets/boat_edge_v90.js
+          grep -q 'V92-DECISION-CENTER' index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v90.js assets/boat_edge_v90.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Prepare BOAT EDGE V92 decision center"
+          git push
