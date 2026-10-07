@@ -1,0 +1,254 @@
+name: BOAT EDGE V124 FINAL15M Audit
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v124.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v124-final15m-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit V123 FINAL_15M snapshots
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from __future__ import annotations
+          import json, hashlib, re
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          ROOT=Path(".")
+          JST=timezone(timedelta(hours=9))
+          TODAY=datetime.now(JST).strftime("%Y%m%d")
+          SNAPS=ROOT/"data/site_prediction_snapshots"
+          RACES=ROOT/"data/races"
+          ODDS=ROOT/"data/site_odds"
+          HIST=ROOT/"data/site_prediction_history"
+          AUDIT=ROOT/"data/site_prediction_audit"
+          AUDIT.mkdir(parents=True,exist_ok=True)
+
+          def read_json(p):
+              try:return json.loads(Path(p).read_text(encoding="utf-8"))
+              except Exception:return None
+
+          def sha256_file(p):
+              p=Path(p)
+              try:return hashlib.sha256(p.read_bytes()).hexdigest()
+              except Exception:return None
+
+          def write_if_changed(p,obj):
+              p=Path(p)
+              text=json.dumps(obj,ensure_ascii=False,indent=2)
+              old=p.read_text(encoding="utf-8") if p.exists() else None
+              if old==text:return False
+              p.write_text(text,encoding="utf-8")
+              return True
+
+          def parse_iso(s):
+              try:return datetime.fromisoformat(str(s).replace("Z","+00:00"))
+              except Exception:return None
+
+          def norm_combo(v):
+              m=re.search(r"([1-6])\D+([1-6])\D+([1-6])",str(v or ""))
+              return "-".join(m.groups()) if m else None
+
+          created=0
+          audited={}
+          errors=[]
+
+          for sp in sorted(SNAPS.glob(f"{TODAY}-??-??.json")):
+              snap=read_json(sp)
+              if not snap:continue
+
+              key=snap.get("race_key") or sp.stem
+              race_path=RACES/f"{key}.json"
+              odds_path=ODDS/f"{key}.json"
+              hist_path=HIST/f"{key}.json"
+              race=read_json(race_path) or {}
+              meta=race.get("meta") or {}
+              guards=snap.get("guards") or {}
+              saved_at=parse_iso(snap.get("saved_at"))
+              deadline=None
+              try:
+                  deadline=datetime.fromisoformat(f'{meta.get("date")}T{meta.get("deadline")}:00+09:00')
+              except Exception:
+                  pass
+
+              mins_to_deadline=None
+              if saved_at and deadline:
+                  if saved_at.tzinfo is None:saved_at=saved_at.replace(tzinfo=timezone.utc)
+                  mins_to_deadline=(deadline.astimezone(timezone.utc)-saved_at.astimezone(timezone.utc)).total_seconds()/60
+
+              modes=snap.get("modes") or {}
+              hit_rows=(modes.get("hit") or {}).get("tickets") or []
+              top10=[{
+                  "rank":i+1,
+                  "combo":x.get("combo"),
+                  "p":x.get("p"),
+                  "odds":x.get("odds")
+              } for i,x in enumerate(hit_rows[:10])]
+
+              flags={
+                  "schema_v123":snap.get("schema_version")=="boat-edge-server-site-final-v123",
+                  "final_15m":snap.get("snapshot_window")=="FINAL_15M",
+                  "pre_result_guards":guards.get("results_seen") is False and guards.get("unlock") is False and guards.get("scoring") is False,
+                  "race_sha_matches":snap.get("race_sha256")==sha256_file(race_path),
+                  "odds_sha_matches":snap.get("odds_sha256")==sha256_file(odds_path),
+                  "saved_before_deadline":mins_to_deadline is not None and mins_to_deadline>=0,
+                  "saved_within_16m":mins_to_deadline is not None and mins_to_deadline<=16.2,
+                  "ranking_policy_ok":snap.get("selection_policy") in ("V122_SCENARIO_AWARE_PROBABILITY_FIRST","FORMAL_CURRENT"),
+                  "prediction_kind_ok":snap.get("prediction_kind") in ("SITE_REFERENCE_V122","FORMAL_CURRENT"),
+                  "top10_nonempty":len(top10)>0
+              }
+              passed=all(flags.values())
+
+              settled=read_json(hist_path)
+              settlement=(settled or {}).get("settlement") or {}
+              winning=settlement.get("winning_combo")
+              hit_any=settlement.get("hit_any")
+
+              doc={
+                  "schema_version":"boat-edge-final15m-audit-v124",
+                  "race_key":key,
+                  "audit_generated_at":datetime.now(timezone.utc).isoformat(),
+                  "snapshot_file":str(sp),
+                  "snapshot_sha256":sha256_file(sp),
+                  "race_file":str(race_path),
+                  "race_sha256_current":sha256_file(race_path),
+                  "race_sha256_snapshot":snap.get("race_sha256"),
+                  "odds_file":str(odds_path),
+                  "odds_sha256_current":sha256_file(odds_path),
+                  "odds_sha256_snapshot":snap.get("odds_sha256"),
+                  "saved_at":snap.get("saved_at"),
+                  "first_saved_at":snap.get("first_saved_at"),
+                  "minutes_to_deadline_recomputed":None if mins_to_deadline is None else round(mins_to_deadline,3),
+                  "minutes_to_deadline_snapshot":snap.get("minutes_to_deadline"),
+                  "prediction_kind":snap.get("prediction_kind"),
+                  "selection_policy":snap.get("selection_policy"),
+                  "used_inputs":snap.get("used_inputs") or [],
+                  "guards":guards,
+                  "grade":snap.get("grade"),
+                  "hit_mode_top10":top10,
+                  "mode_ticket_counts":{k:len((v or {}).get("tickets") or []) for k,v in modes.items()},
+                  "flags":flags,
+                  "pass":passed,
+                  "settlement":{
+                      "available":bool(settlement),
+                      "winning_combo":winning,
+                      "hit_any":hit_any,
+                      "mode_hits":settlement.get("mode_hits") or {},
+                      "payout":settlement.get("payout")
+                  }
+              }
+
+              out=AUDIT/f"{key}.json"
+              if write_if_changed(out,doc):created+=1
+              audited[key]={
+                  "race_key":key,
+                  "pass":passed,
+                  "saved_at":snap.get("saved_at"),
+                  "minutes_to_deadline":snap.get("minutes_to_deadline"),
+                  "prediction_kind":snap.get("prediction_kind"),
+                  "selection_policy":snap.get("selection_policy"),
+                  "used_inputs":snap.get("used_inputs") or [],
+                  "top1":top10[0]["combo"] if top10 else None,
+                  "top10_count":len(top10),
+                  "audit_file":str(out)
+              }
+              if not passed:
+                  errors.append({"race_key":key,"failed":[k for k,v in flags.items() if not v]})
+
+          old_idx=read_json(AUDIT/"index.json") or {}
+          base={
+              "schema_version":"boat-edge-final15m-audit-index-v124",
+              "date":TODAY,
+              "source_snapshot_schema":"boat-edge-server-site-final-v123",
+              "ui_target":"V122-SCENARIO-AWARE-REFERENCE-FIXED",
+              "audited":audited,
+              "errors":errors
+          }
+          old_cmp=dict(old_idx);old_cmp.pop("updated_at",None)
+          idx=dict(base)
+          idx["updated_at"]=datetime.now(timezone.utc).isoformat() if old_cmp!=base else old_idx.get("updated_at") or datetime.now(timezone.utc).isoformat()
+          if write_if_changed(AUDIT/"index.json",idx):created+=1
+
+          print(json.dumps({
+              "date":TODAY,
+              "audited_count":len(audited),
+              "errors":errors,
+              "files_changed":created
+          },ensure_ascii=False))
+          if errors:
+              raise SystemExit("audit_failed")
+
+          PY
+
+      - name: Validate V124
+        shell: bash
+        run: |
+          set -e
+          test -f data/site_prediction_audit/index.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_audit/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-final15m-audit-index-v124"
+          assert d["source_snapshot_schema"]=="boat-edge-server-site-final-v123"
+          assert d["ui_target"]=="V122-SCENARIO-AWARE-REFERENCE-FIXED"
+          assert not d.get("errors"), d.get("errors")
+          print({"audited_count":len(d.get("audited",{})),"errors":d.get("errors",[])})
+          PY
+
+      - name: Update TODO
+        if: github.event_name != 'schedule'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("BOAT_EDGE_CURRENT_TODO.md")
+          s=p.read_text(encoding="utf-8") if p.exists() else "# BOAT EDGE CURRENT TODO\n"
+          lines=[
+            "- V124 audits every V123 FINAL_15M snapshot without changing production prediction logic.",
+            "- V124 records snapshot/race/odds SHA-256, PRE_RESULT guards, used inputs, deadline timing and hit-mode top10.",
+            "- V124 fails if a snapshot is outside FINAL_15M, guard-invalid, hash-mismatched or not V122/formal policy.",
+            "- V124 is evidence-only; production UI remains V122 and server snapshot generation remains V123."
+          ]
+          marker="## NEXT"
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+"\n\n"+marker,1) if marker in s else s+"\n"+line+"\n"
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: Save V124 audit
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_audit BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add FINAL_15M evidence audit V124"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
