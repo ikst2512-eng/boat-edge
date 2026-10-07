@@ -1052,7 +1052,7 @@ body{background:
 <link rel="stylesheet" href="./assets/boat_edge_final_v48.css">
 <link rel="stylesheet" href="./assets/boat_edge_simple_v51.css?v=85"><!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 <!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->
-  <meta name="boat-edge-site-version" content="V86-INTERACTION-GUARD">
+  <meta name="boat-edge-site-version" content="V87-CORE-BOOT-FIX">
 </head>
 <body>
 <div class="app">
@@ -2118,6 +2118,7 @@ function ageMinutes(iso){
 function updateSystemBanner(){
   const box = document.getElementById("systemBanner");
   if(!box) return;
+  const formal = formalState();
   const t = state.today?.updated_at ? new Date(state.today.updated_at) : null;
   const age = t ? Math.floor((Date.now()-t.getTime())/60000) : null;
   const errs = state.today?.collector?.errors || [];
@@ -3098,6 +3099,6 @@ setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUr
 </script>
 <script src="./assets/boat_edge_final_v48.js"></script>
 <!-- BOAT_EDGE_V85_SAFE_MODE: accumulated simple JS disabled -->
-<script src="./assets/boat_edge_v86_interaction.js?v=86"></script>
+<script src="./assets/boat_edge_v86_interaction.js?v=87"></script>
 </body>
 </html>
