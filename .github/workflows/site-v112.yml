@@ -1,0 +1,332 @@
+name: BOAT EDGE V112 Final Prediction Snapshot
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v112.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch final-window prediction snapshot
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          js_path=Path('assets/boat_edge_v108.js')
+          s=js_path.read_text(encoding='utf-8')
+
+          anchor='function todayYmd(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`}'
+          insert=r'''function todayYmd(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`}
+          function raceMinutesToDeadline(race){
+            const date=String(race?.meta?.date||"");
+            const deadline=String(race?.meta?.deadline||"");
+            const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+            const tm=/^(\d{1,2}):(\d{2})$/.exec(deadline);
+            if(!dm||!tm)return null;
+            const iso=`${dm[1]}-${dm[2]}-${dm[3]}T${String(tm[1]).padStart(2,"0")}:${tm[2]}:00+09:00`;
+            const ts=new Date(iso).getTime();
+            if(!Number.isFinite(ts))return null;
+            return Math.floor((ts-Date.now())/60000);
+          }'''
+          if anchor not in s:
+              raise SystemExit('todayYmd anchor not found')
+          s=s.replace(anchor,insert,1)
+
+          old_save=re.compile(
+              r'function saveSnapshot\(key,race,pred,modes\)\{.*?\n\}\nfunction settle\(snapshot,result\)\{',
+              re.S
+          )
+          new_save=r'''function saveFinalSnapshot(key,race,pred,modes,mins){
+            const snap={
+              schema:"boat-edge-v112-final-snapshot-v1",
+              snapshot_window:"FINAL_15M",
+              race_key:key,
+              saved_at:new Date().toISOString(),
+              minutes_to_deadline:mins,
+              venue:race?.meta?.venue||"",
+              race_no:race?.meta?.race_no||"",
+              deadline:race?.meta?.deadline||null,
+              grade:pred?.grade||null,
+              modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>[
+                k,
+                {
+                  confidence:confidence(pred,k,rows),
+                  tickets:rows.map(x=>({combo:x.combo,p:x.p,odds:x.odds??null}))
+                }
+              ]))
+            };
+            writeLocal(snapKey(key),snap);
+            return snap;
+          }
+          function isFinalSnapshot(snap){
+            return snap?.schema==="boat-edge-v112-final-snapshot-v1"
+              && snap?.snapshot_window==="FINAL_15M";
+          }
+          function settle(snapshot,result){'''
+          s,n=old_save.subn(new_save,s,count=1)
+          if n!=1:
+              raise SystemExit(f'saveSnapshot replacement count={n}')
+
+          render_re=re.compile(
+              r'async function renderPredictionModes\(race,pred\)\{.*?\n\}\nfunction renderMainPick',
+              re.S
+          )
+          render_new=r'''async function renderPredictionModes(race,pred){
+            const key=race?.race_key;if(!key||!pred)return;
+            const stack=$("#tab-pred .section.stack");if(!stack)return;
+
+            const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
+            const modes=selectModes(pred,odds);
+            const mins=raceMinutesToDeadline(race);
+            const resultConfirmed=result?.status==="confirmed";
+            const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
+
+            let snap=readLocal(snapKey(key));
+            if(inFinalWindow){
+              snap=saveFinalSnapshot(key,race,pred,modes,mins);
+            }
+
+            const finalSnap=isFinalSnapshot(snap)?snap:null;
+            const settled=finalSnap&&resultConfirmed?settle(finalSnap,result):null;
+            const win=settled?.winning_combo||null;
+
+            let mode=localStorage.getItem(ACTIVE_MODE)||"balance";
+            if(!LABELS[mode])mode="balance";
+
+            const frozenRows=finalSnap?.modes?.[mode]?.tickets||null;
+            const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
+            const rows=baseRows.map(x=>({
+              ...x,
+              odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)
+            }));
+            const conf=(resultConfirmed&&finalSnap?.modes?.[mode]?.confidence!=null)
+              ? finalSnap.modes[mode].confidence
+              : confidence(pred,mode,rows);
+
+            let snapStatus="🎯履歴は締切15分前から保存";
+            if(inFinalWindow){
+              snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
+            }else if(resultConfirmed&&finalSnap){
+              snapStatus=`🎯 締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
+            }else if(resultConfirmed&&!finalSnap){
+              snapStatus="この端末に締切前の最終スナップショットなし・🎯判定対象外";
+            }else if(mins!==null&&mins<0){
+              snapStatus=finalSnap
+                ?"締切済み・保存した最終予想を固定中"
+                :"締切済み・締切前スナップショットなし";
+            }
+
+            let panel=$("#be108PredictionModes");
+            if(!panel){
+              panel=document.createElement("section");
+              panel.id="be108PredictionModes";
+              panel.className="be108-panel";
+              stack.prepend(panel);
+            }
+
+            panel.innerHTML=`<div class="be108-head"><div><h3>予想スタイル</h3><p>目的別に買い目を切替</p></div><button id="be108HistoryBtn" type="button">🎯 的中履歴</button></div>
+            <div class="be108-snapshot-status">${snapStatus}</div>
+            <div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div>
+            <div class="be108-mode-card ${settled?.mode_hits?.[mode]?"hit":""}"><div class="be108-mode-top"><div><b>${settled?.mode_hits?.[mode]?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div>
+            <div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+
+            $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{
+              localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);
+              renderPredictionModes(race,pred);
+            });
+            $("#be108HistoryBtn",panel).onclick=()=>{
+              const h=$("#be108History",panel);
+              h.hidden=!h.hidden;
+            };
+          }
+          function renderMainPick'''
+          s,n=render_re.subn(render_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f'renderPredictionModes replacement count={n}')
+
+          events_re=re.compile(
+              r'function installEvents\(\)\{.*?\n\}\n\ntry\{selectedDate=',
+              re.S
+          )
+          events_new=r'''async function refreshCurrentRaceData(){
+            const r=raceOf();
+            if(!r?.race_key)return;
+            clearRaceCache(r.race_key);
+            if(typeof loadRace==="function"){
+              await loadRace(`data/races/${r.race_key}.json`,r.meta?.venue_code||"");
+              return;
+            }
+            const p=predOf(r);
+            renderPredictionModes(r,p);
+            augmentBuyBoard(r);
+          }
+          function installEvents(){
+            document.addEventListener("click",e=>{
+              const bottom=e.target.closest?.(".bottomnav [data-view]");
+              if(bottom&&bottom.dataset.view!==activeView())pushView(activeView());
+
+              const boat=e.target.closest?.("#boats .boat.be108-clickable");
+              if(boat){e.preventDefault();showHeadPrediction(boat)}
+
+              const tab=e.target.closest?.("#raceTabs [data-tab]");
+              if(tab&&raceOf())requestAnimationFrame(()=>{
+                cleanTabs();
+                if(tab.dataset.tab==="pred"){
+                  const r=raceOf(),p=predOf(r);
+                  renderMainPick(r,p);
+                  renderPredictionModes(r,p);
+                  augmentBuyBoard(r);
+                }
+              });
+            },true);
+
+            document.addEventListener("visibilitychange",()=>{
+              if(document.visibilityState==="visible"&&raceOf()){
+                refreshCurrentRaceData();
+              }
+            });
+
+            $("#refreshTopBtn")?.addEventListener("click",()=>{
+              setTimeout(()=>refreshCurrentRaceData(),800);
+            });
+          }
+
+          try{selectedDate='''
+          s,n=events_re.subn(events_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f'installEvents replacement count={n}')
+
+          js_path.write_text(s,encoding='utf-8')
+
+          css_path=Path('assets/boat_edge_v108.css')
+          css=css_path.read_text(encoding='utf-8')
+          marker='.be108-snapshot-status'
+          if marker not in css:
+              css += '\n.be108-snapshot-status{margin-top:7px;padding:6px 8px;border-radius:8px;background:#f4f7fb;color:#60748a;font-size:8px;font-weight:800}\n'
+          css_path.write_text(css,encoding='utf-8')
+
+          index=Path('index.html')
+          html=index.read_text(encoding='utf-8')
+          html=html.replace('boat_edge_v108.js?v=108','boat_edge_v108.js?v=112')
+          html=html.replace('boat_edge_v108.css?v=108','boat_edge_v108.css?v=112')
+          if re.search(r'<meta name="boat-edge-site-version" content="[^"]+">',html):
+              html=re.sub(
+                  r'<meta name="boat-edge-site-version" content="[^"]+">',
+                  '<meta name="boat-edge-site-version" content="V112-FINAL-15M-SNAPSHOT">',
+                  html
+              )
+          index.write_text(html,encoding='utf-8')
+          PY
+
+      - name: Update TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('BOAT_EDGE_CURRENT_TODO.md')
+          s=p.read_text(encoding='utf-8') if p.exists() else '# BOAT EDGE CURRENT TODO\n'
+          s=re.sub(r'Current UI target: V\d+','Current UI target: V112',s)
+
+          s=s.replace(
+              '- Verify four modes update when changing race.',
+              '- DONE V112: four modes rerender from the newly selected race key on every race change.'
+          )
+          s=s.replace(
+              '- Verify official odds appear in mode rows.',
+              '- DONE V112: official trifecta_odds schema matches V108/V112 mode-row odds lookup.'
+          )
+          s=s.replace(
+              '- Verify pre-result snapshot -> result confirmation -> 🎯 flow.',
+              '- DONE V112: only FINAL_15M pre-result snapshots are eligible for post-result 🎯 settlement.'
+          )
+
+          lines=[
+              '- V112 does not treat early-day page opens as historical final predictions.',
+              '- V112 updates the final snapshot while 0-15 minutes remain and freezes it after deadline.',
+              '- V112 reloads the current race JSON on app resume or manual refresh without adding polling timers.',
+              '- V112 keeps V111 lightweight runtime architecture: no MutationObserver and no new setInterval.'
+          ]
+
+          marker='## NEXT'
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+'\n\n'+marker,1) if marker in s else s+'\n'+line+'\n'
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate V112
+        shell: bash
+        run: |
+          set -e
+
+          node --check assets/boat_edge_v108.js
+
+          grep -q 'V112-FINAL-15M-SNAPSHOT' index.html
+          grep -q 'boat_edge_v108.js?v=112' index.html
+          grep -q 'boat_edge_v108.css?v=112' index.html
+
+          grep -q 'boat-edge-v112-final-snapshot-v1' assets/boat_edge_v108.js
+          grep -q 'FINAL_15M' assets/boat_edge_v108.js
+          grep -q 'raceMinutesToDeadline' assets/boat_edge_v108.js
+          grep -q 'refreshCurrentRaceData' assets/boat_edge_v108.js
+
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          s=Path('index.html').read_text(encoding='utf-8')
+          boat=[
+              x for x in re.findall(r'<script src="([^"]+)"',s)
+              if 'boat_edge' in x
+          ]
+          assert boat==[
+              './assets/boat_edge_final_v48.js',
+              './assets/boat_edge_v108.js?v=112'
+          ], boat
+
+          print({
+              'boat_scripts':boat,
+              'final_window':'0-15 minutes before deadline',
+              'polling_added':False
+          })
+          PY
+
+      - name: Save V112
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assets/boat_edge_v108.js assets/boat_edge_v108.css index.html BOAT_EDGE_CURRENT_TODO.md
+
+          git diff --cached --quiet && exit 0
+
+          git commit -m "Use final 15-minute prediction snapshots V112"
+
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+
+          git push
