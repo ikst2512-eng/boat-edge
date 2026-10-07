@@ -83,6 +83,16 @@ Current UI target: V107
 
 - V108 archive scheduler writes only when saved archive content changes.
 
+- V109 replaces the legacy result collector without changing V108 UI.
+
+- V109 treats confirmed + payout null as incomplete and refetches it.
+
+- V109 payout parser supports ¥ / ￥ / 円.
+
+- V109 backfills historical confirmed payout gaps from 2026-10-07.
+
+- V109 keeps result/trifecta data factual; missing payout is never fabricated.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - Verify four modes update when changing race.
