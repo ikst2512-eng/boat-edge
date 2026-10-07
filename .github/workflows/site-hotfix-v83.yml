@@ -1,0 +1,102 @@
+name: BOAT EDGE V83 操作不能緊急修復
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-hotfix-v83.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 無限再描画を停止
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("assets/boat_edge_simple_v51.js")
+          s=p.read_text(encoding="utf-8")
+
+          # V81: DOMを書き換えるpolish自身をMutationObserverで再発火していたため停止
+          s=s.replace(
+            'new MutationObserver(()=>requestAnimationFrame(polish)).observe(document.body,{childList:true,subtree:true});',
+            '/* V83 HOTFIX: recursive V81 MutationObserver disabled */'
+          )
+
+          # V82: renderがinnerHTMLを書き換え、その変更でrenderを再発火していたため停止
+          s=s.replace(
+            'new MutationObserver(()=>requestAnimationFrame(render)).observe(document.body,{childList:true,subtree:true});',
+            '/* V83 HOTFIX: recursive V82 MutationObserver disabled */'
+          )
+
+          # 念のため同型の空白差異にも対応
+          s=re.sub(
+            r'new MutationObserver\(\(\)=>requestAnimationFrame\(polish\)\)\.observe\(document\.body,\{childList:true,subtree:true\}\);',
+            '/* V83 HOTFIX: recursive V81 MutationObserver disabled */',s
+          )
+          s=re.sub(
+            r'new MutationObserver\(\(\)=>requestAnimationFrame\(render\)\)\.observe\(document\.body,\{childList:true,subtree:true\}\);',
+            '/* V83 HOTFIX: recursive V82 MutationObserver disabled */',s
+          )
+
+          if "BOAT_EDGE_SITE_V83_INTERACTION_HOTFIX" not in s:
+              s += r"""
+/* BOAT_EDGE_SITE_V83_INTERACTION_HOTFIX */
+(()=>{
+  "use strict";
+  window.BOAT_EDGE_SITE_VERSION="V83";
+  let busy=false;
+  function safeRefresh(){
+    if(busy)return;
+    busy=true;
+    try{
+      const st=document.getElementById("be73Status");
+      if(st)st.innerHTML=st.innerHTML.replace(/BOAT EDGE V(?:7[3-9]|8[0-2])/g,"BOAT EDGE V83");
+    }finally{busy=false}
+  }
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")safeRefresh()});
+  window.addEventListener("pageshow",safeRefresh);
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",safeRefresh);else safeRefresh();
+})();
+"""
+          p.write_text(s,encoding="utf-8")
+
+          # index cache bust
+          ip=Path("index.html")
+          h=ip.read_text(encoding="utf-8")
+          h=re.sub(r'boat_edge_simple_v51\.js(?:\?v=\d+)?','boat_edge_simple_v51.js?v=83',h)
+          h=re.sub(r'boat_edge_simple_v51\.css(?:\?v=\d+)?','boat_edge_simple_v51.css?v=83',h)
+          ip.write_text(h,encoding="utf-8")
+          PY
+
+      - name: JS構文チェック
+        shell: bash
+        run: |
+          node --check assets/boat_edge_simple_v51.js
+
+      - name: 修復確認
+        shell: bash
+        run: |
+          grep -q "BOAT_EDGE_SITE_V83_INTERACTION_HOTFIX" assets/boat_edge_simple_v51.js
+          grep -q "recursive V81 MutationObserver disabled" assets/boat_edge_simple_v51.js
+          grep -q "recursive V82 MutationObserver disabled" assets/boat_edge_simple_v51.js
+          grep -q "boat_edge_simple_v51.js?v=83" index.html
+
+      - name: 保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Hotfix BOAT EDGE V83 interaction freeze"
+          git push
