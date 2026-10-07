@@ -1,0 +1,384 @@
+name: BOAT EDGE V117 Official Course Stats
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v117.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "10 21 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v117-course-stats
+  cancel-in-progress: false
+
+jobs:
+  course-stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install collector dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Collect official recent-3-month course stats
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json,re,time
+          from pathlib import Path
+          from datetime import datetime,timezone,timedelta
+          import requests
+          from bs4 import BeautifulSoup
+
+          JST=timezone(timedelta(hours=9))
+          out=Path("data/site_course_stats")
+          out.mkdir(parents=True,exist_ok=True)
+
+          VENUES={
+            "01":"桐生","02":"戸田","03":"江戸川","04":"平和島","05":"多摩川","06":"浜名湖",
+            "07":"蒲郡","08":"常滑","09":"津","10":"三国","11":"びわこ","12":"住之江",
+            "13":"尼崎","14":"鳴門","15":"丸亀","16":"児島","17":"宮島","18":"徳山",
+            "19":"下関","20":"若松","21":"芦屋","22":"福岡","23":"唐津","24":"大村"
+          }
+
+          sess=requests.Session()
+          sess.headers.update({
+            "User-Agent":"Mozilla/5.0 (compatible; BOAT-EDGE-V117/1.0)",
+            "Accept-Language":"ja-JP,ja;q=0.9",
+            "Connection":"close",
+          })
+
+          def norm(x):
+            return re.sub(r"\s+"," ",str(x or "")).strip()
+
+          def to_float(x):
+            s=norm(x).replace("%","")
+            return float(s) if re.fullmatch(r"-?\d+(?:\.\d+)?",s) else None
+
+          def validate(course,vals):
+            if len(vals)!=12:
+              raise ValueError(f"course_{course}_value_count={len(vals)}")
+            if any(v is None or v<0 or v>100 for v in vals):
+              raise ValueError(f"course_{course}_out_of_range")
+            finish=sum(vals[:6]); methods=sum(vals[6:])
+            if not 94<=finish<=106:
+              raise ValueError(f"course_{course}_finish_sum={finish:.1f}")
+            if not 88<=methods<=112:
+              raise ValueError(f"course_{course}_method_sum={methods:.1f}")
+
+          def parse_page(html):
+            soup=BeautifulSoup(html,"lxml")
+            target=None
+            for table in soup.find_all("table"):
+              txt=norm(table.get_text(" ",strip=True))
+              if "コース" in txt and "1着" in txt and ("決まり手" in txt or "逃げ" in txt) and "差し" in txt:
+                target=table
+                break
+            if target is None:
+              raise ValueError("course_table_not_found")
+
+            courses={}
+            for tr in target.find_all("tr"):
+              cells=[norm(x.get_text(" ",strip=True)) for x in tr.find_all(["th","td"])]
+              if len(cells)<13 or not re.fullmatch(r"[1-6]",cells[0]):
+                continue
+              course=int(cells[0])
+              vals=[to_float(x) for x in cells[1:13]]
+              validate(course,vals)
+              courses[str(course)]={
+                "first_rate":vals[0],"second_rate":vals[1],"third_rate":vals[2],
+                "fourth_rate":vals[3],"fifth_rate":vals[4],"sixth_rate":vals[5],
+                "escape":vals[6],"makuri":vals[7],"sashi":vals[8],
+                "makuri_sashi":vals[9],"nuki":vals[10],"megumare":vals[11],
+              }
+
+            if set(courses)!={str(x) for x in range(1,7)}:
+              raise ValueError(f"course_keys={sorted(courses)}")
+
+            text=norm(soup.get_text(" ",strip=True))
+            m=re.search(r"集計期間[：:]?\s*(\d{4}/\d{1,2}/\d{1,2})\s*[～〜~\-]\s*(\d{4}/\d{1,2}/\d{1,2})",text)
+            period={"from":m.group(1),"to":m.group(2)} if m else None
+            return courses,period
+
+          errors=[]; ok=0
+          for jcd,name in VENUES.items():
+            url=f"https://www.boatrace.jp/owpc/pc/data/stadium?jcd={jcd}"
+            last=None
+            for attempt in range(3):
+              try:
+                r=sess.get(url,timeout=(5,20))
+                r.raise_for_status()
+                r.encoding=r.apparent_encoding or r.encoding or "utf-8"
+                courses,period=parse_page(r.text)
+                doc={
+                  "schema_version":"boat-edge-site-course-stats-v117",
+                  "venue_code":jcd,"venue":name,
+                  "fetched_at":datetime.now(JST).isoformat(timespec="seconds"),
+                  "source":"BOAT RACE オフィシャルウェブサイト ボートレース場データ",
+                  "source_url":url,
+                  "scope":"venue_recent_3_months",
+                  "period":period,"unit":"percent",
+                  "prediction_logic_uses_course_stats":False,
+                  "method_rate_meaning":"share_of_winning_methods_within_each_course",
+                  "courses":courses,
+                }
+                (out/f"{jcd}.json").write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
+                ok+=1; last=None; break
+              except Exception as e:
+                last=repr(e)
+                time.sleep(.8+attempt)
+            if last is not None:
+              errors.append({"jcd":jcd,"venue":name,"error":last})
+            time.sleep(.1)
+
+          idx={
+            "schema_version":"boat-edge-site-course-stats-index-v117",
+            "updated_at":datetime.now(JST).isoformat(timespec="seconds"),
+            "venues_ok":ok,"venues_total":24,"errors":errors,
+            "source":"BOAT RACE official stadium pages",
+            "scope":"recent_3_months",
+            "prediction_logic_uses_course_stats":False,
+          }
+          (out/"index.json").write_text(json.dumps(idx,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(idx,ensure_ascii=False))
+          if ok<20:
+            raise SystemExit(f"too_few_venues_ok={ok}")
+
+          PY
+
+      - name: Install event-driven course stats UI
+        if: github.event_name != 'schedule'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("assets/boat_edge_v108.js")
+          s=p.read_text(encoding="utf-8")
+
+          anchor='async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}'
+          addition='''async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}
+          async function courseStatsFor(jcd){
+            const code=String(jcd||"").padStart(2,"0");
+            if(!/^[0-9]{2}$/.test(code)||code==="00")return null;
+            return await J(`./data/site_course_stats/${code}.json`,86400000);
+          }'''
+          if anchor not in s:
+            raise SystemExit("resultFor anchor not found")
+          s=s.replace(anchor,addition,1)
+
+          marker='/* ---------- racer tap + standout ---------- */'
+          course_code=r'''/* ---------- official venue course stats ---------- */
+          function be117ActualCourseMap(race){
+            const m=new Map();
+            for(const x of race?.actual_entry||[]){
+              const lane=Number(x?.lane);
+              const course=Number(x?.course??x?.actual_course??x?.entry_course);
+              if(lane>=1&&lane<=6&&course>=1&&course<=6)m.set(lane,course);
+            }
+            return m;
+          }
+          function be117DominantMethod(c){
+            const rows=[
+              ["逃げ",c?.escape],["まくり",c?.makuri],["差し",c?.sashi],["まくり差し",c?.makuri_sashi]
+            ].filter(x=>Number.isFinite(Number(x[1])));
+            rows.sort((a,b)=>Number(b[1])-Number(a[1]));
+            return rows[0]||["－",null];
+          }
+          function be117Strongest(nodes,minGap,minRelative){
+            const rows=[...nodes].map(n=>({n,v:Number(n.dataset.value)}))
+              .filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v);
+            rows.forEach(x=>x.n.classList.remove("be117-best"));
+            if(rows.length<2)return;
+            const gap=rows[0].v-rows[1].v;
+            const rel=gap/Math.max(Math.abs(rows[1].v),1);
+            if(gap>=minGap&&rel>=minRelative)rows[0].n.classList.add("be117-best");
+          }
+          function be117Pct(v){
+            const n=Number(v);
+            return Number.isFinite(n)?n.toFixed(1)+"%":"－";
+          }
+          async function renderCourseStats(race){
+            const key=race?.race_key;if(!key)return;
+            const jcd=String(race?.meta?.venue_code||key.split("-")[1]||"").padStart(2,"0");
+            const stats=await courseStatsFor(jcd).catch(()=>null);
+            const stack=$("#tab-scenario .section.stack");if(!stack)return;
+
+            let panel=$("#be117CourseStats");
+            if(!panel){
+              panel=document.createElement("section");
+              panel.id="be117CourseStats";
+              panel.className="be117-course";
+              const title=stack.querySelector(":scope > .title");
+              if(title)title.insertAdjacentElement("afterend",panel);else stack.prepend(panel);
+            }
+
+            if(!stats?.courses){
+              panel.innerHTML='<div class="be117-head"><div><b>当地コース傾向</b><span>公式データ未取得</span></div></div>';
+              return;
+            }
+
+            const actual=be117ActualCourseMap(race),actualReady=actual.size===6,rows=[];
+            for(let lane=1;lane<=6;lane++){
+              const course=actual.get(lane)||lane,c=stats.courses[String(course)]||{};
+              rows.push({lane,course,c,dom:be117DominantMethod(c)});
+            }
+
+            const period=stats.period?`${esc(stats.period.from)}〜${esc(stats.period.to)}`:"最近3か月";
+            panel.innerHTML=`<div class="be117-head">
+              <div><b>当地コース傾向</b><span>${esc(stats.venue||race?.meta?.venue||"")} / ${period}</span></div>
+              <em>${actualReady?"実進入で表示":"枠＝想定コース"}</em>
+            </div>
+            <div class="be117-grid">${rows.map(x=>`<article class="be117-card">
+              <div class="be117-card-head"><b>${x.lane}号艇</b><span>${x.course}コース</span></div>
+              <div class="be117-first" data-be117-first data-value="${Number(x.c.first_rate)}">
+                <small>当地コース1着率</small><strong>${be117Pct(x.c.first_rate)}</strong>
+              </div>
+              <div class="be117-dominant">
+                <small>勝った時の主な決まり手</small><strong>${esc(x.dom[0])} ${be117Pct(x.dom[1])}</strong>
+              </div>
+              <div class="be117-methods">
+                <span data-be117-method="escape" data-value="${Number(x.c.escape)}">逃 ${be117Pct(x.c.escape)}</span>
+                <span data-be117-method="makuri" data-value="${Number(x.c.makuri)}">捲 ${be117Pct(x.c.makuri)}</span>
+                <span data-be117-method="sashi" data-value="${Number(x.c.sashi)}">差 ${be117Pct(x.c.sashi)}</span>
+                <span data-be117-method="makuri_sashi" data-value="${Number(x.c.makuri_sashi)}">捲差 ${be117Pct(x.c.makuri_sashi)}</span>
+              </div>
+            </article>`).join("")}</div>
+            <p class="be117-note">BOAT RACE公式・最近3か月。決まり手%は「そのコースが勝った時」の内訳。現時点では予想ロジック未使用。</p>`;
+
+            be117Strongest(panel.querySelectorAll("[data-be117-first]"),5,.08);
+            for(const m of ["escape","makuri","sashi","makuri_sashi"]){
+              be117Strongest(panel.querySelectorAll(`[data-be117-method="${m}"]`),8,.10);
+            }
+          }
+
+          /* ---------- racer tap + standout ---------- */'''
+          if marker not in s:
+            raise SystemExit("racer section anchor not found")
+          s=s.replace(marker,course_code,1)
+
+          old='await Promise.all([renderPredictionModes(race,pred),augmentBuyBoard(race)]);'
+          new='''await Promise.all([
+            renderPredictionModes(race,pred),
+            augmentBuyBoard(race),
+            renderCourseStats(race)
+          ]);'''
+          if old not in s:
+            raise SystemExit("afterRace Promise.all anchor not found")
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding="utf-8")
+
+          cssp=Path("assets/boat_edge_v108.css")
+          css=cssp.read_text(encoding="utf-8")
+          if "BOAT_EDGE_V117_COURSE_STATS" not in css:
+            css += r'''
+          /* BOAT_EDGE_V117_COURSE_STATS */
+          .be117-course{background:#fff;border:1px solid #dfe6ef;border-radius:14px;padding:11px}
+          .be117-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+          .be117-head b{display:block;color:#173d6b;font-size:14px}.be117-head span{display:block;margin-top:2px;color:#71859c;font-size:8px}
+          .be117-head em{font-style:normal;font-size:7px;font-weight:900;color:#52657a;background:#f3f6fa;border-radius:999px;padding:5px 7px;white-space:nowrap}
+          .be117-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+          .be117-card{min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:8px;background:#fbfcfe}
+          .be117-card-head{display:flex;justify-content:space-between;align-items:center;gap:5px}.be117-card-head b{font-size:10px;color:#173d6b}.be117-card-head span{font-size:7px;color:#71859c}
+          .be117-first,.be117-dominant{margin-top:5px;padding:6px;background:#fff;border:1px solid #e7edf4;border-radius:8px}
+          .be117-first small,.be117-dominant small{display:block;font-size:6.8px;color:#71859c}.be117-first strong,.be117-dominant strong{display:block;margin-top:2px;font-size:11px;color:#173d6b}
+          .be117-methods{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}.be117-methods span{font-size:7px;padding:4px;border-radius:6px;background:#f3f7fb;color:#53687d;white-space:nowrap}
+          .be117-best{background:#fff0f1!important;color:#d2232a!important;border-color:#ffadb2!important;font-weight:950!important}
+          .be117-best strong{color:#d2232a!important}.be117-note{margin:7px 1px 0;color:#71859c;font-size:7px;line-height:1.5}
+          @media(max-width:640px){.be117-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.be117-course{padding:9px}.be117-card{padding:7px}}
+          '''
+          cssp.write_text(css,encoding="utf-8")
+
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=html.replace("boat_edge_v108.js?v=116","boat_edge_v108.js?v=117")
+          html=html.replace("boat_edge_v108.css?v=116","boat_edge_v108.css?v=117")
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V117-OFFICIAL-COURSE-STATS">',html)
+          idx.write_text(html,encoding="utf-8")
+
+          PY
+
+      - name: Update TODO
+        if: github.event_name != 'schedule'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("BOAT_EDGE_CURRENT_TODO.md")
+          s=p.read_text(encoding="utf-8") if p.exists() else "# BOAT EDGE CURRENT TODO\n"
+          s=re.sub(r"Current UI target: V\d+","Current UI target: V117",s)
+          s=s.replace("- Continue official course-stat collector work separately.",
+                      "- DONE V117: official recent-3-month venue course stats collector and event-driven scenario display.")
+          lines=[
+            "- V117 collects BOAT RACE official recent-3-month course finish rates and winning-method shares.",
+            "- V117 validates all six course rows and percentage ranges before publishing.",
+            "- V117 maps stats to actual entry course when all six actual courses are available; otherwise it labels frame=assumed course.",
+            "- V117 highlights only clearly standout first-rate / escape / makuri / sashi / makuri-sashi values.",
+            "- V117 keeps course stats display-only; prediction logic does not use them yet.",
+            "- V117 adds no MutationObserver and no setInterval."
+          ]
+          marker="## NEXT"
+          for line in lines:
+            if line not in s:
+              s=s.replace(marker,line+"\n\n"+marker,1) if marker in s else s+"\n"+line+"\n"
+          p.write_text(s,encoding="utf-8")
+
+          PY
+
+      - name: Validate V117
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          test -f data/site_course_stats/index.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          idx=json.loads(Path("data/site_course_stats/index.json").read_text(encoding="utf-8"))
+          assert idx["schema_version"]=="boat-edge-site-course-stats-index-v117"
+          assert idx["venues_ok"]>=20
+          files=list(Path("data/site_course_stats").glob("[0-9][0-9].json"))
+          assert len(files)>=20
+          for fp in files:
+              d=json.loads(fp.read_text(encoding="utf-8"))
+              assert len(d["courses"])==6
+              assert d["prediction_logic_uses_course_stats"] is False
+          print({"venues_ok":idx["venues_ok"],"errors":idx["errors"],"files":len(files)})
+          PY
+          grep -q 'V117-OFFICIAL-COURSE-STATS' index.html
+          grep -q 'boat_edge_v108.js?v=117' index.html
+          grep -q 'renderCourseStats' assets/boat_edge_v108.js
+          grep -q '勝った時の主な決まり手' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V117
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_course_stats assets/boat_edge_v108.js assets/boat_edge_v108.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add official venue course stats V117"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
