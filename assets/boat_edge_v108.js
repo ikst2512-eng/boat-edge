@@ -283,6 +283,218 @@ function confidence(pred,mode,rows){
   if(rows.length<=3)base-=2;
   return Math.max(35,Math.min(94,Math.round(base)));
 }
+
+function be122Clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function be122Mean(arr){
+  const v=arr.map(Number).filter(Number.isFinite);
+  return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
+}
+function be122ActualCourseMap(race){
+  const m=new Map();
+  for(const x of race?.actual_entry||[]){
+    const lane=Number(x?.lane),course=Number(x?.course??x?.actual_course??x?.entry_course);
+    if(lane>=1&&lane<=6&&course>=1&&course<=6)m.set(lane,course);
+  }
+  return m;
+}
+function be122ExStMap(race){
+  const m=new Map();
+  for(const x of race?.actual_entry||[]){
+    const lane=Number(x?.lane),v=n(x?.exhibition_st);
+    if(lane>=1&&lane<=6&&Number.isFinite(v))m.set(lane,v);
+  }
+  for(const x of race?.beforeinfo?.start_exhibition||[]){
+    const lane=Number(x?.lane),v=n(x?.st);
+    if(lane>=1&&lane<=6&&Number.isFinite(v)&&!m.has(lane))m.set(lane,v);
+  }
+  return m;
+}
+function be122ExTimeMap(race){
+  const m=new Map();
+  for(const x of race?.beforeinfo?.racers||[]){
+    const lane=Number(x?.lane),v=n(x?.exhibition_time);
+    if(lane>=1&&lane<=6&&Number.isFinite(v))m.set(lane,v);
+  }
+  return m;
+}
+function be122OriginalMap(race){
+  const labels=(race?.original_exhibition?.labels||[]).map(x=>String(x||""));
+  const out=new Map();
+  for(const b of race?.original_exhibition?.boats||[]){
+    const lane=Number(b?.lane);if(!(lane>=1&&lane<=6))continue;
+    const row={};
+    (b?.values||[]).forEach((v,i)=>{
+      const x=n(v);
+      if(Number.isFinite(x))row[labels[i]||`metric_${i}`]=x;
+    });
+    out.set(lane,row);
+  }
+  return {labels,out};
+}
+function be122MetricScores(map,label){
+  const rows=[];
+  for(const [lane,row] of map.entries()){
+    const v=n(row?.[label]);
+    if(Number.isFinite(v))rows.push({lane,v});
+  }
+  const score=new Map();
+  if(rows.length<2)return score;
+  const lo=Math.min(...rows.map(x=>x.v)),hi=Math.max(...rows.map(x=>x.v));
+  const range=Math.max(hi-lo,.001);
+  rows.forEach(x=>score.set(x.lane,1-((x.v-lo)/range)));
+  return score;
+}
+function be122MethodFit(c,course){
+  if(!c)return null;
+  if(course===1)return n(c.escape);
+  if(course===2)return Math.max(n(c.sashi)??0,n(c.makuri)??0);
+  if(course===3||course===4)return Math.max(n(c.makuri)??0,n(c.makuri_sashi)??0);
+  return n(c.makuri_sashi);
+}
+async function be122ScenarioAdjusted(race,pred){
+  const all=allTickets(pred);
+  if(!all.length)return {tickets:[],stage:"NO_TICKETS",used:[],applied:false};
+  if(pred?.mode==="formal")return {tickets:all,stage:"FORMAL_CURRENT",used:["正式CURRENT"],applied:false};
+
+  const jcd=String(race?.meta?.venue_code||race?.race_key?.split("-")?.[1]||"").padStart(2,"0");
+  const stats=await courseStatsFor(jcd).catch(()=>null);
+  const actual=be122ActualCourseMap(race),useActual=actual.size===6;
+  const exSt=be122ExStMap(race);
+  const exTime=be122ExTimeMap(race);
+  const orig=be122OriginalMap(race);
+  const racers=new Map((race?.racers||[]).map((r,i)=>[Number(r?.lane??i+1),r]));
+
+  const avgStMean=be122Mean([...racers.values()].map(r=>n(r?.avg_st)));
+  const exStMean=be122Mean([...exSt.values()]);
+  const exTimeVals=[...exTime.values()].filter(Number.isFinite);
+  const exTimeMean=be122Mean(exTimeVals);
+  const exTimeRange=exTimeVals.length?Math.max(...exTimeVals)-Math.min(...exTimeVals):0;
+
+  const origScores=new Map();
+  for(const lab of orig.labels){
+    const metric=be122MetricScores(orig.out,lab);
+    for(const [lane,sc] of metric.entries()){
+      if(!origScores.has(lane))origScores.set(lane,[]);
+      origScores.get(lane).push(sc);
+    }
+  }
+
+  const courseToLane=new Map();
+  for(let lane=1;lane<=6;lane++)courseToLane.set(useActual?actual.get(lane):lane,lane);
+
+  const used=[];
+  if(stats?.courses)used.push("当地3か月コース");
+  if(useActual)used.push("実進入");
+  if(exSt.size>=4)used.push("展示ST");
+  if(exTime.size>=4)used.push("展示タイム");
+  if(orig.out.size>=4)used.push("オリ展");
+
+  const neighborStFactor=(lane,course)=>{
+    const own=exSt.get(lane);
+    if(!Number.isFinite(own))return 1;
+    const vals=[];
+    for(const c of [course-1,course+1]){
+      const other=courseToLane.get(c);
+      const v=exSt.get(other);
+      if(Number.isFinite(v))vals.push(v);
+    }
+    const mean=be122Mean(vals);
+    if(!Number.isFinite(mean))return 1;
+    return 1+be122Clamp((mean-own)*.45,-.04,.05);
+  };
+
+  const laneFactor=lane=>{
+    const r=racers.get(Number(lane))||{};
+    const course=useActual?actual.get(Number(lane)):Number(lane);
+    const c=stats?.courses?.[String(course)]||null;
+    let f=1;
+
+    if(c){
+      const first=n(c.first_rate);
+      if(Number.isFinite(first)){
+        const rates=Object.values(stats.courses||{}).map(x=>n(x.first_rate)).filter(Number.isFinite);
+        const mean=be122Mean(rates);
+        if(Number.isFinite(mean))f*=1+be122Clamp(((first-mean)/100)*.45,-.10,.18);
+      }
+      const fit=be122MethodFit(c,course);
+      if(Number.isFinite(fit)){
+        f*=1+be122Clamp(((fit/100)-.45)*.15,-.05,.08);
+        if(course===4&&Math.max(n(c.makuri)??0,n(c.makuri_sashi)??0)>=50)f*=1.035;
+      }
+    }
+
+    const ast=n(r?.avg_st);
+    if(Number.isFinite(ast)&&Number.isFinite(avgStMean)){
+      f*=1+be122Clamp((avgStMean-ast)*.90,-.06,.06);
+    }
+
+    const est=exSt.get(Number(lane));
+    if(Number.isFinite(est)&&Number.isFinite(exStMean)){
+      f*=1+be122Clamp((exStMean-est)*.65,-.08,.08);
+      f*=neighborStFactor(Number(lane),course);
+    }
+
+    const et=exTime.get(Number(lane));
+    if(Number.isFinite(et)&&Number.isFinite(exTimeMean)&&exTimeRange>.001){
+      f*=1+be122Clamp(((exTimeMean-et)/exTimeRange)*.07,-.05,.07);
+    }
+
+    const os=origScores.get(Number(lane))||[];
+    if(os.length){
+      const m=be122Mean(os);
+      if(Number.isFinite(m))f*=1+be122Clamp((m-.5)*.12,-.06,.06);
+    }
+
+    return be122Clamp(f,.78,1.30);
+  };
+
+  const enriched=all.map(x=>{
+    const parts=String(x.combo||"").split("-").map(Number);
+    const f1=laneFactor(parts[0]),f2=laneFactor(parts[1]),f3=laneFactor(parts[2]);
+    const factor=Math.pow(f1,.70)*Math.pow(f2,.19)*Math.pow(f3,.11);
+    return {...x,scenario_factor:factor,raw:Math.max(.001,x.p)*factor};
+  });
+
+  const oldSum=all.reduce((a,b)=>a+b.p,0)||100;
+  const rawSum=enriched.reduce((a,b)=>a+b.raw,0)||1;
+  const tickets=enriched.map(x=>({...x,p:(x.raw/rawSum)*oldSum})).sort((a,b)=>b.p-a.p);
+
+  let stage="ENTRY";
+  if(stats?.courses)stage="COURSE";
+  if(useActual)stage="ACTUAL_ENTRY";
+  if(exSt.size>=4)stage="START";
+  if(exTime.size>=4)stage="EXHIBITION";
+  if(orig.out.size>=4)stage="ORIGINAL_EXHIBITION";
+  return {tickets,stage,used,applied:true};
+}
+function be122ModesFromTickets(all,odds){
+  const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
+  const primaryHead=all[0]?.combo?.split("-")?.[0]||null;
+  const altHead=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+  const variancePool=altHead.length?altHead:all.slice(3);
+  const modes={
+    hit:all.slice(0,Math.min(10,all.length)),
+    balance:all.slice(0,Math.min(6,all.length)),
+    hole:variancePool.slice(0,Math.min(8,variancePool.length)),
+    narrow:all.slice(0,Math.min(3,all.length))
+  };
+  if(!modes.hole.length)modes.hole=all.slice(0,Math.min(6,all.length));
+  for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
+  return modes;
+}
+function be122PredictionFromAdjusted(pred,adjusted){
+  if(pred?.mode==="formal"||!adjusted?.tickets?.length)return pred;
+  const base=pred?.worlds||[];
+  const worlds=base.map((w,wi)=>{
+    const key=w?.key||(wi===0?"A":"B");
+    const tickets=adjusted.tickets.filter(x=>x.world===key).map((x,i)=>({
+      rank:i+1,combo:x.combo,probability:x.p,amount:x.amount??0
+    }));
+    const probability=tickets.reduce((a,b)=>a+(Number(b.probability)||0),0);
+    return {...w,probability,tickets};
+  });
+  return {...pred,worlds};
+}
 function selectModes(pred,odds){
   const all=allTickets(pred);
   const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
@@ -394,7 +606,8 @@ async function renderPredictionModes(race,pred){
 
   const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
   await loadServerHistoryIndex();
-  const modes=selectModes(pred,odds);
+  const adjusted=await be122ScenarioAdjusted(race,pred);
+  const modes=be122ModesFromTickets(adjusted.tickets,odds);
   const mins=raceMinutesToDeadline(race);
   const resultConfirmed=result?.status==="confirmed";
   const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
@@ -436,9 +649,10 @@ async function renderPredictionModes(race,pred){
     resultBar=`<div class="be118-resultbar ${cls}"><div><small>確定結果</small><b>${esc(officialResult||"確定")}</b></div><div><strong>${verdict}</strong><span>${payText}</span></div></div>`;
   }
 
+  const stageText=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   const sourceBar=pred.mode==="formal"
     ? `<div class="be118-source formal">正式CURRENTを使用中</div>`
-    : `<div class="be118-source reference">参考簡易予想・正式CURRENTはまだ未接続。オッズで買い目順位は変えていません。</div>`;
+    : `<div class="be118-source reference"><b>最新方針準拠・参考予想</b><span>${esc(stageText)}</span><small>正式CURRENTは未接続。実データが増えるたび展開確率を更新。オッズは順位に使いません。</small></div>`;
 
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
@@ -448,14 +662,16 @@ async function renderPredictionModes(race,pred){
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
   $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};
 }
-function renderMainPick(race,pred){
+async function renderMainPick(race,pred,preAdjusted=null){
   const stack=$("#tab-pred .section.stack");if(!stack||!pred)return;
-  const top=allTickets(pred)[0];if(!top)return;
+  const adjusted=preAdjusted||await be122ScenarioAdjusted(race,pred);
+  const top=adjusted.tickets[0];if(!top)return;
   let box=$("#be108MainPick");
   if(!box){box=document.createElement("div");box.id="be108MainPick";box.className="be108-mainpick";stack.prepend(box)}
   const formal=pred.mode==="formal";
+  const stage=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   box.classList.toggle("be118-reference",!formal);
-  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"参考簡易予想・正式CURRENT未接続"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
+  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"最新方針準拠・参考予想"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")} / ${esc(stage)}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
 }
 async function augmentBuyBoard(race){
   const key=race?.race_key;if(!key)return;
@@ -577,9 +793,10 @@ function markStandouts(){
     }
   }
 }
-function showHeadPrediction(boat){
-  const lane=Number(boat.dataset.be108Lane),pred=predOf();if(!lane||!pred)return;
-  const rows=allTickets(pred).filter(x=>String(x.combo).startsWith(lane+"-")).slice(0,5);
+async function showHeadPrediction(boat){
+  const lane=Number(boat.dataset.be108Lane),pred=predOf(),race=raceOf();if(!lane||!pred||!race)return;
+  const adjusted=await be122ScenarioAdjusted(race,pred);
+  const rows=adjusted.tickets.filter(x=>String(x.combo).startsWith(lane+"-")).slice(0,5);
   let box=$(".be108-headpick",boat);
   if(box){box.remove();return}
   box=document.createElement("div");box.className="be108-headpick";
@@ -593,13 +810,21 @@ async function afterRace(race){
   lastRaceKey=race.race_key;
   cleanTabs();fixBottom();installBackButtons();enhanceRaceNav(race);
   const pred=predOf(race);
-  renderMainPick(race,pred);
   markStandouts();
+
+  const adjusted=await be122ScenarioAdjusted(race,pred);
+  const adjustedPred=be122PredictionFromAdjusted(pred,adjusted);
+
   await Promise.all([
-  renderPredictionModes(race,pred),
-  augmentBuyBoard(race),
-  renderCourseStats(race)
-]);
+    renderMainPick(race,pred,adjusted),
+    renderCourseStats(race)
+  ]);
+  await renderPredictionModes(race,pred);
+
+  if(typeof renderBuyBoard==="function")renderBuyBoard(race,adjustedPred);
+  if(typeof renderDirectMode==="function")renderDirectMode(race,adjustedPred);
+  const diff=$("#predictionDiff");if(diff)diff.style.display="none";
+  await augmentBuyBoard(race);
 }
 function wrapRenderRace(){
   const original=window.renderRace;
@@ -615,9 +840,7 @@ async function refreshCurrentRaceData(){
     await loadRace(`data/races/${r.race_key}.json`,r.meta?.venue_code||"");
     return;
   }
-  const p=predOf(r);
-  renderPredictionModes(r,p);
-  augmentBuyBoard(r);
+  await afterRace(r);
 }
 function installEvents(){
   document.addEventListener("click",e=>{
@@ -631,10 +854,7 @@ function installEvents(){
     if(tab&&raceOf())requestAnimationFrame(()=>{
       cleanTabs();
       if(tab.dataset.tab==="pred"){
-        const r=raceOf(),p=predOf(r);
-        renderMainPick(r,p);
-        renderPredictionModes(r,p);
-        augmentBuyBoard(r);
+        afterRace(raceOf());
       }
     });
   },true);

@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V119
+Current UI target: V122
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -194,6 +194,28 @@ Current UI target: V119
 - V120 preserves settled_at and index updated_at when content is unchanged to avoid needless commits.
 
 - V120 does not modify current V119 UI.
+
+- V121 failed before validation because its main-pick patch expected the wrong V119 function signature; production stayed V119.
+
+- V122 fixes the patch against the exact V119 runtime.
+
+- V122 reference input order: venue-course -> actual entry -> exhibition ST -> exhibition time -> original exhibition.
+
+- V122 uses actual course over frame only when all six actual courses are available.
+
+- V122 uses real exhibition/original-exhibition gaps and neighboring exhibition-ST differences; missing inputs are not imputed.
+
+- V122 caps scenario modifiers so player/base strength remains dominant over exhibition noise.
+
+- V122 main pick, four modes, buy board, direct mode and racer-tap head picks share the same adjusted order.
+
+- V122 bypasses all reference adjustment when formal CURRENT exists.
+
+- V122 uses odds for display/payout only, never ranking.
+
+- V122 preserves V119 compact mobile header and inline result/hit display.
+
+- V122 adds no MutationObserver and no setInterval.
 
 ## NEXT
 - Verify V101 iPhone layout.

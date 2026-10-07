@@ -1053,8 +1053,8 @@ body{background:
 <!-- V89: orphaned V51 CSS disabled -->
 <!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 <!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->
-  <meta name="boat-edge-site-version" content="V119-COMPACT-PROBABILITY-FIRST">
-<link rel="stylesheet" href="./assets/boat_edge_v108.css?v=119">
+  <meta name="boat-edge-site-version" content="V122-SCENARIO-AWARE-REFERENCE-FIXED">
+<link rel="stylesheet" href="./assets/boat_edge_v108.css?v=122">
 </head>
 <body>
 <div class="app">
@@ -1716,11 +1716,11 @@ function buildFallbackPrediction(d){
 
   return {
     mode:"temp",
-    label:"参考簡易（正式CURRENT未接続）",
+    label:"最新方針準拠・参考（正式CURRENT未接続）",
     decision,
     grade,
     updateLabel,
-    reason: `【最新モデルではありません】正式CURRENTとは別計算。${missing.length ? `不足データ: ${missing.join(" / ")}` : "取得済み直前情報のみで暫定算出"}`,
+    reason: `【正式CURRENT未接続】最新方針に沿った参考計算。${missing.length ? `不足データ: ${missing.join(" / ")}` : "取得済み直前情報のみで暫定算出"}`,
     worlds:[
       {
         key:"A", title:"イン逃げ成立", probability:worldAProb, budget:budgetA,
@@ -2052,7 +2052,7 @@ function renderRaceMasthead(d,pred){
   const worlds=pred.worlds||[];
   const a=worlds.find(x=>x.key==="A")?.probability;
   const b=worlds.find(x=>x.key==="B")?.probability;
-  const mode=pred.mode==="formal"?"正式CURRENT":"サイト簡易";
+  const mode=pred.mode==="formal"?"正式CURRENT":"最新方針準拠・参考";
   const beforeReady=(d.beforeinfo?.racers||[]).length>0 || (d.beforeinfo?.start_exhibition||[]).length>0;
   el.innerHTML=`
     <div class="mast-panel">
@@ -2314,7 +2314,7 @@ function renderBuyBoard(d,pred){
           <div class="buy-prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</div>
           <div class="buy-money">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</div>
         </div>`}).join("")}</div>`:`<div class="buy-empty">正式/暫定の買い目待ち</div>`}
-      <div class="buy-footer">${pred.mode==="formal"?"正式CURRENTの世界別出力":"サイト簡易スコアの世界別出力"}${total?` / 配分 ${total.toLocaleString()}円`:""}</div>
+      <div class="buy-footer">${pred.mode==="formal"?"正式CURRENTの世界別出力":"最新方針準拠の参考出力"}${total?` / 配分 ${total.toLocaleString()}円`:""}</div>
     </div>`;
   }).join("");
   const all=worlds.flatMap((w,wi)=>(w.tickets||[]).map(t=>({w:w.key||(wi===0?"A":"B"),...t})));
@@ -2397,7 +2397,7 @@ function renderDirectMode(d,pred){
   const beforeReady=(bf.racers||[]).length>0 || starts.size>0 || actual.size>0;
   const entryRows=[...actual.entries()].sort((a,b)=>a[0]-b[0]);
   const entryChanged=entryRows.some(([lane,course])=>Number(lane)!==Number(course));
-  const mode=pred.mode==="formal"?"正式CURRENT":"サイト簡易";
+  const mode=pred.mode==="formal"?"正式CURRENT":"最新方針準拠・参考";
   el.innerHTML=`
     <div class="direct-hero">
       <div class="direct-top">
@@ -3101,6 +3101,6 @@ startPassiveRefresh();
 </script>
 <script src="./assets/boat_edge_final_v48.js"></script>
 <!-- BOAT_EDGE_V85_SAFE_MODE: accumulated simple JS disabled -->
-<script src="./assets/boat_edge_v108.js?v=119"></script>
+<script src="./assets/boat_edge_v108.js?v=122"></script>
 </body>
 </html>
