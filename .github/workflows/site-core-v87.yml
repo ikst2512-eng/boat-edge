@@ -1,0 +1,63 @@
+name: BOAT EDGE V87 Core Boot Fix
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-core-v87.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix core boot ReferenceError
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("index.html")
+          h=p.read_text(encoding="utf-8")
+
+          old='function updateSystemBanner(){\n  const box = document.getElementById("systemBanner");\n  if(!box) return;'
+          new='function updateSystemBanner(){\n  const box = document.getElementById("systemBanner");\n  if(!box) return;\n  const formal = formalState();'
+          if old not in h:
+              raise SystemExit("updateSystemBanner target not found")
+          h=h.replace(old,new,1)
+
+          h=re.sub(
+              r'<meta name="boat-edge-site-version" content="[^"]+">',
+              '<meta name="boat-edge-site-version" content="V87-CORE-BOOT-FIX">',
+              h
+          )
+          h=re.sub(
+              r'boat_edge_v86_interaction\.js(?:\?v=\d+)?',
+              'boat_edge_v86_interaction.js?v=87',
+              h
+          )
+          p.write_text(h,encoding="utf-8")
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          grep -q 'V87-CORE-BOOT-FIX' index.html
+          grep -A4 'function updateSystemBanner' index.html | grep -q 'const formal = formalState();'
+          grep -q 'boat_edge_v86_interaction.js?v=87' index.html
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix BOAT EDGE V87 core boot"
+          git push
