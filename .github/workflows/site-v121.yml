@@ -1,0 +1,383 @@
+name: BOAT EDGE V121 Scenario Aware Reference
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v121.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v121-scenario-aware-reference
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install scenario-aware reference prediction
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import re
+
+          p = Path("assets/boat_edge_v108.js")
+          s = p.read_text(encoding="utf-8")
+
+          anchor = "function selectModes(pred,odds){"
+          if anchor not in s:
+              raise SystemExit("selectModes anchor missing")
+
+          if "function be121ScenarioAdjusted" not in s:
+              insert = s.index(anchor)
+              block = r'''
+          function be121Clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+          function be121Mean(arr){
+            const v=arr.map(Number).filter(Number.isFinite);
+            return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
+          }
+          function be121ActualCourseMap(race){
+            const m=new Map();
+            for(const x of race?.actual_entry||[]){
+              const lane=Number(x?.lane),course=Number(x?.course??x?.actual_course??x?.entry_course);
+              if(lane>=1&&lane<=6&&course>=1&&course<=6)m.set(lane,course);
+            }
+            return m;
+          }
+          function be121ExStMap(race){
+            const m=new Map();
+            for(const x of race?.actual_entry||[]){
+              const lane=Number(x?.lane),v=n(x?.exhibition_st);
+              if(lane>=1&&lane<=6&&Number.isFinite(v))m.set(lane,v);
+            }
+            for(const x of race?.beforeinfo?.start_exhibition||[]){
+              const lane=Number(x?.lane),v=n(x?.st);
+              if(lane>=1&&lane<=6&&Number.isFinite(v)&&!m.has(lane))m.set(lane,v);
+            }
+            return m;
+          }
+          function be121ExTimeMap(race){
+            const m=new Map();
+            for(const x of race?.beforeinfo?.racers||[]){
+              const lane=Number(x?.lane),v=n(x?.exhibition_time);
+              if(lane>=1&&lane<=6&&Number.isFinite(v))m.set(lane,v);
+            }
+            return m;
+          }
+          function be121OriginalMap(race){
+            const labels=(race?.original_exhibition?.labels||[]).map(x=>String(x||""));
+            const out=new Map();
+            for(const b of race?.original_exhibition?.boats||[]){
+              const lane=Number(b?.lane);if(!(lane>=1&&lane<=6))continue;
+              const row={};
+              (b?.values||[]).forEach((v,i)=>{
+                const x=n(v);if(!Number.isFinite(x))return;
+                row[labels[i]||`metric_${i}`]=x;
+              });
+              out.set(lane,row);
+            }
+            return {labels,out};
+          }
+          function be121RankScore(map,label){
+            const rows=[];
+            for(const [lane,row] of map.entries()){
+              const v=n(row?.[label]);
+              if(Number.isFinite(v))rows.push({lane,v});
+            }
+            rows.sort((a,b)=>a.v-b.v);
+            const score=new Map();
+            if(rows.length<2)return score;
+            rows.forEach((x,i)=>score.set(x.lane,1-(i/(rows.length-1))));
+            return score;
+          }
+          function be121MethodFit(c,course){
+            if(!c)return null;
+            if(course===1)return n(c.escape);
+            if(course===2)return Math.max(n(c.sashi)??0,n(c.makuri)??0);
+            if(course===3||course===4)return Math.max(n(c.makuri)??0,n(c.makuri_sashi)??0);
+            return n(c.makuri_sashi);
+          }
+          async function be121ScenarioAdjusted(race,pred){
+            const all=allTickets(pred);
+            if(!all.length)return {tickets:[],stage:"NO_TICKETS",used:[]};
+
+            const jcd=String(race?.meta?.venue_code||race?.race_key?.split("-")?.[1]||"").padStart(2,"0");
+            const stats=await courseStatsFor(jcd).catch(()=>null);
+            const actual=be121ActualCourseMap(race);
+            const exSt=be121ExStMap(race);
+            const exTime=be121ExTimeMap(race);
+            const orig=be121OriginalMap(race);
+
+            const racers=new Map((race?.racers||[]).map((r,i)=>[Number(r?.lane??i+1),r]));
+            const avgStMean=be121Mean([...racers.values()].map(r=>n(r?.avg_st)));
+            const exStMean=be121Mean([...exSt.values()]);
+            const exTimeVals=[...exTime.values()].filter(Number.isFinite);
+            const exTimeMean=be121Mean(exTimeVals);
+            const exTimeRange=exTimeVals.length?Math.max(...exTimeVals)-Math.min(...exTimeVals):0;
+
+            const origScores=new Map();
+            for(const lab of orig.labels){
+              const ranks=be121RankScore(orig.out,lab);
+              for(const [lane,sc] of ranks.entries()){
+                if(!origScores.has(lane))origScores.set(lane,[]);
+                origScores.get(lane).push(sc);
+              }
+            }
+
+            const used=[];
+            if(stats?.courses)used.push("当地3か月コース");
+            if(actual.size===6)used.push("実進入");
+            if(exSt.size>=4)used.push("展示ST");
+            if(exTime.size>=4)used.push("展示タイム");
+            if(orig.out.size>=4)used.push("オリ展");
+
+            const laneFactor=lane=>{
+              const r=racers.get(Number(lane))||{};
+              const course=actual.get(Number(lane))||Number(lane);
+              const c=stats?.courses?.[String(course)]||null;
+              let f=1;
+
+              if(c){
+                const first=n(c.first_rate);
+                if(Number.isFinite(first)){
+                  const courseRates=Object.values(stats.courses||{}).map(x=>n(x.first_rate)).filter(Number.isFinite);
+                  const mean=be121Mean(courseRates);
+                  if(Number.isFinite(mean))f*=1+be121Clamp(((first-mean)/100)*.55,-.12,.22);
+                }
+                const fit=be121MethodFit(c,course);
+                if(Number.isFinite(fit)){
+                  f*=1+be121Clamp(((fit/100)-.45)*.18,-.06,.10);
+                  if(course===4 && Math.max(n(c.makuri)??0,n(c.makuri_sashi)??0)>=50)f*=1.04;
+                }
+              }
+
+              const ast=n(r?.avg_st);
+              if(Number.isFinite(ast)&&Number.isFinite(avgStMean)){
+                f*=1+be121Clamp((avgStMean-ast)*1.1,-.08,.08);
+              }
+
+              const est=exSt.get(Number(lane));
+              if(Number.isFinite(est)&&Number.isFinite(exStMean)){
+                f*=1+be121Clamp((exStMean-est)*.75,-.10,.10);
+              }
+
+              const et=exTime.get(Number(lane));
+              if(Number.isFinite(et)&&Number.isFinite(exTimeMean)&&exTimeRange>.001){
+                f*=1+be121Clamp(((exTimeMean-et)/exTimeRange)*.08,-.06,.08);
+              }
+
+              const os=origScores.get(Number(lane))||[];
+              if(os.length){
+                const m=be121Mean(os);
+                if(Number.isFinite(m))f*=1+be121Clamp((m-.5)*.14,-.07,.07);
+              }
+
+              return be121Clamp(f,.72,1.38);
+            };
+
+            const enriched=all.map(x=>{
+              const parts=String(x.combo||"").split("-").map(Number);
+              const f1=laneFactor(parts[0]),f2=laneFactor(parts[1]),f3=laneFactor(parts[2]);
+              const factor=Math.pow(f1,.72)*Math.pow(f2,.18)*Math.pow(f3,.10);
+              return {...x,scenario_factor:factor,raw:Math.max(.001,x.p)*factor};
+            });
+
+            const oldSum=all.reduce((a,b)=>a+b.p,0)||100;
+            const rawSum=enriched.reduce((a,b)=>a+b.raw,0)||1;
+            const tickets=enriched.map(x=>({...x,p:(x.raw/rawSum)*oldSum}))
+              .sort((a,b)=>b.p-a.p);
+
+            let stage="ENTRY";
+            if(stats?.courses)stage="COURSE";
+            if(actual.size===6)stage="ACTUAL_ENTRY";
+            if(exSt.size>=4)stage="START";
+            if(exTime.size>=4)stage="EXHIBITION";
+            if(orig.out.size>=4)stage="ORIGINAL_EXHIBITION";
+
+            return {tickets,stage,used};
+          }
+          function be121ModesFromTickets(all,odds){
+            const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
+            const primaryHead=all[0]?.combo?.split("-")?.[0]||null;
+            const altHead=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+            const variancePool=altHead.length?altHead:all.slice(3);
+            const modes={
+              hit:all.slice(0,Math.min(10,all.length)),
+              balance:all.slice(0,Math.min(6,all.length)),
+              hole:variancePool.slice(0,Math.min(8,variancePool.length)),
+              narrow:all.slice(0,Math.min(3,all.length))
+            };
+            if(!modes.hole.length)modes.hole=all.slice(0,Math.min(6,all.length));
+            for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
+            return modes;
+          }
+          '''
+              s = s[:insert] + block + s[insert:]
+
+          s = s.replace(
+              "  const modes=selectModes(pred,odds);\n  const mins=raceMinutesToDeadline(race);",
+              "  const adjusted=await be121ScenarioAdjusted(race,pred);\n  const modes=be121ModesFromTickets(adjusted.tickets,odds);\n  const mins=raceMinutesToDeadline(race);",
+              1
+          )
+
+          source_pattern = re.compile(
+              r'  const sourceBar=pred\.mode==="formal"\n'
+              r'    \? `<div class="be118-source formal">正式CURRENTを使用中</div>`\n'
+              r'    : `<div class="be118-source reference">.*?</div>`;',
+              re.S
+          )
+          source_repl = '''  const stageText=adjusted.used.length?adjusted.used.join(" → "):"出走表";
+            const sourceBar=pred.mode==="formal"
+              ? `<div class="be118-source formal">正式CURRENTを使用中</div>`
+              : `<div class="be118-source reference"><b>最新方針準拠・参考予想</b><span>${esc(stageText)}</span><small>正式CURRENTは未接続。実データが増えるたび展開確率を更新。オッズは順位に使いません。</small></div>`;'''
+          s, n = source_pattern.subn(source_repl, s, count=1)
+          if n != 1:
+              raise SystemExit(f"sourceBar replace count={n}")
+
+          main_re = re.compile(r'async function renderMainPick\(race,pred\)\{.*?\n\}\nasync function augmentBuyBoard', re.S)
+          main_new = r'''async function renderMainPick(race,pred){
+            const stack=$("#tab-pred .section.stack");if(!stack||!pred)return;
+            const adjusted=await be121ScenarioAdjusted(race,pred);
+            const top=adjusted.tickets[0];if(!top)return;
+            let box=$("#be108MainPick");
+            if(!box){
+              box=document.createElement("div");
+              box.id="be108MainPick";
+              box.className="be108-mainpick";
+              stack.prepend(box);
+            }
+            const formal=pred.mode==="formal";
+            const stage=adjusted.used.length?adjusted.used.join(" → "):"出走表";
+            box.classList.toggle("be118-reference",!formal);
+            box.innerHTML=`<div>
+              <small>${formal?"正式CURRENT メイン予想":"最新方針準拠・参考予想"}</small>
+              <b>${esc(top.combo)}</b>
+              <span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")} / ${esc(stage)}</span>
+            </div><em>${formal?"正式CURRENT":"参考"}</em>`;
+          }
+          async function augmentBuyBoard'''
+          s, n = main_re.subn(main_new, s, count=1)
+          if n != 1:
+              raise SystemExit(f"main pick replace count={n}")
+
+          old_after = '''  const pred=predOf(race);
+            renderMainPick(race,pred);
+            markStandouts();
+            await Promise.all([
+            renderPredictionModes(race,pred),
+            augmentBuyBoard(race),
+            renderCourseStats(race)
+          ]);'''
+          new_after = '''  const pred=predOf(race);
+            markStandouts();
+            await Promise.all([
+              renderMainPick(race,pred),
+              renderPredictionModes(race,pred),
+              augmentBuyBoard(race),
+              renderCourseStats(race)
+            ]);'''
+          if old_after not in s:
+              raise SystemExit("afterRace anchor missing")
+          s = s.replace(old_after, new_after, 1)
+
+          p.write_text(s, encoding="utf-8")
+
+          cssp = Path("assets/boat_edge_v108.css")
+          css = cssp.read_text(encoding="utf-8")
+          if "BOAT_EDGE_V121_SCENARIO_AWARE" not in css:
+              css += r'''
+          /* BOAT_EDGE_V121_SCENARIO_AWARE */
+          .be118-source.reference{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center}
+          .be118-source.reference b{font-size:9px}
+          .be118-source.reference span{font-size:8px;font-weight:900;color:#6f4d15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .be118-source.reference small{grid-column:1/-1;font-size:7px;font-weight:700;color:#8a6d3b}
+          @media(max-width:640px){
+            .be118-source.reference{grid-template-columns:1fr}
+            .be118-source.reference span,.be118-source.reference small{grid-column:1}
+          }
+          '''
+          cssp.write_text(css, encoding="utf-8")
+
+          idx = Path("index.html")
+          html = idx.read_text(encoding="utf-8")
+          html = re.sub(r'boat_edge_v108\.js\?v=\d+', 'boat_edge_v108.js?v=121', html)
+          html = re.sub(r'boat_edge_v108\.css\?v=\d+', 'boat_edge_v108.css?v=121', html)
+          html = re.sub(
+              r'<meta name="boat-edge-site-version" content="[^"]+">',
+              '<meta name="boat-edge-site-version" content="V121-SCENARIO-AWARE-REFERENCE">',
+              html
+          )
+          idx.write_text(html, encoding="utf-8")
+
+          todo = Path("BOAT_EDGE_CURRENT_TODO.md")
+          t = todo.read_text(encoding="utf-8") if todo.exists() else "# BOAT EDGE CURRENT TODO\n"
+          t = re.sub(r"Current UI target: V\d+", "Current UI target: V121", t)
+          lines = [
+            "- V121 reference prediction follows latest-policy input order: venue-course -> actual entry -> exhibition ST -> exhibition time -> original exhibition.",
+            "- V121 uses actual course over frame whenever actual_entry is complete.",
+            "- V121 uses official recent-3-month course first-rate / winning-method tendency without using odds to rank tickets.",
+            "- V121 uses avg ST and exhibition ST as relative field differences, not absolute standalone boosts.",
+            "- V121 uses only original-exhibition metrics actually present in the race JSON; missing metrics are not imputed.",
+            "- V121 main pick and all four mode rows use the same scenario-adjusted probability ordering.",
+            "- V121 remains explicitly reference/latest-policy-aligned until formal CURRENT predictions_ready becomes true.",
+            "- V121 adds no MutationObserver and no setInterval."
+          ]
+          marker = "## NEXT"
+          for line in lines:
+              if line not in t:
+                  t = t.replace(marker, line + "\n\n" + marker, 1) if marker in t else t + "\n" + line + "\n"
+          todo.write_text(t, encoding="utf-8")
+
+          PY
+
+      - name: Validate V121
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          grep -q 'V121-SCENARIO-AWARE-REFERENCE' index.html
+          grep -q 'boat_edge_v108.js?v=121' index.html
+          grep -q 'be121ScenarioAdjusted' assets/boat_edge_v108.js
+          grep -q '最新方針準拠・参考予想' assets/boat_edge_v108.js
+          grep -q '実データが増えるたび展開確率を更新' assets/boat_edge_v108.js
+          grep -q 'BOAT_EDGE_V121_SCENARIO_AWARE' assets/boat_edge_v108.css
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path("index.html").read_text(encoding="utf-8")
+          boat=[x for x in re.findall(r'<script src="([^"]+)"',s) if "boat_edge" in x]
+          assert boat==[
+            "./assets/boat_edge_final_v48.js",
+            "./assets/boat_edge_v108.js?v=121"
+          ],boat
+          print({"boat_scripts":boat,"scenario_aware":True,"odds_rank_weight":False})
+          PY
+
+      - name: Save V121
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js assets/boat_edge_v108.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Align reference prediction with scenario inputs V121"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
