@@ -1,0 +1,51 @@
+name: BOAT EDGE V86 Interaction Guard
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-interaction-v86.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install isolated interaction guard
+        shell: bash
+        env:
+          V86_JS: "LyogQk9BVF9FREdFX1Y4Nl9JTlRFUkFDVElPTl9HVUFSRCAqLwooKCk9PnsKInVzZSBzdHJpY3QiOwp3aW5kb3cuQk9BVF9FREdFX1NJVEVfVkVSU0lPTj0iVjg2IjsKZnVuY3Rpb24gdG9hc3QobXNnKXsKIGxldCB4PWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJiZTg2VG9hc3QiKTsKIGlmKCF4KXt4PWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImRpdiIpO3guaWQ9ImJlODZUb2FzdCI7eC5zdHlsZS5jc3NUZXh0PSJwb3NpdGlvbjpmaXhlZDtsZWZ0OjEycHg7cmlnaHQ6MTJweDtib3R0b206MThweDt6LWluZGV4Ojk5OTk7YmFja2dyb3VuZDojMTAyZDUwO2NvbG9yOiNmZmY7cGFkZGluZzoxMnB4IDE0cHg7Ym9yZGVyLXJhZGl1czoxMnB4O2ZvbnQ6NzAwIDEycHgvMS41IHN5c3RlbS11aTtib3gtc2hhZG93OjAgOHB4IDI4cHggIzAwMDMiO2RvY3VtZW50LmJvZHkuYXBwZW5kQ2hpbGQoeCl9CiB4LnRleHRDb250ZW50PW1zZzt4LmhpZGRlbj1mYWxzZTtjbGVhclRpbWVvdXQoeC5fdCk7eC5fdD1zZXRUaW1lb3V0KCgpPT54LmhpZGRlbj10cnVlLDQ1MDApOwp9CndpbmRvdy5hZGRFdmVudExpc3RlbmVyKCJlcnJvciIsZT0+dG9hc3QoIueUu+mdouOCqOODqeODvDogIisoZS5tZXNzYWdlfHwi5LiN5piOIikpKTsKd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoInVuaGFuZGxlZHJlamVjdGlvbiIsZT0+dG9hc3QoIuiqrei+vOOCqOODqeODvDogIisoZS5yZWFzb24/Lm1lc3NhZ2V8fGUucmVhc29ufHwi5LiN5piOIikpKTsKZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigiY2xpY2siLGFzeW5jIGU9PnsKIGNvbnN0IGI9ZS50YXJnZXQuY2xvc2VzdCgiYnV0dG9uW2RhdGEtZmlsZV0iKTsKIGlmKCFiKXJldHVybjsKIGNvbnN0IGZpbGU9Yi5kYXRhc2V0LmZpbGUsamNkPWIuZGF0YXNldC5qY2Q7CiBpZighZmlsZSlyZXR1cm47CiBlLnByZXZlbnREZWZhdWx0KCk7ZS5zdG9wUHJvcGFnYXRpb24oKTsKIGIuZGlzYWJsZWQ9dHJ1ZTsKIHRyeXsKICAgaWYodHlwZW9mIGxvYWRSYWNlIT09ImZ1bmN0aW9uIil0aHJvdyBuZXcgRXJyb3IoImxvYWRSYWNlIOOBjOimi+OBpOOBi+OCiuOBvuOBm+OCkyIpOwogICBhd2FpdCBsb2FkUmFjZShmaWxlLGpjZCk7CiB9Y2F0Y2goZXJyKXsKICAgY29uc29sZS5lcnJvcigiVjg2IGxvYWRSYWNlIixlcnIpOwogICB0b2FzdCgi44Os44O844K544KS6ZaL44GR44G+44Gb44KTOiAiKyhlcnI/Lm1lc3NhZ2V8fGVycikpOwogfWZpbmFsbHl7Yi5kaXNhYmxlZD1mYWxzZX0KfSx0cnVlKTsKfSkoKTs="
+        run: |
+          python - <<'PY'
+          import os,base64,re
+          from pathlib import Path
+          js=Path("assets/boat_edge_v86_interaction.js")
+          js.write_text(base64.b64decode(os.environ["V86_JS"]).decode("utf-8")+"\n",encoding="utf-8")
+          p=Path("index.html")
+          h=p.read_text(encoding="utf-8")
+          h=re.sub(r'\s*<script\s+src=["\']\./assets/boat_edge_v86_interaction\.js(?:\?v=\d+)?["\']\s*></script>\s*','\n',h)
+          tag='<script src="./assets/boat_edge_v86_interaction.js?v=86"></script>'
+          h=h.replace('</body>',tag+'\n</body>')
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V86-INTERACTION-GUARD">',h)
+          p.write_text(h,encoding="utf-8")
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v86_interaction.js
+          grep -q 'BOAT_EDGE_V86_INTERACTION_GUARD' assets/boat_edge_v86_interaction.js
+          grep -q 'boat_edge_v86_interaction.js?v=86' index.html
+          if grep -Eq '<script[[:space:]]+src=["'\'']\./assets/boat_edge_simple_v51\.js' index.html; then exit 1; fi
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v86_interaction.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V86 interaction guard"
+          git push
