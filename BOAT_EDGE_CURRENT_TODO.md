@@ -46,3 +46,13 @@ This is the live execution list. Historical items are archived separately.
 - Legacy NEXT sections are not allowed.
 
 - [x] V130 fixes V129 regression harness by extracting be129WaveRows before parity execution.
+
+- V109 replaces the legacy result collector without changing V108 UI.
+
+- V109 treats confirmed + payout null as incomplete and refetches it.
+
+- V109 payout parser supports ¥ / ￥ / 円.
+
+- V109 backfills historical confirmed payout gaps from 2026-10-07.
+
+- V109 keeps result/trifecta data factual; missing payout is never fabricated.
