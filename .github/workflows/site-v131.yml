@@ -1,0 +1,679 @@
+name: BOAT EDGE V131 Wave 12 15 18
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v131.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v131-current
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install V131 adaptive 12 15 18 wave
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, re
+
+          js_path=Path("assets/boat_edge_v108.js")
+          s=js_path.read_text(encoding="utf-8")
+
+          # Expanded reference pool used ONLY by 波乱展開.
+          insert_anchor="function be129WaveRows(all){"
+          if insert_anchor not in s:
+              raise SystemExit("V130 wave anchor missing")
+
+          expanded_js=r'''
+          function be131ExpandedReferencePrediction(race,pred){
+            if(!pred||pred.mode==="formal")return pred;
+            const scores=computeScores(race);
+            if(!scores?.length)return pred;
+
+            const one=scores.find(x=>x.lane===1)||scores[0];
+            const challengers=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore);
+            const supporters=[...scores].sort((a,b)=>b.baseScore-a.baseScore);
+
+            const worldA=pred.worlds?.find(x=>x.key==="A")||pred.worlds?.[0]||{};
+            const worldB=pred.worlds?.find(x=>x.key==="B")||pred.worlds?.[1]||{};
+            const pa=n(worldA.probability)??50;
+            const pb=n(worldB.probability)??(100-pa);
+
+            const aCandidates=[];
+            const seconds=supporters.filter(x=>x.lane!==1);
+            for(let i=0;i<seconds.length;i++){
+              for(let j=0;j<seconds.length;j++){
+                if(i===j)continue;
+                const sec=seconds[i],third=seconds[j];
+                const weight=(one.insideScore*1.2)+sec.baseScore+third.baseScore+(sec.lane<third.lane?.5:0);
+                aCandidates.push({combo:`1-${sec.lane}-${third.lane}`,weight});
+              }
+            }
+            const aTop=topNUnique(aCandidates.sort((a,b)=>b.weight-a.weight),10);
+            const aSum=aTop.reduce((x,y)=>x+y.weight,0)||1;
+            const aTickets=aTop.map((x,i)=>({rank:i+1,combo:x.combo,probability:(x.weight/aSum)*pa,amount:null}));
+
+            const bCandidates=[];
+            for(const h of challengers.slice(0,3)){
+              const others=supporters.filter(x=>x.lane!==h.lane);
+              const pref=others.find(x=>x.lane===1);
+              const rest=others.filter(x=>x.lane!==1);
+              for(const sec of others.slice(0,5)){
+                for(const third of others.slice(0,5)){
+                  if(third.lane===sec.lane)continue;
+                  const preferIn=(sec.lane===1?1.2:0)+(third.lane===1?.8:0);
+                  const weight=h.attackScore*1.25+sec.baseScore+third.baseScore+preferIn+((h.actualCourse||0)>=3?1.5:0);
+                  bCandidates.push({combo:`${h.lane}-${sec.lane}-${third.lane}`,weight});
+                }
+              }
+              if(pref){
+                for(const r of rest.slice(0,3)){
+                  bCandidates.push({combo:`${h.lane}-1-${r.lane}`,weight:h.attackScore*1.35+pref.baseScore+r.baseScore+3});
+                  bCandidates.push({combo:`${h.lane}-${r.lane}-1`,weight:h.attackScore*1.2+pref.baseScore+r.baseScore+2.2});
+                }
+              }
+            }
+            const bTop=topNUnique(bCandidates.sort((a,b)=>b.weight-a.weight),10);
+            const bSum=bTop.reduce((x,y)=>x+y.weight,0)||1;
+            const bTickets=bTop.map((x,i)=>({rank:i+1,combo:x.combo,probability:(x.weight/bSum)*pb,amount:null}));
+
+            return {...pred,worlds:[
+              {...worldA,key:"A",probability:pa,tickets:aTickets},
+              {...worldB,key:"B",probability:pb,tickets:bTickets}
+            ]};
+          }
+          function be131WaveRows(all){
+            if(!all?.length)return [];
+            const total=all.reduce((a,b)=>a+(Number(b?.p)||0),0)||1;
+            const headMass=new Map();
+            for(const x of all){
+              const h=String(x?.combo||"").split("-")[0];
+              if(!h)continue;
+              headMass.set(h,(headMass.get(h)||0)+(Number(x?.p)||0));
+            }
+            const shares=[...headMass.entries()]
+              .map(([head,mass])=>({head,mass,share:mass/total}))
+              .sort((a,b)=>b.mass-a.mass);
+
+            const primaryHead=shares[0]?.head||String(all[0]?.combo||"").split("-")[0]||null;
+            const primaryShare=shares[0]?.share??1;
+            const meaningfulHeads=shares.filter(x=>x.share>=.10).length;
+
+            let target=12;
+            if(meaningfulHeads>=4||primaryShare<=.42)target=18;
+            else if(meaningfulHeads>=3||primaryShare<=.58)target=15;
+
+            const alt=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+            const primary=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]===primaryHead):all;
+            const ordered=[...alt,...primary];
+            const out=[],seen=new Set();
+            for(const x of ordered){
+              if(!x?.combo||seen.has(x.combo))continue;
+              seen.add(x.combo);out.push(x);
+              if(out.length>=Math.min(target,all.length))break;
+            }
+            return out;
+          }
+          '''
+
+          # Replace V129 helper with expanded+V131 helper.
+          wave_re=re.compile(r'function be129WaveRows\(all\)\{.*?\n\}\nfunction be122ModesFromTickets\(all,odds\)\{.*?\n\}\nfunction be122PredictionFromAdjusted',re.S)
+          wave_new=expanded_js+r'''
+          function be122ModesFromTickets(all,odds,waveAll=all){
+            const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
+            const modes={
+              hit:all.slice(0,Math.min(10,all.length)),
+              balance:all.slice(0,Math.min(6,all.length)),
+              hole:be131WaveRows(waveAll),
+              narrow:all.slice(0,Math.min(3,all.length))
+            };
+            for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
+            return modes;
+          }
+          function be122PredictionFromAdjusted'''
+          s,n=wave_re.subn(wave_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f"wave replace count={n}")
+
+          # Prediction mode gets expanded candidates only for 波乱展開.
+          old='''  const adjusted=await be122ScenarioAdjusted(race,pred);
+            const modes=be122ModesFromTickets(adjusted.tickets,odds);
+            const mins=raceMinutesToDeadline(race);'''
+          new='''  const adjusted=await be122ScenarioAdjusted(race,pred);
+            let waveAdjusted=adjusted;
+            if(pred.mode!=="formal"){
+              const wavePred=be131ExpandedReferencePrediction(race,pred);
+              waveAdjusted=await be122ScenarioAdjusted(race,wavePred);
+            }
+            const modes=be122ModesFromTickets(adjusted.tickets,odds,waveAdjusted.tickets);
+            const mins=raceMinutesToDeadline(race);'''
+          if old not in s:
+              raise SystemExit("renderPredictionModes anchor missing")
+          s=s.replace(old,new,1)
+
+          s=s.replace(
+              'hole:{name:"波乱展開",desc:"別頭を先に、展開分岐の強さで8〜10点。オッズでは増減しない",icon:"◆"}',
+              'hole:{name:"波乱展開",desc:"別頭を先に、頭の分散で12・15・18点。オッズでは増減しない",icon:"◆"}',
+              1
+          )
+
+          js_path.write_text(s,encoding="utf-8")
+
+          # Version/cache bust.
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=131',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=131',html)
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V131-WAVE-12-15-18">',html)
+          idx.write_text(html,encoding="utf-8")
+
+          # ---------- Server FINAL_15M ----------
+          server_path=Path("scripts/site_final_history_v130.py")
+          server=server_path.read_text(encoding="utf-8")
+
+          # Add expanded reference builder after original build_fallback.
+          anchor="def normalize_formal(raw):"
+          if anchor not in server:
+              raise SystemExit("server normalize_formal anchor missing")
+
+          expanded_py=r'''
+          def build_fallback_expanded(d,base_pred=None):
+              scores=compute_scores(d)
+              if not scores:return base_pred
+              one=next((x for x in scores if x["lane"]==1),scores[0])
+              challengers=sorted([x for x in scores if x["lane"]!=1],key=lambda x:x["attackScore"],reverse=True)
+              supporters=sorted(scores,key=lambda x:x["baseScore"],reverse=True)
+
+              worlds=(base_pred or {}).get("worlds") or []
+              wa=next((x for x in worlds if x.get("key")=="A"),worlds[0] if worlds else {})
+              wb=next((x for x in worlds if x.get("key")=="B"),worlds[1] if len(worlds)>1 else {})
+              pa=num(wa.get("probability"))
+              pb=num(wb.get("probability"))
+              pa=50 if pa is None else pa
+              pb=(100-pa) if pb is None else pb
+
+              ac=[]
+              seconds=[x for x in supporters if x["lane"]!=1]
+              for i,sec in enumerate(seconds):
+                  for j,third in enumerate(seconds):
+                      if i==j:continue
+                      weight=one["insideScore"]*1.2+sec["baseScore"]+third["baseScore"]+(.5 if sec["lane"]<third["lane"] else 0)
+                      ac.append({"combo":f'1-{sec["lane"]}-{third["lane"]}',"weight":weight})
+              atop=top_unique(sorted(ac,key=lambda x:x["weight"],reverse=True),10)
+              asum=sum(x["weight"] for x in atop) or 1
+              at=[{"rank":i+1,"combo":x["combo"],"probability":x["weight"]/asum*pa} for i,x in enumerate(atop)]
+
+              bc=[]
+              for h in challengers[:3]:
+                  others=[x for x in supporters if x["lane"]!=h["lane"]]
+                  pref=next((x for x in others if x["lane"]==1),None)
+                  rest=[x for x in others if x["lane"]!=1]
+                  for sec in others[:5]:
+                      for third in others[:5]:
+                          if third["lane"]==sec["lane"]:continue
+                          prefer_in=(1.2 if sec["lane"]==1 else 0)+(.8 if third["lane"]==1 else 0)
+                          weight=h["attackScore"]*1.25+sec["baseScore"]+third["baseScore"]+prefer_in+(1.5 if (h["actualCourse"] or 0)>=3 else 0)
+                          bc.append({"combo":f'{h["lane"]}-{sec["lane"]}-{third["lane"]}',"weight":weight})
+                  if pref:
+                      for r in rest[:3]:
+                          bc.append({"combo":f'{h["lane"]}-1-{r["lane"]}',"weight":h["attackScore"]*1.35+pref["baseScore"]+r["baseScore"]+3})
+                          bc.append({"combo":f'{h["lane"]}-{r["lane"]}-1',"weight":h["attackScore"]*1.2+pref["baseScore"]+r["baseScore"]+2.2})
+              btop=top_unique(sorted(bc,key=lambda x:x["weight"],reverse=True),10)
+              bsum=sum(x["weight"] for x in btop) or 1
+              bt=[{"rank":i+1,"combo":x["combo"],"probability":x["weight"]/bsum*pb} for i,x in enumerate(btop)]
+
+              return {
+                  "mode":"temp",
+                  "grade":(base_pred or {}).get("grade"),
+                  "worlds":[
+                      {"key":"A","probability":pa,"tickets":at},
+                      {"key":"B","probability":pb,"tickets":bt}
+                  ]
+              }
+
+          '''
+          server=server.replace(anchor,expanded_py+anchor,1)
+
+          mode_re=re.compile(r'def modes_from_tickets\(allrows,odds\):.*?\n\ndef confidence',re.S)
+          mode_new=r'''def modes_from_tickets(allrows,odds,wave_rows=None):
+              def od(x):
+                  v=num(odds.get(x["combo"]))
+                  return v if v is not None and v>0 else None
+
+              source=list(wave_rows if wave_rows is not None else allrows)
+              total=sum(float(x.get("p") or 0) for x in source) or 1
+              head_mass={}
+              for x in source:
+                  head=x["combo"].split("-")[0]
+                  head_mass[head]=head_mass.get(head,0)+float(x.get("p") or 0)
+              shares=sorted(
+                  ({"head":h,"mass":m,"share":m/total} for h,m in head_mass.items()),
+                  key=lambda x:x["mass"],reverse=True
+              )
+              primary=shares[0]["head"] if shares else (source[0]["combo"].split("-")[0] if source else None)
+              primary_share=shares[0]["share"] if shares else 1
+              meaningful=sum(1 for x in shares if x["share"]>=.10)
+
+              target=12
+              if meaningful>=4 or primary_share<=.42:
+                  target=18
+              elif meaningful>=3 or primary_share<=.58:
+                  target=15
+
+              alt=[x for x in source if x["combo"].split("-")[0]!=primary] if primary else []
+              primary_rows=[x for x in source if x["combo"].split("-")[0]==primary] if primary else source
+              wave=[];seen=set()
+              for x in alt+primary_rows:
+                  if x["combo"] in seen:continue
+                  seen.add(x["combo"]);wave.append(x)
+                  if len(wave)>=min(target,len(source)):break
+
+              modes={
+                  "hit":allrows[:10],
+                  "balance":allrows[:6],
+                  "hole":wave,
+                  "narrow":allrows[:3]
+              }
+              return {k:[dict(x,odds=od(x)) for x in v] for k,v in modes.items()}
+
+          def confidence'''
+          server,n=mode_re.subn(mode_new,server,count=1)
+          if n!=1:
+              raise SystemExit(f"server modes replace count={n}")
+
+          old_loop='''    pred=formal_pred(race) if has_formal(race) else build_fallback(race)
+              if not pred:continue
+              adjusted=scenario_adjust(race,pred)
+
+              odds_doc=read_json(ODDS/f"{key}.json") or {}
+              odds=odds_doc.get("trifecta_odds") or {}
+              modes=modes_from_tickets(adjusted["tickets"],odds)'''
+          new_loop='''    pred=formal_pred(race) if has_formal(race) else build_fallback(race)
+              if not pred:continue
+              adjusted=scenario_adjust(race,pred)
+
+              wave_adjusted=adjusted
+              if pred.get("mode")!="formal":
+                  wave_pred=build_fallback_expanded(race,pred)
+                  wave_adjusted=scenario_adjust(race,wave_pred)
+
+              odds_doc=read_json(ODDS/f"{key}.json") or {}
+              odds=odds_doc.get("trifecta_odds") or {}
+              modes=modes_from_tickets(adjusted["tickets"],odds,wave_adjusted["tickets"])'''
+          if old_loop not in server:
+              raise SystemExit("server main loop anchor missing")
+          server=server.replace(old_loop,new_loop,1)
+
+          server=server.replace('"mode_policy":"ADAPTIVE_WAVE_8_10"','"mode_policy":"ADAPTIVE_WAVE_12_15_18"')
+          server=server.replace('"selection_policy":"MATCH_CURRENT_UI_V130_OR_FORMAL_CURRENT"',
+                                '"selection_policy":"MATCH_CURRENT_UI_V131_OR_FORMAL_CURRENT"')
+
+          Path("scripts/site_final_history_v131.py").write_text(server,encoding="utf-8")
+
+          # ---------- Policy / state / TODO ----------
+          policy_path=Path("data/site_prediction_policy.json")
+          policy=json.loads(policy_path.read_text(encoding="utf-8"))
+          policy["wave_mode"]={
+              "name":"波乱展開",
+              "candidate_pool":"参考予想時のみ20候補まで内部生成",
+              "ticket_count":"12 / 15 / 18",
+              "12_condition":"本線頭の支配が比較的残る",
+              "15_condition":"有力頭が3系統以上、または本線頭シェア58%以下",
+              "18_condition":"有力頭が4系統以上、または本線頭シェア42%以下",
+              "ordering":"別頭候補を先に確率順、その後本線頭の2・3着崩れ筋",
+              "odds_used_for_selection":False,
+              "probabilities_modified_for_odds":False
+          }
+          policy_path.write_text(json.dumps(policy,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          state_path=Path("data/site_current_state.json")
+          state=json.loads(state_path.read_text(encoding="utf-8"))
+          state["schema_version"]="boat-edge-current-state-v131"
+          state["ui"]={"version":"V131","status":"INSTALLING"}
+          state["latest_prediction_policy"]["version"]="V127+V131-wave"
+          state["final15m_snapshot"]={"version":"V131","status":"ACTIVE","script":"scripts/site_final_history_v131.py"}
+          state["parity"]={"version":"V131","status":"PENDING"}
+          state["wave_mode"]={
+              "candidate_pool":20,
+              "ticket_counts":[12,15,18],
+              "max_tickets":18,
+              "odds_rank_weight":False
+          }
+          state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("V130-ADAPTIVE-WAVE-HIT-TODO-FIXED","V131-WAVE-12-15-18")
+          t=t.replace("Latest prediction policy: V127 + V129 adaptive wave ACTIVE","Latest prediction policy: V127 + V131 adaptive wave ACTIVE")
+          t=t.replace("FINAL_15M server generator: V130 ACTIVE","FINAL_15M server generator: V131 ACTIVE")
+          t=t.replace("Browser/server parity: V130 PASS","Browser/server parity: V131 PENDING")
+          t=t.replace("First live V130 FINAL_15M snapshot","First live V131 FINAL_15M snapshot")
+          t=t.replace("Validate live 波乱展開 count is 8 or 10 and browser/server saved ticket order is identical.",
+                      "Validate live 波乱展開 count is 12, 15, or 18 and browser/server saved ticket order is identical.")
+          t=t.replace("Scenario accuracy is primary; genuine split/rough races may use up to 10 tickets.",
+                      "Scenario accuracy is primary; 波乱展開 may use up to 18 tickets when head scenarios genuinely split.")
+          t=t.replace("V130 波乱展開 changed from sparse alternate-head-only selection to adaptive 8〜10 scenario coverage.",
+                      "V131 波乱展開 uses a dedicated 20-candidate pool and adaptive 12 / 15 / 18 scenario coverage.")
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Browser server parity including 18-ticket branch
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, subprocess, re
+
+          ROOT=Path(".")
+          FIXTURES=["20261005-09-08","20261005-20-11","20261005-20-06","20261005-23-05"]
+
+          idx=Path("index.html").read_text(encoding="utf-8")
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+
+          def extract_function(src,name):
+              starts=[src.find(f"function {name}("),src.find(f"async function {name}(")]
+              starts=[x for x in starts if x>=0]
+              assert starts,f"missing JS function {name}"
+              start=min(starts);brace=src.find("{",start);depth=0;quote=None;esc=False;i=brace
+              while i<len(src):
+                  ch=src[i]
+                  if quote:
+                      if esc:esc=False
+                      elif ch=="\\":esc=True
+                      elif ch==quote:quote=None
+                      i+=1;continue
+                  if ch in ("'",'"',"`"):quote=ch;i+=1;continue
+                  if ch=="{":depth+=1
+                  elif ch=="}":
+                      depth-=1
+                      if depth==0:return src[start:i+1]
+                  i+=1
+              raise AssertionError(f"unclosed {name}")
+
+          idx_funcs=["getBeforeMap","normalizeExhibition","computeScores","gradeFromSpread","round100","allocateByWeights","topNUnique","buildFallbackPrediction"]
+          js_funcs=["normalizeCombo","allTickets","be122Clamp","be122Mean","be122ActualCourseMap","be122ExStMap","be122ExTimeMap","be122OriginalMap","be122MetricScores","be122MethodFit","be122ScenarioAdjusted","be131ExpandedReferencePrediction","be131WaveRows","be122ModesFromTickets"]
+          defs="\n".join(extract_function(idx,n) for n in idx_funcs)+"\n"+"\n".join(extract_function(js,n) for n in js_funcs)
+
+          node=r'''
+          const fs=require("fs"),path=require("path");
+          const num=v=>(v===null||v===undefined||String(v).trim()==="")?null:(Number.isFinite(Number(v))?Number(v):null);
+          const n=num;
+          const laneNo=(r,i)=>r?.lane??(i+1);
+          const state={model:null};
+          const formatUpdated=()=> "";
+          async function courseStatsFor(jcd){
+            const p=path.join("data","site_course_stats",String(jcd).padStart(2,"0")+".json");
+            try{return JSON.parse(fs.readFileSync(p,"utf8"))}catch(_){return null}
+          }
+          __DEFS__
+
+          function synthetic(headShares){
+            const rows=[];let rank=0;
+            for(const [head,share] of Object.entries(headShares)){
+              for(let i=0;i<5;i++){
+                const second=((Number(head)+i)%6)+1;
+                let third=((Number(head)+i+1)%6)+1;
+                if(second===Number(head))continue;
+                if(third===Number(head)||third===second)third=((third+1)%6)+1;
+                rows.push({combo:`${head}-${second}-${third}`,p:share/5,world:"X",rank:++rank});
+              }
+            }
+            return rows;
+          }
+          async function run(){
+            const fixtures=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+            const out={};
+            for(const key of fixtures){
+              const race=JSON.parse(fs.readFileSync(path.join("data","races",key+".json"),"utf8"));
+              const pred=buildFallbackPrediction(race);
+              const adjusted=await be122ScenarioAdjusted(race,pred);
+              const wavePred=be131ExpandedReferencePrediction(race,pred);
+              const waveAdjusted=await be122ScenarioAdjusted(race,wavePred);
+              const modes=be122ModesFromTickets(adjusted.tickets,{},waveAdjusted.tickets);
+              out[key]=Object.fromEntries(Object.entries(modes).map(([k,v])=>[k,v.map(x=>({combo:x.combo,p:x.p}))]));
+            }
+            out.synthetic={
+              twelve:be131WaveRows(synthetic({"1":70,"2":30})).length,
+              fifteen:be131WaveRows(synthetic({"1":50,"2":30,"3":20})).length,
+              eighteen:be131WaveRows(synthetic({"1":35,"2":25,"3":20,"4":20})).length
+            };
+            process.stdout.write(JSON.stringify(out));
+          }
+          run().catch(e=>{console.error(e);process.exit(1)});
+          '''.replace("__DEFS__",defs)
+
+          node_path=Path("/tmp/v131_browser.js")
+          node_path.write_text(node,encoding="utf-8")
+          Path("/tmp/v131_fixtures.json").write_text(json.dumps(FIXTURES),encoding="utf-8")
+          chk=subprocess.run(["node","--check",str(node_path)],capture_output=True,text=True)
+          assert chk.returncode==0,chk.stderr
+          run=subprocess.run(["node",str(node_path),"/tmp/v131_fixtures.json"],capture_output=True,text=True)
+          assert run.returncode==0,run.stderr
+          browser=json.loads(run.stdout)
+
+          server_src=Path("scripts/site_final_history_v131.py").read_text(encoding="utf-8")
+          cut=server_src.find("changed=0;snapshots=0;settled=0")
+          assert cut>=0
+          ns={"__name__":"v131_parity"}
+          exec(compile(server_src[:cut],"v131_server_defs.py","exec"),ns)
+
+          server={}
+          for key in FIXTURES:
+              race=json.loads((ROOT/"data/races"/f"{key}.json").read_text(encoding="utf-8"))
+              pred=ns["build_fallback"](race)
+              adjusted=ns["scenario_adjust"](race,pred)
+              wave_pred=ns["build_fallback_expanded"](race,pred)
+              wave_adjusted=ns["scenario_adjust"](race,wave_pred)
+              modes=ns["modes_from_tickets"](adjusted["tickets"],{},wave_adjusted["tickets"])
+              server[key]={k:[{"combo":x["combo"],"p":x["p"]} for x in v] for k,v in modes.items()}
+
+          def synthetic_py(head_shares):
+              rows=[];rank=0
+              for head,share in head_shares.items():
+                  for i in range(5):
+                      second=((int(head)+i)%6)+1
+                      third=((int(head)+i+1)%6)+1
+                      if second==int(head):continue
+                      if third==int(head) or third==second:third=((third+1)%6)+1
+                      rank+=1
+                      rows.append({"combo":f"{head}-{second}-{third}","p":share/5,"world":"X","rank":rank})
+              return rows
+
+          server["synthetic"]={
+              "twelve":len(ns["modes_from_tickets"]([],{},synthetic_py({"1":70,"2":30}))["hole"]),
+              "fifteen":len(ns["modes_from_tickets"]([],{},synthetic_py({"1":50,"2":30,"3":20}))["hole"]),
+              "eighteen":len(ns["modes_from_tickets"]([],{},synthetic_py({"1":35,"2":25,"3":20,"4":20}))["hole"])
+          }
+
+          errors=[];cases={}
+          for key in FIXTURES:
+              cases[key]={}
+              for mode in ["hit","balance","hole","narrow"]:
+                  b=browser[key][mode];sv=server[key][mode]
+                  bc=[x["combo"] for x in b];sc=[x["combo"] for x in sv]
+                  maxdiff=max([abs(float(x["p"])-float(y["p"])) for x,y in zip(b,sv)] or [0])
+                  ok=bc==sc and maxdiff<=1e-9
+                  cases[key][mode]={"pass":ok,"count":len(b),"browser":bc,"server":sc,"max_probability_abs_diff":maxdiff}
+                  if not ok:errors.append({"race":key,"mode":mode})
+              if len(browser[key]["hole"]) not in (12,15,18):
+                  errors.append({"race":key,"mode":"hole","reason":"count_not_12_15_18","count":len(browser[key]["hole"])})
+
+          synthetic_ok=(browser["synthetic"]=={"twelve":12,"fifteen":15,"eighteen":18}
+                        and server["synthetic"]==browser["synthetic"])
+          if not synthetic_ok:
+              errors.append({"synthetic":True,"browser":browser["synthetic"],"server":server["synthetic"]})
+
+          report={
+              "schema_version":"boat-edge-v131-browser-server-parity",
+              "ui_version":"V131-WAVE-12-15-18",
+              "server_history_version":"V131",
+              "mode_policy":"ADAPTIVE_WAVE_12_15_18",
+              "candidate_pool_reference":20,
+              "synthetic_branches":browser["synthetic"],
+              "cases":cases,
+              "errors":errors,
+              "pass":not errors
+          }
+          Path("data/site_prediction_parity/v131.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          if errors:raise SystemExit("V131 parity failed")
+
+          PY
+
+      - name: Finalize V131 state
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json
+
+          p=json.loads(Path("data/site_prediction_parity/v131.json").read_text(encoding="utf-8"))
+          assert p["pass"] is True and p["synthetic_branches"]=={"twelve":12,"fifteen":15,"eighteen":18}
+
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["ui"]["status"]="ACTIVE"
+          st["parity"]={"version":"V131","status":"PASS","report":"data/site_prediction_parity/v131.json"}
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("Browser/server parity: V131 PENDING","Browser/server parity: V131 PASS")
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Validate V131
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_final_history_v131.py
+          grep -q 'V131-WAVE-12-15-18' index.html
+          grep -q 'boat_edge_v108.js?v=131' index.html
+          grep -q 'function be131ExpandedReferencePrediction' assets/boat_edge_v108.js
+          grep -q 'function be131WaveRows' assets/boat_edge_v108.js
+          grep -q '12・15・18点' assets/boat_edge_v108.js
+          grep -q 'ADAPTIVE_WAVE_12_15_18' scripts/site_final_history_v131.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          p=json.loads(Path("data/site_prediction_parity/v131.json").read_text(encoding="utf-8"))
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          assert st["ui"]=={"version":"V131","status":"ACTIVE"}
+          assert st["final15m_snapshot"]["version"]=="V131"
+          assert st["parity"]["status"]=="PASS"
+          assert st["wave_mode"]["ticket_counts"]==[12,15,18]
+          assert p["pass"] is True and not p["errors"]
+          assert p["synthetic_branches"]=={"twelve":12,"fifteen":15,"eighteen":18}
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "[ ]" in active
+          print({"ui":"V131","wave":[12,15,18],"parity":"PASS","todo_guard":"PASS"})
+          PY
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V131
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js index.html scripts/site_final_history_v131.py data/site_prediction_policy.json data/site_current_state.json data/site_prediction_parity/v131.json BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Expand wave mode to adaptive 12 15 18 V131"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
+
+      - name: Disable obsolete V130 scheduler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in site-v129.yml site-v130.yml; do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} initial_state=${state}"
+            if [ "${state}" = "active" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null
+            fi
+            final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} final_state=${final}"
+            [ "${final}" != "active" ]
+          done
+
+  history:
+    needs: [install]
+    if: always() && (github.event_name == 'schedule' || needs.install.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build V131 FINAL_15M history
+        shell: bash
+        run: |
+          test -f scripts/site_final_history_v131.py
+          python scripts/site_final_history_v131.py
+
+      - name: Validate V131 history
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_history/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-server-site-history-index-v123"
+          assert d["selection_policy"]=="MATCH_CURRENT_UI_V131_OR_FORMAL_CURRENT"
+          print({"history_count":len(d.get("races",{})),"policy":d["selection_policy"]})
+          PY
+
+      - name: Save V131 history
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_snapshots data/site_prediction_history
+          git diff --cached --quiet && exit 0
+          git commit -m "Update V131 FINAL15M history"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
