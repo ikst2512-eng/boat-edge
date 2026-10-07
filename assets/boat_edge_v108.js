@@ -48,6 +48,9 @@ function clearRaceCache(key){
   if(!key)return;
   jsonCache.delete(`./data/site_odds/${key}.json`);
   jsonCache.delete(`./data/site_results/${key}.json`);
+  jsonCache.delete(`./data/site_prediction_history/${key}.json`);
+  jsonCache.delete("./data/site_prediction_history/index.json");
+  serverHistoryByKey={};
 }
 function raceOf(){try{return state?.race||null}catch(_){return null}}
 function predOf(r=raceOf()){try{return r&&typeof getPrediction==="function"?getPrediction(r):null}catch(_){return null}}
@@ -263,6 +266,10 @@ async function loadServerHistoryIndex(){
   serverHistoryByKey=d?.races||{};
   return d||{races:{}};
 }
+async function serverHistoryFor(key){
+  if(!key)return null;
+  return await J(`./data/site_prediction_history/${key}.json`,30000);
+}
 function confidence(pred,mode,rows){
   const map={S:90,"S+":93,A:82,"A+":86,B:72,"B+":76,C:62,D:52};
   let base=map[String(pred?.grade||"").toUpperCase()]??68;
@@ -321,9 +328,54 @@ function settle(snapshot,result){
   const h=(readLocal(HISTORY,[])||[]).filter(x=>x.race_key!==item.race_key);h.unshift(item);writeLocal(HISTORY,h.slice(0,120));return item;
 }
 function historyHtml(){
-  const hits=(readLocal(HISTORY,[])||[]).filter(x=>x.hit_any&&x.snapshot_window==="FINAL_15M"&&x.snapshot_schema==="boat-edge-v113-final-snapshot-v1");
-  if(!hits.length)return '<div class="be108-emptyline">締切15分前の最終予想による🎯履歴はまだありません。</div>';
-  return hits.slice(0,30).map(x=>`<div class="be108-history-row"><div><b>🎯 ${esc(x.venue)} ${esc(x.race_no)}R</b><span>${esc(x.winning_combo)}</span></div><div><small>${Object.entries(x.mode_hits||{}).filter(([,v])=>v).map(([k])=>LABELS[k]?.name||k).join(" / ")}</small>${x.payout?`<strong>${yen(x.payout)}/100円</strong>`:""}</div></div>`).join("");
+  const local=(readLocal(HISTORY,[])||[]).filter(
+    x=>x.hit_any
+      && x.snapshot_window==="FINAL_15M"
+      && x.snapshot_schema==="boat-edge-v113-final-snapshot-v1"
+  );
+  const server=Object.values(serverHistoryByKey||{})
+    .filter(x=>x?.hit_any)
+    .map(x=>({
+      race_key:x.race_key,
+      venue:x.venue,
+      race_no:x.race_no,
+      winning_combo:x.winning_combo,
+      payout:x.payout,
+      mode_hits:x.mode_hits||{},
+      hit_any:true,
+      settled_at:x.settled_at||null,
+      source:"server"
+    }));
+
+  const merged=new Map();
+  for(const x of server){
+    if(x?.race_key)merged.set(x.race_key,x);
+  }
+  for(const x of local){
+    if(x?.race_key&&!merged.has(x.race_key))merged.set(x.race_key,x);
+  }
+
+  const hits=[...merged.values()].sort((a,b)=>{
+    const at=String(a.settled_at||a.final_saved_at||a.race_key||"");
+    const bt=String(b.settled_at||b.final_saved_at||b.race_key||"");
+    return bt.localeCompare(at);
+  });
+
+  if(!hits.length){
+    return '<div class="be108-emptyline">締切15分前の最終予想による🎯履歴はまだありません。</div>';
+  }
+
+  return hits.slice(0,60).map(x=>{
+    const modes=Object.entries(x.mode_hits||{})
+      .filter(([,v])=>v)
+      .map(([k])=>LABELS[k]?.name||k)
+      .join(" / ");
+    const shared=x.source==="server"?"共有 / ":"";
+    return `<div class="be108-history-row">
+      <div><b>🎯 ${esc(x.venue)} ${esc(x.race_no)}R</b><span>${esc(x.winning_combo)}</span></div>
+      <div><small>${shared}${esc(modes)}</small>${x.payout?`<strong>${yen(x.payout)}/100円</strong>`:""}</div>
+    </div>`;
+  }).join("");
 }
 function renderTicketRows(rows,win){
   return rows.map((x,i)=>`<div class="be108-ticket ${win===x.combo?"hit":""}"><span>${i+1}</span><b>${win===x.combo?"🎯 ":""}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${x.odds?x.odds.toFixed(1)+"倍":"オッズ－"}</small></div>`).join("");
@@ -333,9 +385,12 @@ async function renderPredictionModes(race,pred){
   const stack=$("#tab-pred .section.stack");if(!stack)return;
 
   const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
+  await loadServerHistoryIndex();
   const modes=selectModes(pred,odds);
   const mins=raceMinutesToDeadline(race);
   const resultConfirmed=result?.status==="confirmed";
+  const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
+  const serverRecord=serverSummary?await serverHistoryFor(key):null;
   const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
 
   let snap=readLocal(snapKey(key));
@@ -344,29 +399,35 @@ async function renderPredictionModes(race,pred){
   }
 
   const finalSnap=isFinalSnapshot(snap)?snap:null;
-  const settled=finalSnap&&resultConfirmed?settle(finalSnap,result):null;
+  const serverSnap=serverRecord?.snapshot||null;
+  const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;
+  const settled=resultConfirmed
+    ? (serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null))
+    : null;
   const win=settled?.winning_combo||null;
 
   let mode=localStorage.getItem(ACTIVE_MODE)||"balance";
   if(!LABELS[mode])mode="balance";
 
-  const frozenRows=finalSnap?.modes?.[mode]?.tickets||null;
+  const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;
   const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
   const rows=baseRows.map(x=>({
     ...x,
     odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)
   }));
-  const conf=(resultConfirmed&&finalSnap?.modes?.[mode]?.confidence!=null)
-    ? finalSnap.modes[mode].confidence
+  const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)
+    ? effectiveSnap.modes[mode].confidence
     : confidence(pred,mode,rows);
 
   let snapStatus="🎯履歴は締切15分前から保存";
   if(inFinalWindow){
     snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
+  }else if(resultConfirmed&&serverSnap){
+    snapStatus=`🎯 サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
   }else if(resultConfirmed&&finalSnap){
-    snapStatus=`🎯 締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
-  }else if(resultConfirmed&&!finalSnap){
-    snapStatus="この端末に締切前の最終スナップショットなし・🎯判定対象外";
+    snapStatus=`🎯 この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
+  }else if(resultConfirmed&&!effectiveSnap){
+    snapStatus="締切前の最終スナップショットなし・🎯判定対象外";
   }else if(mins!==null&&mins<0){
     snapStatus=finalSnap
       ?"締切済み・保存した最終予想を固定中"

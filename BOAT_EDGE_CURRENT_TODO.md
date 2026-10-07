@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V115
+Current UI target: V116
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -145,10 +145,22 @@ Current UI target: V115
 
 - V115 removes obsolete workflow churn that caused unnecessary failed Actions and Pages rebuilds.
 
+- V116 merges server and local FINAL_15M hit history without duplicate race rows.
+
+- V116 prefers the server-saved final snapshot on settled races so all devices see the same historical prediction.
+
+- V116 restores historical mode hits, winning ticket and payout from server history on other devices.
+
+- V116 labels server-sourced hit-history rows as shared.
+
+- V116 invalidates server-history cache on race refresh/resume.
+
+- V116 adds no MutationObserver and no setInterval.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - DONE V112: four modes rerender from the newly selected race key on every race change.
 - DONE V112: official trifecta_odds schema matches V108/V112 mode-row odds lookup.
 - DONE V112: only FINAL_15M pre-result snapshots are eligible for post-result 🎯 settlement.
-- Consider server-side cross-device prediction history only after a true PRE_RESULT snapshot pipeline is added.
+- DONE V116: server-side cross-device history is connected to the prediction tab using V114 PRE_RESULT FINAL_15M snapshots.
 - Continue official course-stat collector work separately.
