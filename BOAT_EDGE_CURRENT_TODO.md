@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V107
+Current UI target: V108
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
