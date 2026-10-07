@@ -1,0 +1,152 @@
+name: BOAT EDGE V113 Final History Provenance
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v113.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Separate final-only snapshot and hit history
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('assets/boat_edge_v108.js')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace(
+              'const SNAP="boatEdgeV101Snapshot:";\nconst HISTORY="boatEdgeV101History";',
+              'const SNAP="boatEdgeV113FinalSnapshot:";\nconst HISTORY="boatEdgeV113FinalHistory";'
+          )
+
+          s=s.replace(
+              'schema:"boat-edge-v112-final-snapshot-v1",',
+              'schema:"boat-edge-v113-final-snapshot-v1",'
+          )
+          s=s.replace(
+              'return snap?.schema==="boat-edge-v112-final-snapshot-v1"',
+              'return snap?.schema==="boat-edge-v113-final-snapshot-v1"'
+          )
+
+          old_item='const item={race_key:snapshot.race_key,venue:snapshot.venue,race_no:snapshot.race_no,winning_combo:win,payout:result.trifecta_payout_yen_per_100??null,mode_hits,hit_any:Object.values(mode_hits).some(Boolean)};'
+          new_item='const item={race_key:snapshot.race_key,venue:snapshot.venue,race_no:snapshot.race_no,deadline:snapshot.deadline??null,final_saved_at:snapshot.saved_at??null,snapshot_schema:snapshot.schema,snapshot_window:snapshot.snapshot_window,winning_combo:win,payout:result.trifecta_payout_yen_per_100??null,mode_hits,hit_any:Object.values(mode_hits).some(Boolean)};'
+          if old_item not in s:
+              raise SystemExit('settle item anchor not found')
+          s=s.replace(old_item,new_item,1)
+
+          old_hist='const hits=(readLocal(HISTORY,[])||[]).filter(x=>x.hit_any);'
+          new_hist='const hits=(readLocal(HISTORY,[])||[]).filter(x=>x.hit_any&&x.snapshot_window==="FINAL_15M"&&x.snapshot_schema==="boat-edge-v113-final-snapshot-v1");'
+          if old_hist not in s:
+              raise SystemExit('history filter anchor not found')
+          s=s.replace(old_hist,new_hist,1)
+
+          old_empty="まだ🎯的中履歴はありません。"
+          new_empty="締切15分前の最終予想による🎯履歴はまだありません。"
+          s=s.replace(old_empty,new_empty)
+
+          p.write_text(s,encoding='utf-8')
+
+          idx=Path('index.html')
+          html=idx.read_text(encoding='utf-8')
+          html=html.replace('boat_edge_v108.js?v=112','boat_edge_v108.js?v=113')
+          html=html.replace('boat_edge_v108.css?v=112','boat_edge_v108.css?v=113')
+          if re.search(r'<meta name="boat-edge-site-version" content="[^"]+">',html):
+              html=re.sub(
+                  r'<meta name="boat-edge-site-version" content="[^"]+">',
+                  '<meta name="boat-edge-site-version" content="V113-FINAL-HISTORY-PROVENANCE">',
+                  html
+              )
+          idx.write_text(html,encoding='utf-8')
+          PY
+
+      - name: Update TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('BOAT_EDGE_CURRENT_TODO.md')
+          s=p.read_text(encoding='utf-8') if p.exists() else '# BOAT EDGE CURRENT TODO\n'
+          s=re.sub(r'Current UI target: V\d+','Current UI target: V113',s)
+
+          lines=[
+              '- V113 isolates FINAL_15M snapshots from legacy V101/V108 local snapshot storage.',
+              '- V113 isolates final-only hit history from legacy local hit history.',
+              '- V113 hit-history rows require FINAL_15M provenance and v113 snapshot schema.',
+              '- V113 stores final snapshot saved time/deadline provenance with each settled hit.',
+              '- V113 adds no MutationObserver and no setInterval.'
+          ]
+
+          marker='## NEXT'
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+'\n\n'+marker,1) if marker in s else s+'\n'+line+'\n'
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate V113
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+
+          grep -q 'V113-FINAL-HISTORY-PROVENANCE' index.html
+          grep -q 'boat_edge_v108.js?v=113' index.html
+          grep -q 'boatEdgeV113FinalSnapshot:' assets/boat_edge_v108.js
+          grep -q 'boatEdgeV113FinalHistory' assets/boat_edge_v108.js
+          grep -q 'boat-edge-v113-final-snapshot-v1' assets/boat_edge_v108.js
+          grep -q 'snapshot_window==="FINAL_15M"' assets/boat_edge_v108.js
+
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          s=Path('index.html').read_text(encoding='utf-8')
+          boat=[
+              x for x in re.findall(r'<script src="([^"]+)"',s)
+              if 'boat_edge' in x
+          ]
+          assert boat==[
+              './assets/boat_edge_final_v48.js',
+              './assets/boat_edge_v108.js?v=113'
+          ],boat
+          print({'boat_scripts':boat,'legacy_history_in_current_runtime':False})
+          PY
+
+      - name: Save V113
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assets/boat_edge_v108.js index.html BOAT_EDGE_CURRENT_TODO.md
+
+          git diff --cached --quiet && exit 0
+          git commit -m "Separate final prediction history provenance V113"
+
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
