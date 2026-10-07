@@ -1,0 +1,309 @@
+name: BOAT EDGE V128 Hit Status TODO Guard
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v128.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v128-hit-status-todo-guard
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install visible hit status and rebuild TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, re
+
+          js_path=Path("assets/boat_edge_v108.js")
+          s=js_path.read_text(encoding="utf-8")
+
+          pattern=re.compile(r'''  const modeHit=Boolean\(settled\?\.mode_hits\?\.\[mode\]\);
+            let resultBar="";
+            if\(resultConfirmed\)\{
+              const pay=Number\(result\?\.trifecta_payout_yen_per_100\);
+              const payText=Number\.isFinite\(pay\)\?`\$\{pay\.toLocaleString\("ja-JP"\)\}円 / 100円`:"払戻未取得";
+              let verdict="締切前予想なし・判定対象外",cls="neutral";
+              if\(settled\)\{verdict=modeHit\?"🎯 この予想モード的中":"この予想モードは不的中";cls=modeHit\?"hit":"miss"\}
+              resultBar=`<div class="be118-resultbar \$\{cls\}"><div><small>確定結果</small><b>\$\{esc\(officialResult\|\|"確定"\)\}</b></div><div><strong>\$\{verdict\}</strong><span>\$\{payText\}</span></div></div>`;
+            \}''',re.S)
+
+          replacement=r'''  const modeHit=Boolean(settled?.mode_hits?.[mode]);
+            let cls="pending",status="🎯 判定待ち",detail="締切15分前に最終予想を保存して判定",resultText="結果未確定";
+            if(inFinalWindow){
+              status="🎯 判定待ち・最終予想保存中";
+              detail=`締切まで${mins}分 / 保存済み最終予想で判定`;
+            }else if(!resultConfirmed&&mins!==null&&mins<0){
+              status="🎯 判定待ち・結果待ち";
+              detail=effectiveSnap?"締切前の最終予想は保存済み":"締切前snapshotなし";
+            }else if(resultConfirmed){
+              const pay=Number(result?.trifecta_payout_yen_per_100);
+              const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";
+              resultText=`結果 ${esc(officialResult||"確定")}`;
+              if(settled){
+                status=modeHit?"🎯 的中":"✕ 不的中";
+                detail=`${LABELS[mode]?.name||mode} / ${payText}`;
+                cls=modeHit?"hit":"miss";
+              }else{
+                status="— 判定対象外";
+                detail=`締切前の最終予想snapshotなし / ${payText}`;
+                cls="neutral";
+              }
+            }
+            const resultBar=`<div id="be128HitStatus" class="be118-resultbar ${cls}" data-hit-status="${modeHit?"hit":resultConfirmed?"settled":"pending"}"><div><small>🎯 判定ステータス</small><b>${status}</b></div><div><strong>${resultText}</strong><span>${detail}</span></div></div>`;'''
+
+          s,n=pattern.subn(replacement,s,count=1)
+          if n!=1:
+              raise SystemExit(f"resultBar patch count={n}")
+          js_path.write_text(s,encoding="utf-8")
+
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=128',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=128',html)
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V128-HIT-STATUS-TODO-GUARD">',html)
+          idx.write_text(html,encoding="utf-8")
+
+          css_path=Path("assets/boat_edge_v108.css")
+          css=css_path.read_text(encoding="utf-8")
+          if "BOAT_EDGE_V128_HIT_STATUS" not in css:
+              css += r'''
+          /* BOAT_EDGE_V128_HIT_STATUS */
+          .be118-resultbar.pending{background:#f5f8fc;border-color:#c9d6e5}
+          .be118-resultbar.pending b{font-size:13px;color:#173d6b}
+          .be118-resultbar.neutral{background:#f7f7f7;border-color:#d7d7d7}
+          #be128HitStatus{margin-top:7px}
+          #be128HitStatus>div:first-child{min-width:42%}
+          @media(max-width:640px){
+            #be128HitStatus{padding:8px 9px;gap:7px}
+            #be128HitStatus b{font-size:11px}
+            #be128HitStatus strong{font-size:9px}
+            #be128HitStatus span{font-size:7px}
+          }
+          '''
+          css_path.write_text(css,encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          old_todo=todo.read_text(encoding="utf-8") if todo.exists() else ""
+          archive=Path("BOAT_EDGE_TODO_ARCHIVE_PRE_V128.md")
+          if old_todo and not archive.exists():
+              archive.write_text(old_todo,encoding="utf-8")
+
+          formal={}
+          fp=Path("data/formal_status.json")
+          if fp.exists():
+              try:
+                  formal=json.loads(fp.read_text(encoding="utf-8"))
+              except Exception:
+                  formal={}
+
+          current_state={
+            "schema_version":"boat-edge-current-state-v128",
+            "as_of":"2026-10-08",
+            "ui":{"version":"V128","status":"INSTALLING"},
+            "latest_prediction_policy":{"version":"V127","status":"ACTIVE","file":"data/site_prediction_policy.json"},
+            "final15m_snapshot":{"version":"V123","status":"ACTIVE"},
+            "audit":{"version":"V125","status":"ACTIVE"},
+            "parity":{"version":"V126","status":"PENDING_RECHECK_AFTER_V127"},
+            "formal_current":{
+              "connected":formal.get("connected"),
+              "predictions_ready":formal.get("predictions_ready"),
+              "current":formal.get("current"),
+              "stage":formal.get("stage"),
+              "guards":formal.get("guards")
+            },
+            "hit_status_ui":{
+              "always_visible":True,
+              "states":["判定待ち","最終予想保存中","結果待ち","🎯的中","✕不的中","判定対象外"]
+            }
+          }
+          Path("data/site_current_state.json").write_text(
+              json.dumps(current_state,ensure_ascii=False,indent=2),encoding="utf-8"
+          )
+
+          guards=formal.get("guards") or {}
+          lines=[
+          "# BOAT EDGE CURRENT TODO",
+          "",
+          "Updated: 2026-10-08",
+          "This file is the live execution list. Historical DONE items were moved to `BOAT_EDGE_TODO_ARCHIVE_PRE_V128.md`.",
+          "",
+          "## CURRENT",
+          "- UI: V128-HIT-STATUS-TODO-GUARD",
+          "- Latest prediction policy: V127 ACTIVE",
+          "- FINAL_15M server snapshot: V123 ACTIVE",
+          "- Revision-safe audit: V125 ACTIVE",
+          "- Browser/server parity: V126 PENDING RECHECK after V127 null-safe fix",
+          f"- Formal CURRENT connected: {str(formal.get('connected')).lower()}",
+          f"- Formal predictions_ready: {str(formal.get('predictions_ready')).lower()}",
+          f"- Formal stage: {formal.get('stage') or 'unknown'}",
+          f"- Formal guards: results_seen={str(guards.get('results_seen')).lower()} / unlock={str(guards.get('unlock')).lower()} / scoring={str(guards.get('scoring')).lower()}",
+          "",
+          "## ACTIVE TODO — priority order",
+          "1. [ ] V126 parity recheck after V127 null-safe avg_st fix. PASS required; mismatch must not be ignored.",
+          "2. [ ] First live V123 FINAL_15M snapshot on 2026-10-08 and V125 audit PASS.",
+          "3. [ ] Confirm the first settled race shows one of: `🎯 的中` / `✕ 不的中` / `判定対象外` directly in the prediction panel.",
+          "4. [ ] Connect latest-policy missing input: racer×actual-course 1y/6m/3m.",
+          "5. [ ] Connect 1-course escape resistance + 2-course wall/逃がし interaction.",
+          "6. [ ] Connect 3/4 attack boat -> 5/6 beneficiary interaction.",
+          "7. [ ] Connect motor recent-meet/current-meet/parts-change state.",
+          "8. [ ] Connect venue×season/wind/tide/course and same-day completed-race LIVE water state.",
+          "9. [ ] Formal latest prediction source-bind original exhibition against both BOATERS + 競艇日和; do not claim retrieved unless audited.",
+          "",
+          "## WAITING / GATES",
+          "- Formal CURRENT is not allowed to replace reference prediction until `predictions_ready=true` and PRE_RESULT guards are valid.",
+          "- Do not backfill historical prediction snapshots after a result is known.",
+          "- Do not use missing values as zero/mean/proxy.",
+          "- Do not use odds to rank tickets or manually boost holes.",
+          "- Ticket count is secondary to scenario accuracy; genuine split/rough races may use up to 10.",
+          "",
+          "## RECENT DONE",
+          "- [x] V127 fixed null avg_st being treated as zero in browser scenario adjustment.",
+          "- [x] V127 locked latest-prediction CURRENT policy and missing-input rules.",
+          "- [x] V125 records FINAL_15M snapshot revisions and avoids false hash-mismatch failures.",
+          "- [x] V123 server snapshots follow the scenario-aware ordering and prefer valid formal CURRENT when available.",
+          "- [x] V119/V122 compact mobile header and direct result area retained.",
+          "- [x] V128 makes 🎯 judgement status visible before and after settlement instead of appearing only after a hit.",
+          "",
+          "## TODO GUARD",
+          "- `ACTIVE TODO` may contain only unfinished `[ ]` tasks.",
+          "- Completed work belongs in `RECENT DONE`, never in `ACTIVE TODO`.",
+          "- Current component versions must match `data/site_current_state.json`.",
+          "- Old `## NEXT` is forbidden.",
+          ""
+          ]
+          todo.write_text("\n".join(lines),encoding="utf-8")
+
+          PY
+
+      - name: Re-run V126 parity against V127/V128 code
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import subprocess, textwrap
+
+          w=Path(".github/workflows/site-v126.yml").read_text(encoding="utf-8")
+          step=w.find("      - name: Run browser-server parity regression")
+          assert step>=0, "V126 parity step missing"
+          start=w.find("python - <<'PY'",step)
+          assert start>=0
+          body_start=w.find("\n",start)+1
+          body_end=w.find("\n          PY",body_start)
+          assert body_end>=0
+          src=textwrap.dedent(w[body_start:body_end])
+          p=Path("/tmp/run_v126_from_v128.py")
+          p.write_text(src,encoding="utf-8")
+          r=subprocess.run(["python",str(p)],text=True)
+          if r.returncode!=0:
+              raise SystemExit(r.returncode)
+
+          PY
+
+      - name: Finalize live state after parity PASS
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json
+
+          report=json.loads(Path("data/site_prediction_parity/v126.json").read_text(encoding="utf-8"))
+          assert report.get("pass") is True, report.get("errors")
+
+          state_path=Path("data/site_current_state.json")
+          state=json.loads(state_path.read_text(encoding="utf-8"))
+          state["ui"]["status"]="ACTIVE"
+          state["parity"]["status"]="PASS_AFTER_V127"
+          state["parity"]["report"]="data/site_prediction_parity/v126.json"
+          state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          s=todo.read_text(encoding="utf-8")
+          s=s.replace(
+            "1. [ ] V126 parity recheck after V127 null-safe avg_st fix. PASS required; mismatch must not be ignored.\n",
+            ""
+          )
+          s=s.replace(
+            "Browser/server parity: V126 PENDING RECHECK after V127 null-safe fix",
+            "Browser/server parity: V126 PASS after V127 null-safe fix"
+          )
+          s=s.replace(
+            "## RECENT DONE\n",
+            "## RECENT DONE\n- [x] V126 parity recheck after V127 null-safe avg_st fix — PASS on all fixed real-race fixtures.\n",
+            1
+          )
+          todo.write_text(s,encoding="utf-8")
+
+          PY
+
+      - name: Validate V128
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          grep -q 'V128-HIT-STATUS-TODO-GUARD' index.html
+          grep -q 'boat_edge_v108.js?v=128' index.html
+          grep -q 'id="be128HitStatus"' assets/boat_edge_v108.js
+          grep -q '🎯 判定待ち' assets/boat_edge_v108.js
+          grep -q '🎯 的中' assets/boat_edge_v108.js
+          grep -q '✕ 不的中' assets/boat_edge_v108.js
+          grep -q 'BOAT_EDGE_V128_HIT_STATUS' assets/boat_edge_v108.css
+          test -f BOAT_EDGE_TODO_ARCHIVE_PRE_V128.md
+          test -f data/site_current_state.json
+          test -f data/site_prediction_parity/v126.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          p=json.loads(Path("data/site_prediction_parity/v126.json").read_text(encoding="utf-8"))
+          assert "## NEXT" not in t
+          assert "Verify V101 iPhone layout" not in t
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "[ ]" in active
+          assert st["ui"]["version"]=="V128" and st["ui"]["status"]=="ACTIVE"
+          assert st["final15m_snapshot"]["version"]=="V123"
+          assert st["audit"]["version"]=="V125"
+          assert st["parity"]["status"]=="PASS_AFTER_V127"
+          assert p["pass"] is True and not p["errors"]
+          print({"todo_guard":"PASS","parity":"PASS","ui":"V128"})
+          PY
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V128
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js assets/boat_edge_v108.css index.html BOAT_EDGE_CURRENT_TODO.md BOAT_EDGE_TODO_ARCHIVE_PRE_V128.md data/site_current_state.json data/site_prediction_parity/v126.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Make hit status visible and enforce live TODO V128"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
