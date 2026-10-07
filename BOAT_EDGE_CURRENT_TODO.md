@@ -185,6 +185,16 @@ Current UI target: V119
 
 - V119 changes current site selection only; existing V114 server-history workflow is left untouched to avoid workflow-write permission failure.
 
+- V120 replaces V114 scheduled history because V114 validation was tied to the old UI version.
+
+- V120 disables obsolete V114 and keeps FINAL_15M history independent of UI version.
+
+- V120 server snapshot selection is probability-first; odds are display/payout-only.
+
+- V120 preserves settled_at and index updated_at when content is unchanged to avoid needless commits.
+
+- V120 does not modify current V119 UI.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - DONE V112: four modes rerender from the newly selected race key on every race change.
