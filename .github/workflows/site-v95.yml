@@ -1,0 +1,83 @@
+name: BOAT EDGE V95 Head Picks and Simple Flow
+on:
+  push:
+    paths: [".github/workflows/site-v95.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install V95
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # --- V90 race hub: racer tap -> formal head-only picks ---
+          p=Path("assets/boat_edge_v90.js")
+          s=p.read_text(encoding="utf-8")
+
+          old='''+(r.early_race?"<span>前走 "+E(r.early_race)+"R</span>":"")+"</div></details>"'''
+          new='''+(r.early_race?"<span>前走 "+E(r.early_race)+"R</span>":"")+"<div class=be95headpick><small>"+r.lane+"号艇が1着の正式予想</small>"+(a.filter(x=>String(x.c||"").startsWith(r.lane+"-")).slice(0,5).length?a.filter(x=>String(x.c||"").startsWith(r.lane+"-")).slice(0,5).map((x,i)=>"<div><b>#"+(i+1)+" "+E(x.c)+"</b><span>"+(x.p<=1?x.p*100:x.p).toFixed(2)+"%</span><span>"+((o?.trifecta_odds||{})[x.c]?((o.trifecta_odds[x.c])+"倍"):"オッズ待ち")+"</span></div>").join(""):"<p>正式120確率が未接続のため表示できません。</p>")+"</div></div></details>"'''
+          if old not in s:
+              raise SystemExit("V94 detail target not found")
+          s=s.replace(old,new,1)
+          s=s.replace("BOAT_EDGE_V94_RACER_SUMMARY","BOAT_EDGE_V95_HEAD_PICKS",1)
+          p.write_text(s,encoding="utf-8")
+
+          # --- Main scenario UI: replace technical flow diagram with plain-language steps ---
+          hp=Path("index.html")
+          h=hp.read_text(encoding="utf-8")
+
+          pattern=r'''document\.getElementById\("scenarioFlow"\)\.innerHTML=`.*?`;\n\n  document\.getElementById\("scenarioLanes"\)'''
+          replacement='''document.getElementById("scenarioFlow").innerHTML=`
+    <div class="be95-flow-simple">
+      <div class="be95-flow-head"><b>レースの流れを簡単に見る</b><span>専門用語を減らして表示</span></div>
+      <div class="be95-step"><em>①</em><div><small>最初に前へ出そう</small><b>${topAttackLane ? `${topAttackLane}号艇 ${attack?.name||""}` : "直前データ待ち"}</b><p>${stKnown ? "展示STなどの直前データを見て、最初に仕掛けそうな艇を表示。" : "展示STが出ると更新します。"}</p></div></div>
+      <div class="be95-step"><em>②</em><div><small>1マークで攻める役</small><b>${attack ? `${attack.lane}号艇 ${attack.name}` : "攻め役待ち"}</b><p>${attack ? "この艇の差し・まくり・まくり差しが展開のカギ。" : "攻め役を判断できるデータ待ちです。"}</p></div></div>
+      <div class="be95-step"><em>③</em><div><small>その攻めで残りそう</small><b>${pA!==null&&pB!==null?(pA>=pB?"1号艇を中心に内側が残る想定":"攻め艇の外・差し艇が連動する想定"):"直前データ待ち"}</b><p>誰の攻めで、どの艇が2着・3着へ入りやすいかを見る部分です。</p></div></div>
+      <div class="be95-step final"><em>④</em><div><small>結論</small><b>${flowConclusion}</b><p>${pred.mode==="formal"?"正式CURRENTの世界評価を優先。":"現在はサイト簡易。正式CURRENT接続時は自動で正式評価へ切替。"}</p></div></div>
+    </div>
+  `;
+
+  document.getElementById("scenarioLanes")'''
+          h2,n=re.subn(pattern,replacement,h,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit(f"scenarioFlow target not found: {n}")
+          h=h2
+
+          h=re.sub(r'boat_edge_v90\.js\?v=\d+','boat_edge_v90.js?v=95',h)
+          h=re.sub(r'boat_edge_v90\.css\?v=\d+','boat_edge_v90.css?v=95',h)
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V95-HEAD-PICKS-SIMPLE-FLOW">',h)
+          hp.write_text(h,encoding="utf-8")
+
+          # --- styles ---
+          css=Path("assets/boat_edge_v90.css")
+          c=css.read_text(encoding="utf-8")
+          c += "\n/* BOAT_EDGE_V95_HEAD_PICKS */\n"
+          c += ".be95headpick{width:100%;margin-top:6px;background:#fff;border:1px solid #e1eaf4;border-radius:10px;padding:9px}.be95headpick>small{display:block;font-weight:900;color:#173d6b;margin-bottom:6px}.be95headpick>div{display:grid;grid-template-columns:1fr 62px 70px;gap:6px;padding:6px 0;border-top:1px solid #edf2f8;font-size:10px}.be95headpick p{font-size:10px;color:#71859c;margin:3px 0}\n"
+          c += ".be95-flow-simple{display:grid;gap:8px}.be95-flow-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:2px}.be95-flow-head span{font-size:10px;color:#71859c}.be95-step{display:grid;grid-template-columns:34px 1fr;gap:10px;background:#fff;border:1px solid #dce7f5;border-radius:13px;padding:11px}.be95-step em{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#eaf3ff;color:#1264d9;font-style:normal;font-weight:900}.be95-step small{display:block;font-size:9px;color:#71859c;margin-bottom:2px}.be95-step b{display:block;font-size:14px;color:#173d6b}.be95-step p{margin:4px 0 0;font-size:10px;color:#71859c;line-height:1.5}.be95-step.final{border-color:#9cc7ff;background:#f7fbff}\n"
+          css.write_text(c,encoding="utf-8")
+          PY
+
+      - name: Validate and commit
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v90.js
+          grep -q 'BOAT_EDGE_V95_HEAD_PICKS' assets/boat_edge_v90.js
+          grep -q 'be95-flow-simple' index.html
+          grep -q 'V95-HEAD-PICKS-SIMPLE-FLOW' index.html
+          grep -q 'boat_edge_v90.js?v=95' index.html
+          grep -q 'boat_edge_v90.css?v=95' index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v90.js assets/boat_edge_v90.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V95 head picks and simple flow"
+          git push
