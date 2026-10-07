@@ -52,6 +52,17 @@ function raceOf(){try{return state?.race||null}catch(_){return null}}
 function predOf(r=raceOf()){try{return r&&typeof getPrediction==="function"?getPrediction(r):null}catch(_){return null}}
 function activeView(){return $(".view.active")?.id||"homeView"}
 function todayYmd(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`}
+function raceMinutesToDeadline(race){
+  const date=String(race?.meta?.date||"");
+  const deadline=String(race?.meta?.deadline||"");
+  const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const tm=/^(\d{1,2}):(\d{2})$/.exec(deadline);
+  if(!dm||!tm)return null;
+  const iso=`${dm[1]}-${dm[2]}-${dm[3]}T${String(tm[1]).padStart(2,"0")}:${tm[2]}:00+09:00`;
+  const ts=new Date(iso).getTime();
+  if(!Number.isFinite(ts))return null;
+  return Math.floor((ts-Date.now())/60000);
+}
 function dateObj(s){return /^\d{8}$/.test(String(s||""))?new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8)):null}
 function dateLabel(s){const d=dateObj(s);if(!d)return String(s||"");const w=["日","月","火","水","木","金","土"][d.getDay()];return `${d.getMonth()+1}月${d.getDate()}日(${w})`}
 function saveSelection(){
@@ -268,10 +279,31 @@ function selectModes(pred,odds){
 function snapKey(k){return SNAP+k}
 function readLocal(k,f=null){try{return JSON.parse(localStorage.getItem(k)||"null")??f}catch(_){return f}}
 function writeLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}}
-function saveSnapshot(key,race,pred,modes){
-  const old=readLocal(snapKey(key));if(old)return old;
-  const s={schema:"boat-edge-v108-snapshot-v1",race_key:key,saved_at:new Date().toISOString(),venue:race?.meta?.venue||"",race_no:race?.meta?.race_no||"",grade:pred?.grade||null,modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>[k,{confidence:confidence(pred,k,rows),tickets:rows.map(x=>({combo:x.combo,p:x.p,odds:x.odds??null}))}]))};
-  writeLocal(snapKey(key),s);return s;
+function saveFinalSnapshot(key,race,pred,modes,mins){
+  const snap={
+    schema:"boat-edge-v112-final-snapshot-v1",
+    snapshot_window:"FINAL_15M",
+    race_key:key,
+    saved_at:new Date().toISOString(),
+    minutes_to_deadline:mins,
+    venue:race?.meta?.venue||"",
+    race_no:race?.meta?.race_no||"",
+    deadline:race?.meta?.deadline||null,
+    grade:pred?.grade||null,
+    modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>[
+      k,
+      {
+        confidence:confidence(pred,k,rows),
+        tickets:rows.map(x=>({combo:x.combo,p:x.p,odds:x.odds??null}))
+      }
+    ]))
+  };
+  writeLocal(snapKey(key),snap);
+  return snap;
+}
+function isFinalSnapshot(snap){
+  return snap?.schema==="boat-edge-v112-final-snapshot-v1"
+    && snap?.snapshot_window==="FINAL_15M";
 }
 function settle(snapshot,result){
   if(!snapshot||result?.status!=="confirmed")return null;
@@ -291,24 +323,70 @@ function renderTicketRows(rows,win){
 async function renderPredictionModes(race,pred){
   const key=race?.race_key;if(!key||!pred)return;
   const stack=$("#tab-pred .section.stack");if(!stack)return;
+
   const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
   const modes=selectModes(pred,odds);
+  const mins=raceMinutesToDeadline(race);
+  const resultConfirmed=result?.status==="confirmed";
+  const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
+
   let snap=readLocal(snapKey(key));
-  if(result?.status!=="confirmed"&&!snap)snap=saveSnapshot(key,race,pred,modes);
-  const settled=snap&&result?.status==="confirmed"?settle(snap,result):null;
+  if(inFinalWindow){
+    snap=saveFinalSnapshot(key,race,pred,modes,mins);
+  }
+
+  const finalSnap=isFinalSnapshot(snap)?snap:null;
+  const settled=finalSnap&&resultConfirmed?settle(finalSnap,result):null;
   const win=settled?.winning_combo||null;
-  let mode=localStorage.getItem(ACTIVE_MODE)||"balance";if(!LABELS[mode])mode="balance";
-  const rows=(snap?.modes?.[mode]?.tickets||modes[mode]||[]).map(x=>({...x,odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)}));
-  const conf=snap?.modes?.[mode]?.confidence??confidence(pred,mode,rows);
+
+  let mode=localStorage.getItem(ACTIVE_MODE)||"balance";
+  if(!LABELS[mode])mode="balance";
+
+  const frozenRows=finalSnap?.modes?.[mode]?.tickets||null;
+  const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
+  const rows=baseRows.map(x=>({
+    ...x,
+    odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)
+  }));
+  const conf=(resultConfirmed&&finalSnap?.modes?.[mode]?.confidence!=null)
+    ? finalSnap.modes[mode].confidence
+    : confidence(pred,mode,rows);
+
+  let snapStatus="🎯履歴は締切15分前から保存";
+  if(inFinalWindow){
+    snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
+  }else if(resultConfirmed&&finalSnap){
+    snapStatus=`🎯 締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
+  }else if(resultConfirmed&&!finalSnap){
+    snapStatus="この端末に締切前の最終スナップショットなし・🎯判定対象外";
+  }else if(mins!==null&&mins<0){
+    snapStatus=finalSnap
+      ?"締切済み・保存した最終予想を固定中"
+      :"締切済み・締切前スナップショットなし";
+  }
 
   let panel=$("#be108PredictionModes");
-  if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
+  if(!panel){
+    panel=document.createElement("section");
+    panel.id="be108PredictionModes";
+    panel.className="be108-panel";
+    stack.prepend(panel);
+  }
+
   panel.innerHTML=`<div class="be108-head"><div><h3>予想スタイル</h3><p>目的別に買い目を切替</p></div><button id="be108HistoryBtn" type="button">🎯 的中履歴</button></div>
+  <div class="be108-snapshot-status">${snapStatus}</div>
   <div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div>
   <div class="be108-mode-card ${settled?.mode_hits?.[mode]?"hit":""}"><div class="be108-mode-top"><div><b>${settled?.mode_hits?.[mode]?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div>
   <div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
-  $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
-  $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};
+
+  $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{
+    localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);
+    renderPredictionModes(race,pred);
+  });
+  $("#be108HistoryBtn",panel).onclick=()=>{
+    const h=$("#be108History",panel);
+    h.hidden=!h.hidden;
+  };
 }
 function renderMainPick(race,pred){
   const stack=$("#tab-pred .section.stack");if(!stack||!pred)return;
@@ -378,24 +456,47 @@ function wrapRenderRace(){
   const wrapped=function(d){const out=original.apply(this,arguments);Promise.resolve().then(()=>afterRace(d));return out};
   wrapped.__be108Wrapped=true;window.renderRace=wrapped;
 }
+async function refreshCurrentRaceData(){
+  const r=raceOf();
+  if(!r?.race_key)return;
+  clearRaceCache(r.race_key);
+  if(typeof loadRace==="function"){
+    await loadRace(`data/races/${r.race_key}.json`,r.meta?.venue_code||"");
+    return;
+  }
+  const p=predOf(r);
+  renderPredictionModes(r,p);
+  augmentBuyBoard(r);
+}
 function installEvents(){
   document.addEventListener("click",e=>{
     const bottom=e.target.closest?.(".bottomnav [data-view]");
     if(bottom&&bottom.dataset.view!==activeView())pushView(activeView());
+
     const boat=e.target.closest?.("#boats .boat.be108-clickable");
     if(boat){e.preventDefault();showHeadPrediction(boat)}
+
     const tab=e.target.closest?.("#raceTabs [data-tab]");
-    if(tab&&raceOf())requestAnimationFrame(()=>{cleanTabs();if(tab.dataset.tab==="pred"){const r=raceOf(),p=predOf(r);renderMainPick(r,p);renderPredictionModes(r,p);augmentBuyBoard(r)}});
+    if(tab&&raceOf())requestAnimationFrame(()=>{
+      cleanTabs();
+      if(tab.dataset.tab==="pred"){
+        const r=raceOf(),p=predOf(r);
+        renderMainPick(r,p);
+        renderPredictionModes(r,p);
+        augmentBuyBoard(r);
+      }
+    });
   },true);
+
   document.addEventListener("visibilitychange",()=>{
     if(document.visibilityState==="visible"&&raceOf()){
-      clearRaceCache(raceOf().race_key);
-      const r=raceOf(),p=predOf(r);renderPredictionModes(r,p);augmentBuyBoard(r);
+      refreshCurrentRaceData();
     }
   });
-  $("#refreshTopBtn")?.addEventListener("click",()=>setTimeout(()=>{
-    const r=raceOf();if(!r)return;clearRaceCache(r.race_key);const p=predOf(r);renderPredictionModes(r,p);augmentBuyBoard(r);
-  },800));
+
+  $("#refreshTopBtn")?.addEventListener("click",()=>{
+    setTimeout(()=>refreshCurrentRaceData(),800);
+  });
 }
 
 try{selectedDate=localStorage.getItem(KDATE)||null;selectedVenue=localStorage.getItem(KVENUE)||null}catch(_){}

@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V111
+Current UI target: V112
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -105,10 +105,18 @@ Current UI target: V111
 
 - V111 owns archive refresh; V109 owns result/payout collection.
 
+- V112 does not treat early-day page opens as historical final predictions.
+
+- V112 updates the final snapshot while 0-15 minutes remain and freezes it after deadline.
+
+- V112 reloads the current race JSON on app resume or manual refresh without adding polling timers.
+
+- V112 keeps V111 lightweight runtime architecture: no MutationObserver and no new setInterval.
+
 ## NEXT
 - Verify V101 iPhone layout.
-- Verify four modes update when changing race.
-- Verify official odds appear in mode rows.
-- Verify pre-result snapshot -> result confirmation -> 🎯 flow.
+- DONE V112: four modes rerender from the newly selected race key on every race change.
+- DONE V112: official trifecta_odds schema matches V108/V112 mode-row odds lookup.
+- DONE V112: only FINAL_15M pre-result snapshots are eligible for post-result 🎯 settlement.
 - Consider server-side cross-device prediction history only after a true PRE_RESULT snapshot pipeline is added.
 - Continue official course-stat collector work separately.
