@@ -1,0 +1,67 @@
+name: BOAT EDGE V84 Interaction Hotfix
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-hotfix-v84.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stop recursive redraw
+        shell: bash
+        env:
+          V84_JS: "LyogQk9BVF9FREdFX1NJVEVfVjg0X0lOVEVSQUNUSU9OX0hPVEZJWCAqLwooKCk9PnsidXNlIHN0cmljdCI7d2luZG93LkJPQVRfRURHRV9TSVRFX1ZFUlNJT049IlY4NCI7CmZ1bmN0aW9uIG1hcmsoKXtjb25zdCBzdD1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiYmU3M1N0YXR1cyIpO2lmKHN0JiYhc3QuaW5uZXJIVE1MLmluY2x1ZGVzKCJCT0FUIEVER0UgVjg0Iikpc3QuaW5uZXJIVE1MPXN0LmlubmVySFRNTC5yZXBsYWNlKC9CT0FUIEVER0UgVig/OjdbMy05XXw4WzAtM10pL2csIkJPQVQgRURHRSBWODQiKX0Kd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoInBhZ2VzaG93IixtYXJrKTsKZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigidmlzaWJpbGl0eWNoYW5nZSIsKCk9PntpZihkb2N1bWVudC52aXNpYmlsaXR5U3RhdGU9PT0idmlzaWJsZSIpbWFyaygpfSk7CmRvY3VtZW50LnJlYWR5U3RhdGU9PT0ibG9hZGluZyI/ZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcigiRE9NQ29udGVudExvYWRlZCIsbWFyayk6bWFyaygpOwp9KSgpOw=="
+        run: |
+          python - <<'PY'
+          import os, base64, re
+          from pathlib import Path
+
+          p = Path("assets/boat_edge_simple_v51.js")
+          s = p.read_text(encoding="utf-8")
+
+          bad81 = 'new MutationObserver(()=>requestAnimationFrame(polish)).observe(document.body,{childList:true,subtree:true});'
+          bad82 = 'new MutationObserver(()=>requestAnimationFrame(render)).observe(document.body,{childList:true,subtree:true});'
+
+          s = s.replace(bad81, '/* V84: V81 recursive observer disabled */')
+          s = s.replace(bad82, '/* V84: V82 recursive observer disabled */')
+
+          marker = "BOAT_EDGE_SITE_V84_INTERACTION_HOTFIX"
+          if marker not in s:
+              s += "\n\n" + base64.b64decode(os.environ["V84_JS"]).decode("utf-8") + "\n"
+
+          p.write_text(s, encoding="utf-8")
+
+          ip = Path("index.html")
+          h = ip.read_text(encoding="utf-8")
+          h = re.sub(r'boat_edge_simple_v51\.js(?:\?v=\d+)?', 'boat_edge_simple_v51.js?v=84', h)
+          h = re.sub(r'boat_edge_simple_v51\.css(?:\?v=\d+)?', 'boat_edge_simple_v51.css?v=84', h)
+          ip.write_text(h, encoding="utf-8")
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          node --check assets/boat_edge_simple_v51.js
+          grep -q "BOAT_EDGE_SITE_V84_INTERACTION_HOTFIX" assets/boat_edge_simple_v51.js
+          grep -q "V84: V81 recursive observer disabled" assets/boat_edge_simple_v51.js
+          grep -q "V84: V82 recursive observer disabled" assets/boat_edge_simple_v51.js
+          grep -q "boat_edge_simple_v51.js?v=84" index.html
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_simple_v51.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Hotfix BOAT EDGE V84 interaction freeze"
+          git push
