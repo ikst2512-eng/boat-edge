@@ -1,0 +1,258 @@
+name: BOAT EDGE V119 Compact Probability First FIXED
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v119.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v119-compact-probability-first
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch compact UI and probability-first modes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          js_path=Path('assets/boat_edge_v108.js')
+          s=js_path.read_text(encoding='utf-8')
+
+          s=s.replace('const ACTIVE_MODE="boatEdgeV101ActiveMode";','const ACTIVE_MODE="boatEdgeV119ActiveMode";')
+
+          old_labels='''const LABELS={
+            hit:{name:"的中重視",desc:"候補を広めに残して取りこぼしを減らす",icon:"◎"},
+            balance:{name:"バランス重視",desc:"確率とオッズの両方を見て選ぶ",icon:"◐"},
+            hole:{name:"穴重視",desc:"予想候補内で高配当寄りを優先",icon:"◆"},
+            narrow:{name:"激絞り重視",desc:"確率上位だけを3点に絞る",icon:"⚡"}
+          };'''
+          new_labels='''const LABELS={
+            hit:{name:"的中重視",desc:"展開確率の上位を広めに残して取りこぼしを減らす",icon:"◎"},
+            balance:{name:"バランス",desc:"展開確率の上位6点。オッズでは順位を変えない",icon:"◐"},
+            hole:{name:"波乱展開",desc:"本線と違う頭の展開候補を見る。オッズでは選ばない",icon:"◆"},
+            narrow:{name:"激絞り3点",desc:"展開確率の上位3点だけに絞る",icon:"⚡"}
+          };'''
+          if old_labels not in s:
+              raise SystemExit('LABELS anchor not found')
+          s=s.replace(old_labels,new_labels,1)
+
+          sel_re=re.compile(r'function selectModes\(pred,odds\)\{.*?\n\}\nfunction snapKey',re.S)
+          sel_new='''function selectModes(pred,odds){
+            const all=allTickets(pred);
+            const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
+            const primaryHead=all[0]?.combo?.split("-")?.[0]||null;
+            const altHead=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+            const variancePool=altHead.length?altHead:all.slice(3);
+            const modes={
+              hit:all.slice(0,Math.min(10,all.length)),
+              balance:all.slice(0,Math.min(6,all.length)),
+              hole:variancePool.slice(0,Math.min(8,variancePool.length)),
+              narrow:all.slice(0,Math.min(3,all.length))
+            };
+            if(!modes.hole.length)modes.hole=all.slice(0,Math.min(6,all.length));
+            for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
+            return modes;
+          }
+          function snapKey'''
+          s,n=sel_re.subn(sel_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f'selectModes replacement count={n}')
+
+          s=s.replace('({hit:5,balance:0,hole:-9,narrow:-5}[mode]||0)','({hit:5,balance:0,hole:-5,narrow:-5}[mode]||0)')
+
+          main_re=re.compile(r'function renderMainPick\(race,pred\)\{.*?\n\}\nasync function augmentBuyBoard',re.S)
+          main_new='''function renderMainPick(race,pred){
+            const stack=$("#tab-pred .section.stack");if(!stack||!pred)return;
+            const top=allTickets(pred)[0];if(!top)return;
+            let box=$("#be108MainPick");
+            if(!box){box=document.createElement("div");box.id="be108MainPick";box.className="be108-mainpick";stack.prepend(box)}
+            const formal=pred.mode==="formal";
+            box.classList.toggle("be118-reference",!formal);
+            box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"参考簡易予想・正式CURRENT未接続"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
+          }
+          async function augmentBuyBoard'''
+          s,n=main_re.subn(main_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f'renderMainPick replacement count={n}')
+
+          render_re=re.compile(r'async function renderPredictionModes\(race,pred\)\{.*?\n\}\nfunction renderMainPick',re.S)
+          render_new='''async function renderPredictionModes(race,pred){
+            const key=race?.race_key;if(!key||!pred)return;
+            const stack=$("#tab-pred .section.stack");if(!stack)return;
+
+            const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
+            await loadServerHistoryIndex();
+            const modes=selectModes(pred,odds);
+            const mins=raceMinutesToDeadline(race);
+            const resultConfirmed=result?.status==="confirmed";
+            const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
+            const serverRecord=serverSummary?await serverHistoryFor(key):null;
+            const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
+
+            let snap=readLocal(snapKey(key));
+            if(inFinalWindow)snap=saveFinalSnapshot(key,race,pred,modes,mins);
+
+            const finalSnap=isFinalSnapshot(snap)?snap:null;
+            const serverSnap=serverRecord?.snapshot||null;
+            const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;
+            const settled=resultConfirmed?(serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null)):null;
+            const win=settled?.winning_combo||null;
+            const officialResult=resultConfirmed?normalizeCombo(result?.trifecta||result?.finish_order):null;
+
+            let mode=localStorage.getItem(ACTIVE_MODE)||"hit";
+            if(!LABELS[mode])mode="hit";
+
+            const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;
+            const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
+            const rows=baseRows.map(x=>({...x,odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)}));
+            const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
+
+            let snapStatus="🎯履歴は締切15分前から保存";
+            if(inFinalWindow)snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
+            else if(resultConfirmed&&serverSnap)snapStatus=`サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
+            else if(resultConfirmed&&finalSnap)snapStatus=`この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
+            else if(resultConfirmed&&!effectiveSnap)snapStatus="締切前の最終スナップショットなし・的中判定対象外";
+            else if(mins!==null&&mins<0)snapStatus=finalSnap?"締切済み・保存した最終予想を固定中":"締切済み・締切前スナップショットなし";
+
+            const modeHit=Boolean(settled?.mode_hits?.[mode]);
+            let resultBar="";
+            if(resultConfirmed){
+              const pay=Number(result?.trifecta_payout_yen_per_100);
+              const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";
+              let verdict="締切前予想なし・判定対象外",cls="neutral";
+              if(settled){verdict=modeHit?"🎯 この予想モード的中":"この予想モードは不的中";cls=modeHit?"hit":"miss"}
+              resultBar=`<div class="be118-resultbar ${cls}"><div><small>確定結果</small><b>${esc(officialResult||"確定")}</b></div><div><strong>${verdict}</strong><span>${payText}</span></div></div>`;
+            }
+
+            const sourceBar=pred.mode==="formal"
+              ? `<div class="be118-source formal">正式CURRENTを使用中</div>`
+              : `<div class="be118-source reference">参考簡易予想・正式CURRENTはまだ未接続。オッズで買い目順位は変えていません。</div>`;
+
+            let panel=$("#be108PredictionModes");
+            if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
+
+            panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+
+            $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
+            $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};
+          }
+          function renderMainPick'''
+          s,n=render_re.subn(render_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f'renderPredictionModes replacement count={n}')
+
+          js_path.write_text(s,encoding='utf-8')
+
+          css_path=Path('assets/boat_edge_v108.css')
+          css=css_path.read_text(encoding='utf-8')
+          if 'BOAT_EDGE_V118_COMPACT_CURRENT_RESULT' not in css:
+              css += '''\n/* BOAT_EDGE_V118_COMPACT_CURRENT_RESULT */
+          #tab-pred #worlds{display:none!important}
+          .be118-source{margin-bottom:8px;padding:8px 10px;border-radius:10px;font-size:8px;font-weight:900;line-height:1.45}
+          .be118-source.formal{background:#ebfff5;color:#08795a;border:1px solid #bcebd6}
+          .be118-source.reference{background:#fff7e8;color:#9a5a00;border:1px solid #f4d59d}
+          .be108-mainpick.be118-reference{background:#5e6b7a}
+          .be118-resultbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;padding:10px 11px;border-radius:11px;border:1px solid #dfe6ef;background:#f8fafc}
+          .be118-resultbar>div:last-child{text-align:right}.be118-resultbar small,.be118-resultbar span{display:block;font-size:8px;color:#71859c}
+          .be118-resultbar b{display:block;margin-top:2px;font-size:18px;color:#173d6b}.be118-resultbar strong{display:block;font-size:10px;color:#52657a}
+          .be118-resultbar.hit{background:#edf9f2;border-color:#77c99e}.be118-resultbar.hit strong{color:#08795a}
+          .be118-resultbar.miss{background:#fff7f7;border-color:#efc8c8}.be118-resultbar.miss strong{color:#a44545}
+          .race-shell{padding:7px 10px 3px}.race-summary{padding:10px 12px}.race-summary h1{font-size:24px;line-height:1.1}
+          .race-subtitle{font-size:10px;line-height:1.35;margin-top:4px;max-height:29px;overflow:hidden}.deadline-big{font-size:26px;line-height:1}.deadline-cap{font-size:9px}
+          #be108RaceNav{margin-top:5px!important;padding-top:4px!important}.be108-race-nav-head{min-height:22px}.be108-race-nav-head button{font-size:8px!important;padding:2px 0!important}
+          .be108-race-nav-head span{font-size:7px!important;max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.be108-race-strip{padding:5px 0 3px!important;gap:5px!important}
+          .be108-race-chip{flex:0 0 54px!important;padding:6px 4px!important;border-radius:7px!important}.be108-race-chip b{font-size:11px!important}.be108-race-chip span{font-size:6px!important;margin-top:2px!important}
+          #raceTabs.be108-tabs{margin-top:3px!important;padding:5px 0 2px!important;gap:4px!important}#raceTabs.be108-tabs [data-tab]{min-width:55px!important;padding:7px 9px!important;font-size:10px!important}
+          @media(max-width:640px){.race-head{position:relative!important;top:auto!important}.race-shell{padding:5px 7px 2px!important}.race-summary{padding:8px 9px!important;border-radius:12px!important}.race-summary h1{font-size:20px!important}.race-subtitle{font-size:9px!important;max-height:25px!important}.deadline-big{font-size:23px!important}.deadline-cap{font-size:8px!important}.summary-top{gap:7px!important}.be108-race-strip{overflow-x:auto!important}#raceTabs.be108-tabs{overflow-x:auto!important}.be108-mainpick{padding:9px 10px!important}.be108-mainpick b{font-size:17px!important}}
+          '''
+          css_path.write_text(css,encoding='utf-8')
+
+          idx=Path('index.html')
+          html=idx.read_text(encoding='utf-8')
+          html=html.replace('label:"旧サイト簡易（参考）"','label:"参考簡易（正式CURRENT未接続）"')
+          html=html.replace('const decision = worldAProb >= 60 || worldBProb >= 60 ? "暫定予想" : "慎重";','const decision = worldAProb >= 60 || worldBProb >= 60 ? "参考予想" : "参考・慎重";')
+          html=html.replace('caption:`旧サイト簡易スコア（参考表示）。正式CURRENTとは別計算。`,','caption:`参考簡易スコア。正式CURRENTとは別計算で、オッズによる買い目順位変更はしません。`,')
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=119',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=119',html)
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V119-COMPACT-PROBABILITY-FIRST">',html)
+          idx.write_text(html,encoding='utf-8')
+
+
+          todo=Path('BOAT_EDGE_CURRENT_TODO.md')
+          t=todo.read_text(encoding='utf-8') if todo.exists() else '# BOAT EDGE CURRENT TODO\n'
+          t=re.sub(r'Current UI target: V\d+','Current UI target: V119',t)
+          lines=[
+            '- V119 mobile race header is compact and no longer sticky on iPhone-width screens.',
+            '- V119 shows current confirmed result and current-mode hit/miss directly inside the prediction panel; history tap is not required.',
+            '- V119 resets default prediction mode to hit-priority using a new storage key.',
+            '- V119 removes odds from ticket ranking in all four modes; odds remain display/payout-only.',
+            '- V119 renames old hole mode to scenario variance and selects alternate-head scenarios by prediction probability, not price.',
+            '- V119 clearly labels non-formal output as reference/simple while formal CURRENT is disconnected.',
+            '- V119 keeps zero MutationObserver and zero extension setInterval.',
+            '- V119 changes current site selection only; existing V114 server-history workflow is left untouched to avoid workflow-write permission failure.'
+          ]
+          marker='## NEXT'
+          for line in lines:
+              if line not in t:
+                  t=t.replace(marker,line+'\n\n'+marker,1) if marker in t else t+'\n'+line+'\n'
+          todo.write_text(t,encoding='utf-8')
+
+          PY
+
+      - name: Validate V119
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          grep -q 'V119-COMPACT-PROBABILITY-FIRST' index.html
+          grep -q 'boat_edge_v108.js?v=119' index.html
+          grep -q 'boatEdgeV119ActiveMode' assets/boat_edge_v108.js
+          grep -q '波乱展開' assets/boat_edge_v108.js
+          grep -q 'be118-resultbar' assets/boat_edge_v108.js
+          grep -q '正式CURRENT未接続' assets/boat_edge_v108.js
+          grep -q 'BOAT_EDGE_V118_COMPACT_CURRENT_RESULT' assets/boat_edge_v108.css
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path("index.html").read_text(encoding="utf-8")
+          boat=[x for x in re.findall(r'<script src="([^"]+)"',s) if "boat_edge" in x]
+          assert boat==[
+            "./assets/boat_edge_final_v48.js",
+            "./assets/boat_edge_v108.js?v=119"
+          ],boat
+          print({"boat_scripts":boat,"default_mode":"hit","odds_rank_weight":False})
+          PY
+
+      - name: Save V119
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js assets/boat_edge_v108.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Compact race UI and remove odds ranking V119"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
