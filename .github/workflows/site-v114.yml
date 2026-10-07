@@ -1,0 +1,153 @@
+name: BOAT EDGE V114 Server Final History
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v114.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v114-server-history
+  cancel-in-progress: false
+
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build PRE_RESULT final snapshots and settle history
+        shell: bash
+        run: |
+          cat > /tmp/v114_history.js <<'JS'
+          const fs=require("fs"),path=require("path"),crypto=require("crypto");
+          const ROOT=process.cwd(),JST_OFFSET=9*60*60*1000;
+          const now=new Date(),todayJst=new Date(now.getTime()+JST_OFFSET).toISOString().slice(0,10).replaceAll("-","");
+          const racesDir=path.join(ROOT,"data/races"),oddsDir=path.join(ROOT,"data/site_odds"),resultsDir=path.join(ROOT,"data/site_results");
+          const snapDir=path.join(ROOT,"data/site_prediction_snapshots"),histDir=path.join(ROOT,"data/site_prediction_history");
+          fs.mkdirSync(snapDir,{recursive:true});fs.mkdirSync(histDir,{recursive:true});
+          const read=p=>{try{return JSON.parse(fs.readFileSync(p,"utf8"))}catch(_){return null}};
+          const write=(p,v)=>fs.writeFileSync(p,JSON.stringify(v,null,2));
+          const sha=p=>{try{return crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex")}catch(_){return null}};
+          const num=v=>(v===null||v===undefined||String(v).trim()==="")?null:(Number.isFinite(Number(v))?Number(v):null);
+          const laneNo=(r,i)=>Number(r?.lane??(i+1));
+          function getBeforeMap(d){const bf=d?.beforeinfo||{},starts=new Map((bf.start_exhibition||[]).map((x,i)=>[Number(x.lane??i+1),num(x.st)])),racers=new Map((bf.racers||[]).map((x,i)=>[Number(x.lane??i+1),x])),actual=new Map((d?.actual_entry||[]).map((x,i)=>[Number(x?.lane??i+1),Number(x?.course??x?.actual_course??x?.entry_course)]));return{bf,starts,racers,actual}}
+          function normalizeExhibition(racers){const times=racers.map(x=>num(x.exhibition_time)).filter(v=>v!==null);if(!times.length)return{};const min=Math.min(...times),max=Math.max(...times),range=Math.max(max-min,.01),out={};racers.forEach(x=>{const t=num(x.exhibition_time);if(t!==null)out[x.lane]=Math.max(0,1-((t-min)/range))});return out}
+          function computeScores(d){const {bf,starts,racers:bfRacers,actual}=getBeforeMap(d),exNorm=normalizeExhibition(bf.racers||[]);return(d.racers||[]).map((r,i)=>{const lane=laneNo(r,i),nat=r.national||{},loc=r.local||{},mot=r.motor||{},boat=r.boat||{},avgSt=num(r.avg_st),natWin=num(nat.win_rate)??0,natQ=num(nat.quinella_rate)??0,locWin=num(loc.win_rate)??0,locQ=num(loc.quinella_rate)??0,motQ=num(mot.quinella_rate)??0,boatQ=num(boat.quinella_rate)??0,before=bfRacers.get(lane)||{},exScore=exNorm[lane]===undefined?0:exNorm[lane]*8,stEx=starts.get(lane),exStartScore=stEx===undefined||stEx===null?0:Math.max(0,(.25-Number(stEx))*28),avgStScore=avgSt===null?0:Math.max(0,(.24-avgSt)*42),laneBase=({1:9.5,2:7,3:5.8,4:5.2,5:3.2,6:2.2}[lane]||0),tiltScore=num(before.tilt)===null?0:Math.max(-1,Math.min(2.5,num(before.tilt))),actualCourse=actual.has(lane)?actual.get(lane):null,attackBase=actualCourse===null?0:({1:.5,2:5.4,3:6.2,4:6.8,5:4,6:3}[actualCourse]||0),insideBase=lane===1?8:(actualCourse===null?0:Math.max(0,5-Math.abs(actualCourse-2))),machine=motQ*.11+boatQ*.07,classBonus=/A1/.test(r.class||"")?2.4:/A2/.test(r.class||"")?1.4:/B1/.test(r.class||"")?.5:0,base=natWin*2.8+natQ*.18+locWin*1.9+locQ*.12+machine+avgStScore+exScore+exStartScore+laneBase+classBonus+tiltScore;return{lane,actualCourse,baseScore:base,insideScore:base+insideBase+(lane===1?6:0),attackScore:base+attackBase+(actualCourse>=3&&actualCourse<=4?2.5:0)}}).sort((a,b)=>a.lane-b.lane)}
+          const gradeFromSpread=s=>s>=9?"A":s>=6?"B+":s>=4?"B":s>=2.5?"C+":"C";
+          const round100=v=>Math.max(100,Math.round(v/100)*100);
+          function allocateByWeights(weights,total){const sum=weights.reduce((a,b)=>a+b,0)||1;let amounts=weights.map(w=>round100(total*(w/sum))),diff=total-amounts.reduce((a,b)=>a+b,0),i=0;while(diff!==0&&amounts.length&&i<1000){const step=diff>0?100:-100,pos=i%amounts.length;if(amounts[pos]+step>=100){amounts[pos]+=step;diff-=step}i++}return amounts}
+          function topNUnique(arr,n){const seen=new Set(),out=[];for(const x of arr){if(seen.has(x.combo))continue;seen.add(x.combo);out.push(x);if(out.length>=n)break}return out}
+          function buildFallbackPrediction(d){const scores=computeScores(d),one=scores.find(x=>x.lane===1)||scores[0];if(!one)return null;const challengers=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore),supporters=[...scores].sort((a,b)=>b.baseScore-a.baseScore),strongest=challengers[0]||supporters[1]||one,diff=(one.insideScore||0)-(strongest.attackScore||0),worldAProb=Math.max(35,Math.min(78,55+diff*2.2)),worldBProb=100-worldAProb,aCandidates=[],secondsA=supporters.filter(x=>x.lane!==1).sort((a,b)=>b.baseScore-a.baseScore);
+          for(let i=0;i<secondsA.length;i++)for(let j=0;j<secondsA.length;j++){if(i===j)continue;const s=secondsA[i],t=secondsA[j];aCandidates.push({combo:`1-${s.lane}-${t.lane}`,weight:one.insideScore*1.2+s.baseScore+t.baseScore+(s.lane<t.lane?.5:0)})}
+          const aTop=topNUnique(aCandidates.sort((a,b)=>b.weight-a.weight),5),aSum=aTop.reduce((a,b)=>a+b.weight,0)||1,aTickets=aTop.map(x=>({...x,probability:(x.weight/aSum)*worldAProb})),bCandidates=[];
+          for(const h of challengers.slice(0,3)){const others=supporters.filter(x=>x.lane!==h.lane),pref=others.find(x=>x.lane===1),rest=others.filter(x=>x.lane!==1);for(const s of others.slice(0,5))for(const t of others.slice(0,5)){if(t.lane===s.lane)continue;const preferIn=(s.lane===1?1.2:0)+(t.lane===1?.8:0),weight=h.attackScore*1.25+s.baseScore+t.baseScore+preferIn+(h.actualCourse>=3?1.5:0);bCandidates.push({combo:`${h.lane}-${s.lane}-${t.lane}`,weight})}if(pref)rest.slice(0,3).forEach(r=>{bCandidates.push({combo:`${h.lane}-1-${r.lane}`,weight:h.attackScore*1.35+pref.baseScore+r.baseScore+3});bCandidates.push({combo:`${h.lane}-${r.lane}-1`,weight:h.attackScore*1.2+pref.baseScore+r.baseScore+2.2})})}
+          const bTop=topNUnique(bCandidates.sort((a,b)=>b.weight-a.weight),5),bSum=bTop.reduce((a,b)=>a+b.weight,0)||1,bTickets=bTop.map(x=>({...x,probability:(x.weight/bSum)*worldBProb})),total=5000,budgetA=round100(total*(worldAProb/100)),budgetB=total-budgetA,aAmounts=allocateByWeights(aTickets.map(x=>x.probability),budgetA),bAmounts=allocateByWeights(bTickets.map(x=>x.probability),budgetB);
+          return{mode:"temp",grade:gradeFromSpread(Math.abs(diff)),worlds:[{key:"A",probability:worldAProb,tickets:aTickets.map((x,i)=>({rank:i+1,combo:x.combo,probability:x.probability,amount:aAmounts[i]}))},{key:"B",probability:worldBProb,tickets:bTickets.map((x,i)=>({rank:i+1,combo:x.combo,probability:x.probability,amount:bAmounts[i]}))}]}}
+          const normalizeCombo=v=>Array.isArray(v)?v.slice(0,3).join("-"):(String(v||"").match(/([1-6])\D+([1-6])\D+([1-6])/)||[]).slice(1,4).join("-")||null;
+          function allTickets(pred){const out=[],seen=new Set();for(const [wi,w] of (pred?.worlds||[]).entries())for(const [i,t] of (w?.tickets||[]).entries()){const combo=normalizeCombo(t?.combo||t?.trifecta||t?.order);if(!combo||seen.has(combo))continue;seen.add(combo);const raw=Number(t?.probability??t?.confidence??t?.prob??t?.p);out.push({combo,p:Number.isFinite(raw)?(raw<=1?raw*100:raw):0,world:w?.key||(wi===0?"A":"B"),rank:i+1})}return out.sort((a,b)=>b.p-a.p)}
+          function confidence(pred,mode,rows){const map={S:90,"S+":93,A:82,"A+":86,B:72,"B+":76,C:62,D:52};let base=map[String(pred?.grade||"").toUpperCase()]??68;const all=allTickets(pred),sum=all.reduce((s,x)=>s+x.p,0),top=all.slice(0,3).reduce((s,x)=>s+x.p,0);base+=Math.round(((sum?top/sum:0)-.35)*18)+({hit:5,balance:0,hole:-9,narrow:-5}[mode]||0);if(rows.length<=3)base-=2;return Math.max(35,Math.min(94,Math.round(base)))}
+          function selectModes(pred,odds){const all=allTickets(pred),od=x=>{const v=Number(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null},vals=all.map(od).filter(Number.isFinite).sort((a,b)=>a-b),med=vals.length?vals[Math.floor(vals.length/2)]:null,modes={hit:all.slice(0,Math.min(10,all.length)),balance:[...all].sort((a,b)=>(b.p*Math.sqrt(Math.min(od(b)??1,80)))-(a.p*Math.sqrt(Math.min(od(a)??1,80)))).slice(0,Math.min(6,all.length)),hole:[...all].filter(x=>od(x)!=null&&(med==null||od(x)>=med)).sort((a,b)=>(b.p*Math.pow(Math.min(od(b)??1,120),.72))-(a.p*Math.pow(Math.min(od(a)??1,120),.72))).slice(0,Math.min(6,all.length)),narrow:all.slice(0,Math.min(3,all.length))};if(!modes.hole.length)modes.hole=all.slice(Math.min(3,all.length),Math.min(9,all.length));for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));return modes}
+          let snapshotsUpdated=0,historiesUpdated=0;
+          for(const file of fs.readdirSync(racesDir).filter(x=>x.startsWith(todayJst+"-")&&x.endsWith(".json")).sort()){const racePath=path.join(racesDir,file),race=read(racePath);if(!race)continue;const key=race.race_key||file.replace(".json",""),meta=race.meta||{};if(meta.results_seen===true||meta.unlock===true||meta.scoring===true)continue;const result=read(path.join(resultsDir,key+".json"));if(result?.status==="confirmed")continue;const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(meta.date||"")),tm=/^(\d{1,2}):(\d{2})$/.exec(String(meta.deadline||""));if(!dm||!tm)continue;const deadlineMs=Date.parse(`${dm[1]}-${dm[2]}-${dm[3]}T${String(tm[1]).padStart(2,"0")}:${tm[2]}:00+09:00`),mins=(deadlineMs-Date.now())/60000;if(!(mins>=0&&mins<=15.999))continue;const pred=buildFallbackPrediction(race);if(!pred)continue;const oddsPath=path.join(oddsDir,key+".json"),odds=(read(oddsPath)||{}).trifecta_odds||{},modes=selectModes(pred,odds),old=read(path.join(snapDir,key+".json"));const snap={schema_version:"boat-edge-server-site-final-v114",snapshot_window:"FINAL_15M",race_key:key,prediction_kind:"SITE_FALLBACK",first_saved_at:old?.first_saved_at||new Date().toISOString(),saved_at:new Date().toISOString(),minutes_to_deadline:Number(mins.toFixed(2)),venue:meta.venue||"",venue_code:meta.venue_code||key.split("-")[1],race_no:meta.race_no||Number(key.split("-")[2]),deadline:meta.deadline||null,grade:pred.grade||null,race_sha256:sha(racePath),odds_sha256:sha(oddsPath),guards:{results_seen:false,unlock:false,scoring:false},modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>[k,{confidence:confidence(pred,k,rows),tickets:rows.map(x=>({combo:x.combo,p:x.p,odds:x.odds??null}))}]))};write(path.join(snapDir,key+".json"),snap);snapshotsUpdated++}
+          for(const file of fs.readdirSync(snapDir).filter(x=>/^\d{8}-\d{2}-\d{2}\.json$/.test(x)).sort()){const key=file.replace(".json",""),snap=read(path.join(snapDir,file)),result=read(path.join(resultsDir,key+".json"));if(!snap||result?.status!=="confirmed")continue;const win=normalizeCombo(result.trifecta||result.finish_order);if(!win)continue;const mode_hits={};for(const [k,v] of Object.entries(snap.modes||{}))mode_hits[k]=(v.tickets||[]).some(x=>x.combo===win);const settlement={settled_at:new Date().toISOString(),winning_combo:win,payout:result.trifecta_payout_yen_per_100??null,mode_hits,hit_any:Object.values(mode_hits).some(Boolean)};const payload={schema_version:"boat-edge-server-site-history-v114",race_key:key,snapshot:snap,settlement};const hp=path.join(histDir,key+".json"),prev=read(hp);if(JSON.stringify(prev)!==JSON.stringify(payload)){write(hp,payload);historiesUpdated++}}
+          const races={};for(const file of fs.readdirSync(histDir).filter(x=>/^\d{8}-\d{2}-\d{2}\.json$/.test(x)).sort()){const d=read(path.join(histDir,file));if(!d)continue;const s=d.snapshot||{},t=d.settlement||{};races[d.race_key]={race_key:d.race_key,venue:s.venue||"",venue_code:s.venue_code||"",race_no:s.race_no||null,deadline:s.deadline||null,final_saved_at:s.saved_at||null,prediction_kind:s.prediction_kind||null,winning_combo:t.winning_combo||null,payout:t.payout??null,mode_hits:t.mode_hits||{},hit_any:Boolean(t.hit_any),settled_at:t.settled_at||null}}
+          const oldIndex=read(path.join(histDir,"index.json"))||{},index={schema_version:"boat-edge-server-site-history-index-v114",start_date:todayJst,note:"Server history starts with V114. No retrospective prediction backfill.",races,updated_at:oldIndex.updated_at||new Date().toISOString()};
+          write(path.join(histDir,"index.json"),index);
+          console.log(JSON.stringify({todayJst,snapshotsUpdated,historiesUpdated,historyCount:Object.keys(races).length},null,2));
+          JS
+          node /tmp/v114_history.js
+
+      - name: Patch UI for server hit history
+        if: github.event_name != 'schedule'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('assets/boat_edge_v108.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('let archiveIndex=null;','let archiveIndex=null;\nlet serverHistoryByKey={};',1)
+          anchor='async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}'
+          add='''async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}
+          async function loadServerHistoryIndex(){
+            const d=await J("./data/site_prediction_history/index.json",30000);
+            serverHistoryByKey=d?.races||{};
+            return d||{races:{}};
+          }'''
+          if anchor not in s: raise SystemExit('resultFor anchor missing')
+          s=s.replace(anchor,add,1)
+          s=s.replace('async function renderHomeHub(){\n  const host=ensureHomeHub();if(!host)return;','async function renderHomeHub(){\n  const host=ensureHomeHub();if(!host)return;\n  await loadServerHistoryIndex();',1)
+          s=s.replace('const pay=r.payout?` ${Number(r.payout).toLocaleString("ja-JP")}円`:"";\n    return `結果 ${r.trifecta||"確定"}${pay}`;','const pay=r.payout?` ${Number(r.payout).toLocaleString("ja-JP")}円`:"";\n    const hit=serverHistoryByKey?.[r.race_key]?.hit_any?" 🎯":"";\n    return `結果 ${r.trifecta||"確定"}${pay}${hit}`;',1)
+          p.write_text(s,encoding='utf-8')
+          idx=Path('index.html')
+          html=idx.read_text(encoding='utf-8').replace('boat_edge_v108.js?v=113','boat_edge_v108.js?v=114').replace('boat_edge_v108.css?v=113','boat_edge_v108.css?v=114')
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V114-SERVER-FINAL-HISTORY">',html)
+          idx.write_text(html,encoding='utf-8')
+          PY
+
+      - name: Update TODO
+        if: github.event_name != 'schedule'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('BOAT_EDGE_CURRENT_TODO.md')
+          s=p.read_text(encoding='utf-8') if p.exists() else '# BOAT EDGE CURRENT TODO\n'
+          s=re.sub(r'Current UI target: V\d+','Current UI target: V114',s)
+          lines=[
+            '- V114 server history starts prospectively; no retrospective prediction backfill.',
+            '- V114 saves only 0-15 minute PRE_RESULT site-final snapshots with results_seen/unlock/scoring false.',
+            '- V114 never creates a snapshot after a confirmed result exists.',
+            '- V114 settles saved snapshots against factual site_results and exposes cross-device 🎯 on archived race rows.',
+            '- V114 labels these snapshots SITE_FALLBACK; they are not formal predictions.',
+            '- V114 adds no browser MutationObserver or setInterval.'
+          ]
+          marker='## NEXT'
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+'\n\n'+marker,1) if marker in s else s+'\n'+line+'\n'
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate V114
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          test -f data/site_prediction_history/index.json
+          grep -q 'V114-SERVER-FINAL-HISTORY' index.html
+          grep -q 'boat_edge_v108.js?v=114' index.html
+          grep -q 'site_prediction_history' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+          node - <<'JS'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('data/site_prediction_history/index.json','utf8'));
+          if(d.schema_version!=='boat-edge-server-site-history-index-v114') process.exit(1);
+          console.log(JSON.stringify({history_count:Object.keys(d.races||{}).length,note:d.note}));
+          JS
+
+      - name: Save V114
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_snapshots data/site_prediction_history assets/boat_edge_v108.js index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add server final prediction history V114"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
