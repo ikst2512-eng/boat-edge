@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V101
+Current UI target: V104
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -26,6 +26,18 @@ Current UI target: V101
 - V101 🎯 badge on hit mode / hit ticket.
 - V101 🎯 hit history for pre-result snapshots on this device.
 - V101 does not backfill a fake historical prediction if first opened after result.
+
+- V104 top page previous/next day navigation.
+
+- V104 saved dates available from 2026-10-05.
+
+- V104 venue grid -> linked 1R-12R list with deadline times.
+
+- V104 race page keeps 1R-12R selector directly above prediction tabs.
+
+- V104 site back navigation restores date / venue / scroll context.
+
+- Historical odds/results are shown only when saved; missing values remain unavailable.
 
 ## NEXT
 - Verify V101 iPhone layout.

@@ -1,0 +1,42 @@
+/* BOAT_EDGE_V104_BOATERS_NAV */
+#homeView>.hero,#homeView>.home-command{display:none!important}
+#homeView .venue-toolbar{display:none!important}
+#homeView #venueStats,#homeView #venues,#homeView #venueListTitle,#homeView #updatedHome{display:none!important}
+.be104-hub{padding:10px 12px 2px;background:#f4f6f9}
+.be104-shell{max-width:980px;margin:auto}
+.be104-date-nav{display:grid;grid-template-columns:84px 1fr 84px;gap:8px;align-items:center;margin-bottom:10px}
+.be104-date-nav>button{height:42px;border:1px solid #dde3ea;background:#fff;border-radius:22px;color:#4e6278;font-size:10px;font-weight:900}
+.be104-date-nav>button:disabled{opacity:.35}
+.be104-date-nav>div{text-align:center}.be104-date-nav b{display:block;font-size:15px;color:#142f52}.be104-date-nav span{display:block;margin-top:2px;font-size:8px;color:#7b8998}
+.be104-venue-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-left:1px solid #dfe4ea;border-top:1px solid #dfe4ea;background:#eef1f5}
+.be104-venue{min-height:82px;border:0;border-right:1px solid #dfe4ea;border-bottom:1px solid #dfe4ea;background:#fff;text-align:left;padding:9px;position:relative}
+.be104-venue.on{box-shadow:inset 0 0 0 2px #1b62ad;background:#f7fbff}
+.be104-venue .be104-badge{display:inline-block;background:#8ba9c8;color:#fff;border-radius:4px;padding:3px 5px;font-size:7px;font-weight:900}
+.be104-venue b{display:block;margin-top:5px;color:#172f50;font-size:12px}.be104-venue small{display:block;margin-top:3px;color:#788899;font-size:8px}
+.be104-venue-panel{margin-top:12px;background:#fff;border:1px solid #dfe5ed;border-radius:12px;overflow:hidden}
+.be104-venue-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px;border-bottom:1px solid #edf1f5}
+.be104-venue-head b{display:block;color:#172f50;font-size:18px}.be104-venue-head span{display:block;margin-top:3px;color:#718296;font-size:9px}
+.be104-venue-head button{border:1px solid #dce3ec;background:#f7f9fc;border-radius:9px;padding:7px 9px;color:#48617a;font-size:8px;font-weight:900}
+.be104-race-strip{display:flex;gap:6px;overflow:auto;padding:10px 10px 8px;scrollbar-width:none}.be104-race-strip::-webkit-scrollbar{display:none}
+.be104-race-mini{flex:0 0 66px;border:1px solid #dfe4eb;background:#f4f6f9;border-radius:7px;padding:8px 5px;text-align:center}
+.be104-race-mini b{display:block;font-size:13px;color:#1e2936}.be104-race-mini span{display:block;margin-top:4px;font-size:7px;color:#748394}
+.be104-race-mini.on{background:#22252b;border-color:#22252b}.be104-race-mini.on b,.be104-race-mini.on span{color:#fff}
+.be104-race-list{border-top:1px solid #edf1f5}.be104-race-row{width:100%;display:grid;grid-template-columns:72px 1fr 48px;gap:8px;align-items:center;border:0;border-bottom:1px solid #e4e9ef;background:#fff;padding:11px 12px;text-align:left}
+.be104-rno b{font-size:16px;color:#172f50}.be104-rno small{display:inline-block;margin-left:6px;padding:3px 5px;border-radius:4px;background:#f1f3f6;color:#68798b;font-size:7px}
+.be104-rmeta strong{display:block;font-size:11px;color:#25384d}.be104-rmeta span{display:block;margin-top:3px;font-size:8px;color:#718296}.be104-open{text-align:right;color:#1773d3;font-size:9px;font-weight:900}
+#be104RaceTop{margin-top:8px;border-top:1px solid #edf1f5;padding-top:8px}
+.be104-race-backrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 2px}
+.be104-race-backrow button{border:0;background:transparent;color:#1769bf;font-size:9px;font-weight:900;padding:5px 0}.be104-race-backrow span{font-size:8px;color:#718296}
+#raceNav,#raceQuickNav{display:none!important}
+#summaryStrip,#raceCommand,#raceMasthead,#urgencyRibbon,#freshnessStrip{display:none!important}
+#raceTabs.be104-tabs{display:flex!important;gap:5px;overflow:auto;margin:7px 0 0;padding:7px 0 0;border-top:1px solid #edf1f5;scrollbar-width:none}
+#raceTabs.be104-tabs::-webkit-scrollbar{display:none}
+#raceTabs.be104-tabs button{flex:0 0 auto;min-width:68px}
+.be104-view-back{display:flex;align-items:center;gap:10px;padding:10px 12px 0}.be104-view-back button{border:1px solid #dce3ec;background:#fff;border-radius:10px;padding:8px 10px;color:#173d6b;font-size:9px;font-weight:900}.be104-view-back span{color:#66798e;font-size:10px;font-weight:900}
+.be104-empty{padding:20px;background:#fff;border-radius:12px;text-align:center;color:#718296;font-size:10px}
+@media(max-width:640px){
+  .be104-hub{padding:8px 8px 2px}.be104-date-nav{grid-template-columns:78px 1fr 78px}
+  .be104-date-nav b{font-size:14px}.be104-venue-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .be104-venue{min-height:76px;padding:7px}.be104-venue b{font-size:11px}
+  .be104-race-mini{flex-basis:62px}.be104-race-row{grid-template-columns:66px 1fr 42px;padding:10px 9px}
+}
