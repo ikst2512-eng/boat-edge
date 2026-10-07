@@ -1089,3 +1089,81 @@ function boot(){
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
 })();
+
+/* BOAT_EDGE_SITE_V81_MOBILE_RACE_SUITE */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V81";
+const $=(q,r=document)=>r.querySelector(q), $$=(q,r=document)=>[...r.querySelectorAll(q)];
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function S(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
+function race(){const s=S();return s?.race||s?.currentRace||s?.raceData||null}
+function laneNo(r,i){return Number(r?.lane||r?.boat_number||r?.frame||i+1)}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function clickTab(tab){
+  const b=document.querySelector(`#raceTabs [data-tab="${tab}"]`);
+  if(b){b.click();return}
+  const v=document.getElementById(`tab-${tab}`);
+  if(v){$$(".subview").forEach(x=>x.classList.toggle("active",x===v));window.scrollTo({top:0,behavior:"smooth"})}
+}
+function makeFlow(){
+  const rv=$("#raceView");if(!rv)return;
+  let h=$("#be81Flow");
+  if(!h){h=document.createElement("section");h.id="be81Flow";h.className="be81-flow";const tabs=$("#raceTabs");tabs?.parentNode?.insertBefore(h,tabs)}
+  h.innerHTML=`<div class="be81-flow-head"><div><small>DECISION FLOW</small><b>この順に見ればOK</b></div><span>スマホ実戦用</span></div>
+  <div class="be81-steps">
+   <button data-tab="before"><i>1</i><b>直前</b><small>進入・展示</small></button>
+   <button data-tab="data"><i>2</i><b>比較</b><small>選手・機力</small></button>
+   <button data-tab="scenario"><i>3</i><b>展開</b><small>A/B世界</small></button>
+   <button data-tab="pred"><i>4</i><b>予想</b><small>確率・理由</small></button>
+   <button data-tab="direct"><i>5</i><b>最終</b><small>締切判断</small></button>
+  </div>`;
+  $$("#be81Flow [data-tab]").forEach(b=>b.onclick=()=>clickTab(b.dataset.tab));
+}
+function compactTabs(){
+  const tabs=$("#raceTabs");if(!tabs)return;
+  tabs.classList.add("be81-tabs");
+  const map={pred:"予想",scenario:"展開",card:"選手",before:"直前",data:"比較",direct:"最終",audit:"状態"};
+  $$("#raceTabs [data-tab]").forEach(b=>{if(map[b.dataset.tab])b.textContent=map[b.dataset.tab]});
+}
+function promoteCommand(){
+ const cmd=$("#be79Command"),pred=$("#tab-pred");
+ if(cmd&&pred&&!pred.contains(cmd)){const sec=pred.querySelector(".section");if(sec)sec.insertBefore(cmd,sec.firstChild)}
+}
+function beforeMaps(d){
+ const bf=d?.beforeinfo||{};
+ return {
+  racers:new Map((bf.racers||[]).map(x=>[Number(x.lane),x])),
+  st:new Map((bf.start_exhibition||[]).map(x=>[Number(x.lane),num(x.st)])),
+  actual:new Map((d?.actual_entry||[]).map(x=>[Number(x.lane),Number(x.course)]))
+ };
+}
+function quickCompare(){
+ const d=race(),rv=$("#raceView");if(!d||!rv)return;
+ let h=$("#be81Quick");
+ if(!h){h=document.createElement("section");h.id="be81Quick";h.className="be81-quick";const a=$("#be81Flow")||$("#raceTabs");a?.parentNode?.insertBefore(h,a)}
+ const m=beforeMaps(d),rs=d.racers||[];
+ h.innerHTML=`<div class="be81-qhead"><div><small>6 BOATS QUICK VIEW</small><b>6艇クイック比較</b></div><span>直前値を優先表示</span></div>
+ <div class="be81-grid">${rs.map((r,i)=>{
+   const l=laneNo(r,i),bf=m.racers.get(l)||{},st=m.st.get(l),course=m.actual.get(l);
+   const ex=num(bf.exhibition_time),avg=num(r.avg_st),mq=num(r?.motor?.quinella_rate),nw=num(r?.national?.win_rate);
+   return `<button data-tab="data" class="be81-boat lane${l}">
+     <div class="be81-lane">${l}</div><b>${esc(r.name||r.racer_name||"—")}</b>
+     <small>${esc(r.class||r.grade||"")} / 全国 ${nw!==null?nw.toFixed(2):"—"}</small>
+     <div class="be81-mini"><span>平均ST <strong>${avg!==null?avg.toFixed(2):"—"}</strong></span><span>展示ST <strong>${st!==null?st.toFixed(2):"—"}</strong></span><span>M2連 <strong>${mq!==null?mq.toFixed(1)+"%":"—"}</strong></span><span>展示 <strong>${ex!==null?ex.toFixed(2):"—"}</strong></span></div>
+     <em>${course?`実進入 ${course}コース`:"実進入待ち"}</em>
+   </button>`;
+ }).join("")}</div>`;
+ $$("#be81Quick [data-tab]").forEach(b=>b.onclick=()=>clickTab(b.dataset.tab));
+}
+function tags(){
+ [["tab-before","① 直前確認"],["tab-data","② 6艇比較"],["tab-scenario","③ 展開確認"],["tab-pred","④ 予想・買い目"],["tab-direct","⑤ 締切前最終判断"]].forEach(([id,l])=>{const v=$("#"+id);if(v)v.dataset.be81Label=l});
+}
+function status(){const st=$("#be73Status");if(st)st.innerHTML=st.innerHTML.replace(/BOAT EDGE V7[3-9]|BOAT EDGE V80/g,"BOAT EDGE V81")}
+function polish(){makeFlow();compactTabs();promoteCommand();quickCompare();tags();status()}
+function boot(){
+ polish();
+ new MutationObserver(()=>requestAnimationFrame(polish)).observe(document.body,{childList:true,subtree:true});
+ setInterval(()=>{if(document.visibilityState==="visible")polish()},20000);
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+})();
