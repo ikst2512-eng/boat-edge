@@ -1,0 +1,10 @@
+/* BOAT_EDGE_V97_ODDS_PAYOUT_UX */
+#buyBoard .buy-ticket{grid-template-columns:32px 34px minmax(76px,1fr) 56px 68px!important;grid-template-areas:"check rank combo prob money" "odds odds odds odds odds"}
+#buyBoard .buy-check{grid-area:check}#buyBoard .buy-rank{grid-area:rank}#buyBoard .buy-combo{grid-area:combo}#buyBoard .buy-prob{grid-area:prob}#buyBoard .buy-money{grid-area:money}
+.be97-odds{grid-area:odds;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:5px;padding-top:7px;border-top:1px dashed #dfe9f6}
+.be97-odds>span{display:block;background:#f7fbff;border:1px solid #e6eef8;border-radius:9px;padding:6px 7px;min-width:0}
+.be97-odds small{display:block;font-size:8px;color:#71859c;font-weight:800;white-space:nowrap}.be97-odds b{display:block;font-size:10px;color:#173d6b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.be97-odds .plus{color:#08795a}.be97-odds .minus{color:#c03b55}.be97-odds .miss{grid-column:1/-1;color:#8b98a8;font-size:9px;background:#f8fafc}
+.be97-summary{grid-column:1/-1;margin-top:10px;padding:11px;border:1px solid #cfe1f6;border-radius:13px;background:linear-gradient(180deg,#f8fbff,#eef6ff);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.be97-summary>div{padding:8px;border-radius:10px;background:#fff;border:1px solid #e2ecf8}.be97-summary small{display:block;color:#71859c;font-size:8px}.be97-summary b{display:block;color:#173d6b;font-size:12px;margin-top:3px}.be97-summary p{grid-column:1/-1;margin:0;font-size:8px;color:#71859c;line-height:1.5}
+@media(max-width:640px){.be97-odds{grid-template-columns:repeat(2,minmax(0,1fr))}.be97-summary{grid-template-columns:1fr}.be97-summary p{grid-column:1}.be97-odds b{font-size:9px}}

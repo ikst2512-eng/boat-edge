@@ -1053,9 +1053,10 @@ body{background:
 <!-- V89: orphaned V51 CSS disabled -->
 <!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 <!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->
-  <meta name="boat-edge-site-version" content="V96-UX-UPGRADE">
+  <meta name="boat-edge-site-version" content="V97-ODDS-PAYOUT">
 <link rel="stylesheet" href="./assets/boat_edge_v90.css?v=94">
 <link rel="stylesheet" href="./assets/boat_edge_v96.css?v=96">
+<link rel="stylesheet" href="./assets/boat_edge_v97.css?v=97">
 </head>
 <body>
 <div class="app">
@@ -1308,7 +1309,7 @@ body{background:
           <li><b>今すぐ更新</b>は公開済みJSONを即再読込し、その後2分間15秒ごとに追跡</li>
           <li><b>収集を開始</b>はGitHub Actionsの実行画面を開き、元データ収集そのものを手動起動できる</li>
           <li><b>現在接続済み</b>: 出走表 / 選手基本 / 全国・当地 / モーター・ボート2連3連 / F・L / 直前 / 実進入 / 展示ST / オリジナル展示 / 水面</li>
-          <li><b>未接続</b>: オッズ / 選手写真 / 詳細コース別長期成績 / AI予測ST / モーター詳細ランキング。未接続値は作らず「未取得」で表示</li>
+          <li><b>オッズ接続済み</b>: BOAT RACE公式3連単オッズ（締切45分前〜5分後）。配分から的中時払戻・損益・回収率を表示</li><li><b>未接続</b>: 選手写真 / 詳細コース別長期成績 / AI予測ST / モーター詳細ランキング。未接続値は作らず「未取得」で表示</li>
           <li><b>ホーム</b> → 締切が近いレースを選ぶ</li>
           <li><b>予想</b> → 買い目を見る</li>
           <li><b>展開予想</b> → 逃げるのか、誰が攻めるのかを見る</li><li><b>直前</b> → 実進入 / 展示ST / 展示タイムを見る</li>
@@ -3106,5 +3107,6 @@ setInterval(()=>{ if(state.race){ const pred=getPrediction(state.race); renderUr
 <script src="./assets/boat_edge_v88.js?v=88"></script>
 <script src="./assets/boat_edge_v90.js?v=94"></script>
 <script src="./assets/boat_edge_v96.js?v=96"></script>
+<script src="./assets/boat_edge_v97.js?v=97"></script>
 </body>
 </html>
