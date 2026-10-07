@@ -26,6 +26,7 @@ const HISTORY="boatEdgeV113FinalHistory";
 const ACTIVE_MODE="boatEdgeV101ActiveMode";
 
 let archiveIndex=null;
+let serverHistoryByKey={};
 let selectedDate=null;
 let selectedVenue=null;
 let lastRaceKey=null;
@@ -113,7 +114,8 @@ function ensureHomeHub(){
 function resultText(r){
   if(r.result_status==="confirmed"){
     const pay=r.payout?` ${Number(r.payout).toLocaleString("ja-JP")}円`:"";
-    return `結果 ${r.trifecta||"確定"}${pay}`;
+    const hit=serverHistoryByKey?.[r.race_key]?.hit_any?" 🎯":"";
+    return `結果 ${r.trifecta||"確定"}${pay}${hit}`;
   }
   return r.has_odds?"オッズあり":"保存データ";
 }
@@ -152,6 +154,7 @@ function venuePanel(day){
 }
 async function renderHomeHub(){
   const host=ensureHomeHub();if(!host)return;
+  await loadServerHistoryIndex();
   const idx=await loadArchiveIndex();
   const dates=[...(idx?.dates||[])].map(x=>x.ymd).sort();
   if(!dates.length){host.innerHTML='<div class="be108-empty">保存データ準備中</div>';return}
@@ -255,6 +258,11 @@ function allTickets(pred){
 }
 async function oddsFor(key){return (await J(`./data/site_odds/${key}.json`,30000))?.trifecta_odds||{}}
 async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}
+async function loadServerHistoryIndex(){
+  const d=await J("./data/site_prediction_history/index.json",30000);
+  serverHistoryByKey=d?.races||{};
+  return d||{races:{}};
+}
 function confidence(pred,mode,rows){
   const map={S:90,"S+":93,A:82,"A+":86,B:72,"B+":76,C:62,D:52};
   let base=map[String(pred?.grade||"").toUpperCase()]??68;

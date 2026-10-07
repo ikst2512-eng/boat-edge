@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V113
+Current UI target: V114
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -122,6 +122,18 @@ Current UI target: V113
 - V113 stores final snapshot saved time/deadline provenance with each settled hit.
 
 - V113 adds no MutationObserver and no setInterval.
+
+- V114 server history starts prospectively; no retrospective prediction backfill.
+
+- V114 saves only 0-15 minute PRE_RESULT site-final snapshots with results_seen/unlock/scoring false.
+
+- V114 never creates a snapshot after a confirmed result exists.
+
+- V114 settles saved snapshots against factual site_results and exposes cross-device 🎯 on archived race rows.
+
+- V114 labels these snapshots SITE_FALLBACK; they are not formal predictions.
+
+- V114 adds no browser MutationObserver or setInterval.
 
 ## NEXT
 - Verify V101 iPhone layout.
