@@ -1167,3 +1167,75 @@ function boot(){
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
 })();
+
+/* BOAT_EDGE_SITE_V82_PURCHASE_RESULT_CENTER */
+(()=>{"use strict";
+window.BOAT_EDGE_SITE_VERSION="V82";
+const $=(q,r=document)=>r.querySelector(q);
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen=v=>Number.isFinite(Number(v))?Math.round(Number(v)).toLocaleString("ja-JP")+"円":"—";
+function S(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
+function race(){const s=S();return s?.race||s?.currentRace||s?.raceData||null}
+function norm(v){if(Array.isArray(v))return v.slice(0,3).join("-");const m=String(v??"").match(/([1-6])\D+([1-6])\D+([1-6])/);return m?`${m[1]}-${m[2]}-${m[3]}`:null}
+async function json(u){try{const r=await fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});return r.ok?await r.json():null}catch(_){return null}}
+function dist(r){
+ const d=r?.__formal120||window.__boatEdgeFormal120?.[r?.race_key];
+ const a=Array.isArray(d?.distribution120)?d.distribution120:[];
+ return a.map((x,i)=>({combo:norm(x.combo||x.trifecta||x.order),p:Number(x.probability??x.prob??x.p),rank:i+1,reason:x.reason||x.reasons||x.rationale||"",world:x.world||x.scenario||""})).filter(x=>x.combo&&Number.isFinite(x.p)).sort((a,b)=>b.p-a.p).map((x,i)=>({...x,rank:i+1}));
+}
+function oddsMap(o){const m=o?.trifecta_odds||o?.odds||{};const z={};for(const [k,v] of Object.entries(m)){const c=norm(k),n=Number(typeof v==="object"?(v.odds??v.value):v);if(c&&n>0)z[c]=n}return z}
+function alloc(rows,budget,fn){
+ const units=Math.max(1,Math.floor(budget/100)),w=rows.map(x=>Math.max(0,Number(fn(x))||0));let sum=w.reduce((a,b)=>a+b,0);
+ if(!sum){w.fill(1);sum=w.length}const raw=w.map(x=>units*x/sum),base=raw.map(Math.floor),left=units-base.reduce((a,b)=>a+b,0);
+ [...raw.keys()].sort((a,b)=>(raw[b]-base[b])-(raw[a]-base[a])).slice(0,left).forEach(i=>base[i]++);
+ return rows.map((x,i)=>({...x,stake:base[i]*100}));
+}
+function plans(rows,budget,odds){
+ const out=[
+  {id:"equal",label:"均等",rows:alloc(rows,budget,()=>1)},
+  {id:"prob",label:"確率比例",rows:alloc(rows,budget,x=>x.p)}
+ ];
+ if(rows.length&&rows.every(x=>odds[x.combo]>0))out.push({id:"dutch",label:"払戻均等化",rows:alloc(rows,budget,x=>1/odds[x.combo])});
+ return out;
+}
+function metric(p,odds){
+ let ev=0,all=true,min=null,max=null;
+ for(const x of p.rows){const o=odds[x.combo];if(!(o>0)){all=false;continue}const gross=x.stake*o;ev+=x.p/100*gross;min=min===null?gross:Math.min(min,gross);max=max===null?gross:Math.max(max,gross)}
+ return {ev:all?Math.round(ev):null,min:all?Math.round(min):null,max:all?Math.round(max):null,stake:p.rows.reduce((a,x)=>a+x.stake,0)};
+}
+function host(){
+ const h=$("#tab-pred .section")||$("#tab-pred");if(!h)return null;let x=$("#be82Center");
+ if(!x){x=document.createElement("section");x.id="be82Center";x.className="be82-center";const anchor=$("#be79Command");anchor?.after(x)||h.prepend(x)}return x;
+}
+function resultRank(rows,win){const x=rows.find(v=>v.combo===win);return x?.rank||null}
+function settle(plan,res,odds){
+ const win=norm(res?.trifecta||res?.finish_order),pay=Number(res?.trifecta_payout_yen_per_100),t=plan.rows.find(x=>x.combo===win);
+ const stake=plan.rows.reduce((a,x)=>a+x.stake,0),gross=t&&pay>0?Math.floor(pay*t.stake/100):0;
+ return {win,pay,hit:!!t,hitStake:t?.stake||0,stake,gross,profit:gross-stake};
+}
+async function render(){
+ const r=race(),h=host();if(!r||!h||!r.race_key)return;
+ const rows=dist(r),[oraw,res]=await Promise.all([json(`./data/site_odds/${r.race_key}.json`),json(`./data/site_results/${r.race_key}.json`)]);
+ const odds=oddsMap(oraw),budget=5000,cut=Math.min(10,rows.length),sel=rows.slice(0,cut),ps=plans(sel,budget,odds).map(p=>({...p,m:metric(p,odds)}));
+ const ranked=ps.filter(x=>x.m.ev!=null).sort((a,b)=>b.m.ev-a.m.ev),best=ranked[0]||ps.find(x=>x.id==="prob")||ps[0];
+ const confirmed=res?.status==="confirmed",win=confirmed?norm(res.trifecta||res.finish_order):null,wr=win?resultRank(rows,win):null,st=confirmed&&best?settle(best,res,odds):null;
+ const recommendation=!rows.length?"データ待ち":!Object.keys(odds).length?"オッズ待ち":best?`買うなら ${best.label}`:"見送り";
+ h.innerHTML=`<div class="be82-head"><div><small>PURCHASE / RESULT</small><h3>購入・払戻センター</h3></div><div class="be82-rec"><span>AI推奨</span><b>${esc(recommendation)}</b></div></div>
+ <div class="be82-kpis">
+  <div><span>予算</span><b>${yen(budget)}</b></div><div><span>対象</span><b>${rows.length?`上位${cut}点`:"120分布待ち"}</b></div>
+  <div><span>オッズ</span><b>${Object.keys(odds).length}/120</b></div><div><span>結果</span><b>${confirmed?"確定":"待ち"}</b></div>
+ </div>
+ ${rows.length?`<div class="be82-strats">${ps.map(p=>`<button class="${best?.id===p.id?"best":""}" data-plan="${p.id}"><b>${esc(p.label)}</b><span>投資 ${yen(p.m.stake)}</span><small>${p.m.ev==null?"現在オッズ待ち":`期待払戻 ${yen(p.m.ev)}`}</small><em>${p.m.min==null?"—":`${yen(p.m.min)}〜${yen(p.m.max)}`}</em></button>`).join("")}</div>`:'<div class="be82-empty">正式120通り分布を待っています。サイト側で確率は作りません。</div>'}
+ ${best?`<details open class="be82-detail"><summary>AI推奨配分：${esc(best.label)}</summary><div class="be82-table"><div class="head"><span>買い目</span><span>確率</span><span>金額</span><span>オッズ</span><span>想定払戻</span></div>${best.rows.map(x=>`<div><b>${x.combo}</b><span>${x.p.toFixed(2)}%</span><span>${yen(x.stake)}</span><span>${odds[x.combo]?odds[x.combo].toFixed(1)+"倍":"—"}</span><strong>${odds[x.combo]?yen(x.stake*odds[x.combo]):"—"}</strong></div>`).join("")}</div><p>予想順位は確率だけで決定。オッズは購入配分の比較にだけ使用。</p></details>`:""}
+ ${confirmed?`<div class="be82-result ${st?.hit?"hit":"miss"}"><div><small>確定3連単</small><b>${esc(win)}</b></div><div><small>予測順位</small><b>${wr?wr+"位":"120分布外/未取得"}</b></div><div><small>100円払戻</small><b>${yen(res.trifecta_payout_yen_per_100)}</b></div>${st?`<div><small>${esc(best.label)}結果</small><b>${st.hit?"的中":"不的中"}</b></div><div><small>実払戻</small><b>${yen(st.gross)}</b></div><div><small>収支</small><b>${st.profit>=0?"+":""}${yen(st.profit)}</b></div>`:""}</div>`:""}
+ <div class="be82-foot">事前予想を固定 → 結果を自動照合 → 的中組の予測順位・払戻・収支を記録。結果を見て予想確率を作り直しません。</div>`;
+ const stx=$("#be73Status");if(stx)stx.innerHTML=stx.innerHTML.replace(/BOAT EDGE V(?:7[3-9]|8[0-1])/g,"BOAT EDGE V82");
+}
+function boot(){
+ render();
+ window.addEventListener("boat-edge-formal120",render);
+ new MutationObserver(()=>requestAnimationFrame(render)).observe(document.body,{childList:true,subtree:true});
+ setInterval(()=>{if(document.visibilityState==="visible")render()},30000);
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+})();
