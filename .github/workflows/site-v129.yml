@@ -1,0 +1,506 @@
+name: BOAT EDGE V129 Adaptive Wave Current
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v129.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v129-current
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install V129 UI server policy and live TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, re, textwrap
+
+          # ---------- browser UI + hit status ----------
+          js_path=Path("assets/boat_edge_v108.js")
+          s=js_path.read_text(encoding="utf-8")
+
+          if 'id="be128HitStatus"' not in s:
+              pattern=re.compile(r'''  const modeHit=Boolean\(settled\?\.mode_hits\?\.\[mode\]\);
+            let resultBar="";
+            if\(resultConfirmed\)\{
+              const pay=Number\(result\?\.trifecta_payout_yen_per_100\);
+              const payText=Number\.isFinite\(pay\)\?`\$\{pay\.toLocaleString\("ja-JP"\)\}円 / 100円`:"払戻未取得";
+              let verdict="締切前予想なし・判定対象外",cls="neutral";
+              if\(settled\)\{verdict=modeHit\?"🎯 この予想モード的中":"この予想モードは不的中";cls=modeHit\?"hit":"miss"\}
+              resultBar=`<div class="be118-resultbar \$\{cls\}"><div><small>確定結果</small><b>\$\{esc\(officialResult\|\|"確定"\)\}</b></div><div><strong>\$\{verdict\}</strong><span>\$\{payText\}</span></div></div>`;
+            \}''',re.S)
+              replacement=r'''  const modeHit=Boolean(settled?.mode_hits?.[mode]);
+            let cls="pending",status="🎯 判定待ち",detail="締切15分前に最終予想を保存して判定",resultText="結果未確定";
+            if(inFinalWindow){
+              status="🎯 判定待ち・最終予想保存中";
+              detail=`締切まで${mins}分 / 保存済み最終予想で判定`;
+            }else if(!resultConfirmed&&mins!==null&&mins<0){
+              status="🎯 判定待ち・結果待ち";
+              detail=effectiveSnap?"締切前の最終予想は保存済み":"締切前snapshotなし";
+            }else if(resultConfirmed){
+              const pay=Number(result?.trifecta_payout_yen_per_100);
+              const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";
+              resultText=`結果 ${esc(officialResult||"確定")}`;
+              if(settled){
+                status=modeHit?"🎯 的中":"✕ 不的中";
+                detail=`${LABELS[mode]?.name||mode} / ${payText}`;
+                cls=modeHit?"hit":"miss";
+              }else{
+                status="— 判定対象外";
+                detail=`締切前の最終予想snapshotなし / ${payText}`;
+                cls="neutral";
+              }
+            }
+            const resultBar=`<div id="be128HitStatus" class="be118-resultbar ${cls}" data-hit-status="${modeHit?"hit":resultConfirmed?"settled":"pending"}"><div><small>🎯 判定ステータス</small><b>${status}</b></div><div><strong>${resultText}</strong><span>${detail}</span></div></div>`;'''
+              s,n=pattern.subn(replacement,s,count=1)
+              if n!=1:
+                  raise SystemExit(f"hit-status patch count={n}")
+
+          # ---------- adaptive wave mode: probability/scenario only, no odds ----------
+          mode_re=re.compile(r'function be122ModesFromTickets\(all,odds\)\{.*?\n\}\nfunction be122PredictionFromAdjusted',re.S)
+          mode_new=r'''function be129WaveRows(all){
+            if(!all.length)return [];
+            const primaryHead=String(all[0]?.combo||"").split("-")[0]||null;
+            const alt=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+            const primary=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]===primaryHead):all;
+            const altHeads=new Set(alt.map(x=>String(x.combo||"").split("-")[0]).filter(Boolean));
+            const total=all.reduce((a,b)=>a+(Number(b?.p)||0),0)||1;
+            const altShare=alt.reduce((a,b)=>a+(Number(b?.p)||0),0)/total;
+            const target=(altHeads.size>=2||altShare>=.38)?10:8;
+            const ordered=[...alt,...primary];
+            const out=[],seen=new Set();
+            for(const x of ordered){
+              if(!x?.combo||seen.has(x.combo))continue;
+              seen.add(x.combo);out.push(x);
+              if(out.length>=Math.min(target,all.length))break;
+            }
+            return out;
+          }
+          function be122ModesFromTickets(all,odds){
+            const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
+            const modes={
+              hit:all.slice(0,Math.min(10,all.length)),
+              balance:all.slice(0,Math.min(6,all.length)),
+              hole:be129WaveRows(all),
+              narrow:all.slice(0,Math.min(3,all.length))
+            };
+            for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
+            return modes;
+          }
+          function be122PredictionFromAdjusted'''
+          s,n=mode_re.subn(mode_new,s,count=1)
+          if n!=1:
+              raise SystemExit(f"mode patch count={n}")
+
+          s=s.replace(
+              'hole:{name:"波乱展開",desc:"本線と違う頭の展開候補を見る。オッズでは選ばない",icon:"◆"}',
+              'hole:{name:"波乱展開",desc:"別頭を先に、展開分岐の強さで8〜10点。オッズでは増減しない",icon:"◆"}',
+              1
+          )
+          js_path.write_text(s,encoding="utf-8")
+
+          # ---------- CSS ----------
+          css_path=Path("assets/boat_edge_v108.css")
+          css=css_path.read_text(encoding="utf-8")
+          if "BOAT_EDGE_V128_HIT_STATUS" not in css:
+              css += r'''
+          /* BOAT_EDGE_V128_HIT_STATUS */
+          .be118-resultbar.pending{background:#f5f8fc;border-color:#c9d6e5}
+          .be118-resultbar.pending b{font-size:13px;color:#173d6b}
+          .be118-resultbar.neutral{background:#f7f7f7;border-color:#d7d7d7}
+          #be128HitStatus{margin-top:7px}
+          #be128HitStatus>div:first-child{min-width:42%}
+          @media(max-width:640px){
+            #be128HitStatus{padding:8px 9px;gap:7px}
+            #be128HitStatus b{font-size:11px}
+            #be128HitStatus strong{font-size:9px}
+            #be128HitStatus span{font-size:7px}
+          }
+          '''
+          css_path.write_text(css,encoding="utf-8")
+
+          # ---------- index ----------
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=129',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=129',html)
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V129-ADAPTIVE-WAVE-HIT-TODO">',html)
+          idx.write_text(html,encoding="utf-8")
+
+          # ---------- create the scheduled server generator from V123, with the same wave policy ----------
+          v123=Path(".github/workflows/site-v123.yml").read_text(encoding="utf-8")
+          step=v123.find("      - name: Build UI-matched FINAL_15M history")
+          assert step>=0, "V123 build step missing"
+          hs=v123.find("python - <<'PY'",step)
+          assert hs>=0
+          body_start=v123.find("\n",hs)+1
+          body_end=v123.find("\n          PY",body_start)
+          assert body_end>=0
+          server_src=textwrap.dedent(v123[body_start:body_end])
+
+          py_mode_re=re.compile(r'def modes_from_tickets\(allrows,odds\):.*?\n\ndef confidence',re.S)
+          py_mode_new=r'''def modes_from_tickets(allrows,odds):
+              def od(x):
+                  v=num(odds.get(x["combo"]))
+                  return v if v is not None and v>0 else None
+              primary=(allrows[0]["combo"].split("-")[0] if allrows else None)
+              alt=[x for x in allrows if x["combo"].split("-")[0]!=primary] if primary else []
+              primary_rows=[x for x in allrows if x["combo"].split("-")[0]==primary] if primary else list(allrows)
+              alt_heads={x["combo"].split("-")[0] for x in alt}
+              total=sum(float(x.get("p") or 0) for x in allrows) or 1
+              alt_share=sum(float(x.get("p") or 0) for x in alt)/total
+              target=10 if len(alt_heads)>=2 or alt_share>=.38 else 8
+              wave=[];seen=set()
+              for x in alt+primary_rows:
+                  if x["combo"] in seen:continue
+                  seen.add(x["combo"]);wave.append(x)
+                  if len(wave)>=min(target,len(allrows)):break
+              modes={
+                  "hit":allrows[:10],
+                  "balance":allrows[:6],
+                  "hole":wave,
+                  "narrow":allrows[:3]
+              }
+              return {k:[dict(x,odds=od(x)) for x in v] for k,v in modes.items()}
+
+          def confidence'''
+          server_src,n=py_mode_re.subn(py_mode_new,server_src,count=1)
+          if n!=1:
+              raise SystemExit(f"server mode patch count={n}")
+
+          server_src=server_src.replace(
+              '"selection_policy":"MATCH_CURRENT_UI_V122_OR_FORMAL_CURRENT"',
+              '"selection_policy":"MATCH_CURRENT_UI_V129_OR_FORMAL_CURRENT"'
+          )
+          server_src=server_src.replace(
+              '"selection_policy":policy,\n',
+              '"selection_policy":policy,\n        "mode_policy":"ADAPTIVE_WAVE_8_10",\n',
+              1
+          )
+
+          scripts=Path("scripts")
+          scripts.mkdir(exist_ok=True)
+          Path("scripts/site_final_history_v129.py").write_text(server_src,encoding="utf-8")
+
+          # ---------- prediction policy ----------
+          policy_path=Path("data/site_prediction_policy.json")
+          policy=json.loads(policy_path.read_text(encoding="utf-8")) if policy_path.exists() else {}
+          policy["wave_mode"]={
+              "name":"波乱展開",
+              "ticket_count":"8〜10",
+              "rule":"別頭候補を確率順で優先し、分岐が強い場合は10点。足りない分は本命頭の2・3着崩れ上位確率筋を追加。",
+              "ten_ticket_condition":"別頭が2系統以上、または別頭確率シェアが38%以上",
+              "odds_used_for_selection":False,
+              "probabilities_modified":False
+          }
+          policy_path.write_text(json.dumps(policy,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # ---------- archive old TODO then create a true live TODO ----------
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          old_todo=todo.read_text(encoding="utf-8") if todo.exists() else ""
+          archive=Path("BOAT_EDGE_TODO_ARCHIVE_PRE_V129.md")
+          if old_todo and not archive.exists():
+              archive.write_text(old_todo,encoding="utf-8")
+
+          formal={}
+          fp=Path("data/formal_status.json")
+          if fp.exists():
+              try: formal=json.loads(fp.read_text(encoding="utf-8"))
+              except Exception: formal={}
+          guards=formal.get("guards") or {}
+
+          state={
+            "schema_version":"boat-edge-current-state-v129",
+            "as_of":"2026-10-08",
+            "ui":{"version":"V129","status":"INSTALLING"},
+            "latest_prediction_policy":{"version":"V127+V129-wave","status":"ACTIVE","file":"data/site_prediction_policy.json"},
+            "final15m_snapshot":{"version":"V129","status":"ACTIVE","script":"scripts/site_final_history_v129.py"},
+            "audit":{"version":"V125","status":"ACTIVE_SCHEDULE_FALLBACK"},
+            "parity":{"version":"V129","status":"PENDING"},
+            "formal_current":{
+              "connected":formal.get("connected"),
+              "predictions_ready":formal.get("predictions_ready"),
+              "current":formal.get("current"),
+              "stage":formal.get("stage"),
+              "guards":guards
+            },
+            "hit_status_ui":{
+              "always_visible":True,
+              "states":["判定待ち","最終予想保存中","結果待ち","🎯的中","✕不的中","判定対象外"]
+            },
+            "wave_mode":{"min_tickets":8,"max_tickets":10,"odds_rank_weight":False}
+          }
+          Path("data/site_current_state.json").write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          lines=[
+          "# BOAT EDGE CURRENT TODO",
+          "",
+          "Updated: 2026-10-08",
+          "This is the live execution list. Historical items are archived separately.",
+          "",
+          "## CURRENT",
+          "- UI: V129-ADAPTIVE-WAVE-HIT-TODO",
+          "- Latest prediction policy: V127 + V129 adaptive wave ACTIVE",
+          "- FINAL_15M server generator: V129 ACTIVE",
+          "- Revision-safe audit: V125 ACTIVE (schedule fallback)",
+          "- Browser/server parity: V129 PENDING until install validation",
+          f"- Formal CURRENT connected: {str(formal.get('connected')).lower()}",
+          f"- Formal predictions_ready: {str(formal.get('predictions_ready')).lower()}",
+          f"- Formal stage: {formal.get('stage') or 'unknown'}",
+          f"- Formal guards: results_seen={str(guards.get('results_seen')).lower()} / unlock={str(guards.get('unlock')).lower()} / scoring={str(guards.get('scoring')).lower()}",
+          "",
+          "## ACTIVE TODO — priority order",
+          "1. [ ] First live V129 FINAL_15M snapshot on 2026-10-08 and V125 audit PASS.",
+          "2. [ ] Confirm first settled race shows `🎯 的中`, `✕ 不的中`, or `判定対象外` directly in prediction panel.",
+          "3. [ ] Validate live 波乱展開 count is 8 or 10 and browser/server saved ticket order is identical.",
+          "4. [ ] Connect racer×actual-course 1y/6m/3m.",
+          "5. [ ] Connect 1-course escape resistance + 2-course wall/逃がし interaction.",
+          "6. [ ] Connect 3/4 attack boat -> 5/6 beneficiary interaction.",
+          "7. [ ] Connect motor recent-meet/current-meet/parts-change state.",
+          "8. [ ] Connect venue×season/wind/tide/course and same-day completed-race LIVE water state.",
+          "9. [ ] Formal latest prediction: audit original exhibition against both BOATERS + 競艇日和 before claiming retrieved.",
+          "",
+          "## WAITING / GATES",
+          "- Formal CURRENT cannot replace reference prediction until predictions_ready=true and PRE_RESULT guards are valid.",
+          "- No retrospective prediction backfill after results are known.",
+          "- Missing values are not replaced with zero, mean, or proxy.",
+          "- Odds never rank tickets and never decide 波乱展開 point count.",
+          "- Scenario accuracy is primary; genuine split/rough races may use up to 10 tickets.",
+          "",
+          "## RECENT DONE",
+          "- [x] V127 excluded missing avg_st instead of treating null as zero.",
+          "- [x] V126 recheck after V127 fix passed all four fixed real-race fixtures during V128 run.",
+          "- [x] V129 波乱展開 changed from sparse alternate-head-only selection to adaptive 8〜10 scenario coverage.",
+          "- [x] V129 keeps 🎯 judgement status visible before and after result settlement.",
+          "- [x] V129 rebuilt TODO as CURRENT / ACTIVE / WAITING / RECENT DONE.",
+          "",
+          "## TODO GUARD",
+          "- ACTIVE TODO contains unfinished tasks only.",
+          "- Completed work moves to RECENT DONE.",
+          "- Component versions must match data/site_current_state.json.",
+          "- Legacy NEXT sections are not allowed.",
+          ""
+          ]
+          todo.write_text("\n".join(lines),encoding="utf-8")
+
+          PY
+
+      - name: Disable obsolete V123 scheduler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=site-v123.yml
+          state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+          echo "${target} initial_state=${state}"
+          if [ "${state}" = "active" ]; then
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null
+          fi
+          final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+          echo "${target} final_state=${final}"
+          [ "${final}" != "active" ]
+
+      - name: Browser server parity including adaptive wave
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, subprocess, textwrap, re
+
+          # Temporarily make the V126 regression read the exact V129 server mode policy,
+          # while keeping the repository workflow file untouched after the test.
+          wf=Path(".github/workflows/site-v123.yml")
+          orig=wf.read_text(encoding="utf-8")
+          server=Path("scripts/site_final_history_v129.py").read_text(encoding="utf-8")
+
+          step=orig.find("      - name: Build UI-matched FINAL_15M history")
+          assert step>=0
+          hs=orig.find("python - <<'PY'",step)
+          body_start=orig.find("\n",hs)+1
+          body_end=orig.find("\n          PY",body_start)
+          assert body_end>=0
+          temp=orig[:body_start]+textwrap.indent(server,"          ")+orig[body_end:]
+          wf.write_text(temp,encoding="utf-8")
+
+          try:
+              v126=Path(".github/workflows/site-v126.yml").read_text(encoding="utf-8")
+              s=v126.find("      - name: Run browser-server parity regression")
+              assert s>=0
+              ps=v126.find("python - <<'PY'",s)
+              pstart=v126.find("\n",ps)+1
+              pend=v126.find("\n          PY",pstart)
+              assert pend>=0
+              src=textwrap.dedent(v126[pstart:pend])
+              runner=Path("/tmp/v129_parity.py")
+              runner.write_text(src,encoding="utf-8")
+              r=subprocess.run(["python",str(runner)],text=True)
+              if r.returncode!=0:
+                  raise SystemExit(r.returncode)
+          finally:
+              wf.write_text(orig,encoding="utf-8")
+
+          report_path=Path("data/site_prediction_parity/v126.json")
+          d=json.loads(report_path.read_text(encoding="utf-8"))
+          assert d.get("pass") is True and not d.get("errors"), d.get("errors")
+          d["schema_version"]="boat-edge-v129-browser-server-parity"
+          d["ui_version"]="V129-ADAPTIVE-WAVE-HIT-TODO"
+          d["server_history_version"]="V129"
+          d["mode_policy"]="ADAPTIVE_WAVE_8_10"
+          d["pass"]=True
+          out=Path("data/site_prediction_parity/v129.json")
+          out.write_text(json.dumps(d,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          PY
+
+      - name: Finalize current state
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json,re
+
+          p=json.loads(Path("data/site_prediction_parity/v129.json").read_text(encoding="utf-8"))
+          assert p["pass"] is True and not p["errors"]
+
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["ui"]["status"]="ACTIVE"
+          st["parity"]["status"]="PASS"
+          st["parity"]["report"]="data/site_prediction_parity/v129.json"
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # Check adaptive wave logic on fixed real fixtures by reading the parity report.
+          # Also require source-code rules that force 8/10 without odds.
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+          assert 'const target=(altHeads.size>=2||altShare>=.38)?10:8;' in js
+          assert 'hole:be129WaveRows(all)' in js
+          assert 'odds' not in re.search(r'function be129WaveRows\(all\)\{.*?\n\}',js,re.S).group(0)
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("- Browser/server parity: V129 PENDING until install validation","- Browser/server parity: V129 PASS")
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Validate V129
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_final_history_v129.py
+          grep -q 'V129-ADAPTIVE-WAVE-HIT-TODO' index.html
+          grep -q 'boat_edge_v108.js?v=129' index.html
+          grep -q 'id="be128HitStatus"' assets/boat_edge_v108.js
+          grep -q 'function be129WaveRows' assets/boat_edge_v108.js
+          grep -q '8〜10点' assets/boat_edge_v108.js
+          grep -q 'ADAPTIVE_WAVE_8_10' scripts/site_final_history_v129.py
+          test -f BOAT_EDGE_TODO_ARCHIVE_PRE_V129.md
+          test -f data/site_current_state.json
+          test -f data/site_prediction_parity/v129.json
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          p=json.loads(Path("data/site_prediction_parity/v129.json").read_text(encoding="utf-8"))
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "[ ]" in active
+          assert "Verify V101 iPhone layout" not in t
+          assert st["ui"]=={"version":"V129","status":"ACTIVE"}
+          assert st["final15m_snapshot"]["version"]=="V129"
+          assert st["parity"]["status"]=="PASS"
+          assert p["pass"] is True and not p["errors"]
+          assert st["wave_mode"]["min_tickets"]==8 and st["wave_mode"]["max_tickets"]==10
+          print({"ui":"V129","todo_guard":"PASS","parity":"PASS","wave":"8-10"})
+          PY
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V129
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js assets/boat_edge_v108.css index.html scripts/site_final_history_v129.py data/site_prediction_policy.json data/site_current_state.json data/site_prediction_parity/v129.json BOAT_EDGE_CURRENT_TODO.md BOAT_EDGE_TODO_ARCHIVE_PRE_V129.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Adaptive wave 8-10 and current TODO V129"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
+
+  history:
+    needs: [install]
+    if: always() && (github.event_name == 'schedule' || needs.install.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build V129 FINAL_15M history
+        shell: bash
+        run: |
+          test -f scripts/site_final_history_v129.py
+          python scripts/site_final_history_v129.py
+
+      - name: Validate V129 history
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_history/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-server-site-history-index-v123"
+          assert d["selection_policy"]=="MATCH_CURRENT_UI_V129_OR_FORMAL_CURRENT"
+          print({"history_count":len(d.get("races",{})),"policy":d["selection_policy"]})
+          PY
+
+      - name: Save V129 history
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_snapshots data/site_prediction_history
+          git diff --cached --quiet && exit 0
+          git commit -m "Update V129 FINAL15M history"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
