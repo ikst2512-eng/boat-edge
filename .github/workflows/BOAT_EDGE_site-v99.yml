@@ -1,0 +1,316 @@
+name: BOAT EDGE V99 Race Tabs + Course Stats
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v99.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "20 21 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v99-race-tabs-course-stats
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml pyyaml
+
+      - name: Collect official venue course stats
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json,re,time
+          from pathlib import Path
+          from datetime import datetime,timedelta,timezone
+          import requests
+          from bs4 import BeautifulSoup
+          JST=timezone(timedelta(hours=9)); now=datetime.now(JST)
+          out=Path("data/site_course_stats"); out.mkdir(parents=True,exist_ok=True)
+          VENUES={"01":"桐生","02":"戸田","03":"江戸川","04":"平和島","05":"多摩川","06":"浜名湖","07":"蒲郡","08":"常滑","09":"津","10":"三国","11":"びわこ","12":"住之江","13":"尼崎","14":"鳴門","15":"丸亀","16":"児島","17":"宮島","18":"徳山","19":"下関","20":"若松","21":"芦屋","22":"福岡","23":"唐津","24":"大村"}
+          s=requests.Session(); s.headers.update({"User-Agent":"Mozilla/5.0 (compatible; BOAT-EDGE-V99/1.0)","Accept-Language":"ja-JP,ja;q=0.9","Connection":"close"})
+          def norm(x): return re.sub(r"\s+"," ",str(x or "")).strip()
+          def parse(html):
+              soup=BeautifulSoup(html,"lxml"); tables=[]
+              for table in soup.find_all("table"):
+                  t=norm(table.get_text(" ",strip=True))
+                  if "コース別入着率" in t and "決まり手" in t: tables.append(table)
+              if not tables:
+                  for table in soup.find_all("table"):
+                      t=norm(table.get_text(" ",strip=True))
+                      if "決まり手" in t and "1着" in t and ("捲り" in t or "まくり" in t): tables.append(table)
+              if not tables: raise ValueError("course_table_not_found")
+              table=max(tables,key=lambda x:len(norm(x.get_text(" ",strip=True))))
+              courses={}
+              for tr in table.find_all("tr"):
+                  t=norm(tr.get_text(" ",strip=True))
+                  nums=re.findall(r"(?<!\d)(\d+(?:\.\d+)?)(?!\d)",t)
+                  if len(nums)<13: continue
+                  try: course=int(float(nums[0])); vals=[float(x) for x in nums[1:13]]
+                  except: continue
+                  if course not in range(1,7) or len(vals)!=12 or any(x<0 or x>100 for x in vals): continue
+                  courses[str(course)]={"first_rate":vals[0],"second_rate":vals[1],"third_rate":vals[2],"fourth_rate":vals[3],"fifth_rate":vals[4],"sixth_rate":vals[5],"escape":vals[6],"makuri":vals[7],"sashi":vals[8],"makuri_sashi":vals[9],"nuki":vals[10],"megumare":vals[11]}
+              if len(courses)!=6: raise ValueError(f"course_count={len(courses)}")
+              txt=norm(soup.get_text(" ",strip=True))
+              m=re.search(r"集計期間[：:]?\s*(\d{4}[/-]\d{1,2}[/-]\d{1,2})\s*[〜～~\-]\s*(\d{4}[/-]\d{1,2}[/-]\d{1,2})",txt)
+              return courses,({"from":m.group(1),"to":m.group(2)} if m else None)
+          errors=[]; ok=0
+          for jcd,name in VENUES.items():
+              url=f"https://www.boatrace.jp/owpc/pc/data/stadium?jcd={jcd}"
+              try:
+                  r=s.get(url,timeout=(5,20)); r.raise_for_status(); r.encoding=r.apparent_encoding or r.encoding or "utf-8"
+                  courses,period=parse(r.text)
+                  doc={"schema_version":"boat-edge-site-course-stats-v99","venue_code":jcd,"venue":name,"fetched_at":datetime.now(JST).isoformat(timespec="seconds"),"source":"BOAT RACE オフィシャルウェブサイト ボートレース場データ","source_url":url,"period":period,"unit":"percent","scope":"venue_recent_3_months","prediction_logic_uses_course_stats":False,"courses":courses}
+                  (out/f"{jcd}.json").write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8"); ok+=1
+              except Exception as e: errors.append({"jcd":jcd,"venue":name,"error":repr(e)})
+              time.sleep(.12)
+          idx={"schema_version":"boat-edge-site-course-stats-index-v99","updated_at":datetime.now(JST).isoformat(timespec="seconds"),"venues_ok":ok,"venues_total":24,"errors":errors,"source":"BOAT RACE official stadium pages","prediction_logic_uses_course_stats":False}
+          (out/"index.json").write_text(json.dumps(idx,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(idx,ensure_ascii=False))
+          if ok<20: print(f"WARN too_few_venues_ok={ok}")
+          PY
+
+      - name: Install V99 UI
+        shell: bash
+        run: |
+          cat > assets/boat_edge_v99.js <<'JS'
+          /* BOAT_EDGE_V99_TOP_RACE_TABS_COURSE_STATS */
+          (()=>{"use strict";
+          const esc=x=>String(x??"－").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+          const pct=x=>Number.isFinite(Number(x))?Number(x).toFixed(1)+"%":"－";
+          const statsCache=new Map();
+          let courseRaceKey="";
+          
+          function currentState(){
+            try{return typeof state!=="undefined"?state:null}catch(_){return null}
+          }
+          function currentRace(){return currentState()?.race||null}
+          function currentVenue(){
+            const s=currentState(), d=s?.race;
+            if(!s||!d)return null;
+            return (s.today?.venues||[]).find(v=>String(v.jcd)===String(d.meta?.venue_code||s.currentVenue))||null;
+          }
+          function minsTo(deadline){
+            if(!deadline)return null;
+            const m=/^(\d{1,2}):(\d{2})$/.exec(String(deadline)); if(!m)return null;
+            const now=new Date(); const x=new Date(now); x.setHours(Number(m[1]),Number(m[2]),0,0);
+            return Math.round((x-now)/60000);
+          }
+          function placeTopNav(){
+            const summary=document.querySelector("#raceView .race-summary");
+            const top=summary?.querySelector(".summary-top");
+            const nav=document.getElementById("raceNav");
+            const tabs=document.getElementById("raceTabs");
+            if(!summary||!top||!nav||!tabs)return;
+            if(top.nextElementSibling!==nav) top.insertAdjacentElement("afterend",nav);
+            if(nav.nextElementSibling!==tabs) nav.insertAdjacentElement("afterend",tabs);
+            summary.classList.add("be99-summary"); nav.classList.add("be99-race-nav"); tabs.classList.add("be99-content-tabs");
+          }
+          function renderTopRaceTabs(){
+            placeTopNav();
+            const s=currentState(), d=s?.race, venue=currentVenue(), nav=document.getElementById("raceNav");
+            if(!d||!venue||!nav)return;
+            const sig=`${d.race_key}|${s.today?.updated_at||""}`;
+            if(nav.dataset.be99Sig===sig && nav.querySelector(".be99-race-btn"))return;
+            nav.dataset.be99Sig=sig;
+            const currentNo=Number(d.meta?.race_no);
+            nav.innerHTML=(venue.races||[]).map(r=>{
+              const active=Number(r.race_no)===currentNo;
+              const mins=minsTo(r.deadline);
+              const status=r.beforeinfo_status==="ok"?"直前あり":(mins!==null&&mins<0?"締切":"予選");
+              return `<button type="button" class="be99-race-btn ${active?"active":""}" data-file="${esc(r.file)}" data-jcd="${esc(venue.jcd)}">
+                <strong>${esc(r.race_no)}R</strong>
+                <span>締切 ${esc(r.deadline||"－")}</span>
+                <small>${esc(status)}</small>
+              </button>`;
+            }).join("");
+            nav.querySelectorAll("[data-file]").forEach(btn=>btn.addEventListener("click",()=>{
+              if(typeof loadRace==="function") loadRace(btn.dataset.file,btn.dataset.jcd);
+            }));
+            requestAnimationFrame(()=>nav.querySelector(".be99-race-btn.active")?.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"}));
+          }
+          async function getVenueStats(jcd){
+            const k=String(jcd||"").padStart(2,"0"); if(!k)return null;
+            const hit=statsCache.get(k); if(hit&&Date.now()-hit.at<3600000)return hit.v;
+            const v=await fetch(`./data/site_course_stats/${k}.json?t=${Date.now()}`,{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null);
+            statsCache.set(k,{at:Date.now(),v}); return v;
+          }
+          function actualCourseMap(d){
+            const m=new Map();
+            for(const x of d?.actual_entry||[]){const lane=Number(x.lane),course=Number(x.course); if(lane>=1&&lane<=6&&course>=1&&course<=6)m.set(lane,course)}
+            return m;
+          }
+          function dominant(c){
+            const a=[["逃げ",c?.escape],["まくり",c?.makuri],["差し",c?.sashi],["まくり差し",c?.makuri_sashi]].filter(x=>Number.isFinite(Number(x[1])));
+            a.sort((x,y)=>Number(y[1])-Number(x[1])); return a[0]||["－",null];
+          }
+          function highlightClear(nodes,minGap,minRel){
+            const a=[...nodes].map(n=>({n,v:Number(n.dataset.value)})).filter(x=>Number.isFinite(x.v)).sort((x,y)=>y.v-x.v);
+            a.forEach(x=>x.n.classList.remove("be99-best")); if(a.length<2)return;
+            const gap=a[0].v-a[1].v, rel=gap/Math.max(Math.abs(a[1].v),1);
+            if(gap>=minGap&&rel>=minRel)a[0].n.classList.add("be99-best");
+          }
+          function ensureCourseBox(){
+            let el=document.getElementById("be99CourseStats"); if(el)return el;
+            const boats=document.getElementById("boats");
+            const anchor=boats?.parentElement||document.getElementById("worlds")||document.getElementById("buyBoard");
+            if(!anchor)return null;
+            el=document.createElement("section"); el.id="be99CourseStats"; el.className="be99-course-box"; anchor.after(el); return el;
+          }
+          async function renderCourseStats(){
+            const d=currentRace(); if(!d?.race_key)return;
+            const el=ensureCourseBox(); if(!el)return;
+            const jcd=d.meta?.venue_code, stats=await getVenueStats(jcd);
+            if(d.race_key!==currentRace()?.race_key)return;
+            if(!stats?.courses){el.innerHTML='<div class="be99-course-head"><h3>当地コース傾向</h3></div><p class="be99-miss">公式コース別データ未取得</p>';return;}
+            const actual=actualCourseMap(d), actualReady=actual.size>0;
+            const rows=[];
+            for(let lane=1;lane<=6;lane++){
+              const course=actual.get(lane)||lane, c=stats.courses[String(course)]||{}, dom=dominant(c);
+              rows.push({lane,course,c,dom});
+            }
+            const period=stats.period?`${esc(stats.period.from)}〜${esc(stats.period.to)}`:"最近3か月";
+            el.innerHTML=`<div class="be99-course-head"><div><h3>当地コース傾向</h3><p>BOAT RACE公式 / ${period} / ${actualReady?"実進入":"枠＝想定コース"}</p></div><span>6艇比較</span></div>
+              <div class="be99-course-grid">${rows.map(x=>`<article class="be99-course-card">
+                <div class="be99-course-title"><b>${x.lane}号艇</b><span>${x.course}コース</span></div>
+                <div class="be99-first" data-value="${Number(x.c.first_rate)}"><small>1着率</small><strong>${pct(x.c.first_rate)}</strong></div>
+                <div class="be99-dominant"><small>主な決まり手</small><strong>${esc(x.dom[0])} ${pct(x.dom[1])}</strong></div>
+                <div class="be99-methods">
+                  <span data-m="escape" data-value="${Number(x.c.escape)}">逃 ${pct(x.c.escape)}</span>
+                  <span data-m="makuri" data-value="${Number(x.c.makuri)}">捲 ${pct(x.c.makuri)}</span>
+                  <span data-m="sashi" data-value="${Number(x.c.sashi)}">差 ${pct(x.c.sashi)}</span>
+                  <span data-m="makuri_sashi" data-value="${Number(x.c.makuri_sashi)}">捲差 ${pct(x.c.makuri_sashi)}</span>
+                </div>
+              </article>`).join("")}</div>
+              <p class="be99-course-note">※選手個人ではなく、この場の最近3か月のコース傾向。実進入取得後は実コースに自動切替。</p>`;
+            highlightClear(el.querySelectorAll(".be99-first"),5,.10);
+            for(const m of ["escape","makuri","sashi","makuri_sashi"]) highlightClear(el.querySelectorAll(`[data-m="${m}"]`),8,.10);
+            courseRaceKey=d.race_key;
+          }
+          function polishHeader(){
+            placeTopNav();
+            const cap=document.querySelector("#raceView .deadline-cap"); if(cap)cap.textContent="締切";
+            const title=document.getElementById("raceTitle"); if(title)title.classList.add("be99-title-main");
+          }
+          let scheduled=false;
+          function run(){
+            if(scheduled)return; scheduled=true;
+            requestAnimationFrame(async()=>{
+              scheduled=false; polishHeader(); renderTopRaceTabs();
+              const k=currentRace()?.race_key||""; if(k&&k!==courseRaceKey) await renderCourseStats();
+            });
+          }
+          new MutationObserver(run).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+          setInterval(run,1500); run();
+          })();
+          JS
+          cat > assets/boat_edge_v99.css <<'CSS'
+          /* BOAT_EDGE_V99_TOP_RACE_TABS_COURSE_STATS */
+          #raceView .race-head{background:#f4f6f8;padding-top:0}
+          #raceView .race-shell{max-width:none}
+          #raceView .race-summary.be99-summary{border:0;border-radius:0;box-shadow:none;background:#fff;padding:0 0 10px;overflow:hidden}
+          #raceView .be99-summary .summary-top{padding:18px 16px 14px;border-bottom:1px solid #e7e9ed;align-items:center}
+          #raceView .be99-title-main{font-size:28px!important;line-height:1.05;margin:0!important;color:#1d2329!important;font-weight:950!important}
+          #raceView .race-subtitle{margin-top:7px!important;font-size:11px!important;color:#65717d!important;line-height:1.5}
+          #raceView .deadline-big{font-size:27px!important;color:#1d2329!important;font-weight:950!important;line-height:1}
+          #raceView .deadline-cap{font-size:10px!important;color:#687481!important;margin-top:5px}
+          #raceView #raceNav.be99-race-nav{display:flex!important;gap:8px!important;overflow-x:auto!important;padding:12px 14px!important;margin:0!important;background:#f5f6f8;border-bottom:1px solid #e3e6ea;scrollbar-width:none;scroll-snap-type:x proximity}
+          #raceView #raceNav.be99-race-nav::-webkit-scrollbar{display:none}
+          #raceView .be99-race-btn{appearance:none;flex:0 0 86px;min-width:86px;border:1px solid #d9dde3;border-radius:8px;background:#eef0f3;color:#20252b;padding:9px 6px 8px;text-align:center;scroll-snap-align:center;font-family:inherit}
+          #raceView .be99-race-btn strong{display:block;font-size:18px;line-height:1;font-weight:950}
+          #raceView .be99-race-btn span{display:block;margin-top:6px;font-size:9px;font-weight:800;color:#5e6975;white-space:nowrap}
+          #raceView .be99-race-btn small{display:block;margin-top:4px;font-size:8px;font-weight:800;color:#7c8792}
+          #raceView .be99-race-btn.active{background:#202124;border-color:#202124;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+          #raceView .be99-race-btn.active span,#raceView .be99-race-btn.active small{color:#fff}
+          #raceView #raceTabs.be99-content-tabs{display:flex!important;gap:0!important;overflow-x:auto!important;padding:0 10px!important;margin:0!important;background:#fff;border-bottom:1px solid #dfe3e8;scrollbar-width:none}
+          #raceView #raceTabs.be99-content-tabs::-webkit-scrollbar{display:none}
+          #raceView #raceTabs.be99-content-tabs button{flex:0 0 auto;border:0!important;border-bottom:3px solid transparent!important;border-radius:0!important;background:#fff!important;color:#7a838d!important;padding:13px 12px 11px!important;font-size:12px!important;font-weight:900!important;white-space:nowrap!important;box-shadow:none!important}
+          #raceView #raceTabs.be99-content-tabs button.on{color:#202124!important;border-bottom-color:#202124!important}
+          #raceView .be99-summary>#summaryStrip,#raceView .be99-summary>#raceCommand,#raceView .be99-summary>#raceMasthead,#raceView .be99-summary>#urgencyRibbon,#raceView .be99-summary>#freshnessStrip,#raceView .be99-summary>#raceQuickNav{margin-left:14px!important;margin-right:14px!important}
+          .be99-course-box{margin-top:14px;padding:14px;border:1px solid #dde4ec;border-radius:14px;background:#fff}
+          .be99-course-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.be99-course-head h3{margin:0;color:#20252b;font-size:16px;font-weight:950}.be99-course-head p{margin:4px 0 0;color:#75808c;font-size:9px;line-height:1.5}.be99-course-head>span{font-size:8px;font-weight:900;color:#607080;background:#f0f3f6;border-radius:999px;padding:5px 8px;white-space:nowrap}
+          .be99-course-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.be99-course-card{border:1px solid #e2e7ed;border-radius:11px;background:#fafbfc;padding:9px;min-width:0}.be99-course-title{display:flex;justify-content:space-between;gap:6px;align-items:center}.be99-course-title b{font-size:11px;color:#20252b}.be99-course-title span{font-size:8px;color:#778390}.be99-first,.be99-dominant{margin-top:6px;padding:6px 7px;border-radius:8px;background:#fff;border:1px solid #e8ebef}.be99-first small,.be99-dominant small{display:block;font-size:7px;color:#7d8894}.be99-first strong,.be99-dominant strong{display:block;margin-top:2px;font-size:11px;color:#24313e}.be99-methods{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}.be99-methods span{padding:4px 5px;border-radius:6px;background:#f0f3f6;color:#526170;font-size:7.5px;white-space:nowrap}.be99-best{background:#fff0f2!important;border-color:#ff9bad!important;color:#d92f4f!important}.be99-best strong{color:#d92f4f!important}.be99-best:after{content:"突出";display:block;margin-top:2px;color:#d92f4f;font-size:6.5px;font-weight:950}.be99-course-note,.be99-miss{margin:8px 0 0;color:#7d8894;font-size:8px;line-height:1.5}
+          @media(max-width:640px){#raceView .be99-summary .summary-top{padding:16px 14px 12px}#raceView .be99-title-main{font-size:24px!important}#raceView .deadline-big{font-size:24px!important}#raceView .be99-race-btn{flex-basis:80px;min-width:80px}#raceView #raceTabs.be99-content-tabs button{padding-left:10px!important;padding-right:10px!important}.be99-course-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+          CSS
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html"); s=p.read_text(encoding="utf-8")
+          s=re.sub(r'\s*<script src=["\']\./assets/boat_edge_v9[89]\.js(?:\?v=\d+)?["\']></script>\s*','\n',s)
+          s=re.sub(r'\s*<link[^>]+boat_edge_v9[89]\.css(?:\?v=\d+)?[^>]*>\s*','\n',s)
+          s=s.replace("</head>",'<link rel="stylesheet" href="./assets/boat_edge_v99.css?v=99">\n</head>')
+          s=s.replace("</body>",'<script src="./assets/boat_edge_v99.js?v=99"></script>\n</body>')
+          s=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V99-RACE-TABS-COURSE-STATS">',s)
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: Persist CURRENT TODO
+        shell: bash
+        run: |
+          cat > BOAT_EDGE_CURRENT_TODO.md <<'MD'
+          # BOAT EDGE CURRENT TODO
+          
+          Last updated: V99
+          
+          ## Fixed rules
+          - Before every change, review/update this TODO.
+          - If upload is needed: single file first + exact GitHub upload URL.
+          - ZIP only when multiple files are genuinely required.
+          - After upload: verify Actions -> generated files -> Pages.
+          - Never fabricate unavailable values.
+          - Highlight only clearly standout values.
+          
+          ## DONE
+          - V96 racer tap -> that boat as head prediction.
+          - V96 4-stage race flow / bottom nav 予想 / standout highlighting.
+          - V97 official trifecta odds + stake + payout + profit/loss + ROI.
+          - V99 top 1R-12R race selector with deadline time.
+          - V99 selected race high-contrast state and auto-centering.
+          - V99 prediction/content tabs moved directly under race selector.
+          - V99 cleaner BOATERS-like race-header hierarchy (reference only, not copied).
+          - V99 official venue recent-3-month course 1st-place + winning-method stats.
+          - V99 actual-course mapping when actual entry exists; lane fallback otherwise.
+          - V99 clear-gap highlighting for course stats.
+          
+          ## NEXT
+          - Verify V99 collector >=20/24 venues.
+          - Verify V99 JS/CSS/index generation.
+          - Verify GitHub Pages deployment.
+          - Check iPhone screenshots for tab spacing/readability.
+          - Add player-specific course stats only when a reliable source is available.
+          - Continue simplifying dense technical blocks without hiding important data.
+          MD
+
+      - name: Validate
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v99.js
+          python - <<'PY'
+          import yaml
+          yaml.safe_load(open(".github/workflows/site-v99.yml",encoding="utf-8"))
+          PY
+          grep -q 'V99-RACE-TABS-COURSE-STATS' index.html
+          grep -q 'BOAT_EDGE_V99_TOP_RACE_TABS_COURSE_STATS' assets/boat_edge_v99.js
+          grep -q '締切' assets/boat_edge_v99.js
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_course_stats assets/boat_edge_v99.js assets/boat_edge_v99.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V99 race tabs and course stats"
+          git push
