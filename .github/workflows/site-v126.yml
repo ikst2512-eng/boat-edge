@@ -1,0 +1,284 @@
+name: BOAT EDGE V126 V122-V123 Parity Regression
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v126.yml"
+      - ".github/workflows/site-v123.yml"
+      - "index.html"
+      - "assets/boat_edge_v108.js"
+      - "data/site_course_stats/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v126-parity
+  cancel-in-progress: false
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run browser-server parity regression
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from __future__ import annotations
+          import hashlib, json, re, subprocess, textwrap
+          from pathlib import Path
+
+          ROOT=Path(".")
+          REPORT=ROOT/"data/site_prediction_parity"
+          REPORT.mkdir(parents=True,exist_ok=True)
+          FIXTURES=[
+              "20261005-09-08",
+              "20261005-20-11",
+              "20261005-20-06",
+              "20261005-23-05",
+          ]
+
+          def sha(p):
+              return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+          def read_json(p):
+              return json.loads(Path(p).read_text(encoding="utf-8"))
+
+          v123=Path(".github/workflows/site-v123.yml").read_text(encoding="utf-8")
+          marker="      - name: Build UI-matched FINAL_15M history"
+          start=v123.find(marker)
+          assert start>=0, "V123 build step missing"
+          py_start=v123.find("python - <<'PY'",start)
+          assert py_start>=0, "V123 python heredoc missing"
+          line_start=v123.find("\n",py_start)+1
+          py_end=v123.find("\n          PY",line_start)
+          assert py_end>=0, "V123 python heredoc end missing"
+          server_src=textwrap.dedent(v123[line_start:py_end])
+          cut=server_src.find("changed=0;snapshots=0;settled=0")
+          assert cut>=0, "V123 execution boundary missing"
+          server_defs=server_src[:cut]
+          server_ns={"__name__":"v123_parity"}
+          exec(compile(server_defs,"v123_extracted.py","exec"),server_ns)
+          for name in ["build_fallback","scenario_adjust","modes_from_tickets"]:
+              assert callable(server_ns.get(name)), f"V123 function missing: {name}"
+
+          idx=Path("index.html").read_text(encoding="utf-8")
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+
+          def extract_function(src,name):
+              starts=[src.find(f"function {name}("),src.find(f"async function {name}(")]
+              starts=[x for x in starts if x>=0]
+              assert starts, f"JS function missing: {name}"
+              start=min(starts)
+              brace=src.find("{",start)
+              assert brace>=0
+              depth=0
+              quote=None
+              esc=False
+              i=brace
+              while i<len(src):
+                  ch=src[i]
+                  if quote:
+                      if esc:
+                          esc=False
+                      elif ch=="\\":
+                          esc=True
+                      elif ch==quote:
+                          quote=None
+                      i+=1
+                      continue
+                  if ch in ("'",'"',"`"):
+                      quote=ch
+                      i+=1
+                      continue
+                  if ch=="{":
+                      depth+=1
+                  elif ch=="}":
+                      depth-=1
+                      if depth==0:
+                          return src[start:i+1]
+                  i+=1
+              raise AssertionError(f"Unclosed JS function: {name}")
+
+          idx_funcs=[
+              "getBeforeMap","normalizeExhibition","computeScores","gradeFromSpread",
+              "round100","allocateByWeights","topNUnique","buildFallbackPrediction"
+          ]
+          v108_funcs=[
+              "normalizeCombo","allTickets",
+              "be122Clamp","be122Mean","be122ActualCourseMap","be122ExStMap",
+              "be122ExTimeMap","be122OriginalMap","be122MetricScores","be122MethodFit",
+              "be122ScenarioAdjusted","be122ModesFromTickets"
+          ]
+          browser_defs="\n".join(extract_function(idx,n) for n in idx_funcs)
+          browser_defs+="\n"+"\n".join(extract_function(js,n) for n in v108_funcs)
+
+          node_runner=r'''
+          const fs=require("fs");
+          const path=require("path");
+          const num=v=>(v===null||v===undefined||String(v).trim()==="")?null:(Number.isFinite(Number(v))?Number(v):null);
+          const n=num;
+          const laneNo=(r,i)=>r?.lane??(i+1);
+          const state={model:null};
+          const formatUpdated=()=> "";
+          async function courseStatsFor(jcd){
+            const p=path.join("data","site_course_stats",String(jcd).padStart(2,"0")+".json");
+            try{return JSON.parse(fs.readFileSync(p,"utf8"))}catch(_){return null}
+          }
+          __DEFS__
+
+          async function run(){
+            const fixtures=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+            const out={};
+            for(const key of fixtures){
+              const race=JSON.parse(fs.readFileSync(path.join("data","races",key+".json"),"utf8"));
+              const pred=buildFallbackPrediction(race);
+              const adjusted=await be122ScenarioAdjusted(race,pred);
+              const modes=be122ModesFromTickets(adjusted.tickets,{});
+              out[key]={
+                used:adjusted.used,
+                tickets:adjusted.tickets.slice(0,10).map(x=>({combo:x.combo,p:x.p,world:x.world})),
+                modes:Object.fromEntries(Object.entries(modes).map(([k,v])=>[k,v.map(x=>x.combo)]))
+              };
+            }
+            process.stdout.write(JSON.stringify(out));
+          }
+          run().catch(e=>{console.error(e);process.exit(1)});
+          '''.replace("__DEFS__",browser_defs)
+
+          tmp=Path("/tmp/v126_browser.js")
+          tmp.write_text(node_runner,encoding="utf-8")
+          fixtures_path=Path("/tmp/v126_fixtures.json")
+          fixtures_path.write_text(json.dumps(FIXTURES),encoding="utf-8")
+          check=subprocess.run(["node","--check",str(tmp)],capture_output=True,text=True)
+          assert check.returncode==0, check.stderr
+          run=subprocess.run(["node",str(tmp),str(fixtures_path)],capture_output=True,text=True)
+          assert run.returncode==0, run.stderr
+          browser=json.loads(run.stdout)
+
+          server={}
+          for key in FIXTURES:
+              race=read_json(ROOT/"data/races"/f"{key}.json")
+              pred=server_ns["build_fallback"](race)
+              adjusted=server_ns["scenario_adjust"](race,pred)
+              modes=server_ns["modes_from_tickets"](adjusted["tickets"],{})
+              server[key]={
+                  "used":adjusted.get("used") or [],
+                  "tickets":[{"combo":x["combo"],"p":x["p"],"world":x["world"]} for x in adjusted["tickets"][:10]],
+                  "modes":{k:[x["combo"] for x in v] for k,v in modes.items()}
+              }
+
+          cases={}
+          errors=[]
+          for key in FIXTURES:
+              b=browser[key];s=server[key]
+              bcomb=[x["combo"] for x in b["tickets"]]
+              scomb=[x["combo"] for x in s["tickets"]]
+              order_ok=bcomb==scomb
+              used_ok=b["used"]==s["used"]
+              modes_ok=b["modes"]==s["modes"]
+              diffs=[abs(float(bx["p"])-float(sx["p"])) for bx,sx in zip(b["tickets"],s["tickets"])]
+              max_diff=max(diffs) if diffs else 0.0
+              prob_ok=max_diff<=1e-9
+              passed=order_ok and used_ok and modes_ok and prob_ok
+              cases[key]={
+                  "pass":passed,
+                  "used_inputs":b["used"],
+                  "browser_top10":bcomb,
+                  "server_top10":scomb,
+                  "max_probability_abs_diff":max_diff,
+                  "mode_order_match":modes_ok,
+                  "input_stage_match":used_ok
+              }
+              if not passed:
+                  errors.append({
+                      "race_key":key,
+                      "order_ok":order_ok,
+                      "used_ok":used_ok,
+                      "modes_ok":modes_ok,
+                      "max_probability_abs_diff":max_diff
+                  })
+
+          report={
+              "schema_version":"boat-edge-v122-v123-parity-v126",
+              "ui_version":"V122-SCENARIO-AWARE-REFERENCE-FIXED",
+              "server_history_version":"V123",
+              "index_sha256":sha("index.html"),
+              "runtime_js_sha256":sha("assets/boat_edge_v108.js"),
+              "v123_workflow_sha256":sha(".github/workflows/site-v123.yml"),
+              "fixtures":FIXTURES,
+              "cases":cases,
+              "errors":errors,
+              "pass":not errors
+          }
+          out=REPORT/"v126.json"
+          out.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          if errors:
+              raise SystemExit("V122/V123 parity mismatch")
+
+          PY
+
+      - name: Validate parity report
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_parity/v126.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-v122-v123-parity-v126"
+          assert d["pass"] is True, d["errors"]
+          assert len(d["cases"])>=4
+          for key,c in d["cases"].items():
+              assert c["pass"] is True, (key,c)
+              assert c["browser_top10"]==c["server_top10"], key
+              assert c["mode_order_match"] is True, key
+              assert c["input_stage_match"] is True, key
+              assert c["max_probability_abs_diff"]<=1e-9, key
+          print({"cases":len(d["cases"]),"pass":d["pass"],"errors":d["errors"]})
+          PY
+
+      - name: Update TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("BOAT_EDGE_CURRENT_TODO.md")
+          s=p.read_text(encoding="utf-8") if p.exists() else "# BOAT EDGE CURRENT TODO\n"
+          lines=[
+            "- V126 executes the actual V122 browser functions and extracted V123 server functions against real stored races.",
+            "- V126 requires identical top10/mode ordering and probability parity within 1e-9.",
+            "- V126 fixtures cover actual-course swap, missing exhibition time, wide exhibition-ST gap and complete original-exhibition data.",
+            "- V126 automatically reruns when V122 runtime, V123 workflow or venue course stats change.",
+            "- V126 does not modify V122 UI or V123/V125 production pipelines."
+          ]
+          marker="## NEXT"
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+"\n\n"+marker,1) if marker in s else s+"\n"+line+"\n"
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: Save V126 parity evidence
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_parity/v126.json BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add V122-V123 parity regression V126"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
