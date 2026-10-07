@@ -1053,8 +1053,8 @@ body{background:
 <!-- V89: orphaned V51 CSS disabled -->
 <!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 <!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->
-  <meta name="boat-edge-site-version" content="V117-OFFICIAL-COURSE-STATS">
-<link rel="stylesheet" href="./assets/boat_edge_v108.css?v=117">
+  <meta name="boat-edge-site-version" content="V119-COMPACT-PROBABILITY-FIRST">
+<link rel="stylesheet" href="./assets/boat_edge_v108.css?v=119">
 </head>
 <body>
 <div class="app">
@@ -1710,13 +1710,13 @@ function buildFallbackPrediction(d){
   const bAmounts = allocateByWeights(bTickets.map(x=>x.probability), budgetB);
 
   const grade = gradeFromSpread(Math.abs(diff));
-  const decision = worldAProb >= 60 || worldBProb >= 60 ? "暫定予想" : "慎重";
+  const decision = worldAProb >= 60 || worldBProb >= 60 ? "参考予想" : "参考・慎重";
   const updateLabel = d.meta?.updated_at ? `更新 ${formatUpdated(d.meta.updated_at)}` : "更新時刻なし";
   const leader = strongestChallenger ? `${strongestChallenger.lane}号艇` : "外艇";
 
   return {
     mode:"temp",
-    label:"旧サイト簡易（参考）",
+    label:"参考簡易（正式CURRENT未接続）",
     decision,
     grade,
     updateLabel,
@@ -1724,12 +1724,12 @@ function buildFallbackPrediction(d){
     worlds:[
       {
         key:"A", title:"イン逃げ成立", probability:worldAProb, budget:budgetA,
-        caption:`旧サイト簡易スコア（参考表示）。正式CURRENTとは別計算。`,
+        caption:`参考簡易スコア。正式CURRENTとは別計算で、オッズによる買い目順位変更はしません。`,
         tickets:aTickets.map((x,idx)=>({rank:idx+1, combo:x.combo, probability:x.probability, amount:aAmounts[idx]}))
       },
       {
         key:"B", title:"イン逃げ不成立", probability:worldBProb, budget:budgetB,
-        caption:`旧サイト簡易スコア（参考表示）。正式CURRENTとは別計算。`,
+        caption:`参考簡易スコア。正式CURRENTとは別計算で、オッズによる買い目順位変更はしません。`,
         tickets:bTickets.map((x,idx)=>({rank:idx+1, combo:x.combo, probability:x.probability, amount:bAmounts[idx]}))
       }
     ],
@@ -3101,6 +3101,6 @@ startPassiveRefresh();
 </script>
 <script src="./assets/boat_edge_final_v48.js"></script>
 <!-- BOAT_EDGE_V85_SAFE_MODE: accumulated simple JS disabled -->
-<script src="./assets/boat_edge_v108.js?v=117"></script>
+<script src="./assets/boat_edge_v108.js?v=119"></script>
 </body>
 </html>

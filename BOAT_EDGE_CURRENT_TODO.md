@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V117
+Current UI target: V119
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -168,6 +168,22 @@ Current UI target: V117
 - V117 keeps course stats display-only; prediction logic does not use them yet.
 
 - V117 adds no MutationObserver and no setInterval.
+
+- V119 mobile race header is compact and no longer sticky on iPhone-width screens.
+
+- V119 shows current confirmed result and current-mode hit/miss directly inside the prediction panel; history tap is not required.
+
+- V119 resets default prediction mode to hit-priority using a new storage key.
+
+- V119 removes odds from ticket ranking in all four modes; odds remain display/payout-only.
+
+- V119 renames old hole mode to scenario variance and selects alternate-head scenarios by prediction probability, not price.
+
+- V119 clearly labels non-formal output as reference/simple while formal CURRENT is disconnected.
+
+- V119 keeps zero MutationObserver and zero extension setInterval.
+
+- V119 changes current site selection only; existing V114 server-history workflow is left untouched to avoid workflow-write permission failure.
 
 ## NEXT
 - Verify V101 iPhone layout.

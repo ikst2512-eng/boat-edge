@@ -11,10 +11,10 @@ const yen=v=>Number.isFinite(n(v))?Math.round(n(v)).toLocaleString("ja-JP")+"円
 const VENUES=[["01","桐生"],["02","戸田"],["03","江戸川"],["04","平和島"],["05","多摩川"],["06","浜名湖"],["07","蒲郡"],["08","常滑"],["09","津"],["10","三国"],["11","びわこ"],["12","住之江"],["13","尼崎"],["14","鳴門"],["15","丸亀"],["16","児島"],["17","宮島"],["18","徳山"],["19","下関"],["20","若松"],["21","芦屋"],["22","福岡"],["23","唐津"],["24","大村"]];
 
 const LABELS={
-  hit:{name:"的中重視",desc:"候補を広めに残して取りこぼしを減らす",icon:"◎"},
-  balance:{name:"バランス重視",desc:"確率とオッズの両方を見て選ぶ",icon:"◐"},
-  hole:{name:"穴重視",desc:"予想候補内で高配当寄りを優先",icon:"◆"},
-  narrow:{name:"激絞り重視",desc:"確率上位だけを3点に絞る",icon:"⚡"}
+  hit:{name:"的中重視",desc:"展開確率の上位を広めに残して取りこぼしを減らす",icon:"◎"},
+  balance:{name:"バランス",desc:"展開確率の上位6点。オッズでは順位を変えない",icon:"◐"},
+  hole:{name:"波乱展開",desc:"本線と違う頭の展開候補を見る。オッズでは選ばない",icon:"◆"},
+  narrow:{name:"激絞り3点",desc:"展開確率の上位3点だけに絞る",icon:"⚡"}
 };
 
 const KDATE="boatEdgeV108Date";
@@ -23,7 +23,7 @@ const KSCROLL="boatEdgeV108HomeScroll";
 const KVIEW="boatEdgeV108ViewStack";
 const SNAP="boatEdgeV113FinalSnapshot:";
 const HISTORY="boatEdgeV113FinalHistory";
-const ACTIVE_MODE="boatEdgeV101ActiveMode";
+const ACTIVE_MODE="boatEdgeV119ActiveMode";
 
 let archiveIndex=null;
 let serverHistoryByKey={};
@@ -279,20 +279,23 @@ function confidence(pred,mode,rows){
   const map={S:90,"S+":93,A:82,"A+":86,B:72,"B+":76,C:62,D:52};
   let base=map[String(pred?.grade||"").toUpperCase()]??68;
   const all=allTickets(pred),sum=all.reduce((s,x)=>s+x.p,0),top=all.slice(0,3).reduce((s,x)=>s+x.p,0);
-  base+=Math.round(((sum?top/sum:0)-.35)*18)+({hit:5,balance:0,hole:-9,narrow:-5}[mode]||0);
+  base+=Math.round(((sum?top/sum:0)-.35)*18)+({hit:5,balance:0,hole:-5,narrow:-5}[mode]||0);
   if(rows.length<=3)base-=2;
   return Math.max(35,Math.min(94,Math.round(base)));
 }
 function selectModes(pred,odds){
-  const all=allTickets(pred),od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
-  const vals=all.map(od).filter(Number.isFinite).sort((a,b)=>a-b),med=vals.length?vals[Math.floor(vals.length/2)]:null;
+  const all=allTickets(pred);
+  const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
+  const primaryHead=all[0]?.combo?.split("-")?.[0]||null;
+  const altHead=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
+  const variancePool=altHead.length?altHead:all.slice(3);
   const modes={
     hit:all.slice(0,Math.min(10,all.length)),
-    balance:[...all].sort((a,b)=>(b.p*Math.sqrt(Math.min(od(b)??1,80)))-(a.p*Math.sqrt(Math.min(od(a)??1,80)))).slice(0,Math.min(6,all.length)),
-    hole:[...all].filter(x=>od(x)!=null&&(med==null||od(x)>=med)).sort((a,b)=>(b.p*Math.pow(Math.min(od(b)??1,120),.72))-(a.p*Math.pow(Math.min(od(a)??1,120),.72))).slice(0,Math.min(6,all.length)),
+    balance:all.slice(0,Math.min(6,all.length)),
+    hole:variancePool.slice(0,Math.min(8,variancePool.length)),
     narrow:all.slice(0,Math.min(3,all.length))
   };
-  if(!modes.hole.length)modes.hole=all.slice(Math.min(3,all.length),Math.min(9,all.length));
+  if(!modes.hole.length)modes.hole=all.slice(0,Math.min(6,all.length));
   for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
   return modes;
 }
@@ -399,74 +402,60 @@ async function renderPredictionModes(race,pred){
   const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
 
   let snap=readLocal(snapKey(key));
-  if(inFinalWindow){
-    snap=saveFinalSnapshot(key,race,pred,modes,mins);
-  }
+  if(inFinalWindow)snap=saveFinalSnapshot(key,race,pred,modes,mins);
 
   const finalSnap=isFinalSnapshot(snap)?snap:null;
   const serverSnap=serverRecord?.snapshot||null;
   const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;
-  const settled=resultConfirmed
-    ? (serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null))
-    : null;
+  const settled=resultConfirmed?(serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null)):null;
   const win=settled?.winning_combo||null;
+  const officialResult=resultConfirmed?normalizeCombo(result?.trifecta||result?.finish_order):null;
 
-  let mode=localStorage.getItem(ACTIVE_MODE)||"balance";
-  if(!LABELS[mode])mode="balance";
+  let mode=localStorage.getItem(ACTIVE_MODE)||"hit";
+  if(!LABELS[mode])mode="hit";
 
   const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;
   const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
-  const rows=baseRows.map(x=>({
-    ...x,
-    odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)
-  }));
-  const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)
-    ? effectiveSnap.modes[mode].confidence
-    : confidence(pred,mode,rows);
+  const rows=baseRows.map(x=>({...x,odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)}));
+  const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
 
   let snapStatus="🎯履歴は締切15分前から保存";
-  if(inFinalWindow){
-    snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
-  }else if(resultConfirmed&&serverSnap){
-    snapStatus=`🎯 サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
-  }else if(resultConfirmed&&finalSnap){
-    snapStatus=`🎯 この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
-  }else if(resultConfirmed&&!effectiveSnap){
-    snapStatus="締切前の最終スナップショットなし・🎯判定対象外";
-  }else if(mins!==null&&mins<0){
-    snapStatus=finalSnap
-      ?"締切済み・保存した最終予想を固定中"
-      :"締切済み・締切前スナップショットなし";
+  if(inFinalWindow)snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
+  else if(resultConfirmed&&serverSnap)snapStatus=`サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
+  else if(resultConfirmed&&finalSnap)snapStatus=`この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
+  else if(resultConfirmed&&!effectiveSnap)snapStatus="締切前の最終スナップショットなし・的中判定対象外";
+  else if(mins!==null&&mins<0)snapStatus=finalSnap?"締切済み・保存した最終予想を固定中":"締切済み・締切前スナップショットなし";
+
+  const modeHit=Boolean(settled?.mode_hits?.[mode]);
+  let resultBar="";
+  if(resultConfirmed){
+    const pay=Number(result?.trifecta_payout_yen_per_100);
+    const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";
+    let verdict="締切前予想なし・判定対象外",cls="neutral";
+    if(settled){verdict=modeHit?"🎯 この予想モード的中":"この予想モードは不的中";cls=modeHit?"hit":"miss"}
+    resultBar=`<div class="be118-resultbar ${cls}"><div><small>確定結果</small><b>${esc(officialResult||"確定")}</b></div><div><strong>${verdict}</strong><span>${payText}</span></div></div>`;
   }
+
+  const sourceBar=pred.mode==="formal"
+    ? `<div class="be118-source formal">正式CURRENTを使用中</div>`
+    : `<div class="be118-source reference">参考簡易予想・正式CURRENTはまだ未接続。オッズで買い目順位は変えていません。</div>`;
 
   let panel=$("#be108PredictionModes");
-  if(!panel){
-    panel=document.createElement("section");
-    panel.id="be108PredictionModes";
-    panel.className="be108-panel";
-    stack.prepend(panel);
-  }
+  if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
-  panel.innerHTML=`<div class="be108-head"><div><h3>予想スタイル</h3><p>目的別に買い目を切替</p></div><button id="be108HistoryBtn" type="button">🎯 的中履歴</button></div>
-  <div class="be108-snapshot-status">${snapStatus}</div>
-  <div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div>
-  <div class="be108-mode-card ${settled?.mode_hits?.[mode]?"hit":""}"><div class="be108-mode-top"><div><b>${settled?.mode_hits?.[mode]?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div>
-  <div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
-  $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{
-    localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);
-    renderPredictionModes(race,pred);
-  });
-  $("#be108HistoryBtn",panel).onclick=()=>{
-    const h=$("#be108History",panel);
-    h.hidden=!h.hidden;
-  };
+  $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
+  $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};
 }
 function renderMainPick(race,pred){
   const stack=$("#tab-pred .section.stack");if(!stack||!pred)return;
   const top=allTickets(pred)[0];if(!top)return;
-  let box=$("#be108MainPick");if(!box){box=document.createElement("div");box.id="be108MainPick";box.className="be108-mainpick";stack.prepend(box)}
-  box.innerHTML=`<div><small>メイン予想</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")}</span></div><em>${pred.mode==="formal"?"正式CURRENT":"暫定"}</em>`;
+  let box=$("#be108MainPick");
+  if(!box){box=document.createElement("div");box.id="be108MainPick";box.className="be108-mainpick";stack.prepend(box)}
+  const formal=pred.mode==="formal";
+  box.classList.toggle("be118-reference",!formal);
+  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"参考簡易予想・正式CURRENT未接続"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
 }
 async function augmentBuyBoard(race){
   const key=race?.race_key;if(!key)return;
