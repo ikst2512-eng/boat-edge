@@ -261,6 +261,11 @@ function allTickets(pred){
 }
 async function oddsFor(key){return (await J(`./data/site_odds/${key}.json`,30000))?.trifecta_odds||{}}
 async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}
+async function courseStatsFor(jcd){
+  const code=String(jcd||"").padStart(2,"0");
+  if(!/^[0-9]{2}$/.test(code)||code==="00")return null;
+  return await J(`./data/site_course_stats/${code}.json`,86400000);
+}
 async function loadServerHistoryIndex(){
   const d=await J("./data/site_prediction_history/index.json",30000);
   serverHistoryByKey=d?.races||{};
@@ -484,6 +489,90 @@ async function augmentBuyBoard(race){
   }
 }
 
+/* ---------- official venue course stats ---------- */
+function be117ActualCourseMap(race){
+  const m=new Map();
+  for(const x of race?.actual_entry||[]){
+    const lane=Number(x?.lane);
+    const course=Number(x?.course??x?.actual_course??x?.entry_course);
+    if(lane>=1&&lane<=6&&course>=1&&course<=6)m.set(lane,course);
+  }
+  return m;
+}
+function be117DominantMethod(c){
+  const rows=[
+    ["逃げ",c?.escape],["まくり",c?.makuri],["差し",c?.sashi],["まくり差し",c?.makuri_sashi]
+  ].filter(x=>Number.isFinite(Number(x[1])));
+  rows.sort((a,b)=>Number(b[1])-Number(a[1]));
+  return rows[0]||["－",null];
+}
+function be117Strongest(nodes,minGap,minRelative){
+  const rows=[...nodes].map(n=>({n,v:Number(n.dataset.value)}))
+    .filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v);
+  rows.forEach(x=>x.n.classList.remove("be117-best"));
+  if(rows.length<2)return;
+  const gap=rows[0].v-rows[1].v;
+  const rel=gap/Math.max(Math.abs(rows[1].v),1);
+  if(gap>=minGap&&rel>=minRelative)rows[0].n.classList.add("be117-best");
+}
+function be117Pct(v){
+  const n=Number(v);
+  return Number.isFinite(n)?n.toFixed(1)+"%":"－";
+}
+async function renderCourseStats(race){
+  const key=race?.race_key;if(!key)return;
+  const jcd=String(race?.meta?.venue_code||key.split("-")[1]||"").padStart(2,"0");
+  const stats=await courseStatsFor(jcd).catch(()=>null);
+  const stack=$("#tab-scenario .section.stack");if(!stack)return;
+
+  let panel=$("#be117CourseStats");
+  if(!panel){
+    panel=document.createElement("section");
+    panel.id="be117CourseStats";
+    panel.className="be117-course";
+    const title=stack.querySelector(":scope > .title");
+    if(title)title.insertAdjacentElement("afterend",panel);else stack.prepend(panel);
+  }
+
+  if(!stats?.courses){
+    panel.innerHTML='<div class="be117-head"><div><b>当地コース傾向</b><span>公式データ未取得</span></div></div>';
+    return;
+  }
+
+  const actual=be117ActualCourseMap(race),actualReady=actual.size===6,rows=[];
+  for(let lane=1;lane<=6;lane++){
+    const course=actual.get(lane)||lane,c=stats.courses[String(course)]||{};
+    rows.push({lane,course,c,dom:be117DominantMethod(c)});
+  }
+
+  const period=stats.period?`${esc(stats.period.from)}〜${esc(stats.period.to)}`:"最近3か月";
+  panel.innerHTML=`<div class="be117-head">
+    <div><b>当地コース傾向</b><span>${esc(stats.venue||race?.meta?.venue||"")} / ${period}</span></div>
+    <em>${actualReady?"実進入で表示":"枠＝想定コース"}</em>
+  </div>
+  <div class="be117-grid">${rows.map(x=>`<article class="be117-card">
+    <div class="be117-card-head"><b>${x.lane}号艇</b><span>${x.course}コース</span></div>
+    <div class="be117-first" data-be117-first data-value="${Number(x.c.first_rate)}">
+      <small>当地コース1着率</small><strong>${be117Pct(x.c.first_rate)}</strong>
+    </div>
+    <div class="be117-dominant">
+      <small>勝った時の主な決まり手</small><strong>${esc(x.dom[0])} ${be117Pct(x.dom[1])}</strong>
+    </div>
+    <div class="be117-methods">
+      <span data-be117-method="escape" data-value="${Number(x.c.escape)}">逃 ${be117Pct(x.c.escape)}</span>
+      <span data-be117-method="makuri" data-value="${Number(x.c.makuri)}">捲 ${be117Pct(x.c.makuri)}</span>
+      <span data-be117-method="sashi" data-value="${Number(x.c.sashi)}">差 ${be117Pct(x.c.sashi)}</span>
+      <span data-be117-method="makuri_sashi" data-value="${Number(x.c.makuri_sashi)}">捲差 ${be117Pct(x.c.makuri_sashi)}</span>
+    </div>
+  </article>`).join("")}</div>
+  <p class="be117-note">BOAT RACE公式・最近3か月。決まり手%は「そのコースが勝った時」の内訳。現時点では予想ロジック未使用。</p>`;
+
+  be117Strongest(panel.querySelectorAll("[data-be117-first]"),5,.08);
+  for(const m of ["escape","makuri","sashi","makuri_sashi"]){
+    be117Strongest(panel.querySelectorAll(`[data-be117-method="${m}"]`),8,.10);
+  }
+}
+
 /* ---------- racer tap + standout ---------- */
 function markStandouts(){
   const boats=$$("#boats .boat");if(boats.length!==6)return;
@@ -517,7 +606,11 @@ async function afterRace(race){
   const pred=predOf(race);
   renderMainPick(race,pred);
   markStandouts();
-  await Promise.all([renderPredictionModes(race,pred),augmentBuyBoard(race)]);
+  await Promise.all([
+  renderPredictionModes(race,pred),
+  augmentBuyBoard(race),
+  renderCourseStats(race)
+]);
 }
 function wrapRenderRace(){
   const original=window.renderRace;

@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Current UI target: V116
+Current UI target: V117
 
 ## Fixed operating rules
 - User upload: provide a single file whenever possible.
@@ -157,10 +157,22 @@ Current UI target: V116
 
 - V116 adds no MutationObserver and no setInterval.
 
+- V117 collects BOAT RACE official recent-3-month course finish rates and winning-method shares.
+
+- V117 validates all six course rows and percentage ranges before publishing.
+
+- V117 maps stats to actual entry course when all six actual courses are available; otherwise it labels frame=assumed course.
+
+- V117 highlights only clearly standout first-rate / escape / makuri / sashi / makuri-sashi values.
+
+- V117 keeps course stats display-only; prediction logic does not use them yet.
+
+- V117 adds no MutationObserver and no setInterval.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - DONE V112: four modes rerender from the newly selected race key on every race change.
 - DONE V112: official trifecta_odds schema matches V108/V112 mode-row odds lookup.
 - DONE V112: only FINAL_15M pre-result snapshots are eligible for post-result 🎯 settlement.
 - DONE V116: server-side cross-device history is connected to the prediction tab using V114 PRE_RESULT FINAL_15M snapshots.
-- Continue official course-stat collector work separately.
+- DONE V117: official recent-3-month venue course stats collector and event-driven scenario display.
