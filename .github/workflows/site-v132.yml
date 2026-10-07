@@ -1,0 +1,543 @@
+name: BOAT EDGE V132 Balance10 Wave18
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v132.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v132-current
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install V132 balance10 and wave12 15 18
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import subprocess, textwrap, re, json
+
+          # Reuse the V131 install design exactly, then apply the V132 balance policy.
+          wf=Path(".github/workflows/site-v131.yml").read_text(encoding="utf-8")
+          step=wf.find("      - name: Install V131 adaptive 12 15 18 wave")
+          assert step>=0, "V131 install step missing"
+          hs=wf.find("python - <<'PY'",step)
+          assert hs>=0
+          start=wf.find("\n",hs)+1
+          end=wf.find("\n          PY",start)
+          assert end>=0
+          src=textwrap.dedent(wf[start:end])
+          runner=Path("/tmp/v132_apply_v131.py")
+          runner.write_text(src,encoding="utf-8")
+          r=subprocess.run(["python",str(runner)],text=True)
+          if r.returncode!=0:
+              raise SystemExit(r.returncode)
+
+          js_path=Path("assets/boat_edge_v108.js")
+          s=js_path.read_text(encoding="utf-8")
+
+          # Add a distinct 10-ticket balanced mode:
+          # top 7 probability tickets + up to 3 best alternate-head/scenario tickets,
+          # then fill by probability if fewer than 10 unique tickets.
+          anchor="function be122ModesFromTickets(all,odds,waveAll=all){"
+          assert anchor in s, "V131 modes anchor missing"
+          balance_fn=r'''
+          function be132BalanceRows(all,waveAll=all){
+            const out=[],seen=new Set();
+            const add=x=>{
+              if(!x?.combo||seen.has(x.combo)||out.length>=10)return;
+              seen.add(x.combo);out.push(x);
+            };
+            all.slice(0,7).forEach(add);
+            const primaryHead=String(all[0]?.combo||"").split("-")[0]||null;
+            const alt=(waveAll||[]).filter(x=>String(x?.combo||"").split("-")[0]!==primaryHead);
+            for(const x of alt){
+              add(x);
+              if(out.length>=10)break;
+            }
+            for(const x of all){
+              add(x);
+              if(out.length>=10)break;
+            }
+            for(const x of waveAll||[]){
+              add(x);
+              if(out.length>=10)break;
+            }
+            return out;
+          }
+          '''
+          s=s.replace(anchor,balance_fn+anchor,1)
+
+          old='''  const modes={
+              hit:all.slice(0,Math.min(10,all.length)),
+              balance:all.slice(0,Math.min(6,all.length)),
+              hole:be131WaveRows(waveAll),
+              narrow:all.slice(0,Math.min(3,all.length))
+            };'''
+          new='''  const modes={
+              hit:all.slice(0,Math.min(10,all.length)),
+              balance:be132BalanceRows(all,waveAll),
+              hole:be131WaveRows(waveAll),
+              narrow:all.slice(0,Math.min(3,all.length))
+            };'''
+          if old not in s:
+              raise SystemExit("V131 modes body missing")
+          s=s.replace(old,new,1)
+
+          s=s.replace(
+              'balance:{name:"バランス",desc:"展開確率の上位6点。オッズでは順位を変えない",icon:"◐"}',
+              'balance:{name:"バランス",desc:"上位7点＋別頭/別展開3点を基本に10点。オッズでは順位を変えない",icon:"◐"}',
+              1
+          )
+          js_path.write_text(s,encoding="utf-8")
+
+          # Promote to V132.
+          idx=Path("index.html")
+          html=idx.read_text(encoding="utf-8")
+          html=re.sub(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=132',html)
+          html=re.sub(r'boat_edge_v108\.css\?v=\d+','boat_edge_v108.css?v=132',html)
+          html=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V132-BALANCE10-WAVE12-15-18">',html)
+          idx.write_text(html,encoding="utf-8")
+
+          # Server mirror.
+          server_path=Path("scripts/site_final_history_v131.py")
+          assert server_path.exists(), "V131 server script not generated"
+          server=server_path.read_text(encoding="utf-8")
+
+          mode_re=re.compile(r'def modes_from_tickets\(allrows,odds,wave_rows=None\):.*?\n\ndef confidence',re.S)
+          m=mode_re.search(server)
+          assert m, "V131 server modes function missing"
+          body=m.group(0)
+
+          old_modes='''    modes={
+                  "hit":allrows[:10],
+                  "balance":allrows[:6],
+                  "hole":wave,
+                  "narrow":allrows[:3]
+              }'''
+          new_modes='''    balance=[];balance_seen=set()
+              def add_balance(x):
+                  if not x or x["combo"] in balance_seen or len(balance)>=10:return
+                  balance_seen.add(x["combo"]);balance.append(x)
+
+              for x in allrows[:7]:
+                  add_balance(x)
+              alt_balance=[x for x in source if x["combo"].split("-")[0]!=primary] if primary else []
+              for x in alt_balance:
+                  add_balance(x)
+                  if len(balance)>=10:break
+              for x in allrows:
+                  add_balance(x)
+                  if len(balance)>=10:break
+              for x in source:
+                  add_balance(x)
+                  if len(balance)>=10:break
+
+              modes={
+                  "hit":allrows[:10],
+                  "balance":balance,
+                  "hole":wave,
+                  "narrow":allrows[:3]
+              }'''
+          if old_modes not in body:
+              raise SystemExit("V131 server mode body missing")
+          body2=body.replace(old_modes,new_modes,1)
+          server=server[:m.start()]+body2+server[m.end():]
+
+          server=server.replace('"mode_policy":"ADAPTIVE_WAVE_12_15_18"',
+                                '"mode_policy":"BALANCE10_WAVE12_15_18"')
+          server=server.replace('"selection_policy":"MATCH_CURRENT_UI_V131_OR_FORMAL_CURRENT"',
+                                '"selection_policy":"MATCH_CURRENT_UI_V132_OR_FORMAL_CURRENT"')
+          Path("scripts/site_final_history_v132.py").write_text(server,encoding="utf-8")
+
+          # Policy.
+          policy_path=Path("data/site_prediction_policy.json")
+          policy=json.loads(policy_path.read_text(encoding="utf-8"))
+          policy["balance_mode"]={
+              "ticket_count":10,
+              "construction":"確率上位7点 + 別頭/別展開を最大3点優先。重複や不足は確率順で補完。",
+              "purpose":"的中重視10点との差別化。上位確率を残しつつ、展開分散を持つ。",
+              "odds_used_for_selection":False
+          }
+          policy["wave_mode"]["ticket_count"]="12 / 15 / 18"
+          policy_path.write_text(json.dumps(policy,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # State.
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["schema_version"]="boat-edge-current-state-v132"
+          st["ui"]={"version":"V132","status":"INSTALLING"}
+          st["latest_prediction_policy"]["version"]="V127+V132-modes"
+          st["final15m_snapshot"]={"version":"V132","status":"ACTIVE","script":"scripts/site_final_history_v132.py"}
+          st["parity"]={"version":"V132","status":"PENDING"}
+          st["balance_mode"]={"ticket_count":10,"top_probability":7,"diversified":3,"odds_rank_weight":False}
+          st["wave_mode"]={"candidate_pool":20,"ticket_counts":[12,15,18],"max_tickets":18,"odds_rank_weight":False}
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          # TODO.
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("V131-WAVE-12-15-18","V132-BALANCE10-WAVE12-15-18")
+          t=t.replace("Latest prediction policy: V127 + V131 adaptive wave ACTIVE",
+                      "Latest prediction policy: V127 + V132 mode policy ACTIVE")
+          t=t.replace("FINAL_15M server generator: V131 ACTIVE","FINAL_15M server generator: V132 ACTIVE")
+          t=t.replace("Browser/server parity: V131 PENDING","Browser/server parity: V132 PENDING")
+          t=t.replace("First live V131 FINAL_15M snapshot","First live V132 FINAL_15M snapshot")
+          t=t.replace(
+              "Validate live 波乱展開 count is 12, 15, or 18 and browser/server saved ticket order is identical.",
+              "Validate live バランス=10点 and 波乱展開=12/15/18点, with browser/server saved ticket order identical."
+          )
+          if "- [x] V132 バランス" not in t:
+              t=t.replace("## RECENT DONE\n",
+                          "## RECENT DONE\n- [x] V132 バランス is 10 tickets: top 7 probability + up to 3 alternate-head/scenario tickets, then probability fill.\n"
+                          "- [x] V132 retains V131 wave design: dedicated 20-candidate pool with 12 / 15 / 18 tickets.\n"
+                          "- [x] V132 fixes V131 synthetic 12-ticket regression data so the test pool has at least 12 unique candidates.\n",1)
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Browser server parity for all four modes
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json, subprocess, re
+
+          ROOT=Path(".")
+          FIXTURES=["20261005-09-08","20261005-20-11","20261005-20-06","20261005-23-05"]
+
+          idx=Path("index.html").read_text(encoding="utf-8")
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+
+          def extract_function(src,name):
+              starts=[src.find(f"function {name}("),src.find(f"async function {name}(")]
+              starts=[x for x in starts if x>=0]
+              assert starts,f"missing JS function {name}"
+              start=min(starts);brace=src.find("{",start);depth=0;quote=None;esc=False;i=brace
+              while i<len(src):
+                  ch=src[i]
+                  if quote:
+                      if esc:esc=False
+                      elif ch=="\\":esc=True
+                      elif ch==quote:quote=None
+                      i+=1;continue
+                  if ch in ("'",'"',"`"):quote=ch;i+=1;continue
+                  if ch=="{":depth+=1
+                  elif ch=="}":
+                      depth-=1
+                      if depth==0:return src[start:i+1]
+                  i+=1
+              raise AssertionError(f"unclosed {name}")
+
+          idx_funcs=["getBeforeMap","normalizeExhibition","computeScores","gradeFromSpread","round100","allocateByWeights","topNUnique","buildFallbackPrediction"]
+          js_funcs=[
+              "normalizeCombo","allTickets","be122Clamp","be122Mean","be122ActualCourseMap","be122ExStMap",
+              "be122ExTimeMap","be122OriginalMap","be122MetricScores","be122MethodFit","be122ScenarioAdjusted",
+              "be131ExpandedReferencePrediction","be131WaveRows","be132BalanceRows","be122ModesFromTickets"
+          ]
+          defs="\n".join(extract_function(idx,n) for n in idx_funcs)+"\n"+"\n".join(extract_function(js,n) for n in js_funcs)
+
+          node=r'''
+          const fs=require("fs"),path=require("path");
+          const num=v=>(v===null||v===undefined||String(v).trim()==="")?null:(Number.isFinite(Number(v))?Number(v):null);
+          const n=num;
+          const laneNo=(r,i)=>r?.lane??(i+1);
+          const state={model:null};
+          const formatUpdated=()=> "";
+          async function courseStatsFor(jcd){
+            const p=path.join("data","site_course_stats",String(jcd).padStart(2,"0")+".json");
+            try{return JSON.parse(fs.readFileSync(p,"utf8"))}catch(_){return null}
+          }
+          __DEFS__
+
+          function permsForHead(head,count,share){
+            const others=[1,2,3,4,5,6].filter(x=>x!==head);
+            const combos=[];
+            for(const s of others){
+              for(const t of others){
+                if(t===s)continue;
+                combos.push(`${head}-${s}-${t}`);
+              }
+            }
+            return combos.slice(0,count).map((combo,i)=>({combo,p:share/count,world:"X",rank:i+1}));
+          }
+          function synthetic(shares){
+            const rows=[];
+            for(const [h,share] of Object.entries(shares)){
+              rows.push(...permsForHead(Number(h),10,share));
+            }
+            return rows;
+          }
+          async function run(){
+            const fixtures=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+            const out={};
+            for(const key of fixtures){
+              const race=JSON.parse(fs.readFileSync(path.join("data","races",key+".json"),"utf8"));
+              const pred=buildFallbackPrediction(race);
+              const adjusted=await be122ScenarioAdjusted(race,pred);
+              const wavePred=be131ExpandedReferencePrediction(race,pred);
+              const waveAdjusted=await be122ScenarioAdjusted(race,wavePred);
+              const modes=be122ModesFromTickets(adjusted.tickets,{},waveAdjusted.tickets);
+              out[key]=Object.fromEntries(Object.entries(modes).map(([k,v])=>[k,v.map(x=>({combo:x.combo,p:x.p}))]));
+            }
+            out.synthetic={
+              twelve:be131WaveRows(synthetic({"1":70,"2":30})).length,
+              fifteen:be131WaveRows(synthetic({"1":50,"2":30,"3":20})).length,
+              eighteen:be131WaveRows(synthetic({"1":35,"2":25,"3":20,"4":20})).length,
+              balance:be132BalanceRows(synthetic({"1":60,"2":25,"3":15}).slice(0,20),synthetic({"1":60,"2":25,"3":15})).length
+            };
+            process.stdout.write(JSON.stringify(out));
+          }
+          run().catch(e=>{console.error(e);process.exit(1)});
+          '''.replace("__DEFS__",defs)
+
+          node_path=Path("/tmp/v132_browser.js")
+          node_path.write_text(node,encoding="utf-8")
+          Path("/tmp/v132_fixtures.json").write_text(json.dumps(FIXTURES),encoding="utf-8")
+          chk=subprocess.run(["node","--check",str(node_path)],capture_output=True,text=True)
+          assert chk.returncode==0,chk.stderr
+          run=subprocess.run(["node",str(node_path),"/tmp/v132_fixtures.json"],capture_output=True,text=True)
+          assert run.returncode==0,run.stderr
+          browser=json.loads(run.stdout)
+
+          server_src=Path("scripts/site_final_history_v132.py").read_text(encoding="utf-8")
+          cut=server_src.find("changed=0;snapshots=0;settled=0")
+          assert cut>=0
+          ns={"__name__":"v132_parity"}
+          exec(compile(server_src[:cut],"v132_server_defs.py","exec"),ns)
+
+          server={}
+          for key in FIXTURES:
+              race=json.loads((ROOT/"data/races"/f"{key}.json").read_text(encoding="utf-8"))
+              pred=ns["build_fallback"](race)
+              adjusted=ns["scenario_adjust"](race,pred)
+              wave_pred=ns["build_fallback_expanded"](race,pred)
+              wave_adjusted=ns["scenario_adjust"](race,wave_pred)
+              modes=ns["modes_from_tickets"](adjusted["tickets"],{},wave_adjusted["tickets"])
+              server[key]={k:[{"combo":x["combo"],"p":x["p"]} for x in v] for k,v in modes.items()}
+
+          def perms_py(head,count,share):
+              others=[x for x in range(1,7) if x!=head]
+              combos=[]
+              for s in others:
+                  for t in others:
+                      if t==s:continue
+                      combos.append(f"{head}-{s}-{t}")
+              return [{"combo":c,"p":share/count,"world":"X","rank":i+1} for i,c in enumerate(combos[:count])]
+
+          def synthetic_py(shares):
+              rows=[]
+              for h,share in shares.items():
+                  rows.extend(perms_py(int(h),10,share))
+              return rows
+
+          syn12=synthetic_py({"1":70,"2":30})
+          syn15=synthetic_py({"1":50,"2":30,"3":20})
+          syn18=synthetic_py({"1":35,"2":25,"3":20,"4":20})
+          synbal=synthetic_py({"1":60,"2":25,"3":15})
+          server["synthetic"]={
+              "twelve":len(ns["modes_from_tickets"]([],{},syn12)["hole"]),
+              "fifteen":len(ns["modes_from_tickets"]([],{},syn15)["hole"]),
+              "eighteen":len(ns["modes_from_tickets"]([],{},syn18)["hole"]),
+              "balance":len(ns["modes_from_tickets"](synbal[:20],{},synbal)["balance"])
+          }
+
+          errors=[];cases={};distinct_balance=False
+          for key in FIXTURES:
+              cases[key]={}
+              for mode in ["hit","balance","hole","narrow"]:
+                  b=browser[key][mode];sv=server[key][mode]
+                  bc=[x["combo"] for x in b];sc=[x["combo"] for x in sv]
+                  maxdiff=max([abs(float(x["p"])-float(y["p"])) for x,y in zip(b,sv)] or [0])
+                  ok=bc==sc and maxdiff<=1e-9
+                  cases[key][mode]={"pass":ok,"count":len(b),"browser":bc,"server":sc,"max_probability_abs_diff":maxdiff}
+                  if not ok:errors.append({"race":key,"mode":mode})
+              if len(browser[key]["balance"])!=10:
+                  errors.append({"race":key,"mode":"balance","count":len(browser[key]["balance"])})
+              if len(browser[key]["hole"]) not in (12,15,18):
+                  errors.append({"race":key,"mode":"hole","count":len(browser[key]["hole"])})
+              if [x["combo"] for x in browser[key]["balance"]] != [x["combo"] for x in browser[key]["hit"]]:
+                  distinct_balance=True
+
+          expected={"twelve":12,"fifteen":15,"eighteen":18,"balance":10}
+          if browser["synthetic"]!=expected or server["synthetic"]!=expected:
+              errors.append({"synthetic":True,"browser":browser["synthetic"],"server":server["synthetic"],"expected":expected})
+          if not distinct_balance:
+              errors.append({"balance_distinct":False})
+
+          report={
+              "schema_version":"boat-edge-v132-browser-server-parity",
+              "ui_version":"V132-BALANCE10-WAVE12-15-18",
+              "server_history_version":"V132",
+              "mode_policy":"BALANCE10_WAVE12_15_18",
+              "balance_policy":"TOP7_PLUS_3_DIVERSIFIED",
+              "synthetic_branches":browser["synthetic"],
+              "balance_distinct_from_hit_on_fixed_fixture":distinct_balance,
+              "cases":cases,
+              "errors":errors,
+              "pass":not errors
+          }
+          Path("data/site_prediction_parity/v132.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          if errors:raise SystemExit("V132 parity failed")
+
+          PY
+
+      - name: Finalize V132 state
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json
+
+          p=json.loads(Path("data/site_prediction_parity/v132.json").read_text(encoding="utf-8"))
+          assert p["pass"] is True and not p["errors"]
+          assert p["synthetic_branches"]=={"twelve":12,"fifteen":15,"eighteen":18,"balance":10}
+          assert p["balance_distinct_from_hit_on_fixed_fixture"] is True
+
+          state_path=Path("data/site_current_state.json")
+          st=json.loads(state_path.read_text(encoding="utf-8"))
+          st["ui"]["status"]="ACTIVE"
+          st["parity"]={"version":"V132","status":"PASS","report":"data/site_prediction_parity/v132.json"}
+          state_path.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          todo=Path("BOAT_EDGE_CURRENT_TODO.md")
+          t=todo.read_text(encoding="utf-8")
+          t=t.replace("Browser/server parity: V132 PENDING","Browser/server parity: V132 PASS")
+          todo.write_text(t,encoding="utf-8")
+
+          PY
+
+      - name: Validate V132
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_final_history_v132.py
+          grep -q 'V132-BALANCE10-WAVE12-15-18' index.html
+          grep -q 'boat_edge_v108.js?v=132' index.html
+          grep -q 'function be132BalanceRows' assets/boat_edge_v108.js
+          grep -q '上位7点＋別頭/別展開3点を基本に10点' assets/boat_edge_v108.js
+          grep -q 'BALANCE10_WAVE12_15_18' scripts/site_final_history_v132.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          p=json.loads(Path("data/site_prediction_parity/v132.json").read_text(encoding="utf-8"))
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          assert st["ui"]=={"version":"V132","status":"ACTIVE"}
+          assert st["final15m_snapshot"]["version"]=="V132"
+          assert st["parity"]["status"]=="PASS"
+          assert st["balance_mode"]["ticket_count"]==10
+          assert st["wave_mode"]["ticket_counts"]==[12,15,18]
+          assert p["pass"] is True and not p["errors"]
+          assert p["synthetic_branches"]=={"twelve":12,"fifteen":15,"eighteen":18,"balance":10}
+          assert p["balance_distinct_from_hit_on_fixed_fixture"] is True
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "[ ]" in active
+          print({"ui":"V132","hit":10,"balance":10,"wave":[12,15,18],"narrow":3,"parity":"PASS"})
+          PY
+          ! grep -q 'Math.sqrt(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'Math.pow(Math.min(od(b)' assets/boat_edge_v108.js
+          ! grep -q 'MutationObserver' assets/boat_edge_v108.js
+          ! grep -q 'setInterval(' assets/boat_edge_v108.js
+
+      - name: Save V132
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v108.js index.html scripts/site_final_history_v131.py scripts/site_final_history_v132.py data/site_prediction_policy.json data/site_current_state.json data/site_prediction_parity/v132.json BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Set balanced mode to diversified 10 V132"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
+
+      - name: Disable obsolete V130 V131 schedulers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in site-v130.yml site-v131.yml; do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} initial_state=${state}"
+            if [ "${state}" = "active" ]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null
+            fi
+            final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+            echo "${target} final_state=${final}"
+            [ "${final}" != "active" ]
+          done
+
+  history:
+    needs: [install]
+    if: always() && (github.event_name == 'schedule' || needs.install.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build V132 FINAL_15M history
+        shell: bash
+        run: |
+          test -f scripts/site_final_history_v132.py
+          python scripts/site_final_history_v132.py
+
+      - name: Validate V132 history
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_history/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-server-site-history-index-v123"
+          assert d["selection_policy"]=="MATCH_CURRENT_UI_V132_OR_FORMAL_CURRENT"
+          print({"history_count":len(d.get("races",{})),"policy":d["selection_policy"]})
+          PY
+
+      - name: Save V132 history
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_snapshots data/site_prediction_history
+          git diff --cached --quiet && exit 0
+          git commit -m "Update V132 FINAL15M history"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
