@@ -1,0 +1,64 @@
+name: BOAT EDGE V94 Racer Summary
+on:
+  push:
+    paths: [".github/workflows/site-v94.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install V94 racer summary
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("assets/boat_edge_v90.js")
+          s=p.read_text(encoding="utf-8")
+
+          old = '$("#be90racers").innerHTML="<h3>選手情報</h3><div class=be90racers>"+(d.racers||[]).sort((a,b)=>a.lane-b.lane).map(r=>"<details class=be91racer><summary><b>"+r.lane+"　"+E(r.name)+"</b><span>"+E(r.class)+"　ST "+E(r.avg_st)+"</span></summary><div class=be91detail><span>全国勝率 <b>"+E(r.national?.win_rate)+"</b></span><span>当地勝率 <b>"+E(r.local?.win_rate)+"</b></span><span>モーター2連率 <b>"+E(r.motor?.quinella_rate)+"%</b></span><span>ボート2連率 <b>"+E(r.boat?.quinella_rate)+"%</b></span><span>全国2連率 <b>"+E(r.national?.quinella_rate)+"%</b></span><span>当地2連率 <b>"+E(r.local?.quinella_rate)+"%</b></span></div></details>").join("")+"</div>";'
+
+          new = '$("#be90racers").innerHTML="<h3>選手情報</h3><div class=be90racers>"+(d.racers||[]).sort((a,b)=>a.lane-b.lane).map(r=>"<details class=be94racer><summary><div class=be94head><b>"+r.lane+"　"+E(r.name)+"</b><span>"+E(r.class)+"　ST "+E(r.avg_st)+"</span></div><div class=be94stats><div><small>全国</small><b>"+E(r.national?.win_rate)+"</b><span>2連 "+E(r.national?.quinella_rate)+"%</span><span>3連 "+E(r.national?.trio_rate)+"%</span></div><div><small>当地</small><b>"+E(r.local?.win_rate)+"</b><span>2連 "+E(r.local?.quinella_rate)+"%</span><span>3連 "+E(r.local?.trio_rate)+"%</span></div><div><small>M "+E(r.motor?.no)+"</small><b>"+E(r.motor?.quinella_rate)+"%</b><span>2連率</span><span>3連 "+E(r.motor?.trio_rate)+"%</span></div></div></summary><div class=be94detail><div><small>ボート "+E(r.boat?.no)+"</small><b>"+E(r.boat?.quinella_rate)+"%</b><span>3連 "+E(r.boat?.trio_rate)+"%</span></div><span>登録 "+E(r.registration_no)+"</span><span>"+E(r.age)+"歳</span><span>"+E(r.weight_kg)+"kg</span><span>支部 "+E(r.branch)+"</span><span>出身 "+E(r.birthplace)+"</span><span>F"+E(r.F)+" / L"+E(r.L)+"</span>"+(r.early_race?"<span>前走 "+E(r.early_race)+"R</span>":"")+"</div></details>").join("")+"</div>";'
+
+          if old not in s:
+              raise SystemExit("V91 racer target not found")
+          s=s.replace(old,new,1)
+          s=s.replace("BOAT_EDGE_V91_READABILITY","BOAT_EDGE_V94_RACER_SUMMARY",1)
+          p.write_text(s,encoding="utf-8")
+
+          css=Path("assets/boat_edge_v90.css")
+          c=css.read_text(encoding="utf-8")
+          c += "\n/* BOAT_EDGE_V94_RACER_SUMMARY */\n"
+          c += ".be90racers{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}\n"
+          c += ".be94racer{background:#fff;border:1px solid #dce7f5;border-radius:14px;overflow:hidden}\n"
+          c += ".be94racer summary{list-style:none;padding:12px 14px;cursor:pointer}.be94racer summary::-webkit-details-marker{display:none}\n"
+          c += ".be94head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}.be94head b{font-size:15px;color:#173d6b}.be94head span{font-size:11px;color:#71859c;font-weight:800}\n"
+          c += ".be94stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.be94stats>div{background:#f7faff;border-radius:10px;padding:8px;display:grid;gap:2px}.be94stats small{font-size:9px;color:#7890a8;font-weight:900}.be94stats b{font-size:14px;color:#173d6b}.be94stats span{font-size:9px;color:#71859c}\n"
+          c += ".be94racer[open] summary{border-bottom:1px solid #edf2f8}.be94detail{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 13px;background:#fbfdff}.be94detail>div{display:grid;gap:2px;background:#fff;border:1px solid #e5edf6;border-radius:9px;padding:7px 9px;min-width:100px}.be94detail>span{font-size:10px;color:#617893;background:#eef5fd;border-radius:999px;padding:5px 8px}.be94detail small{font-size:9px;color:#7890a8}.be94detail b{font-size:13px;color:#173d6b}.be94detail div span{font-size:9px;color:#71859c}\n"
+          css.write_text(c,encoding="utf-8")
+
+          hp=Path("index.html")
+          h=hp.read_text(encoding="utf-8")
+          h=re.sub(r'boat_edge_v90\.js\?v=\d+','boat_edge_v90.js?v=94',h)
+          h=re.sub(r'boat_edge_v90\.css\?v=\d+','boat_edge_v90.css?v=94',h)
+          h=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V94-RACER-SUMMARY">',h)
+          hp.write_text(h,encoding="utf-8")
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v90.js
+          grep -q 'BOAT_EDGE_V94_RACER_SUMMARY' assets/boat_edge_v90.js
+          grep -q 'V94-RACER-SUMMARY' index.html
+          grep -q 'boat_edge_v90.js?v=94' index.html
+          grep -q 'boat_edge_v90.css?v=94' index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v90.js assets/boat_edge_v90.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V94 racer summary"
+          git push
