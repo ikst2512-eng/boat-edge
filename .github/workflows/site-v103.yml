@@ -1,0 +1,517 @@
+name: BOAT EDGE V103 Archive + Back Navigation
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v103.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "2/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v103-archive-back
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Repair recent trifecta payouts
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,re,time
+          from pathlib import Path
+          from datetime import datetime,timedelta,timezone
+          import requests
+          from bs4 import BeautifulSoup
+
+          JST=timezone(timedelta(hours=9)); now=datetime.now(JST); iso=now.isoformat(timespec='seconds')
+          races=Path('data/races'); out=Path('data/site_results'); out.mkdir(parents=True,exist_ok=True)
+          s=requests.Session(); s.headers.update({'User-Agent':'Mozilla/5.0 BOAT-EDGE-V103/1.0','Accept-Language':'ja-JP,ja;q=0.9'})
+
+          def clean(x): return re.sub(r'\s+',' ',x or '').strip()
+          def money(text):
+              t=clean(text)
+              m=re.search(r'[¥￥]\s*([0-9][0-9,]*)',t)
+              if m:return int(m.group(1).replace(',',''))
+              m=re.search(r'([0-9][0-9,]*)\s*円',t)
+              return int(m.group(1).replace(',','')) if m else None
+          def fetch(url):
+              last=None
+              for n in range(3):
+                  try:
+                      r=s.get(url,timeout=(5,20)); r.raise_for_status(); r.encoding=r.apparent_encoding or r.encoding or 'utf-8'; return r
+                  except Exception as e:
+                      last=e; time.sleep(1+n)
+              raise last
+
+          dates=[now.strftime('%Y%m%d'),(now-timedelta(days=1)).strftime('%Y%m%d')]
+          updated=backfilled=0; errors=[]
+          for ymd in dates:
+              for p in sorted(races.glob(f'{ymd}-*.json')):
+                  try: doc=json.loads(p.read_text(encoding='utf-8'))
+                  except: continue
+                  meta=doc.get('meta',{}); key=doc.get('race_key') or p.stem
+                  if ymd==now.strftime('%Y%m%d'):
+                      dl=meta.get('deadline')
+                      if dl:
+                          try:
+                              hh,mm=map(int,dl.split(':')); deadline=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
+                              if now < deadline+timedelta(minutes=3): continue
+                          except: pass
+                  target=out/f'{key}.json'; old=None
+                  if target.exists():
+                      try: old=json.loads(target.read_text(encoding='utf-8'))
+                      except: old=None
+                  if old and old.get('status')=='confirmed' and old.get('trifecta_payout_yen_per_100') is not None: continue
+                  jcd=str(meta.get('venue_code') or key.split('-')[1]).zfill(2); rno=int(meta.get('race_no') or key.split('-')[2])
+                  url=f'https://www.boatrace.jp/owpc/pc/race/raceresult?hd={ymd}&jcd={jcd}&rno={rno}'
+                  try:
+                      soup=BeautifulSoup(fetch(url).text,'lxml')
+                      finish=[]
+                      for tr in soup.find_all('tr'):
+                          cells=[clean(x.get_text(' ',strip=True)) for x in tr.find_all(['th','td'])]
+                          if len(cells)>=2 and re.fullmatch(r'[1-6]',cells[0]) and re.fullmatch(r'[1-6]',cells[1]):
+                              finish.append((int(cells[0]),int(cells[1])))
+                      by={a:b for a,b in finish}; order=[by[x] for x in sorted(by) if x in by][:3]
+                      combo=payout=None
+                      for tr in soup.find_all('tr'):
+                          row=' | '.join(clean(x.get_text(' ',strip=True)) for x in tr.find_all(['th','td']))
+                          if '3連単' not in row: continue
+                          m=re.search(r'([1-6])\s*[-－]\s*([1-6])\s*[-－]\s*([1-6])',row)
+                          if m: combo='-'.join(m.groups())
+                          payout=money(row)
+                          if combo: break
+                      if not combo and len(order)>=3: combo='-'.join(map(str,order[:3]))
+                      if not combo: continue
+                      if len(order)<3: order=[int(x) for x in combo.split('-')]
+                      was_missing=bool(old and old.get('status')=='confirmed' and old.get('trifecta_payout_yen_per_100') is None)
+                      result={'schema_version':'boat-edge-site-result-v103','race_key':key,'status':'confirmed','fetched_at':iso,'source':url,'finish_order':order[:3],'trifecta':combo,'trifecta_payout_yen_per_100':payout}
+                      target.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8'); updated+=1
+                      if was_missing and payout is not None: backfilled+=1
+                  except Exception as e:
+                      errors.append({'race_key':key,'error':repr(e)})
+
+          print(json.dumps({'updated':updated,'payout_backfilled':backfilled,'errors':errors[:10]},ensure_ascii=False))
+          PY
+
+      - name: Build permanent archive index from 2026-10-07
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          from datetime import datetime,timezone,timedelta
+
+          JST=timezone(timedelta(hours=9))
+          START='20261007'
+          race_dir=Path('data/races')
+          result_dir=Path('data/site_results')
+          odds_dir=Path('data/site_odds')
+          out=Path('data/site_archive'); out.mkdir(parents=True,exist_ok=True)
+
+          dates={}
+          for p in sorted(race_dir.glob('*.json')):
+              m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',p.name)
+              if not m: continue
+              ymd,jcd,rno=m.groups()
+              if ymd<START: continue
+              try: d=json.loads(p.read_text(encoding='utf-8'))
+              except: continue
+              meta=d.get('meta') or {}
+              venue=meta.get('venue') or jcd
+              event=meta.get('event') or ''
+              dl=meta.get('deadline')
+              key=d.get('race_key') or p.stem
+
+              res=None
+              rp=result_dir/f'{key}.json'
+              if rp.exists():
+                  try: res=json.loads(rp.read_text(encoding='utf-8'))
+                  except: res=None
+
+              day=dates.setdefault(ymd,{})
+              v=day.setdefault(jcd,{'jcd':jcd,'venue':venue,'event':event,'races':[]})
+              v['races'].append({
+                  'race_key':key,
+                  'race_no':int(meta.get('race_no') or rno),
+                  'deadline':dl,
+                  'file':f'data/races/{key}.json',
+                  'jcd':jcd,
+                  'result_status':res.get('status') if res else None,
+                  'trifecta':res.get('trifecta') if res else None,
+                  'payout':res.get('trifecta_payout_yen_per_100') if res else None,
+                  'has_odds':(odds_dir/f'{key}.json').exists()
+              })
+
+          index=[]
+          for ymd,venues_map in sorted(dates.items()):
+              venues=[]
+              race_count=0
+              for jcd,v in sorted(venues_map.items()):
+                  v['races'].sort(key=lambda x:x['race_no'])
+                  race_count+=len(v['races']); venues.append(v)
+              doc={
+                  'schema_version':'boat-edge-site-archive-v103',
+                  'ymd':ymd,
+                  'date':f'{ymd[:4]}-{ymd[4:6]}-{ymd[6:8]}',
+                  'venue_count':len(venues),
+                  'race_count':race_count,
+                  'venues':venues
+              }
+              (out/f'{ymd}.json').write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding='utf-8')
+              index.append({'ymd':ymd,'date':doc['date'],'venues':len(venues),'races':race_count})
+
+          root={
+              'schema_version':'boat-edge-site-archive-index-v103',
+              'start_date':'2026-10-07',
+              'updated_at':datetime.now(JST).isoformat(timespec='seconds'),
+              'dates':index,
+              'retention':'append_only_from_2026-10-07',
+              'source_dirs':['data/races','data/site_odds','data/site_results']
+          }
+          (out/'index.json').write_text(json.dumps(root,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'dates':len(index),'first':index[0] if index else None,'last':index[-1] if index else None},ensure_ascii=False))
+          PY
+
+      - name: Install V103 archive and navigation UI
+        shell: bash
+        run: |
+          cat > assets/boat_edge_v103.js <<'JS'
+          /* BOAT_EDGE_V103_ARCHIVE_BACK_NAV */
+          (()=>{"use strict";
+          const $=(s,r=document)=>r.querySelector(s);
+          const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+          const esc=v=>String(v??"－").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+          const NAV_KEY="boatEdgeV103NavStack";
+          const ARCHIVE_KEY="boatEdgeV103ArchiveDate";
+          let archiveIndex=null;
+          let activeArchiveDate=null;
+
+          async function J(u){
+            try{
+              const r=await fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+              return r.ok?await r.json():null;
+            }catch(_){return null}
+          }
+          function activeView(){
+            return $(".view.active")?.id||"homeView";
+          }
+          function stack(){
+            try{return JSON.parse(sessionStorage.getItem(NAV_KEY)||"[]")}catch(_){return []}
+          }
+          function saveStack(s){
+            try{sessionStorage.setItem(NAV_KEY,JSON.stringify(s.slice(-30)))}catch(_){}
+          }
+          function currentContext(){
+            return {view:activeView(),scroll:window.scrollY||0,archiveDate:activeArchiveDate||null};
+          }
+          function pushContext(){
+            const s=stack(),cur=currentContext(),last=s[s.length-1];
+            if(last && last.view===cur.view && last.archiveDate===cur.archiveDate && Math.abs((last.scroll||0)-(cur.scroll||0))<30)return;
+            s.push(cur);saveStack(s);
+          }
+          function activateView(id){
+            $$(".view").forEach(v=>v.classList.toggle("active",v.id===id));
+            $$(".bottomnav [data-view]").forEach(v=>v.classList.toggle("on",v.dataset.view===id));
+          }
+          async function goBack(){
+            const s=stack();
+            const prev=s.pop();
+            saveStack(s);
+            if(!prev){
+              activateView("homeView");
+              await showLiveHome();
+              window.scrollTo({top:0,behavior:"smooth"});
+              return;
+            }
+            activateView(prev.view||"homeView");
+            if(prev.view==="homeView"){
+              if(prev.archiveDate) await showArchive(prev.archiveDate,false);
+              else await showLiveHome(false);
+            }
+            setTimeout(()=>window.scrollTo({top:prev.scroll||0,behavior:"smooth"}),30);
+          }
+          function ensureViewBack(viewId,label){
+            const view=$("#"+viewId);if(!view)return;
+            let bar=$(".be103-view-back",view);
+            if(!bar){
+              bar=document.createElement("div");
+              bar.className="be103-view-back";
+              bar.innerHTML=`<button type="button">← 戻る</button><span>${esc(label)}</span>`;
+              view.insertBefore(bar,view.firstChild);
+            }
+            $("button",bar).onclick=goBack;
+          }
+          function repairRaceBack(){
+            const b=$(".be100-back");
+            if(b){b.textContent="← 戻る";b.onclick=goBack}
+          }
+          function setupNavigationCapture(){
+            document.addEventListener("click",e=>{
+              const bottom=e.target.closest?.(".bottomnav [data-view]");
+              if(bottom){
+                const dest=bottom.dataset.view;
+                if(dest && dest!==activeView())pushContext();
+                return;
+              }
+              const file=e.target.closest?.("[data-file]");
+              if(file && !file.closest("#raceNav")){
+                pushContext();
+              }
+            },true);
+          }
+          function ymdLabel(ymd){
+            const s=String(ymd||"");
+            if(!/^\d{8}$/.test(s))return s;
+            return `${Number(s.slice(4,6))}/${Number(s.slice(6,8))}`;
+          }
+          function longLabel(ymd){
+            const s=String(ymd||"");
+            if(!/^\d{8}$/.test(s))return s;
+            return `${s.slice(0,4)}/${s.slice(4,6)}/${s.slice(6,8)}`;
+          }
+          function todayYmd(){
+            const d=new Date();
+            return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+          }
+          function ensureArchiveSection(){
+            const home=$("#homeView");if(!home)return null;
+            let sec=$("#be103ArchiveSection");
+            if(!sec){
+              sec=document.createElement("section");
+              sec.id="be103ArchiveSection";
+              sec.className="be103-date-section";
+              home.insertBefore(sec,home.firstChild);
+            }
+            return sec;
+          }
+          async function loadArchiveIndex(){
+            if(archiveIndex)return archiveIndex;
+            archiveIndex=await J("./data/site_archive/index.json");
+            return archiveIndex;
+          }
+          function archiveButtons(idx){
+            const dates=[...(idx?.dates||[])].sort((a,b)=>String(b.ymd).localeCompare(String(a.ymd)));
+            const today=todayYmd();
+            return `<div class="be103-date-scroll">
+              <button type="button" data-date="live" class="${activeArchiveDate?"":"on"}">今日</button>
+              ${dates.map(d=>`<button type="button" data-date="${esc(d.ymd)}" class="${activeArchiveDate===d.ymd?"on":""}">
+                ${ymdLabel(d.ymd)}<small>${d.races}R</small>
+              </button>`).join("")}
+            </div>`;
+          }
+          function archiveRaceButton(r){
+            const result=r.result_status==="confirmed";
+            const combo=r.trifecta?`結果 ${esc(r.trifecta)}`:(result?"結果確定":"");
+            const payout=r.payout?` / ${Number(r.payout).toLocaleString("ja-JP")}円`:"";
+            return `<button class="be103-archive-race" data-file="${esc(r.file)}" data-jcd="${esc(r.jcd)}">
+              <b>${esc(r.race_no)}R</b><span>締切 ${esc(r.deadline||"－")}</span>
+              <small>${combo}${payout}</small>
+            </button>`;
+          }
+          function renderArchiveDay(doc){
+            const body=(doc?.venues||[]).map(v=>`
+              <article class="be103-archive-venue">
+                <div class="be103-venue-title"><div><b>${esc(v.venue)}</b><span>${esc(v.event||"")}</span></div><small>${(v.races||[]).length}R</small></div>
+                <div class="be103-archive-races">${(v.races||[]).map(archiveRaceButton).join("")}</div>
+              </article>`).join("");
+            return `<div class="be103-archive-head">
+                <div><b>${longLabel(doc?.ymd)} のレース</b><span>保存済みデータを同じページで確認</span></div>
+                <small>${doc?.race_count||0}R</small>
+              </div>
+              <div class="be103-archive-venues">${body||'<div class="be103-empty">この日の保存データはありません。</div>'}</div>`;
+          }
+          function bindArchiveButtons(sec){
+            $$("[data-date]",sec).forEach(b=>b.onclick=async()=>{
+              const d=b.dataset.date;
+              if(d==="live")await showLiveHome();
+              else await showArchive(d);
+            });
+            $$(".be103-archive-race[data-file]",sec).forEach(b=>b.onclick=()=>{
+              try{
+                sessionStorage.setItem(ARCHIVE_KEY,activeArchiveDate||"");
+              }catch(_){}
+              if(typeof loadRace==="function")loadRace(b.dataset.file,b.dataset.jcd);
+            });
+          }
+          function hideLiveHome(hide){
+            const home=$("#homeView");if(!home)return;
+            [...home.children].forEach(ch=>{
+              if(ch.id==="be103ArchiveSection")return;
+              ch.classList.toggle("be103-live-hidden",hide);
+            });
+            home.classList.toggle("be103-archive-mode",hide);
+          }
+          async function renderDateBar(contentHtml=""){
+            const sec=ensureArchiveSection();if(!sec)return;
+            const idx=await loadArchiveIndex();
+            sec.innerHTML=`
+              <div class="be103-date-card">
+                <div class="be103-date-title"><div><b>日付を選ぶ</b><span>10/7以降の保存データ</span></div><button id="be103TodayBtn" type="button">今日へ</button></div>
+                ${archiveButtons(idx)}
+                <div id="be103ArchiveBody">${contentHtml}</div>
+              </div>`;
+            $("#be103TodayBtn",sec).onclick=()=>showLiveHome();
+            bindArchiveButtons(sec);
+          }
+          async function showArchive(ymd,push=true){
+            if(push && (activeView()!=="homeView" || activeArchiveDate!==ymd))pushContext();
+            activeArchiveDate=ymd;
+            try{sessionStorage.setItem(ARCHIVE_KEY,ymd)}catch(_){}
+            activateView("homeView");
+            hideLiveHome(true);
+            const doc=await J(`./data/site_archive/${ymd}.json`);
+            await renderDateBar(renderArchiveDay(doc));
+            window.scrollTo({top:0,behavior:"smooth"});
+          }
+          async function showLiveHome(push=true){
+            if(push && (activeView()!=="homeView" || activeArchiveDate))pushContext();
+            activeArchiveDate=null;
+            try{sessionStorage.removeItem(ARCHIVE_KEY)}catch(_){}
+            activateView("homeView");
+            hideLiveHome(false);
+            await renderDateBar("");
+          }
+          function addRaceDateBadge(){
+            const race=(()=>{try{return state?.race||null}catch(_){return null}})();
+            const key=race?.race_key;
+            if(!key)return;
+            const ymd=String(key).slice(0,8);
+            const title=$("#raceTitle");if(!title)return;
+            let b=$("#be103RaceDate");
+            if(!b){
+              b=document.createElement("span");b.id="be103RaceDate";b.className="be103-race-date";
+              title.insertAdjacentElement("afterend",b);
+            }
+            b.textContent=longLabel(ymd);
+          }
+          async function initArchive(){
+            await loadArchiveIndex();
+            const remembered=(()=>{try{return sessionStorage.getItem(ARCHIVE_KEY)}catch(_){return null}})();
+            activeArchiveDate=remembered||null;
+            if(activeArchiveDate && activeView()==="homeView")await showArchive(activeArchiveDate,false);
+            else await renderDateBar("");
+          }
+          function maintain(){
+            ensureViewBack("dataView","データ状況");
+            ensureViewBack("auditView","監査");
+            repairRaceBack();
+            addRaceDateBadge();
+          }
+          setupNavigationCapture();
+          new MutationObserver(()=>maintain()).observe(document.documentElement,{subtree:true,childList:true});
+          setInterval(maintain,1200);
+          maintain();
+          initArchive();
+          })();
+          JS
+
+          cat > assets/boat_edge_v103.css <<'CSS'
+          /* BOAT_EDGE_V103_ARCHIVE_BACK_NAV */
+          .be103-date-section{padding:10px 14px 0}
+          .be103-date-card{background:#fff;border:1px solid #dde5ee;border-radius:14px;padding:11px}
+          .be103-date-title{display:flex;justify-content:space-between;gap:10px;align-items:center}
+          .be103-date-title b{display:block;font-size:13px;color:#173d6b}.be103-date-title span{display:block;margin-top:2px;font-size:8px;color:#73869b}
+          #be103TodayBtn{border:1px solid #dce3ec;background:#f7f9fc;color:#173d6b;border-radius:9px;padding:7px 9px;font-size:9px;font-weight:900}
+          .be103-date-scroll{display:flex;gap:6px;overflow:auto;margin-top:9px;padding-bottom:2px;scrollbar-width:none}.be103-date-scroll::-webkit-scrollbar{display:none}
+          .be103-date-scroll button{flex:0 0 auto;min-width:64px;border:1px solid #dce3eb;background:#f6f8fb;color:#52657a;border-radius:9px;padding:7px 9px;font-size:10px;font-weight:900}
+          .be103-date-scroll button small{display:block;margin-top:2px;font-size:7px;font-weight:700;color:#8693a2}
+          .be103-date-scroll button.on{background:#22252b;color:#fff;border-color:#22252b}.be103-date-scroll button.on small{color:#dfe5ec}
+          #be103ArchiveBody{margin-top:10px}.be103-archive-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 2px;border-top:1px solid #edf1f5}
+          .be103-archive-head b{display:block;font-size:12px;color:#173d6b}.be103-archive-head span{display:block;margin-top:2px;font-size:8px;color:#71859c}.be103-archive-head small{font-size:9px;color:#71859c}
+          .be103-archive-venues{display:grid;gap:8px}.be103-archive-venue{border:1px solid #e3e9f0;border-radius:11px;padding:9px;background:#fbfcfe}
+          .be103-venue-title{display:flex;justify-content:space-between;align-items:center;gap:8px}.be103-venue-title b{font-size:12px;color:#173d6b}.be103-venue-title span{display:block;margin-top:2px;font-size:8px;color:#71859c}.be103-venue-title small{font-size:8px;color:#71859c}
+          .be103-archive-races{display:flex;gap:6px;overflow:auto;margin-top:7px;padding-bottom:2px;scrollbar-width:none}.be103-archive-races::-webkit-scrollbar{display:none}
+          .be103-archive-race{flex:0 0 88px;text-align:left;border:1px solid #dfe6ee;background:#fff;border-radius:9px;padding:8px}
+          .be103-archive-race b{display:block;font-size:13px;color:#172f50}.be103-archive-race span{display:block;margin-top:3px;font-size:8px;color:#60758c}.be103-archive-race small{display:block;margin-top:4px;font-size:7px;line-height:1.35;color:#08795a;min-height:18px}
+          .be103-live-hidden{display:none!important}.be103-empty{padding:15px 4px;font-size:9px;color:#71859c}
+          .be103-view-back{display:flex;align-items:center;gap:9px;padding:10px 14px 0}.be103-view-back button{border:1px solid #d9e1eb;background:#fff;color:#183b67;border-radius:10px;padding:9px 11px;font-size:10px;font-weight:900}.be103-view-back span{font-size:11px;font-weight:900;color:#60748b}
+          .be103-race-date{display:inline-block;margin-top:3px;font-size:8px;color:#71859c;font-weight:800}
+          @media(max-width:640px){.be103-date-section{padding:8px 10px 0}.be103-date-card{padding:10px}.be103-archive-race{flex-basis:84px}.be103-view-back{padding:8px 10px 0}}
+          CSS
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          s=re.sub(r'\s*<script src=["\']\./assets/boat_edge_v103\.js(?:\?v=\d+)?["\']></script>\s*','\n',s)
+          s=re.sub(r'\s*<link[^>]+boat_edge_v103\.css(?:\?v=\d+)?[^>]*>\s*','\n',s)
+          s=s.replace('</head>','<link rel="stylesheet" href="./assets/boat_edge_v103.css?v=103">\n</head>')
+          s=s.replace('</body>','<script src="./assets/boat_edge_v103.js?v=103"></script>\n</body>')
+          if re.search(r'<meta name="boat-edge-site-version" content="[^"]+">',s):
+              s=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V103-ARCHIVE-BACK-NAV">',s)
+          else:
+              s=s.replace('</head>','<meta name="boat-edge-site-version" content="V103-ARCHIVE-BACK-NAV">\n</head>')
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Update persistent TODO
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('BOAT_EDGE_CURRENT_TODO.md')
+          s=p.read_text(encoding='utf-8') if p.exists() else '# BOAT EDGE CURRENT TODO\n'
+          import re
+          s=re.sub(r'Current UI target: V\d+','Current UI target: V103',s)
+          lines=[
+            '- V103 archive starts at 2026-10-07 and keeps historical race / odds / result files.',
+            '- V103 same-page date selector shows historical venues and races.',
+            '- V103 archive manifests are rebuilt automatically without deleting old dates.',
+            '- V103 site-wide back stack for race / data / audit / historical-date navigation.',
+            '- V103 payout repair carries forward V102 ¥ / ￥ / 円 support.'
+          ]
+          marker='## NEXT'
+          for line in lines:
+              if line not in s:
+                  if marker in s:s=s.replace(marker,line+'\n\n'+marker,1)
+                  else:s+='\n'+line+'\n'
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate V103
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v103.js
+          grep -q 'V103-ARCHIVE-BACK-NAV' index.html
+          grep -q 'boat_edge_v103.js?v=103' index.html
+          test -f data/site_archive/index.json
+          python - <<'PY'
+          import json
+          d=json.load(open('data/site_archive/index.json',encoding='utf-8'))
+          assert d.get('start_date')=='2026-10-07'
+          assert all(x['ymd']>='20261007' for x in d.get('dates',[]))
+          print(d)
+          PY
+
+      - name: Save V103
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_results data/site_archive assets/boat_edge_v103.js assets/boat_edge_v103.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V103 archive and back navigation"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
