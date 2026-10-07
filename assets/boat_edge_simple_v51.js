@@ -1162,7 +1162,7 @@ function status(){const st=$("#be73Status");if(st)st.innerHTML=st.innerHTML.repl
 function polish(){makeFlow();compactTabs();promoteCommand();quickCompare();tags();status()}
 function boot(){
  polish();
- new MutationObserver(()=>requestAnimationFrame(polish)).observe(document.body,{childList:true,subtree:true});
+ /* V84: V81 recursive observer disabled */
  setInterval(()=>{if(document.visibilityState==="visible")polish()},20000);
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
@@ -1234,8 +1234,17 @@ async function render(){
 function boot(){
  render();
  window.addEventListener("boat-edge-formal120",render);
- new MutationObserver(()=>requestAnimationFrame(render)).observe(document.body,{childList:true,subtree:true});
+ /* V84: V82 recursive observer disabled */
  setInterval(()=>{if(document.visibilityState==="visible")render()},30000);
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+})();
+
+
+/* BOAT_EDGE_SITE_V84_INTERACTION_HOTFIX */
+(()=>{"use strict";window.BOAT_EDGE_SITE_VERSION="V84";
+function mark(){const st=document.getElementById("be73Status");if(st&&!st.innerHTML.includes("BOAT EDGE V84"))st.innerHTML=st.innerHTML.replace(/BOAT EDGE V(?:7[3-9]|8[0-3])/g,"BOAT EDGE V84")}
+window.addEventListener("pageshow",mark);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")mark()});
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",mark):mark();
 })();
