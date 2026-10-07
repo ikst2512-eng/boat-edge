@@ -1,37 +1,29 @@
 /* BOAT_EDGE_V96_UX_UPGRADE */
 (()=>{"use strict";
-const $=s=>document.querySelector(s);
-const E=x=>String(x??"－");
+const $=s=>document.querySelector(s), esc=x=>String(x??"－").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function J(u){const r=await fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});if(!r.ok)throw Error(r.status);return r.json()}
-function distribution(f){let a=f?.distribution120||f?.distribution_120||f?.all_combinations||f?.allCombinations||f?.trifecta_distribution||f?.probabilities;if(Array.isArray(a))return a.map(x=>({c:x.combo||x.combination||x.ticket,p:Number(x.probability??x.prob??x.p),r:x.reason||x.rationale||""})).filter(x=>x.c&&Number.isFinite(x.p)).sort((a,b)=>b.p-a.p);if(a&&typeof a==="object")return Object.entries(a).map(([c,v])=>({c,p:Number(typeof v==="object"?(v.probability??v.prob??v.p):v),r:typeof v==="object"?(v.reason||v.rationale||""):""})).filter(x=>Number.isFinite(x.p)).sort((a,b)=>b.p-a.p);return[]}
+function prediction(d){try{return typeof window.getPrediction==="function"?window.getPrediction(d):null}catch(_){return null}}
+function ticketRows(p,lane){return(p?.worlds||[]).flatMap(w=>(w.tickets||[]).map(t=>({...t,world:w.title||w.key||""}))).filter(t=>String(t.combo||"").startsWith(lane+"-")).sort((a,b)=>Number(b.probability||0)-Number(a.probability||0)).slice(0,5)}
 async function showHead(d){
-  if(!d.open||d.dataset.be96==="1")return;
-  d.dataset.be96="1";
-  const lane=d.querySelector("summary b")?.textContent?.trim()?.match(/^([1-6])/ )?.[1];
-  if(!lane)return;
-  let box=document.createElement("div");box.className="be96-head";box.innerHTML="<b>"+lane+"号艇が1着の正式予想</b><p>読込中…</p>";d.appendChild(box);
-  try{
-    const f=window.be90cur?.f;if(!f)throw Error("race");
-    const rd=await J(f),k=rd.race_key||f.match(/(\d{8}-\d{2}-\d{2})/)?.[1];
-    const [fp,o]=await Promise.all([J("./data/formal_predictions/"+k+".json").catch(()=>null),J("./data/site_odds/"+k+".json").catch(()=>null)]);
-    const a=distribution(fp).filter(x=>String(x.c).startsWith(lane+"-")).slice(0,5),om=o?.trifecta_odds||{};
-    box.innerHTML="<b>"+lane+"号艇が1着の正式予想</b>"+(a.length?a.map((x,i)=>"<div><strong>#"+(i+1)+" "+E(x.c)+"</strong><span>"+(x.p<=1?x.p*100:x.p).toFixed(2)+"%</span><span>"+(om[x.c]?om[x.c]+"倍":"オッズ待ち")+"</span></div>").join(""):"<p>正式120確率が未接続のため、頭予想は作りません。</p>");
-  }catch(e){box.innerHTML="<b>"+lane+"号艇が1着の正式予想</b><p>正式予想データ待ち</p>"}
+ if(!d.open||d.dataset.be96==="1")return;
+ const lane=d.querySelector("summary b")?.textContent?.trim()?.match(/^([1-6])/ )?.[1];if(!lane)return;d.dataset.be96="1";
+ const box=document.createElement("div");box.className="be96-head";box.innerHTML="<b>"+lane+"号艇が1着の予想</b><p>読込中…</p>";d.appendChild(box);
+ try{const f=window.be90cur?.f;if(!f)throw Error("race");const race=await J(f),p=prediction(race),rows=ticketRows(p,lane);box.replaceChildren();const title=document.createElement("b");title.textContent=lane+"号艇が1着の"+(p?.mode==="formal"?"正式予想":"暫定予想");box.append(title);
+ if(!rows.length){const q=document.createElement("p");q.textContent="この艇を1着とする予想データはありません。";box.append(q);return}
+ for(const [i,t] of rows.entries()){const row=document.createElement("div");row.innerHTML="<strong></strong><span></span><small></small>";row.children[0].textContent="#"+(i+1)+" "+String(t.combo);const v=Number(t.probability);row.children[1].textContent=(v<=1?v*100:v).toFixed(2)+"%";row.children[2].textContent=(t.world? t.world+" / ":"")+(p?.mode==="formal"?"正式":"サイト簡易・参考");box.append(row)}
+ }catch(_){box.innerHTML="<b>"+lane+"号艇が1着の予想</b><p>レース予想データを読み込めませんでした。</p>"}
 }
 document.addEventListener("toggle",e=>{if(e.target.matches?.(".be94racer"))showHead(e.target)},true);
-function highlight(){
-  const cards=[...document.querySelectorAll(".be94racer")];if(cards.length!==6)return;
-  const vals=cards.map((c,i)=>{const boxes=[...c.querySelectorAll(".be94stats>div")];const parse=b=>{let n=parseFloat(b?.querySelector("b")?.textContent);return Number.isFinite(n)?n:null};return{c,i,nat:parse(boxes[0]),loc:parse(boxes[1]),mot:parse(boxes[2]),boxes}});
-  ["nat","loc","mot"].forEach((key,bi)=>{let v=vals.filter(x=>x[key]!=null).sort((a,b)=>b[key]-a[key]);vals.forEach(x=>x.boxes[bi]?.classList.remove("be96-best","be96-second"));if(v[0])v[0].boxes[bi]?.classList.add("be96-best");if(v[1])v[1].boxes[bi]?.classList.add("be96-second")});
-}
-function simplifyFlow(){
-  const f=$("#scenarioFlow");if(!f||f.dataset.be96)return;
-  const txt=f.textContent||""; if(!txt.trim())return;
-  const conclusion=(txt.match(/結論[\s\S]*/)||[])[0]||"直前データに応じて更新";
-  f.dataset.be96="1";
-  f.innerHTML='<div class="be96-flow"><h3>レースの流れ</h3><div><em>①</em><span><small>まず見る</small><b>誰がスタートで前に出そうか</b></span></div><div><em>②</em><span><small>次に見る</small><b>誰が1マークで攻めるか</b></span></div><div><em>③</em><span><small>その結果</small><b>内が残るか、外が展開をもらうか</b></span></div><div class="last"><em>④</em><span><small>結論</small><b>'+E(conclusion.replace("結論","").trim())+'</b></span></div></div>';
-}
-function nav(){const b=[...document.querySelectorAll(".bottomnav button")].find(x=>x.dataset.view==="raceView");if(b){b.innerHTML='<span class="navicon">◎</span>予想';b.dataset.be96="1"}}
-nav();highlight();simplifyFlow();
-setInterval(()=>{nav();highlight();simplifyFlow()},1500);
+function parseVal(node){const n=Number.parseFloat(node?.dataset?.be96Value??node?.querySelector?.("b")?.textContent??node?.textContent);return Number.isFinite(n)?n:null}
+function applyClearWinner(nodes,{minCount=4,minGap=1,minRelativeGap=.1}={}){const list=[...nodes];list.forEach(n=>{n.classList.remove("be96-best");delete n.dataset.be96Label});const vals=list.map(n=>({n,v:parseVal(n)})).filter(x=>x.v!==null).sort((a,b)=>b.v-a.v);if(vals.length<minCount||vals.length<2)return null;const gap=vals[0].v-vals[1].v,rel=gap/Math.max(Math.abs(vals[1].v),1);if(gap<minGap||rel<minRelativeGap)return null;vals[0].n.classList.add("be96-best");vals[0].n.dataset.be96Label="6艇中1位";return{value:vals[0].v,gap,relativeGap:rel,node:vals[0].n}}
+window.BE96_HIGHLIGHT={applyClearWinner,parseValue:parseVal};
+function highlight(){const cards=[...document.querySelectorAll(".be94racer")];if(cards.length===6){for(let boxIndex=0;boxIndex<3;boxIndex++){const boxes=cards.map(c=>c.querySelectorAll(".be94stats>div")[boxIndex]).filter(Boolean),rate=boxes.map(b=>b.querySelector("b")).filter(Boolean);applyClearWinner(rate,{minCount:4,minGap:boxIndex===2?8:.55,minRelativeGap:.08});for(let spanIndex=0;spanIndex<2;spanIndex++){const pct=boxes.map(b=>[...b.querySelectorAll("span")].filter(n=>/%/.test(n.textContent))[spanIndex]).filter(Boolean);pct.forEach(n=>{const m=n.textContent.match(/-?\d+(?:\.\d+)?(?=\s*%)/);if(m)n.dataset.be96Value=m[0]});applyClearWinner(pct,{minCount:4,minGap:8,minRelativeGap:.1})}}}const groups=new Map;document.querySelectorAll("[data-be96-group]").forEach(n=>{const k=n.dataset.be96Group;(groups.get(k)||groups.set(k,[]).get(k)).push(n)});for(const [k,g] of groups){const sample=g[0],minGap=Number(sample.dataset.be96MinGap||0),minRelativeGap=Number(sample.dataset.be96MinRelativeGap||.1);applyClearWinner(g,{minCount:Number(sample.dataset.be96MinCount||4),minGap,minRelativeGap})}}
+function ensureFlow(){let el=$("#be96flow");if(el)return el;const p=$("#be90pred");if(!p)return null;el=document.createElement("section");el.id="be96flow";el.className="be96-flow";el.innerHTML="<h3>展開を4段階で見る</h3><div class=be96-steps></div>";p.after(el);return el}
+function flowStep(n,label,value,detail){return '<div class="be96-step '+(n===4?"last":"")+'"><em>'+n+'</em><span><small>'+label+'</small><b>'+esc(value)+'</b><i>'+esc(detail)+'</i></span></div>'}
+async function renderFlow(){const el=ensureFlow(),cur=window.be90cur;if(!el||!cur||el.dataset.file===cur.f)return;el.dataset.file=cur.f;const steps=el.querySelector(".be96-steps");steps.innerHTML=flowStep("①","スタート","直前データを確認中","展示STが未取得なら更新待ちです")+flowStep("②","1マーク","攻め役を確認中","実進入と選手データから整理します")+flowStep("③","展開","内残り / 外の連動","2つの展開パターンを比べます")+flowStep("④","結論","予想を読込中","暫定か正式かを明示します");
+ try{const d=await J(cur.f),p=prediction(d),scores=p?.scores|| (typeof window.computeScores==="function"?window.computeScores(d):[]),st=[...(d.beforeinfo?.start_exhibition||[])].filter(x=>x.st!=null).sort((a,b)=>Number(a.st)-Number(b.st))[0],start=st?st.lane+"号艇（展示ST "+Number(st.st).toFixed(2)+"）":"展示ST待ち",atk=[...scores].sort((a,b)=>Number(b.attackScore||b.score||0)-Number(a.attackScore||a.score||0))[0],attack=atk?atk.lane+"号艇 "+(atk.name||""):"攻め役を判断できるデータ待ち",worlds=p?.worlds||[],a=worlds.find(w=>w.key==="A"),b=worlds.find(w=>w.key==="B"),inner=a&&b?(Number(a.probability)>=Number(b.probability)?a:b):null,scenario=inner?(inner.title||"内側が残る想定")+(inner.probability!=null?"（"+Math.round(inner.probability)+"%）":""):"展開データ待ち",conclusion=p?(p.decision||"予想あり")+" / 勝負度 "+(p.grade||"－")+(p.mode==="formal"?"・正式":"・暫定"):"予想データ待ち",details=["展示STを比較","実進入と攻撃スコアを確認","サイト予想の展開比率","不足データを残したまま表示"];steps.innerHTML=flowStep("①","スタートで前に出そう",start,details[0])+flowStep("②","1マークで攻める",attack,details[1])+flowStep("③","攻めた後の展開",scenario,details[2])+flowStep("④","予想の結論",conclusion,details[3]);
+ }catch(_){steps.innerHTML=flowStep("①","スタート","展示ST待ち","データが公開されると表示します")+flowStep("②","1マーク","攻め役待ち","実進入・選手データを確認します")+flowStep("③","展開","内残り / 外連動","展開予想データ待ち")+flowStep("④","結論","予想データ待ち","読み込み後に更新します")}}
+function nav(){const b=[...document.querySelectorAll(".bottomnav button")].find(x=>x.dataset.view==="raceView");if(b&&b.textContent.includes("レース")){b.innerHTML='<span class="navicon">◎</span>予想'}}
+function run(){nav();highlight();renderFlow()}
+run();setInterval(run,1200);
 })();
