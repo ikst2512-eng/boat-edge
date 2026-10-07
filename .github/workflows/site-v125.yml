@@ -1,0 +1,291 @@
+name: BOAT EDGE V125 Revision Safe FINAL15M Audit
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v125.yml"
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "BOAT EDGE V123 UI Matched Final History"
+    types:
+      - completed
+  schedule:
+    - cron: "3,8,13,18,23,28,33,38,43,48,53,58 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v125-revision-safe-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Disable obsolete V124 audit
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=site-v124.yml
+          state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+          echo "${target} initial_state=${state}"
+          if [ "${state}" = "active" ]; then
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null
+          fi
+          final="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null || echo unknown)"
+          echo "${target} final_state=${final}"
+          [ "${final}" != "active" ]
+
+      - name: Audit V123 snapshots with revision history
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from __future__ import annotations
+          import json, hashlib, re
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          ROOT=Path(".")
+          JST=timezone(timedelta(hours=9))
+          TODAY=datetime.now(JST).strftime("%Y%m%d")
+          SNAPS=ROOT/"data/site_prediction_snapshots"
+          RACES=ROOT/"data/races"
+          ODDS=ROOT/"data/site_odds"
+          HIST=ROOT/"data/site_prediction_history"
+          AUDIT=ROOT/"data/site_prediction_audit"
+          AUDIT.mkdir(parents=True,exist_ok=True)
+
+          def read_json(p):
+              try:return json.loads(Path(p).read_text(encoding="utf-8"))
+              except Exception:return None
+
+          def sha256_file(p):
+              p=Path(p)
+              try:return hashlib.sha256(p.read_bytes()).hexdigest()
+              except Exception:return None
+
+          def valid_sha(v):
+              return isinstance(v,str) and re.fullmatch(r"[0-9a-f]{64}",v) is not None
+
+          def write_if_changed(p,obj):
+              p=Path(p)
+              text=json.dumps(obj,ensure_ascii=False,indent=2)
+              old=p.read_text(encoding="utf-8") if p.exists() else None
+              if old==text:return False
+              p.write_text(text,encoding="utf-8")
+              return True
+
+          changed=0
+          audited={}
+          errors=[]
+
+          for sp in sorted(SNAPS.glob(f"{TODAY}-??-??.json")):
+              snap=read_json(sp)
+              if not snap:continue
+
+              key=snap.get("race_key") or sp.stem
+              race_path=RACES/f"{key}.json"
+              odds_path=ODDS/f"{key}.json"
+              hist_path=HIST/f"{key}.json"
+              audit_path=AUDIT/f"{key}.json"
+
+              guards=snap.get("guards") or {}
+              modes=snap.get("modes") or {}
+              hit_rows=(modes.get("hit") or {}).get("tickets") or []
+              top10=[{
+                  "rank":i+1,
+                  "combo":x.get("combo"),
+                  "p":x.get("p"),
+                  "odds":x.get("odds")
+              } for i,x in enumerate(hit_rows[:10])]
+
+              intrinsic={
+                  "schema_v123":snap.get("schema_version")=="boat-edge-server-site-final-v123",
+                  "final_15m":snap.get("snapshot_window")=="FINAL_15M",
+                  "pre_result_guards":guards.get("results_seen") is False and guards.get("unlock") is False and guards.get("scoring") is False,
+                  "race_sha_present":valid_sha(snap.get("race_sha256")),
+                  "odds_sha_present_or_missing_source":valid_sha(snap.get("odds_sha256")) or snap.get("odds_sha256") is None,
+                  "minutes_in_window":isinstance(snap.get("minutes_to_deadline"),(int,float)) and 0 <= float(snap["minutes_to_deadline"]) <= 15.999,
+                  "ranking_policy_ok":snap.get("selection_policy") in ("V122_SCENARIO_AWARE_PROBABILITY_FIRST","FORMAL_CURRENT"),
+                  "prediction_kind_ok":snap.get("prediction_kind") in ("SITE_REFERENCE_V122","FORMAL_CURRENT"),
+                  "top10_nonempty":len(top10)>0
+              }
+              passed=all(intrinsic.values())
+
+              snapshot_sha=sha256_file(sp)
+              current_race_sha=sha256_file(race_path)
+              current_odds_sha=sha256_file(odds_path)
+
+              revision={
+                  "snapshot_sha256":snapshot_sha,
+                  "saved_at":snap.get("saved_at"),
+                  "first_saved_at":snap.get("first_saved_at"),
+                  "minutes_to_deadline":snap.get("minutes_to_deadline"),
+                  "prediction_kind":snap.get("prediction_kind"),
+                  "selection_policy":snap.get("selection_policy"),
+                  "used_inputs":snap.get("used_inputs") or [],
+                  "race_sha256_snapshot":snap.get("race_sha256"),
+                  "odds_sha256_snapshot":snap.get("odds_sha256"),
+                  "grade":snap.get("grade"),
+                  "mode_ticket_counts":{k:len((v or {}).get("tickets") or []) for k,v in modes.items()},
+                  "hit_mode_top10":top10,
+                  "intrinsic_flags":intrinsic,
+                  "pass":passed
+              }
+
+              old=read_json(audit_path) or {}
+              revisions=old.get("revisions") or []
+              if not any(x.get("snapshot_sha256")==snapshot_sha for x in revisions):
+                  revisions.append(revision)
+              else:
+                  revisions=[
+                      revision if x.get("snapshot_sha256")==snapshot_sha else x
+                      for x in revisions
+                  ]
+              revisions.sort(key=lambda x:str(x.get("saved_at") or ""))
+
+              settlement=((read_json(hist_path) or {}).get("settlement") or {})
+              doc={
+                  "schema_version":"boat-edge-final15m-audit-v125",
+                  "race_key":key,
+                  "first_audited_at":old.get("first_audited_at") or datetime.now(timezone.utc).isoformat(),
+                  "last_audited_at":datetime.now(timezone.utc).isoformat(),
+                  "latest_snapshot_sha256":snapshot_sha,
+                  "latest_snapshot_saved_at":snap.get("saved_at"),
+                  "revision_count":len(revisions),
+                  "revisions":revisions,
+                  "current_state_info":{
+                      "race_sha256_current":current_race_sha,
+                      "odds_sha256_current":current_odds_sha,
+                      "race_still_matches_latest_snapshot":current_race_sha==snap.get("race_sha256"),
+                      "odds_still_matches_latest_snapshot":current_odds_sha==snap.get("odds_sha256") if snap.get("odds_sha256") is not None else current_odds_sha is None,
+                      "note":"Current-source mismatch after snapshot time is informational only; snapshot-time hashes remain the evidence."
+                  },
+                  "latest_intrinsic_flags":intrinsic,
+                  "pass":passed,
+                  "settlement":{
+                      "available":bool(settlement),
+                      "winning_combo":settlement.get("winning_combo"),
+                      "hit_any":settlement.get("hit_any"),
+                      "mode_hits":settlement.get("mode_hits") or {},
+                      "payout":settlement.get("payout")
+                  }
+              }
+              if write_if_changed(audit_path,doc):changed+=1
+
+              audited[key]={
+                  "race_key":key,
+                  "pass":passed,
+                  "latest_snapshot_saved_at":snap.get("saved_at"),
+                  "latest_minutes_to_deadline":snap.get("minutes_to_deadline"),
+                  "prediction_kind":snap.get("prediction_kind"),
+                  "selection_policy":snap.get("selection_policy"),
+                  "used_inputs":snap.get("used_inputs") or [],
+                  "top1":top10[0]["combo"] if top10 else None,
+                  "top10_count":len(top10),
+                  "revision_count":len(revisions),
+                  "audit_file":str(audit_path)
+              }
+              if not passed:
+                  errors.append({"race_key":key,"failed":[k for k,v in intrinsic.items() if not v]})
+
+          old_idx=read_json(AUDIT/"index.json") or {}
+          base={
+              "schema_version":"boat-edge-final15m-audit-index-v125",
+              "date":TODAY,
+              "source_snapshot_schema":"boat-edge-server-site-final-v123",
+              "ui_target":"V122-SCENARIO-AWARE-REFERENCE-FIXED",
+              "audit_rule":"SNAPSHOT_INTRINSIC_VALIDATION_WITH_REVISION_HISTORY",
+              "current_hash_mismatch_policy":"INFORMATIONAL_NOT_FAILURE",
+              "audited":audited,
+              "errors":errors
+          }
+          old_cmp=dict(old_idx);old_cmp.pop("updated_at",None)
+          idx=dict(base)
+          idx["updated_at"]=datetime.now(timezone.utc).isoformat() if old_cmp!=base else old_idx.get("updated_at") or datetime.now(timezone.utc).isoformat()
+          if write_if_changed(AUDIT/"index.json",idx):changed+=1
+
+          print(json.dumps({
+              "date":TODAY,
+              "audited_count":len(audited),
+              "errors":errors,
+              "files_changed":changed,
+              "rule":"SNAPSHOT_INTRINSIC_VALIDATION_WITH_REVISION_HISTORY"
+          },ensure_ascii=False))
+          if errors:
+              raise SystemExit("intrinsic_audit_failed")
+
+          PY
+
+      - name: Validate V125
+        shell: bash
+        run: |
+          set -e
+          test -f data/site_prediction_audit/index.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("data/site_prediction_audit/index.json").read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-final15m-audit-index-v125"
+          assert d["source_snapshot_schema"]=="boat-edge-server-site-final-v123"
+          assert d["ui_target"]=="V122-SCENARIO-AWARE-REFERENCE-FIXED"
+          assert d["current_hash_mismatch_policy"]=="INFORMATIONAL_NOT_FAILURE"
+          assert not d.get("errors"), d.get("errors")
+          print({
+            "audited_count":len(d.get("audited",{})),
+            "errors":d.get("errors",[]),
+            "rule":d["audit_rule"]
+          })
+          PY
+
+      - name: Update TODO
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_run'
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("BOAT_EDGE_CURRENT_TODO.md")
+          s=p.read_text(encoding="utf-8") if p.exists() else "# BOAT EDGE CURRENT TODO\n"
+          lines=[
+            "- V125 replaces V124 audit and disables the obsolete V124 scheduler.",
+            "- V125 validates snapshot-time facts intrinsically and no longer falsely fails when live race/odds files change later.",
+            "- V125 records every distinct V123 snapshot revision during FINAL_15M, including saved time, input hashes, used inputs and hit-mode top10.",
+            "- V125 runs after V123 workflow completion plus a schedule fallback.",
+            "- V125 treats current-vs-snapshot hash divergence as informational evidence, not a historical integrity failure.",
+            "- V125 does not modify V122 UI or V123 prediction generation."
+          ]
+          marker="## NEXT"
+          for line in lines:
+              if line not in s:
+                  s=s.replace(marker,line+"\n\n"+marker,1) if marker in s else s+"\n"+line+"\n"
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: Save V125 audit
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_prediction_audit BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Make FINAL15M audit revision-safe V125"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
