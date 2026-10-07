@@ -49,10 +49,20 @@
   "original_exhibition_formal_requirement": "正式最新予想ではBOATERS + 競艇日和を確認し、一周・まわり足・直線・展示ST/タイムを実値/艇間差で評価する。",
   "wave_mode": {
     "name": "波乱展開",
-    "ticket_count": "8〜10",
-    "rule": "別頭候補を確率順で優先し、分岐が強い場合は10点。足りない分は本命頭の2・3着崩れ上位確率筋を追加。",
-    "ten_ticket_condition": "別頭が2系統以上、または別頭確率シェアが38%以上",
+    "candidate_pool": "参考予想時のみ20候補まで内部生成",
+    "ticket_count": "12 / 15 / 18",
+    "12_condition": "本線頭の支配が比較的残る",
+    "15_condition": "有力頭が3系統以上、または本線頭シェア58%以下",
+    "18_condition": "有力頭が4系統以上、または本線頭シェア42%以下",
+    "ordering": "別頭候補を先に確率順、その後本線頭の2・3着崩れ筋",
     "odds_used_for_selection": false,
-    "probabilities_modified": false
+    "probabilities_modified_for_odds": false
+  },
+  "balance_mode": {
+    "ticket_count": 10,
+    "construction": "確率上位7点 + 別頭/別展開を最大3点優先。重複や不足は確率順で補完。",
+    "purpose": "的中重視10点との差別化。上位確率を残しつつ、展開分散を持つ。",
+    "odds_used_for_selection": false,
+    "diversification_reference": "通常調整済み予想の1位頭"
   }
 }

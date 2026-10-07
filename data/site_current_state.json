@@ -1,28 +1,28 @@
 {
-  "schema_version": "boat-edge-current-state-v130",
+  "schema_version": "boat-edge-current-state-v133",
   "as_of": "2026-10-08",
   "ui": {
-    "version": "V130",
+    "version": "V133",
     "status": "ACTIVE"
   },
   "latest_prediction_policy": {
-    "version": "V127+V129-wave",
+    "version": "V127+V133-modes",
     "status": "ACTIVE",
     "file": "data/site_prediction_policy.json"
   },
   "final15m_snapshot": {
-    "version": "V130",
+    "version": "V133",
     "status": "ACTIVE",
-    "script": "scripts/site_final_history_v130.py"
+    "script": "scripts/site_final_history_v133.py"
   },
   "audit": {
     "version": "V125",
     "status": "ACTIVE_SCHEDULE_FALLBACK"
   },
   "parity": {
-    "version": "V130",
+    "version": "V133",
     "status": "PASS",
-    "report": "data/site_prediction_parity/v130.json"
+    "report": "data/site_prediction_parity/v133.json"
   },
   "formal_current": {
     "connected": false,
@@ -48,8 +48,20 @@
     ]
   },
   "wave_mode": {
-    "min_tickets": 8,
-    "max_tickets": 10,
+    "candidate_pool": 20,
+    "ticket_counts": [
+      12,
+      15,
+      18
+    ],
+    "max_tickets": 18,
+    "odds_rank_weight": false
+  },
+  "balance_mode": {
+    "ticket_count": 10,
+    "top_probability": 7,
+    "diversified": 3,
+    "diversification_reference": "normal_top_ticket_head",
     "odds_rank_weight": false
   }
 }

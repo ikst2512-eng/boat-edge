@@ -12,8 +12,8 @@ const VENUES=[["01","桐生"],["02","戸田"],["03","江戸川"],["04","平和�
 
 const LABELS={
   hit:{name:"的中重視",desc:"展開確率の上位を広めに残して取りこぼしを減らす",icon:"◎"},
-  balance:{name:"バランス",desc:"展開確率の上位6点。オッズでは順位を変えない",icon:"◐"},
-  hole:{name:"波乱展開",desc:"別頭を先に、展開分岐の強さで8〜10点。オッズでは増減しない",icon:"◆"},
+  balance:{name:"バランス",desc:"上位7点＋別頭/別展開3点を基本に10点。オッズでは順位を変えない",icon:"◐"},
+  hole:{name:"波乱展開",desc:"別頭を先に、頭の分散で12・15・18点。オッズでは増減しない",icon:"◆"},
   narrow:{name:"激絞り3点",desc:"展開確率の上位3点だけに絞る",icon:"⚡"}
 };
 
@@ -470,15 +470,87 @@ async function be122ScenarioAdjusted(race,pred){
   if(orig.out.size>=4)stage="ORIGINAL_EXHIBITION";
   return {tickets,stage,used,applied:true};
 }
-function be129WaveRows(all){
-  if(!all.length)return [];
-  const primaryHead=String(all[0]?.combo||"").split("-")[0]||null;
+
+function be131ExpandedReferencePrediction(race,pred){
+  if(!pred||pred.mode==="formal")return pred;
+  const scores=computeScores(race);
+  if(!scores?.length)return pred;
+
+  const one=scores.find(x=>x.lane===1)||scores[0];
+  const challengers=[...scores].filter(x=>x.lane!==1).sort((a,b)=>b.attackScore-a.attackScore);
+  const supporters=[...scores].sort((a,b)=>b.baseScore-a.baseScore);
+
+  const worldA=pred.worlds?.find(x=>x.key==="A")||pred.worlds?.[0]||{};
+  const worldB=pred.worlds?.find(x=>x.key==="B")||pred.worlds?.[1]||{};
+  const pa=n(worldA.probability)??50;
+  const pb=n(worldB.probability)??(100-pa);
+
+  const aCandidates=[];
+  const seconds=supporters.filter(x=>x.lane!==1);
+  for(let i=0;i<seconds.length;i++){
+    for(let j=0;j<seconds.length;j++){
+      if(i===j)continue;
+      const sec=seconds[i],third=seconds[j];
+      const weight=(one.insideScore*1.2)+sec.baseScore+third.baseScore+(sec.lane<third.lane?.5:0);
+      aCandidates.push({combo:`1-${sec.lane}-${third.lane}`,weight});
+    }
+  }
+  const aTop=topNUnique(aCandidates.sort((a,b)=>b.weight-a.weight),10);
+  const aSum=aTop.reduce((x,y)=>x+y.weight,0)||1;
+  const aTickets=aTop.map((x,i)=>({rank:i+1,combo:x.combo,probability:(x.weight/aSum)*pa,amount:null}));
+
+  const bCandidates=[];
+  for(const h of challengers.slice(0,3)){
+    const others=supporters.filter(x=>x.lane!==h.lane);
+    const pref=others.find(x=>x.lane===1);
+    const rest=others.filter(x=>x.lane!==1);
+    for(const sec of others.slice(0,5)){
+      for(const third of others.slice(0,5)){
+        if(third.lane===sec.lane)continue;
+        const preferIn=(sec.lane===1?1.2:0)+(third.lane===1?.8:0);
+        const weight=h.attackScore*1.25+sec.baseScore+third.baseScore+preferIn+((h.actualCourse||0)>=3?1.5:0);
+        bCandidates.push({combo:`${h.lane}-${sec.lane}-${third.lane}`,weight});
+      }
+    }
+    if(pref){
+      for(const r of rest.slice(0,3)){
+        bCandidates.push({combo:`${h.lane}-1-${r.lane}`,weight:h.attackScore*1.35+pref.baseScore+r.baseScore+3});
+        bCandidates.push({combo:`${h.lane}-${r.lane}-1`,weight:h.attackScore*1.2+pref.baseScore+r.baseScore+2.2});
+      }
+    }
+  }
+  const bTop=topNUnique(bCandidates.sort((a,b)=>b.weight-a.weight),10);
+  const bSum=bTop.reduce((x,y)=>x+y.weight,0)||1;
+  const bTickets=bTop.map((x,i)=>({rank:i+1,combo:x.combo,probability:(x.weight/bSum)*pb,amount:null}));
+
+  return {...pred,worlds:[
+    {...worldA,key:"A",probability:pa,tickets:aTickets},
+    {...worldB,key:"B",probability:pb,tickets:bTickets}
+  ]};
+}
+function be131WaveRows(all){
+  if(!all?.length)return [];
+  const total=all.reduce((a,b)=>a+(Number(b?.p)||0),0)||1;
+  const headMass=new Map();
+  for(const x of all){
+    const h=String(x?.combo||"").split("-")[0];
+    if(!h)continue;
+    headMass.set(h,(headMass.get(h)||0)+(Number(x?.p)||0));
+  }
+  const shares=[...headMass.entries()]
+    .map(([head,mass])=>({head,mass,share:mass/total}))
+    .sort((a,b)=>b.mass-a.mass);
+
+  const primaryHead=shares[0]?.head||String(all[0]?.combo||"").split("-")[0]||null;
+  const primaryShare=shares[0]?.share??1;
+  const meaningfulHeads=shares.filter(x=>x.share>=.10).length;
+
+  let target=12;
+  if(meaningfulHeads>=4||primaryShare<=.42)target=18;
+  else if(meaningfulHeads>=3||primaryShare<=.58)target=15;
+
   const alt=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]!==primaryHead):[];
   const primary=primaryHead?all.filter(x=>String(x.combo||"").split("-")[0]===primaryHead):all;
-  const altHeads=new Set(alt.map(x=>String(x.combo||"").split("-")[0]).filter(Boolean));
-  const total=all.reduce((a,b)=>a+(Number(b?.p)||0),0)||1;
-  const altShare=alt.reduce((a,b)=>a+(Number(b?.p)||0),0)/total;
-  const target=(altHeads.size>=2||altShare>=.38)?10:8;
   const ordered=[...alt,...primary];
   const out=[],seen=new Set();
   for(const x of ordered){
@@ -488,12 +560,37 @@ function be129WaveRows(all){
   }
   return out;
 }
-function be122ModesFromTickets(all,odds){
+
+
+function be132BalanceRows(all,waveAll=all){
+  const out=[],seen=new Set();
+  const add=x=>{
+    if(!x?.combo||seen.has(x.combo)||out.length>=10)return;
+    seen.add(x.combo);out.push(x);
+  };
+  all.slice(0,7).forEach(add);
+  const primaryHead=String(all[0]?.combo||"").split("-")[0]||null;
+  const alt=(waveAll||[]).filter(x=>String(x?.combo||"").split("-")[0]!==primaryHead);
+  for(const x of alt){
+    add(x);
+    if(out.length>=10)break;
+  }
+  for(const x of all){
+    add(x);
+    if(out.length>=10)break;
+  }
+  for(const x of waveAll||[]){
+    add(x);
+    if(out.length>=10)break;
+  }
+  return out;
+}
+function be122ModesFromTickets(all,odds,waveAll=all){
   const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
   const modes={
     hit:all.slice(0,Math.min(10,all.length)),
-    balance:all.slice(0,Math.min(6,all.length)),
-    hole:be129WaveRows(all),
+    balance:be132BalanceRows(all,waveAll),
+    hole:be131WaveRows(waveAll),
     narrow:all.slice(0,Math.min(3,all.length))
   };
   for(const k of Object.keys(modes))modes[k]=modes[k].map(x=>({...x,odds:od(x)}));
@@ -624,7 +721,12 @@ async function renderPredictionModes(race,pred){
   const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
   await loadServerHistoryIndex();
   const adjusted=await be122ScenarioAdjusted(race,pred);
-  const modes=be122ModesFromTickets(adjusted.tickets,odds);
+  let waveAdjusted=adjusted;
+  if(pred.mode!=="formal"){
+    const wavePred=be131ExpandedReferencePrediction(race,pred);
+    waveAdjusted=await be122ScenarioAdjusted(race,wavePred);
+  }
+  const modes=be122ModesFromTickets(adjusted.tickets,odds,waveAdjusted.tickets);
   const mins=raceMinutesToDeadline(race);
   const resultConfirmed=result?.status==="confirmed";
   const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
