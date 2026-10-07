@@ -235,6 +235,18 @@ Current UI target: V122
 
 - V124 is evidence-only; production UI remains V122 and server snapshot generation remains V123.
 
+- V125 replaces V124 audit and disables the obsolete V124 scheduler.
+
+- V125 validates snapshot-time facts intrinsically and no longer falsely fails when live race/odds files change later.
+
+- V125 records every distinct V123 snapshot revision during FINAL_15M, including saved time, input hashes, used inputs and hit-mode top10.
+
+- V125 runs after V123 workflow completion plus a schedule fallback.
+
+- V125 treats current-vs-snapshot hash divergence as informational evidence, not a historical integrity failure.
+
+- V125 does not modify V122 UI or V123 prediction generation.
+
 ## NEXT
 - Verify V101 iPhone layout.
 - DONE V112: four modes rerender from the newly selected race key on every race change.
