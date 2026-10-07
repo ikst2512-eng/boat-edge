@@ -1,0 +1,266 @@
+name: BOAT EDGE V100 Top Navigation UX
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v100.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v100-top-navigation
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install V100 UI
+        shell: bash
+        run: |
+          mkdir -p assets
+          cat > assets/boat_edge_v100.js <<'JS'
+          /* BOAT_EDGE_V100_TOP_NAVIGATION_UX */
+          (()=>{"use strict";
+          const $=(s,r=document)=>r.querySelector(s);
+          const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+          const esc=v=>String(v??"－").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+          const yen=v=>Number.isFinite(Number(v))?Math.round(Number(v)).toLocaleString("ja-JP")+"円":"－";
+          const ptxt=v=>{const n=Number(v);if(!Number.isFinite(n))return "－";return (n<=1?n*100:n).toFixed(1)+"%"};
+
+          function currentRace(){try{return typeof state!=="undefined"?state.race:null}catch(_){return null}}
+          function currentPrediction(){
+            try{const r=currentRace();return r&&typeof getPrediction==="function"?getPrediction(r):null}catch(_){return null}
+          }
+          function topTicket(pred){
+            const rows=[];
+            for(const [wi,w] of (pred?.worlds||[]).entries()){
+              for(const [i,t] of (w?.tickets||[]).entries()){
+                const p=Number(t?.probability??t?.prob??t?.p);
+                rows.push({combo:t?.combo||t?.trifecta||t?.order||"－",p:Number.isFinite(p)?p:-1,amount:Number(t?.amount||0),world:w?.key||(wi===0?"A":"B"),rank:i+1});
+              }
+            }
+            rows.sort((a,b)=>b.p-a.p);
+            return rows[0]||null;
+          }
+          function ensureBack(){
+            const top=$("#raceView .summary-top"); if(!top)return;
+            let b=$(".be100-back",top);
+            if(!b){
+              b=document.createElement("button");b.className="be100-back";b.type="button";b.innerHTML="← 戻る";
+              top.insertBefore(b,top.firstChild);
+            }
+            b.onclick=()=>{
+              try{
+                if(typeof showView==="function"){
+                  showView("homeView");
+                  const y=Number(sessionStorage.getItem("be100HomeScroll")||0);
+                  setTimeout(()=>window.scrollTo({top:y,behavior:"instant"}),30);
+                  return;
+                }
+              }catch(_){}
+              history.back();
+            };
+          }
+          function rememberHomePosition(){
+            document.addEventListener("click",e=>{
+              const btn=e.target.closest?.("[data-file]");
+              if(!btn)return;
+              if(btn.closest("#raceNav"))return;
+              if($("#homeView")?.classList.contains("active")){
+                try{sessionStorage.setItem("be100HomeScroll",String(window.scrollY||0))}catch(_){}
+              }
+            },true);
+          }
+          function ensureNavShell(){
+            const summary=$("#raceView .race-summary"), top=$("#raceView .summary-top");
+            const raceNav=$("#raceNav"), tabs=$("#raceTabs");
+            if(!summary||!top||!raceNav||!tabs)return null;
+            let shell=$("#be100NavShell");
+            if(!shell){
+              shell=document.createElement("div");shell.id="be100NavShell";shell.className="be100-nav-shell";
+              top.insertAdjacentElement("afterend",shell);
+            }
+            if(raceNav.parentElement!==shell)shell.appendChild(raceNav);
+            if(tabs.parentElement!==shell)shell.appendChild(tabs);
+            return shell;
+          }
+          function tuneTabs(){
+            const tabs=$("#raceTabs"); if(!tabs)return;
+            const names={pred:"予想",scenario:"展開",card:"選手",before:"直前",data:"データ",audit:"監査",direct:"直前モード"};
+            $$('[data-tab]',tabs).forEach(b=>{
+              const k=b.dataset.tab;
+              if(names[k])b.textContent=names[k];
+              b.classList.toggle("be100-hidden-tab",k==="direct");
+            });
+            const active=$("[data-tab].on",tabs);
+            if(active?.dataset.tab==="direct"){
+              const p=$("[data-tab='pred']",tabs); if(p)p.click();
+            }
+          }
+          function scrollActiveRace(){
+            const nav=$("#raceNav"); if(!nav)return;
+            const active=$(".before",nav)||$(".on",nav)||$(".active",nav);
+            if(active)try{active.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"})}catch(_){}
+          }
+          function renderMainPick(){
+            const shell=ensureNavShell(); if(!shell)return;
+            let box=$("#be100MainPick");
+            if(!box){box=document.createElement("div");box.id="be100MainPick";box.className="be100-mainpick";shell.insertAdjacentElement("afterend",box)}
+            const r=currentRace(), pred=currentPrediction(), t=topTicket(pred);
+            const mode=pred?.mode==="formal"?"正式CURRENT":"暫定メイン";
+            const venue=r?.meta?.venue||"レース", no=r?.meta?.race_no?`${r.meta.race_no}R`:"";
+            if(!pred||!t){
+              box.innerHTML=`<div class="be100-main-label">メイン予想</div><div class="be100-main-empty">予想データ待ち</div>`;return;
+            }
+            box.innerHTML=`
+              <div class="be100-main-top"><span class="be100-main-label">メイン予想</span><span class="be100-mode ${pred.mode==="formal"?"formal":"temp"}">${mode}</span></div>
+              <div class="be100-main-row">
+                <div><div class="be100-race-name">${esc(venue)} ${esc(no)}</div><div class="be100-combo">${esc(t.combo)}</div></div>
+                <div class="be100-main-metrics"><span><small>確率</small><b>${ptxt(t.p)}</b></span><span><small>配分</small><b>${t.amount>0?yen(t.amount):"－"}</b></span></div>
+              </div>
+              <div class="be100-main-sub"><b>${esc(pred?.decision||"判断待ち")}</b><span>勝負度 ${esc(pred?.grade||"－")}</span></div>`;
+          }
+          function prioritizePredictionDetail(){
+            const stack=$("#tab-pred .section.stack"), buy=$("#buyBoard");
+            if(stack&&buy&&stack.firstElementChild!==buy)stack.insertBefore(buy,stack.firstElementChild);
+          }
+          function compactTop(){
+            for(const id of ["summaryStrip","raceCommand","raceMasthead","urgencyRibbon","freshnessStrip","raceQuickNav"]){const el=$("#"+id);if(el)el.classList.add("be100-hide-top")}
+            const decision=$("#decision"); if(decision)decision.classList.add("be100-hide-duplicate");
+          }
+          function enhance(){
+            if(!$("#raceView"))return;
+            ensureBack();
+            ensureNavShell();
+            tuneTabs();
+            compactTop();
+            prioritizePredictionDetail();
+            renderMainPick();
+            setTimeout(scrollActiveRace,40);
+          }
+          let timer=null;
+          function schedule(){clearTimeout(timer);timer=setTimeout(enhance,40)}
+          rememberHomePosition();
+          new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+          document.addEventListener("click",e=>{if(e.target.closest?.("#raceNav [data-file],#raceTabs [data-tab]"))setTimeout(enhance,120)},true);
+          setInterval(()=>{if($("#raceView")?.classList.contains("active"))enhance()},1200);
+          enhance();
+          })();
+          JS
+
+          cat > assets/boat_edge_v100.css <<'CSS'
+          /* BOAT_EDGE_V100_TOP_NAVIGATION_UX */
+          #raceView .race-head{background:#f6f8fb}
+          #raceView .race-shell{padding-bottom:0}
+          #raceView .race-summary{padding:12px 12px 10px;border-radius:0 0 16px 16px;box-shadow:none;border-left:0;border-right:0;background:#fff}
+          #raceView .summary-top{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+          #raceView .summary-top>div:first-of-type{min-width:0}
+          .be100-back{border:1px solid #d9e1eb;background:#fff;color:#183b67;border-radius:10px;padding:9px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+          #raceTitle{font-size:19px!important;margin:0!important}.race-subtitle{font-size:9px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          #deadlineBig{font-size:21px!important}.deadline-cap{font-size:8px!important}
+          .be100-nav-shell{margin-top:10px;border-top:1px solid #e7ebf1;padding-top:10px}
+          #raceNav{display:flex!important;gap:7px!important;overflow-x:auto!important;padding:0 0 8px!important;margin:0!important;scrollbar-width:none;flex-wrap:nowrap!important}
+          #raceNav::-webkit-scrollbar{display:none}
+          #raceNav .racechip{flex:0 0 76px!important;min-width:76px!important;height:auto!important;border:1px solid #d9dee7!important;background:#f4f5f7!important;color:#222!important;border-radius:7px!important;padding:8px 5px!important;font-size:14px!important;font-weight:900!important;box-shadow:none!important}
+          #raceNav .racechip small{display:block!important;margin-top:4px!important;font-size:8px!important;font-weight:700!important;color:#66758a!important;line-height:1.1!important}
+          #raceNav .racechip.before{background:#22252b!important;border-color:#22252b!important;color:#fff!important}
+          #raceNav .racechip.before small{color:#fff!important;opacity:.8}
+          #raceTabs{display:flex!important;gap:0!important;overflow-x:auto!important;background:#fff!important;border-top:1px solid #eceff3!important;border-bottom:1px solid #dfe4eb!important;margin:2px -12px 0!important;padding:0 12px!important;scrollbar-width:none}
+          #raceTabs::-webkit-scrollbar{display:none}
+          #raceTabs button{flex:0 0 auto!important;border:0!important;background:transparent!important;color:#6e7887!important;padding:11px 14px 9px!important;border-radius:0!important;font-size:11px!important;font-weight:900!important;position:relative!important;box-shadow:none!important}
+          #raceTabs button.on{color:#111!important}
+          #raceTabs button.on:after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px;background:#222}
+          #raceTabs .be100-hidden-tab{display:none!important}
+          .be100-hide-top,.be100-hide-duplicate{display:none!important}
+          .be100-mainpick{margin:10px 14px 0;background:#fff;border:1px solid #dde5ef;border-radius:14px;padding:12px 13px;box-shadow:0 4px 14px rgba(31,56,88,.04)}
+          .be100-main-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.be100-main-label{font-size:11px;font-weight:1000;color:#173d6b}.be100-mode{font-size:8px;font-weight:900;padding:4px 7px;border-radius:999px}.be100-mode.formal{background:#e9f8f1;color:#08795a}.be100-mode.temp{background:#fff3db;color:#9b6200}
+          .be100-main-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:8px}.be100-race-name{font-size:9px;color:#71859c;font-weight:800}.be100-combo{font-size:27px;line-height:1.1;font-weight:1000;letter-spacing:1px;color:#172f50;margin-top:3px}.be100-main-metrics{display:flex;gap:7px}.be100-main-metrics span{min-width:62px;text-align:center;background:#f6f8fb;border-radius:9px;padding:6px}.be100-main-metrics small{display:block;font-size:7px;color:#71859c}.be100-main-metrics b{display:block;margin-top:2px;font-size:12px;color:#173d6b}.be100-main-sub{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #edf1f5;font-size:9px;color:#64778d}.be100-main-sub b{color:#173d6b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.be100-main-sub span{white-space:nowrap}
+          #tab-pred>.section{padding-top:10px!important}
+          #buyBoard{margin-top:0!important}
+          @media(max-width:640px){
+            #raceView .race-summary{padding:10px 10px 8px}.be100-nav-shell{margin-top:8px}
+            #raceNav .racechip{flex-basis:70px!important;min-width:70px!important;padding:7px 4px!important;font-size:13px!important}
+            #raceTabs{margin-left:-10px!important;margin-right:-10px!important;padding:0 6px!important}
+            #raceTabs button{padding:10px 12px 8px!important;font-size:10px!important}
+            .be100-mainpick{margin:8px 10px 0;padding:11px}.be100-combo{font-size:24px}.be100-main-metrics span{min-width:54px;padding:5px}
+          }
+          CSS
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+          s=re.sub(r'\s*<script src=["\']\./assets/boat_edge_v100\.js(?:\?v=\d+)?["\']></script>\s*','\n',s)
+          s=re.sub(r'\s*<link[^>]+boat_edge_v100\.css(?:\?v=\d+)?[^>]*>\s*','\n',s)
+          s=s.replace('</head>','<link rel="stylesheet" href="./assets/boat_edge_v100.css?v=100">\n</head>')
+          s=s.replace('</body>','<script src="./assets/boat_edge_v100.js?v=100"></script>\n</body>')
+          if re.search(r'<meta name="boat-edge-site-version" content="[^"]+">',s):
+              s=re.sub(r'<meta name="boat-edge-site-version" content="[^"]+">','<meta name="boat-edge-site-version" content="V100-TOP-NAVIGATION">',s)
+          else:
+              s=s.replace('</head>','<meta name="boat-edge-site-version" content="V100-TOP-NAVIGATION">\n</head>')
+          p.write_text(s,encoding="utf-8")
+          PY
+
+      - name: Update persistent TODO
+        shell: bash
+        run: |
+          cat > BOAT_EDGE_CURRENT_TODO.md <<'MD'
+          # BOAT EDGE CURRENT TODO
+
+          Current UI target: V100
+
+          ## Fixed operating rules
+          - User upload: provide a single file whenever possible.
+          - Always provide the exact GitHub upload URL together with the file.
+          - The downloadable filename must exactly match the workflow trigger path.
+          - ZIP only when multiple files are genuinely required.
+          - After upload verify Actions -> generated assets -> index -> Pages.
+          - Do not fabricate missing odds / stats / source data.
+          - Highlight only clearly standout values.
+
+          ## DONE / carried forward
+          - V96 racer tap -> that boat as head prediction.
+          - V96 four-stage scenario display.
+          - V96 standout national/local/motor display.
+          - V97 official trifecta odds -> stake / payout / P&L / ROI.
+          - V100 race selector moved to the top, 1R-12R with deadline times.
+          - V100 top tabs: 予想 / 展開 / 選手 / 直前 / データ / 監査.
+          - V100 main prediction card kept visible above detailed prediction.
+          - V100 detailed prediction starts with buy board.
+          - V100 duplicate top blocks removed from primary flow.
+          - V100 in-site back button returns to race list and restores list scroll position.
+          - V100 BOATERS-like compact visual hierarchy.
+
+          ## NEXT
+          - Verify V100 on iPhone actual layout.
+          - Verify race tabs change races correctly and active race auto-scrolls into view.
+          - Verify main prediction updates when changing race.
+          - Verify V97 odds/payout block still works inside prediction tab.
+          - Continue V98 official course-stat data work; do not claim complete until collector is verified.
+          - Review player-specific course 1st rate / winning-method source.
+          MD
+
+      - name: Validate V100
+        shell: bash
+        run: |
+          node --check assets/boat_edge_v100.js
+          grep -q 'V100-TOP-NAVIGATION' index.html
+          grep -q 'boat_edge_v100.js?v=100' index.html
+          grep -q 'BOAT_EDGE_V100_TOP_NAVIGATION_UX' assets/boat_edge_v100.js
+
+      - name: Save V100
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v100.js assets/boat_edge_v100.css index.html BOAT_EDGE_CURRENT_TODO.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Add BOAT EDGE V100 top navigation UX"
+          git push
