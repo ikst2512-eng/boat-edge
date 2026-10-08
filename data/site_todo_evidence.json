@@ -1,0 +1,125 @@
+{
+  "schema_version": "boat-edge-todo-evidence-v134",
+  "date": "2026-10-08",
+  "current_ui": "V133",
+  "mode_policy": "BALANCE10_WAVE12_15_18_V133_FIXED",
+  "current_state_ok": true,
+  "status": {
+    "task1_live_snapshot_audit": true,
+    "task2_settled_hit_ui_path": true,
+    "task3_live_mode_counts_and_parity": true
+  },
+  "summary": {
+    "v133_snapshot_count": 42,
+    "v133_audited_pass_count": 42,
+    "observed_wave_counts": [
+      12,
+      15,
+      18
+    ],
+    "all_live_mode_counts_ok": true,
+    "v133_settled_count": 31,
+    "ui_hit_branch_ok": true,
+    "parity_pass": true
+  },
+  "examples": {
+    "first_audited_v133": {
+      "race_key": "20261008-03-01",
+      "snapshot_sha256": "7cd683b6d31d7bc4daf1905903c2f55eeb8383e7bf9921af6c89b085c14a49a0",
+      "audit_file": "data/site_prediction_audit/20261008-03-01.json",
+      "minutes_to_deadline": 4.74,
+      "counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 12,
+        "narrow": 3
+      }
+    },
+    "wave_12": {
+      "race_key": "20261008-03-01",
+      "path": "data/site_prediction_snapshots/20261008-03-01.json",
+      "sha256": "7cd683b6d31d7bc4daf1905903c2f55eeb8383e7bf9921af6c89b085c14a49a0",
+      "saved_at": "2026-10-08T02:09:15.820143+00:00",
+      "minutes_to_deadline": 4.74,
+      "counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 12,
+        "narrow": 3
+      },
+      "used_inputs": [
+        "当地3か月コース"
+      ],
+      "guards": {
+        "results_seen": false,
+        "unlock": false,
+        "scoring": false
+      }
+    },
+    "wave_15": {
+      "race_key": "20261008-03-03",
+      "path": "data/site_prediction_snapshots/20261008-03-03.json",
+      "sha256": "a6f12db3af8a50225b71d9e99c618c87bf5185db1ee1e6c863acfa5964049085",
+      "saved_at": "2026-10-08T03:07:10.816919+00:00",
+      "minutes_to_deadline": 0.82,
+      "counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 15,
+        "narrow": 3
+      },
+      "used_inputs": [
+        "当地3か月コース",
+        "実進入",
+        "展示ST",
+        "展示タイム"
+      ],
+      "guards": {
+        "results_seen": false,
+        "unlock": false,
+        "scoring": false
+      }
+    },
+    "wave_18": {
+      "race_key": "20261008-03-02",
+      "path": "data/site_prediction_snapshots/20261008-03-02.json",
+      "sha256": "4a2812edf90fe5d9a7f428368f4d0eb3ebe399ddf7615560137e7238caef17e5",
+      "saved_at": "2026-10-08T02:40:53.882241+00:00",
+      "minutes_to_deadline": 1.1,
+      "counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 18,
+        "narrow": 3
+      },
+      "used_inputs": [
+        "当地3か月コース",
+        "展示タイム"
+      ],
+      "guards": {
+        "results_seen": false,
+        "unlock": false,
+        "scoring": false
+      }
+    },
+    "first_settled_v133": {
+      "race_key": "20261008-03-01",
+      "winning_combo": "3-4-2",
+      "mode_hits": {
+        "hit": false,
+        "balance": false,
+        "hole": false,
+        "narrow": false
+      },
+      "hit_any": false,
+      "settled_at": "2026-10-08T02:40:53.909630+00:00"
+    }
+  },
+  "source_hashes": {
+    "state": "27c1e1899f13adff967c8e7bd09ab171fded804ae5d8d3b0aeba0e861c9b4c93",
+    "audit_index": "d183a2654115b4598d7676d99817d333d456cf81d24896f768cecf81b331f9c8",
+    "parity_v133": "df2a3dff42ce0a9a986b5de02c70e502154387c915e127f55b7b24c89c61ff18",
+    "runtime_js": "5bfbccd7f52f11a0950e7c518f5954fa83c4a4d17cddf7d51299842934ac6f1a"
+  },
+  "updated_at": "2026-10-08T03:43:43.296170+00:00"
+}
