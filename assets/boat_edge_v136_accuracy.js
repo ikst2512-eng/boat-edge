@@ -32,9 +32,26 @@ async function render(){
       const rate=Number.isFinite(Number(r.hit_rate_percent))&&r.hit_rate_percent!==null?`${r.hit_rate_percent}%`:"—";
       return `<div class="be136-mode"><strong>${label}</strong><b>${rate}</b><small>${Number(r.hits||0)}/${Number(r.evaluated||0)}R 的中</small></div>`;
     }).join("");
+    /* BE137_AUDITED_WINNING_HEAD_SPLIT */
+    // The split comes exclusively from the post-settlement V136 audited summary.
+    const groups=[["1","1号艇が1着"],["2-6","2〜6号艇が1着"]];
+    const splitRows=groups.map(([group,label])=>{
+      const stats=d.by_winning_head?.[group]||{};
+      const total=Number(stats.evaluated||0);
+      const sub=Object.entries(labels).map(([key,name])=>{
+        const hits=Math.max(0,Math.min(total,Number(stats.hits?.[key]||0)));
+        const rate=total>0?(100*hits/total).toFixed(1)+"%":"—";
+        return `<span class="be137-split-mode"><small>${name}</small><b>${rate}</b><small>${hits}/${total}R</small></span>`;
+      }).join("");
+      return `<div class="be137-split-group"><div class="be137-split-heading"><b>${label}</b><small>${total}R</small></div><div class="be137-split-grid">${sub}</div></div>`;
+    }).join("");
     root.innerHTML=`<div class="be136-title"><b>参考予想・実戦的中率</b><span>締切前保存 → 結果確定</span></div>
       <div class="be136-count">監査済み確定レース <strong>${n}R</strong></div>
       <div class="be136-modes">${cards}</div>
+      <details class="be137-split"><summary>1号艇・その他の1着別に的中率を見る</summary>
+        <p class="be137-explain">勝った艇の号艇別集計です。「逃げ」の決まり手率ではありません。</p>
+        <div class="be137-split-groups">${splitRows}</div>
+      </details>
       <p class="be136-note">サイト参考予想の実績で、正式CURRENTの未見Fresh検証とは別集計。少数サンプルの的中率だけでは精度向上を証明できません。</p>`;
   }catch(e){
     root.innerHTML='<div class="be136-title"><b>参考予想・実戦的中率</b></div><p class="be136-note">採点データの公開待ち。締切前保存と結果確定の監査が揃ったレースだけ表示します。</p>';
