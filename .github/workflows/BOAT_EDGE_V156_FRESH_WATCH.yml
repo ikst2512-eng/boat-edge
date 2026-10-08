@@ -1,0 +1,210 @@
+name: BOAT EDGE V156 Immutable Fresh Evidence Watch SAFE-READONLY
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V156_FRESH_WATCH.yml"
+      - "data/site_racer_actual_course/v155_fresh/**"
+  workflow_dispatch:
+  schedule:
+    - cron: '16 23 * * *' # 08:16 JST check pre-result freeze
+    - cron: '15 0 * * *'  # 09:15 JST check prior-day scored data
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v156-research-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Check frozen-only provenance and aggregate settled evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v156_audit.py <<'PY'
+          from __future__ import annotations
+          import hashlib, json, math, os, re, subprocess
+          from datetime import datetime, date, timezone, timedelta
+          from pathlib import Path
+
+          JST=timezone(timedelta(hours=9))
+          FROZEN=Path('data/site_racer_actual_course/v155_fresh')
+          OUTPUT=Path('data/site_racer_actual_course/v156_watch/audit.json')
+          FIRST=date(2026,10,9)
+          LAST=date(2026,10,31)
+          MODELS=('baseline_pl','v148_cond_full','v151_multisignal','v153_weak_cond','v154_wall_attack_cond')
+          PIN='2d149e1ae838f6ed3426a7989be69e799ac2988f'
+          SHA=lambda b:hashlib.sha256(b).hexdigest()
+
+          def gitlog(path):
+              cmd=['git','log','--format=%cI','--',str(path)]
+              o=subprocess.run(cmd,check=True,capture_output=True,text=True).stdout.splitlines()
+              if len(o)!=1:
+                  raise AssertionError(f'IMMUTABLE_COMMIT_COUNT expected=1 got={len(o)} for {path}')
+              return datetime.fromisoformat(o[0].replace('Z','+00:00'))
+
+          def check(x,message):
+              if not x:raise AssertionError(message)
+
+          def valid_sha(s,n):
+              return isinstance(s,str) and bool(re.fullmatch(r'[0-9a-f]{%d}'%n,s))
+
+          def load_json(path):
+              raw=path.read_bytes()
+              return json.loads(raw),SHA(raw)
+
+          def ticket_tuple(label):
+              check(isinstance(label,str) and bool(re.fullmatch(r'[1-6]-[1-6]-[1-6]',label)),f'invalid ticket {label!r}')
+              t=tuple(map(int,label.split('-')))
+              check(len(set(t))==3,f'duplicate boat {label}')
+              return t
+
+          def compare_clock(a,b,minsecs=0,maxsecs=900):
+              delta=(b-a).total_seconds()
+              check(minsecs<=delta<=maxsecs,f'commit timing invalid delta_s={delta}')
+
+          def verify_freeze(path,day):
+              fr,fsha=load_json(path)
+              check(fr.get('status')=='PRE_RESULT_FROZEN_RESEARCH_ONLY','bad freeze status')
+              check(fr.get('date_jst')==day.isoformat(),'date mismatch')
+              check(fr.get('formal_2026_10_08_result_accessed') is False,'formal result flag')
+              check(fr.get('actual_course_used') is False,'actual entry used')
+              for k in ('payout_used','odds_used','proxy_imputation_used'):
+                  check(fr.get(k) is False,f'unsafe {k}')
+              check(fr.get('history_cutoff')=='2026-10-07','history cutoff drift')
+              check(fr.get('history_commit')==PIN,'history source drift')
+              check(valid_sha(fr.get('source_card_sha256'),64),'source card digest invalid')
+              check(valid_sha(fr.get('source_card_commit'),40),'source git sha invalid')
+              check(valid_sha(fr.get('history_manifest_sha256'),64),'history manifest sha invalid')
+              check(valid_sha(fr.get('predictor_script_sha256'),64),'script sha invalid')
+              capture=datetime.fromisoformat(fr['capture_at_jst'])
+              published=datetime.fromisoformat(fr['source_card_commit_time'])
+              check(capture.tzinfo is not None and published.tzinfo is not None,'naive clock')
+              local=capture.astimezone(JST)
+              check(local.date()==day and (5*60)<=local.hour*60+local.minute<(8*60+15),'not pre-cutoff capture')
+              check(published<=capture,'card commit after capture')
+              commit=gitlog(path).astimezone(JST)
+              check(commit.date()==day and (5*60)<=commit.hour*60+commit.minute<(8*60+15),'not pre-cutoff Git commit')
+              compare_clock(capture,commit)
+              rows=fr['predictions']
+              check(isinstance(rows,list) and len(rows)==fr['race_count'] and len(rows)>=1,'race count invalid')
+              check(len(rows)==len(set(x['race_code'] for x in rows)),'duplicate race id')
+              for row in rows:
+                  check(set(row['models'])==set(MODELS),f'model mismatch {row["race_code"]}')
+                  check(bool(row['race_code']) and row['race_code'].startswith(day.strftime('%Y%m%d')),'race code date mismatch')
+                  for model in MODELS:
+                      p=row['models'][model]
+                      q=p['marginal_head_probs']
+                      check(len(q)==6 and all(isinstance(z,(int,float)) and math.isfinite(z) and 0<z<=1 for z in q) and abs(sum(q)-1)<1e-8,'bad head mass')
+                      tops=p['top10']
+                      check(len(tops)==10,'top10 count')
+                      prev=1.0;seen=set()
+                      for t in tops:
+                          tp=ticket_tuple(t['ticket'])
+                          check(tp not in seen,'duplicate ranked ticket');seen.add(tp)
+                          prob=t['p']
+                          check(isinstance(prob,(int,float)) and math.isfinite(prob) and 0<prob<=prev+1e-10,'invalid ticket probability/rank')
+                          prev=prob
+                      check(p['top_ticket_head']==int(tops[0]['ticket'][0]),'ticket head mismatch')
+              return fr,fsha,commit.isoformat()
+
+          def verify_score(path,day,fsha,n):
+              sc,sha=load_json(path)
+              check(sc.get('status')=='FRESH_SCORE_COMPLETE_RESEARCH_ONLY','bad scored status')
+              check(sc.get('date_jst')==day.isoformat(),'scoring date mismatch')
+              check(sc.get('frozen_pred_sha256')==fsha,'scored the wrong freeze sha')
+              check(sc.get('target_is_not_2026_10_08') is True,'formal cohort risk')
+              check(sc.get('production_promoted') is False and sc.get('formal_gate_unlocked') is False,'production guard')
+              check(valid_sha(sc.get('source_result_sha256'),64),'result sha invalid')
+              check(sc.get('n_scored')==n,'partial or overcounted score')
+              sm=sc['models'];check(set(sm)==set(MODELS),'scored model set drift')
+              for model,counts in sm.items():
+                  check(counts['evaluated']==n,'score sample drift')
+                  ordered=[counts['top3'],counts['top5'],counts['top10']]
+                  check(0<=ordered[0]<=ordered[1]<=ordered[2]<=n,'Top3/5/10 monotonicity failed')
+                  for k in ('head_top1','marginal_head_top1','non1_true','non1_called','non1_correct','non1_false'):
+                      check(isinstance(counts[k],int) and 0<=counts[k]<=n,f'invalid metric {model}:{k}')
+                  check(counts['non1_correct']<=min(counts['non1_called'],counts['non1_true']),'non1 count impossible')
+                  check(counts['non1_false']<=counts['non1_called'],'non1 false count impossible')
+              stored=gitlog(path).astimezone(JST)
+              check(stored.date()>day,'score entered before next day')
+              return sc,sha,stored.isoformat()
+
+          def build():
+              guard=json.loads(Path('data/site_current_state.json').read_text())['formal_current']['guards']
+              check(guard['results_seen'] is False and guard['unlock'] is False and guard['scoring'] is False and guard['RESULT_UNLOCK_TOKEN'] is None,'formal target unlocked; stop watcher')
+              now_str=os.getenv('V156_FIXTURE_NOW_UTC')
+              if now_str:
+                  check(os.getenv('V156_TEST_ONLY')=='1','clock injection outside test')
+                  now=datetime.fromisoformat(now_str)
+              else:now=datetime.now(timezone.utc)
+              entries=[]
+              tally={m:{k:0 for k in ('evaluated','head_top1','marginal_head_top1','top3','top5','top10','non1_true','non1_called','non1_correct','non1_false')} for m in MODELS}
+              if FROZEN.exists():
+                  dirs=sorted([p for p in FROZEN.iterdir() if p.is_dir()])
+              else:dirs=[]
+              for folder in dirs:
+                  check(re.fullmatch('[0-9]{8}',folder.name) is not None,'unexpected frozen folder')
+                  day=datetime.strptime(folder.name,'%Y%m%d').date()
+                  check(FIRST<=day<=LAST,'out of cohort date')
+                  score=folder/'score.json';freeze=folder/'freeze.json'
+                  check(freeze.is_file(),'orphan score folder/no freeze')
+                  raw,sha,commit=verify_freeze(freeze,day)
+                  item={'date_jst':day.isoformat(),'race_count':raw['race_count'],'freeze_sha256':sha,'freeze_git_commit_at_jst':commit,
+                        'capture_at_jst':raw['capture_at_jst'],'source_card_sha256':raw['source_card_sha256'],'score_status':'NOT_YET_SCORED'}
+                  if score.exists():
+                      scored,shasc,score_commit=verify_score(score,day,sha,raw['race_count'])
+                      item.update(score_status='SCORED',score_sha256=shasc,score_git_commit_at_jst=score_commit)
+                      for m in MODELS:
+                          for k in tally[m]:tally[m][k]+=scored['models'][m][k]
+                  entries.append(item)
+              totals={}
+              for m,v in tally.items():
+                  n=v['evaluated']
+                  totals[m]={**v,**{f'{k}_pct':round(100*v[k]/n,3) if n else None for k in ('head_top1','marginal_head_top1','top3','top5','top10')},
+                             'non1_recall_pct':round(100*v['non1_correct']/v['non1_true'],3) if v['non1_true'] else None,
+                             'non1_precision_pct':round(100*v['non1_correct']/v['non1_called'],3) if v['non1_called'] else None}
+              freeze_count=sum(x['race_count'] for x in entries)
+              score_count=totals[MODELS[0]]['evaluated']
+              status=('WAITING_FIRST_VERIFIED_FREEZE' if not entries else 'FROZEN_WAITING_SETTLEMENT' if not score_count else 'PROSPECTIVE_MONITORING_NO_PROMOTION')
+              out={'schema_version':'boat-edge-v156-prospective-evidence-watch-v1',
+                   'generated_at_utc':now.astimezone(timezone.utc).isoformat(),
+                   'status':status,'formal_2026_10_08_result_accessed':False,'formal_unlock':False,'formal_scoring':False,
+                   'source_policy':'Read only Git-committed V155 freeze and score JSON; never load source race results, payout or combined APIs.',
+                   'history_cutoff':'2026-10-07','first_allowed_new_date':'2026-10-09',
+                   'days_with_verified_freeze':len(entries),'frozen_races':freeze_count,
+                   'days_scored':sum(x['score_status']=='SCORED' for x in entries),'scored_races':score_count,
+                   'production_weights_changed':False,'automatic_model_promotion':False,
+                   'accuracy_claim':'NONE_UNTIL_INDEPENDENT_FRESH_SAMPLE_SUFFICIENT',
+                   'models':list(MODELS),'cumulative_observed_only':totals,'days':entries}
+              OUTPUT.parent.mkdir(parents=True,exist_ok=True)
+              OUTPUT.write_bytes((json.dumps(out,ensure_ascii=False,sort_keys=True,indent=2)+'\n').encode())
+              print(json.dumps({'status':status,'frozen_days':len(entries),'frozen_races':freeze_count,'scored_races':score_count,
+                                'report_sha256':SHA(OUTPUT.read_bytes())},sort_keys=True))
+
+          if __name__=='__main__':build()
+          PY
+          python /tmp/v156_audit.py
+      - name: Save derived V156 watcher only; never overwrite V155 freeze or score
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/site_racer_actual_course/v156_watch/audit.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'V156: audit immutable pre-result V155 evidence only'
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
