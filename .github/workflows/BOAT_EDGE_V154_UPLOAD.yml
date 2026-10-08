@@ -1,0 +1,797 @@
+name: BOAT EDGE V154 Inside-Wall vs Attack Research SAFE-CUTOFF
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V154_UPLOAD.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v154-inside-wall-vs-attack-research
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Acquire pinned pre-target data through 2026-10-07
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/boatracecsv
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/boatracecsv
+          git -C /tmp/boatracecsv sparse-checkout init --no-cone
+          cat > /tmp/boatracecsv/.git/info/sparse-checkout <<'PATTERNS'
+          /data/results/realtime/2025/11/
+          /data/programs/race_cards/2025/11/
+          /data/results/realtime/2025/12/
+          /data/programs/race_cards/2025/12/
+          /data/results/realtime/2026/01/
+          /data/programs/race_cards/2026/01/
+          /data/results/realtime/2026/02/
+          /data/programs/race_cards/2026/02/
+          /data/results/realtime/2026/03/
+          /data/programs/race_cards/2026/03/
+          /data/results/realtime/2026/04/
+          /data/programs/race_cards/2026/04/
+          /data/results/realtime/2026/05/
+          /data/programs/race_cards/2026/05/
+          /data/results/realtime/2026/06/
+          /data/programs/race_cards/2026/06/
+          /data/results/realtime/2026/07/
+          /data/programs/race_cards/2026/07/
+          /data/results/realtime/2026/08/
+          /data/programs/race_cards/2026/08/
+          /data/results/realtime/2026/09/
+          /data/programs/race_cards/2026/09/
+          /data/results/realtime/2026/10/01.csv
+          /data/programs/race_cards/2026/10/01.csv
+          /data/results/realtime/2026/10/02.csv
+          /data/programs/race_cards/2026/10/02.csv
+          /data/results/realtime/2026/10/03.csv
+          /data/programs/race_cards/2026/10/03.csv
+          /data/results/realtime/2026/10/04.csv
+          /data/programs/race_cards/2026/10/04.csv
+          /data/results/realtime/2026/10/05.csv
+          /data/programs/race_cards/2026/10/05.csv
+          /data/results/realtime/2026/10/06.csv
+          /data/programs/race_cards/2026/10/06.csv
+          /data/results/realtime/2026/10/07.csv
+          /data/programs/race_cards/2026/10/07.csv
+          PATTERNS
+          SOURCE_COMMIT="2d149e1ae838f6ed3426a7989be69e799ac2988f"
+          git -C /tmp/boatracecsv fetch --depth 1 origin "$SOURCE_COMMIT"
+          git -C /tmp/boatracecsv checkout --force --detach "$SOURCE_COMMIT"
+          test "$(git -C /tmp/boatracecsv rev-parse HEAD)" = "$SOURCE_COMMIT"
+          test ! -e /tmp/boatracecsv/data/results/realtime/2026/10/08.csv
+          test ! -e /tmp/boatracecsv/data/programs/race_cards/2026/10/08.csv
+
+      - name: Compare V154 pre-wall and attack scenarios twice; V153 54-model parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v154.py <<'PY'
+          from __future__ import annotations
+          import csv, hashlib, itertools, json, math, os
+          from collections import Counter, defaultdict
+          from datetime import date, timedelta
+          from pathlib import Path
+          
+          SRC=Path(os.getenv('BOAT_CSV_ROOT','/tmp/boatracecsv'))
+          OUT=Path(os.getenv('V154_OUT','data/site_racer_actual_course/v154_research'))
+          OUT.mkdir(parents=True,exist_ok=True)
+          TEST=os.environ.get('V154_TEST_MODE')=='1'
+          SOURCE_SHA='2d149e1ae838f6ed3426a7989be69e799ac2988f'
+          FIRST=date(2025,11,1)
+          TARGET=date(2026,10,8)
+          FOLDS=[('F1',date(2026,7,7),date(2026,7,8),date(2026,8,7)),
+                 ('F2',date(2026,8,7),date(2026,8,8),date(2026,9,7)),
+                 ('F3',date(2026,9,7),date(2026,9,8),date(2026,10,7))]
+          MODELS=('baseline_pl','head_history_pl','v148_cond_full','role_head12','role_guarded',
+                  'head_tail_baseline','head_tail_place','head_tail_base_cond',
+                  'pre_head_pressure','pre_head_pressure_cond','pre_head_multisignal',
+                  'world_tail_base','world_tail_place','world_tail_conditional','world_tail_conditional_place',
+                  'head_blend05_pl','head_blend05_weak_cond','head_blend05_place',
+                  'v154_wall_pl','v154_wall_cond','v154_attack_cond','v154_wall_attack_cond')
+          SEGMENTS=('all','pred_head1','pred_head2','pred_head34','pred_head56',
+                    'changed_entry_DIAGNOSTIC','unchanged_entry_DIAGNOSTIC',
+                    'realized_1_2_DIAGNOSTIC','realized_attack34_benefit56_DIAGNOSTIC',
+                  'pre_wall_SUPPORTED','pre_attack_SUPPORTED','pre_neutral_SUPPORTED')
+          COURSE_PRIOR_EXP=0.65
+          BACKOFF_N=12
+          HEAD_EFFECT_EXP=0.5
+          PL2_PSEUDO=40
+          PL3_PSEUDO=25
+          PLACE_BACKOFF_N=20
+          PLACE_EFFECT_EXP=0.35
+          TAIL_B2_BLEND=0.18
+          TAIL_B3_BLEND=0.10
+          # Freeze pre-race head / escape pressure hypotheses before evaluation.
+          ST_ADV_SCALE=0.065      # 0.065 sec faster than 1 = full score
+          MOTOR_ADV_SCALE=22.0    # percentage point units (0..100)
+          NAT2_ADV_SCALE=26.0     # percentage point units (0..100)
+          HEAD_PRESSURE_GAIN=1.5
+          HEAD_PRESSURE_ESCAPE_DAMP=0.38
+          HEAD_MULTI_GAIN=1.05
+          HEAD_MULTI_ESCAPE_DAMP=0.20
+          # V154 frozen scenario reweighting: no odds, no target results, no race-day observations.
+          V154_WALL_MULT=1.25
+          V154_ATTACK_MULT=1.18
+          # V153 predeclared: fixed 50% geometric shrink of head pressure; weak conditional training-only tails.
+          V153_BLEND=0.50
+          V153_P2_BLEND=0.12
+          V153_P3_BLEND=0.07
+          # V152 preregistered: conditional-on-hypothetical-head tail response, no outcome features.
+          # Shrink toward race-card Plackett-Luce; only training-fold conditional counts used.
+          WORLD_P2_ALPHA_BY_HEAD=(0.10,0.20,0.20,0.20,0.06,0.06)
+          WORLD_P3_ALPHA_BY_HEAD=(0.06,0.10,0.10,0.10,0.03,0.03)
+          WORLD_P2_PSEUDO=80
+          WORLD_P3_PSEUDO=55
+          assert all(e<h<=end<TARGET for _,e,h,end in FOLDS)
+          SHA=lambda b:hashlib.sha256(b).hexdigest()
+          
+          
+          def read_pair(d):
+              rel=f'{d:%Y/%m/%d}.csv'
+              rp=SRC/'data/results/realtime'/rel
+              cp=SRC/'data/programs/race_cards'/rel
+              if not (rp.exists() and cp.exists()):
+                  return None,None,dict(date=d.isoformat(),result=rp.exists(),card=cp.exists())
+              rb,cb=rp.read_bytes(),cp.read_bytes()
+              return (list(csv.DictReader(rb.decode('utf-8-sig').splitlines())),
+                      list(csv.DictReader(cb.decode('utf-8-sig').splitlines())),
+                      (rel,SHA(rb),SHA(cb)))
+          
+          
+          def data_number(value):
+              try:
+                  x=float(str(value).strip())
+                  return x if x>0 and math.isfinite(x) else None
+              except (ValueError,TypeError):return None
+          
+          
+          def optional_st(v):
+              try:
+                  x=float(str(v).strip())
+                  return x if math.isfinite(x) and 0.0 <= x <= 0.45 else None
+              except (ValueError,TypeError):return None
+          
+          
+          def optional_pct(v):
+              try:
+                  x=float(str(v).strip())
+                  return x if math.isfinite(x) and 0.0 <= x <= 100.0 else None
+              except (ValueError,TypeError):return None
+          
+          
+          def prerace_exhibition_safe_card_features(card):
+              # Pre-race *card* metrics only. No exhibition, actual entry, odds or results.
+              return tuple((optional_st(card.get(f'艇{i}_全国平均ST')),
+                            optional_pct(card.get(f'艇{i}_モーター2連対率')),
+                            optional_pct(card.get(f'艇{i}_全国2連対率')))
+                           for i in range(1,7))
+          
+          
+          def clamp(x):return max(-1.0,min(1.0,x))
+          
+          
+          def adjust_escape_pressure(head,pre,multisignal=False):
+              # Scoring is applied to hypothetical frames/courses available before race.
+              # A missing feature is NEUTRAL and never backfilled from race results.
+              out=list(head)
+              strongest=0.0
+              scores=[]
+              for i in range(1,4): # 2,3,4: potential challengers to the inside lead
+                  components=[]
+                  if pre[0][0] is not None and pre[i][0] is not None:
+                      components.append(clamp((pre[0][0]-pre[i][0])/ST_ADV_SCALE))
+                  if pre[0][1] is not None and pre[i][1] is not None:
+                      components.append(clamp((pre[i][1]-pre[0][1])/MOTOR_ADV_SCALE))
+                  if pre[0][2] is not None and pre[i][2] is not None:
+                      components.append(clamp((pre[i][2]-pre[0][2])/NAT2_ADV_SCALE))
+                  # Conservative: require at least two independent observed signals.
+                  if len(components)<2: strength=0.0
+                  elif multisignal:
+                      strength=max(0.0,sum(components)/len(components)) if sum(v>0 for v in components)>=2 else 0.0
+                  else:
+                      strength=max(0.0,sum(components)/len(components))
+                  scores.append(strength)
+                  strongest=max(strongest,strength)
+                  if multisignal:
+                      out[i]*=1.0+HEAD_MULTI_GAIN*strength
+                  else:
+                      out[i]*=1.0+HEAD_PRESSURE_GAIN*strength
+              out[0]/=1.0+(HEAD_MULTI_ESCAPE_DAMP if multisignal else HEAD_PRESSURE_ESCAPE_DAMP)*strongest
+              assert all(math.isfinite(v) and v>0 for v in out)
+              return out,tuple(scores)
+          
+          
+          def v154_prerace_support(pre):
+              # Card-only. An unavailable feature is not an inferred/zero observation.
+              def observed_votes(items):
+                  values=[v for v in items if v is not None]
+                  return len(values)>=2 and sum(values)>=2
+              def ge_with_slack(a,b,slack):
+                  return a>=b-slack if a is not None and b is not None else None
+              def st_not_late(a,b,slack):
+                  return a<=b+slack if a is not None and b is not None else None
+              p1,p2=pre[0],pre[1]
+              escape=observed_votes([
+                  st_not_late(p1[0],p2[0],0.015),
+                  ge_with_slack(p1[1],p2[1],6),
+                  ge_with_slack(p1[2],p2[2],6)])
+              # Two-boat survives the 3/4 pressure, not a claim of actual live 2-course wall.
+              rivals=pre[2:4]
+              checks=[]
+              for dim in range(3):
+                  vals=[v[dim] for v in rivals if v[dim] is not None]
+                  if p2[dim] is None or not vals:checks.append(None)
+                  elif dim==0:checks.append(p2[dim]<=min(vals)+0.025)
+                  else:checks.append(p2[dim]>=max(vals)-10)
+              wall=bool(escape and observed_votes(checks))
+              challengers=[]
+              for i in (2,3):
+                  q=pre[i]
+                  supporters=observed_votes([
+                      q[0]<=p1[0]-0.020 if q[0] is not None and p1[0] is not None else None,
+                      q[1]>=p1[1]+5 if q[1] is not None and p1[1] is not None else None,
+                      q[2]>=p1[2]+5 if q[2] is not None and p1[2] is not None else None])
+                  if supporters:challengers.append(i)
+              beneficiaries=[]
+              for i in (4,5):
+                  q=pre[i]
+                  if observed_votes([q[0]<=0.22 if q[0] is not None else None,
+                                     q[1]>=25 if q[1] is not None else None,
+                                     q[2]>=25 if q[2] is not None else None]):
+                      beneficiaries.append(i)
+              return wall,tuple(challengers),tuple(beneficiaries)
+          
+          
+          def extract(r,card,need_nat):
+              try:
+                  lanes=[int(str(r[f'{i}コース_艇番']).strip()) for i in range(1,7)]
+                  finish=[int(str(r[f'{i}着_艇番']).strip()) for i in range(1,4)]
+              except (ValueError,TypeError,KeyError):return None
+              if sorted(lanes)!=[1,2,3,4,5,6] or len(set(finish))!=3 or any(x not in range(1,7) for x in finish):return None
+              regs=[str(card.get(f'艇{i}_登録番号') or '').strip() for i in range(1,7)]
+              if len(set(regs))!=6 or any(len(x)!=4 or not x.isdigit() for x in regs):return None
+              nat=[data_number(card.get(f'艇{i}_全国勝率')) for i in range(1,7)] if need_nat else None
+              if need_nat and any(x is None for x in nat):return None
+              return (lanes,regs,finish,nat)
+          
+          
+          def rank120(scores,heads,seconds,thirds,style,tail2=None,tail3=None,pre=None):
+              # Rank-specific head/2nd/3rd scores. Existing V149 styles remain byte-for-byte
+              # numerically identical; the new styles decouple head strength from tail strength.
+              if style in ('v154_wall_pl','v154_wall_cond','v154_attack_cond','v154_wall_attack_cond'):
+                  base_style='pl' if style=='v154_wall_pl' else 'head_blend05_weak_cond'
+                  base=rank120(scores,heads,seconds,thirds,base_style,tail2,tail3)
+                  wall,challengers,beneficiaries=v154_prerace_support(pre) if pre is not None else (False,(),())
+                  use_wall=style in ('v154_wall_pl','v154_wall_cond','v154_wall_attack_cond')
+                  use_attack=style in ('v154_attack_cond','v154_wall_attack_cond')
+                  if not ((use_wall and wall) or (use_attack and challengers and beneficiaries)):
+                      return base
+                  weighted=[]; head_mass=[0.0]*6; head_raw=[0.0]*6
+                  for seq,p in base:
+                      a,b,c=seq
+                      boost=1.0
+                      if use_wall and wall and a==1 and b==2:
+                          boost*=V154_WALL_MULT
+                      if use_attack and a-1 in challengers and ((b-1 in beneficiaries) or (c-1 in beneficiaries)):
+                          boost*=V154_ATTACK_MULT
+                      weighted.append((seq,p*boost))
+                      head_mass[a-1]+=p
+                      head_raw[a-1]+=p*boost
+                  result=[(seq,p*head_mass[seq[0]-1]/head_raw[seq[0]-1]) for seq,p in weighted]
+                  result.sort(key=lambda x:(-x[1],x[0]))
+                  assert len(result)==120 and abs(sum(p for _,p in result)-1)<1e-9
+                  for a in range(6):
+                      assert abs(sum(p for seq,p in result if seq[0]==a+1)-scores[a]/sum(scores))<1e-9
+                  return result
+              total=sum(scores)
+              total2=sum(tail2) if tail2 is not None else None
+              total3=sum(tail3) if tail3 is not None else None
+              output=[]
+              for a,b,c in itertools.permutations(range(6),3):
+                  p1=scores[a]/total
+                  p2pl=scores[b]/(total-scores[a]) if tail2 is None else tail2[b]/(total2-tail2[a])
+                  p3pl=scores[c]/(total-scores[a]-scores[b]) if tail3 is None else tail3[c]/(total3-tail3[a]-tail3[b])
+                  if style=='v148_cond_full':
+                      b2,b3=0.4,0.35
+                  elif style=='role_head12':
+                      b2,b3=((0.30,0.15) if a==0 else (0.20,0.10) if a==1 else (0.0,0.0))
+                  elif style=='role_guarded':
+                      b2,b3=((0.25,0.15) if a==0 else (0.18,0.10) if a==1 else (0.10,0.05) if a in (2,3) else (0.0,0.0))
+                  elif style=='head_tail_base_cond':
+                      b2,b3=TAIL_B2_BLEND,TAIL_B3_BLEND
+                  elif style=='head_blend05_weak_cond':
+                      b2,b3=V153_P2_BLEND,V153_P3_BLEND
+                  elif style in ('world_tail_conditional','world_tail_conditional_place'):
+                      b2,b3=WORLD_P2_ALPHA_BY_HEAD[a],WORLD_P3_ALPHA_BY_HEAD[a]
+          
+                  else:
+                      b2,b3=0.0,0.0
+                  if style in ('world_tail_conditional','world_tail_conditional_place'):
+                      p2=(1-b2)*p2pl+b2*(seconds[(a,b)]+WORLD_P2_PSEUDO*p2pl)/(heads[a]+WORLD_P2_PSEUDO)
+                      p3=(1-b3)*p3pl+b3*(thirds[(a,b,c)]+WORLD_P3_PSEUDO*p3pl)/(seconds[(a,b)]+WORLD_P3_PSEUDO)
+                  else:
+                      p2=(1-b2)*p2pl+b2*(seconds[(a,b)]+PL2_PSEUDO*p2pl)/(heads[a]+PL2_PSEUDO) if b2 else p2pl
+                      p3=(1-b3)*p3pl+b3*(thirds[(a,b,c)]+PL3_PSEUDO*p3pl)/(seconds[(a,b)]+PL3_PSEUDO) if b3 else p3pl
+                  output.append(((a+1,b+1,c+1),p1*p2*p3))
+              output.sort(key=lambda x:(-x[1],x[0]))
+              assert len(output)==120
+              if not TEST:assert abs(sum(x[1] for x in output)-1)<1e-9
+              return output
+          
+          
+          # Separate untouched formal 10/8 target entirely from this retrospective research.
+          assert not (SRC/'data/results/realtime/2026/10/08.csv').exists()
+          assert not (SRC/'data/programs/race_cards/2026/10/08.csv').exists()
+          records=[];missing=[];source_hashes=[];quality=Counter()
+          d=FIRST
+          while d<=FOLDS[-1][3]:
+              rs,cs,hashline=read_pair(d)
+              if rs is None:
+                  missing.append(hashline)
+                  d+=timedelta(days=1)
+                  continue
+              source_hashes.append(hashline)
+              cards={str(c.get('レースコード') or ''):c for c in cs}
+              for r in rs:
+                  quality['rows']+=1
+                  key=str(r.get('レースコード') or '')
+                  card=cards.get(key)
+                  if card is None:
+                      quality['card_missing']+=1
+                      continue
+                  parts=extract(r,card,False)
+                  if parts is None:
+                      quality['invalid_race_or_racer']+=1
+                      continue
+                  lanes,regs,finish,_=parts
+                  nat=[data_number(card.get(f'艇{i}_全国勝率')) for i in range(1,7)]
+                  if any(x is None for x in nat):quality['national_strength_missing']+=1
+                  records.append((d,key,lanes,regs,finish,nat,prerace_exhibition_safe_card_features(card)))
+              d+=timedelta(days=1)
+          
+          fold_metrics={}; fold_counts={}; train_count={}; details={}; per_fold_notes={}
+          for fid,train_end,hold_start,hold_end in FOLDS:
+              train=[v for v in records if v[0]<=train_end]
+              hold=[v for v in records if hold_start<=v[0]<=hold_end and all(x is not None for x in v[5])]
+              train_count[fid]=len(train);fold_counts[fid]=len(hold)
+              if TEST:
+                  assert len(train)>=20 and len(hold)>=10,(fid,len(train),len(hold))
+              else:
+                  assert len(train)>25000 and len(hold)>3500,(fid,len(train),len(hold))
+              starts=[0]*6;wins=[0]*6
+              course_second=[0]*6;course_third=[0]*6
+              racer_place=defaultdict(lambda:[0,0,0])
+              racer=defaultdict(lambda:[0,0])
+              heads=Counter();seconds=Counter();thirds=Counter()
+              for _,_,lanes,regs,finish,_,_ in train:
+                  a,b,c=(x-1 for x in finish)
+                  heads[a]+=1;seconds[(a,b)]+=1;thirds[(a,b,c)]+=1
+                  for ci,boat in enumerate(lanes):
+                      starts[ci]+=1
+                      iswin=boat==finish[0]
+                      wins[ci]+=int(iswin)
+                      course_second[ci]+=int(boat==finish[1])
+                      course_third[ci]+=int(boat==finish[2])
+                      rkey=(regs[boat-1],ci+1)
+                      v=racer[rkey];v[0]+=1;v[1]+=int(iswin)
+                      q=racer_place[rkey];q[0]+=1;q[1]+=int(boat==finish[1]);q[2]+=int(boat==finish[2])
+              prior=[wins[i]/starts[i] for i in range(6)]
+              second_prior=[course_second[i]/starts[i] for i in range(6)]
+              third_prior=[course_third[i]/starts[i] for i in range(6)]
+              assert all(0<x<1 for x in prior+second_prior+third_prior),(fid,prior,second_prior,third_prior)
+              train_source_dates=[v[0] for v in train]
+              assert train_source_dates and max(train_source_dates)<=train_end
+          
+              stats={seg:{m:dict(evaluated=0,head_top1=0,marginal_head_top1=0,trifecta_top3=0,trifecta_top5=0,trifecta_top10=0,head_ll_sum=0.0,pred_non1=0,true_non1=0,true_non1_called=0,false_non1=0,pred_head34=0,head_ticket_mismatch=0,mismatch_ticket_head_correct=0,mismatch_marginal_head_correct=0) for m in MODELS} for seg in SEGMENTS}
+              for d,key,lanes,regs,finish,nat,pre in hold:
+                  base=[nat[i]*(prior[i]/(1/6))**COURSE_PRIOR_EXP for i in range(6)]
+                  head=[]
+                  for i,reg in enumerate(regs):
+                      pair=racer.get((reg,i+1))
+                      if pair is None:
+                          head.append(base[i])
+                      else:
+                          n,nw=pair;posterior=(nw+BACKOFF_N*prior[i])/(n+BACKOFF_N)
+                          head.append(base[i]*(posterior/prior[i])**HEAD_EFFECT_EXP)
+                  # Predeclared three rank-specialized candidates; all tails rely only
+                  # on the held-out race card + earlier racer/actual-course history.
+                  t2_place=[];t3_place=[]
+                  for i,reg in enumerate(regs):
+                      counts=racer_place.get((reg,i+1))
+                      if counts is None:
+                          t2_place.append(base[i]);t3_place.append(base[i]);continue
+                      n,second_n,third_n=counts
+                      q2=(second_n+PLACE_BACKOFF_N*second_prior[i])/(n+PLACE_BACKOFF_N)
+                      q3=(third_n+PLACE_BACKOFF_N*third_prior[i])/(n+PLACE_BACKOFF_N)
+                      t2_place.append(base[i]*(q2/second_prior[i])**PLACE_EFFECT_EXP)
+                      t3_place.append(base[i]*(q3/third_prior[i])**PLACE_EFFECT_EXP)
+                  multi_head=adjust_escape_pressure(head,pre,multisignal=True)[0]
+                  # Geometric interpolation of positive scores preserves valid normalized head marginals.
+                  blended=[head[i]**(1.0-V153_BLEND)*multi_head[i]**V153_BLEND for i in range(6)]
+                  scoremap={
+                      'baseline_pl':(base,'pl',None,None),
+                      'head_history_pl':(head,'pl',None,None),
+                      'v148_cond_full':(head,'v148_cond_full',None,None),
+                      'role_head12':(head,'role_head12',None,None),
+                      'role_guarded':(head,'role_guarded',None,None),
+                      'head_tail_baseline':(head,'head_tail_baseline',base,base),
+                      'head_tail_place':(head,'head_tail_place',t2_place,t3_place),
+                      'head_tail_base_cond':(head,'head_tail_base_cond',base,base),
+                      'pre_head_pressure':(adjust_escape_pressure(head,pre)[0],'pl',None,None),
+                      'pre_head_pressure_cond':(adjust_escape_pressure(head,pre)[0],'v148_cond_full',None,None),
+                      'pre_head_multisignal':(adjust_escape_pressure(head,pre,multisignal=True)[0],'pl',None,None),
+                      'world_tail_base':(adjust_escape_pressure(head,pre,multisignal=True)[0],'pl',base,base),
+                      'world_tail_place':(adjust_escape_pressure(head,pre,multisignal=True)[0],'pl',t2_place,t3_place),
+                      'world_tail_conditional':(adjust_escape_pressure(head,pre,multisignal=True)[0],'world_tail_conditional',base,base),
+                      'world_tail_conditional_place':(adjust_escape_pressure(head,pre,multisignal=True)[0],'world_tail_conditional_place',t2_place,t3_place),
+                      'head_blend05_pl':(blended,'pl',None,None),
+                      'head_blend05_weak_cond':(blended,'head_blend05_weak_cond',None,None),
+                      'head_blend05_place':(blended,'pl',t2_place,t3_place),
+                      'v154_wall_pl':(blended,'v154_wall_pl',None,None),
+                      'v154_wall_cond':(blended,'v154_wall_cond',None,None),
+                      'v154_attack_cond':(blended,'v154_attack_cond',None,None),
+                      'v154_wall_attack_cond':(blended,'v154_wall_attack_cond',None,None),
+                  }
+                  predhead=max(range(6),key=lambda x:(base[x],-x))+1
+                  group='pred_head1' if predhead==1 else 'pred_head2' if predhead==2 else 'pred_head34' if predhead in (3,4) else 'pred_head56'
+                  segs=['all',group,'changed_entry_DIAGNOSTIC' if lanes!=[1,2,3,4,5,6] else 'unchanged_entry_DIAGNOSTIC']
+                  if finish[0]==1 and finish[1]==2:segs.append('realized_1_2_DIAGNOSTIC')
+                  if finish[0] in (3,4) and (finish[1] in (5,6) or finish[2] in (5,6)):segs.append('realized_attack34_benefit56_DIAGNOSTIC')
+                  wall_supported,attack_sources,attack_benef=v154_prerace_support(pre)
+                  if wall_supported:segs.append('pre_wall_SUPPORTED')
+                  if attack_sources and attack_benef:segs.append('pre_attack_SUPPORTED')
+                  if not wall_supported and not (attack_sources and attack_benef):segs.append('pre_neutral_SUPPORTED')
+                  truth=tuple(finish)
+                  for model,(score,style,tail2,tail3) in scoremap.items():
+                      ranked=rank120(score,heads,seconds,thirds,style,tail2,tail3,pre)
+                      top=[item[0] for item in ranked[:10]]
+                      pwin=score[finish[0]-1]/sum(score)
+                      marghead=max(range(6),key=lambda x:(score[x],-x))+1
+                      for seg in segs:
+                          z=stats[seg][model]
+                          z['evaluated']+=1
+                          z['head_top1']+=int(ranked[0][0][0]==finish[0])
+                          call=ranked[0][0][0]
+                          z['pred_non1']+=int(call!=1)
+                          z['true_non1']+=int(finish[0]!=1)
+                          z['true_non1_called']+=int(call!=1 and finish[0]!=1)
+                          z['false_non1']+=int(call!=1 and finish[0]==1)
+                          z['pred_head34']+=int(call in (3,4))
+                          z['marginal_head_top1']+=int(marghead==finish[0])
+                          z['head_ticket_mismatch']+=int(call!=marghead)
+                          z['mismatch_ticket_head_correct']+=int(call!=marghead and call==finish[0])
+                          z['mismatch_marginal_head_correct']+=int(call!=marghead and marghead==finish[0])
+                          z['head_ll_sum']+=-math.log(max(pwin,1e-12))
+                          for k in (3,5,10):z[f'trifecta_top{k}']+=int(truth in top[:k])
+          
+              for segment in stats.values():
+                  for z in segment.values():
+                      n=z['evaluated']
+                      z['head_log_loss']=round(z.pop('head_ll_sum')/n,5) if n else None
+                      for k in ('head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10'):
+                          z[k+'_pct']=round(z[k]*100/n,2) if n else None
+              for segment in stats.values():
+                  for z in segment.values():
+                      z['non1_precision_pct']=round(100*z['true_non1_called']/z['pred_non1'],2) if z['pred_non1'] else None
+                      z['non1_recall_pct']=round(100*z['true_non1_called']/z['true_non1'],2) if z['true_non1'] else None
+              fold_metrics[fid]=stats
+              details[fid]=dict(train_end=train_end.isoformat(),hold_start=hold_start.isoformat(),hold_end=hold_end.isoformat(),
+                                train_races=len(train),hold_races=len(hold),course_priors=[round(x,6) for x in prior])
+          
+          # Audit parity against V148 on identical last fold/source; fail closed.
+          control_file=Path('data/site_racer_actual_course/v148_research/research.json')
+          control=dict(checked=False,reason='V148 reference missing')
+          if not TEST:
+              assert control_file.exists(),'V148 reference required for parity'
+              old=json.loads(control_file.read_text(encoding='utf-8'))
+              assert old['source']['paired_sha256']==SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+              same=fold_metrics['F3']['all']
+              compared=('baseline_pl','head1y_pl','head1y_cond_full')
+              ours=('baseline_pl','head_history_pl','v148_cond_full')
+              check={}
+              for original,now in zip(compared,ours):
+                  left=old['metrics']['all'][original]
+                  right=same[now]
+                  check[now]=all(left[k]==right[k] for k in ('evaluated','head_top1','trifecta_top3','trifecta_top5','trifecta_top10'))
+              assert all(check.values()),check
+              control=dict(checked=True,source_equal=True,metrics_equal=check)
+          
+          # Independent V149 parity contract, including all three folds and all five controls.
+          parity149={'checked':False,'models':{}}
+          if not TEST:
+              p149=Path('data/site_racer_actual_course/v149_research/research.json')
+              assert p149.exists(),'V149 control research is required'
+              old149=json.loads(p149.read_text(encoding='utf-8'))
+              assert old149['source']['source_manifest_sha256']==SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+              for f in ('F1','F2','F3'):
+                  for m in ('baseline_pl','head_history_pl','v148_cond_full','role_head12','role_guarded'):
+                      a=old149['metrics']['folds'][f]['all'][m]
+                      b=fold_metrics[f]['all'][m]
+                      checked=all(a[k]==b[k] for k in ('evaluated','head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10','head_log_loss'))
+                      parity149['models'][f+'_'+m]=checked
+              assert all(parity149['models'].values()),parity149
+              parity149['checked']=True
+          
+          # V150 immutable control parity: prevent changes to earlier scoring paths.
+          parity150={'checked':False,'models':{}}
+          if not TEST:
+              p150=Path('data/site_racer_actual_course/v150_research/research.json')
+              assert p150.exists(),'V150 research required for fail-closed parity'
+              old150=json.loads(p150.read_text(encoding='utf-8'))
+              assert old150['source']['source_manifest_sha256']==SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+              for f in ('F1','F2','F3'):
+                  for m in old150['models']:
+                      old=old150['metrics']['folds'][f]['all'][m]
+                      current=fold_metrics[f]['all'][m]
+                      parity150['models'][f+'_'+m]=all(old[k]==current[k] for k in
+                          ('evaluated','head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10','head_log_loss'))
+              assert len(parity150['models'])==24 and all(parity150['models'].values()),parity150
+              parity150['checked']=True
+          
+          # Fail-closed V151 control parity: preserve all previous eleven model outputs.
+          parity151={'checked':False,'models':{}}
+          if not TEST:
+              p151=Path('data/site_racer_actual_course/v151_research/research.json')
+              assert p151.exists(),'V151 control research required'
+              old151=json.loads(p151.read_text(encoding='utf-8'))
+              assert old151['source']['source_manifest_sha256']==SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+              for f in ('F1','F2','F3'):
+                  for m in old151['models']:
+                      old=old151['metrics']['folds'][f]['all'][m]
+                      curr=fold_metrics[f]['all'][m]
+                      parity151['models'][f+'_'+m]=all(old[k]==curr[k] for k in (
+                          'evaluated','head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10','head_log_loss',
+                          'pred_non1','true_non1','true_non1_called','false_non1','non1_precision_pct','non1_recall_pct'))
+              assert len(parity151['models'])==33 and all(parity151['models'].values()),parity151
+              parity151['checked']=True
+          
+          # V152 fixed retrospective parity: 15 old models x 3 folds, no previous path changes.
+          parity152={'checked':False,'models':{}}
+          if not TEST:
+              p152=Path('data/site_racer_actual_course/v152_research/research.json')
+              assert p152.exists(),'V152 source research required for fail-closed parity'
+              old152=json.loads(p152.read_text(encoding='utf-8'))
+              assert old152['source']['source_manifest_sha256']==SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+              for f in ('F1','F2','F3'):
+                  for name in old152['models']:
+                      a=old152['metrics']['folds'][f]['all'][name]
+                      b=fold_metrics[f]['all'][name]
+                      keys=('evaluated','head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10',
+                            'head_log_loss','pred_non1','true_non1','true_non1_called','false_non1','pred_head34')
+                      parity152['models'][f+'_'+name]=all(a[k]==b[k] for k in keys)
+              assert len(parity152['models'])==45 and all(parity152['models'].values()),parity152
+              parity152['checked']=True
+          
+          # V153 full parity including disagreement metrics (18 old models x 3 folds).
+          parity153={'checked':False,'models':{}}
+          if not TEST:
+              p153=Path('data/site_racer_actual_course/v153_research/research.json')
+              assert p153.exists(),'V153 research required, cannot skip comparison'
+              prev=json.loads(p153.read_text(encoding='utf-8'))
+              assert prev['source']['source_manifest_sha256']==SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+              for f in ('F1','F2','F3'):
+                  for model in prev['models']:
+                      a=prev['metrics']['folds'][f]['all'][model]
+                      b=fold_metrics[f]['all'][model]
+                      ks=('evaluated','head_top1','marginal_head_top1','trifecta_top3','trifecta_top5',
+                          'trifecta_top10','head_log_loss','pred_non1','true_non1','true_non1_called','false_non1',
+                          'pred_head34','head_ticket_mismatch','mismatch_ticket_head_correct','mismatch_marginal_head_correct')
+                      parity153['models'][f+'_'+model]=all(a[k]==b[k] for k in ks)
+              assert len(parity153['models'])==54 and all(parity153['models'].values()),parity153
+              parity153['checked']=True
+          
+          # Joint aggregate with weighted count denominator (not mean-of-percentages).
+          agg={seg:{m:{} for m in MODELS} for seg in SEGMENTS}
+          for seg in SEGMENTS:
+              for m in MODELS:
+                  z=agg[seg][m];pieces=[fold_metrics[f][seg][m] for f in ('F1','F2','F3')]
+                  for k in ('evaluated','head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10','pred_non1','true_non1','true_non1_called','false_non1','pred_head34','head_ticket_mismatch','mismatch_ticket_head_correct','mismatch_marginal_head_correct'):
+                      z[k]=sum(v[k] for v in pieces)
+                  n=z['evaluated']
+                  for k in ('head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10'):
+                      z[k+'_pct']=round(100*z[k]/n,2) if n else None
+                  z['head_log_loss']=round(sum(p['head_log_loss']*p['evaluated'] for p in pieces if p['evaluated'])/n,5) if n else None
+                  z['non1_precision_pct']=round(100*z['true_non1_called']/z['pred_non1'],2) if z['pred_non1'] else None
+                  z['non1_recall_pct']=round(100*z['true_non1_called']/z['true_non1'],2) if z['true_non1'] else None
+          
+          deltas={}
+          for model in MODELS[1:]:
+              deltas[model]={}
+              for group,stats in [('aggregate',agg),*[(f,fold_metrics[f]) for f in ('F1','F2','F3')]]:
+                  b=stats['all']['baseline_pl'];c=stats['all'][model]
+                  deltas[model][group]={k:round(c[k+'_pct']-b[k+'_pct'],2) for k in ('head_top1','marginal_head_top1','trifecta_top3','trifecta_top5','trifecta_top10')}
+              # This is descriptive only. This report CANNOT promote a model into production.
+              deltas[model]['direction_consistent']=(
+                  all(deltas[model][f]['trifecta_top3']>0 and deltas[model][f]['trifecta_top5']>0 and
+                      deltas[model][f]['trifecta_top10']>=0 and deltas[model][f]['marginal_head_top1']>=0 for f in ('F1','F2','F3'))
+              )
+          
+          source_manifest_sha=SHA('\n'.join('|'.join(x) for x in source_hashes).encode())
+          report={
+           'schema_version':'boat-edge-v154-inside-wall-vs-attack-research-v1',
+           'status':'RESEARCH_ONLY_NO_PRODUCTION_CHANGES',
+           'decision':'NO_PROMOTION_IRRESPECTIVE_OF_RESULTS; requires unseen prospective formal validation',
+           'historical_fold_not_fresh':'All three folds are retrospective and historical results had been available to V147/V148 training; F3 test reused.',
+           'source':dict(repo='BoatraceCSV/boatracecsv.github.io',pinned_commit=SOURCE_SHA,source_manifest_sha256=source_manifest_sha),
+           'formal_2026_10_08_results_accessed':False,'formal_unlock':False,'formal_scoring':False,'prediction_weights_changed':False,
+           'actual_holdout_entry_used_for_ranking':False,'heldout_actual_entry_for_diagnostics_only':True,
+           'baseline_not_V133_or_formal':True,
+           'fixed_predeclared_role_model':{
+              'role_head12':'on hypothetical winner boat1 P2/P3 blend 0.30/0.15; boat2 0.20/0.10; other heads PL',
+              'role_guarded':'on hypothetical winner boat1 blend 0.25/0.15; boat2 0.18/0.10; boat3/4 0.10/0.05; boat5/6 PL',
+              'v148_cond_full':'all six heads P2/P3 blend 0.4/0.35',
+              'roles':'Hypothetical head role from race-card frame only; no actual holdout course',
+              'prior':'National winrate × course historical first-rate and optional racer×actual-course head backoff, training-only'
+           },
+           'v150_frozen_hypotheses':{
+              'head_tail_baseline':'Only 1st-place uses historical racer-course head adjustment; 2nd and 3rd use pre-race base strength',
+              'head_tail_place':'1st-place racer head strength; 2nd/3rd pre-race base adjusted by training-only racer×actual-course respective placing rates; shrink=20 exponent=0.35',
+              'head_tail_base_cond':'1st-place racer head strength; 2nd/3rd pre-race base with small training-only conditional frequency shrinkage (mix=0.18/0.10)',
+              'scoring_policy':'120 permutations, no odds, no manual hole boost, no ticket-count target',
+              'training':'each fold strictly prior to holdout; no heldout course/result used as prediction feature',
+           },
+           'v151_frozen_hypotheses':{
+               'pre_head_pressure':'In frames 2-4 require >=2 reported card signals; score non-1 using avg ST, motor 2-rate, national 2-rate vs frame1; fixed gain 1.5 and 1-boat inverse damping 0.38',
+               'pre_head_pressure_cond':'Same head pressure with V148 train-only conditional second/third; not a new scenario predictor',
+               'pre_head_multisignal':'Require >=2 positive signs among available 2+; gain 1.05 and inside damping 0.20',
+               'feature_scope':'Only national mean ST and reported motor/national 2-place rates from heldout race card; no result-day outcomes/actual entry/exhibition/odds',
+               'diagnostics':'For each model report predicted non-1 head count, false non-1 alarms, non-1 recall, non-1 precision and predicted head3/4 count',
+               'frozen_no_tuning':'No parameter grid search or best-model promotion against F1 F2 F3',
+           },
+           'v152_frozen_hypotheses':{
+              'world_tail_base':'V151 multi-signal pre-race head, tail2/3 use unchanged national winrate + training-only global course first-rate as PL inputs',
+              'world_tail_place':'V151 multi-signal pre-race head; rank-specific second/third training-only racer-by-actual-course placing estimates with V150 shrinkage',
+              'world_tail_conditional':'V151 multi-signal pre-race head; for each hypothetical head use frozen world alpha second [0.10,0.20,0.20,0.20,0.06,0.06], third [0.06,0.10,0.10,0.10,0.03,0.03]; training-only conditional finish counts',
+              'world_tail_conditional_place':'V151 multi-signal pre-race head; conditional 2nd/3rd with racer-course rank-specific tails',
+              'conditional_pseudocounts':{'second':WORLD_P2_PSEUDO,'third':WORLD_P3_PSEUDO},
+              'role_worlds':'Hypothetical head is evaluated for every one of 120 possible 3-place sequences, never inferred from actual finish or heldout entry',
+              'no_best_candidate_selection':'Any metric comparisons are retrospective diagnostics only; no parameters searched, no production promotion',
+              'no_live_scenario_claim':'Start timing, 2-course wall, first-turn and original exhibition not directly measured in this experiment',
+           },
+           'source_missing_days':missing,'input_quality':dict(quality),
+           'folds':details,'heldout_total':sum(fold_counts.values()),
+           'models':MODELS,'metrics':{'aggregate':agg,'folds':fold_metrics},
+           'delta_pp_vs_baseline':deltas,
+           'v148_f3_parity':control,
+           'v149_threefold_parity':parity149,
+           'v150_threefold_parity':parity150,
+           'v151_threefold_parity':parity151,
+           'v152_threefold_parity':parity152,
+           'v154_frozen_hypotheses':{
+              'scenarios':'Pre-race card-only escape+2-wall and 3/4 attack+5/6 beneficiary support, each >=2 observed affirmative independent signals; otherwise neutral',
+              'wall_pl':'Geometric 50% head blend; PL tail reweight 1-2 within hypothetical first=1 by fixed 1.25 if escape+wall pre-signal',
+              'wall_cond':'V153 weak conditional tail and same fixed 1.25 inside-wall effect',
+              'attack_cond':'V153 weak conditional tail; conditional 3/4 head with supported 5/6 beneficiary boost fixed 1.18',
+              'wall_attack_cond':'Both above, factors renormalized separately per hypothetical winning head',
+              'probability_invariant':'Exactly 120 unique tickets, mass=1, marginal first-place mass preserved without forcing top-ticket head to match',
+              'scope':'Retrospective exploratory only; user production gate remains locked; BOATERS original exhibition/wall is NOT measured',
+           },
+           'v153_threefold_parity':parity153,
+           'v153_frozen_hypotheses':{
+               'head_blend05_pl':'Head pressure geometric halfway from racer actual-course strength to V151 conservative multi-signal score; both inputs race-card/history only; PL tail uses same interpolated scores',
+               'head_blend05_weak_cond':'Same 0.50 log-domain blend; P(second|head) blend 0.12, P(third|head,second) blend 0.07 with training-only frame-level counts and pseudocount 40/25',
+               'head_blend05_place':'Same head blend; training-only racer actual-course second and third priors from V150',
+               'probability_contract':'Trifecta ticket scores represent valid joint normalized probabilities; marginal head is the sum over 20 tickets, so highest-probability ticket head need not be highest marginal head; both outputs independently scored',
+               'diagnostics':'ticket-head vs marginal-head disagreement frequency; accuracy within disagreement; must not force prediction to agree',
+               'calibration':'No hyperparameter grid/holdout optimization; descriptive retrospective report only',
+           },
+           'limitations':['Pre-race race card input extraction timestamps are NOT independently verified; provenance risk remains.',
+                          'The 2-course wall or current exhibition is not directly observed, only proxy features.',
+                          'These candidates are evaluated on previously accessed retrospective folds; selection is exploratory and not a new independent success claim.',
+                          'Training histories start 2025-11-01, not complete 1-year on early folds.',
+                          'Historical race card nationality strength is treated as pre-race; no race-card scrape timestamps audited.',
+                          'No automatic selection/promote based on repeated historical testing.',
+                          'Conditional effect is course/frame proxy; no live 2-course wall/ST/BOATERS original exhibition integrated.',
+                          'Always compare A-head, Top3, Top5 and Top10, not minimal ticket count.']
+          }
+          raw=(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True)+'\n').encode()
+          (OUT/'research.json').write_bytes(raw)
+          audit={
+           'schema_version':'boat-edge-v154-inside-wall-vs-attack-audit-v1',
+           'research_sha256':SHA(raw),
+           'source_pair_sha256':source_manifest_sha,
+           'pinned_source':SOURCE_SHA,
+           'source_cutoff':'2026-10-07',
+           'source_2026_10_08_result_materialized':(SRC/'data/results/realtime/2026/10/08.csv').exists(),
+           'source_2026_10_08_card_materialized':(SRC/'data/programs/race_cards/2026/10/08.csv').exists(),
+           'train_before_heldout':all(e<h for _,e,h,_ in FOLDS),
+           'no_proxy_no_imputation':True,
+           'holdout_dates_disjoint':len({d for _,_,h,end in FOLDS for d in (h+timedelta(days=i) for i in range((end-h).days+1))})==sum((end-h).days+1 for _,_,h,end in FOLDS),
+           'all_fold_models_same_n':all(len({fold_metrics[f]['all'][m]['evaluated'] for m in MODELS})==1 for f in ('F1','F2','F3')),
+           'monotonic_trifecta':all(z['trifecta_top3']<=z['trifecta_top5']<=z['trifecta_top10']<=z['evaluated'] for ss in [agg,*fold_metrics.values()] for group in ss.values() for z in group.values()),
+           'v148_f3_parity':control,
+           'v149_threefold_parity':parity149,
+           'v150_threefold_parity':parity150,
+           'v151_threefold_parity':parity151,
+           'v152_threefold_parity':parity152,
+           'v153_threefold_parity':parity153,
+           'prerace_segment_partition':all(fold_metrics[f]['pre_wall_SUPPORTED']['baseline_pl']['evaluated']<=fold_metrics[f]['all']['baseline_pl']['evaluated'] and fold_metrics[f]['pre_attack_SUPPORTED']['baseline_pl']['evaluated']<=fold_metrics[f]['all']['baseline_pl']['evaluated'] for f in ('F1','F2','F3')),
+           'head_ticket_mismatch_counts_valid':all(0<=z['head_ticket_mismatch']<=z['evaluated'] and z['mismatch_ticket_head_correct']+z['mismatch_marginal_head_correct']<=z['head_ticket_mismatch'] for tables in [agg,*fold_metrics.values()] for row in tables.values() for z in row.values()),
+           'formal_gate_unchanged':True,
+           'results_seen_formal':False,
+           'research_not_production':True
+          }
+          assert not audit['source_2026_10_08_result_materialized'] and not audit['source_2026_10_08_card_materialized']
+          assert audit['train_before_heldout'] and audit['holdout_dates_disjoint'] and audit['all_fold_models_same_n'] and audit['monotonic_trifecta'] and audit['head_ticket_mismatch_counts_valid'] and audit['prerace_segment_partition']
+          (OUT/'audit.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({'version':'V154','holdout_per_fold':fold_counts,'sample_total':report['heldout_total'],'parity':control,'wall_pl':deltas['v154_wall_pl'],'wall_cond':deltas['v154_wall_cond'],'attack_cond':deltas['v154_attack_cond'],'wall_attack_cond':deltas['v154_wall_attack_cond']},ensure_ascii=False,sort_keys=True))
+          PY
+          rm -rf data/site_racer_actual_course/v154_research
+          python /tmp/v154.py | tee /tmp/v154_run1.txt
+          cp -a data/site_racer_actual_course/v154_research /tmp/v154_pass1
+          rm -rf data/site_racer_actual_course/v154_research
+          python /tmp/v154.py | tee /tmp/v154_run2.txt
+          cmp /tmp/v154_run1.txt /tmp/v154_run2.txt
+          cmp /tmp/v154_pass1/research.json data/site_racer_actual_course/v154_research/research.json
+          cmp /tmp/v154_pass1/audit.json data/site_racer_actual_course/v154_research/audit.json
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path('data/site_racer_actual_course/v154_research')
+          r=json.loads((p/'research.json').read_text(encoding='utf-8'))
+          a=json.loads((p/'audit.json').read_text(encoding='utf-8'))
+          assert a['research_sha256']==hashlib.sha256((p/'research.json').read_bytes()).hexdigest()
+          assert r['status']=='RESEARCH_ONLY_NO_PRODUCTION_CHANGES'
+          assert r['source']['pinned_commit']=='2d149e1ae838f6ed3426a7989be69e799ac2988f'
+          assert r['formal_2026_10_08_results_accessed'] is False
+          assert r['formal_unlock'] is False and r['formal_scoring'] is False
+          assert r['prediction_weights_changed'] is False
+          assert r['heldout_total']==14049
+          assert a['v150_threefold_parity']['checked'] and all(a['v150_threefold_parity']['models'].values())
+          assert a['v151_threefold_parity']['checked'] and len(a['v151_threefold_parity']['models']) == 33
+          assert all(a['v151_threefold_parity']['models'].values())
+          assert len(a['v152_threefold_parity']['models'])==45 and all(a['v152_threefold_parity']['models'].values())
+          assert len(a['v153_threefold_parity']['models'])==54 and all(a['v153_threefold_parity']['models'].values())
+          assert a['prerace_segment_partition']
+          assert a['head_ticket_mismatch_counts_valid']
+          assert len(r['models'])==22
+          assert r['heldout_total']==14049
+          assert all(r['folds'][f]['hold_races']>3500 for f in ('F1','F2','F3'))
+          assert all(m in r['models'] for m in ('world_tail_base','world_tail_place','world_tail_conditional','world_tail_conditional_place'))
+          assert all(z['trifecta_top3']<=z['trifecta_top5']<=z['trifecta_top10']<=z['evaluated']
+                     for f in ('F1','F2','F3') for z in r['metrics']['folds'][f]['all'].values())
+
+          assert all(a[k] for k in ('train_before_heldout','holdout_dates_disjoint','all_fold_models_same_n','monotonic_trifecta'))
+          assert not a['source_2026_10_08_result_materialized'] and not a['source_2026_10_08_card_materialized']
+          for ss in [r['metrics']['aggregate'],*r['metrics']['folds'].values()]:
+            for models in ss.values():
+              for z in models.values():
+                assert 0<=z['trifecta_top3']<=z['trifecta_top5']<=z['trifecta_top10']<=z['evaluated']
+                assert z['true_non1_called']<=z['pred_non1']
+                assert z['true_non1_called']<=z['true_non1']
+          st=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          assert not any(st['formal_current']['guards'][k] for k in ('results_seen','unlock','scoring'))
+          print('V154 RUN1_RUN2 BYTE_IDENTICAL PASS')
+          print('V154 V153 54-OLD-MODEL PARITY PASS')
+          print('V154 SCENARIO DIAGNOSTICS PASS')
+          print('V154 FORMAL_LOCK NO_PRODUCTION_CHANGE PASS')
+          PY
+
+      - name: Publish V154 research-only artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/site_racer_actual_course/v154_research
+          git diff --cached --quiet && exit 0
+          git commit -m 'V154: research pre-race wall and attack scenarios only'
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
