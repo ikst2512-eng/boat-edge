@@ -1,0 +1,160 @@
+name: BOAT EDGE V136 Site Mode Accuracy
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v136.yml"
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "BOAT EDGE V133 Balance10 Wave18 FIXED"
+    types: [completed]
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v136-site-accuracy
+  cancel-in-progress: false
+
+jobs:
+  install:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Install V136 files and audit panel
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json,re
+          script=Path("scripts/site_accuracy_v136.py")
+          script.parent.mkdir(parents=True,exist_ok=True)
+          script.write_text('\nfrom pathlib import Path\nfrom datetime import datetime, timezone\nimport json, hashlib, collections\n\nBASE=Path(".")\nHISTORY=BASE/"data/site_prediction_history"\nRESULTS=BASE/"data/site_results"\nAUDIT=BASE/"data/site_prediction_audit/index.json"\nOUT=BASE/"data/site_learning/mode_accuracy_v136.json"\nDETAIL=BASE/"data/site_learning/site_mode_evaluations_v136"\nMODES=("hit","balance","hole","narrow")\nPOLICY="BALANCE10_WAVE12_15_18_V133_FIXED"\nLABELS={"hit":"的中重視","balance":"バランス","hole":"波乱展開","narrow":"激絞り"}\n\ndef get(p):\n    try: return json.loads(p.read_text(encoding="utf-8"))\n    except (OSError,ValueError):return None\n\ndef iso(v):\n    try:\n        d=datetime.fromisoformat(str(v).replace("Z","+00:00"))\n        return d.astimezone(timezone.utc) if d.tzinfo else None\n    except (ValueError,TypeError):return None\n\ndef digest(p):\n    return hashlib.sha256(p.read_bytes()).hexdigest()\n\naudit=get(AUDIT) or {}\naudited=audit.get("audited") or {}\ncounts=collections.Counter()\nby_mode={m:{"label":LABELS[m],"evaluated":0,"hits":0,"misses":0,"hit_rate_percent":None} for m in MODES}\nby_head={"1":{"evaluated":0,"hits":{m:0 for m in MODES}},"2-6":{"evaluated":0,"hits":{m:0 for m in MODES}}}\nevidence=[]\nDETAIL.mkdir(parents=True,exist_ok=True)\nfor hp in sorted(HISTORY.glob("20??????-??-??.json")):\n    h=get(hp) or {}\n    snap=h.get("snapshot") or {}\n    if snap.get("mode_policy")!=POLICY:continue\n    key=str(snap.get("race_key") or hp.stem)\n    settlement=h.get("settlement") or {}\n    if not settlement:\n        counts["unsettled"]+=1\n        continue\n    if snap.get("schema_version")!="boat-edge-server-site-final-v123" or snap.get("snapshot_window")!="FINAL_15M":\n        counts["invalid_snapshot_contract"]+=1\n        continue\n    if snap.get("prediction_kind")!="SITE_REFERENCE_V122":\n        counts["not_reference_prediction"]+=1\n        continue\n    guards=snap.get("guards") or {}\n    if any(guards.get(x) is not False for x in ("results_seen","unlock","scoring")):\n        counts["pre_result_guard_invalid"]+=1\n        continue\n    try:remaining=float(snap["minutes_to_deadline"])\n    except (ValueError,TypeError,KeyError):remaining=-1\n    if not 0<=remaining<=16:\n        counts["deadline_window_invalid"]+=1\n        continue\n    first=iso(snap.get("first_saved_at"))\n    saved=iso(snap.get("saved_at"))\n    settled=iso(settlement.get("settled_at"))\n    if not first or not saved or not settled or not first<=saved<settled:\n        counts["temporal_order_invalid"]+=1\n        continue\n    proof=audited.get(key) or {}\n    if proof.get("pass") is not True or proof.get("latest_snapshot_saved_at")!=snap.get("saved_at"):\n        counts["awaiting_matching_v125_audit"]+=1\n        continue\n    result_path=RESULTS/f"{key}.json"\n    result=get(result_path) or {}\n    winning=result.get("trifecta")\n    if result.get("status")!="confirmed" or not isinstance(winning,str):\n        counts["confirmed_result_missing"]+=1\n        continue\n    if winning!=settlement.get("winning_combo"):\n        counts["result_settlement_mismatch"]+=1\n        continue\n    group="1" if winning.startswith("1-") else "2-6"\n    cases={}\n    valid=True\n    for mode in MODES:\n        items=((snap.get("modes") or {}).get(mode) or {}).get("tickets") or []\n        combos=[row.get("combo") for row in items if isinstance(row,dict)]\n        if not combos or any(not isinstance(c,str) for c in combos) or len(set(combos))!=len(combos):\n            valid=False;break\n        if mode=="hit" and len(combos)!=10:valid=False;break\n        if mode=="balance" and len(combos)!=10:valid=False;break\n        if mode=="narrow" and len(combos)!=3:valid=False;break\n        if mode=="hole" and len(combos) not in (12,15,18):valid=False;break\n        hit=winning in combos\n        if (settlement.get("mode_hits") or {}).get(mode) is not hit:\n            valid=False;break\n        cases[mode]={"hit":hit,"count":len(combos),"ticket_rank":combos.index(winning)+1 if hit else None}\n    if not valid:\n        counts["tickets_or_settlement_invalid"]+=1\n        continue\n    entry={\n        "schema_version":"boat-edge-site-mode-evaluation-v136",\n        "scope":"SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",\n        "race_key":key,\n        "snapshot_saved_at":snap["saved_at"],\n        "snapshot_first_saved_at":snap["first_saved_at"],\n        "settled_at":settlement["settled_at"],\n        "remaining_at_snapshot_minutes":remaining,\n        "mode_policy":POLICY,\n        "winning_combo":winning,\n        "official_result_source":result.get("source"),\n        "source_history_sha256":digest(hp),\n        "source_result_sha256":digest(result_path),\n        "used_inputs":snap.get("used_inputs") or [],\n        "grade":snap.get("grade"),\n        "winning_head_group":group,\n        "modes":cases\n    }\n    dp=DETAIL/f"{key}.json"\n    blob=json.dumps(entry,ensure_ascii=False,indent=2)+"\\n"\n    if not dp.exists() or dp.read_text(encoding="utf-8")!=blob:\n        dp.write_text(blob,encoding="utf-8")\n    evidence.append(entry)\n    by_head[group]["evaluated"]+=1\n    for mode in MODES:\n        by_mode[mode]["evaluated"]+=1\n        by_mode[mode]["hits"]+=int(cases[mode]["hit"])\n        by_mode[mode]["misses"]+=int(not cases[mode]["hit"])\n        by_head[group]["hits"][mode]+=int(cases[mode]["hit"])\n\nfor mode in MODES:\n    x=by_mode[mode]\n    if x["evaluated"]:\n        x["hit_rate_percent"]=round(100*x["hits"]/x["evaluated"],1)\n\nsummary={\n    "schema_version":"boat-edge-site-mode-accuracy-v136",\n    "scope":"SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",\n    "formal_current_scoring":False,\n    "production_prediction_weights_changed":False,\n    "predictions_evaluated":len(evidence),\n    "mode_policy":POLICY,\n    "modes":by_mode,\n    "by_winning_head":by_head,\n    "excluded_reasons":dict(sorted(counts.items())),\n    "method":"Only V133 prospective FINAL_15M snapshots with matching V125 audit and confirmed official result; no race/result endpoint consulted, no historical prediction backfill.",\n    "rank_120_available":False,\n    "latest_settlement":max((e["settled_at"] for e in evidence),default=None),\n    "example_race_keys":[e["race_key"] for e in evidence[:10]],\n    "note":"Descriptive observed hit rates, not proven predictive improvement. Site reference predictions are separate from formal Fresh validation."\n}\nOUT.parent.mkdir(parents=True,exist_ok=True)\nblob=json.dumps(summary,ensure_ascii=False,indent=2)+"\\n"\nif not OUT.exists() or OUT.read_text(encoding="utf-8")!=blob:\n    OUT.write_text(blob,encoding="utf-8")\nprint(json.dumps({"evaluated":len(evidence),"modes":by_mode,"excluded":dict(counts)},ensure_ascii=False))\n',encoding="utf-8")
+
+          front=Path("assets/boat_edge_v136_accuracy.js")
+          front.write_text('\n/* BOAT_EDGE_V136_SITE_ACCURACY_POST_RESULT */\n(()=>{"use strict";\nlet running=false;\nconst labels={hit:"的中重視",balance:"バランス",hole:"波乱展開",narrow:"激絞り"};\nfunction target(){\n  const host=document.getElementById("auditView");\n  if(!host)return null;\n  let panel=document.getElementById("be136SiteAccuracy");\n  if(!panel){\n    panel=document.createElement("section");\n    panel.id="be136SiteAccuracy";\n    panel.className="section be136-accuracy";\n    panel.innerHTML=\'<div class="card be136-shell"><div class="be136-title"><b>参考予想・実戦的中率</b><span>締切前保存 → 結果確定</span></div><p>評価データを読み込み中…</p></div>\';\n    host.insertBefore(panel,host.firstChild);\n  }\n  return panel.querySelector(".be136-shell");\n}\nasync function render(){\n  if(running)return;\n  const root=target();if(!root)return;\n  running=true;\n  try{\n    const url=`./data/site_learning/mode_accuracy_v136.json?v=${Math.floor(Date.now()/60000)}`;\n    const res=await fetch(url,{cache:"no-store"});\n    if(!res.ok)throw new Error("not published");\n    const d=await res.json();\n    if(d.schema_version!=="boat-edge-site-mode-accuracy-v136")throw new Error("schema");\n    const n=Number(d.predictions_evaluated||0);\n    const cards=Object.entries(labels).map(([k,label])=>{\n      const r=d.modes?.[k]||{};\n      const rate=Number.isFinite(Number(r.hit_rate_percent))&&r.hit_rate_percent!==null?`${r.hit_rate_percent}%`:"—";\n      return `<div class="be136-mode"><strong>${label}</strong><b>${rate}</b><small>${Number(r.hits||0)}/${Number(r.evaluated||0)}R 的中</small></div>`;\n    }).join("");\n    root.innerHTML=`<div class="be136-title"><b>参考予想・実戦的中率</b><span>締切前保存 → 結果確定</span></div>\n      <div class="be136-count">監査済み確定レース <strong>${n}R</strong></div>\n      <div class="be136-modes">${cards}</div>\n      <p class="be136-note">サイト参考予想の実績で、正式CURRENTの未見Fresh検証とは別集計。少数サンプルの的中率だけでは精度向上を証明できません。</p>`;\n  }catch(e){\n    root.innerHTML=\'<div class="be136-title"><b>参考予想・実戦的中率</b></div><p class="be136-note">採点データの公開待ち。締切前保存と結果確定の監査が揃ったレースだけ表示します。</p>\';\n  }finally{running=false}\n}\nfunction install(){\n  target();\n  render();\n  document.addEventListener("click",e=>{\n    if(e.target.closest?.(\'.bottomnav [data-view="auditView"]\'))render();\n  });\n  document.addEventListener("visibilitychange",()=>{\n    if(document.visibilityState==="visible"&&document.getElementById("auditView")?.classList.contains("active"))render();\n  });\n}\nif(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});else install();\n})();\n',encoding="utf-8")
+          css=Path("assets/boat_edge_v136_accuracy.css")
+          css.write_text('\n/* BOAT_EDGE_V136_SITE_ACCURACY_POST_RESULT */\n.be136-shell{padding:13px;background:#fff}\n.be136-title{display:flex;gap:9px;align-items:center;justify-content:space-between}\n.be136-title b{color:#153d6c;font-size:16px}\n.be136-title span{font-size:10px;color:#607893}\n.be136-count{margin-top:10px;font-size:12px;color:#617895}\n.be136-count strong{font-size:15px;color:#173d6b}\n.be136-modes{margin-top:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n.be136-mode{border:1px solid #dfe8f2;background:#f6f9ff;border-radius:9px;padding:9px 7px}\n.be136-mode strong,.be136-mode b,.be136-mode small{display:block}\n.be136-mode strong{font-size:10px;color:#496785}\n.be136-mode b{font-size:22px;color:#143d70;margin-top:4px}\n.be136-mode small{font-size:9px;color:#647991;margin-top:4px}\n.be136-note{margin:10px 0 0;font-size:10px;color:#60758c;line-height:1.7}\n@media(max-width:640px){.be136-modes{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.be136-mode b{font-size:19px}}\n',encoding="utf-8")
+
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+          assert 'boat_edge_v136_accuracy.js' not in s
+          js_anchor='<script src="./assets/boat_edge_v108.js?v=135"></script>'
+          assert s.count(js_anchor)==1,"JS anchor missing"
+          s=s.replace(js_anchor,js_anchor+'\n<script defer src="./assets/boat_edge_v136_accuracy.js?v=136"></script>',1)
+          css_anchor='<link rel="stylesheet" href="./assets/boat_edge_v108.css?v=135">'
+          assert s.count(css_anchor)==1,"CSS anchor missing"
+          s=s.replace(css_anchor,css_anchor+'\n<link rel="stylesheet" href="./assets/boat_edge_v136_accuracy.css?v=136">',1)
+          s,n=re.subn(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V136-SITE-ACCURACY-V133-CORE">',s)
+          assert n==1
+          p.write_text(s,encoding="utf-8")
+
+          state_path=Path("data/site_current_state.json")
+          state=json.loads(state_path.read_text(encoding="utf-8"))
+          assert state["ui"]=={"version":"V133","status":"ACTIVE"}
+          state["site_mode_accuracy"]={
+            "version":"V136","status":"ACTIVE","summary":"data/site_learning/mode_accuracy_v136.json",
+            "scope":"SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",
+            "production_weights_unchanged":True
+          }
+          state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding="utf-8")
+          # Align the declared SITE reference contract with deployed V133 modes.
+          policy_path=Path("data/site_prediction_policy.json")
+          policy=json.loads(policy_path.read_text(encoding="utf-8"))
+          policy["ticket_policy"]["solid"]="激絞り3点、的中重視10点"
+          policy["ticket_policy"]["split_or_rough"]="バランス10点、波乱展開12/15/18点（展開分岐によって可変）"
+          policy["ticket_policy"]["ranking"]="サイト参考予想は最大20候補の相対順位。120通りの完全分布は未実装で、正式CURRENT検証とは別。"
+          policy["site_reference_120way_full_distribution_ready"]=False
+          policy["site_reference_mode_policy"]="V133: hit10 balance10 wave12/15/18 narrow3"
+          policy_path.write_text(json.dumps(policy,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("V136 accuracy evaluator and audit panel installed; formal guard and V133 model unchanged")
+
+          PY
+      - name: Validate frontend and model isolation
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v136_accuracy.js
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_accuracy_v136.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          h=Path("index.html").read_text(encoding="utf-8")
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          assert h.count("boat_edge_v136_accuracy.js")==1
+          assert h.count("boat_edge_v136_accuracy.css")==1
+          assert h.count("boat_edge_v108.js?v=135")==1
+          assert st["ui"]=={"version":"V133","status":"ACTIVE"}
+          assert st["site_mode_accuracy"]["production_weights_unchanged"] is True
+          print({"V136":"PASS","prediction_core":"V133 unchanged","formal_current":"untouched"})
+          PY
+      - name: Commit V136 install
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/site_accuracy_v136.py assets/boat_edge_v136_accuracy.js assets/boat_edge_v136_accuracy.css index.html data/site_current_state.json data/site_prediction_policy.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Add segregated post-settlement site accuracy V136"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
+  score:
+    needs: [install]
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_run' || needs.install.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Score audited prospective site-reference snapshots
+        shell: bash
+        run: |
+          set -e
+          test -f scripts/site_accuracy_v136.py
+          python scripts/site_accuracy_v136.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("data/site_learning/mode_accuracy_v136.json")
+          d=json.loads(p.read_text(encoding="utf-8"))
+          assert d["schema_version"]=="boat-edge-site-mode-accuracy-v136"
+          assert d["scope"]=="SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH"
+          assert d["formal_current_scoring"] is False
+          assert d["rank_120_available"] is False
+          assert d["production_prediction_weights_changed"] is False
+          ns={d["modes"][m]["evaluated"] for m in ("hit","balance","hole","narrow")}
+          assert len(ns)==1
+          assert ns.pop()==d["predictions_evaluated"]
+          print({"scored":d["predictions_evaluated"],"excluded":d["excluded_reasons"]})
+          PY
+      - name: Commit V136 report
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site_learning/mode_accuracy_v136.json data/site_learning/site_mode_evaluations_v136
+          git diff --cached --quiet && exit 0
+          git commit -m "Update audited site-reference mode accuracy V136"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
