@@ -155,6 +155,63 @@ function venuePanel(day){
     </div>
   </section>`;
 }
+
+/* BOAT_EDGE_V135_HOME_NEXT3 */
+let be135Timer=null,be135Serial=0;
+function be135JstIsoDate(){
+  return new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+}
+function be135UpcomingThree(doc,now,isoDay){
+  if(String(doc?.date||"")!==isoDay)return [];
+  const rows=[];
+  for(const v of doc.venues||[]){
+    const jcd=String(v.jcd||"").padStart(2,"0");
+    if(!/^\d{2}$/.test(jcd))continue;
+    for(const r of v.races||[]){
+      const time=String(r.deadline||"");
+      if(!/^\d{1,2}:\d{2}$/.test(time))continue;
+      const [h,m]=time.split(":").map(Number);
+      if(h>23||m>59)continue;
+      const ts=Date.parse(`${isoDay}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00+09:00`);
+      if(!Number.isFinite(ts)||ts<=now)continue;
+      const file=String(r.file||"");
+      if(!/^data\/races\/\d{8}-\d{2}-\d{2}\.json$/.test(file))continue;
+      rows.push({file,jcd,venue:String(v.venue||""),no:Number(r.race_no),deadline:time,ts});
+    }
+  }
+  rows.sort((a,b)=>a.ts-b.ts||a.jcd.localeCompare(b.jcd)||a.no-b.no);
+  return rows.slice(0,3);
+}
+async function be135RefreshUpcoming(){
+  const host=document.getElementById("be135Upcoming");
+  if(!host)return;
+  if(be135Timer){clearTimeout(be135Timer);be135Timer=null}
+  const serial=++be135Serial, grid=host.querySelector(".be135-upcoming-grid");
+  if(!grid)return;
+  try{
+    const resp=await fetch(`./data/today.json?next3=${Math.floor(Date.now()/30000)}`,{cache:"no-store"});
+    if(!resp.ok)throw new Error("today fetch failed");
+    const doc=await resp.json();
+    if(serial!==be135Serial||!host.isConnected)return;
+    const now=Date.now(),rows=be135UpcomingThree(doc,now,be135JstIsoDate());
+    grid.innerHTML=rows.length?rows.map((r,i)=>`<button type="button" class="be135-card ${i===0?"nearest":""}" data-be135-file="${esc(r.file)}" data-be135-jcd="${esc(r.jcd)}">
+      <span class="be135-rank">${i+1}</span><b>${esc(r.venue)} ${r.no}R</b>
+      <strong>締切 ${esc(r.deadline)}</strong><small>あと${Math.max(1,Math.ceil((r.ts-now)/60000))}分 ›</small>
+    </button>`).join(""):'<div class="be135-empty">本日の締切予定はありません</div>';
+    grid.querySelectorAll("[data-be135-file]").forEach(b=>b.onclick=()=>{
+      try{sessionStorage.setItem(KSCROLL,String(window.scrollY||0))}catch(_){}
+      pushView("homeView");
+      selectedDate=be135JstIsoDate().replaceAll("-","");
+      selectedVenue=b.dataset.be135Jcd;saveSelection();
+      if(typeof loadRace==="function")loadRace(b.dataset.be135File,b.dataset.be135Jcd);
+    });
+  }catch(e){
+    if(serial===be135Serial&&host.isConnected)grid.innerHTML='<div class="be135-empty">締切情報が取得できません（再読み込みで更新）</div>';
+  }
+  if(serial===be135Serial&&document.visibilityState==="visible"&&activeView()==="homeView")
+    be135Timer=setTimeout(be135RefreshUpcoming,30000);
+}
+
 async function renderHomeHub(){
   const host=ensureHomeHub();if(!host)return;
   await loadServerHistoryIndex();
@@ -166,6 +223,10 @@ async function renderHomeHub(){
   if(selectedVenue&&!(day?.venues||[]).some(v=>String(v.jcd)===String(selectedVenue)))selectedVenue=null;
   const i=dates.indexOf(selectedDate),prev=dates[i-1]||"",next=dates[i+1]||"";
   host.innerHTML=`<div class="be108-shell">
+    <section id="be135Upcoming" class="be135-upcoming" aria-label="締切が近い3レース">
+      <div class="be135-upcoming-head"><b>締切が近いレース</b><small>本日の次の3レース</small></div>
+      <div class="be135-upcoming-grid"><span class="be135-empty">読み込み中…</span></div>
+    </section>
     <div class="be108-date-nav">
       <button type="button" data-be108-day="${prev}" ${prev?"":"disabled"}>‹ 前日</button>
       <div><b>${selectedDate===todayYmd()?"本日 ":""}${dateLabel(selectedDate)}のレース</b><span>日付 → 場 → レース</span></div>
@@ -175,6 +236,7 @@ async function renderHomeHub(){
     ${venuePanel(day)}
   </div>`;
   saveSelection();
+  be135RefreshUpcoming();
 
   $$("[data-be108-day]",host).forEach(b=>b.onclick=async()=>{
     if(!b.dataset.be108Day)return;
@@ -1008,5 +1070,15 @@ wrapRenderRace();
 installEvents();
 fixBottom();cleanTabs();installBackButtons();
 renderHomeHub();
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"&&activeView()==="homeView")be135RefreshUpcoming();
+});
+document.addEventListener("click",e=>{
+  if(e.target.closest?.('.bottomnav [data-view="homeView"]'))
+    requestAnimationFrame(()=>be135RefreshUpcoming());
+});
+window.addEventListener("pageshow",e=>{
+  if(e.persisted&&activeView()==="homeView")be135RefreshUpcoming();
+});
 if(raceOf())afterRace(raceOf());
 })();
