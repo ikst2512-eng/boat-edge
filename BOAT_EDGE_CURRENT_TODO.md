@@ -16,6 +16,7 @@ This file is auto-reconciled from repository evidence by V134. ACTIVE TODO conta
 - Formal guards: results_seen=false / unlock=false / scoring=false
 
 ## ACTIVE TODO — priority order
+2. [ ] First V133-mode settled race must flow through the direct prediction-panel judgement path (`🎯 的中` / `✕ 不的中` / `判定対象外`).
 4. [ ] Connect racer×actual-course 1y/6m/3m.
 5. [ ] Connect 1-course escape resistance + 2-course wall/逃がし interaction.
 6. [ ] Connect 3/4 attack boat -> 5/6 beneficiary interaction.
@@ -32,17 +33,16 @@ This file is auto-reconciled from repository evidence by V134. ACTIVE TODO conta
 
 ## RECENT DONE
 - [x] Live mode counts confirmed — balance=10 / wave=[12, 15, 18] / narrow=3; V133 parity PASS.
-- [x] V133-mode settled judgement path confirmed — `20261008-03-01` / ✕ miss path.
 - [x] Live V133 FINAL_15M snapshot + audit PASS — `20261008-03-01`.
 - [x] V133 browser/server parity PASS for all four prediction modes.
 - [x] V133 mode policy fixed at 的中重視10 / バランス10 / 波乱12・15・18 / 激絞り3.
 
 ## TODO EVIDENCE
 - Machine-readable evidence: `data/site_todo_evidence.json`.
-- Current V133 snapshots observed: 85.
+- Current V133 snapshots observed: 88.
 - Current V133 audited PASS: 85.
 - Observed wave counts: [12, 15, 18].
-- Current V133 settled races: 75.
+- Current V133 settled races: 81.
 
 ## TODO GUARD
 - ACTIVE TODO contains unfinished `[ ]` tasks only.
