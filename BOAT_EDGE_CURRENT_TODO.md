@@ -39,23 +39,13 @@ This file is auto-reconciled from repository evidence by V134. ACTIVE TODO conta
 
 ## TODO EVIDENCE
 - Machine-readable evidence: `data/site_todo_evidence.json`.
-- Current V133 snapshots observed: 69.
-- Current V133 audited PASS: 66.
+- Current V133 snapshots observed: 73.
+- Current V133 audited PASS: 69.
 - Observed wave counts: [12, 15, 18].
-- Current V133 settled races: 61.
+- Current V133 settled races: 67.
 
 ## TODO GUARD
 - ACTIVE TODO contains unfinished `[ ]` tasks only.
 - Evidence-complete tasks are removed from ACTIVE and written to RECENT DONE automatically.
 - Component versions must match `data/site_current_state.json`.
 - Legacy NEXT sections are forbidden.
-
-- V109 replaces the legacy result collector without changing V108 UI.
-
-- V109 treats confirmed + payout null as incomplete and refetches it.
-
-- V109 payout parser supports ¥ / ￥ / 円.
-
-- V109 backfills historical confirmed payout gaps from 2026-10-07.
-
-- V109 keeps result/trifecta data factual; missing payout is never fabricated.
