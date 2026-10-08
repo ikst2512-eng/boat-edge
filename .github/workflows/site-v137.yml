@@ -1,0 +1,172 @@
+name: BOAT EDGE V137 Audited Head Split UI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/site-v137.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v137-audited-head-ui
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Install compact scenario accuracy breakdown without changing prediction model
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          jp=Path('assets/boat_edge_v136_accuracy.js')
+          cp=Path('assets/boat_edge_v136_accuracy.css')
+          ip=Path('index.html')
+          sp=Path('data/site_current_state.json')
+          assert all(p.exists() for p in (jp,cp,ip,sp)), 'V136/V133 base missing'
+          s=jp.read_text(encoding='utf-8')
+          marker='/* BE137_AUDITED_WINNING_HEAD_SPLIT */'
+          if marker not in s:
+              start=s.find('    root.innerHTML=`<div class="be136-title"><b>参考予想・実戦的中率')
+              end=s.find('  }catch(e){', start)
+              assert start>=0 and end>start, 'V136 accuracy render anchor missing'
+              block=s[start:end]
+              assert '監査済み確定レース' in block and 'be136-modes' in block, 'V136 anchor mismatch'
+              replacement=r'''    /* BE137_AUDITED_WINNING_HEAD_SPLIT */
+              // The split comes exclusively from the post-settlement V136 audited summary.
+              const groups=[["1","1号艇が1着"],["2-6","2〜6号艇が1着"]];
+              const splitRows=groups.map(([group,label])=>{
+                const stats=d.by_winning_head?.[group]||{};
+                const total=Number(stats.evaluated||0);
+                const sub=Object.entries(labels).map(([key,name])=>{
+                  const hits=Math.max(0,Math.min(total,Number(stats.hits?.[key]||0)));
+                  const rate=total>0?(100*hits/total).toFixed(1)+"%":"—";
+                  return `<span class="be137-split-mode"><small>${name}</small><b>${rate}</b><small>${hits}/${total}R</small></span>`;
+                }).join("");
+                return `<div class="be137-split-group"><div class="be137-split-heading"><b>${label}</b><small>${total}R</small></div><div class="be137-split-grid">${sub}</div></div>`;
+              }).join("");
+              root.innerHTML=`<div class="be136-title"><b>参考予想・実戦的中率</b><span>締切前保存 → 結果確定</span></div>
+                <div class="be136-count">監査済み確定レース <strong>${n}R</strong></div>
+                <div class="be136-modes">${cards}</div>
+                <details class="be137-split"><summary>1号艇・その他の1着別に的中率を見る</summary>
+                  <p class="be137-explain">勝った艇の号艇別集計です。「逃げ」の決まり手率ではありません。</p>
+                  <div class="be137-split-groups">${splitRows}</div>
+                </details>
+                <p class="be136-note">サイト参考予想の実績で、正式CURRENTの未見Fresh検証とは別集計。少数サンプルの的中率だけでは精度向上を証明できません。</p>`;
+          '''
+              s=s[:start]+replacement+s[end:]
+              jp.write_text(s,encoding='utf-8')
+
+          css=cp.read_text(encoding='utf-8')
+          if 'BE137_WINNING_HEAD_SPLIT_STYLES' not in css:
+              css+='''
+          /* BE137_WINNING_HEAD_SPLIT_STYLES: details collapsed by default */
+          .be137-split{margin-top:11px;padding:0 10px;border:1px solid #dfe8f2;border-radius:9px;background:#fbfdff}
+          .be137-split summary{cursor:pointer;font-size:12px;font-weight:800;color:#194e88;padding:11px 0;list-style:revert}
+          .be137-split summary:focus-visible{outline:2px solid #287eea;outline-offset:2px}
+          .be137-explain{margin:1px 0 9px;font-size:10px;line-height:1.5;color:#667c92}
+          .be137-split-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding-bottom:11px}
+          .be137-split-group{border:1px solid #e2eaf5;border-radius:8px;background:white;padding:8px;min-width:0}
+          .be137-split-heading{display:flex;justify-content:space-between;gap:6px;align-items:center;color:#214f7f;font-size:11px}
+          .be137-split-heading small{color:#71839a;font-size:10px}
+          .be137-split-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+          .be137-split-mode{min-width:0;border-radius:6px;background:#f4f8fd;padding:6px 5px}
+          .be137-split-mode small,.be137-split-mode b{display:block;white-space:nowrap}
+          .be137-split-mode small{font-size:9px;color:#56718e}
+          .be137-split-mode b{font-size:16px;color:#163f6e}
+          @media(max-width:640px){.be137-split-groups{grid-template-columns:1fr}.be137-split-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.be137-split-mode{padding:6px 3px}.be137-split-mode b{font-size:13px}.be137-split-mode small{font-size:8px}}
+          '''
+              cp.write_text(css,encoding='utf-8')
+
+          html=ip.read_text(encoding='utf-8')
+          for kind in ('js','css'):
+              old=f'boat_edge_v136_accuracy.{kind}?v=136'
+              new=f'boat_edge_v136_accuracy.{kind}?v=137'
+              if old in html:
+                  assert html.count(old)==1, f'duplicate {kind} link'
+                  html=html.replace(old,new,1)
+              else:
+                  assert html.count(new)==1, f'missing V136 {kind} link'
+          html,n=re.subn(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                          '<meta name="boat-edge-site-version" content="V137-HEAD-SPLIT-V133-PREDICTION-CORE">',html)
+          assert n==1, 'version meta missing'
+          ip.write_text(html,encoding='utf-8')
+
+          st=json.loads(sp.read_text(encoding='utf-8'))
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}, 'production prediction core moved'
+          assert st['site_mode_accuracy']['version']=='V136', 'V136 summary missing'
+          assert st['site_mode_accuracy']['production_weights_unchanged'] is True
+          assert st['formal_current']['guards']=={
+              'results_seen':False,'unlock':False,'scoring':False,'RESULT_UNLOCK_TOKEN':None}, 'formal PRE_RESULT guard mismatch'
+          st['site_mode_accuracy']['winning_head_breakdown_ui']='V137-ACTIVE'
+          st['site_mode_accuracy']['winning_head_breakdown_source']='data/site_learning/mode_accuracy_v136.json'
+          sp.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('V137 head split installed; V133 predictor, V136 evaluator and formal guards unchanged')
+          PY
+
+      - name: Validate V137 and audited cohort arithmetic
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v136_accuracy.js
+          node --check assets/boat_edge_v108.js
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          d=json.loads(Path('data/site_learning/mode_accuracy_v136.json').read_text(encoding='utf-8'))
+          st=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          s=Path('assets/boat_edge_v136_accuracy.js').read_text(encoding='utf-8')
+          idx=Path('index.html').read_text(encoding='utf-8')
+          assert d['scope']=='SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH'
+          assert not d['formal_current_scoring'] and not d['production_prediction_weights_changed']
+          groups=d['by_winning_head']
+          assert sum(g['evaluated'] for g in groups.values())==d['predictions_evaluated']
+          for mode, aggregate in d['modes'].items():
+              assert sum(g['hits'][mode] for g in groups.values())==aggregate['hits'], mode
+              assert aggregate['hits']+aggregate['misses']==aggregate['evaluated'], mode
+          assert st['site_mode_accuracy']['winning_head_breakdown_ui']=='V137-ACTIVE'
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}
+          assert not any(st['formal_current']['guards'][key] for key in ('results_seen','unlock','scoring'))
+          assert s.count('BE137_AUDITED_WINNING_HEAD_SPLIT')==1
+          assert s.count('be137-split-groups')==1
+          assert idx.count('boat_edge_v136_accuracy.js?v=137')==1
+          assert idx.count('boat_edge_v136_accuracy.css?v=137')==1
+          assert 'V133-BALANCE10-WAVE12-15-18-FIXED' in idx
+          print({'V137':'PASS','total_audited':d['predictions_evaluated'],
+                 'winning_head_groups':{k:v['evaluated'] for k,v in groups.items()},
+                 'prediction_core':'V133 untouched','formal_current':'PRE_RESULT untouched'})
+          PY
+          git diff --name-only | tee /tmp/v137-changed.txt
+          python - <<'PY'
+          from pathlib import Path
+          allowed={'assets/boat_edge_v136_accuracy.js','assets/boat_edge_v136_accuracy.css',
+                   'index.html','data/site_current_state.json'}
+          changed=set(Path('/tmp/v137-changed.txt').read_text().splitlines())
+          assert changed<=allowed, f'Unexpected files changed: {changed-allowed}'
+          PY
+
+      - name: Commit V137 and publish via GitHub Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/boat_edge_v136_accuracy.js assets/boat_edge_v136_accuracy.css index.html data/site_current_state.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add compact audited winning-head accuracy breakdown V137'
+          for n in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          git push origin HEAD:main
