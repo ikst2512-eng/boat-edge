@@ -1,0 +1,316 @@
+name: BOAT EDGE V157 Fresh Partial-Result Coverage & Exact Non1 Audit
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V157_COVERAGE.yml"
+      - "data/site_racer_actual_course/v155_fresh/**"
+  workflow_dispatch:
+  schedule:
+    - cron: '30 0 * * *'  # 09:30 JST; inspect only PRIOR DAY or earlier Git-frozen research cohorts
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v157-research-coverage
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Audit prior-day freeze before any result data is accessed
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v157_coverage.py <<'PY'
+          #!/usr/bin/env python3
+          """Independent prospective coverage audit. Never rewrites a V155 freeze or score."""
+          from __future__ import annotations
+          import csv, hashlib, json, os, re, subprocess, sys
+          from datetime import date, datetime, timedelta, timezone
+          from pathlib import Path
+          
+          JST = timezone(timedelta(hours=9))
+          FIRST, LAST = date(2026, 10, 9), date(2026, 10, 31)
+          ROOT = Path('data/site_racer_actual_course/v155_fresh')
+          OUT = Path('data/site_racer_actual_course/v157_coverage/report.json')
+          MODELS = ('baseline_pl','v148_cond_full','v151_multisignal','v153_weak_cond','v154_wall_attack_cond')
+          HISTORY_PIN = '2d149e1ae838f6ed3426a7989be69e799ac2988f'
+          HEX64 = re.compile('[0-9a-f]{64}\\Z')
+          HEX40 = re.compile('[0-9a-f]{40}\\Z')
+          CODE = re.compile('[0-9]{12}\\Z')
+          
+          
+          def require(ok, why):
+              if not ok: raise AssertionError(why)
+          
+          
+          def sha(b): return hashlib.sha256(b).hexdigest()
+          
+          
+          def stable_bytes(v): return (json.dumps(v, ensure_ascii=False, sort_keys=True, indent=2)+'\n').encode('utf-8')
+          
+          
+          def now_jst():
+              override = os.getenv('V157_TEST_NOW_JST')
+              if override:
+                  require(os.getenv('V157_TEST_ONLY')=='1', 'TEST_CLOCK_FORBIDDEN')
+                  n=datetime.fromisoformat(override)
+                  require(n.tzinfo is not None,'TEST_TZ_REQUIRED')
+                  return n.astimezone(JST)
+              return datetime.now(timezone.utc).astimezone(JST)
+          
+          
+          def git(cmd):
+              z=subprocess.run(['git',*cmd],capture_output=True,text=True,check=True)
+              return z.stdout.strip()
+          
+          
+          def check_freeze(folder: Path, today:date):
+              p=folder/'freeze.json'
+              d=date.fromisoformat(folder.name[:4]+'-'+folder.name[4:6]+'-'+folder.name[6:8])
+              require(FIRST <= d <= LAST,'INVALID_DATE')
+              if d>=today:return None
+              raw=p.read_bytes()
+              f=json.loads(raw)
+              require(f.get('schema_version')=='boat-edge-v155-prospective-freeze-v1','SCHEMA_NOT_V155')
+              require(f.get('status')=='PRE_RESULT_FROZEN_RESEARCH_ONLY','NOT_FROZEN')
+              require(f.get('date_jst')==d.isoformat(),'DATE_MISMATCH')
+              require(f.get('history_commit')==HISTORY_PIN and f.get('history_cutoff')=='2026-10-07','TRAINING_CUTOFF_DRIFT')
+              require(f.get('formal_2026_10_08_result_accessed') is False,'FORMAL_LEAK')
+              require(f.get('actual_course_used') is False and f.get('payout_used') is False,'INPUT_LEAK')
+              require(f.get('odds_used') is False and f.get('proxy_imputation_used') is False,'INPUT_PROVENANCE')
+              require(HEX40.fullmatch(str(f.get('source_card_commit',''))),'INVALID_SOURCE_COMMIT')
+              for key in ('source_card_sha256','predictor_script_sha256','model_sha256','history_manifest_sha256'):
+                  require(HEX64.fullmatch(str(f.get(key,''))),'INVALID_'+key)
+              captured=datetime.fromisoformat(f['capture_at_jst']).astimezone(JST)
+              source_time=datetime.fromisoformat(f['source_card_commit_time']).astimezone(JST)
+              require(captured.date()==d and 300 <= captured.hour*60+captured.minute<495,'LATE_FREEZE_CLOCK')
+              require(source_time<=captured,'SOURCE_TIME_AFTER_CAPTURE')
+              require(f['race_count']==len(f['predictions']) and f['race_count']>=5,'RACE_COUNT_MISMATCH')
+              codes=set()
+              for race in f['predictions']:
+                  code=str(race.get('race_code',''))
+                  require(CODE.fullmatch(code) and code[:8]==folder.name and code not in codes,'INVALID_RACE_CODE')
+                  codes.add(code)
+                  require(set(race['models'])==set(MODELS),'MODEL_LIST_DRIFT')
+                  for m in MODELS:
+                      z=race['models'][m]; top=z['top10']; marginal=z['marginal_head_probs']
+                      require(len(top)==10 and len(marginal)==6,'PRED_SHAPE')
+                      require(all(isinstance(x,(int,float)) and 0<=x<=1 for x in marginal),'INVALID_MARGINAL')
+                      require(abs(sum(marginal)-1)<1e-8,'MARGINAL_MASS')
+                      tickets=set(); prev=1.0
+                      for entry in top:
+                          parts=str(entry['ticket']).split('-'); prob=entry['p']
+                          require(len(parts)==3 and all(x in '123456' and len(x)==1 for x in parts) and len(set(parts))==3,'INVALID_TICKET')
+                          require(entry['ticket'] not in tickets and isinstance(prob,(int,float)) and 0<=prob<=prev+1e-12,'INVALID_TOP10')
+                          prev=prob;tickets.add(entry['ticket'])
+                      require(z['top_ticket_head']==int(top[0]['ticket'][0]),'TICKET_HEAD_MISMATCH')
+              if os.getenv('V157_TEST_ONLY')!='1':
+                  rel=str(p)
+                  require(git(['rev-list','--count','HEAD','--',rel])=='1','FREEZE_REWRITTEN')
+                  commit=datetime.fromisoformat(git(['log','-1','--format=%cI','--',rel]).replace('Z','+00:00')).astimezone(JST)
+                  require(commit.date()==d and commit.hour*60+commit.minute<495,'LATE_FREEZE_COMMIT')
+                  require(captured-timedelta(minutes=2)<=commit<=captured+timedelta(minutes=15),'COMMIT_CAPTURE_GAP')
+                  commit_time=commit.isoformat()
+              else:commit_time='fixture-verified-not-production'
+              return {'date':d.isoformat(),'ymd':folder.name,'race_count':len(codes),
+                      'freeze_sha256':sha(raw),'freeze_commit_time_jst':commit_time,'capture_at_jst':captured.isoformat(),
+                      'predictions':f['predictions']}
+          
+          
+          def preflight(today):
+              require(today>=FIRST,'NOT_STARTED')
+              if not ROOT.exists():return []
+              approved=[]
+              for folder in sorted(ROOT.iterdir()):
+                  if not folder.is_dir() or not re.fullmatch('[0-9]{8}',folder.name):continue
+                  if not (folder/'freeze.json').is_file():continue
+                  d=date(int(folder.name[:4]),int(folder.name[4:6]),int(folder.name[6:8]))
+                  if d<FIRST or d>LAST:raise AssertionError('FORBIDDEN_COHORT')
+                  if d>=today:continue
+                  approved.append(check_freeze(folder,today))
+              return approved
+          
+          
+          def metrics_init():
+              return {m:{'evaluated':0,'head_top1':0,'marginal_head_top1':0,'top3':0,'top5':0,'top10':0,
+                         'actual_non1':0,'called_non1':0,'predicted_non1_and_actual_non1':0,'exact_non1_correct':0} for m in MODELS}
+          
+          
+          def score_row(metrics,race,fin):
+              truth='-'.join(map(str,fin))
+              for name,z in metrics.items():
+                  a=race['models'][name]; seq=[i['ticket'] for i in a['top10']]
+                  head=int(a['top_ticket_head']);max_head=max(range(6),key=lambda i:(a['marginal_head_probs'][i],-i))+1
+                  z['evaluated']+=1
+                  z['head_top1']+=int(head==fin[0]);z['marginal_head_top1']+=int(max_head==fin[0])
+                  for n in (3,5,10):z[f'top{n}']+=int(truth in seq[:n])
+                  z['actual_non1']+=int(fin[0]!=1)
+                  z['called_non1']+=int(head!=1)
+                  z['predicted_non1_and_actual_non1']+=int(head!=1 and fin[0]!=1)
+                  z['exact_non1_correct']+=int(head==fin[0] and fin[0]!=1)
+          
+          
+          def finalize(metrics):
+              for name,z in metrics.items():
+                  n=z['evaluated']
+                  for key in ('head_top1','marginal_head_top1','top3','top5','top10'):
+                      z[key+'_pct']=round(100*z[key]/n,3) if n else None
+                  z['non1_event_recall_pct']=round(100*z['predicted_non1_and_actual_non1']/z['actual_non1'],3) if z['actual_non1'] else None
+                  z['non1_exact_recall_pct']=round(100*z['exact_non1_correct']/z['actual_non1'],3) if z['actual_non1'] else None
+                  z['non1_exact_precision_pct']=round(100*z['exact_non1_correct']/z['called_non1'],3) if z['called_non1'] else None
+              return metrics
+          
+          
+          def read_results(root:Path, d:date):
+              require(FIRST<=d<=LAST,'FORBIDDEN_RESULT_DATE')
+              p=root/'data/results/realtime'/f'{d:%Y/%m/%d}.csv'
+              if not p.is_file():return None,None
+              raw=p.read_bytes();rows=list(csv.DictReader(raw.decode('utf-8-sig').splitlines()))
+              found={}
+              for r in rows:
+                  code=str(r.get('レースコード') or '')
+                  require(CODE.fullmatch(code) and code[:8]==d.strftime('%Y%m%d'),'RESULT_CODE_INVALID')
+                  require(code not in found,'DUPLICATED_RESULT')
+                  found[code]=r
+              return found,sha(raw)
+          
+          
+          def aggregate(approved,today,source_root:Path,source_commit:str):
+              combined=metrics_init();days=[];total_frozen=0;total_scored=0
+              for f in approved:
+                  d=date.fromisoformat(f['date']);found,sourchash=read_results(source_root,d)
+                  daymetrics=metrics_init();missing=[];invalid=[];scored=0
+                  for race in f['predictions']:
+                      code=race['race_code'];row=found.get(code) if found is not None else None
+                      if row is None:
+                          missing.append(code);continue
+                      try:fin=[int(row[f'{i}着_艇番']) for i in (1,2,3)]
+                      except (ValueError,KeyError,TypeError):invalid.append(code);continue
+                      if len(set(fin))!=3 or any(v not in range(1,7) for v in fin):invalid.append(code);continue
+                      score_row(daymetrics,race,fin);score_row(combined,race,fin);scored+=1
+                  total_frozen+=f['race_count'];total_scored+=scored
+                  complete=bool(found is not None and scored==f['race_count'])
+                  days.append({'date_jst':f['date'],'frozen_races':f['race_count'],'settled_races':scored,
+                               'unmatched_races':len(missing),'invalid_results':len(invalid),
+                               'missing_race_codes':missing,'invalid_race_codes':invalid,
+                               'freeze_sha256':f['freeze_sha256'],'freeze_commit_time_jst':f['freeze_commit_time_jst'],
+                               'result_source_sha256':sourchash,'status':'COMPLETE_RESEARCH_COVERAGE' if complete else
+                               'SOURCE_NOT_PUBLISHED' if found is None else 'PARTIAL_RESEARCH_COVERAGE',
+                               'metrics':finalize(daymetrics)})
+              if not approved:status='WAITING_FIRST_FROZEN_DAY'
+              elif total_scored==0:status='FROZEN_NOT_SETTLED'
+              elif total_frozen==total_scored:status='ALL_FROZEN_RACES_MATCHED_RESEARCH_ONLY'
+              else:status='PARTIAL_SETTLEMENT_RESEARCH_ONLY'
+              return {'schema_version':'boat-edge-v157-settlement-coverage-v1','status':status,
+                      'research_only':True,'automatic_model_promotion':False,'accuracy_claim':'NONE_UNTIL_INDEPENDENT_SUFFICIENT_FRESH_SAMPLE',
+                      'date_scope':'2026-10-09..2026-10-31','history_cutoff':'2026-10-07',
+                      'formal_2026_10_08_result_accessed':False,'formal_unlock':False,'formal_scoring':False,
+                      'source_rules':'Results read only for independently Git-frozen dates strictly earlier than run day; never result 2026-10-08',
+                      'never_impute_missing_outcome':True,'research_data_selection':'ALL_VALID_SETTLED_RACES_WITH_MATCHING_FROZEN_PREDICTION',
+                      'partial_coverage_not_full_day_success':True,'non1_measurement_contract':'EVENT detection and EXACT winning non1 boat are separate',
+                      'source_result_repository':'BoatraceCSV/boatracecsv.github.io','source_result_head_commit':source_commit,
+                      'auditor_script_sha256':sha(Path(__file__).read_bytes()),
+                      'frozen_days_verified':len(approved),'frozen_races':total_frozen,'settled_races':total_scored,
+                      'pending_or_invalid_races':total_frozen-total_scored,'coverage_pct':round(total_scored*100/total_frozen,3) if total_frozen else None,
+                      'models':list(MODELS),'overall_settled_subset_metrics':finalize(combined),'days':days}
+          
+          
+          def main():
+              require(len(sys.argv)>1 and sys.argv[1] in ('preflight','audit'),'INVALID_MODE')
+              today=now_jst().date();approved=preflight(today)
+              if sys.argv[1]=='preflight':
+                  print(json.dumps({'date_jst':today.isoformat(),'verified_earlier_dates':[x['date'] for x in approved],
+                                    'frozen_races':sum(x['race_count'] for x in approved)},sort_keys=True))
+                  return
+              source_root=Path(os.getenv('V157_RESULTS_ROOT','/tmp/v157_results'))
+              require(bool(approved)==source_root.exists() or not approved,'RESULT_SOURCE_SETUP_MISMATCH')
+              report=aggregate(approved,today,source_root,os.getenv('V157_RESULT_COMMIT','NOT_CLONED'))
+              out=Path(os.getenv('V157_OUTFILE',str(OUT)));out.parent.mkdir(parents=True,exist_ok=True)
+              out.write_bytes(stable_bytes(report))
+              print(json.dumps({k:report[k] for k in ('status','frozen_days_verified','frozen_races','settled_races','pending_or_invalid_races','coverage_pct')},sort_keys=True))
+          
+          if __name__=='__main__':main()
+          PY
+          python -m py_compile /tmp/v157_coverage.py
+          python /tmp/v157_coverage.py preflight | tee /tmp/v157_dates.json
+          sha256sum /tmp/v157_coverage.py
+
+      - name: Fetch research results ONLY for verified earlier frozen days
+        shell: bash
+        run: |
+          set -euo pipefail
+          FROZEN_DAYS=$(python - <<'PY'
+          import json
+          print(len(json.load(open('/tmp/v157_dates.json'))['verified_earlier_dates']))
+          PY
+          )
+          if [ "$FROZEN_DAYS" -eq 0 ]; then
+            echo 'V157_NO_PRIOR_FROZEN_DATES: refuse result source checkout'
+            echo 'V157_RESULT_COMMIT=NOT_CLONED' >> "$GITHUB_ENV"
+            exit 0
+          fi
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/v157_results
+          git -C /tmp/v157_results sparse-checkout init --no-cone
+          python - <<'PY'
+          import json
+          a=json.load(open('/tmp/v157_dates.json'))['verified_earlier_dates']
+          assert a and all('2026-10-09' <= d <= '2026-10-31' for d in a)
+          with open('/tmp/v157_results/.git/info/sparse-checkout','w') as output:
+              for d in a:
+                  output.write('/data/results/realtime/'+d.replace('-','/')+'.csv\n')
+          print('V157 PERMITTED RESULT DATES:',','.join(a))
+          PY
+          git -C /tmp/v157_results checkout --force
+          echo "V157_RESULT_COMMIT=$(git -C /tmp/v157_results rev-parse HEAD)" >> "$GITHUB_ENV"
+          test ! -e /tmp/v157_results/data/results/realtime/2026/10/08.csv
+
+      - name: Compute derived research coverage twice and verify identical bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          export V157_RESULTS_ROOT=/tmp/v157_results
+          export V157_OUTFILE=/tmp/v157_run1.json
+          python /tmp/v157_coverage.py audit | tee /tmp/v157_run1.log
+          export V157_OUTFILE=/tmp/v157_run2.json
+          python /tmp/v157_coverage.py audit | tee /tmp/v157_run2.log
+          cmp /tmp/v157_run1.json /tmp/v157_run2.json
+          echo 'V157 RUN1_RUN2 BYTE_IDENTICAL PASS'
+          mkdir -p data/site_racer_actual_course/v157_coverage
+          cp /tmp/v157_run1.json data/site_racer_actual_course/v157_coverage/report.json
+          sha256sum data/site_racer_actual_course/v157_coverage/report.json
+          python - <<'PY'
+          import json
+          j=json.load(open('data/site_racer_actual_course/v157_coverage/report.json'))
+          assert j['formal_2026_10_08_result_accessed'] is False
+          assert j['formal_unlock'] is False and j['formal_scoring'] is False
+          assert j['automatic_model_promotion'] is False
+          assert j['never_impute_missing_outcome'] is True
+          assert j['settled_races'] <= j['frozen_races']
+          print('V157 NO_FORMAL_LEAK, NO_IMPUTATION, NO_PRODUCTION_CHANGE PASS')
+          PY
+
+      - name: Publish derived coverage report only, preserve immutable freezes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/site_racer_actual_course/v157_coverage/report.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'V157: observe settled subset coverage; separate exact non1 wins from event detection'
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
