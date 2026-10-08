@@ -1,0 +1,217 @@
+{
+  "schema_version": "boat-edge-racer-actual-course-manifest-v146",
+  "status": "DATA_ONLY_NOT_PREDICTION_CONNECTED",
+  "as_of_d1": "2026-10-07",
+  "today_excluded": "2026-10-08",
+  "formal_current_unchanged": true,
+  "prediction_weights_changed": false,
+  "proxy": false,
+  "imputation": false,
+  "source": {
+    "repo": "BoatraceCSV/boatracecsv.github.io",
+    "commit": "2d149e1ae838f6ed3426a7989be69e799ac2988f",
+    "results": "data/results/realtime/YYYY/MM/DD.csv",
+    "race_cards": "data/programs/race_cards/YYYY/MM/DD.csv",
+    "join_key": "レースコード",
+    "actual_course_fields": "1コース_艇番..6コース_艇番"
+  },
+  "coverage": {
+    "requested_from": "2025-10-08",
+    "observed_from": "2025-11-01",
+    "observed_to": "2026-10-07",
+    "windows": {
+      "1y": {
+        "requested_from": "2025-10-08",
+        "requested_to": "2026-10-07",
+        "expected_calendar_days": 365,
+        "days_with_both_sources": 340,
+        "coverage_percent": 93.2,
+        "complete": false
+      },
+      "6m": {
+        "requested_from": "2026-04-08",
+        "requested_to": "2026-10-07",
+        "expected_calendar_days": 183,
+        "days_with_both_sources": 182,
+        "coverage_percent": 99.5,
+        "complete": false
+      },
+      "3m": {
+        "requested_from": "2026-07-08",
+        "requested_to": "2026-10-07",
+        "expected_calendar_days": 92,
+        "days_with_both_sources": 92,
+        "coverage_percent": 100.0,
+        "complete": true
+      }
+    },
+    "missing_or_unpaired_days": [
+      {
+        "date": "2025-10-08",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-09",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-10",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-11",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-12",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-13",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-14",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-15",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-16",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-17",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-18",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-19",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-20",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-21",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-22",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-23",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-24",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-25",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-26",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-27",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-28",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-29",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-30",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2025-10-31",
+        "result": false,
+        "card": false
+      },
+      {
+        "date": "2026-06-17",
+        "result": false,
+        "card": false
+      }
+    ]
+  },
+  "quality": {
+    "result_races_seen": 51405,
+    "joined_races": 50595,
+    "valid_actual_course_permutation_races": 50077,
+    "invalid_actual_course_permutation_races": 518,
+    "missing_race_card_races": 810,
+    "racer_starts_emitted": 300462,
+    "unique_racers": 1641,
+    "unique_racer_course_pairs": 9481
+  },
+  "shards": {
+    "2.json": {
+      "racers": 2,
+      "sha256": "30a230ade68ba4fed6038090b35e811d3256172d56cc60e7d9d9e72efe4b36af",
+      "bytes": 6278
+    },
+    "3.json": {
+      "racers": 394,
+      "sha256": "66ac18a16917b8b9fb9fe7f73a52a47e3fa1880457598e730c4457b0fd72dba4",
+      "bytes": 1200237
+    },
+    "4.json": {
+      "racers": 796,
+      "sha256": "84b256b67a0066d27774359fc3256c664afad2cf95ba9f27560929375ba44369",
+      "bytes": 2548945
+    },
+    "5.json": {
+      "racers": 449,
+      "sha256": "70950e184f2c65dad964b52045323030a3b6f16e4c2de7cb32239762cc143bd1",
+      "bytes": 1238302
+    }
+  },
+  "source_pair_hash_manifest_sha256": "a4700d1db86366358ba5ba3b78bc2b45e94364f579e2f009ca8f2770ccd2f3d2",
+  "notes": [
+    "Locked cutoff is 2026-10-07; 2026-10-08 formal target result/card blobs are not materialized or read.",
+    "Wall-clock date cannot advance this cutoff.",
+    "Actual course is taken from result course-to-boat permutation, never frame number.",
+    "Missing dates are not zero-filled or imputed.",
+    "1y is marked incomplete whenever the upstream result source lacks part of the requested trailing year.",
+    "This V146 artifact is data/audit only and does not change ticket ranking."
+  ]
+}
