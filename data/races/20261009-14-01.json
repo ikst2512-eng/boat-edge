@@ -8,7 +8,7 @@
     "event": "松茂町ほか二町ボートレース事業組合開設58周年記念",
     "race_no": 1,
     "deadline": "08:35",
-    "updated_at": "2026-10-09T07:21:47+09:00",
+    "updated_at": "2026-10-09T07:40:24+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,16 +19,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261009&jcd=14&rno=1",
-      "fetched_at": "2026-10-09T07:21:47+09:00",
-      "sha256": "6caa681041d62b444d5282f7181669644a40d7cad931fd24b255dcac5f956269",
+      "fetched_at": "2026-10-09T07:40:24+09:00",
+      "sha256": "ec0f3340c606aa802408b2102878a18778672c1a67d70f8221d7ce280c65a71a",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261009&jcd=14&rno=1",
-      "fetched_at": "2026-10-09T07:21:47+09:00",
-      "sha256": "136befdf3ce8c4b59dd0e8eab9116827b273df3bb53b019270577f965802b450",
+      "fetched_at": "2026-10-09T07:40:24+09:00",
+      "sha256": "3eacb320945934abafc63461cebc60fe291bef71494316d74b6e1dbfb21fe529",
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/09.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/09.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/09.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/09.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -325,12 +349,26 @@
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": null,
-      "wave_cm": null
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
     }
   },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
