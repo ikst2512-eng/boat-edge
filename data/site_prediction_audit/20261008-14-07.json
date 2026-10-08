@@ -2,7 +2,7 @@
   "schema_version": "boat-edge-final15m-audit-v125",
   "race_key": "20261008-14-07",
   "first_audited_at": "2026-10-08T02:12:38.022236+00:00",
-  "last_audited_at": "2026-10-08T02:43:43.009861+00:00",
+  "last_audited_at": "2026-10-08T02:56:27.704768+00:00",
   "latest_snapshot_sha256": "fce0ea6a22cb7a270347cae6be8ea9b0a8b853151ff98e0d6b3532d155adb65d",
   "latest_snapshot_saved_at": "2026-10-08T02:09:15.837294+00:00",
   "revision_count": 1,
@@ -103,7 +103,7 @@
     }
   ],
   "current_state_info": {
-    "race_sha256_current": "781fce278ae243d501a1f51906ca87aa0cf2d240a0bd63fd2e7d3acb2c4eb722",
+    "race_sha256_current": "7be1bd638f70363a2d9f826290d414fde8c8b8e6d7a73df095437614363c537f",
     "odds_sha256_current": "e509f37f0f52657739117c4294dc18634a923386349cb25b5cec6e440f5665ee",
     "race_still_matches_latest_snapshot": false,
     "odds_still_matches_latest_snapshot": true,
@@ -122,10 +122,15 @@
   },
   "pass": true,
   "settlement": {
-    "available": false,
-    "winning_combo": null,
-    "hit_any": null,
-    "mode_hits": {},
-    "payout": null
+    "available": true,
+    "winning_combo": "4-1-6",
+    "hit_any": true,
+    "mode_hits": {
+      "hit": true,
+      "balance": true,
+      "hole": true,
+      "narrow": false
+    },
+    "payout": 1760
   }
 }
