@@ -690,25 +690,32 @@ function selectModes(pred,odds){
 function snapKey(k){return SNAP+k}
 function readLocal(k,f=null){try{return JSON.parse(localStorage.getItem(k)||"null")??f}catch(_){return f}}
 function writeLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}}
+/* BE141_PROSPECTIVE_STAKE_CAPTURE: only new snapshots, never backfill legacy frozen stakes. */
 function saveFinalSnapshot(key,race,pred,modes,mins){
+  const previous=readLocal(snapKey(key),null);
+  const capture=!isFinalSnapshot(previous)||previous?.stake_plan_version==="V141-10000-PROSPECTIVE";
+  const savedAt=new Date().toISOString();
   const snap={
     schema:"boat-edge-v113-final-snapshot-v1",
     snapshot_window:"FINAL_15M",
     race_key:key,
-    saved_at:new Date().toISOString(),
+    saved_at:savedAt,
     minutes_to_deadline:mins,
     venue:race?.meta?.venue||"",
     race_no:race?.meta?.race_no||"",
     deadline:race?.meta?.deadline||null,
     grade:pred?.grade||null,
-    modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>[
-      k,
-      {
+    modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>{
+      const money=capture?be140StakePlan(rows,10000):[];
+      return [k,{
         confidence:confidence(pred,k,rows),
-        tickets:rows.map(x=>({combo:x.combo,p:x.p,odds:x.odds??null}))
-      }
-    ]))
+        tickets:rows.map((x,i)=>({combo:x.combo,p:x.p,odds:x.odds??null,
+          ...(capture&&Number.isInteger(money[i])&&money[i]>=100?{stake_yen:money[i]}:{})
+        }))
+      }];
+    }))
   };
+  if(capture){snap.stake_plan_version="V141-10000-PROSPECTIVE";snap.stake_saved_at=savedAt;}
   writeLocal(snapKey(key),snap);
   return snap;
 }
@@ -792,17 +799,31 @@ function be140StakePlan(rows,total=10000){
   for(let j=0;j<left;j++)extra[order[j].i]++;
   return extra.map(n=>(n+1)*100);
 }
-function renderTicketRows(rows,win){
-  const stakes=be140StakePlan(rows,10000);
+/* BE141_POST_SETTLEMENT_STAKE_GUARD: never fabricate an old stake. */
+function renderTicketRows(rows,win,postResult=false,officialPayout100=null){
+  const suggestions=postResult?[]:be140StakePlan(rows,10000);
+  const verifiedPayout=(officialPayout100!==null&&officialPayout100!==undefined&&Number.isFinite(Number(officialPayout100))&&Number(officialPayout100)>0)?Number(officialPayout100):null;
   return rows.map((x,i)=>{
-    const odds=Number(x.odds);
-    const hasOdds=x.odds!==null&&x.odds!==undefined&&Number.isFinite(odds)&&odds>0;
-    const stake=stakes[i]||0;
-    const potential=hasOdds&&stake?Math.round(stake*odds):null;
+    const odd=Number(x.odds);
+    const hasOdds=x.odds!==null&&x.odds!==undefined&&Number.isFinite(odd)&&odd>0;
+    const saved=Number(x.stake_yen);
+    const savedValid=x.stake_yen!==null&&x.stake_yen!==undefined&&Number.isInteger(saved)&&saved>=100&&saved%100===0;
+    const stake=postResult?(savedValid?saved:null):(suggestions[i]||0);
     const money=v=>Number(v).toLocaleString('ja-JP')+'円';
-    const estimated=potential===null?'払戻概算：オッズ未取得':`的中時想定払戻 ${money(potential)}`;
-    return `<div class="be108-ticket ${win===x.combo?"hit":""}"><span>${i+1}</span><b>${win===x.combo?"🎯 ":""}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${hasOdds?odds.toFixed(1)+"倍":"オッズ－"}</small><span class="be140-ticket-money">参考配分 ${money(stake)} / ${estimated}</span></div>`;
-  }).join("");
+    let details;
+    if(postResult){
+      if(!savedValid){details='締切前の配分記録なし（過去の額は推定しません）';}
+      else if(win===x.combo&&verifiedPayout!==null){
+        details=`締切前の保存配分 ${money(stake)} / 買っていた場合の参考払戻 ${money(Math.floor(stake*verifiedPayout/100))}`;
+      }else{
+        details=`締切前の保存配分 ${money(stake)} / ${verifiedPayout===null?'公式払戻未取得':'公式結果と照合済み'}`;
+      }
+    }else{
+      const estimate=hasOdds&&stake?`的中時想定払戻 ${money(Math.round(stake*odd))}`:'払戻概算：オッズ未取得';
+      details=`現在の参考配分 ${money(stake)} / ${estimate}`;
+    }
+    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${hasOdds?odd.toFixed(1)+'倍':'オッズ－'}</small><span class="be140-ticket-money">${details}</span></div>`;
+  }).join('');
 }
 async function renderPredictionModes(race,pred){
   const key=race?.race_key;if(!key||!pred)return;
@@ -880,7 +901,7 @@ async function renderPredictionModes(race,pred){
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
-  panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">参考配分：1万円／レース（100円単位）。的中時想定払戻は現在取得できたオッズに基づく概算で、実購入履歴ではありません。</div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
   $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};

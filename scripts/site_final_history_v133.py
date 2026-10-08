@@ -511,6 +511,24 @@ def confidence(pred,mode,rows):
     if len(rows)<=3:base-=2
     return max(35,min(94,round(base)))
 
+# BE141_SERVER_STAKE_CAPTURE: read-only model outputs; stake suggestions are non-purchase metadata.
+def be141_stakes(rows,total=10000):
+    if not rows or len(rows)>100 or total%100: return []
+    units=total//100-len(rows)
+    if units<0: return []
+    weights=[]
+    for x in rows:
+        v=num(x.get("p"))
+        weights.append(v if v is not None and v>0 else 0.0)
+    if not any(weights):weights=[1.0]*len(rows)
+    denom=sum(weights)
+    shares=[v/denom*units for v in weights]
+    extra=[math.floor(v) for v in shares]
+    left=units-sum(extra)
+    order=sorted(range(len(rows)), key=lambda i:(-(shares[i]-extra[i]),i))
+    for i in order[:left]:extra[i]+=1
+    return [(n+1)*100 for n in extra]
+
 changed=0;snapshots=0;settled=0
 for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
     race=read_json(race_path)
@@ -573,6 +591,16 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
             } for k,rows in modes.items()
         }
     }
+    # Never infer historical stake suggestions: only store with new snapshots, or
+    # refresh a prospectively captured V141 snapshot while results are unseen.
+    capture=not old or old.get("stake_plan_version")=="V141-10000-PROSPECTIVE"
+    if capture:
+        for mode, row in snap["modes"].items():
+            amounts=be141_stakes(row["tickets"],10000)
+            assert len(amounts)==len(row["tickets"])
+            for ticket,stake in zip(row["tickets"],amounts):ticket["stake_yen"]=stake
+        snap["stake_plan_version"]="V141-10000-PROSPECTIVE"
+        snap["stake_saved_at"]=snap["saved_at"]
     if write_if_changed(SNAPS/f"{key}.json",snap):
         changed+=1;snapshots+=1
 
