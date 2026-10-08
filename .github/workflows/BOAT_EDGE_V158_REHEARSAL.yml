@@ -1,0 +1,216 @@
+name: BOAT EDGE V158 V155 Actual Card Full Pipeline Rehearsal SAFE
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V158_REHEARSAL.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v158-v155-rehearsal
+  cancel-in-progress: false
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Acquire pinned history no later than 2026-10-07, capture only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/v158history
+          git -C /tmp/v158history sparse-checkout init --no-cone
+          cat > /tmp/v158history/.git/info/sparse-checkout <<'HIST'
+          /data/results/realtime/2025/11/
+          /data/programs/race_cards/2025/11/
+          /data/results/realtime/2025/12/
+          /data/programs/race_cards/2025/12/
+          /data/results/realtime/2026/01/
+          /data/programs/race_cards/2026/01/
+          /data/results/realtime/2026/02/
+          /data/programs/race_cards/2026/02/
+          /data/results/realtime/2026/03/
+          /data/programs/race_cards/2026/03/
+          /data/results/realtime/2026/04/
+          /data/programs/race_cards/2026/04/
+          /data/results/realtime/2026/05/
+          /data/programs/race_cards/2026/05/
+          /data/results/realtime/2026/06/
+          /data/programs/race_cards/2026/06/
+          /data/results/realtime/2026/07/
+          /data/programs/race_cards/2026/07/
+          /data/results/realtime/2026/08/
+          /data/programs/race_cards/2026/08/
+          /data/results/realtime/2026/09/
+          /data/programs/race_cards/2026/09/
+          /data/results/realtime/2026/10/01.csv
+          /data/programs/race_cards/2026/10/01.csv
+          /data/results/realtime/2026/10/02.csv
+          /data/programs/race_cards/2026/10/02.csv
+          /data/results/realtime/2026/10/03.csv
+          /data/programs/race_cards/2026/10/03.csv
+          /data/results/realtime/2026/10/04.csv
+          /data/programs/race_cards/2026/10/04.csv
+          /data/results/realtime/2026/10/05.csv
+          /data/programs/race_cards/2026/10/05.csv
+          /data/results/realtime/2026/10/06.csv
+          /data/programs/race_cards/2026/10/06.csv
+          /data/results/realtime/2026/10/07.csv
+          /data/programs/race_cards/2026/10/07.csv
+          HIST
+          SRC=2d149e1ae838f6ed3426a7989be69e799ac2988f
+          git -C /tmp/v158history fetch --depth 1 origin "$SRC"
+          git -C /tmp/v158history checkout --force --detach "$SRC"
+          [ "$(git -C /tmp/v158history rev-parse HEAD)" = "$SRC" ]
+          test ! -e /tmp/v158history/data/results/realtime/2026/10/08.csv
+          test ! -e /tmp/v158history/data/programs/race_cards/2026/10/08.csv
+      - name: Rehearse EXACT V155 model with 2026-10-07 card shape only; never score or query formal target
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v158_rehearsal.py <<'PY'
+          from __future__ import annotations
+          import csv, hashlib, json, os, re, subprocess, sys
+          from pathlib import Path
+          
+          SHA=lambda b: hashlib.sha256(b).hexdigest()
+          PREFIX=Path('data/site_racer_actual_course/v158_rehearsal')
+          PIN='2d149e1ae838f6ed3426a7989be69e799ac2988f'
+          SOURCE=Path('/tmp/v158history/data/programs/race_cards/2026/10/07.csv')
+          SCRIPT=Path('.github/workflows/BOAT_EDGE_V155_DOWNLOAD.yml')
+          raw=SCRIPT.read_text(encoding='utf-8')
+          match=re.search(r"          cat > /tmp/v155.py <<'PY'\n(.*?)\n          PY\n",raw,re.S)
+          assert match is not None,'V155 script extraction contract changed'
+          code='\n'.join(line[10:] for line in match.group(1).splitlines())+'\n'
+          compile(code,'v155_production_code.py','exec')
+          assert "EARLIEST=date(2026,10,9)" in code
+          assert "PINNED_HISTORY_SOURCE='"+PIN+"'" in code
+          assert "assert today>date(2026,10,8)" in code
+          assert "TEST=False" in code
+          assert "def candidate_predictions(card,st):" in code
+          assert "def capture():" in code
+          assert SOURCE.is_file(),'Historical fixture source missing from strict pinned checkout'
+          source=SOURCE.read_text(encoding='utf-8-sig')
+          assert source.count('20261007')>70,'Historical card format unknown'
+          fixture=source.replace('20261007','20261009').replace('2026-10-07','2026-10-09')
+          orig_rows=list(csv.DictReader(source.splitlines()))
+          rows=list(csv.DictReader(fixture.splitlines()))
+          assert 100<=len(rows)<=240
+          assert len(orig_rows)==len(rows)
+          assert all(str(x['レースコード']).startswith('20261009') for x in rows)
+          assert all(str(x['レースコード']).startswith('20261007') for x in orig_rows)
+          assert all(str(x['レース日']).startswith('2026-10-09') for x in rows)
+          assert all('2026-10-08' not in (x['レースコード'],x['レース日']) for x in rows)
+          card=Path('/tmp/v158card/data/programs/race_cards/2026/10/09.csv')
+          card.parent.mkdir(parents=True,exist_ok=True)
+          card.write_text(fixture,encoding='utf-8')
+          real_script=Path('/tmp/v158_real_v155.py')
+          real_script.write_text(code,encoding='utf-8')
+          shared=dict(os.environ)
+          shared.update({'V155_MODE':'capture','V155_TEST_ONLY':'1',
+             'V155_CAPTURE_UTC':'2026-10-08T22:50:00+00:00',
+             'V155_FIXTURE_NOW':'2026-10-08T22:50:01+00:00',
+             'V155_HISTORY_ROOT':'/tmp/v158history',
+             'V155_CARD_ROOT':'/tmp/v158card',
+             'V155_CARD_SOURCE_SHA':PIN,
+             'V155_CARD_SOURCE_TIME':'2026-10-06T22:31:05+00:00',
+             'V155_OUT':'/tmp/v158_rehearsal_only'})
+          outputs=[]
+          for k in (1,2):
+              out=Path(f'/tmp/v158_run{k}.json')
+              shared['V155_OUTFILE']=str(out)
+              p=subprocess.run([sys.executable,str(real_script)],env=shared,capture_output=True,text=True)
+              print('V158_V155_REPLAY_RUN',k,'EXIT',p.returncode, 'STDOUT', p.stdout[-500:],flush=True)
+              if p.returncode:
+                  print('STDERR',p.stderr[-7000:],flush=True)
+                  raise RuntimeError('V155 real-script complete capture rehearsal failed')
+              assert out.is_file(),'V155 failed to produce fixture freeze'
+              outputs.append(out.read_bytes())
+          assert outputs[0]==outputs[1],'V155 independent run byte parity failure'
+          payload=json.loads(outputs[0]);items=payload['predictions']
+          assert payload['status']=='PRE_RESULT_FROZEN_RESEARCH_ONLY'
+          assert payload['date_jst']=='2026-10-09'
+          assert payload['race_count']==len(items)>=100
+          assert payload['raw_card_count']==len(rows)
+          assert payload['history_valid_races']>40000
+          assert payload['history_cutoff']=='2026-10-07'
+          assert payload['source_card_sha256']==SHA(card.read_bytes())
+          assert payload['predictor_script_sha256']==SHA(real_script.read_bytes())
+          assert payload['source_card_commit']==PIN
+          assert payload['formal_2026_10_08_result_accessed'] is False
+          assert payload['actual_course_used'] is False
+          assert payload['payout_used'] is False and payload['odds_used'] is False
+          assert len(set(x['race_code'] for x in items))==len(items)
+          expected=['baseline_pl','v148_cond_full','v151_multisignal','v153_weak_cond','v154_wall_attack_cond']
+          for entry in items:
+              assert list(entry['models'])==expected
+              assert entry['race_code'].startswith('20261009')
+              for key,z in entry['models'].items():
+                  assert len(z['top10'])==10
+                  assert abs(sum(z['marginal_head_probs'])-1)<1e-8
+                  assert all(len(x['ticket'].split('-'))==3 for x in z['top10'])
+                  assert all(z['top10'][i]['p']>=z['top10'][i+1]['p'] for i in range(9))
+          assert not Path('/tmp/v158history/data/results/realtime/2026/10/08.csv').exists()
+          assert not Path('/tmp/v158history/data/programs/race_cards/2026/10/08.csv').exists()
+          counts={'pre_wall':sum(bool(e['predicted_wall']) for e in items),
+                  'pre_attack':sum(bool(e['attack_frames']) and bool(e['beneficiary_frames']) for e in items)}
+          report={
+           'schema_version':'boat-edge-v158-v155-actual-card-full-pipeline-rehearsal-v1',
+           'status':'HISTORICAL_CARD_REHEARSAL_PASS_NOT_FRESH',
+           'scope':'DATA_SHAPE_AND_EXECUTION_ONLY_NEVER_HIT_RATE',
+           'input_card_day_original':'2026-10-07',
+           'input_card_day_synthetic_relabel':'2026-10-09',
+           'synthetic_relabel_not_independent':'True',
+           'input_card_source_commit_first_published_jst':'2026-10-07T07:31:05+09:00',
+           'fixture_card_original_sha256':SHA(SOURCE.read_bytes()),
+           'fixture_card_relabelled_sha256':SHA(card.read_bytes()),
+           'v155_python_sha256':SHA(real_script.read_bytes()),
+           'pinned_history_commit':PIN,
+           'history_cutoff':'2026-10-07',
+           'history_valid_races':payload['history_valid_races'],
+           'history_manifest_sha256':payload['history_manifest_sha256'],
+           'predictions_generated':len(items),
+           'source_card_rows':len(rows),
+           'models':expected,
+           'scenario_support_counts':counts,
+           'run1_run2_byte_identical':True,
+           'rehearsal_freeze_sha256':SHA(outputs[0]),
+           'formal_2026_10_08_result_read':False,
+           'formal_scoring':False,
+           'formal_unlock':False,
+           'production_promoted':False,
+           'fresh_races_evaluated':0,
+           'no_accuracy_claim':True,
+           'no_fixture_predictions_published':True,
+           'notes':'The 2026-10-07 card is synthetically relabelled to 2026-10-09 to exercise the unmodified V155 capture module. Historic training includes the original card day, hence NEVER treat as independent prediction or validation; fixture freeze remains /tmp only.'}
+          PREFIX.mkdir(parents=True,exist_ok=True)
+          file=PREFIX/'report.json'
+          file.write_text(json.dumps(report,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('V158 HISTORICAL CARD FULL-PIPELINE RUN1_RUN2 BYTE_IDENTICAL PASS',flush=True)
+          print('V158 RESEARCH-ONLY NO_FRESH_ACCURACY NO_FORMAL_RESULT PASS',flush=True)
+          print(json.dumps({'history_valid_races':payload['history_valid_races'],'race_count':len(items),'source_card_rows':len(rows),'models':len(expected),'sha256':SHA(file.read_bytes()),'status':report['status']},sort_keys=True),flush=True)
+          PY
+          python /tmp/v158_rehearsal.py
+      - name: Publish rehearsal report only, never fixture freeze or production changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/site_racer_actual_course/v158_rehearsal/report.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'V158: full V155 historical-card rehearsal, no fresh score or formal unlock'
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
