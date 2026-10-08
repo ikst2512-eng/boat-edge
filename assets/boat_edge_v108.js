@@ -773,8 +773,36 @@ function historyHtml(){
     </div>`;
   }).join("");
 }
+/* BE140_10000_STAKE_DISPLAY: presentation-only suggestions, not purchase records. */
+function be140StakePlan(rows,total=10000){
+  if(!Array.isArray(rows)||!rows.length)return [];
+  if(rows.length>100)return [];
+  const units=Math.floor(total/100)-rows.length;
+  if(units<0)return [];
+  const weights=rows.map(r=>{
+    const value=Number(r?.p);
+    return Number.isFinite(value)&&value>0?value:0;
+  });
+  if(weights.every(w=>w===0))weights.fill(1);
+  const sum=weights.reduce((a,b)=>a+b,0);
+  const shares=weights.map(w=>w/sum*units);
+  const extra=shares.map(Math.floor);
+  let left=units-extra.reduce((a,b)=>a+b,0);
+  const order=shares.map((v,i)=>({i,frac:v-extra[i]})).sort((a,b)=>b.frac-a.frac||a.i-b.i);
+  for(let j=0;j<left;j++)extra[order[j].i]++;
+  return extra.map(n=>(n+1)*100);
+}
 function renderTicketRows(rows,win){
-  return rows.map((x,i)=>`<div class="be108-ticket ${win===x.combo?"hit":""}"><span>${i+1}</span><b>${win===x.combo?"🎯 ":""}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${x.odds?x.odds.toFixed(1)+"倍":"オッズ－"}</small></div>`).join("");
+  const stakes=be140StakePlan(rows,10000);
+  return rows.map((x,i)=>{
+    const odds=Number(x.odds);
+    const hasOdds=x.odds!==null&&x.odds!==undefined&&Number.isFinite(odds)&&odds>0;
+    const stake=stakes[i]||0;
+    const potential=hasOdds&&stake?Math.round(stake*odds):null;
+    const money=v=>Number(v).toLocaleString('ja-JP')+'円';
+    const estimated=potential===null?'払戻概算：オッズ未取得':`的中時想定払戻 ${money(potential)}`;
+    return `<div class="be108-ticket ${win===x.combo?"hit":""}"><span>${i+1}</span><b>${win===x.combo?"🎯 ":""}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${hasOdds?odds.toFixed(1)+"倍":"オッズ－"}</small><span class="be140-ticket-money">参考配分 ${money(stake)} / ${estimated}</span></div>`;
+  }).join("");
 }
 async function renderPredictionModes(race,pred){
   const key=race?.race_key;if(!key||!pred)return;
@@ -821,16 +849,16 @@ async function renderPredictionModes(race,pred){
   else if(mins!==null&&mins<0)snapStatus=finalSnap?"締切済み・保存した最終予想を固定中":"締切済み・締切前スナップショットなし";
 
   const modeHit=Boolean(settled?.mode_hits?.[mode]);
-  let cls="pending",status="🎯 判定待ち",detail="締切15分前に最終予想を保存して判定",resultText="結果未確定";
+  let cls="pending",status="判定待ち",detail="締切15分前に最終予想を保存して判定",resultText="結果未確定";
   if(inFinalWindow){
-    status="🎯 判定待ち・最終予想保存中";
+    status="最終予想保存中";
     detail=`締切まで${mins}分 / 保存済み最終予想で判定`;
   }else if(!resultConfirmed&&mins!==null&&mins<0){
-    status="🎯 判定待ち・結果待ち";
+    status="結果待ち";
     detail=effectiveSnap?"締切前の最終予想は保存済み":"締切前snapshotなし";
   }else if(resultConfirmed){
-    const pay=Number(result?.trifecta_payout_yen_per_100);
-    const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";
+    const pay=result?.trifecta_payout_yen_per_100==null?null:Number(result.trifecta_payout_yen_per_100);
+    const payText=Number.isFinite(pay)&&pay>0?`公式3連単払戻 ${pay.toLocaleString("ja-JP")}円 / 100円`:"公式払戻未取得";
     resultText=`結果 ${esc(officialResult||"確定")}`;
     if(settled){
       status=modeHit?"🎯 的中":"✕ 不的中";
@@ -842,7 +870,7 @@ async function renderPredictionModes(race,pred){
       cls="neutral";
     }
   }
-  const resultBar=`<div id="be128HitStatus" class="be118-resultbar ${cls}" data-hit-status="${modeHit?"hit":resultConfirmed?"settled":"pending"}"><div><small>🎯 判定ステータス</small><b>${status}</b></div><div><strong>${resultText}</strong><span>${detail}</span></div></div>`;
+  const resultBar=`<div id="be128HitStatus" class="be118-resultbar ${cls}" data-hit-status="${modeHit?"hit":resultConfirmed?"settled":"pending"}"><div><small>的中判定</small><b>${status}</b></div><div><strong>${resultText}</strong><span>${detail}</span></div></div>`;
 
   const stageText=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   const sourceBar=pred.mode==="formal"
@@ -852,7 +880,7 @@ async function renderPredictionModes(race,pred){
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
-  panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">参考配分：1万円／レース（100円単位）。的中時想定払戻は現在取得できたオッズに基づく概算で、実購入履歴ではありません。</div><div class="be108-ticket-list">${renderTicketRows(rows,win)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
   $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};

@@ -1053,10 +1053,11 @@ body{background:
 <!-- V89: orphaned V51 CSS disabled -->
 <!-- BOAT_EDGE_SIMPLE_FINAL_V51 -->
 <!-- BOAT_EDGE_SITE_V75_CACHE_BUST -->
-  <meta name="boat-edge-site-version" content="V139-INPUT-AUDIT-V133-PREDICTION-CORE">
+  <meta name="boat-edge-site-version" content="V140-BUDGET-10000-RESULT-CLARITY-V133-CORE">
 <link rel="stylesheet" href="./assets/boat_edge_v108.css?v=135">
 <link rel="stylesheet" href="./assets/boat_edge_v136_accuracy.css?v=137">
 <link rel="stylesheet" href="./assets/boat_edge_v139_input_audit.css?v=139">
+<link rel="stylesheet" href="./assets/boat_edge_v140_budget.css?v=140">
 </head>
 <body>
 <div class="app">
@@ -1705,7 +1706,7 @@ function buildFallbackPrediction(d){
   if(!(d.original_exhibition?.boats||[]).length) missing.push("オリジナル展示待ち");
   if(!state.model?.core7?.formal_first100_ready) missing.push("正式CURRENT未接続");
 
-  const totalBudget = 5000;
+  const totalBudget = 10000;
   const budgetA = round100(totalBudget * (worldAProb/100));
   const budgetB = totalBudget - budgetA;
   const aAmounts = allocateByWeights(aTickets.map(x=>x.probability), budgetA);
@@ -1770,8 +1771,8 @@ function officialToPrediction(d){
   };
   const pA = num(wa?.probability ?? wa?.prob ?? wa?.rate);
   const pB = num(wb?.probability ?? wb?.prob ?? wb?.rate);
-  const total = 5000;
-  const budgetA = pA!==null ? round100(total*(pA/Math.max(1,(pA||0)+(pB||0)||100))) : 2500;
+  const total = 10000;
+  const budgetA = pA!==null ? round100(total*(pA/Math.max(1,(pA||0)+(pB||0)||100))) : 5000;
   const budgetB = total-budgetA;
   return {
     mode:"formal",
