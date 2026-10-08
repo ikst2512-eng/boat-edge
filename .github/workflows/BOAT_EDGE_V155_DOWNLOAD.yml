@@ -1,0 +1,686 @@
+name: BOAT EDGE V155 Prospective Pre-Result Freeze & Next-Day Score
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V155_DOWNLOAD.yml"
+  schedule:
+    # 07:50, 08:00, 08:08 Japan local time: immutable snapshot before 08:15 JST only.
+    - cron: '50 22 * * *'
+    - cron: '0 23 * * *'
+    - cron: '8 23 * * *'
+    # 08:20 next day: only outcomes for yesterday WITH valid prior frozen prediction.
+    - cron: '20 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v155-prospective-freeze
+  cancel-in-progress: false
+
+jobs:
+  prospective:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Determine mode and prevent formal target leakage
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.schedule }}" = '20 23 * * *' ]; then
+            echo 'V155_MODE=score' >> "$GITHUB_ENV"
+          else
+            echo 'V155_MODE=capture' >> "$GITHUB_ENV"
+          fi
+          echo 'V155_OUT=data/site_racer_actual_course/v155_fresh' >> "$GITHUB_ENV"
+          echo 'V155_HISTORY_ROOT=/tmp/v155history' >> "$GITHUB_ENV"
+          echo 'V155_CARD_ROOT=/tmp/v155card' >> "$GITHUB_ENV"
+          echo 'V155_RESULT_ROOT=/tmp/v155results' >> "$GITHUB_ENV"
+          echo 'V155_MODEL_SCOPE=RESEARCH_ONLY' >> "$GITHUB_ENV"
+          echo 'MODE: capture is always PRE_RESULT; score requires earlier Git-tracked frozen prediction.'
+      - name: Inspect only permitted before-race card or earlier frozen score target
+        shell: bash
+        run: |
+          set -euo pipefail
+          TZ=Asia/Tokyo TODAY=$(TZ=Asia/Tokyo date +%Y%m%d)
+          LOCAL_DATE=$(TZ=Asia/Tokyo date +%Y/%m/%d)
+          LOCAL_HM=$(TZ=Asia/Tokyo date +%H%M)
+          if [ "$V155_MODE" = capture ]; then
+            if [ "${TODAY}" -lt 20261009 ] || [ "${TODAY}" -gt 20261031 ] || [ "${LOCAL_HM}" -ge 0815 ]; then
+              echo 'V155_SKIP=1' >> "$GITHUB_ENV"
+              echo 'Outside pre-race date/time; no card or result checkout.'
+              exit 0
+            fi
+            if [ -f "data/site_racer_actual_course/v155_fresh/${TODAY}/freeze.json" ]; then
+              echo 'V155_SKIP=1' >> "$GITHUB_ENV"
+              echo 'Existing pre-result freeze is immutable.'
+              exit 0
+            fi
+            git clone --depth 1 --filter=blob:none --no-checkout \
+              https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/v155card
+            git -C /tmp/v155card sparse-checkout init --no-cone
+            printf '/data/programs/race_cards/%s.csv\n' "$LOCAL_DATE" > /tmp/v155card/.git/info/sparse-checkout
+            git -C /tmp/v155card checkout --force
+            echo "V155_CARD_SOURCE_SHA=$(git -C /tmp/v155card rev-parse HEAD)" >> "$GITHUB_ENV"
+            echo "V155_CARD_SOURCE_TIME=$(git -C /tmp/v155card log -1 --format=%cI)" >> "$GITHUB_ENV"
+            if [ ! -f "/tmp/v155card/data/programs/race_cards/${LOCAL_DATE}.csv" ]; then
+              echo 'V155_SKIP=1' >> "$GITHUB_ENV"
+              echo 'Card is not published; no retroactive prediction will be generated.'
+              exit 0
+            fi
+          else
+            # Recheck unscored prior days; never inspect a result unless a freeze exists.
+            PREV=''
+            PREVPATH=''
+            FREEZE=''
+            for AGE in 7 6 5 4 3 2 1; do
+              DAY=$(TZ=Asia/Tokyo date -d "$AGE days ago" +%Y%m%d)
+              DPATH=$(TZ=Asia/Tokyo date -d "$AGE days ago" +%Y/%m/%d)
+              if [ "$DAY" -lt 20261009 ] || [ "$DAY" -gt 20261031 ]; then continue; fi
+              CANDIDATE="data/site_racer_actual_course/v155_fresh/${DAY}/freeze.json"
+              if [ -f "$CANDIDATE" ] && [ ! -f "data/site_racer_actual_course/v155_fresh/${DAY}/score.json" ]; then
+                PREV="$DAY"; PREVPATH="$DPATH"; FREEZE="$CANDIDATE"
+                break
+              fi
+            done
+            if [ -z "$FREEZE" ]; then
+              echo 'V155_SKIP=1' >> "$GITHUB_ENV"
+              echo 'No prior valid frozen unscored day; do not inspect results.'
+              exit 0
+            fi
+            echo "V155_SCORE_DATE=${PREV:0:4}-${PREV:4:2}-${PREV:6:2}" >> "$GITHUB_ENV"
+            COMMIT_TIME=$(git log -1 --format=%cI -- "$FREEZE")
+            [ -n "$COMMIT_TIME" ] || exit 1
+            echo "V155_FREEZE_COMMIT_TIME=$COMMIT_TIME" >> "$GITHUB_ENV"
+            git clone --depth 1 --filter=blob:none --no-checkout \
+              https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/v155results
+            git -C /tmp/v155results sparse-checkout init --no-cone
+            printf '/data/results/realtime/%s.csv\n' "$PREVPATH" > /tmp/v155results/.git/info/sparse-checkout
+            git -C /tmp/v155results checkout --force
+            echo "V155_RESULT_SOURCE_SHA=$(git -C /tmp/v155results rev-parse HEAD)" >> "$GITHUB_ENV"
+            if [ ! -f "/tmp/v155results/data/results/realtime/${PREVPATH}.csv" ]; then
+              echo 'V155_SKIP=1' >> "$GITHUB_ENV"
+              echo 'Yesterday result not published; frozen predictions stay locked.'
+              exit 0
+            fi
+          fi
+      - name: Acquire pinned history no later than 2026-10-07, capture only
+        if: env.V155_MODE == 'capture' && env.V155_SKIP != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/v155history
+          git -C /tmp/v155history sparse-checkout init --no-cone
+          cat > /tmp/v155history/.git/info/sparse-checkout <<'HIST'
+          /data/results/realtime/2025/11/
+          /data/programs/race_cards/2025/11/
+          /data/results/realtime/2025/12/
+          /data/programs/race_cards/2025/12/
+          /data/results/realtime/2026/01/
+          /data/programs/race_cards/2026/01/
+          /data/results/realtime/2026/02/
+          /data/programs/race_cards/2026/02/
+          /data/results/realtime/2026/03/
+          /data/programs/race_cards/2026/03/
+          /data/results/realtime/2026/04/
+          /data/programs/race_cards/2026/04/
+          /data/results/realtime/2026/05/
+          /data/programs/race_cards/2026/05/
+          /data/results/realtime/2026/06/
+          /data/programs/race_cards/2026/06/
+          /data/results/realtime/2026/07/
+          /data/programs/race_cards/2026/07/
+          /data/results/realtime/2026/08/
+          /data/programs/race_cards/2026/08/
+          /data/results/realtime/2026/09/
+          /data/programs/race_cards/2026/09/
+          /data/results/realtime/2026/10/01.csv
+          /data/programs/race_cards/2026/10/01.csv
+          /data/results/realtime/2026/10/02.csv
+          /data/programs/race_cards/2026/10/02.csv
+          /data/results/realtime/2026/10/03.csv
+          /data/programs/race_cards/2026/10/03.csv
+          /data/results/realtime/2026/10/04.csv
+          /data/programs/race_cards/2026/10/04.csv
+          /data/results/realtime/2026/10/05.csv
+          /data/programs/race_cards/2026/10/05.csv
+          /data/results/realtime/2026/10/06.csv
+          /data/programs/race_cards/2026/10/06.csv
+          /data/results/realtime/2026/10/07.csv
+          /data/programs/race_cards/2026/10/07.csv
+          HIST
+          SRC=2d149e1ae838f6ed3426a7989be69e799ac2988f
+          git -C /tmp/v155history fetch --depth 1 origin "$SRC"
+          git -C /tmp/v155history checkout --force --detach "$SRC"
+          [ "$(git -C /tmp/v155history rev-parse HEAD)" = "$SRC" ]
+          test ! -e /tmp/v155history/data/results/realtime/2026/10/08.csv
+          test ! -e /tmp/v155history/data/programs/race_cards/2026/10/08.csv
+      - name: Execute independent fixed-source Run1 and Run2
+        if: env.V155_SKIP != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v155.py <<'PY'
+          from __future__ import annotations
+          import csv, json, hashlib, itertools, math, os, sys
+          from collections import Counter, defaultdict
+          from datetime import datetime, timedelta, timezone, date
+          from pathlib import Path
+          
+          JST=timezone(timedelta(hours=9))
+          SHA=lambda b:hashlib.sha256(b).hexdigest()
+          MODEL_CODE_SHA='5abcad1088feaeb8a927c036bfc14055773fa5d73bc178a66fda149b59a1278f'
+          PINNED_HISTORY_SOURCE='2d149e1ae838f6ed3426a7989be69e799ac2988f'
+          CUTOFF_DATE=date(2026,10,7)
+          EARLIEST=date(2026,10,9)
+          LATEST=date(2026,10,31)
+          CUTOFF_MINUTE=8*60+15
+          TEST=False
+          
+          COURSE_PRIOR_EXP=0.65
+          
+          BACKOFF_N=12
+          
+          HEAD_EFFECT_EXP=0.5
+          
+          PL2_PSEUDO=40
+          
+          PL3_PSEUDO=25
+          
+          ST_ADV_SCALE=0.065
+          
+          MOTOR_ADV_SCALE=22.0
+          
+          NAT2_ADV_SCALE=26.0
+          
+          HEAD_MULTI_GAIN=1.05
+          
+          HEAD_MULTI_ESCAPE_DAMP=0.20
+          
+          V154_WALL_MULT=1.25
+          
+          V154_ATTACK_MULT=1.18
+          
+          V153_BLEND=0.50
+          
+          V153_P2_BLEND=0.12
+          
+          V153_P3_BLEND=0.07
+          
+          def data_number(value):
+              try:
+                  x=float(str(value).strip())
+                  return x if x>0 and math.isfinite(x) else None
+              except (ValueError,TypeError):return None
+          
+          def optional_st(v):
+              try:
+                  x=float(str(v).strip())
+                  return x if math.isfinite(x) and 0.0 <= x <= 0.45 else None
+              except (ValueError,TypeError):return None
+          
+          def optional_pct(v):
+              try:
+                  x=float(str(v).strip())
+                  return x if math.isfinite(x) and 0.0 <= x <= 100.0 else None
+              except (ValueError,TypeError):return None
+          
+          def prerace_exhibition_safe_card_features(card):
+              # Pre-race *card* metrics only. No exhibition, actual entry, odds or results.
+              return tuple((optional_st(card.get(f'艇{i}_全国平均ST')),
+                            optional_pct(card.get(f'艇{i}_モーター2連対率')),
+                            optional_pct(card.get(f'艇{i}_全国2連対率')))
+                           for i in range(1,7))
+          
+          def clamp(x):return max(-1.0,min(1.0,x))
+          
+          def adjust_escape_pressure(head,pre,multisignal=False):
+              # Scoring is applied to hypothetical frames/courses available before race.
+              # A missing feature is NEUTRAL and never backfilled from race results.
+              out=list(head)
+              strongest=0.0
+              scores=[]
+              for i in range(1,4): # 2,3,4: potential challengers to the inside lead
+                  components=[]
+                  if pre[0][0] is not None and pre[i][0] is not None:
+                      components.append(clamp((pre[0][0]-pre[i][0])/ST_ADV_SCALE))
+                  if pre[0][1] is not None and pre[i][1] is not None:
+                      components.append(clamp((pre[i][1]-pre[0][1])/MOTOR_ADV_SCALE))
+                  if pre[0][2] is not None and pre[i][2] is not None:
+                      components.append(clamp((pre[i][2]-pre[0][2])/NAT2_ADV_SCALE))
+                  # Conservative: require at least two independent observed signals.
+                  if len(components)<2: strength=0.0
+                  elif multisignal:
+                      strength=max(0.0,sum(components)/len(components)) if sum(v>0 for v in components)>=2 else 0.0
+                  else:
+                      strength=max(0.0,sum(components)/len(components))
+                  scores.append(strength)
+                  strongest=max(strongest,strength)
+                  if multisignal:
+                      out[i]*=1.0+HEAD_MULTI_GAIN*strength
+                  else:
+                      out[i]*=1.0+HEAD_PRESSURE_GAIN*strength
+              out[0]/=1.0+(HEAD_MULTI_ESCAPE_DAMP if multisignal else HEAD_PRESSURE_ESCAPE_DAMP)*strongest
+              assert all(math.isfinite(v) and v>0 for v in out)
+              return out,tuple(scores)
+          
+          def v154_prerace_support(pre):
+              # Card-only. An unavailable feature is not an inferred/zero observation.
+              def observed_votes(items):
+                  values=[v for v in items if v is not None]
+                  return len(values)>=2 and sum(values)>=2
+              def ge_with_slack(a,b,slack):
+                  return a>=b-slack if a is not None and b is not None else None
+              def st_not_late(a,b,slack):
+                  return a<=b+slack if a is not None and b is not None else None
+              p1,p2=pre[0],pre[1]
+              escape=observed_votes([
+                  st_not_late(p1[0],p2[0],0.015),
+                  ge_with_slack(p1[1],p2[1],6),
+                  ge_with_slack(p1[2],p2[2],6)])
+              # Two-boat survives the 3/4 pressure, not a claim of actual live 2-course wall.
+              rivals=pre[2:4]
+              checks=[]
+              for dim in range(3):
+                  vals=[v[dim] for v in rivals if v[dim] is not None]
+                  if p2[dim] is None or not vals:checks.append(None)
+                  elif dim==0:checks.append(p2[dim]<=min(vals)+0.025)
+                  else:checks.append(p2[dim]>=max(vals)-10)
+              wall=bool(escape and observed_votes(checks))
+              challengers=[]
+              for i in (2,3):
+                  q=pre[i]
+                  supporters=observed_votes([
+                      q[0]<=p1[0]-0.020 if q[0] is not None and p1[0] is not None else None,
+                      q[1]>=p1[1]+5 if q[1] is not None and p1[1] is not None else None,
+                      q[2]>=p1[2]+5 if q[2] is not None and p1[2] is not None else None])
+                  if supporters:challengers.append(i)
+              beneficiaries=[]
+              for i in (4,5):
+                  q=pre[i]
+                  if observed_votes([q[0]<=0.22 if q[0] is not None else None,
+                                     q[1]>=25 if q[1] is not None else None,
+                                     q[2]>=25 if q[2] is not None else None]):
+                      beneficiaries.append(i)
+              return wall,tuple(challengers),tuple(beneficiaries)
+          
+          def rank120(scores,heads,seconds,thirds,style,tail2=None,tail3=None,pre=None):
+              # Rank-specific head/2nd/3rd scores. Existing V149 styles remain byte-for-byte
+              # numerically identical; the new styles decouple head strength from tail strength.
+              if style in ('v154_wall_pl','v154_wall_cond','v154_attack_cond','v154_wall_attack_cond'):
+                  base_style='pl' if style=='v154_wall_pl' else 'head_blend05_weak_cond'
+                  base=rank120(scores,heads,seconds,thirds,base_style,tail2,tail3)
+                  wall,challengers,beneficiaries=v154_prerace_support(pre) if pre is not None else (False,(),())
+                  use_wall=style in ('v154_wall_pl','v154_wall_cond','v154_wall_attack_cond')
+                  use_attack=style in ('v154_attack_cond','v154_wall_attack_cond')
+                  if not ((use_wall and wall) or (use_attack and challengers and beneficiaries)):
+                      return base
+                  weighted=[]; head_mass=[0.0]*6; head_raw=[0.0]*6
+                  for seq,p in base:
+                      a,b,c=seq
+                      boost=1.0
+                      if use_wall and wall and a==1 and b==2:
+                          boost*=V154_WALL_MULT
+                      if use_attack and a-1 in challengers and ((b-1 in beneficiaries) or (c-1 in beneficiaries)):
+                          boost*=V154_ATTACK_MULT
+                      weighted.append((seq,p*boost))
+                      head_mass[a-1]+=p
+                      head_raw[a-1]+=p*boost
+                  result=[(seq,p*head_mass[seq[0]-1]/head_raw[seq[0]-1]) for seq,p in weighted]
+                  result.sort(key=lambda x:(-x[1],x[0]))
+                  assert len(result)==120 and abs(sum(p for _,p in result)-1)<1e-9
+                  for a in range(6):
+                      assert abs(sum(p for seq,p in result if seq[0]==a+1)-scores[a]/sum(scores))<1e-9
+                  return result
+              total=sum(scores)
+              total2=sum(tail2) if tail2 is not None else None
+              total3=sum(tail3) if tail3 is not None else None
+              output=[]
+              for a,b,c in itertools.permutations(range(6),3):
+                  p1=scores[a]/total
+                  p2pl=scores[b]/(total-scores[a]) if tail2 is None else tail2[b]/(total2-tail2[a])
+                  p3pl=scores[c]/(total-scores[a]-scores[b]) if tail3 is None else tail3[c]/(total3-tail3[a]-tail3[b])
+                  if style=='v148_cond_full':
+                      b2,b3=0.4,0.35
+                  elif style=='role_head12':
+                      b2,b3=((0.30,0.15) if a==0 else (0.20,0.10) if a==1 else (0.0,0.0))
+                  elif style=='role_guarded':
+                      b2,b3=((0.25,0.15) if a==0 else (0.18,0.10) if a==1 else (0.10,0.05) if a in (2,3) else (0.0,0.0))
+                  elif style=='head_tail_base_cond':
+                      b2,b3=TAIL_B2_BLEND,TAIL_B3_BLEND
+                  elif style=='head_blend05_weak_cond':
+                      b2,b3=V153_P2_BLEND,V153_P3_BLEND
+                  elif style in ('world_tail_conditional','world_tail_conditional_place'):
+                      b2,b3=WORLD_P2_ALPHA_BY_HEAD[a],WORLD_P3_ALPHA_BY_HEAD[a]
+          
+                  else:
+                      b2,b3=0.0,0.0
+                  if style in ('world_tail_conditional','world_tail_conditional_place'):
+                      p2=(1-b2)*p2pl+b2*(seconds[(a,b)]+WORLD_P2_PSEUDO*p2pl)/(heads[a]+WORLD_P2_PSEUDO)
+                      p3=(1-b3)*p3pl+b3*(thirds[(a,b,c)]+WORLD_P3_PSEUDO*p3pl)/(seconds[(a,b)]+WORLD_P3_PSEUDO)
+                  else:
+                      p2=(1-b2)*p2pl+b2*(seconds[(a,b)]+PL2_PSEUDO*p2pl)/(heads[a]+PL2_PSEUDO) if b2 else p2pl
+                      p3=(1-b3)*p3pl+b3*(thirds[(a,b,c)]+PL3_PSEUDO*p3pl)/(seconds[(a,b)]+PL3_PSEUDO) if b3 else p3pl
+                  output.append(((a+1,b+1,c+1),p1*p2*p3))
+              output.sort(key=lambda x:(-x[1],x[0]))
+              assert len(output)==120
+              if not TEST:assert abs(sum(x[1] for x in output)-1)<1e-9
+              return output
+          
+          
+          def get_now():
+              override=os.getenv('V155_FIXTURE_NOW')
+              if override:
+                  if os.getenv('V155_TEST_ONLY')!='1':raise RuntimeError('Refuse clock override outside fixtures')
+                  return datetime.fromisoformat(override)
+              return datetime.now(timezone.utc)
+          
+          
+          def read_card(path):
+              b=Path(path).read_bytes()
+              rows=list(csv.DictReader(b.decode('utf-8-sig').splitlines()))
+              return rows,SHA(b)
+          
+          
+          def history_stats(root):
+              root=Path(root)
+              starts=[0]*6; wins=[0]*6
+              racer=defaultdict(lambda:[0,0]);heads=Counter();seconds=Counter();thirds=Counter()
+              nvalid=0;missing=[];checked=0;manifest=[]
+              day=date(2025,11,1)
+              while day<=CUTOFF_DATE:
+                  rel=f'{day:%Y/%m/%d}.csv'
+                  cp=root/'data/programs/race_cards'/rel
+                  rp=root/'data/results/realtime'/rel
+                  if not (cp.is_file() and rp.is_file()):
+                      missing.append(rel)
+                      day+=timedelta(days=1)
+                      continue
+                  cb=cp.read_bytes();rb=rp.read_bytes()
+                  manifest.append(f'{rel}|{SHA(rb)}|{SHA(cb)}')
+                  cs=list(csv.DictReader(cb.decode('utf-8-sig').splitlines()))
+                  rs=list(csv.DictReader(rb.decode('utf-8-sig').splitlines()))
+                  cmap={str(c.get('レースコード') or ''):c for c in cs}
+                  checked+=len(rs)
+                  for rr in rs:
+                      card=cmap.get(str(rr.get('レースコード') or ''))
+                      if card is None:continue
+                      try:
+                          lanes=[int(str(rr[f'{i}コース_艇番']).strip()) for i in range(1,7)]
+                          finish=[int(str(rr[f'{i}着_艇番']).strip()) for i in range(1,4)]
+                      except (ValueError,TypeError,KeyError):continue
+                      if sorted(lanes)!=list(range(1,7)) or len(set(finish))!=3 or any(x not in range(1,7) for x in finish):continue
+                      regs=[str(card.get(f'艇{i}_登録番号') or '').strip() for i in range(1,7)]
+                      if len(set(regs))!=6 or any(len(x)!=4 or not x.isdigit() for x in regs):continue
+                      a,b,c=(x-1 for x in finish)
+                      heads[a]+=1;seconds[(a,b)]+=1;thirds[(a,b,c)]+=1
+                      for ci,boat in enumerate(lanes):
+                          starts[ci]+=1
+                          win=(boat==finish[0]);wins[ci]+=int(win)
+                          key=(regs[boat-1],ci+1)
+                          v=racer[key];v[0]+=1;v[1]+=int(win)
+                      nvalid+=1
+                  day+=timedelta(days=1)
+              if os.getenv('V155_TEST_ONLY')=='1':
+                  assert nvalid>=20
+              else:
+                  assert nvalid>40000 and checked>40000,(nvalid,checked)
+              p=[w/s for w,s in zip(wins,starts)]
+              assert all(0<x<1 for x in p)
+              return {'prior':p,'racer':racer,'heads':heads,'seconds':seconds,'thirds':thirds,
+                      'valid_races':nvalid,'raw_rows':checked,'missing_days':missing,
+                      'history_manifest_sha256':SHA(('\n'.join(manifest)).encode()),
+                      'history_last_date':CUTOFF_DATE.isoformat()}
+          
+          
+          def candidate_predictions(card,st):
+              regs=[str(card.get(f'艇{i}_登録番号') or '').strip() for i in range(1,7)]
+              nat=[data_number(card.get(f'艇{i}_全国勝率')) for i in range(1,7)]
+              if len(set(regs))!=6 or any(len(x)!=4 or not x.isdigit() for x in regs):return None
+              if any(x is None for x in nat):return None
+              prior=st['prior']
+              base=[nat[i]*(prior[i]/(1/6))**COURSE_PRIOR_EXP for i in range(6)]
+              head=[]
+              for i,reg in enumerate(regs):
+                  pair=st['racer'].get((reg,i+1))
+                  if pair is None:head.append(base[i])
+                  else:
+                      n,nw=pair;posterior=(nw+BACKOFF_N*prior[i])/(n+BACKOFF_N)
+                      head.append(base[i]*(posterior/prior[i])**HEAD_EFFECT_EXP)
+              pre=prerace_exhibition_safe_card_features(card)
+              multi=adjust_escape_pressure(head,pre,multisignal=True)[0]
+              blended=[head[i]**(1-V153_BLEND)*multi[i]**V153_BLEND for i in range(6)]
+              scoremap={'baseline_pl':(base,'pl'),
+                        'v148_cond_full':(head,'v148_cond_full'),
+                        'v151_multisignal':(multi,'pl'),
+                        'v153_weak_cond':(blended,'head_blend05_weak_cond'),
+                        'v154_wall_attack_cond':(blended,'v154_wall_attack_cond')}
+              result={}
+              for model,(scores,style) in scoremap.items():
+                  ranked=rank120(scores,st['heads'],st['seconds'],st['thirds'],style,pre=pre)
+                  assert len(ranked)==120 and abs(sum(p for _,p in ranked)-1)<1e-8
+                  marginal=[sum(p for seq,p in ranked if seq[0]==i+1) for i in range(6)]
+                  assert all(abs(marginal[i]-scores[i]/sum(scores))<1e-8 for i in range(6))
+                  top10=[{'ticket':'-'.join(map(str,seq)),'p':round(p,12)} for seq,p in ranked[:10]]
+                  result[model]={'marginal_head_probs':[round(p,12) for p in marginal],
+                                 'top_ticket_head':ranked[0][0][0],
+                                 'top10':top10}
+              wall,att,ben=v154_prerace_support(pre)
+              return {'race_code':str(card.get('レースコード') or ''),
+                      'registration_numbers':regs,
+                      'field_completeness':sum(v is not None for trio in pre for v in trio),
+                      'predicted_wall':wall,'attack_frames':[v+1 for v in att],
+                      'beneficiary_frames':[v+1 for v in ben],
+                      'models':result}
+          
+          
+          def byte_json(d):return (json.dumps(d,sort_keys=True,ensure_ascii=False,indent=2)+'\n').encode()
+          
+          
+          def capture():
+              stamp=os.getenv('V155_CAPTURE_UTC')
+              now=(datetime.fromisoformat(stamp) if stamp else get_now()).astimezone(JST)
+              if stamp and os.getenv('V155_TEST_ONLY')!='1':
+                  assert 0<=(get_now()-now.astimezone(timezone.utc)).total_seconds()<600, 'Capture clock stale; fail closed'
+              today=now.date();tm=now.hour*60+now.minute
+              if not (EARLIEST<=today<=LATEST and 5*60<=tm<CUTOFF_MINUTE):
+                  print('V155 NO_FREEZE: outside strict pre-race window (must be JST before 08:15)')
+                  return
+              root=Path(os.getenv('V155_OUT','data/site_racer_actual_course/v155_fresh'))
+              dest=root/today.strftime('%Y%m%d')
+              if (dest/'freeze.json').exists():
+                  print('V155 ALREADY_FROZEN: immutable existing snapshot preserved');return
+              cardfile=Path(os.environ['V155_CARD_ROOT'])/'data/programs/race_cards'/f'{today:%Y/%m/%d}.csv'
+              if not cardfile.is_file():
+                  print('V155 SOURCE_NOT_PUBLISHED: no prediction freeze; no results accessed');return
+              source_sha=os.environ['V155_CARD_SOURCE_SHA']
+              source_time=datetime.fromisoformat(os.environ['V155_CARD_SOURCE_TIME'].replace('Z','+00:00'))
+              if source_time.tzinfo is None:raise AssertionError('Source commit clock must include timezone')
+              if source_time>now.astimezone(timezone.utc):raise AssertionError('Source commit is dated after capture')
+              if source_time.astimezone(JST).date()>today:raise AssertionError('Future-dated input')
+              rows,card_hash=read_card(cardfile)
+              if not rows:print('V155 EMPTY_CARD: no freeze');return
+              expected_date=today.strftime('%Y%m%d')
+              st=history_stats(os.environ['V155_HISTORY_ROOT'])
+              records=[];skipped=0;codes=set()
+              for card in rows:
+                  datefield=str(card.get('レース日') or '').replace('-','').replace('/','')
+                  racecode=str(card.get('レースコード') or '')
+                  if expected_date not in (datefield,racecode[:8]):
+                      skipped+=1;continue
+                  if not racecode or racecode in codes:raise AssertionError('Blank/duplicate race code')
+                  codes.add(racecode)
+                  item=candidate_predictions(card,st)
+                  if item is None:skipped+=1
+                  else:records.append(item)
+              if os.getenv('V155_TEST_ONLY')=='1':assert len(records)>=5
+              else:assert len(records)>=60,(len(records),len(rows),skipped)
+              # User formal 2026-10-08 fresh is forbidden. No result path is ever materialized in capture.
+              assert today>date(2026,10,8)
+              payload={
+                  'schema_version':'boat-edge-v155-prospective-freeze-v1',
+                  'status':'PRE_RESULT_FROZEN_RESEARCH_ONLY',
+                  'date_jst':today.isoformat(),'capture_at_jst':now.isoformat(),
+                  'source_card_commit':source_sha,'source_card_commit_time':source_time.isoformat(),
+                  'source_card_sha256':card_hash,
+                  'history_commit':PINNED_HISTORY_SOURCE,
+                  'history_cutoff':'2026-10-07',
+                  'history_manifest_sha256':st['history_manifest_sha256'],
+                  'history_valid_races':st['valid_races'],
+                  'history_missing_days':st['missing_days'],
+                  'model_sha256':MODEL_CODE_SHA,
+                  'predictor_script_sha256':SHA(Path(__file__).read_bytes()),
+                  'race_count':len(records),'skipped_cards':skipped,'raw_card_count':len(rows),
+                  'formal_2026_10_08_result_accessed':False,
+                  'actual_course_used':False,
+                  'payout_used':False,'odds_used':False,'proxy_imputation_used':False,
+                  'model_scope':'research comparison only; prior uses FRAME not unseen actual course',
+                  'nonfresh_note':'2026-10-08 formally locked; this is an entirely separate fresh cohort >=2026-10-09',
+                  'predictions':sorted(records,key=lambda x:x['race_code'])}
+              blob=byte_json(payload)
+              out=Path(os.getenv('V155_OUTFILE',str(dest/'freeze.json')))
+              out.parent.mkdir(parents=True,exist_ok=True)
+              if out.exists():raise AssertionError('Freeze immutable; refusing overwrite')
+              out.write_bytes(blob)
+              print(json.dumps({'version':'V155','mode':'capture','race_count':len(records),'date':today.isoformat(),
+                 'capture_at_jst':now.isoformat(),'source_card_sha256':card_hash,'freeze_sha256':SHA(blob),
+                 'history_cutoff':'2026-10-07','all_models':list(records[0]['models'])},sort_keys=True))
+          
+          
+          def score():
+              now=get_now().astimezone(JST)
+              requested=os.getenv('V155_SCORE_DATE')
+              day=date.fromisoformat(requested) if requested else now.date()-timedelta(days=1)
+              if not (EARLIEST<=day<=LATEST and day<now.date()):
+                  print('V155 SCORE_SKIPPED: outside prospective cohort');return
+              root=Path(os.getenv('V155_OUT','data/site_racer_actual_course/v155_fresh'))
+              freeze_path=root/day.strftime('%Y%m%d')/'freeze.json'
+              score_path=root/day.strftime('%Y%m%d')/'score.json'
+              if score_path.exists():print('V155 ALREADY_SCORED: immutable score preserved');return
+              if not freeze_path.is_file():
+                  print('V155 NO_FROZEN_PREDICTIONS: fail closed; no results request');return
+              freeze=json.loads(freeze_path.read_bytes())
+              assert freeze['date_jst']==day.isoformat() and freeze['status']=='PRE_RESULT_FROZEN_RESEARCH_ONLY'
+              assert len(freeze['predictions'])>=5 and freeze['formal_2026_10_08_result_accessed'] is False
+              assert freeze['history_cutoff']=='2026-10-07' and freeze['model_sha256']==MODEL_CODE_SHA
+              assert freeze['predictor_script_sha256']==SHA(Path(__file__).read_bytes())
+              captured=datetime.fromisoformat(freeze['capture_at_jst'])
+              assert captured.tzinfo is not None and captured.astimezone(JST).date()==day
+              assert captured.astimezone(JST).hour*60+captured.astimezone(JST).minute<CUTOFF_MINUTE
+              # Independent server-side GitHub commit-age check; a retroactively inserted snapshot fails.
+              source_commit_time=datetime.fromisoformat(os.environ['V155_FREEZE_COMMIT_TIME'].replace('Z','+00:00'))
+              assert source_commit_time.astimezone(JST).date()==day
+              assert (source_commit_time.astimezone(JST).hour*60+source_commit_time.astimezone(JST).minute)<CUTOFF_MINUTE
+              assert captured-timedelta(minutes=2)<=source_commit_time.astimezone(JST)
+              assert source_commit_time.astimezone(JST)<=captured+timedelta(minutes=15)
+              result_file=Path(os.environ['V155_RESULT_ROOT'])/'data/results/realtime'/f'{day:%Y/%m/%d}.csv'
+              if not result_file.is_file():
+                  print('V155 RESULT_NOT_PUBLISHED: leave predictions frozen and unscored');return
+              source_bytes=result_file.read_bytes()
+              results=list(csv.DictReader(source_bytes.decode('utf-8-sig').splitlines()))
+              mapped={str(r.get('レースコード') or ''):r for r in results}
+              models=list(freeze['predictions'][0]['models'])
+              metrics={m:dict(evaluated=0,head_top1=0,marginal_head_top1=0,top3=0,top5=0,top10=0,
+                              non1_true=0,non1_called=0,non1_correct=0,non1_false=0) for m in models}
+              missing_results=[];invalid=[];retrospective_segments={'realized_1_2':0,'realized_attack_benefit':0}
+              for p in freeze['predictions']:
+                  key=p['race_code'];result=mapped.get(key)
+                  if result is None:missing_results.append(key);continue
+                  try:finish=[int(result[f'{i}着_艇番']) for i in range(1,4)]
+                  except (ValueError,TypeError,KeyError):invalid.append(key);continue
+                  if len(set(finish))!=3 or any(i not in range(1,7) for i in finish):invalid.append(key);continue
+                  combo='-'.join(map(str,finish))
+                  retrospective_segments['realized_1_2']+=int(finish[:2]==[1,2])
+                  retrospective_segments['realized_attack_benefit']+=int(finish[0] in (3,4) and any(x in (5,6) for x in finish[1:]))
+                  for m in models:
+                      a=p['models'][m]
+                      top=[v['ticket'] for v in a['top10']]
+                      h=max(range(6),key=lambda i:(a['marginal_head_probs'][i],-i))+1
+                      call=a['top_ticket_head']
+                      x=metrics[m];x['evaluated']+=1
+                      x['head_top1']+=int(call==finish[0]);x['marginal_head_top1']+=int(h==finish[0])
+                      for n in (3,5,10):x[f'top{n}']+=int(combo in top[:n])
+                      x['non1_true']+=int(finish[0]!=1)
+                      x['non1_called']+=int(call!=1)
+                      x['non1_correct']+=int(finish[0]!=1 and call!=1)
+                      x['non1_false']+=int(finish[0]==1 and call!=1)
+              valid=min(v['evaluated'] for v in metrics.values())
+              # Partial day results are not a valid fair comparison; fail closed.
+              if valid<len(freeze['predictions']) or missing_results or invalid:
+                  print(json.dumps({'status':'INCOMPLETE_RESULTS_NO_SCORING','expected':len(freeze['predictions']),
+                   'valid':valid,'missing':len(missing_results),'invalid':len(invalid)}));return
+              for m,v in metrics.items():
+                  n=v['evaluated']
+                  for k in ('head_top1','marginal_head_top1','top3','top5','top10'):
+                      v[k+'_pct']=round(100*v[k]/n,3) if n else None
+                  v['non1_recall_pct']=round(100*v['non1_correct']/v['non1_true'],3) if v['non1_true'] else None
+                  v['non1_precision_pct']=round(100*v['non1_correct']/v['non1_called'],3) if v['non1_called'] else None
+              payload={'schema_version':'boat-edge-v155-prospective-scoring-v1','status':'FRESH_SCORE_COMPLETE_RESEARCH_ONLY',
+                       'date_jst':day.isoformat(),'frozen_pred_sha256':SHA(freeze_path.read_bytes()),
+                       'source_result_sha256':SHA(source_bytes),'source_result_commit':os.environ['V155_RESULT_SOURCE_SHA'],
+                       'n_scored':valid,'models':metrics,
+                       'segments_diagnostic_only':retrospective_segments,
+                       'target_is_not_2026_10_08':True,
+                       'production_promoted':False,'formal_gate_unlocked':False,
+                       'provenance_note':'Before-results frozen prediction and independent GitHub commit-time cutoff checked; daily race cards may still have unverified intra-day feature timestamps.'}
+              blob=byte_json(payload);score_path.parent.mkdir(parents=True,exist_ok=True)
+              score_path.write_bytes(blob)
+              print(json.dumps({'status':payload['status'],'date':day.isoformat(),'n':valid,'sha256':SHA(blob),
+                                'summary':{m:{k:v[k] for k in ('head_top1_pct','top3_pct','top5_pct','top10_pct')} for m,v in metrics.items()}},sort_keys=True))
+          
+          if __name__=='__main__':
+              mode=os.environ.get('V155_MODE','capture')
+              assert mode in ('capture','score')
+              if mode=='capture':capture()
+              else:score()
+          PY
+          if [ "$V155_MODE" = capture ]; then
+            export V155_CAPTURE_UTC=$(date -u +%Y-%m-%dT%H:%M:%S+00:00)
+            export V155_OUTFILE=/tmp/v155_run1.json
+            python /tmp/v155.py | tee /tmp/v155_run1.log
+            export V155_OUTFILE=/tmp/v155_run2.json
+            python /tmp/v155.py | tee /tmp/v155_run2.log | sed -n '1,6p'
+            cmp /tmp/v155_run1.json /tmp/v155_run2.json
+            # If either independent run crossed the hard 08:15 cutoff, DO NOT persist.
+            if [ "$(TZ=Asia/Tokyo date +%H%M)" -ge 0815 ]; then
+              echo 'V155 CUTOFF_CROSSED: no freeze is committed'; exit 0
+            fi
+            TARGET=$(TZ=Asia/Tokyo date +%Y%m%d)
+            FOLDER="data/site_racer_actual_course/v155_fresh/${TARGET}"
+            mkdir -p "$FOLDER"
+            if [ -e "$FOLDER/freeze.json" ]; then
+              echo 'Already frozen; fail closed to prevent overwrite'; exit 1
+            fi
+            cp /tmp/v155_run1.json "$FOLDER/freeze.json"
+            sha256sum "$FOLDER/freeze.json"
+            echo 'V155 PROSPECTIVE RUN1_RUN2 BYTE_IDENTICAL PASS'
+          else
+            python /tmp/v155.py | tee /tmp/v155_score.log
+          fi
+      - name: Publish only immutable fresh research files, never production or formal
+        if: env.V155_SKIP != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # For pre-race capture, reject late commits irrespective of the start time.
+          if [ "$V155_MODE" = capture ] && [ "$(TZ=Asia/Tokyo date +%H%M)" -ge 0815 ]; then
+            echo 'V155 CUTOFF_CROSSED_BEFORE_COMMIT: abandon snapshot'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/site_racer_actual_course/v155_fresh
+          git diff --cached --quiet && exit 0
+          git commit -m "V155: immutable prospective $V155_MODE evidence (exclude 2026-10-08)"
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
