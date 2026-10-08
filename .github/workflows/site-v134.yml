@@ -1,0 +1,341 @@
+name: BOAT EDGE V134 Evidence TODO Reconciler
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v134.yml"
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "BOAT EDGE V133 Balance10 Wave18 FIXED"
+    types:
+      - completed
+  schedule:
+    - cron: "2,12,22,32,42,52 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v134-evidence-todo
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Reconcile TODO from live evidence
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from __future__ import annotations
+          import json, hashlib
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          ROOT=Path(".")
+          TODO=ROOT/"BOAT_EDGE_CURRENT_TODO.md"
+          STATE=ROOT/"data/site_current_state.json"
+          AUDIT=ROOT/"data/site_prediction_audit/index.json"
+          PARITY=ROOT/"data/site_prediction_parity/v133.json"
+          SNAPS=ROOT/"data/site_prediction_snapshots"
+          HIST=ROOT/"data/site_prediction_history"
+          EVID=ROOT/"data/site_todo_evidence.json"
+          JS=ROOT/"assets/boat_edge_v108.js"
+
+          MODE_POLICY="BALANCE10_WAVE12_15_18_V133_FIXED"
+
+          def read_json(p):
+              try:
+                  return json.loads(Path(p).read_text(encoding="utf-8"))
+              except Exception:
+                  return {}
+
+          def sha256_file(p):
+              p=Path(p)
+              try:
+                  return hashlib.sha256(p.read_bytes()).hexdigest()
+              except Exception:
+                  return None
+
+          def counts(d):
+              return {k:len((v or {}).get("tickets") or []) for k,v in (d.get("modes") or {}).items()}
+
+          state=read_json(STATE)
+          audit=read_json(AUDIT)
+          parity=read_json(PARITY)
+          js=JS.read_text(encoding="utf-8") if JS.exists() else ""
+
+          current_ok=(
+              (state.get("ui") or {}).get("version")=="V133"
+              and (state.get("ui") or {}).get("status")=="ACTIVE"
+              and (state.get("parity") or {}).get("status")=="PASS"
+              and parity.get("pass") is True
+              and not parity.get("errors")
+          )
+
+          snapshots=[]
+          for p in sorted(SNAPS.glob("20261008-??-??.json")):
+              d=read_json(p)
+              if d.get("mode_policy")!=MODE_POLICY:
+                  continue
+              snapshots.append({
+                  "race_key":d.get("race_key") or p.stem,
+                  "path":str(p),
+                  "sha256":sha256_file(p),
+                  "saved_at":d.get("saved_at"),
+                  "minutes_to_deadline":d.get("minutes_to_deadline"),
+                  "counts":counts(d),
+                  "used_inputs":d.get("used_inputs") or [],
+                  "guards":d.get("guards") or {}
+              })
+
+          audited_map=audit.get("audited") or {}
+          audited_v133=[]
+          for s in snapshots:
+              a=audited_map.get(s["race_key"]) or {}
+              if a.get("pass") is True:
+                  audited_v133.append({
+                      "race_key":s["race_key"],
+                      "snapshot_sha256":s["sha256"],
+                      "audit_file":a.get("audit_file"),
+                      "minutes_to_deadline":s["minutes_to_deadline"],
+                      "counts":s["counts"]
+                  })
+
+          wave_counts=sorted({
+              int(s["counts"].get("hole"))
+              for s in snapshots
+              if isinstance(s["counts"].get("hole"),int)
+          })
+          all_mode_counts_ok=bool(snapshots) and all(
+              s["counts"].get("hit")==10
+              and s["counts"].get("balance")==10
+              and s["counts"].get("hole") in (12,15,18)
+              and s["counts"].get("narrow")==3
+              for s in snapshots
+          )
+
+          settled_v133=[]
+          for p in sorted(HIST.glob("20261008-??-??.json")):
+              d=read_json(p)
+              snap=d.get("snapshot") or {}
+              settle=d.get("settlement") or {}
+              if snap.get("mode_policy")!=MODE_POLICY or not settle:
+                  continue
+              settled_v133.append({
+                  "race_key":d.get("race_key") or p.stem,
+                  "winning_combo":settle.get("winning_combo"),
+                  "mode_hits":settle.get("mode_hits") or {},
+                  "hit_any":settle.get("hit_any"),
+                  "settled_at":settle.get("settled_at")
+              })
+
+          ui_hit_branch_ok=all(x in js for x in [
+              'id="be128HitStatus"',
+              "🎯 判定待ち",
+              "🎯 的中",
+              "✕ 不的中",
+              "判定対象外"
+          ])
+
+          task1=current_ok and bool(audited_v133) and not (audit.get("errors") or [])
+          task2=current_ok and ui_hit_branch_ok and bool(settled_v133)
+          task3=(
+              current_ok
+              and all_mode_counts_ok
+              and set(wave_counts)>={12,15,18}
+              and parity.get("balance_distinct_from_hit_on_fixed_fixture") is True
+          )
+          status={
+              "task1_live_snapshot_audit":task1,
+              "task2_settled_hit_ui_path":task2,
+              "task3_live_mode_counts_and_parity":task3
+          }
+
+          base={
+              "schema_version":"boat-edge-todo-evidence-v134",
+              "date":"2026-10-08",
+              "current_ui":"V133",
+              "mode_policy":MODE_POLICY,
+              "current_state_ok":current_ok,
+              "status":status,
+              "summary":{
+                  "v133_snapshot_count":len(snapshots),
+                  "v133_audited_pass_count":len(audited_v133),
+                  "observed_wave_counts":wave_counts,
+                  "all_live_mode_counts_ok":all_mode_counts_ok,
+                  "v133_settled_count":len(settled_v133),
+                  "ui_hit_branch_ok":ui_hit_branch_ok,
+                  "parity_pass":parity.get("pass") is True and not parity.get("errors")
+              },
+              "examples":{
+                  "first_audited_v133":audited_v133[0] if audited_v133 else None,
+                  "wave_12":next((s for s in snapshots if s["counts"].get("hole")==12),None),
+                  "wave_15":next((s for s in snapshots if s["counts"].get("hole")==15),None),
+                  "wave_18":next((s for s in snapshots if s["counts"].get("hole")==18),None),
+                  "first_settled_v133":settled_v133[0] if settled_v133 else None
+              },
+              "source_hashes":{
+                  "state":sha256_file(STATE),
+                  "audit_index":sha256_file(AUDIT),
+                  "parity_v133":sha256_file(PARITY),
+                  "runtime_js":sha256_file(JS)
+              }
+          }
+          old=read_json(EVID)
+          old_cmp=dict(old); old_cmp.pop("updated_at",None)
+          evidence=dict(base)
+          evidence["updated_at"]=datetime.now(timezone.utc).isoformat() if old_cmp!=base else old.get("updated_at") or datetime.now(timezone.utc).isoformat()
+          EVID.parent.mkdir(parents=True,exist_ok=True)
+          EVID.write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          active=[]
+          if not task1:
+              active.append("1. [ ] First live V133 FINAL_15M snapshot on 2026-10-08 and revision-safe audit PASS.")
+          if not task2:
+              active.append("2. [ ] First V133-mode settled race must flow through the direct prediction-panel judgement path (`🎯 的中` / `✕ 不的中` / `判定対象外`).")
+          if not task3:
+              active.append("3. [ ] Live mode evidence must show バランス=10 and 波乱=12/15/18, with V133 browser/server parity PASS.")
+          active += [
+              "4. [ ] Connect racer×actual-course 1y/6m/3m.",
+              "5. [ ] Connect 1-course escape resistance + 2-course wall/逃がし interaction.",
+              "6. [ ] Connect 3/4 attack boat -> 5/6 beneficiary interaction.",
+              "7. [ ] Connect motor recent-meet/current-meet/parts-change state.",
+              "8. [ ] Connect venue×season/wind/tide/course and same-day completed-race LIVE water state.",
+              "9. [ ] Formal latest prediction: audit original exhibition against both BOATERS + 競艇日和 before claiming retrieved."
+          ]
+
+          done=[
+              "- [x] V133 browser/server parity PASS for all four prediction modes.",
+              "- [x] V133 mode policy fixed at 的中重視10 / バランス10 / 波乱12・15・18 / 激絞り3."
+          ]
+          if task1:
+              e=audited_v133[0]
+              done.insert(0,f'- [x] Live V133 FINAL_15M snapshot + audit PASS — `{e["race_key"]}`.')
+          if task2:
+              e=settled_v133[0]
+              verdict="🎯 hit path" if e.get("hit_any") else "✕ miss path"
+              done.insert(0,f'- [x] V133-mode settled judgement path confirmed — `{e["race_key"]}` / {verdict}.')
+          if task3:
+              done.insert(0,f'- [x] Live mode counts confirmed — balance=10 / wave={wave_counts} / narrow=3; V133 parity PASS.')
+
+          formal=state.get("formal_current") or {}
+          guards=formal.get("guards") or {}
+
+          todo_lines=[
+              "# BOAT EDGE CURRENT TODO","",
+              "Updated: 2026-10-08",
+              "This file is auto-reconciled from repository evidence by V134. ACTIVE TODO contains unresolved work only.","",
+              "## CURRENT",
+              "- UI: V133-BALANCE10-WAVE12-15-18-FIXED",
+              "- Latest prediction policy: V127 + V133 mode policy ACTIVE",
+              "- FINAL_15M server generator: V133 ACTIVE",
+              "- Revision-safe audit evidence: V125 + V134 reconciler",
+              "- Browser/server parity: V133 PASS",
+              "- TODO evidence reconciler: V134 ACTIVE",
+              f"- Formal CURRENT connected: {str(formal.get('connected')).lower()}",
+              f"- Formal predictions_ready: {str(formal.get('predictions_ready')).lower()}",
+              f"- Formal stage: {formal.get('stage') or 'unknown'}",
+              f"- Formal guards: results_seen={str(guards.get('results_seen')).lower()} / unlock={str(guards.get('unlock')).lower()} / scoring={str(guards.get('scoring')).lower()}","",
+              "## ACTIVE TODO — priority order",
+              *active,"",
+              "## WAITING / GATES",
+              "- Formal CURRENT cannot replace reference prediction until predictions_ready=true and PRE_RESULT guards are valid.",
+              "- No retrospective prediction backfill after results are known.",
+              "- Missing values are not replaced with zero, mean, or proxy.",
+              "- Odds never rank tickets and never decide mode ticket counts.",
+              "- Scenario accuracy is primary; 波乱展開 may use up to 18 tickets when head scenarios genuinely split.","",
+              "## RECENT DONE",
+              *done,"",
+              "## TODO EVIDENCE",
+              "- Machine-readable evidence: `data/site_todo_evidence.json`.",
+              f"- Current V133 snapshots observed: {len(snapshots)}.",
+              f"- Current V133 audited PASS: {len(audited_v133)}.",
+              f"- Observed wave counts: {wave_counts}.",
+              f"- Current V133 settled races: {len(settled_v133)}.","",
+              "## TODO GUARD",
+              "- ACTIVE TODO contains unfinished `[ ]` tasks only.",
+              "- Evidence-complete tasks are removed from ACTIVE and written to RECENT DONE automatically.",
+              "- Component versions must match `data/site_current_state.json`.",
+              "- Legacy NEXT sections are forbidden.",""
+          ]
+          TODO.write_text("\n".join(todo_lines),encoding="utf-8")
+
+          state["todo_reconciler"]={
+              "version":"V134",
+              "status":"ACTIVE",
+              "evidence":"data/site_todo_evidence.json",
+              "auto_completed":[k for k,v in status.items() if v],
+              "pending":[k for k,v in status.items() if not v]
+          }
+          STATE.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          print(json.dumps({
+              "status":status,
+              "snapshots":len(snapshots),
+              "audited_pass":len(audited_v133),
+              "wave_counts":wave_counts,
+              "settled_v133":len(settled_v133),
+              "active_count":len(active)
+          },ensure_ascii=False))
+
+          PY
+
+      - name: Validate V134
+        shell: bash
+        run: |
+          set -e
+          test -f data/site_todo_evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path("data/site_todo_evidence.json").read_text(encoding="utf-8"))
+          s=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          t=Path("BOAT_EDGE_CURRENT_TODO.md").read_text(encoding="utf-8")
+          assert e["schema_version"]=="boat-edge-todo-evidence-v134"
+          assert e["current_ui"]=="V133"
+          assert e["summary"]["parity_pass"] is True
+          assert e["status"]["task1_live_snapshot_audit"] is True
+          assert e["status"]["task3_live_mode_counts_and_parity"] is True
+          assert set(e["summary"]["observed_wave_counts"]) >= {12,15,18}
+          assert s["ui"]=={"version":"V133","status":"ACTIVE"}
+          assert s["todo_reconciler"]["version"]=="V134"
+          assert "## NEXT" not in t
+          active=t.split("## ACTIVE TODO — priority order",1)[1].split("## WAITING / GATES",1)[0]
+          assert "[x]" not in active
+          assert "First live V133 FINAL_15M snapshot" not in active
+          assert "Live mode evidence must show" not in active
+          if e["status"]["task2_settled_hit_ui_path"]:
+              assert "First V133-mode settled race" not in active
+          else:
+              assert "First V133-mode settled race" in active
+          print({
+            "task1":e["status"]["task1_live_snapshot_audit"],
+            "task2":e["status"]["task2_settled_hit_ui_path"],
+            "task3":e["status"]["task3_live_mode_counts_and_parity"],
+            "wave_counts":e["summary"]["observed_wave_counts"]
+          })
+          PY
+
+      - name: Save V134 reconciliation
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add BOAT_EDGE_CURRENT_TODO.md data/site_current_state.json data/site_todo_evidence.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Auto reconcile current TODO from evidence V134"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
