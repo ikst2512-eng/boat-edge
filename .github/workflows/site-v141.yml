@@ -1,0 +1,257 @@
+name: BOAT EDGE V141 Prospective Stake Audit
+
+on:
+  push:
+    paths:
+      - '.github/workflows/site-v141.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v141-stake-freeze
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Freeze new 10000 yen suggestions, never reconstruct old stakes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PYINSTALL'
+          from pathlib import Path
+          import json, textwrap
+          
+          core = Path('assets/boat_edge_v108.js')
+          server = Path('scripts/site_final_history_v133.py')
+          state = Path('data/site_current_state.json')
+          assert all(p.exists() for p in (core,server,state)), 'V140/V133 base not present'
+          s=core.read_text(encoding='utf-8')
+          p=server.read_text(encoding='utf-8')
+          st=json.loads(state.read_text(encoding='utf-8'))
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}
+          assert st['stake_payout_display']['version']=='V140'
+          assert st['stake_payout_display']['reference_budget_yen']==10000
+          assert st['formal_current']['connected'] is False and st['formal_current']['predictions_ready'] is False
+          assert all(st['formal_current']['guards'][k] is False for k in ('results_seen','unlock','scoring'))
+          assert 'BE141_PROSPECTIVE_STAKE_CAPTURE' not in s
+          assert 'BE141_SERVER_STAKE_CAPTURE' not in p
+          assert s.count('BE140_10000_STAKE_DISPLAY')==1
+          assert s.count('function be140StakePlan(')==1
+          
+          start=s.index('function saveFinalSnapshot(key,race,pred,modes,mins){')
+          end=s.index('function isFinalSnapshot(snap){',start)
+          assert 500<end-start<1500, 'snapshot lifecycle unexpectedly changed'
+          old=s[start:end]
+          assert 'snapshot_window:"FINAL_15M"' in old
+          assert 'tickets:rows.map(x=>({combo:x.combo,p:x.p,odds:x.odds??null}))' in old
+          repl='''/* BE141_PROSPECTIVE_STAKE_CAPTURE: only new snapshots, never backfill legacy frozen stakes. */
+          function saveFinalSnapshot(key,race,pred,modes,mins){
+            const previous=readLocal(snapKey(key),null);
+            const capture=!isFinalSnapshot(previous)||previous?.stake_plan_version==="V141-10000-PROSPECTIVE";
+            const savedAt=new Date().toISOString();
+            const snap={
+              schema:"boat-edge-v113-final-snapshot-v1",
+              snapshot_window:"FINAL_15M",
+              race_key:key,
+              saved_at:savedAt,
+              minutes_to_deadline:mins,
+              venue:race?.meta?.venue||"",
+              race_no:race?.meta?.race_no||"",
+              deadline:race?.meta?.deadline||null,
+              grade:pred?.grade||null,
+              modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>{
+                const money=capture?be140StakePlan(rows,10000):[];
+                return [k,{
+                  confidence:confidence(pred,k,rows),
+                  tickets:rows.map((x,i)=>({combo:x.combo,p:x.p,odds:x.odds??null,
+                    ...(capture&&Number.isInteger(money[i])&&money[i]>=100?{stake_yen:money[i]}:{})
+                  }))
+                }];
+              }))
+            };
+            if(capture){snap.stake_plan_version="V141-10000-PROSPECTIVE";snap.stake_saved_at=savedAt;}
+            writeLocal(snapKey(key),snap);
+            return snap;
+          }
+          '''
+          s=s[:start]+repl+s[end:]
+          start=s.index('function renderTicketRows(rows,win){')
+          end=s.index('async function renderPredictionModes(race,pred){',start)
+          assert 500<end-start<2200, 'V140 ticket renderer unexpectedly changed'
+          old=s[start:end]
+          assert 'const stakes=be140StakePlan(rows,10000);' in old
+          repl='''/* BE141_POST_SETTLEMENT_STAKE_GUARD: never fabricate an old stake. */
+          function renderTicketRows(rows,win,postResult=false,officialPayout100=null){
+            const suggestions=postResult?[]:be140StakePlan(rows,10000);
+            const verifiedPayout=(officialPayout100!==null&&officialPayout100!==undefined&&Number.isFinite(Number(officialPayout100))&&Number(officialPayout100)>0)?Number(officialPayout100):null;
+            return rows.map((x,i)=>{
+              const odd=Number(x.odds);
+              const hasOdds=x.odds!==null&&x.odds!==undefined&&Number.isFinite(odd)&&odd>0;
+              const saved=Number(x.stake_yen);
+              const savedValid=x.stake_yen!==null&&x.stake_yen!==undefined&&Number.isInteger(saved)&&saved>=100&&saved%100===0;
+              const stake=postResult?(savedValid?saved:null):(suggestions[i]||0);
+              const money=v=>Number(v).toLocaleString('ja-JP')+'円';
+              let details;
+              if(postResult){
+                if(!savedValid){details='締切前の配分記録なし（過去の額は推定しません）';}
+                else if(win===x.combo&&verifiedPayout!==null){
+                  details=`締切前の保存配分 ${money(stake)} / 買っていた場合の参考払戻 ${money(Math.floor(stake*verifiedPayout/100))}`;
+                }else{
+                  details=`締切前の保存配分 ${money(stake)} / ${verifiedPayout===null?'公式払戻未取得':'公式結果と照合済み'}`;
+                }
+              }else{
+                const estimate=hasOdds&&stake?`的中時想定払戻 ${money(Math.round(stake*odd))}`:'払戻概算：オッズ未取得';
+                details=`現在の参考配分 ${money(stake)} / ${estimate}`;
+              }
+              return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${hasOdds?odd.toFixed(1)+'倍':'オッズ－'}</small><span class="be140-ticket-money">${details}</span></div>`;
+            }).join('');
+          }
+          '''
+          s=s[:start]+repl+s[end:]
+          assert s.count('${renderTicketRows(rows,win)}')==1
+          s=s.replace('${renderTicketRows(rows,win)}','${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}',1)
+          notice='参考配分：1万円／レース（100円単位）。的中時想定払戻は現在取得できたオッズに基づく概算で、実購入履歴ではありません。'
+          assert s.count(notice)==1
+          s=s.replace(notice,'${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}',1)
+          # All modification is lifecycle/presentation; ranking functions unaffected.
+          core.write_text(s,encoding='utf-8')
+          
+          marker='changed=0;snapshots=0;settled=0'
+          assert p.count(marker)==1
+          helper='''# BE141_SERVER_STAKE_CAPTURE: read-only model outputs; stake suggestions are non-purchase metadata.
+          def be141_stakes(rows,total=10000):
+              if not rows or len(rows)>100 or total%100: return []
+              units=total//100-len(rows)
+              if units<0: return []
+              weights=[]
+              for x in rows:
+                  v=num(x.get("p"))
+                  weights.append(v if v is not None and v>0 else 0.0)
+              if not any(weights):weights=[1.0]*len(rows)
+              denom=sum(weights)
+              shares=[v/denom*units for v in weights]
+              extra=[math.floor(v) for v in shares]
+              left=units-sum(extra)
+              order=sorted(range(len(rows)), key=lambda i:(-(shares[i]-extra[i]),i))
+              for i in order[:left]:extra[i]+=1
+              return [(n+1)*100 for n in extra]
+          
+          '''
+          p=p.replace(marker,helper+marker,1)
+          anchor='''    if write_if_changed(SNAPS/f"{key}.json",snap):'''
+          assert p.count(anchor)==1
+          insertion='''    # Never infer historical stake suggestions: only store with new snapshots, or
+              # refresh a prospectively captured V141 snapshot while results are unseen.
+              capture=not old or old.get("stake_plan_version")=="V141-10000-PROSPECTIVE"
+              if capture:
+                  for mode, row in snap["modes"].items():
+                      amounts=be141_stakes(row["tickets"],10000)
+                      assert len(amounts)==len(row["tickets"])
+                      for ticket,stake in zip(row["tickets"],amounts):ticket["stake_yen"]=stake
+                  snap["stake_plan_version"]="V141-10000-PROSPECTIVE"
+                  snap["stake_saved_at"]=snap["saved_at"]
+          '''
+          p=p.replace(anchor,insertion+anchor,1)
+          server.write_text(p,encoding='utf-8')
+          st['stake_snapshot_freeze']={
+              'version':'V141','status':'ACTIVE',
+              'contract':'V141-10000-PROSPECTIVE',
+              'only_before_result':True,'older_snapshots_backfilled':False,
+              'missing_historical_stakes':'NOT_RECONSTRUCTED',
+              'formal_model_unchanged':True,
+              'amounts_are_suggestions_not_purchases':True,
+              'server_script':'scripts/site_final_history_v133.py'
+          }
+          state.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('V141 prospective stakes captured for new FINAL_15M local/server snapshots; historical stakes never backfilled')
+          PYINSTALL
+      - name: Validate browser and server prospective settlement guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v108.js
+          python -m py_compile scripts/site_final_history_v133.py
+          node - <<'JS'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const code=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+          const match=code.match(/function be140StakePlan\(rows,total=10000\)\{[\s\S]*?\n\}/);
+          assert(match, 'V140 stake helper missing');
+          const widget=code.match(/function renderTicketRows\(rows,win,postResult=false,officialPayout100=null\)\{[\s\S]*?\n\}\nasync function renderPredictionModes/);
+          assert(widget,'V141 ticket renderer missing');
+          const ctx=vm.createContext({Number,Math,Object,Array,esc:v=>String(v),pct:v=>String(v)+'%'});
+          vm.runInContext(match[0],ctx);
+          vm.runInContext(widget[0].replace(/\nasync function renderPredictionModes$/,''),ctx);
+          for(const n of [3,10,12,15,18]){
+           const rows=Array.from({length:n},(_,i)=>({combo:`1-${i%5+2}-${(i+1)%5+2}`,p:i+1,odds:10+i}));
+           const stakes=ctx.be140StakePlan(rows,10000);
+           assert.strictEqual(stakes.reduce((a,b)=>a+b,0),10000);
+           assert(stakes.every(x=>x>=100&&x%100===0));
+          }
+          const settled=[{combo:'1-2-3',p:30,odds:12.5,stake_yen:1500},{combo:'1-3-2',p:20,odds:14.0,stake_yen:8500}];
+          const hit=ctx.renderTicketRows(settled,'1-2-3',true,1200);
+          assert(hit.includes('🎯 1-2-3')&&hit.includes('18,000円'),'official per-100 payout math');
+          assert(!hit.includes('🎯 1-3-2'),'only actual winning combo marked');
+          const legacy=ctx.renderTicketRows([{combo:'1-2-3',p:30,odds:12.5}],'1-2-3',true,1200);
+          assert(legacy.includes('締切前の配分記録なし')&&!legacy.includes('参考払戻'),'no retrospective stakes');
+          const pending=ctx.renderTicketRows([{combo:'1-2-3',p:30,odds:12.5}],null,false,null);
+          assert(pending.includes('現在の参考配分')&&!pending.includes('🎯 '),'pending is not hit');
+          console.log('V141 PASS: 10000 JPY plans, hit-only 🎯, prospective payout, legacy non-backfill');
+          JS
+          python - <<'PYTEST'
+          from pathlib import Path
+          import json,ast,math,re
+          s=Path('scripts/site_final_history_v133.py').read_text(encoding='utf-8')
+          js=Path('assets/boat_edge_v108.js').read_text(encoding='utf-8')
+          st=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          assert st['stake_snapshot_freeze']['version']=='V141'
+          assert st['stake_snapshot_freeze']['older_snapshots_backfilled'] is False
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}
+          assert st['formal_current']['connected'] is False and st['formal_current']['predictions_ready'] is False
+          assert all(st['formal_current']['guards'][k] is False for k in ('results_seen','unlock','scoring'))
+          assert s.count('BE141_SERVER_STAKE_CAPTURE')==1
+          assert js.count('BE141_PROSPECTIVE_STAKE_CAPTURE')==1
+          assert js.count('BE141_POST_SETTLEMENT_STAKE_GUARD')==1
+          assert s.count('capture=not old or old.get("stake_plan_version")=="V141-10000-PROSPECTIVE"')==1
+          assert 'if result and result.get("status")=="confirmed":' in s
+          assert 'if not (0<=mins<=15.999):' in s
+          # Function-only exec, never execute result-reading script within tests.
+          code=ast.parse(s)
+          node=next(x for x in code.body if isinstance(x,ast.FunctionDef) and x.name=='be141_stakes')
+          ns={'math':math,'num':lambda x:None if x is None else float(x)}
+          exec(compile(ast.Module(body=[node],type_ignores=[]),'stake-helper','exec'),ns)
+          for n in [3,10,12,15,18]:
+           a=ns['be141_stakes']([{'p':i+1} for i in range(n)])
+           assert len(a)==n and sum(a)==10000 and all(x>=100 and x%100==0 for x in a)
+          assert ns['be141_stakes']([{'p':0},{'p':0},{'p':0}])==[3400,3300,3300]
+          print('V141 server PASS: equal-case deterministic, no formal gate or model mutation')
+          PYTEST
+          python - <<'PYGUARD'
+          import subprocess
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          allowed={'assets/boat_edge_v108.js','scripts/site_final_history_v133.py','data/site_current_state.json'}
+          assert changed<=allowed, f'Unexpected changed: {changed-allowed}'
+          print('V141 changed-file scope PASS')
+          PYGUARD
+      - name: Publish V141 guarded stake metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/boat_edge_v108.js scripts/site_final_history_v133.py data/site_current_state.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'V141: freeze prospective 10000 yen stake suggestions without legacy backfill'
+          for k in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
