@@ -1,0 +1,385 @@
+name: BOAT EDGE V147 Time-Split Racer Actual-Course Research
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V147.yml"
+      - ".github/workflows/BOAT_EDGE_V147_FIXED.yml"
+      - ".github/workflows/site-v147.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v147-chronological-research
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Prepare historical 2026-10-07-safe research source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/boatracecsv
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/BoatraceCSV/boatracecsv.github.io.git /tmp/boatracecsv
+          git -C /tmp/boatracecsv sparse-checkout init --no-cone
+          cat > /tmp/boatracecsv/.git/info/sparse-checkout <<'PATTERNS'
+          /data/results/realtime/2025/11/
+          /data/programs/race_cards/2025/11/
+          /data/results/realtime/2025/12/
+          /data/programs/race_cards/2025/12/
+          /data/results/realtime/2026/01/
+          /data/programs/race_cards/2026/01/
+          /data/results/realtime/2026/02/
+          /data/programs/race_cards/2026/02/
+          /data/results/realtime/2026/03/
+          /data/programs/race_cards/2026/03/
+          /data/results/realtime/2026/04/
+          /data/programs/race_cards/2026/04/
+          /data/results/realtime/2026/05/
+          /data/programs/race_cards/2026/05/
+          /data/results/realtime/2026/06/
+          /data/programs/race_cards/2026/06/
+          /data/results/realtime/2026/07/
+          /data/programs/race_cards/2026/07/
+          /data/results/realtime/2026/08/
+          /data/programs/race_cards/2026/08/
+          /data/results/realtime/2026/09/
+          /data/programs/race_cards/2026/09/
+          /data/results/realtime/2026/10/01.csv
+          /data/programs/race_cards/2026/10/01.csv
+          /data/results/realtime/2026/10/02.csv
+          /data/programs/race_cards/2026/10/02.csv
+          /data/results/realtime/2026/10/03.csv
+          /data/programs/race_cards/2026/10/03.csv
+          /data/results/realtime/2026/10/04.csv
+          /data/programs/race_cards/2026/10/04.csv
+          /data/results/realtime/2026/10/05.csv
+          /data/programs/race_cards/2026/10/05.csv
+          /data/results/realtime/2026/10/06.csv
+          /data/programs/race_cards/2026/10/06.csv
+          /data/results/realtime/2026/10/07.csv
+          /data/programs/race_cards/2026/10/07.csv
+          PATTERNS
+          git -C /tmp/boatracecsv checkout --force
+          test ! -e /tmp/boatracecsv/data/results/realtime/2026/10/08.csv
+          test ! -e /tmp/boatracecsv/data/programs/race_cards/2026/10/08.csv
+          SOURCE_COMMIT="$(git -C /tmp/boatracecsv rev-parse HEAD)"
+          echo "SOURCE_COMMIT=$SOURCE_COMMIT" >> "$GITHUB_ENV"
+
+      - name: Run independent two-pass fixed chronological research
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v147.py <<'PY'
+          from __future__ import annotations
+          import csv, hashlib, itertools, json, math, os, calendar
+          from collections import defaultdict, Counter
+          from datetime import date, timedelta
+          from pathlib import Path
+          
+          SRC=Path('/tmp/boatracecsv')
+          OUT=Path('data/site_racer_actual_course/v147_research')
+          OUT.mkdir(parents=True, exist_ok=True)
+          TRAIN_END=date(2026,9,7)
+          HOLD_START=date(2026,9,8)
+          HOLD_END=date(2026,10,7)
+          FORMAL_TARGET=date(2026,10,8)
+          SOURCE_FIRST=date(2025,11,1)
+          assert TRAIN_END < HOLD_START <= HOLD_END < FORMAL_TARGET
+          SHA=lambda b:hashlib.sha256(b).hexdigest()
+          
+          # Fixed, registered beforehand: no tuning against the evaluation dates.
+          BACKOFF_N=12
+          EFFECT_EXPONENT=0.5
+          COURSE_PRIOR_EXPONENT=0.65
+          WINDOWS={'3m': date(2026,6,8), '6m':date(2026,3,8), '1y':date(2025,9,8)}
+          CANDIDATES=['baseline','racer_course_3m','racer_course_6m','racer_course_1y']
+          DATA_USED=['race card published national win rate','boat frame as expected entry (NOT actual heldout entry)','historical actual course racer 1st-rate, train dates <= 2026-09-07']
+          
+          
+          def read_pair(d):
+              rel=f'{d:%Y/%m/%d}.csv'
+              rp=SRC/'data/results/realtime'/rel
+              cp=SRC/'data/programs/race_cards'/rel
+              if not(rp.exists() and cp.exists()): return None, None, {'date':d.isoformat(),'result_exists':rp.exists(),'card_exists':cp.exists()}
+              a=rp.read_bytes();b=cp.read_bytes()
+              return list(csv.DictReader(a.decode('utf-8-sig').splitlines())), list(csv.DictReader(b.decode('utf-8-sig').splitlines())), (rel,SHA(a),SHA(b))
+          
+          
+          def course_lanes(r):
+              try:
+                  boat=[int(str(r[f'{i}コース_艇番']).strip()) for i in range(1,7)]
+              except (ValueError,KeyError,TypeError): return None
+              return boat if sorted(boat)==[1,2,3,4,5,6] else None
+          
+          
+          def regs_for(c):
+              regs=[]
+              for boat in range(1,7):
+                  s=str(c.get(f'艇{boat}_登録番号') or '').strip()
+                  if not(s.isdigit() and len(s)==4): return None
+                  regs.append(s)
+              return regs if len(set(regs))==6 else None
+          
+          
+          def parse_strength(v):
+              try:
+                  x=float(str(v).strip())
+                  return x if math.isfinite(x) and x>0 else None
+              except (ValueError,TypeError): return None
+          
+          
+          def rank_tickets(scores):
+              z=sum(scores)
+              arr=[]
+              for a,b,c in itertools.permutations(range(6),3):
+                  p=(scores[a]/z)*(scores[b]/(z-scores[a]))*(scores[c]/(z-scores[a]-scores[b]))
+                  arr.append(((a+1,b+1,c+1),p))
+              return sorted(arr,key=lambda x:(-x[1],x[0]))
+          
+          
+          # Read history only through 2026-10-07; Oct 8 is a strict prohibited path.
+          assert not (SRC/'data/results/realtime/2026/10/08.csv').exists()
+          assert not (SRC/'data/programs/race_cards/2026/10/08.csv').exists()
+          
+          source_hashes=[];missing=[];train=[];hold=[]
+          d=SOURCE_FIRST
+          while d<=HOLD_END:
+              rows,cards,provenance=read_pair(d)
+              if rows is None:
+                  missing.append(provenance)
+                  d+=timedelta(days=1)
+                  continue
+              source_hashes.append(provenance)
+              by_card={str(c.get('レースコード') or ''):c for c in cards}
+              for r in rows:
+                  key=str(r.get('レースコード') or '')
+                  card=by_card.get(key)
+                  if card is None:continue
+                  lanes=course_lanes(r)
+                  regs=regs_for(card)
+                  if lanes is None or regs is None: continue
+                  try:
+                      finish=[int(str(r[f'{i}着_艇番']).strip()) for i in range(1,4)]
+                  except (ValueError,KeyError,TypeError):continue
+                  if len(set(finish))!=3 or any(x not in range(1,7) for x in finish):continue
+                  if d<=TRAIN_END:
+                      train.append((d,lanes,regs,finish))
+                  elif HOLD_START<=d<=HOLD_END:
+                      national=[parse_strength(card.get(f'艇{i}_全国勝率')) for i in range(1,7)]
+                      if any(v is None for v in national):continue
+                      hold.append((d,key,lanes,regs,finish,national))
+              d+=timedelta(days=1)
+          
+          assert len(train)>20000, ('too few train',len(train))
+          assert len(hold)>2000, ('too few hold',len(hold))
+          
+          train_pools={w:defaultdict(lambda:[0,0]) for w in WINDOWS}
+          course_totals=[0]*6
+          course_wins=[0]*6
+          for d,lanes,regs,finish in train:
+              for course,boat in enumerate(lanes,1):
+                  course_totals[course-1]+=1
+                  won=(finish[0]==boat)
+                  course_wins[course-1]+=int(won)
+                  reg=regs[boat-1]
+                  for w,start in WINDOWS.items():
+                      if d>=start:
+                          v=train_pools[w][(reg,course)]
+                          v[0]+=1
+                          v[1]+=int(won)
+          
+          prior=[course_wins[i]/course_totals[i] for i in range(6)]
+          assert all(0<x<1 for x in prior),prior
+          
+          stats={}
+          for segment in ['all','early','late','unchanged_entry','changed_entry']:
+              stats[segment]={}
+              for model in CANDIDATES:
+                  stats[segment][model]={
+                      'n':0,'head_top1':0,'trifecta_top3':0,'trifecta_top5':0,'trifecta_top10':0,
+                      'head_prob_sum':0.0,'head_brier_sum':0.0, 'log_loss_sum':0.0,
+                  }
+          
+          # Compare a fixed baseline vs each predeclared racer-course window separately.
+          # The *heldout actual entry* is inspected ONLY to report subgroup performance, not to score any boat.
+          for d,key,lanes,regs,finish,nat in hold:
+              pbase=[nat[i]*(prior[i]/(1/6))**COURSE_PRIOR_EXPONENT for i in range(6)]
+              candidates={'baseline':pbase}
+              for w in WINDOWS:
+                  vals=[]
+                  for i,reg in enumerate(regs):
+                      hist=train_pools[w].get((reg,i+1))
+                      if not hist:
+                          vals.append(pbase[i])  # exact neutral/no new info; no missing statistic fabricated
+                          continue
+                      n,wins=hist
+                      posterior=(wins+BACKOFF_N*prior[i])/(n+BACKOFF_N)
+                      vals.append(pbase[i]*(posterior/prior[i])**EFFECT_EXPONENT)
+                  candidates[f'racer_course_{w}']=vals
+              changed=lanes != [1,2,3,4,5,6]
+              segment='early' if d<=date(2026,9,22) else 'late'
+              groups=['all',segment,'changed_entry' if changed else 'unchanged_entry']
+              truth=tuple(finish)
+              for model,score in candidates.items():
+                  tickets=rank_tickets(score)
+                  combos=[x[0] for x in tickets[:10]]
+                  z=sum(score)
+                  head=score[finish[0]-1]/z
+                  head_prob=score[ tickets[0][0][0]-1]/z
+                  for g in groups:
+                      a=stats[g][model]
+                      a['n']+=1
+                      a['head_top1']+=int(tickets[0][0][0]==finish[0])
+                      for k in [3,5,10]:a[f'trifecta_top{k}']+=int(truth in combos[:k])
+                      a['head_prob_sum']+=head
+                      a['head_brier_sum']+=(1-head)**2
+                      a['log_loss_sum']+=-math.log(max(1e-12,head))
+          
+          for seg,models in stats.items():
+              for model,a in models.items():
+                  n=a.pop('n')
+                  a['evaluated']=n
+                  for x in ['head_top1','trifecta_top3','trifecta_top5','trifecta_top10']:
+                      a[x+'_rate_pct']=round(100*a[x]/n,2) if n else None
+                  a['mean_winner_probability']=round(a.pop('head_prob_sum')/n,5) if n else None
+                  a['head_log_loss']=round(a.pop('log_loss_sum')/n,5) if n else None
+                  a.pop('head_brier_sum')
+          
+          deltas={}
+          for model in CANDIDATES[1:]:
+              deltas[model]={}
+              for seg in ['all','early','late','unchanged_entry','changed_entry']:
+                  a=stats[seg][model];b=stats[seg]['baseline']
+                  if not a['evaluated']:
+                      deltas[model][seg]=None;continue
+                  deltas[model][seg]={
+                      x:round(a[x+'_rate_pct']-b[x+'_rate_pct'],2)
+                      for x in ['head_top1','trifecta_top3','trifecta_top5','trifecta_top10']
+                  }
+                  deltas[model][seg]['head_log_loss_change']=round(a['head_log_loss']-b['head_log_loss'],5)
+          
+          coverage={}
+          for w,start in WINDOWS.items():
+              expected=(TRAIN_END-start).days+1
+              have=sum(start<=date.fromisoformat(x[0].replace('/','-').replace('.csv',''))<=TRAIN_END for x in source_hashes) if start>=SOURCE_FIRST else sum(date.fromisoformat(x[0].replace('/','-').replace('.csv',''))<=TRAIN_END for x in source_hashes)
+              coverage[w]={'requested_start':start.isoformat(),'train_end':TRAIN_END.isoformat(),
+                           'expected_days':expected,'source_days':have,'complete':have==expected,
+                           'coverage_pct':round(have/expected*100,2)}
+          
+          report={
+              'schema_version':'boat-edge-v147-chronological-research-v1',
+              'status':'RESEARCH_ONLY_NO_PRODUCTION_CHANGES',
+              'separation':'train<=2026-09-07, evaluate 2026-09-08..2026-10-07',
+              'source':{'repo':'BoatraceCSV/boatracecsv.github.io','commit':os.environ.get('SOURCE_COMMIT'),
+                        'sha256_source_pair_manifest':SHA('\n'.join('|'.join(x) for x in source_hashes).encode())},
+              'formal_target_2026_10_08_results_accessed':False,
+              'formal_target_results_path_materialized':False,
+              'actual_course_for_test_prediction':'NOT_USED; boat frame i is expected course i',
+              'actual_entry_for_holdout':'evaluation subgroup only',
+              'predeclared_strength_rule':f'national_win_rate * (historical_course_1st_rate / (1/6)) ** {COURSE_PRIOR_EXPONENT}',
+              'candidate_rule':f'baseline_strength * ((racer_course_wins+{BACKOFF_N}*course_prior)/(racer_course_starts+{BACKOFF_N})/course_prior)**{EFFECT_EXPONENT}',
+              'missing_racer_history_policy':'NO_ADJUSTMENT_TO_BASELINE; never fabricate missing win rate',
+              'predeclared_windows':list(WINDOWS),
+              'source_windows':coverage,
+              'training_races':len(train), 'heldout_races':len(hold),
+              'missing_source_days':missing,
+              'course_global_first_rates_training':{str(i+1):round(p,5) for i,p in enumerate(prior)},
+              'metrics':stats,'candidate_minus_baseline_pct_points':deltas,
+              'explanations':[
+                  'This is NOT a comparison to V133/V12133 and does not measure their predictive accuracy.',
+                  'TopN means first N ranked trifectas out of 120, ranked without odds.',
+                  'National win rate is read from held-out race card, assumed pre-race published.',
+                  'Actual entry reported in historical results is never used to rank held-out candidates.',
+                  'Training is fixed strictly before the first held-out date; no rolling target leakage.',
+                  'No model weights are promoted on the basis of this research alone.',
+                  '1-year results history is partial; no zero fill, synthetic replacements, or odds-based ordering.',
+              ]
+          }
+          raw=(json.dumps(report,ensure_ascii=False,sort_keys=True,indent=2)+'\n').encode()
+          (OUT/'research.json').write_bytes(raw)
+          audit={
+              'schema_version':'boat-edge-v147-chronological-audit-v1',
+              'research_sha256':SHA(raw),
+              'train_before_first_holdout':TRAIN_END<HOLD_START,
+              'holdout_ends_before_formal_target':HOLD_END<FORMAL_TARGET,
+              'no_2026_10_08_materialized':not (SRC/'data/results/realtime/2026/10/08.csv').exists(),
+              'prediction_weights_changed':False,
+              'no_result_imputation':True,
+              'scoring_beyond_formal_gate':False,
+              'run_source_sha256':report['source']['sha256_source_pair_manifest'],
+              'split_counts':{g:stats[g]['baseline']['evaluated'] for g in stats},
+          }
+          assert audit['train_before_first_holdout'] and audit['holdout_ends_before_formal_target'] and audit['no_2026_10_08_materialized']
+          (OUT/'audit.json').write_text(json.dumps(audit,ensure_ascii=False,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({'V147':'research-only report generated','training_races':len(train),'heldout_races':len(hold),'splits':audit['split_counts'],'deltas':deltas},ensure_ascii=False))
+          PY
+
+          rm -rf data/site_racer_actual_course/v147_research
+          python /tmp/v147.py | tee /tmp/v147_report_run1.txt
+          cp -a data/site_racer_actual_course/v147_research /tmp/v147_run1
+          rm -rf data/site_racer_actual_course/v147_research
+          python /tmp/v147.py | tee /tmp/v147_report_run2.txt
+
+          for name in research.json audit.json; do
+            cmp /tmp/v147_run1/$name data/site_racer_actual_course/v147_research/$name
+          done
+          cmp /tmp/v147_report_run1.txt /tmp/v147_report_run2.txt
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/site_racer_actual_course/v147_research')
+          r=json.loads((p/'research.json').read_text())
+          a=json.loads((p/'audit.json').read_text())
+          assert r['status']=='RESEARCH_ONLY_NO_PRODUCTION_CHANGES'
+          assert r['heldout_races']>2000 and r['training_races']>20000
+          assert r['formal_target_2026_10_08_results_accessed'] is False
+          assert a['no_2026_10_08_materialized'] is True
+          assert a['train_before_first_holdout'] is True
+          assert a['holdout_ends_before_formal_target'] is True
+          assert a['prediction_weights_changed'] is False
+          assert a['no_result_imputation'] is True
+          assert a['scoring_beyond_formal_gate'] is False
+          assert r['metrics']['early']['baseline']['evaluated']>900
+          assert r['metrics']['late']['baseline']['evaluated']>900
+          assert (r['metrics']['all']['baseline']['evaluated'] ==
+                  r['metrics']['early']['baseline']['evaluated'] +
+                  r['metrics']['late']['baseline']['evaluated'])
+          assert (r['metrics']['all']['baseline']['evaluated'] ==
+                  r['metrics']['unchanged_entry']['baseline']['evaluated'] +
+                  r['metrics']['changed_entry']['baseline']['evaluated'])
+          for group,models in r['metrics'].items():
+            for model,m in models.items():
+              assert all(m['head_top1']>=0 for _ in [0])
+              assert m['trifecta_top3']<=m['trifecta_top5']<=m['trifecta_top10']<=m['evaluated']
+          print('V147 Run1/Run2 byte-identical PASS')
+          print('V147 no formal-target results; train/holdout separation PASS')
+          print('V147 no promotion; candidate-only accuracy comparison PASS')
+          PY
+
+      - name: Publish V147 research-only report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/site_racer_actual_course/v147_research
+          git diff --cached --quiet && exit 0
+          git commit -m 'V147: evaluate actual-course racer features on leakage-safe historical holdout'
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
