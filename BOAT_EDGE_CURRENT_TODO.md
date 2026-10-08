@@ -39,10 +39,10 @@ This file is auto-reconciled from repository evidence by V134. ACTIVE TODO conta
 
 ## TODO EVIDENCE
 - Machine-readable evidence: `data/site_todo_evidence.json`.
-- Current V133 snapshots observed: 80.
-- Current V133 audited PASS: 75.
+- Current V133 snapshots observed: 85.
+- Current V133 audited PASS: 80.
 - Observed wave counts: [12, 15, 18].
-- Current V133 settled races: 70.
+- Current V133 settled races: 75.
 
 ## TODO GUARD
 - ACTIVE TODO contains unfinished `[ ]` tasks only.
