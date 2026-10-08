@@ -1,0 +1,134 @@
+name: BOAT EDGE V139 Visible Prediction Inputs
+
+on:
+  push:
+    paths:
+      - '.github/workflows/site-v139.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v139-input-status
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Install V139 input audit without prediction changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path("assets/boat_edge_v139_input_audit.js")
+          p.parent.mkdir(parents=True,exist_ok=True)
+          p.write_text('/* BOAT_EDGE_V139_PRE_RESULT_INPUT_AUDIT */\n(()=>{"use strict";\nfunction esc(s){return String(s??"").replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c]));}\nfunction validSite(a,key){\n  const item=a?.[key];\n  return item?.status==="ok" && Boolean(item?.source && item?.fetched_at && item?.sha256);\n}\nfunction derive(race){\n  const a=race?.source_audit||{};\n  const racers=Array.isArray(race?.racers)?race.racers:[];\n  const nos=racers.map(r=>String(r?.registration_no||""));\n  const card=a.race_card?.status==="ok" && Boolean(a.race_card?.fetched_at) && racers.length===6 && nos.every(Boolean) && new Set(nos).size===6;\n  const official=a.beforeinfo?.status==="ok" && Boolean(a.beforeinfo?.fetched_at) && race?.beforeinfo && Object.keys(race.beforeinfo).length>0;\n  // CSV original_exhibition is NOT proof of two-site source binding.\n  const both=validSite(a,"boaters_original_exhibition") && validSite(a,"keiteibiyori_original_exhibition");\n  const formal=race?.current_model_input?.formal_prediction_ready===true;\n  return {\n    card: Boolean(card), official:Boolean(official), both:Boolean(both), formalClaimAllowed:false,\n    formalityLabel:formal?"正式モデル入力は別途ゲート監査が必要":"サイトは参考予想（正式CURRENT未接続）",\n    lastFetch:race?.meta?.updated_at||"時刻未確認",\n    raceKey:race?.race_key||"不明"\n  };\n}\nfunction render(race){\n  if(!race?.race_key)return;\n  const host=document.querySelector("#raceView .race-summary");\n  if(!host)return;\n  let box=document.getElementById("be139InputStatus");\n  if(!box){\n    box=document.createElement("details");box.id="be139InputStatus";\n    box.className="be139-input-status";\n    const h=host.querySelector(".summary-top");\n    if(h)h.insertAdjacentElement("afterend",box);else host.prepend(box);\n  }\n  const s=derive(race), wasOpen=box.open;\n  box.innerHTML=`<summary><b>予想材料の取得状況</b><span>${s.card?"出走表✓":"出走表未確認"} · ${s.official?"公式展示✓":"公式展示待ち"} · ${s.both?"外部2サイト✓":"外部2サイト未照合"}</span></summary>\n    <div class="be139-body"><p><b>出走表：</b>${s.card?"6艇確認済み":"取得・6艇照合が未完了"}</p>\n    <p><b>公式展示・実進入：</b>${s.official?"事前情報の取得を確認（実進入6艇照合は別途必要）":"未取得または取得時刻未確認"}</p>\n    <p><b>BOATERS＋競艇日和：</b>${s.both?"両サイトの出所付き記録あり":"双方の原展示の出所照合は未完了"}</p>\n    <p><b>選手別・実コース1年/6か月/3か月：</b>サイト参考予想には未接続</p>\n    <p class="be139-warning">${esc(s.formalityLabel)}。未取得項目を「取得済み」とは扱いません。</p>\n    <small>レースデータ更新：${esc(s.lastFetch)} ／ ${esc(s.raceKey)}</small></div>`;\n  box.open=wasOpen;\n}\nwindow.BoatEdgeInputAuditV139={derive,render};\ntry{if(typeof state!=="undefined" && state?.race)render(state.race);}catch(_){/* no initial race */}\n})();\n',encoding="utf-8")
+          css=Path("assets/boat_edge_v139_input_audit.css")
+          css.write_text('/* BOAT_EDGE_V139_PRE_RESULT_INPUT_AUDIT */\n.be139-input-status{border:1px solid #d9e6f4;background:#f7faff;border-radius:10px;padding:0 9px;margin:9px 0;max-width:100%}\n.be139-input-status summary{display:flex;align-items:center;justify-content:space-between;gap:6px;cursor:pointer;padding:9px 1px;list-style:none;color:#164c87;font-size:11px}\n.be139-input-status summary::-webkit-details-marker{display:none}\n.be139-input-status summary b{flex:0 0 auto;font-size:11px}\n.be139-input-status summary span{min-width:0;text-align:right;font-size:9px;line-height:1.4;color:#5e7692}\n.be139-input-status summary:focus-visible{outline:2px solid #2384d5;outline-offset:3px}\n.be139-body{border-top:1px solid #dfe8f3;padding:8px 2px 10px;color:#334d6b;font-size:11px;line-height:1.6}\n.be139-body p{margin:0 0 5px}\n.be139-body .be139-warning{font-weight:750;color:#97591d}\n.be139-body small{display:block;color:#67829b;font-size:10px;overflow-wrap:anywhere}\n@media(max-width:440px){.be139-input-status summary{display:block}.be139-input-status summary b{display:block}.be139-input-status summary span{display:block;margin-top:3px;text-align:left}}\n',encoding="utf-8")
+          core=Path("assets/boat_edge_v108.js")
+          s=core.read_text(encoding="utf-8")
+          needle="  lastRaceKey=race.race_key;"
+          assert s.count(needle)==1,"V108 race lifecycle anchor missing"
+          addition="  window.BoatEdgeInputAuditV139?.render(race); // V139 UI only; predictor unchanged"
+          if addition not in s:
+              s=s.replace(needle,needle+"\n"+addition,1)
+          core.write_text(s,encoding="utf-8")
+          html=Path("index.html")
+          h=html.read_text(encoding="utf-8")
+          assert h.count('boat_edge_v136_accuracy.js?v=137')==1,"V137 base missing"
+          assert h.count('boat_edge_v136_accuracy.css?v=137')==1,"V137 CSS missing"
+          js_link='<script defer src="./assets/boat_edge_v139_input_audit.js?v=139"></script>'
+          css_link='<link rel="stylesheet" href="./assets/boat_edge_v139_input_audit.css?v=139">'
+          if js_link not in h:
+              h=h.replace('<script defer src="./assets/boat_edge_v136_accuracy.js?v=137"></script>',
+                          '<script defer src="./assets/boat_edge_v136_accuracy.js?v=137"></script>\n'+js_link,1)
+          if css_link not in h:
+              h=h.replace('<link rel="stylesheet" href="./assets/boat_edge_v136_accuracy.css?v=137">',
+                          '<link rel="stylesheet" href="./assets/boat_edge_v136_accuracy.css?v=137">\n'+css_link,1)
+          import re
+          h,n=re.subn(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                      '<meta name="boat-edge-site-version" content="V139-INPUT-AUDIT-V133-PREDICTION-CORE">',h)
+          assert n==1
+          html.write_text(h,encoding="utf-8")
+          sp=Path("data/site_current_state.json")
+          st=json.loads(sp.read_text(encoding="utf-8"))
+          assert st["ui"]=={"version":"V133","status":"ACTIVE"}
+          assert st["site_mode_accuracy"].get("winning_head_breakdown_ui")=="V137-ACTIVE"
+          assert st["formal_current"]["connected"] is False
+          assert st["formal_current"]["predictions_ready"] is False
+          assert all(st["formal_current"]["guards"].get(k) is False for k in ("results_seen","unlock","scoring"))
+          st["race_input_audit_ui"]={"version":"V139","status":"ACTIVE","scope":"PRE_RESULT_RACE_SOURCE_VISIBILITY_ONLY","production_weights_unchanged":True,"formal_fresh_not_claimed":True}
+          sp.write_text(json.dumps(st,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          print("Installed V139 source audit UI; V133 predictor and formal gates unchanged")
+          PY
+      - name: Check source distinctions and formal gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v139_input_audit.js
+          node --check assets/boat_edge_v108.js
+          node - <<'JS'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const code=fs.readFileSync('assets/boat_edge_v139_input_audit.js','utf8');
+          const w={};
+          vm.runInNewContext(code,{window:w,document:{querySelector:()=>null},Set,Object,String,Boolean});
+          const f=w.BoatEdgeInputAuditV139.derive;
+          const racers=[1,2,3,4,5,6].map(i=>({registration_no:String(4000+i)}));
+          const base={race_key:'20261008-01-08',racers,meta:{updated_at:'2026-10-08T14:21:29+09:00'},source_audit:{race_card:{status:'ok',fetched_at:'2026-10-08T14:21:29+09:00'},original_exhibition:{status:'ok',source:'CSV',fetched_at:'now',sha256:'some-hash'},beforeinfo:{status:'missing'}}};
+          const result=f(base);
+          assert.equal(result.card,true);
+          assert.equal(result.official,false);
+          assert.equal(result.both,false,'CSV does not prove BOATERS + Keiteibiyori');
+          assert.equal(result.formalClaimAllowed,false);
+          const source=(status,url)=>({status,source:url,fetched_at:'2026-10-08T14:21:29+09:00',sha256:'test'});
+          const two={...base,source_audit:{...base.source_audit,boaters_original_exhibition:source('ok','https://boaters.jp/x'),keiteibiyori_original_exhibition:source('ok','https://www.kyoteibiyori.com/x')}};
+          assert.equal(f(two).both,true);
+          const bad={...base,racers:[...racers.slice(0,5),racers[0]]};
+          assert.equal(f(bad).card,false);
+          console.log('V139: input coverage contract PASS; missing-site CSV not promoted');
+          JS
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          st=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          h=Path('index.html').read_text(encoding='utf-8')
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}
+          assert st['race_input_audit_ui']['production_weights_unchanged'] is True
+          assert st['race_input_audit_ui']['formal_fresh_not_claimed'] is True
+          assert not any(st['formal_current']['guards'][k] for k in ('results_seen','unlock','scoring'))
+          assert h.count('boat_edge_v139_input_audit.js?v=139')==1
+          assert h.count('boat_edge_v139_input_audit.css?v=139')==1
+          assert Path('assets/boat_edge_v108.js').read_text(encoding='utf-8').count('BoatEdgeInputAuditV139?.render(race)')==1
+          print('V139: HTML, current state and guards PASS')
+          PY
+          changed=$(git diff --name-only)
+          printf '%s\n' "$changed"
+          python - <<'PY'
+          import subprocess
+          allowed={'assets/boat_edge_v108.js','index.html','data/site_current_state.json'}
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          assert changed<=allowed, f'Unexpected tracked files: {changed-allowed}'
+          PY
+      - name: Commit V139 input audit interface
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boat_edge_v139_input_audit.js assets/boat_edge_v139_input_audit.css assets/boat_edge_v108.js index.html data/site_current_state.json
+          git diff --cached --quiet && exit 0
+          git commit -m "V139: show transparent per-race pre-result input coverage"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
