@@ -1,0 +1,167 @@
+name: BOAT EDGE V142 Restore Hit Audit Contract
+
+on:
+  push:
+    paths:
+      - '.github/workflows/site-v142.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v134-evidence-todo
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fix V134 check to match V140-V141 hit statuses
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          workflow=Path('.github/workflows/site-v134.yml')
+          runtime=Path('assets/boat_edge_v108.js').read_text(encoding='utf-8')
+          state=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          assert state['ui']=={'version':'V133','status':'ACTIVE'}
+          assert state['stake_snapshot_freeze']['version']=='V141'
+          assert state['stake_payout_display']['reference_budget_yen']==10000
+          assert state['formal_current']['connected'] is False
+          assert state['formal_current']['predictions_ready'] is False
+          assert all(state['formal_current']['guards'][k] is False for k in ('results_seen','unlock','scoring'))
+          assert 'BE141_POST_SETTLEMENT_STAKE_GUARD' in runtime
+          assert 'const modeHit=Boolean(settled?.mode_hits?.[mode]);' in runtime
+          old='''          ui_hit_branch_ok=all(x in js for x in [
+              'id="be128HitStatus"',
+              "🎯 判定待ち",
+              "🎯 的中",
+              "✕ 不的中",
+              "判定対象外"
+          ])'''
+          new='''          # V142: 🎯 is earned only after a confirmed result and a frozen-ticket match.
+          # Pending states deliberately have no 🎯 since V140; don't regress that safety fix.
+          ui_hit_branch_ok=all(x in js for x in [
+              'id="be128HitStatus"',
+              'status="判定待ち"',
+              'status="最終予想保存中"',
+              'status="結果待ち"',
+              'status=modeHit?"🎯 的中":"✕ 不的中";',
+              'status="— 判定対象外"',
+              'const modeHit=Boolean(settled?.mode_hits?.[mode]);',
+              'const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;',
+              'const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;'
+          ]) and ('🎯 判定待ち' not in js)'''
+          source=workflow.read_text(encoding='utf-8')
+          assert source.count(old)==1, 'expected old V134 false-negative check not found; abort'
+          for marker in ['id="be128HitStatus"', 'status="判定待ち"',
+                         'status="最終予想保存中"', 'status="結果待ち"',
+                         'status=modeHit?"🎯 的中":"✕ 不的中";',
+                         'status="— 判定対象外"',
+                         'const modeHit=Boolean(settled?.mode_hits?.[mode]);',
+                         'const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;',
+                         'const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;']:
+              assert marker in runtime, 'real V141 runtime does not satisfy: '+marker
+          assert '🎯 判定待ち' not in runtime, 'pending is incorrectly decorated with hit emoji'
+          workflow.write_text(source.replace(old,new,1),encoding='utf-8')
+          print('V142: V134 false-negative detector replaced; site predictions and snapshots not changed')
+          PY
+
+      - name: Test hit miss pending and no-result semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v108.js
+          node - <<'JS'
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          const vm=require('node:vm');
+          const src=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+          const start=src.indexOf('function settle(snapshot,result){');
+          const end=src.indexOf('function historyHtml(){',start);
+          assert(start>=0&&end>start&&end-start<2200);
+          const written=[];
+          const ctx={
+            normalizeCombo:x=>Array.isArray(x)?x.slice(0,3).join('-'):String(x),
+            readLocal:()=>[], writeLocal:(k,v)=>written.push({k,v}),HISTORY:'test-history',
+            Boolean,Object,Array
+          };
+          vm.runInNewContext(src.slice(start,end),ctx);
+          const snap={race_key:'fixture',snapshot_window:'FINAL_15M',venue:'テスト',race_no:1,
+            modes:{hit:{tickets:[{combo:'1-2-3'}]},balance:{tickets:[{combo:'1-3-2'}]},hole:{tickets:[{combo:'2-1-3'}]},narrow:{tickets:[{combo:'1-2-3'}]}}};
+          const hit=ctx.settle(snap,{status:'confirmed',trifecta:'1-2-3',trifecta_payout_yen_per_100:850});
+          assert.equal(hit.mode_hits.hit,true);
+          assert.equal(hit.mode_hits.balance,false);
+          assert.equal(hit.mode_hits.narrow,true);
+          assert.equal(hit.hit_any,true);
+          const miss=ctx.settle(snap,{status:'confirmed',trifecta:'6-5-4',trifecta_payout_yen_per_100:13000});
+          assert.equal(miss.hit_any,false);
+          assert.equal(ctx.settle(snap,{status:'pending',trifecta:'1-2-3'}),null);
+          assert.equal(ctx.settle(null,{status:'confirmed',trifecta:'1-2-3'}),null);
+          assert.equal(written.length,2);
+          assert.equal(src.includes('status="🎯 判定待ち"'),false);
+          assert(src.includes('status=modeHit?"🎯 的中":"✕ 不的中";'));
+          console.log('V142 RESULT: PASS: hit/miss/pending/no-snapshot; 🎯 only confirmed hit');
+          JS
+
+      - name: Reconcile actual TODO evidence using patched V134
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          doc=Path('.github/workflows/site-v134.yml').read_text(encoding='utf-8')
+          start=doc.index('      - name: Reconcile TODO from live evidence')
+          end=doc.index('      - name: Validate V134',start)
+          section=doc[start:end]
+          prefix='        run: |\n'
+          assert section.count(prefix)==1
+          raw=section.split(prefix,1)[1]
+          lines=raw.splitlines()
+          assert lines and lines[0].strip()=="python - <<'PY'"
+          assert any(line.strip()=='PY' for line in lines)
+          assert all(not line.strip() or line.startswith('          ') for line in lines)
+          command='\n'.join(line[10:] if line.startswith('          ') else '' for line in lines)+'\n'
+          subprocess.run(['bash','-e','-u','-o','pipefail','-c',command],check=True)
+          PY
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          evidence=json.loads(Path('data/site_todo_evidence.json').read_text(encoding='utf-8'))
+          assert evidence['status']['task2_settled_hit_ui_path'] is True, 'do not claim repaired unless recalculation passes'
+          assert evidence['summary']['ui_hit_branch_ok'] is True
+          assert evidence['summary']['v133_settled_count']>0
+          todo=Path('BOAT_EDGE_CURRENT_TODO.md').read_text(encoding='utf-8')
+          active=todo.split('## ACTIVE TODO — priority order',1)[1].split('## WAITING / GATES',1)[0]
+          assert 'First V133-mode settled race' not in active
+          assert 'Connect racer×actual-course 1y/6m/3m' in active
+          state=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          assert 'task2_settled_hit_ui_path' in state['todo_reconciler']['auto_completed']
+          assert not any(state['formal_current']['guards'][k] for k in ('results_seen','unlock','scoring'))
+          print('V142: live TODO evidence recalculated PASS; racer-course precision work remains pending')
+          PY
+
+      - name: Commit only TODO verifier and its recalculated evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/site-v134.yml BOAT_EDGE_CURRENT_TODO.md data/site_todo_evidence.json data/site_current_state.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'V142: repair V134 hit-status evidence after V140 and reconcile TODO'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+          done
+          git push origin HEAD:main
