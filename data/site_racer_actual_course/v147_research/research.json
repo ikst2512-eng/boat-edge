@@ -1,0 +1,459 @@
+{
+  "actual_course_for_test_prediction": "NOT_USED; boat frame i is expected course i",
+  "actual_entry_for_holdout": "evaluation subgroup only",
+  "candidate_minus_baseline_pct_points": {
+    "racer_course_1y": {
+      "all": {
+        "head_log_loss_change": -0.03303,
+        "head_top1": 0.94,
+        "trifecta_top10": 1.01,
+        "trifecta_top3": -1.14,
+        "trifecta_top5": -0.77
+      },
+      "changed_entry": {
+        "head_log_loss_change": -0.03063,
+        "head_top1": 0.94,
+        "trifecta_top10": 2.15,
+        "trifecta_top3": -0.81,
+        "trifecta_top5": 0.81
+      },
+      "early": {
+        "head_log_loss_change": -0.03394,
+        "head_top1": 0.96,
+        "trifecta_top10": 0.05,
+        "trifecta_top3": -0.74,
+        "trifecta_top5": -1.09
+      },
+      "late": {
+        "head_log_loss_change": -0.03212,
+        "head_top1": 0.92,
+        "trifecta_top10": 1.98,
+        "trifecta_top3": -1.54,
+        "trifecta_top5": -0.44
+      },
+      "unchanged_entry": {
+        "head_log_loss_change": -0.0335,
+        "head_top1": 0.94,
+        "trifecta_top10": 0.79,
+        "trifecta_top3": -1.2,
+        "trifecta_top5": -1.07
+      }
+    },
+    "racer_course_3m": {
+      "all": {
+        "head_log_loss_change": -0.02028,
+        "head_top1": 0.7,
+        "trifecta_top10": -0.02,
+        "trifecta_top3": -1.91,
+        "trifecta_top5": -1.12
+      },
+      "changed_entry": {
+        "head_log_loss_change": -0.01809,
+        "head_top1": 1.2,
+        "trifecta_top10": 0.41,
+        "trifecta_top3": -2.15,
+        "trifecta_top5": -1.48
+      },
+      "early": {
+        "head_log_loss_change": -0.0197,
+        "head_top1": 1.13,
+        "trifecta_top10": -0.52,
+        "trifecta_top3": -2.1,
+        "trifecta_top5": -0.88
+      },
+      "late": {
+        "head_log_loss_change": -0.02087,
+        "head_top1": 0.26,
+        "trifecta_top10": 0.48,
+        "trifecta_top3": -1.71,
+        "trifecta_top5": -1.36
+      },
+      "unchanged_entry": {
+        "head_log_loss_change": -0.02071,
+        "head_top1": 0.6,
+        "trifecta_top10": -0.1,
+        "trifecta_top3": -1.86,
+        "trifecta_top5": -1.04
+      }
+    },
+    "racer_course_6m": {
+      "all": {
+        "head_log_loss_change": -0.0265,
+        "head_top1": 0.77,
+        "trifecta_top10": 0.42,
+        "trifecta_top3": -1.34,
+        "trifecta_top5": -0.74
+      },
+      "changed_entry": {
+        "head_log_loss_change": -0.02522,
+        "head_top1": 1.2,
+        "trifecta_top10": 1.75,
+        "trifecta_top3": -1.61,
+        "trifecta_top5": -1.21
+      },
+      "early": {
+        "head_log_loss_change": -0.02699,
+        "head_top1": 0.92,
+        "trifecta_top10": -0.7,
+        "trifecta_top3": -1.31,
+        "trifecta_top5": -1.66
+      },
+      "late": {
+        "head_log_loss_change": -0.02601,
+        "head_top1": 0.61,
+        "trifecta_top10": 1.54,
+        "trifecta_top3": -1.36,
+        "trifecta_top5": 0.18
+      },
+      "unchanged_entry": {
+        "head_log_loss_change": -0.02675,
+        "head_top1": 0.68,
+        "trifecta_top10": 0.16,
+        "trifecta_top3": -1.28,
+        "trifecta_top5": -0.65
+      }
+    }
+  },
+  "candidate_rule": "baseline_strength * ((racer_course_wins+12*course_prior)/(racer_course_starts+12)/course_prior)**0.5",
+  "course_global_first_rates_training": {
+    "1": 0.55476,
+    "2": 0.13195,
+    "3": 0.1276,
+    "4": 0.10471,
+    "5": 0.06129,
+    "6": 0.01968
+  },
+  "explanations": [
+    "This is NOT a comparison to V133/V12133 and does not measure their predictive accuracy.",
+    "TopN means first N ranked trifectas out of 120, ranked without odds.",
+    "National win rate is read from held-out race card, assumed pre-race published.",
+    "Actual entry reported in historical results is never used to rank held-out candidates.",
+    "Training is fixed strictly before the first held-out date; no rolling target leakage.",
+    "No model weights are promoted on the basis of this research alone.",
+    "1-year results history is partial; no zero fill, synthetic replacements, or odds-based ordering."
+  ],
+  "formal_target_2026_10_08_results_accessed": false,
+  "formal_target_results_path_materialized": false,
+  "heldout_races": 4564,
+  "metrics": {
+    "all": {
+      "baseline": {
+        "evaluated": 4564,
+        "head_log_loss": 1.31429,
+        "head_top1": 2543,
+        "head_top1_rate_pct": 55.72,
+        "mean_winner_probability": 0.31102,
+        "trifecta_top10": 2004,
+        "trifecta_top10_rate_pct": 43.91,
+        "trifecta_top3": 989,
+        "trifecta_top3_rate_pct": 21.67,
+        "trifecta_top5": 1372,
+        "trifecta_top5_rate_pct": 30.06
+      },
+      "racer_course_1y": {
+        "evaluated": 4564,
+        "head_log_loss": 1.28126,
+        "head_top1": 2586,
+        "head_top1_rate_pct": 56.66,
+        "mean_winner_probability": 0.32561,
+        "trifecta_top10": 2050,
+        "trifecta_top10_rate_pct": 44.92,
+        "trifecta_top3": 937,
+        "trifecta_top3_rate_pct": 20.53,
+        "trifecta_top5": 1337,
+        "trifecta_top5_rate_pct": 29.29
+      },
+      "racer_course_3m": {
+        "evaluated": 4564,
+        "head_log_loss": 1.29401,
+        "head_top1": 2575,
+        "head_top1_rate_pct": 56.42,
+        "mean_winner_probability": 0.32065,
+        "trifecta_top10": 2003,
+        "trifecta_top10_rate_pct": 43.89,
+        "trifecta_top3": 902,
+        "trifecta_top3_rate_pct": 19.76,
+        "trifecta_top5": 1321,
+        "trifecta_top5_rate_pct": 28.94
+      },
+      "racer_course_6m": {
+        "evaluated": 4564,
+        "head_log_loss": 1.28779,
+        "head_top1": 2578,
+        "head_top1_rate_pct": 56.49,
+        "mean_winner_probability": 0.32328,
+        "trifecta_top10": 2023,
+        "trifecta_top10_rate_pct": 44.33,
+        "trifecta_top3": 928,
+        "trifecta_top3_rate_pct": 20.33,
+        "trifecta_top5": 1338,
+        "trifecta_top5_rate_pct": 29.32
+      }
+    },
+    "changed_entry": {
+      "baseline": {
+        "evaluated": 745,
+        "head_log_loss": 1.39401,
+        "head_top1": 380,
+        "head_top1_rate_pct": 51.01,
+        "mean_winner_probability": 0.29931,
+        "trifecta_top10": 254,
+        "trifecta_top10_rate_pct": 34.09,
+        "trifecta_top3": 130,
+        "trifecta_top3_rate_pct": 17.45,
+        "trifecta_top5": 175,
+        "trifecta_top5_rate_pct": 23.49
+      },
+      "racer_course_1y": {
+        "evaluated": 745,
+        "head_log_loss": 1.36338,
+        "head_top1": 387,
+        "head_top1_rate_pct": 51.95,
+        "mean_winner_probability": 0.31219,
+        "trifecta_top10": 270,
+        "trifecta_top10_rate_pct": 36.24,
+        "trifecta_top3": 124,
+        "trifecta_top3_rate_pct": 16.64,
+        "trifecta_top5": 181,
+        "trifecta_top5_rate_pct": 24.3
+      },
+      "racer_course_3m": {
+        "evaluated": 745,
+        "head_log_loss": 1.37592,
+        "head_top1": 389,
+        "head_top1_rate_pct": 52.21,
+        "mean_winner_probability": 0.30789,
+        "trifecta_top10": 257,
+        "trifecta_top10_rate_pct": 34.5,
+        "trifecta_top3": 114,
+        "trifecta_top3_rate_pct": 15.3,
+        "trifecta_top5": 164,
+        "trifecta_top5_rate_pct": 22.01
+      },
+      "racer_course_6m": {
+        "evaluated": 745,
+        "head_log_loss": 1.36879,
+        "head_top1": 389,
+        "head_top1_rate_pct": 52.21,
+        "mean_winner_probability": 0.3103,
+        "trifecta_top10": 267,
+        "trifecta_top10_rate_pct": 35.84,
+        "trifecta_top3": 118,
+        "trifecta_top3_rate_pct": 15.84,
+        "trifecta_top5": 166,
+        "trifecta_top5_rate_pct": 22.28
+      }
+    },
+    "early": {
+      "baseline": {
+        "evaluated": 2291,
+        "head_log_loss": 1.32181,
+        "head_top1": 1252,
+        "head_top1_rate_pct": 54.65,
+        "mean_winner_probability": 0.30864,
+        "trifecta_top10": 1023,
+        "trifecta_top10_rate_pct": 44.65,
+        "trifecta_top3": 485,
+        "trifecta_top3_rate_pct": 21.17,
+        "trifecta_top5": 690,
+        "trifecta_top5_rate_pct": 30.12
+      },
+      "racer_course_1y": {
+        "evaluated": 2291,
+        "head_log_loss": 1.28787,
+        "head_top1": 1274,
+        "head_top1_rate_pct": 55.61,
+        "mean_winner_probability": 0.32311,
+        "trifecta_top10": 1024,
+        "trifecta_top10_rate_pct": 44.7,
+        "trifecta_top3": 468,
+        "trifecta_top3_rate_pct": 20.43,
+        "trifecta_top5": 665,
+        "trifecta_top5_rate_pct": 29.03
+      },
+      "racer_course_3m": {
+        "evaluated": 2291,
+        "head_log_loss": 1.30211,
+        "head_top1": 1278,
+        "head_top1_rate_pct": 55.78,
+        "mean_winner_probability": 0.31785,
+        "trifecta_top10": 1011,
+        "trifecta_top10_rate_pct": 44.13,
+        "trifecta_top3": 437,
+        "trifecta_top3_rate_pct": 19.07,
+        "trifecta_top5": 670,
+        "trifecta_top5_rate_pct": 29.24
+      },
+      "racer_course_6m": {
+        "evaluated": 2291,
+        "head_log_loss": 1.29482,
+        "head_top1": 1273,
+        "head_top1_rate_pct": 55.57,
+        "mean_winner_probability": 0.32068,
+        "trifecta_top10": 1007,
+        "trifecta_top10_rate_pct": 43.95,
+        "trifecta_top3": 455,
+        "trifecta_top3_rate_pct": 19.86,
+        "trifecta_top5": 652,
+        "trifecta_top5_rate_pct": 28.46
+      }
+    },
+    "late": {
+      "baseline": {
+        "evaluated": 2273,
+        "head_log_loss": 1.30671,
+        "head_top1": 1291,
+        "head_top1_rate_pct": 56.8,
+        "mean_winner_probability": 0.31341,
+        "trifecta_top10": 981,
+        "trifecta_top10_rate_pct": 43.16,
+        "trifecta_top3": 504,
+        "trifecta_top3_rate_pct": 22.17,
+        "trifecta_top5": 682,
+        "trifecta_top5_rate_pct": 30.0
+      },
+      "racer_course_1y": {
+        "evaluated": 2273,
+        "head_log_loss": 1.27459,
+        "head_top1": 1312,
+        "head_top1_rate_pct": 57.72,
+        "mean_winner_probability": 0.32814,
+        "trifecta_top10": 1026,
+        "trifecta_top10_rate_pct": 45.14,
+        "trifecta_top3": 469,
+        "trifecta_top3_rate_pct": 20.63,
+        "trifecta_top5": 672,
+        "trifecta_top5_rate_pct": 29.56
+      },
+      "racer_course_3m": {
+        "evaluated": 2273,
+        "head_log_loss": 1.28584,
+        "head_top1": 1297,
+        "head_top1_rate_pct": 57.06,
+        "mean_winner_probability": 0.32347,
+        "trifecta_top10": 992,
+        "trifecta_top10_rate_pct": 43.64,
+        "trifecta_top3": 465,
+        "trifecta_top3_rate_pct": 20.46,
+        "trifecta_top5": 651,
+        "trifecta_top5_rate_pct": 28.64
+      },
+      "racer_course_6m": {
+        "evaluated": 2273,
+        "head_log_loss": 1.2807,
+        "head_top1": 1305,
+        "head_top1_rate_pct": 57.41,
+        "mean_winner_probability": 0.3259,
+        "trifecta_top10": 1016,
+        "trifecta_top10_rate_pct": 44.7,
+        "trifecta_top3": 473,
+        "trifecta_top3_rate_pct": 20.81,
+        "trifecta_top5": 686,
+        "trifecta_top5_rate_pct": 30.18
+      }
+    },
+    "unchanged_entry": {
+      "baseline": {
+        "evaluated": 3819,
+        "head_log_loss": 1.29874,
+        "head_top1": 2163,
+        "head_top1_rate_pct": 56.64,
+        "mean_winner_probability": 0.3133,
+        "trifecta_top10": 1750,
+        "trifecta_top10_rate_pct": 45.82,
+        "trifecta_top3": 859,
+        "trifecta_top3_rate_pct": 22.49,
+        "trifecta_top5": 1197,
+        "trifecta_top5_rate_pct": 31.34
+      },
+      "racer_course_1y": {
+        "evaluated": 3819,
+        "head_log_loss": 1.26524,
+        "head_top1": 2199,
+        "head_top1_rate_pct": 57.58,
+        "mean_winner_probability": 0.32823,
+        "trifecta_top10": 1780,
+        "trifecta_top10_rate_pct": 46.61,
+        "trifecta_top3": 813,
+        "trifecta_top3_rate_pct": 21.29,
+        "trifecta_top5": 1156,
+        "trifecta_top5_rate_pct": 30.27
+      },
+      "racer_course_3m": {
+        "evaluated": 3819,
+        "head_log_loss": 1.27803,
+        "head_top1": 2186,
+        "head_top1_rate_pct": 57.24,
+        "mean_winner_probability": 0.32314,
+        "trifecta_top10": 1746,
+        "trifecta_top10_rate_pct": 45.72,
+        "trifecta_top3": 788,
+        "trifecta_top3_rate_pct": 20.63,
+        "trifecta_top5": 1157,
+        "trifecta_top5_rate_pct": 30.3
+      },
+      "racer_course_6m": {
+        "evaluated": 3819,
+        "head_log_loss": 1.27199,
+        "head_top1": 2189,
+        "head_top1_rate_pct": 57.32,
+        "mean_winner_probability": 0.32581,
+        "trifecta_top10": 1756,
+        "trifecta_top10_rate_pct": 45.98,
+        "trifecta_top3": 810,
+        "trifecta_top3_rate_pct": 21.21,
+        "trifecta_top5": 1172,
+        "trifecta_top5_rate_pct": 30.69
+      }
+    }
+  },
+  "missing_racer_history_policy": "NO_ADJUSTMENT_TO_BASELINE; never fabricate missing win rate",
+  "missing_source_days": [
+    {
+      "card_exists": false,
+      "date": "2026-06-17",
+      "result_exists": false
+    }
+  ],
+  "predeclared_strength_rule": "national_win_rate * (historical_course_1st_rate / (1/6)) ** 0.65",
+  "predeclared_windows": [
+    "3m",
+    "6m",
+    "1y"
+  ],
+  "schema_version": "boat-edge-v147-chronological-research-v1",
+  "separation": "train<=2026-09-07, evaluate 2026-09-08..2026-10-07",
+  "source": {
+    "commit": "2d149e1ae838f6ed3426a7989be69e799ac2988f",
+    "repo": "BoatraceCSV/boatracecsv.github.io",
+    "sha256_source_pair_manifest": "a4700d1db86366358ba5ba3b78bc2b45e94364f579e2f009ca8f2770ccd2f3d2"
+  },
+  "source_windows": {
+    "1y": {
+      "complete": false,
+      "coverage_pct": 84.93,
+      "expected_days": 365,
+      "requested_start": "2025-09-08",
+      "source_days": 310,
+      "train_end": "2026-09-07"
+    },
+    "3m": {
+      "complete": false,
+      "coverage_pct": 98.91,
+      "expected_days": 92,
+      "requested_start": "2026-06-08",
+      "source_days": 91,
+      "train_end": "2026-09-07"
+    },
+    "6m": {
+      "complete": false,
+      "coverage_pct": 99.46,
+      "expected_days": 184,
+      "requested_start": "2026-03-08",
+      "source_days": 183,
+      "train_end": "2026-09-07"
+    }
+  },
+  "status": "RESEARCH_ONLY_NO_PRODUCTION_CHANGES",
+  "training_races": 45486
+}
