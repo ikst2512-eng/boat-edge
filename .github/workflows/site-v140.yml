@@ -1,0 +1,227 @@
+name: BOAT EDGE V140 Budget 10000 and Verified Hit Display
+
+on:
+  push:
+    paths:
+      - '.github/workflows/site-v140.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v140-budget-hit-payout
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Install V140 display changes without altering prediction or formal audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PYCODE'
+          from pathlib import Path
+          import json,re
+          index=Path('index.html'); core=Path('assets/boat_edge_v108.js'); state=Path('data/site_current_state.json')
+          assert all(p.is_file() for p in [index,core,state]), 'V139 base missing'
+          h=index.read_text(encoding='utf-8'); s=core.read_text(encoding='utf-8'); st=json.loads(state.read_text(encoding='utf-8'))
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}
+          assert st['race_input_audit_ui']['version']=='V139'
+          assert st['formal_current']['connected'] is False and st['formal_current']['predictions_ready'] is False
+          assert all(st['formal_current']['guards'][k] is False for k in ('results_seen','unlock','scoring'))
+          assert h.count('const totalBudget = 5000;')==1, 'fallback allocation anchor changed'
+          assert h.count('const total = 5000;')==1, 'formal fallback allocation anchor changed'
+          assert h.count(' : 2500;')>=1, 'formal split fallback anchor changed'
+          h=h.replace('const totalBudget = 5000;','const totalBudget = 10000;',1)
+          h=h.replace('const total = 5000;','const total = 10000;',1)
+          old='const budgetA = pA!==null ? round100(total*(pA/Math.max(1,(pA||0)+(pB||0)||100))) : 2500;'
+          new='const budgetA = pA!==null ? round100(total*(pA/Math.max(1,(pA||0)+(pB||0)||100))) : 5000;'
+          assert h.count(old)==1, 'formal fallback budget mismatch'
+          h=h.replace(old,new,1)
+          assert h.count('boat_edge_v139_input_audit.js?v=139')==1,'V139 script missing'
+          assert h.count('boat_edge_v139_input_audit.css?v=139')==1,'V139 style missing'
+          csslink='<link rel="stylesheet" href="./assets/boat_edge_v140_budget.css?v=140">'
+          assert csslink not in h
+          h=h.replace('<link rel="stylesheet" href="./assets/boat_edge_v139_input_audit.css?v=139">',
+                      '<link rel="stylesheet" href="./assets/boat_edge_v139_input_audit.css?v=139">\n'+csslink,1)
+          h,n=re.subn(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                     '<meta name="boat-edge-site-version" content="V140-BUDGET-10000-RESULT-CLARITY-V133-CORE">',h)
+          assert n==1
+          # No previous saved predictions / mode model / evidence files are touched.
+          start=s.index('function renderTicketRows(rows,win){')
+          end=s.index('async function renderPredictionModes(race,pred){',start)
+          assert end>start and end-start<1100,'ticket renderer changed; refuse unsafe edit'
+          assert s[start:end].count('be108-ticket')==1
+          replacement=r'''/* BE140_10000_STAKE_DISPLAY: presentation-only suggestions, not purchase records. */
+          function be140StakePlan(rows,total=10000){
+            if(!Array.isArray(rows)||!rows.length)return [];
+            if(rows.length>100)return [];
+            const units=Math.floor(total/100)-rows.length;
+            if(units<0)return [];
+            const weights=rows.map(r=>{
+              const value=Number(r?.p);
+              return Number.isFinite(value)&&value>0?value:0;
+            });
+            if(weights.every(w=>w===0))weights.fill(1);
+            const sum=weights.reduce((a,b)=>a+b,0);
+            const shares=weights.map(w=>w/sum*units);
+            const extra=shares.map(Math.floor);
+            let left=units-extra.reduce((a,b)=>a+b,0);
+            const order=shares.map((v,i)=>({i,frac:v-extra[i]})).sort((a,b)=>b.frac-a.frac||a.i-b.i);
+            for(let j=0;j<left;j++)extra[order[j].i]++;
+            return extra.map(n=>(n+1)*100);
+          }
+          function renderTicketRows(rows,win){
+            const stakes=be140StakePlan(rows,10000);
+            return rows.map((x,i)=>{
+              const odds=Number(x.odds);
+              const hasOdds=x.odds!==null&&x.odds!==undefined&&Number.isFinite(odds)&&odds>0;
+              const stake=stakes[i]||0;
+              const potential=hasOdds&&stake?Math.round(stake*odds):null;
+              const money=v=>Number(v).toLocaleString('ja-JP')+'円';
+              const estimated=potential===null?'払戻概算：オッズ未取得':`的中時想定払戻 ${money(potential)}`;
+              return `<div class="be108-ticket ${win===x.combo?"hit":""}"><span>${i+1}</span><b>${win===x.combo?"🎯 ":""}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${hasOdds?odds.toFixed(1)+"倍":"オッズ－"}</small><span class="be140-ticket-money">参考配分 ${money(stake)} / ${estimated}</span></div>`;
+            }).join("");
+          }
+          '''
+          s=s[:start]+replacement+s[end:]
+          # Make 🎯 an earned hit signal rather than decorating pending states.
+          for old,new in [
+           ('status="🎯 判定待ち"','status="判定待ち"'),
+           ('status="🎯 判定待ち・最終予想保存中"','status="最終予想保存中"'),
+           ('status="🎯 判定待ち・結果待ち"','status="結果待ち"'),
+           ('<small>🎯 判定ステータス</small>','<small>的中判定</small>')
+          ]:
+            assert s.count(old)==1, 'status anchor changed: '+old
+            s=s.replace(old,new,1)
+          old='const pay=Number(result?.trifecta_payout_yen_per_100);'
+          new='const pay=result?.trifecta_payout_yen_per_100==null?null:Number(result.trifecta_payout_yen_per_100);'
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+          old='const payText=Number.isFinite(pay)?`${pay.toLocaleString("ja-JP")}円 / 100円`:"払戻未取得";'
+          new='const payText=Number.isFinite(pay)&&pay>0?`公式3連単払戻 ${pay.toLocaleString("ja-JP")}円 / 100円`:"公式払戻未取得";'
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+          needle='<div class="be108-ticket-list">${renderTicketRows(rows,win)}</div>'
+          assert s.count(needle)==1
+          s=s.replace(needle,'<div class="be140-budget-notice">参考配分：1万円／レース（100円単位）。的中時想定払戻は現在取得できたオッズに基づく概算で、実購入履歴ではありません。</div>'+needle,1)
+          # Important: result is validated only from frozen FINAL_15M, no post-result backfill.
+          assert s.count('const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;')==1
+          assert s.count('if(inFinalWindow)snap=saveFinalSnapshot(key,race,pred,modes,mins);')==1
+          core.write_text(s,encoding='utf-8')
+          index.write_text(h,encoding='utf-8')
+          css=Path('assets/boat_edge_v140_budget.css')
+          assert not css.exists(), 'already installed'
+          css.write_text('''/* V140 compact stake and estimated return, no change to predictive ranking */
+          .be140-budget-notice{margin:8px 1px;color:#577394;background:#f5f9ff;border:1px solid #dbe7f6;border-radius:8px;padding:7px 8px;font-size:10px;line-height:1.55}
+          .be140-ticket-money{grid-column:1/-1;display:block;min-width:0;padding:2px 0 4px;font-size:10px;line-height:1.5;color:#315c88;overflow-wrap:anywhere}
+          .be108-ticket.hit .be140-ticket-money{font-weight:750}
+          @media(max-width:600px){.be140-budget-notice{font-size:9px}.be140-ticket-money{font-size:9px}}
+          ''',encoding='utf-8')
+          st['stake_payout_display']={
+            'version':'V140','status':'ACTIVE','reference_budget_yen':10000,
+            'stake_unit_yen':100,'applies_to':'new reference and formal display allocation only',
+            'prospective_stake_is_purchase_record':False,
+            'per_ticket_potential_return':'suggested stake x observed trifecta odds (indicative)',
+            'official_result_payout':'official yen per 100 after confirmed result',
+            'hit_status':'only FINAL_15M frozen ticket and confirmed result; 🎯 only on hit',
+            'frozen_snapshots_modified':False,'prediction_weights_changed':False
+          }
+          state.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          req=Path('data/site_ui_display_requirements.json')
+          req.write_text(json.dumps({
+            'schema_version':'boat-edge-ui-requirements-v140',
+            'core_priority':'scenario and trifecta hit-rate improvement before UI extras',
+            'budget_yen':10000,'unit_yen':100,
+            'hit_emoji':'🎯 on verified winning combo in frozen final prediction only',
+            'unsettled_result':'no 🎯 win claim',
+            'pre_result_estimate':'suggested stake x observed odds, never promised payout',
+            'post_result':'show official 3連単払戻 per 100 yen; real cash payout only with recorded purchase stakes',
+            'missing_payout':'never coerce null payout to 0 yen',
+            'future_work':[ 'verify live Safari hit rendering on confirmed winners', 'verify 10k displayed per mode and formal without duplicate stakes', 'connect missing scenario data before model tuning' ],
+            'historical_final_snapshots_untouched':True
+          },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('V140 install prepared: budget 10000, hit-only 🎯, official payout null safe, scenario core unchanged')
+          PYCODE
+      - name: Validate V140 budget precision and settlement guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v108.js
+          python - <<'PYCODE'
+          import json,re
+          from pathlib import Path
+          h=Path('index.html').read_text(encoding='utf-8')
+          s=Path('assets/boat_edge_v108.js').read_text(encoding='utf-8')
+          st=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          req=json.loads(Path('data/site_ui_display_requirements.json').read_text(encoding='utf-8'))
+          assert st['ui']=={'version':'V133','status':'ACTIVE'}
+          assert st['race_input_audit_ui']['version']=='V139'
+          assert st['stake_payout_display']['reference_budget_yen']==10000
+          assert st['stake_payout_display']['prediction_weights_changed'] is False
+          assert req['historical_final_snapshots_untouched']
+          assert h.count('const totalBudget = 10000;')==1
+          assert h.count('const total = 10000;')==1
+          assert h.count('boat_edge_v140_budget.css?v=140')==1
+          assert '🎯 的中' in s and '✕ 不的中' in s
+          assert s.count('BE140_10000_STAKE_DISPLAY')==1
+          assert s.count('be140-budget-notice')==1
+          assert 'Number.isFinite(pay)&&pay>0' in s
+          assert 'status="🎯 判定待ち"' not in s
+          assert not any(st['formal_current']['guards'][k] for k in ('results_seen','unlock','scoring'))
+          assert 'const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;' in s
+          print('V140 code/static/formal guard PASS')
+          PYCODE
+          node - <<'JSCODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const s=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+          const cut=s.match(/function be140StakePlan\(rows,total=10000\)\{[\s\S]*?\n\}\nfunction renderTicketRows/);
+          assert(cut,'V140 stake helper missing');
+          const ctx=vm.createContext({Number,Math,Object,Array});
+          vm.runInContext(cut[0].replace(/\nfunction renderTicketRows$/,''),ctx);
+          for(const n of [3,10,12,15,18]){
+            const rows=Array.from({length:n},(_,i)=>({p:i===0?20:3}));
+            const amounts=ctx.be140StakePlan(rows,10000);
+            assert.equal(amounts.length,n);
+            assert.equal(amounts.reduce((a,b)=>a+b,0),10000);
+            assert(amounts.every(x=>x>=100&&x%100===0));
+          }
+          assert.equal(ctx.be140StakePlan([{p:0},{p:0},{p:0}],10000).reduce((a,b)=>a+b,0),10000);
+          console.log('V140 stake distribution 3/10/12/15/18 PASS, 10000-yen exact');
+          JSCODE
+          python - <<'PYCODE'
+          from pathlib import Path
+          changed=set(__import__('subprocess').check_output(['git','diff','--name-only'],text=True).splitlines())
+          allowed={'index.html','assets/boat_edge_v108.js','data/site_current_state.json'}
+          assert changed<=allowed, f'Unexpected tracked file change: {changed-allowed}'
+          print('V140 tracked-file isolation PASS')
+          PYCODE
+      - name: Commit V140
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html assets/boat_edge_v108.js assets/boat_edge_v140_budget.css data/site_current_state.json data/site_ui_display_requirements.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'V140: 10000 yen reference budget and clear verified hit/payout displays'
+          for try in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+            python - <<'PYCODE'
+          from pathlib import Path
+          import json
+          st=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          assert st['stake_payout_display']['version']=='V140'
+          assert st['ui']['version']=='V133'
+          assert not any(st['formal_current']['guards'][k] for k in ('results_seen','unlock','scoring'))
+          PYCODE
+          done
+          exit 1
