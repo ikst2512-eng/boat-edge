@@ -33,29 +33,19 @@ This file is auto-reconciled from repository evidence by V134. ACTIVE TODO conta
 
 ## RECENT DONE
 - [x] Live mode counts confirmed — balance=10 / wave=[12, 15, 18] / narrow=3; V133 parity PASS.
-- [x] Live V133 FINAL_15M snapshot + audit PASS — `20261008-03-01`.
+- [x] Live V133 FINAL_15M snapshot + audit PASS — `20261008-01-03`.
 - [x] V133 browser/server parity PASS for all four prediction modes.
 - [x] V133 mode policy fixed at 的中重視10 / バランス10 / 波乱12・15・18 / 激絞り3.
 
 ## TODO EVIDENCE
 - Machine-readable evidence: `data/site_todo_evidence.json`.
-- Current V133 snapshots observed: 93.
-- Current V133 audited PASS: 88.
+- Current V133 snapshots observed: 96.
+- Current V133 audited PASS: 93.
 - Observed wave counts: [12, 15, 18].
-- Current V133 settled races: 85.
+- Current V133 settled races: 92.
 
 ## TODO GUARD
 - ACTIVE TODO contains unfinished `[ ]` tasks only.
 - Evidence-complete tasks are removed from ACTIVE and written to RECENT DONE automatically.
 - Component versions must match `data/site_current_state.json`.
 - Legacy NEXT sections are forbidden.
-
-- V109 replaces the legacy result collector without changing V108 UI.
-
-- V109 treats confirmed + payout null as incomplete and refetches it.
-
-- V109 payout parser supports ¥ / ￥ / 円.
-
-- V109 backfills historical confirmed payout gaps from 2026-10-07.
-
-- V109 keeps result/trifecta data factual; missing payout is never fabricated.
