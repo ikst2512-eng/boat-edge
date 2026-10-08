@@ -4,9 +4,9 @@
   "name": "LATEST_PREDICTION_CURRENT_POLICY",
   "objective": "展開を正しく読み、3連単的中率を最大化する。少点数化は二次目的。",
   "ticket_policy": {
-    "solid": "3〜4点を目安",
-    "split_or_rough": "展開が割れる・中穴/大穴筋が複数なら最大10点まで拡張可",
-    "ranking": "120通りの勝率/着順確率を軸に上位から選ぶ",
+    "solid": "激絞り3点、的中重視10点",
+    "split_or_rough": "バランス10点、波乱展開12/15/18点（展開分岐によって可変）",
+    "ranking": "サイト参考予想は最大20候補の相対順位。120通りの完全分布は未実装で、正式CURRENT検証とは別。",
     "odds_rank_weight": false,
     "manual_hole_boost": false
   },
@@ -64,5 +64,7 @@
     "purpose": "的中重視10点との差別化。上位確率を残しつつ、展開分散を持つ。",
     "odds_used_for_selection": false,
     "diversification_reference": "通常調整済み予想の1位頭"
-  }
+  },
+  "site_reference_120way_full_distribution_ready": false,
+  "site_reference_mode_policy": "V133: hit10 balance10 wave12/15/18 narrow3"
 }
