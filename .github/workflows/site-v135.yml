@@ -1,0 +1,229 @@
+name: BOAT EDGE V135 Home Next Three Races
+
+on:
+  push:
+    paths:
+      - ".github/workflows/site-v135.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v135-home-next-three
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install next three cards above date selection
+        shell: bash
+        run: |
+          python - <<'PY'
+
+          from pathlib import Path
+          import json,re
+
+          jp=Path("assets/boat_edge_v108.js")
+          js=jp.read_text(encoding="utf-8")
+          anchor='    <div class="be108-date-nav">'
+          assert js.count(anchor)==1
+          js=js.replace(anchor,'''    <section id="be135Upcoming" class="be135-upcoming" aria-label="締切が近い3レース">
+                <div class="be135-upcoming-head"><b>締切が近いレース</b><small>本日の次の3レース</small></div>
+                <div class="be135-upcoming-grid"><span class="be135-empty">読み込み中…</span></div>
+              </section>
+              <div class="be108-date-nav">''',1)
+
+          helper=r'''
+          /* BOAT_EDGE_V135_HOME_NEXT3 */
+          let be135Timer=null,be135Serial=0;
+          function be135JstIsoDate(){
+            return new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+          }
+          function be135UpcomingThree(doc,now,isoDay){
+            if(String(doc?.date||"")!==isoDay)return [];
+            const rows=[];
+            for(const v of doc.venues||[]){
+              const jcd=String(v.jcd||"").padStart(2,"0");
+              if(!/^\d{2}$/.test(jcd))continue;
+              for(const r of v.races||[]){
+                const time=String(r.deadline||"");
+                if(!/^\d{1,2}:\d{2}$/.test(time))continue;
+                const [h,m]=time.split(":").map(Number);
+                if(h>23||m>59)continue;
+                const ts=Date.parse(`${isoDay}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00+09:00`);
+                if(!Number.isFinite(ts)||ts<=now)continue;
+                const file=String(r.file||"");
+                if(!/^data\/races\/\d{8}-\d{2}-\d{2}\.json$/.test(file))continue;
+                rows.push({file,jcd,venue:String(v.venue||""),no:Number(r.race_no),deadline:time,ts});
+              }
+            }
+            rows.sort((a,b)=>a.ts-b.ts||a.jcd.localeCompare(b.jcd)||a.no-b.no);
+            return rows.slice(0,3);
+          }
+          async function be135RefreshUpcoming(){
+            const host=document.getElementById("be135Upcoming");
+            if(!host)return;
+            if(be135Timer){clearTimeout(be135Timer);be135Timer=null}
+            const serial=++be135Serial, grid=host.querySelector(".be135-upcoming-grid");
+            if(!grid)return;
+            try{
+              const resp=await fetch(`./data/today.json?next3=${Math.floor(Date.now()/30000)}`,{cache:"no-store"});
+              if(!resp.ok)throw new Error("today fetch failed");
+              const doc=await resp.json();
+              if(serial!==be135Serial||!host.isConnected)return;
+              const now=Date.now(),rows=be135UpcomingThree(doc,now,be135JstIsoDate());
+              grid.innerHTML=rows.length?rows.map((r,i)=>`<button type="button" class="be135-card ${i===0?"nearest":""}" data-be135-file="${esc(r.file)}" data-be135-jcd="${esc(r.jcd)}">
+                <span class="be135-rank">${i+1}</span><b>${esc(r.venue)} ${r.no}R</b>
+                <strong>締切 ${esc(r.deadline)}</strong><small>あと${Math.max(1,Math.ceil((r.ts-now)/60000))}分 ›</small>
+              </button>`).join(""):'<div class="be135-empty">本日の締切予定はありません</div>';
+              grid.querySelectorAll("[data-be135-file]").forEach(b=>b.onclick=()=>{
+                try{sessionStorage.setItem(KSCROLL,String(window.scrollY||0))}catch(_){}
+                pushView("homeView");
+                selectedDate=be135JstIsoDate().replaceAll("-","");
+                selectedVenue=b.dataset.be135Jcd;saveSelection();
+                if(typeof loadRace==="function")loadRace(b.dataset.be135File,b.dataset.be135Jcd);
+              });
+            }catch(e){
+              if(serial===be135Serial&&host.isConnected)grid.innerHTML='<div class="be135-empty">締切情報が取得できません（再読み込みで更新）</div>';
+            }
+            if(serial===be135Serial&&document.visibilityState==="visible"&&activeView()==="homeView")
+              be135Timer=setTimeout(be135RefreshUpcoming,30000);
+          }
+          '''
+          assert js.count("async function renderHomeHub(){")==1
+          js=js.replace("async function renderHomeHub(){",helper+"\nasync function renderHomeHub(){",1)
+          anchor2='  saveSelection();\n\n  $$("[data-be108-day]",host)'
+          assert js.count(anchor2)==1
+          js=js.replace(anchor2,'  saveSelection();\n  be135RefreshUpcoming();\n\n  $$("[data-be108-day]",host)',1)
+          boot="renderHomeHub();\nif(raceOf())afterRace(raceOf());"
+          assert js.count(boot)==1
+          js=js.replace(boot,'''renderHomeHub();
+          document.addEventListener("visibilitychange",()=>{
+            if(document.visibilityState==="visible"&&activeView()==="homeView")be135RefreshUpcoming();
+          });
+          document.addEventListener("click",e=>{
+            if(e.target.closest?.('.bottomnav [data-view="homeView"]'))
+              requestAnimationFrame(()=>be135RefreshUpcoming());
+          });
+          window.addEventListener("pageshow",e=>{
+            if(e.persisted&&activeView()==="homeView")be135RefreshUpcoming();
+          });
+          if(raceOf())afterRace(raceOf());''',1)
+          jp.write_text(js,encoding="utf-8")
+
+          cp=Path("assets/boat_edge_v108.css")
+          css=cp.read_text(encoding="utf-8")
+          assert "BOAT_EDGE_V135_HOME_NEXT3" not in css
+          css+=r'''
+          /* BOAT_EDGE_V135_HOME_NEXT3 */
+          .be135-upcoming{background:#fff;border:1px solid #dbe5f0;border-radius:12px;padding:10px;margin:2px 0 11px}
+          .be135-upcoming-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:9px}
+          .be135-upcoming-head b{font-size:13px;color:#173d6b;font-weight:950}
+          .be135-upcoming-head small{font-size:9px;color:#7b8998}
+          .be135-upcoming-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+          .be135-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;min-height:88px;padding:8px 7px;border-radius:9px;border:1px solid #dfe9f5;background:#f5f9ff;color:#173d6b;text-align:left;cursor:pointer}
+          .be135-card.nearest{background:#e8f3ff;border-color:#90bef2}
+          .be135-card:focus-visible{outline:2px solid #176de1;outline-offset:2px}
+          .be135-rank{font-size:9px;font-weight:900;color:#2377cc}
+          .be135-card b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+          .be135-card strong{font-size:10px;white-space:nowrap}
+          .be135-card small{font-size:9px;color:#587b9e;white-space:nowrap}
+          .be135-empty{grid-column:1/-1;color:#70829a;font-size:11px;padding:8px}
+          @media(max-width:640px){.be135-upcoming{padding:8px}.be135-upcoming-grid{gap:5px}.be135-card{padding:7px 5px;min-height:82px}.be135-card b{font-size:11px}.be135-card strong{font-size:9px}.be135-card small{font-size:8px}}
+          '''
+          cp.write_text(css,encoding="utf-8")
+
+          ip=Path("index.html")
+          idx=ip.read_text(encoding="utf-8")
+          idx,n=re.subn(r'boat_edge_v108\.js\?v=\d+','boat_edge_v108.js?v=135',idx)
+          assert n==1
+          idx,n=re.subn(r'boat_edge_v108\.css(?:\?v=\d+)?','boat_edge_v108.css?v=135',idx)
+          assert n==1
+          idx,n=re.subn(r'<meta name="boat-edge-site-version" content="[^"]+">',
+                        '<meta name="boat-edge-site-version" content="V135-HOME-NEXT3-V133-CORE">',idx)
+          assert n==1
+          ip.write_text(idx,encoding="utf-8")
+
+          sp=Path("data/site_current_state.json")
+          st=json.loads(sp.read_text(encoding="utf-8"))
+          assert st["ui"]=={"version":"V133","status":"ACTIVE"},"V134 guard must stay on V133"
+          st["home_upcoming_widget"]={"version":"V135","status":"ACTIVE","source":"data/today.json","max_races":3,"sort":"JST deadline ascending","past":"excluded","refresh_seconds":30}
+          sp.write_text(json.dumps(st,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("V135 installed while V133 prediction and V134 TODO guards remain unchanged")
+
+          PY
+      - name: Regression JST deadlines and core invariants
+        shell: bash
+        run: |
+          set -e
+          node --check assets/boat_edge_v108.js
+          node - <<'JS'
+
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const js=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+          const m=js.match(/function be135UpcomingThree\(doc,now,isoDay\)\{[\s\S]*?\n\}/);
+          assert(m);
+          const ctx=vm.createContext({Date,Number,String,Math});
+          vm.runInContext(m[0],ctx);
+          const fn=ctx.be135UpcomingThree;
+          const doc={date:"2026-10-08",venues:[
+           {jcd:"03",venue:"江戸川",races:[
+            {race_no:1,deadline:"12:39",file:"data/races/20261008-03-01.json"},
+            {race_no:2,deadline:"12:45",file:"data/races/20261008-03-02.json"},
+            {race_no:3,deadline:"12:55",file:"data/races/20261008-03-03.json"}]},
+           {jcd:"10",venue:"三国",races:[
+            {race_no:1,deadline:"12:42",file:"data/races/20261008-10-01.json"},
+            {race_no:2,deadline:"12:50",file:"data/races/20261008-10-02.json"}]}
+          ]};
+          const now=Date.parse("2026-10-08T12:40:00+09:00");
+          const rows=fn(doc,now,"2026-10-08");
+          assert.strictEqual(JSON.stringify(rows.map(r=>r.deadline)),JSON.stringify(["12:42","12:45","12:50"]));
+          assert.strictEqual(fn(doc,now,"2026-10-09").length,0);
+          assert.strictEqual(fn(doc,Date.parse("2026-10-08T23:59:00+09:00"),"2026-10-08").length,0);
+          const real=JSON.parse(fs.readFileSync('data/today.json','utf8'));
+          const realDay=String(real.date);
+          const realNow=Date.parse(`${realDay}T00:00:00+09:00`);
+          const actual=fn(real,realNow,realDay);
+          assert.strictEqual(actual.length,3);
+          assert(actual.every((r,i)=>r.ts>realNow&&(i===0||actual[i-1].ts<=r.ts)));
+          console.log(JSON.stringify({synthetic:"PASS",real_fixture:"PASS",next:actual.map(r=>`${r.venue}${r.no}R ${r.deadline}`)}));
+
+          JS
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          html=Path("index.html").read_text(encoding="utf-8")
+          js=Path("assets/boat_edge_v108.js").read_text(encoding="utf-8")
+          css=Path("assets/boat_edge_v108.css").read_text(encoding="utf-8")
+          st=json.loads(Path("data/site_current_state.json").read_text(encoding="utf-8"))
+          assert "V135-HOME-NEXT3-V133-CORE" in html
+          assert "boat_edge_v108.js?v=135" in html
+          assert "boat_edge_v108.css?v=135" in html
+          assert 'id="be135Upcoming"' in js
+          assert "BOAT_EDGE_V135_HOME_NEXT3" in css
+          assert st["ui"]=={"version":"V133","status":"ACTIVE"}
+          assert st["home_upcoming_widget"]["max_races"]==3
+          assert "🎯 的中" in js and "function be132BalanceRows(" in js
+          assert "MutationObserver" not in js and "setInterval(" not in js
+          print({"V135":"PASS","V133_prediction":"unchanged","V134_TODO":"unchanged"})
+          PY
+      - name: Commit V135
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v108.js assets/boat_edge_v108.css data/site_current_state.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Add top upcoming three race cards V135"
+          for n in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin main
+          done
+          git push
