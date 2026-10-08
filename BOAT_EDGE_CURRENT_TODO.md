@@ -42,7 +42,7 @@ This file is auto-reconciled from repository evidence by V134. ACTIVE TODO conta
 - Current V133 snapshots observed: 130.
 - Current V133 audited PASS: 130.
 - Observed wave counts: [12, 15, 18].
-- Current V133 settled races: 127.
+- Current V133 settled races: 128.
 
 ## TODO GUARD
 - ACTIVE TODO contains unfinished `[ ]` tasks only.
