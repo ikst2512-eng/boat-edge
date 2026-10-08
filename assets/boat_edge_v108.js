@@ -1003,6 +1003,7 @@ async function showHeadPrediction(boat){
 async function afterRace(race){
   if(!race?.race_key)return;
   lastRaceKey=race.race_key;
+  window.BoatEdgeInputAuditV139?.render(race); // V139 UI only; predictor unchanged
   cleanTabs();fixBottom();installBackButtons();enhanceRaceNav(race);
   const pred=predOf(race);
   markStandouts();
