@@ -1,0 +1,478 @@
+name: BOAT EDGE V145 Racer Actual-Course History SAFE-CUTOFF
+
+on:
+  push:
+    paths:
+      - ".github/workflows/BOAT_EDGE_V145.yml"
+      - ".github/workflows/site-v145.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v145-racer-actual-course-history
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build audited racer actual-course history with locked 2026-10-07 cutoff
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf /tmp/boatracecsv
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/BoatraceCSV/boatracecsv.github.io.git \
+            /tmp/boatracecsv
+          git -C /tmp/boatracecsv sparse-checkout init --no-cone
+
+          # Formal 2026-10-08 target remains locked: never materialize 2026-10-08+ result/card blobs.
+          cat > /tmp/boatracecsv/.git/info/sparse-checkout <<'PATTERNS'
+          /data/results/realtime/2025/11/
+          /data/results/realtime/2025/12/
+          /data/programs/race_cards/2025/11/
+          /data/programs/race_cards/2025/12/
+          /data/results/realtime/2026/01/
+          /data/results/realtime/2026/02/
+          /data/results/realtime/2026/03/
+          /data/results/realtime/2026/04/
+          /data/results/realtime/2026/05/
+          /data/results/realtime/2026/06/
+          /data/results/realtime/2026/07/
+          /data/results/realtime/2026/08/
+          /data/results/realtime/2026/09/
+          /data/programs/race_cards/2026/01/
+          /data/programs/race_cards/2026/02/
+          /data/programs/race_cards/2026/03/
+          /data/programs/race_cards/2026/04/
+          /data/programs/race_cards/2026/05/
+          /data/programs/race_cards/2026/06/
+          /data/programs/race_cards/2026/07/
+          /data/programs/race_cards/2026/08/
+          /data/programs/race_cards/2026/09/
+          /data/results/realtime/2026/10/01.csv
+          /data/results/realtime/2026/10/02.csv
+          /data/results/realtime/2026/10/03.csv
+          /data/results/realtime/2026/10/04.csv
+          /data/results/realtime/2026/10/05.csv
+          /data/results/realtime/2026/10/06.csv
+          /data/results/realtime/2026/10/07.csv
+          /data/programs/race_cards/2026/10/01.csv
+          /data/programs/race_cards/2026/10/02.csv
+          /data/programs/race_cards/2026/10/03.csv
+          /data/programs/race_cards/2026/10/04.csv
+          /data/programs/race_cards/2026/10/05.csv
+          /data/programs/race_cards/2026/10/06.csv
+          /data/programs/race_cards/2026/10/07.csv
+          PATTERNS
+          git -C /tmp/boatracecsv checkout --force
+
+          test ! -e /tmp/boatracecsv/data/results/realtime/2026/10/08.csv
+          test ! -e /tmp/boatracecsv/data/programs/race_cards/2026/10/08.csv
+
+          SOURCE_COMMIT="$(git -C /tmp/boatracecsv rev-parse HEAD)"
+          export SOURCE_COMMIT
+
+          cat > /tmp/v145.py <<'PY'
+          from __future__ import annotations
+          import csv, json, hashlib, os, calendar
+          from collections import defaultdict, Counter
+          from datetime import date, datetime, timedelta, timezone
+          from pathlib import Path
+
+          JST=timezone(timedelta(hours=9))
+          ROOT=Path(".")
+          SRC=Path("/tmp/boatracecsv")
+          OUT=ROOT/"data/site_racer_actual_course/v145"
+          OUT.mkdir(parents=True,exist_ok=True)
+
+          # Formal 2026-10-08 target is still PRE_RESULT-locked.
+          # Hard cutoff prevents wall-clock drift on/after 2026-10-09.
+          locked_target_date=date(2026,10,8)
+          as_of=date(2026,10,7)
+          today=locked_target_date
+          assert as_of < locked_target_date
+
+          def shift_months(d,months):
+              y=d.year+(d.month-1+months)//12
+              m=(d.month-1+months)%12+1
+              day=min(d.day,calendar.monthrange(y,m)[1])
+              return date(y,m,day)
+
+          requested_starts={
+              "1y": date(as_of.year-1,as_of.month,as_of.day)+timedelta(days=1),
+              "6m": shift_months(as_of,-6)+timedelta(days=1),
+              "3m": shift_months(as_of,-3)+timedelta(days=1),
+          }
+          earliest=min(requested_starts.values())
+
+          def sha256_bytes(b):
+              return hashlib.sha256(b).hexdigest()
+
+          def read_csv(path):
+              raw=path.read_bytes()
+              text=raw.decode("utf-8-sig")
+              return list(csv.DictReader(text.splitlines())), sha256_bytes(raw)
+
+          def pct(a,b):
+              return round(a/b*100,1) if b else None
+
+          def sample_band(n):
+              if n>=20:return "ROBUST"
+              if n>=12:return "USABLE"
+              if n>=6:return "THIN"
+              return "INSUFFICIENT"
+
+          # event rows keyed by racer registration + actual course
+          events=[]
+          days=[]
+          missing=[]
+          file_hashes=[]
+          races_total=0
+          races_joined=0
+          races_valid_course_perm=0
+          races_invalid_course_perm=0
+          races_missing_card=0
+          racer_starts=0
+
+          d=earliest
+          while d<=as_of:
+              rel=f"{d:%Y/%m/%d}.csv"
+              rp=SRC/"data/results/realtime"/rel
+              cp=SRC/"data/programs/race_cards"/rel
+              day={"date":d.isoformat(),"result":rp.exists(),"card":cp.exists()}
+              if not (rp.exists() and cp.exists()):
+                  missing.append(day)
+                  days.append(day)
+                  d+=timedelta(days=1)
+                  continue
+
+              results,rh=read_csv(rp)
+              cards,ch=read_csv(cp)
+              file_hashes.append([rel,rh,ch])
+              card_by={str(x.get("レースコード") or ""):x for x in cards}
+              day["result_rows"]=len(results)
+              day["card_rows"]=len(cards)
+              joined=0
+              valid=0
+
+              for r in results:
+                  races_total+=1
+                  key=str(r.get("レースコード") or "")
+                  c=card_by.get(key)
+                  if not c:
+                      races_missing_card+=1
+                      continue
+                  races_joined+=1
+                  joined+=1
+
+                  course_to_lane=[]
+                  ok=True
+                  for course in range(1,7):
+                      try:
+                          lane=int(str(r.get(f"{course}コース_艇番") or "").strip())
+                      except Exception:
+                          ok=False
+                          break
+                      if lane<1 or lane>6:
+                          ok=False
+                          break
+                      course_to_lane.append(lane)
+
+                  if not ok or len(set(course_to_lane))!=6:
+                      races_invalid_course_perm+=1
+                      continue
+
+                  races_valid_course_perm+=1
+                  valid+=1
+
+                  finish={}
+                  for rank in range(1,7):
+                      try:
+                          lane=int(str(r.get(f"{rank}着_艇番") or "").strip())
+                      except Exception:
+                          continue
+                      if 1<=lane<=6 and lane not in finish:
+                          finish[lane]=rank
+
+                  method=str(r.get("決まり手") or "").replace("　","").replace(" ","").strip()
+
+                  for course,lane in enumerate(course_to_lane,1):
+                      reg=str(c.get(f"艇{lane}_登録番号") or "").strip()
+                      if not (len(reg)==4 and reg.isdigit()):
+                          continue
+                      st_raw=str(r.get(f"{course}コース_スタートタイミング") or "").strip()
+                      try:
+                          st=float(st_raw)
+                      except Exception:
+                          st=None
+                      rank=finish.get(lane)
+                      events.append({
+                          "date":d,
+                          "race_key":key,
+                          "reg":reg,
+                          "course":course,
+                          "finish":rank,
+                          "st":st,
+                          "method":method if rank==1 else None,
+                      })
+                      racer_starts+=1
+
+              day["joined_races"]=joined
+              day["valid_course_races"]=valid
+              days.append(day)
+              d+=timedelta(days=1)
+
+          observed_dates=sorted({x["date"] for x in events})
+          observed_from=observed_dates[0] if observed_dates else None
+          observed_to=observed_dates[-1] if observed_dates else None
+
+          grouped=defaultdict(list)
+          for e in events:
+              grouped[(e["reg"],e["course"])].append(e)
+
+          racers=defaultdict(lambda:{"courses":{}})
+          for (reg,course),rows in grouped.items():
+              rows.sort(key=lambda x:(x["date"],x["race_key"]))
+              cdoc={}
+              for w,start in requested_starts.items():
+                  sub=[x for x in rows if start<=x["date"]<=as_of]
+                  if not sub:
+                      continue
+                  starts=len(sub)
+                  wins=sum(x["finish"]==1 for x in sub)
+                  top2=sum(x["finish"] in (1,2) for x in sub)
+                  top3=sum(x["finish"] in (1,2,3) for x in sub)
+                  sts=[x["st"] for x in sub if isinstance(x["st"],(int,float))]
+                  methods=Counter(x["method"] for x in sub if x["finish"]==1 and x["method"])
+                  cdoc[w]={
+                      "starts":starts,
+                      "wins":wins,
+                      "top2":top2,
+                      "top3":top3,
+                      "win_rate":pct(wins,starts),
+                      "top2_rate":pct(top2,starts),
+                      "top3_rate":pct(top3,starts),
+                      "avg_st":round(sum(sts)/len(sts),3) if sts else None,
+                      "st_n":len(sts),
+                      "sample_band":sample_band(starts),
+                      "win_methods":dict(sorted(methods.items()))
+                  }
+              if cdoc:
+                  racers[reg]["courses"][str(course)]=cdoc
+
+          # shard by first digit to avoid one huge mobile payload
+          shards={}
+          for digit in ["2","3","4","5"]:
+              obj={k:v for k,v in sorted(racers.items()) if k.startswith(digit)}
+              p=OUT/f"{digit}.json"
+              payload={
+                  "schema_version":"boat-edge-racer-actual-course-v145",
+                  "as_of_d1":as_of.isoformat(),
+                  "shard":digit,
+                  "racers":obj
+              }
+              raw=(json.dumps(payload,ensure_ascii=False,separators=(",",":"))+"\n").encode()
+              p.write_bytes(raw)
+              shards[p.name]={"racers":len(obj),"sha256":sha256_bytes(raw),"bytes":len(raw)}
+
+          # 1y is explicitly partial if the source begins after requested start
+          win_meta={}
+          for w,start in requested_starts.items():
+              expected=(as_of-start).days+1
+              observed=sum(1 for x in days if start<=date.fromisoformat(x["date"])<=as_of and x["result"] and x["card"])
+              win_meta[w]={
+                  "requested_from":start.isoformat(),
+                  "requested_to":as_of.isoformat(),
+                  "expected_calendar_days":expected,
+                  "days_with_both_sources":observed,
+                  "coverage_percent":round(observed/expected*100,1) if expected else None,
+                  "complete":observed==expected,
+              }
+
+          provenance_concat="\n".join("|".join(x) for x in file_hashes).encode()
+          manifest={
+              "schema_version":"boat-edge-racer-actual-course-manifest-v145",
+              "status":"DATA_ONLY_NOT_PREDICTION_CONNECTED",
+              "as_of_d1":as_of.isoformat(),
+              "today_excluded":today.isoformat(),
+              "formal_current_unchanged":True,
+              "prediction_weights_changed":False,
+              "proxy":False,
+              "imputation":False,
+              "source":{
+                  "repo":"BoatraceCSV/boatracecsv.github.io",
+                  "commit":os.environ.get("SOURCE_COMMIT"),
+                  "results":"data/results/realtime/YYYY/MM/DD.csv",
+                  "race_cards":"data/programs/race_cards/YYYY/MM/DD.csv",
+                  "join_key":"レースコード",
+                  "actual_course_fields":"1コース_艇番..6コース_艇番"
+              },
+              "coverage":{
+                  "requested_from":earliest.isoformat(),
+                  "observed_from":observed_from.isoformat() if observed_from else None,
+                  "observed_to":observed_to.isoformat() if observed_to else None,
+                  "windows":win_meta,
+                  "missing_or_unpaired_days":missing
+              },
+              "quality":{
+                  "result_races_seen":races_total,
+                  "joined_races":races_joined,
+                  "valid_actual_course_permutation_races":races_valid_course_perm,
+                  "invalid_actual_course_permutation_races":races_invalid_course_perm,
+                  "missing_race_card_races":races_missing_card,
+                  "racer_starts_emitted":racer_starts,
+                  "unique_racers":len(racers),
+                  "unique_racer_course_pairs":len(grouped)
+              },
+              "shards":shards,
+              "source_pair_hash_manifest_sha256":sha256_bytes(provenance_concat),
+              "notes":[
+                                    "Locked cutoff is 2026-10-07; 2026-10-08 formal target result/card blobs are not materialized or read.",
+                  "Wall-clock date cannot advance this cutoff.",
+                  "Actual course is taken from result course-to-boat permutation, never frame number.",
+                  "Missing dates are not zero-filled or imputed.",
+                  "1y is marked incomplete whenever the upstream result source lacks part of the requested trailing year.",
+                  "This V145 artifact is data/audit only and does not change ticket ranking."
+              ]
+          }
+          mraw=(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n").encode()
+          (OUT/"manifest.json").write_bytes(mraw)
+
+          # deterministic compact validation report
+          report={
+              "schema_version":"boat-edge-racer-actual-course-validation-v145",
+              "manifest_sha256":sha256_bytes(mraw),
+              "checks":{
+                  "today_excluded":manifest["coverage"]["observed_to"] is None or manifest["coverage"]["observed_to"]<today.isoformat(),
+                  "no_proxy":manifest["proxy"] is False,
+                  "no_imputation":manifest["imputation"] is False,
+                  "actual_course_permutation_required":True,
+                  "prediction_weights_changed":False,
+                  "all_shards_present":all((OUT/x).exists() for x in shards)
+              }
+          }
+          assert all(report["checks"].values()), report
+          (OUT/"validation.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+          print(json.dumps({
+              "as_of_d1":manifest["as_of_d1"],
+              "observed_from":manifest["coverage"]["observed_from"],
+              "windows":manifest["coverage"]["windows"],
+              "quality":manifest["quality"],
+              "shards":manifest["shards"]
+          },ensure_ascii=False))
+          PY
+
+          rm -rf data/site_racer_actual_course/v145
+          python /tmp/v145.py | tee /tmp/v145_run1.json
+          cp -a data/site_racer_actual_course/v145 /tmp/v145_run1
+
+          rm -rf data/site_racer_actual_course/v145
+          python /tmp/v145.py | tee /tmp/v145_run2.json
+
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          a=Path("/tmp/v145_run1")
+          b=Path("data/site_racer_actual_course/v145")
+          names=["2.json","3.json","4.json","5.json","manifest.json","validation.json"]
+          for n in names:
+              pa,pb=a/n,b/n
+              assert pa.read_bytes()==pb.read_bytes(), f"Run1/Run2 mismatch: {n}"
+
+          m=json.loads((b/"manifest.json").read_text(encoding="utf-8"))
+          assert m["status"]=="DATA_ONLY_NOT_PREDICTION_CONNECTED"
+          assert m["prediction_weights_changed"] is False
+          assert m["proxy"] is False
+          assert m["imputation"] is False
+          assert m["as_of_d1"] < m["today_excluded"]
+          assert m["quality"]["valid_actual_course_permutation_races"] > 1000
+          assert m["quality"]["unique_racers"] > 500
+          assert m["quality"]["unique_racer_course_pairs"] > 1000
+
+          # Each stat obeys monotonic finish counts and valid rates.
+          for n in ["2.json","3.json","4.json","5.json"]:
+              d=json.loads((b/n).read_text(encoding="utf-8"))
+              for reg,r in d["racers"].items():
+                  for course,cdoc in r["courses"].items():
+                      for w,x in cdoc.items():
+                          assert x["starts"] >= x["top3"] >= x["top2"] >= x["wins"] >= 0
+                          for k in ("win_rate","top2_rate","top3_rate"):
+                              assert x[k] is None or 0 <= x[k] <= 100
+                          assert x["sample_band"] in {"ROBUST","USABLE","THIN","INSUFFICIENT"}
+
+          print("V145 Run1/Run2 byte-identical PASS")
+          print("V145 locked-cutoff / no proxy / no imputation / actual-course permutation PASS")
+          PY
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          stp=Path("data/site_current_state.json")
+          st=json.loads(stp.read_text(encoding="utf-8"))
+          assert st["ui"]=={"version":"V133","status":"ACTIVE"}
+          assert st["formal_current"]["connected"] is False
+          assert st["formal_current"]["predictions_ready"] is False
+          assert not any(st["formal_current"]["guards"][k] for k in ("results_seen","unlock","scoring"))
+          m=json.loads(Path("data/site_racer_actual_course/v145/manifest.json").read_text(encoding="utf-8"))
+          st["racer_actual_course_history"]={
+              "version":"V145",
+              "status":"DATA_ONLY_AUDITED",
+              "as_of_d1":m["as_of_d1"],
+              "manifest":"data/site_racer_actual_course/v145/manifest.json",
+              "prediction_connected":False,
+              "prediction_weights_changed":False,
+              "proxy":False,
+              "imputation":False,
+              "one_year_complete":m["coverage"]["windows"]["1y"]["complete"],
+              "six_month_complete":m["coverage"]["windows"]["6m"]["complete"],
+              "three_month_complete":m["coverage"]["windows"]["3m"]["complete"]
+          }
+          stp.write_text(json.dumps(st,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          PY
+
+      - name: Validate tracked scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          m=json.loads(Path("data/site_racer_actual_course/v145/manifest.json").read_text(encoding="utf-8"))
+          assert m["as_of_d1"]=="2026-10-07"
+          assert m["today_excluded"]=="2026-10-08"
+          assert m["coverage"]["observed_to"] <= "2026-10-07"
+          assert m["coverage"]["windows"]["3m"]["coverage_percent"] >= 99
+          assert m["coverage"]["windows"]["6m"]["coverage_percent"] >= 99
+          # 1y is intentionally partial because upstream realtime results begin in 2025-11.
+          assert m["coverage"]["windows"]["1y"]["coverage_percent"] >= 90
+          print("V145 locked-cutoff coverage contract PASS",m["coverage"]["windows"])
+          PY
+
+      - name: Commit V144 audited data layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            data/site_racer_actual_course/v145 \
+            data/site_current_state.json
+          git diff --cached --quiet && exit 0
+          git commit -m "V145: add locked-cutoff racer actual-course 1y 6m 3m history data"
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
