@@ -1,0 +1,159 @@
+name: BOAT EDGE V143 Repair V134 Hit-Status Audit
+
+on:
+  push:
+    paths:
+      - '.github/workflows/site-v143.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v134-evidence-todo
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Repair whitespace-safe V134 audit without changing predictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          target = Path('.github/workflows/site-v134.yml')
+          core = Path('assets/boat_edge_v108.js')
+          state_path = Path('data/site_current_state.json')
+          assert target.is_file() and core.is_file() and state_path.is_file()
+          state = json.loads(state_path.read_text(encoding='utf-8'))
+          js = core.read_text(encoding='utf-8')
+          assert state['ui'] == {'version':'V133','status':'ACTIVE'}
+          assert state['stake_snapshot_freeze']['version'] == 'V141'
+          assert state['stake_payout_display']['reference_budget_yen'] == 10000
+          assert state['formal_current']['connected'] is False
+          assert state['formal_current']['predictions_ready'] is False
+          assert all(state['formal_current']['guards'].get(k) is False
+                     for k in ('results_seen','unlock','scoring'))
+          assert 'BE141_POST_SETTLEMENT_STAKE_GUARD' in js
+
+          # Unlike V142, don't hardcode leading indentation inside a Python
+          # triple-quoted string passed through YAML's block scalar dedent.
+          source = target.read_text(encoding='utf-8')
+          anchor = 'ui_hit_branch_ok=all(x in js for x in ['
+          already = '# BE143_HIT_STATUS_AUDIT'
+          if already in source:
+              assert source.count(already) == 1, 'duplicate V143 verifier'
+              print('V143 verifier already installed')
+          else:
+              assert source.count(anchor) == 1, 'unexpected V134 audit shape'
+              pos = source.index(anchor)
+              line_start = source.rfind('\n', 0, pos) + 1
+              indent = source[line_start:pos]
+              assert indent and not indent.strip(), 'unexpected non-whitespace prefix'
+              close = '\n' + indent + '])'
+              end = source.index(close, pos) + len(close)
+              old = source[pos:end]
+              assert '"🎯 判定待ち"' in old, 'V142 failure signature missing'
+              assert '"🎯 的中"' in old and '"✕ 不的中"' in old
+
+              lines = [
+                  '# BE143_HIT_STATUS_AUDIT: earned emoji only, never pending.',
+                  'ui_hit_branch_ok=all(x in js for x in [',
+                  '    \'id="be128HitStatus"\',',
+                  '    \'status="判定待ち"\',',
+                  '    \'status="最終予想保存中"\',',
+                  '    \'status="結果待ち"\',',
+                  '    \'status=modeHit?"🎯 的中":"✕ 不的中";\',',
+                  '    \'status="— 判定対象外"\',',
+                  '    \'const modeHit=Boolean(settled?.mode_hits?.[mode]);\',',
+                  '    \'const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;\',',
+                  '    \'const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;\',',
+                  '    \'const settled=resultConfirmed?(serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null)):null;\'',
+                  ']) and ("🎯 判定待ち" not in js)'
+              ]
+              replacement = ('\n'+indent).join(lines[1:])
+              # Preserve the original indentation and add the explanatory marker
+              # on its own line, immediately above the replacement.
+              source = (source[:pos] + replacement + source[end:])
+              marker_line = indent + lines[0] + '\n'
+              at = source.rfind('\n',0,pos)+1
+              source = source[:at] + marker_line + source[at:]
+              target.write_text(source,encoding='utf-8')
+              print('V143 repaired stale V134 hit check with indentation-safe replacement')
+
+          # Scope check only; don't fetch historical results or alter a frozen prediction.
+          fixed = target.read_text(encoding='utf-8')
+          assert fixed.count(already)==1
+          assert '"🎯 判定待ち",' not in fixed
+          assert 'status=modeHit?"🎯 的中":"✕ 不的中";' in fixed
+          PY
+
+      - name: Validate patched verifier and actual V141 runtime branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v108.js
+          python - <<'PY'
+          from pathlib import Path
+          import re, json, ast
+          s=Path('.github/workflows/site-v134.yml').read_text(encoding='utf-8')
+          js=Path('assets/boat_edge_v108.js').read_text(encoding='utf-8')
+          state=json.loads(Path('data/site_current_state.json').read_text(encoding='utf-8'))
+          assert s.count('# BE143_HIT_STATUS_AUDIT')==1
+          assert 'ui_hit_branch_ok=all(x in js for x in [' in s
+          assert ']) and ("🎯 判定待ち" not in js)' in s
+          required=[
+            'id="be128HitStatus"', 'status="判定待ち"',
+            'status="最終予想保存中"', 'status="結果待ち"',
+            'status=modeHit?"🎯 的中":"✕ 不的中";',
+            'status="— 判定対象外"',
+            'const modeHit=Boolean(settled?.mode_hits?.[mode]);',
+            'const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;',
+            'const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;',
+            'const settled=resultConfirmed?(serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null)):null;'
+          ]
+          assert all(x in js for x in required), 'runtime branch contract missing'
+          assert '🎯 判定待ち' not in js
+          # Compile V134's reconciler script without reading results/history.
+          b=s.split('      - name: Reconcile TODO from live evidence\n',1)[1].split('\n      - name:',1)[0]
+          t=b.split('        run: |\n',1)[1]
+          payload='\n'.join(line[10:] if line.startswith('          ') else line for line in t.splitlines())
+          m=re.search(r"python - <<'PY'\n([\s\S]*?)\nPY",payload)
+          assert m, 'V134 embedded python block missing'
+          compile(m.group(1),'<V134 reconciler>','exec')
+          assert state['ui']['version']=='V133'
+          assert not any(state['formal_current']['guards'][k] for k in ('results_seen','unlock','scoring'))
+          print('V143 patched V134 compile PASS; earned-only hit/miss/pending branches PASS')
+          print('No historical result read; no prediction data changed')
+          PY
+          test "$(git diff --name-only | wc -l)" -le 1
+          git diff --name-only | grep -qx '.github/workflows/site-v134.yml' || test -z "$(git diff --name-only)"
+
+      - name: Commit verifier fix only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/site-v134.yml
+          if git diff --cached --quiet; then
+            echo 'No changes; verifier already current'
+            exit 0
+          fi
+          git commit -m 'V143: correct V134 earned-only hit-status audit'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+          done
+          exit 1
