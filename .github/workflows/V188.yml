@@ -1,0 +1,117 @@
+name: BOAT EDGE V188 - Preserve V184 Immutable Shadow Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/V188.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v188-restore-v184-predeadline-evidence
+  cancel-in-progress: false
+
+jobs:
+  stop-audit-regression:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current main with history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Make V183 periodic runs reapply V184 immutable provenance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYFIX'
+          from pathlib import Path
+          p=Path('.github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml')
+          s=p.read_text(encoding='utf-8')
+          marker='V188_REAPPLY_V184_ON_EVERY_V183_RUN'
+          old="""          set -euo pipefail
+          python3 tests/test_v183_audit.py
+          python3 -m py_compile scripts/site_v183_audit.py"""
+          new="""          set -euo pipefail
+          # V188_REAPPLY_V184_ON_EVERY_V183_RUN: V183 restores its old hashed
+          # scorer before this step. Always reapply and prove the V184 gate.
+          test -f scripts/site_v184_patch.py
+          test -f scripts/site_v184_integrity.py
+          test -f tests/test_v184_integrity.py
+          python3 scripts/site_v184_patch.py
+          python3 tests/test_v184_integrity.py
+          python3 tests/test_v183_audit.py
+          python3 -m py_compile scripts/site_v183_audit.py
+          python3 - <<'PYV188GATE'
+          from pathlib import Path
+          p=Path('scripts/site_v183_audit.py').read_text(encoding='utf-8')
+          assert 'V184_COMMITTED_BYTES_AND_SOURCE_REPRODUCIBILITY' in p
+          assert 'verify_shadow_commit_binding(root,rel,p.read_bytes(),data,added)' in p
+          print('V188_V184_PROVENANCE_GATE_ACTIVE')
+          PYV188GATE"""
+          # YAML strips 10 spaces from the run block. Restore the indentation
+          # required by the *target* V183 workflow's run block.
+          old=old.replace('\n','\n          ')
+          new=new.replace('\n','\n          ')
+          if marker not in s:
+            if s.count(old)!=1:
+              raise SystemExit('V188_V183_WORKFLOW_CONTEXT_MISMATCH_FAIL_CLOSED')
+            s=s.replace(old,new,1)
+            p.write_text(s,encoding='utf-8')
+          assert s.count(marker)==1
+          assert 'python3 scripts/site_v184_patch.py' in s
+          assert 'python3 tests/test_v184_integrity.py' in s
+          print('V188_V183_CRON_CANNOT_BYPASS_V184_GUARD')
+          PYFIX
+      - name: Repair current V183 scorer and run independent integrity tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/site_v184_patch.py
+          test -f scripts/site_v184_integrity.py
+          python3 scripts/site_v184_patch.py
+          python3 tests/test_v184_integrity.py
+          python3 tests/test_v183_audit.py
+          python3 -m py_compile scripts/site_v183_audit.py
+          python3 - <<'PYCHECK'
+          from pathlib import Path
+          s=Path('scripts/site_v183_audit.py').read_text(encoding='utf-8')
+          assert s.count('V184_COMMITTED_BYTES_AND_SOURCE_REPRODUCIBILITY')==1
+          assert 'verify_shadow_commit_binding(root,rel,p.read_bytes(),data,added)' in s
+          a=Path('.github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml').read_text(encoding='utf-8')
+          assert a.count('V188_REAPPLY_V184_ON_EVERY_V183_RUN')==1
+          print('V188_V183_V184_CURRENT_AND_PERIODIC_GUARDS_PASS')
+          PYCHECK
+          git diff --check
+      - name: Commit only guarded scoring source and scheduled audit workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml scripts/site_v183_audit.py
+          if git diff --cached --quiet; then
+            echo V188_ALREADY_GUARDED
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m 'V188 keep V184 immutable evidence check active on all V183 scheduled runs'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then
+              echo V188_V184_PERSISTENT_GATE_INSTALLED
+              exit 0
+            fi
+            git fetch origin main
+            git rebase origin/main
+            python3 scripts/site_v184_patch.py
+            python3 tests/test_v184_integrity.py
+            python3 tests/test_v183_audit.py
+          done
+          echo V188_PUSH_RETRIES_EXHAUSTED >&2
+          exit 1
