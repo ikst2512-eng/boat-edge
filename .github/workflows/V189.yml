@@ -1,0 +1,134 @@
+name: BOAT EDGE V189 - Persistent Immutable Scoring Gate Repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/V189.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v189-restore-immutable-scorer
+  cancel-in-progress: false
+
+jobs:
+  repair-v183-v184-integrity:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main with complete commit provenance
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Upgrade recurring V183 regression step to V184 committed-source verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYFIX'
+          from pathlib import Path
+          path=Path('.github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml')
+          current=path.read_text(encoding='utf-8')
+          marker='V189_PERSISTENT_V184_COMMITTED_BLOB_GATE'
+          old='''      - name: Future-only source-before-result unit tests
+            shell: bash'''
+          # Identify exact YAML step by its bounded structural anchors.
+          start='      - name: Future-only source-before-result unit tests\n'
+          next_step='      - name: Run1 Run2 byte-identical proof against immutable V180 shadows\n'
+          if marker not in current:
+              if current.count(start)!=1 or current.count(next_step)!=1:
+                  raise SystemExit('V189_CANNOT_LOCATE_EXACT_V183_STEPS')
+              beginning,tail=current.split(start,1)
+              _,ending=tail.split(next_step,1)
+              # Build YAML step with exact (6/8/10 spaces) workflow indentation.
+              block="\n".join([
+                  "      - name: Verify originally committed pre-result prediction source (V184)",
+                  "        shell: bash",
+                  "        run: |",
+                  "          set -euo pipefail",
+                  "          # V189_PERSISTENT_V184_COMMITTED_BLOB_GATE",
+                  "          # This check MUST follow V183's SHA-restored source and precede scoring.",
+                  "          test -f scripts/site_v184_patch.py",
+                  "          test -f scripts/site_v184_integrity.py",
+                  "          test -f tests/test_v184_integrity.py",
+                  "          python3 scripts/site_v184_patch.py",
+                  "          python3 -m py_compile scripts/site_v183_audit.py scripts/site_v184_integrity.py",
+                  "          python3 tests/test_v184_integrity.py",
+                  "          python3 - <<'PYGUARD'",
+                  "          from pathlib import Path",
+                  "          s=Path('scripts/site_v183_audit.py').read_text(encoding='utf-8')",
+                  "          assert s.count('V184_COMMITTED_BYTES_AND_SOURCE_REPRODUCIBILITY')==1",
+                  "          assert 'verify_shadow_commit_binding(root,rel,p.read_bytes(),data,added)' in s",
+                  "          print('V189_IMMUTABLE_COMMIT_BINDING_ACTIVE')",
+                  "          PYGUARD",
+                  "",
+              ])
+              current=beginning+block+next_step+ending
+          # The old in-memory/mock-only fixture is incompatible with committed
+          # Git-blob enforcement; V184 has real temporary-Git positive/negative tests.
+          current=current.replace('python3 tests/test_v183_audit.py', 'python3 tests/test_v184_integrity.py')
+          assert current.count(marker)==1, 'V189_MISSING_PERSISTENT_MARKER'
+          assert 'python3 tests/test_v183_audit.py' not in current
+          assert current.count('python3 scripts/site_v184_patch.py')>=1
+          assert 'python3 tests/test_v184_integrity.py' in current
+          if path.read_text(encoding='utf-8')!=current:
+              path.write_text(current,encoding='utf-8')
+          print('V189_V183_RECURRING_IMMUTABLE_GATE_INSTALLED')
+          PYFIX
+
+      - name: Apply V184 gate and test against real Git history
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_v184_patch.py
+          python3 -m py_compile scripts/site_v183_audit.py scripts/site_v184_integrity.py
+          python3 tests/test_v184_integrity.py
+          python3 scripts/site_v183_audit.py --repo . --out /tmp/V189_SCORE_RUN1.json
+          python3 scripts/site_v183_audit.py --repo . --out /tmp/V189_SCORE_RUN2.json
+          cmp /tmp/V189_SCORE_RUN1.json /tmp/V189_SCORE_RUN2.json
+          python3 - <<'PYASSERT'
+          from pathlib import Path
+          import json
+          scorer=Path('scripts/site_v183_audit.py').read_text(encoding='utf-8')
+          workflow=Path('.github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml').read_text(encoding='utf-8')
+          assert scorer.count('V184_COMMITTED_BYTES_AND_SOURCE_REPRODUCIBILITY')==1
+          assert workflow.count('V189_PERSISTENT_V184_COMMITTED_BLOB_GATE')==1
+          assert 'python3 tests/test_v183_audit.py' not in workflow
+          report=json.loads(Path('/tmp/V189_SCORE_RUN1.json').read_text(encoding='utf-8'))
+          assert report['formal_current_results_accessed'] is False
+          assert report['prediction_weights_changed'] is False
+          print('V189_TWO_RUN_DETERMINISTIC_AND_NO_FORMAL_ACCESS_PASS')
+          PYASSERT
+          git diff --check
+
+      - name: Commit guarded scorer and recurring workflow only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- scripts/site_v183_audit.py .github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml
+          if git diff --cached --quiet; then
+            echo V189_ALREADY_INSTALLED
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m 'V189 keep immutable V184 Git-blob validation active on every V183 cron run'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then
+              echo V189_PERSISTENT_GATE_COMMITTED
+              exit 0
+            fi
+            git fetch origin main
+            git rebase origin/main
+            python3 tests/test_v184_integrity.py
+            python3 scripts/site_v183_audit.py --repo . --out /tmp/V189_AFTER_REBASE.json
+          done
+          echo V189_PUSH_BLOCKED >&2
+          exit 1
