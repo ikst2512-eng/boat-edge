@@ -1,0 +1,255 @@
+{
+  "counterfactual_policy": "PREDECLARED_SHARED_FIRST_REORDER_OF_SAME_HIT10_ONLY; NO NEW TICKETS; RETROSPECTIVE EXPLORATION",
+  "distinct_dates": [
+    "20261009"
+  ],
+  "eligible_races": 105,
+  "formal_current_modified": false,
+  "formal_current_scoring": false,
+  "fresh_validation_pass": false,
+  "frozen_snapshot_guards_verified": true,
+  "interpretation": "Same-engine mode overlap is correlated, not independent votes; observational per-ticket rates are NOT calibrated probabilities.",
+  "next_gate": "A prospective untouched multi-day Fresh sample, with pre-result prediction freeze and independent scoring, must confirm Top3/5/10 and head-tail conditional model before production adoption.",
+  "production_adoption": "BLOCKED_PENDING_FRESH",
+  "production_model_modified": false,
+  "research": {
+    "by_actual_winning_head": {
+      "1": {
+        "head_available": 57,
+        "hit10_win": 29,
+        "hit_hole_shared_win": 20,
+        "races": 57
+      },
+      "2": {
+        "head_available": 16,
+        "hit10_win": 5,
+        "hit_hole_shared_win": 5,
+        "races": 18
+      },
+      "3": {
+        "head_available": 7,
+        "hit10_win": 1,
+        "hit_hole_shared_win": 1,
+        "races": 13
+      },
+      "4": {
+        "head_available": 8,
+        "hit10_win": 4,
+        "hit_hole_shared_win": 4,
+        "races": 11
+      },
+      "5": {
+        "head_available": 4,
+        "hit10_win": 0,
+        "hit_hole_shared_win": 0,
+        "races": 4
+      },
+      "6": {
+        "head_available": 0,
+        "hit10_win": 0,
+        "hit_hole_shared_win": 0,
+        "races": 2
+      }
+    },
+    "head_tail_near_miss": {
+      "both_tail_candidates_present": 8,
+      "correct_head_but_missed": 53,
+      "head_available": 92,
+      "hit10_win": 39,
+      "neither_tail_present": 6,
+      "one_tail_present": 39,
+      "second_present_with_correct_head": 28,
+      "swapped_second_third_in_hit10": 7,
+      "third_present_with_correct_head": 27
+    },
+    "historical_shared_first_order_hypothesis": {
+      "top10": {
+        "baseline": 39,
+        "baseline_hit_rate_percent": 37.143,
+        "gain": 0,
+        "loss": 0,
+        "shared_first": 39,
+        "shared_first_hit_rate_percent": 37.143
+      },
+      "top3": {
+        "baseline": 12,
+        "baseline_hit_rate_percent": 11.429,
+        "gain": 0,
+        "loss": 2,
+        "shared_first": 10,
+        "shared_first_hit_rate_percent": 9.524
+      },
+      "top5": {
+        "baseline": 21,
+        "baseline_hit_rate_percent": 20.0,
+        "gain": 6,
+        "loss": 9,
+        "shared_first": 18,
+        "shared_first_hit_rate_percent": 17.143
+      }
+    },
+    "hit10_rank_conditional_exposures": {
+      "top1_3_nonoverlap": {
+        "exposures": 66,
+        "hits": 2,
+        "per_ticket_hit_rate_percent": 3.03
+      },
+      "top1_3_overlap": {
+        "exposures": 249,
+        "hits": 10,
+        "per_ticket_hit_rate_percent": 4.016
+      },
+      "top4_7_nonoverlap": {
+        "exposures": 143,
+        "hits": 7,
+        "per_ticket_hit_rate_percent": 4.895
+      },
+      "top4_7_overlap": {
+        "exposures": 277,
+        "hits": 8,
+        "per_ticket_hit_rate_percent": 2.888
+      },
+      "top8_10_nonoverlap": {
+        "exposures": 4,
+        "hits": 0,
+        "per_ticket_hit_rate_percent": 0.0
+      },
+      "top8_10_overlap": {
+        "exposures": 311,
+        "hits": 12,
+        "per_ticket_hit_rate_percent": 3.859
+      }
+    },
+    "illustrations": {
+      "head_only_second_present": [
+        {
+          "race_key": "20261009-02-01",
+          "winning": "1-2-6"
+        },
+        {
+          "race_key": "20261009-02-03",
+          "winning": "5-1-4"
+        },
+        {
+          "race_key": "20261009-02-09",
+          "winning": "2-1-6"
+        },
+        {
+          "race_key": "20261009-02-10",
+          "winning": "1-2-6"
+        },
+        {
+          "race_key": "20261009-03-05",
+          "winning": "3-4-2"
+        }
+      ],
+      "head_only_third_present": [
+        {
+          "race_key": "20261009-01-04",
+          "winning": "2-4-6"
+        },
+        {
+          "race_key": "20261009-02-02",
+          "winning": "1-5-3"
+        },
+        {
+          "race_key": "20261009-02-06",
+          "winning": "5-6-4"
+        },
+        {
+          "race_key": "20261009-03-01",
+          "winning": "1-2-6"
+        },
+        {
+          "race_key": "20261009-03-07",
+          "winning": "2-3-1"
+        }
+      ],
+      "tail_both_covered_but_miss": [
+        {
+          "race_key": "20261009-03-03",
+          "winning": "1-5-6"
+        },
+        {
+          "race_key": "20261009-05-08",
+          "winning": "1-5-4"
+        },
+        {
+          "race_key": "20261009-10-08",
+          "winning": "1-5-2"
+        },
+        {
+          "race_key": "20261009-16-08",
+          "winning": "1-6-5"
+        },
+        {
+          "race_key": "20261009-23-01",
+          "winning": "1-3-2"
+        }
+      ]
+    },
+    "mode_hits": {
+      "balance": 33,
+      "hit": 39,
+      "hole": 36,
+      "narrow": 12
+    },
+    "race_count": 105,
+    "ticket_exposures": {
+      "hit_hole_shared": {
+        "exposures": 837,
+        "hits": 30,
+        "per_ticket_hit_rate_percent": 3.584
+      },
+      "hit_only": {
+        "exposures": 213,
+        "hits": 9,
+        "per_ticket_hit_rate_percent": 4.225
+      },
+      "hole_only": {
+        "exposures": 579,
+        "hits": 6,
+        "per_ticket_hit_rate_percent": 1.036
+      },
+      "mode_memberships_1": {
+        "exposures": 463,
+        "hits": 6,
+        "per_ticket_hit_rate_percent": 1.296
+      },
+      "mode_memberships_2": {
+        "exposures": 388,
+        "hits": 13,
+        "per_ticket_hit_rate_percent": 3.351
+      },
+      "mode_memberships_3": {
+        "exposures": 532,
+        "hits": 16,
+        "per_ticket_hit_rate_percent": 3.008
+      },
+      "mode_memberships_4": {
+        "exposures": 249,
+        "hits": 10,
+        "per_ticket_hit_rate_percent": 4.016
+      },
+      "neither": {
+        "exposures": 3,
+        "hits": 0,
+        "per_ticket_hit_rate_percent": 0.0
+      }
+    },
+    "win_joint_hit_hole": {
+      "both": 30,
+      "hit_only": 9,
+      "hole_only": 6,
+      "neither": 60
+    }
+  },
+  "results_used_only_after_site_reference_snapshot": true,
+  "schema_version": "boat-edge-v176-site-overlap-tail-research-v1",
+  "source_commit_full_sha": "42f84cd4640711ababad8dbcf7d544194a9cc434",
+  "source_scope": "PINNED_OCT9_V173_SOURCE105",
+  "source_sha256_manifest": "5bfd8264789638c48c2b2a2e80dbadc9629105c061fc7d94b7b96717fefd2b2a",
+  "status": "RESEARCH_ONLY_NOT_PROMOTED",
+  "v136_summary_sha256": "e9c8c246b71587316dc8d8c2f933e9115491f157ec3a455c9672e8d650924ed0",
+  "v173_diagnostic_sha256": "82fb781d5e97600d8a154b5c73ea1d4dfbf2483d15006825ccfe47a1f4a8b36b"
+}
