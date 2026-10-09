@@ -1768,27 +1768,31 @@ function officialToPrediction(d){
   const wb = der.world_b || der.pattern_b || null;
   const decision = der.selectivity?.decision || der.decision || "正式予想";
   const grade = der.selectivity?.grade || der.confidence_grade || "A";
+  const verifiedTicketPercent = new Map((der.ranked_120||[]).map(x=>[x.combo,Number(x.probability)*100]));
   const mapTickets = (world, budget) => {
     const bets = (world?.tickets || world?.bets || world?.combinations || []);
     if(!bets.length) return [];
     const items = bets.map((b,i)=>{
-      if(typeof b === "string") return {rank:i+1, combo:b, probability:null, amount:null};
+      if(typeof b === "string") return {rank:i+1, combo:b, probability:verifiedTicketPercent.get(b)??null, amount:null};
       return {
         rank:i+1,
         combo:b.combo || b.ticket || b.bet || "－",
-        probability:b.confidence ?? b.probability ?? b.p ?? null,
+        probability:verifiedTicketPercent.get(b.combo || b.ticket || b.bet) ?? null,
         amount:b.amount ?? b.stake ?? null
       };
     });
     const known = items.filter(x=>x.amount!==null).length;
-    if(!known){
-      const amounts = allocateByWeights(items.map(x=>num(x.probability) || 1), budget);
-      items.forEach((x,i)=>x.amount=amounts[i]);
-    }
+    // V178 requires producer-frozen 10,000-yen stakes. Never create fictitious formal stakes.
+    if(known!==items.length)return [];
     return items;
   };
-  const pA = num(wa?.probability ?? wa?.prob ?? wa?.rate);
-  const pB = num(wb?.probability ?? wb?.prob ?? wb?.rate);
+  // V179: internal UI uses percentage units (e.g. 58 means 58%).
+  // Formal producer may send either normalized [0,1] or [0,100].
+  const pAraw = num(wa?.probability ?? wa?.prob ?? wa?.rate);
+  const pBraw = num(wb?.probability ?? wb?.prob ?? wb?.rate);
+  const worldSum = pAraw!==null && pBraw!==null ? pAraw+pBraw : null;
+  const pA = worldSum!==null && worldSum>0 ? pAraw*100/worldSum : null;
+  const pB = worldSum!==null && worldSum>0 ? pBraw*100/worldSum : null;
   const total = 10000;
   const budgetA = pA!==null ? round100(total*(pA/Math.max(1,(pA||0)+(pB||0)||100))) : 5000;
   const budgetB = total-budgetA;
@@ -2083,8 +2087,8 @@ function renderRaceMasthead(d,pred){
       <div class="mast-strip">
         <span class="mast-pill ${pred.mode==="formal"?"good":"warn"}">${pred.mode==="formal"?"正式":"暫定"}</span>
         <span class="mast-pill ${beforeReady?"good":"warn"}">${beforeReady?"直前あり":"直前待ち"}</span>
-        <span class="mast-pill">A ${a!=null?Math.round(Number(a)*100)+"%":"－"}</span>
-        <span class="mast-pill">B ${b!=null?Math.round(Number(b)*100)+"%":"－"}</span>
+        <span class="mast-pill">A ${a!=null?Math.round(Number(a))+"%":"－"}</span>
+        <span class="mast-pill">B ${b!=null?Math.round(Number(b))+"%":"－"}</span>
       </div>
     </div>
     <div class="mast-panel">
@@ -2322,7 +2326,7 @@ function renderBuyBoard(d,pred){
     const desc=wi===0?"1号艇が先マイから残す世界":"差し・まくり・まくり差し・外連動の世界";
     return `<div class="buy-world">
       <div class="buy-world-head">
-        <div class="topline"><div class="label">${title}</div><div class="prob">${w.probability!=null?Math.round(Number(w.probability)*100)+"%":"－"}</div></div>
+        <div class="topline"><div class="label">${title}</div><div class="prob">${w.probability!=null?Math.round(Number(w.probability))+"%":"－"}</div></div>
         <div class="desc">${desc}</div>
       </div>
       ${tickets.length?`<div class="buy-list">${tickets.map((t,i)=>{
@@ -2333,7 +2337,7 @@ function renderBuyBoard(d,pred){
           <div class="buy-check">${isSel?"✓":""}</div>
           <div class="buy-rank">#${i+1}</div>
           <div class="buy-combo">${f(t.combo)}</div>
-          <div class="buy-prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</div>
+          <div class="buy-prob">${t.probability!=null?Math.round(Number(t.probability)*10)/10+"%":""}</div>
           <div class="buy-money">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</div>
         </div>`}).join("")}</div>`:`<div class="buy-empty">正式/暫定の買い目待ち</div>`}
       <div class="buy-footer">${pred.mode==="formal"?"正式CURRENTの世界別出力":"最新方針準拠の参考出力"}${total?` / 配分 ${total.toLocaleString()}円`:""}</div>
@@ -2435,8 +2439,8 @@ function renderDirectMode(d,pred){
       <div class="direct-card">
         <h3>世界確率</h3>
         <div class="direct-worlds">
-          <div class="direct-world"><div class="wk">Pattern A / イン逃げ成立</div><div class="wv">${A.probability!=null?Math.round(Number(A.probability)*100)+"%":"－"}</div><div class="ws">${f(A.lead||A.reason||"1号艇残し")}</div></div>
-          <div class="direct-world"><div class="wk">Pattern B / イン逃げ不成立</div><div class="wv">${B.probability!=null?Math.round(Number(B.probability)*100)+"%":"－"}</div><div class="ws">${f(B.lead||B.reason||"差し・まくり・外連動")}</div></div>
+          <div class="direct-world"><div class="wk">Pattern A / イン逃げ成立</div><div class="wv">${A.probability!=null?Math.round(Number(A.probability))+"%":"－"}</div><div class="ws">${f(A.lead||A.reason||"1号艇残し")}</div></div>
+          <div class="direct-world"><div class="wk">Pattern B / イン逃げ不成立</div><div class="wv">${B.probability!=null?Math.round(Number(B.probability))+"%":"－"}</div><div class="ws">${f(B.lead||B.reason||"差し・まくり・外連動")}</div></div>
         </div>
       </div>
       <div class="direct-card">
@@ -2450,7 +2454,7 @@ function renderDirectMode(d,pred){
       <div class="direct-card">
         <h3>上位買い目</h3>
         <div class="direct-tickets">${tickets.length?tickets.map((t,i)=>`
-          <div class="direct-ticket"><span class="rank">#${i+1}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</span><span class="memo">${memo.some(m=>m.combo===t.combo)?"メモ済":""}</span></div>`).join(""):`<div class="direct-note">買い目待ち</div>`}</div>
+          <div class="direct-ticket"><span class="rank">#${i+1}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*10)/10+"%":""}</span><span class="memo">${memo.some(m=>m.combo===t.combo)?"メモ済":""}</span></div>`).join(""):`<div class="direct-note">買い目待ち</div>`}</div>
       </div>
       <div class="direct-card">
         <h3>前回からの変化</h3>
@@ -2459,7 +2463,7 @@ function renderDirectMode(d,pred){
       <div class="direct-card">
         <h3>買い目メモ</h3>
         <div class="direct-tickets">${memo.length?memo.map((t,i)=>`
-          <div class="direct-ticket"><span class="rank">${t.world}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*1000)/10+"%":""}</span><span class="memo">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</span></div>`).join(""):`<div class="direct-note">予想タブで買い目をタップすると、ここにまとめて表示します。</div>`}</div>
+          <div class="direct-ticket"><span class="rank">${t.world}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*10)/10+"%":""}</span><span class="memo">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</span></div>`).join(""):`<div class="direct-note">予想タブで買い目をタップすると、ここにまとめて表示します。</div>`}</div>
       </div>
       <div class="direct-card">
         <h3>すぐ見る</h3>
