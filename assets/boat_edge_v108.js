@@ -933,6 +933,7 @@ async function renderPredictionModes(race,pred){
   });
   const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
   window.BoatEdgeV174?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes);
+  window.BoatEdgeV175?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes,odds,resultConfirmed);
 
   let snapStatus="🎯履歴は締切15分前から保存";
   if(inFinalWindow)snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
