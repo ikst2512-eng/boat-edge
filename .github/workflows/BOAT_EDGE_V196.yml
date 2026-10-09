@@ -1,0 +1,261 @@
+name: BOAT EDGE V196 - Audited Head and Third Place Miss Root Cause
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V196.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v196-one-time-site-rootcause-audit
+  cancel-in-progress: false
+
+jobs:
+  audit-frozen-site-misses:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout site evidence and full Git provenance
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Run source-SHA verified 120-race root cause decomposition without model change
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYV196'
+          from __future__ import annotations
+          import collections, hashlib, json, math, re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ROOT = Path('.')
+          DAY = '20261009'
+          MODES = ('hit', 'balance', 'hole', 'narrow')
+          COUNT = {'hit': (10,), 'balance': (10,), 'hole': (12, 15, 18), 'narrow': (3,)}
+          PRED = ROOT / 'data/site_prediction_history'
+          EVAL = ROOT / 'data/site_learning/site_mode_evaluations_v136'
+          AUDIT = ROOT / 'data/site_prediction_audit'
+          REPORT = ROOT / 'data/site_learning/head_tail_rootcause_v196.json'
+          POLICY = 'BALANCE10_WAVE12_15_18_V133_FIXED'
+          SCOPE = 'SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH'
+
+          def read(path):
+              return json.loads(path.read_text(encoding='utf-8'))
+
+          def initial():
+              return dict(races=0, hits=0, top1_hits=0, top3_hits=0, top5_hits=0, top10_hits=0,
+                          head_in_tickets=0, head_second_in_tickets=0, third_only_miss=0,
+                          second_only_miss=0, joint_tail_miss=0, head_absent_miss=0,
+                          true_non1_races=0, true_non1_hits=0, number_of_distinct_heads_sum=0,
+                          confidence_sum=0.0, confidence_observed=0,
+                          overlap_with_hit_sum=0, exact_same_list_as_hit=0,
+                          payout_band_10_20=dict(races=0, hits=0),
+                          confidence_buckets={k:dict(races=0,hits=0) for k in ('under60','60-69','70-79','80plus','unknown')})
+
+          def valid_triple(combo):
+              return isinstance(combo, str) and re.fullmatch(r'[1-6]-[1-6]-[1-6]', combo) is not None and len(set(combo.split('-'))) == 3
+
+          def timezone_date(value):
+              dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+              if dt.tzinfo is None: raise ValueError('timezone missing')
+              return dt.astimezone(timezone.utc)
+
+          reference_accuracy = read(ROOT / 'data/site_learning/mode_accuracy_v136.json')
+          assert reference_accuracy.get('scope') == SCOPE
+          head_top1 = collections.Counter()
+          head_winner = collections.Counter()
+          head_correct = collections.Counter()
+          mode = {name: initial() for name in MODES}
+          errors = []
+          examples = []
+          records = []
+          files = sorted(EVAL.glob(DAY + '-??-??.json'))
+          for pf in files:
+              key = pf.stem
+              try:
+                  entry = read(pf)
+                  hp = PRED / (key + '.json')
+                  raw = hp.read_bytes()
+                  assert hashlib.sha256(raw).hexdigest() == entry['source_history_sha256'], 'history SHA mismatch'
+                  rec = json.loads(raw)
+                  snap = rec['snapshot']
+                  settled = rec['settlement']
+                  audit = read(AUDIT / (key + '.json'))
+                  assert entry['scope'] == SCOPE and entry['schema_version'] == 'boat-edge-site-mode-evaluation-v136'
+                  assert rec['race_key'] == key == snap['race_key'] == entry['race_key'] == audit['race_key']
+                  assert audit['schema_version'] == 'boat-edge-final15m-audit-v125' and audit['pass'] is True
+                  assert audit['latest_snapshot_saved_at'] == snap['saved_at'] == entry['snapshot_saved_at']
+                  assert audit['revisions'][-1]['pass'] is True
+                  assert audit['revisions'][-1]['saved_at'] == snap['saved_at']
+                  assert snap['schema_version'] == 'boat-edge-server-site-final-v123'
+                  assert snap['snapshot_window'] == 'FINAL_15M'
+                  assert snap['mode_policy'] == POLICY and snap['prediction_kind'] == 'SITE_REFERENCE_V122'
+                  assert snap['guards'] == {'results_seen': False, 'unlock': False, 'scoring': False}
+                  assert 0 <= float(snap['minutes_to_deadline']) <= 16
+                  assert timezone_date(snap['first_saved_at']) <= timezone_date(snap['saved_at']) < timezone_date(settled['settled_at'])
+                  win = settled['winning_combo']
+                  assert valid_triple(win) and win == entry['winning_combo']
+                  assert isinstance(settled['payout'], int) and settled['payout'] > 0
+                  assert entry['winning_head_group'] == ('1' if win[0] == '1' else '2-6')
+                  tickets = {}
+                  for m in MODES:
+                      rows = snap['modes'][m]['tickets']
+                      assert len(rows) in COUNT[m], 'unexpected ticket count'
+                      L = [row['combo'] for row in rows]
+                      assert all(valid_triple(x) for x in L) and len(set(L)) == len(L)
+                      assert all(isinstance(row['stake_yen'], int) and row['stake_yen'] >= 100 and row['stake_yen'] % 100 == 0 for row in rows)
+                      assert sum(row['stake_yen'] for row in rows) == 10000
+                      assert (win in L) is entry['modes'][m]['hit']
+                      assert len(L) == entry['modes'][m]['count']
+                      assert (L.index(win) + 1 if win in L else None) == entry['modes'][m]['ticket_rank']
+                      tickets[m] = L
+                  assert audit['revisions'][-1]['hit_mode_top10'][0]['combo'] == tickets['hit'][0]
+              except (KeyError, AssertionError, ValueError, TypeError, OSError, IndexError) as exc:
+                  errors.append({'race_key': key, 'reason': str(exc)[:150]})
+                  continue
+              records.append(key)
+              h,s,t = win.split('-')
+              h_top = tickets['hit'][0][0]
+              head_top1[h_top] += 1
+              head_winner[h] += 1
+              if h_top == h: head_correct[h] += 1
+              if len(examples) < 15 and h != '1' and h_top == '1':
+                  examples.append({'race_key': key, 'top1': tickets['hit'][0], 'result': win})
+              for m in MODES:
+                  x=mode[m]
+                  L=tickets[m]
+                  exact = win in L
+                  heads={comb[0] for comb in L}
+                  win_pair=(h+'-'+s)
+                  has_pair = any(c.startswith(win_pair+'-') for c in L)
+                  has_head_third = any(c[0] == h and c[-1] == t for c in L)
+                  x['races'] += 1
+                  x['hits'] += int(exact)
+                  x['top1_hits'] += int(win == L[0])
+                  x['top3_hits'] += int(win in L[:3])
+                  x['top5_hits'] += int(win in L[:5]) if m != 'narrow' else 0
+                  x['top10_hits'] += int(win in L[:10]) if m != 'narrow' else 0
+                  x['head_in_tickets'] += int(h in heads)
+                  x['head_second_in_tickets'] += int(has_pair)
+                  x['number_of_distinct_heads_sum'] += len(heads)
+                  x['overlap_with_hit_sum'] += sum(y in tickets['hit'] for y in L)
+                  x['exact_same_list_as_hit'] += int(L == tickets['hit'])
+                  if h != '1':
+                      x['true_non1_races'] += 1
+                      x['true_non1_hits'] += int(exact)
+                  if not exact:
+                      if h not in heads:
+                          x['head_absent_miss'] += 1
+                      elif has_pair:
+                          x['third_only_miss'] += 1
+                      elif has_head_third:
+                          x['second_only_miss'] += 1
+                      else:
+                          x['joint_tail_miss'] += 1
+                  confidence = snap['modes'][m].get('confidence')
+                  if isinstance(confidence, (int,float)) and not isinstance(confidence,bool) and math.isfinite(confidence):
+                      x['confidence_sum'] += float(confidence)
+                      x['confidence_observed'] += 1
+                      bucket = 'under60' if confidence<60 else '60-69' if confidence<70 else '70-79' if confidence<80 else '80plus'
+                  else:
+                      bucket='unknown'
+                  x['confidence_buckets'][bucket]['races']+=1
+                  x['confidence_buckets'][bucket]['hits']+=int(exact)
+                  if 1000 <= settled['payout'] < 2000:
+                      x['payout_band_10_20']['races'] += 1
+                      x['payout_band_10_20']['hits'] += int(exact)
+
+          assert files, 'NO_EVALUATION_FILES'
+          assert not errors, 'INTEGRITY_REJECTED: ' + json.dumps(errors[:10], ensure_ascii=False)
+          assert len(records) >= 120, 'INSUFFICIENT_FIXED_SITE_COHORT'
+          assert reference_accuracy['predictions_evaluated'] >= len(records), 'V136_COHORT_DRIFT'
+          for m in MODES:
+              assert mode[m]['races'] == len(records) and mode[m]['hits'] <= reference_accuracy['modes'][m]['hits'], 'MODE_HITS_MISMATCH: ' + m
+              if reference_accuracy['predictions_evaluated'] == len(records):
+                  assert mode[m]['hits'] == reference_accuracy['modes'][m]['hits'], 'SAME_COHORT_MODE_MISMATCH: '+m
+              assert mode[m]['hits'] + sum(mode[m][k] for k in ('head_absent_miss','third_only_miss','second_only_miss','joint_tail_miss')) == len(records), 'MISS_DECOMPOSITION_INVALID: '+m
+
+          head={
+              'predicted_top1_head': dict(sorted(head_top1.items())),
+              'actual_first_place_head': dict(sorted(head_winner.items())),
+              'correct_top1_head_by_actual_head': dict(sorted(head_correct.items())),
+              'total_top1_head_correct': sum(head_correct.values()),
+              'top1_combo_exact_hits': mode['hit']['top1_hits'],
+              'non1_actual_winner_races': sum(x for k,x in head_winner.items() if k!='1'),
+              'non1_top1_head_correct': sum(x for k,x in head_correct.items() if k!='1'),
+              'non1_actual_winner_predicted_head1': 0,
+          }
+          head['non1_actual_winner_predicted_head1'] = sum(1 for pf in files if (lambda r: r['settlement']['winning_combo'][0]!='1' and r['snapshot']['modes']['hit']['tickets'][0]['combo'][0]=='1')(read(PRED/(pf.stem+'.json'))))
+          for m,x in mode.items():
+              x['avg_distinct_heads_per_race'] = round(x['number_of_distinct_heads_sum']/x['races'],2)
+              x['avg_overlap_with_hit_per_race'] = round(x['overlap_with_hit_sum']/x['races'],2)
+              x['avg_displayed_confidence_value'] = round(x['confidence_sum']/x['confidence_observed'],2) if x['confidence_observed'] else None
+              x['observed_10k_tickets_hit_pct'] = round(100*x['hits']/x['races'],2)
+              if m == 'narrow':
+                  x['top5_hits'] = x['top10_hits'] = None
+              del x['number_of_distinct_heads_sum'],x['confidence_sum'],x['overlap_with_hit_sum']
+          report={
+              'schema_version':'boat-edge-site-reference-head-tail-miss-audit-v196',
+              'status':'SHA_AND_V125_AUDIT_VERIFIED_DESCRIPTIVE_ONLY',
+              'scope':'SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH',
+              'date_jst':'2026-10-09',
+              'audited_races':len(records),
+              'distinct_days':1,
+              'comparison':'ONE_DAY_ORIGINAL_SITE_REFERENCE_V133_MODES_NOT_PROSPECTIVE_CANDIDATE_TEST',
+              'head':head,
+              'modes':mode,
+              'examples_non1_result_but_head1_top1':examples,
+              'miss_classification':{
+                  'head_absent_miss':'actual first-place boat not in that mode tickets at all',
+                  'third_only_miss':'actual head+second occurs in one or more tickets; winning third does not',
+                  'second_only_miss':'actual head+third occurs in one or more tickets; winning second does not',
+                  'joint_tail_miss':'actual head present but neither head+second nor head+third present',
+                  'mutually_exclusive':True,
+              },
+              'relative_performance_gate':{
+                  'V180_independent_future_first_eligible':'2026-10-10',
+                  'V185_independent_future_first_eligible':'2026-10-10',
+                  'current_evidence_for_improvement':'NONE_FROM_THIS_SINGLE_DAY',
+                  'requirements':'Untouched predeadline Git committed V180/V185 predictions, independent post-settlement scoring, multi-day reproducible relative Top3 Top5 Top10 results; do not tune weights based on this retrospective audit'
+              },
+              'limitations':['Site reference only; NOT formal Fresh results','Single date, venue composition may not represent future','Mode displayed confidence is not established as an empirically calibrated hit probability','Payout bands use actual post-settlement payout solely for diagnostics; not used in pre-race ticket selection'],
+              'candidate_priority':['first-head non1 scenario recall and 1x2 wall + 4-course attacker','second/third conditional role ranking and original exhibition timing','mode overlap and distinct scenario coverage','calibration of displayed confidence separately from ranking'],
+              'no_external_result_endpoint_access':True,
+              'no_formal_result_data_access':True,
+              'production_model_unchanged':True,
+              'no_weight_tuning_from_same_day':True,
+          }
+          REPORT.parent.mkdir(parents=True,exist_ok=True)
+          REPORT.write_text(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print('V196_AUDIT_PASS races=',len(records),'head=',head,'hit_mode_miss=',{k:mode['hit'][k] for k in ('head_absent_miss','third_only_miss','second_only_miss','joint_tail_miss')})
+          PYV196
+          git diff --check
+      - name: Save diagnostic output only; never change predictor or workflow files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          report=data/site_learning/head_tail_rootcause_v196.json
+          test -s "$report"
+          cp "$report" /tmp/v196_research_report.json
+          for i in 1 2 3 4; do
+            if [ ! -f "$report" ]; then mkdir -p data/site_learning; cp /tmp/v196_research_report.json "$report"; fi
+            git add -- "$report"
+            git diff --cached --check
+            if git diff --cached --quiet; then echo V196_REPORT_ALREADY_SAVED; exit 0; fi
+            git commit -m 'V196 audited 120R head and 3rd-place miss decomposition, no production changes'
+            if git push origin HEAD:main; then echo V196_AUDIT_EVIDENCE_SAVED; exit 0; fi
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo V196_AUDIT_COMMIT_BLOCKED >&2
+          exit 1
