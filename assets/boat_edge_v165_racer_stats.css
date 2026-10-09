@@ -1,0 +1,28 @@
+/* V165: Racer×actual-course historical rates, informational UI only. */
+#be165RacerStats{margin:12px 0 14px;background:#fff;border:1px solid #dbe5f0;border-radius:14px;padding:12px;box-shadow:0 5px 14px rgba(27,66,122,.05)}
+.be165-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.be165-head h3{margin:0;font-size:16px;color:#123e78}
+.be165-head small{font-size:10px;color:#657d9b}
+.be165-note{font-size:11px;line-height:1.6;color:#627c9b;margin:8px 0}
+.be165-alert{background:#fff6e7;color:#805a1f;border:1px solid #f3db9e;border-radius:9px;padding:8px 9px;margin:8px 0;font-size:11px}
+.be165-controls{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.be165-controls button{border-radius:999px;background:#f4f7fd;border:1px solid #dce6f3;color:#527198;padding:8px 11px;font-size:12px;font-weight:800}
+.be165-controls button.on{background:#1f5eff;border-color:#1f5eff;color:#fff}
+.be165-scroll{overflow:auto;max-width:100%;overscroll-behavior-x:contain}
+.be165-table{width:100%;border-collapse:collapse;min-width:635px;font-size:12px;font-variant-numeric:tabular-nums}
+.be165-table th,.be165-table td{border-bottom:1px solid #ebeff5;padding:10px 7px;text-align:right;white-space:nowrap}
+.be165-table thead th{font-size:11px;color:#6f8197;background:#f4f7fb;font-weight:850}
+.be165-table th:first-child,.be165-table td:first-child{text-align:left;position:sticky;left:0;background:white;z-index:1}
+.be165-table thead th:first-child{background:#f4f7fb;z-index:2}
+.be165-table .be165-sub{display:block;color:#8e9caf;font-size:10px;font-weight:500;margin-top:3px}
+.be165-table .be165-strong{background:#fff0eb;color:#c93125;font-weight:900}
+.be165-row-button{border:0;background:transparent;text-align:left;color:#173b73;font-size:12px;font-weight:850;padding:0;cursor:pointer}
+.be165-row-button:focus-visible{outline:2px solid #1f5eff}
+.be165-boat{display:inline-flex;align-items:center;justify-content:center;width:20px;height:22px;border-radius:4px;background:#e9eff8;margin-right:6px}
+.be165-details{margin-top:10px;padding:10px;border:1px solid #dce7f5;background:#f9fbff;border-radius:10px;font-size:12px}
+.be165-details h4{font-size:13px;margin:0 0 8px;color:#163d73}
+.be165-method-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.be165-method-list>div{padding:8px;border-radius:8px;background:#fff;border:1px solid #e3eaf3}
+.be165-method-list strong,.be165-method-list small{display:block}
+.be165-method-list small{font-size:10px;color:#8294a9;margin-top:3px}
+@media(max-width:520px){#be165RacerStats{padding:9px}.be165-head h3{font-size:14px}.be165-method-list{grid-template-columns:repeat(2,minmax(0,1fr))}.be165-table{font-size:11px}}
