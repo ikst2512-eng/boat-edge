@@ -1,0 +1,82 @@
+name: BOAT EDGE V167 - Independent Official Odds 120-Combo Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 0-13 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v167-live-odds-parity
+  cancel-in-progress: false
+
+jobs:
+  official-odds-dom-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install source verification dependencies
+        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Restore checksum-verified verifier, mock tests and restricted live auditor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYIN'
+          import base64, gzip, hashlib
+          from pathlib import Path
+          objects = {
+            'scripts/site_odds_v167_dom_verifier.py': ('69dc593a4df78597679cff18267090ae2546a512bc4335c255ecd1b953de5239', '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'),
+            'tests/test_site_odds_v167.py': ('568e84c84f505127f6760af25d0d717d47ce2c42649d1abcf85215c2dd3a1fbc', 'H4sIAAAAAAAC/6VW727TMBD/3qcwlVBSFkJTxoamuRIg+ApiaF+qynKTS2tw4mA726oJiYfgCXkSzk7Spt20UbDUJM7d7+53/5yKolLakroU1oKxg1yrgizMMRGN4C3w2oq8lheqrhqpSbWorImNsMBUlhl2lZycskwV7Aq0yAXoDu33a6byXKSCS69TaZECK3hViXIZEbipILWQscWa5UIjhcEgg5wsaiEzZnhRSQhFmSqtUY9+4NLA6GxAcFUc9ekdA+HIS7W6NnQWnFu+kEBSyY2hQ0f3pR1Oz+0KeIY37R5JqqSpeEmHyevh9GPLljjl8xd2NcWLdpcWs1DZehrMvZdcaeeJiJJoXi4hnIxbdm4thG046E6/w3imW1QSkdMezi0DqSqziNiV0Bn1sc48aj5Dh/MdXZGTTYoIL7PGPKUTv0F1Sk93rbvVWD5xaP9InlBy4hGN7ycoA0w3ebXvDC0+PaZ0fNemizjG2kKZhTkG7r03uT0eTm8bwz8wl9k0GA3uIOHGOmQDnd56Wq12RBp7vUp+UqLEYt76aJ8l4/EROjsax8lZnOSdk9HgPm6Br2mPgqO5EQbxVzQdOsBo2019rO8BvLvm6sxosLUuSYd2kBF2sydMLnFGvuCEhd2oxW73jm+62TW9e8+SybgbD1YhNDQg815zaDC1tPTR2Qp3RqiXB2cvRsOg7fvvNZdh2JicBcZyW5tgHnUv0hWk3yDrveFXXEgXdTAfRWHw6c3FRRAhZfdrfWwiudYKY/BFZIgByTR89cO6H9O1wCns8frMhQHzGZZwE15yWcN7rZWOSNDGRgphCm7TVbA3NQdmZXuwfNE17PO3ui5T7s6Wii/h/8ljig7n255g7Vl1X/9P4onv9e6Y6vfkJhZMmHEd9XAdVraQdLdvYg2V5CmEfiRfNp7u5YEDGCfdsHrt3z9//aV+Mjo8nQvFLfHxmMPT6iLdS1F7UrGFqsuM6/V+clR9+NRts9eLPIh6OyLMc7cZBg+NKPruT6Mbtl3yorziUmQuCKzxGvX/ucg7R/akLdCuINkKHq1cr2j/WKUBfnIYK3kBjFEaMBSLkrHgbPO/JXZv8MP/B2X+mR7PCAAA'),
+            'tests/test_site_odds_v167_runner.py': ('7bca59f1afc8ebb15ac9f44fd0d49fde25dfbf21519ab056ba92ef0e61834a9a', 'H4sIAAAAAAAC/8VWa2/iOBT93l+Rb046IQ2M1N1mFGkRpbNou3REaUcrFlkmcYpLYmdsB0qr/ve9zqvQYdvRSqtBAvy699j3HJ+EZbmQ2rpXgh+xqi1U09I0yxOW0qZfcKY1VfookSKzYqKpZhm16tmm71rm91HwuhXTVJMqJCd6mbJFE/EFutVEk9nLRLRqpmF1VM+rSLJcq2ZGMU2xiGOF193TX3DK1hSTImbaIsqSBedUVnEmJ95f3eRYFCyNsSJZDgc8Ou9PhyHq+b3TTtfv+GfoKEqJUtYghQ0FRxZ8flOaaBZlVC9FXI7ENLG42Nj6MRzDcZ3AklQXkrelsE1Ct+u7Z2731PVd/ch4IkL96NTpJ1TlgitaIRiAQuFIxDTs+X45Rjl0Gb8LUaGTzq+oHCR5TiTlGh+cNdvCmEFJMbYVTRNXP2gnMC1P0wcdQrddKAlTFCdC4gq9DHCCHHZX7/GaKsUEr7a4pCSmUoVPz+9DvUK6o7packzc4+OVE9TFampgN1FtcUoip0Ch3erD9AZEQa3bvIrqm7zedjlYlrLMleVho2GINLwTuT1nkkZayK3tfCqXbYgKhfJgf9EmhkFoR8uYSbtJ4nGSUafNbWRrI++O6WWxONkIuUpSsVHI8bKVCau4UeFUFu9HnRh1dow6vW2WQo6NNHI1PNkoEeJvjj5Uivb+7E/+GE4+oAWRMPo6M2iOtFs4NHmiRUy2nrnq+zBmxIuLLFf2k1lJUWCug4vWlBdUoWDWZjOfJ3QfxShAfhe5SJKoXPFUtvCKbmHGqL7r+2cdv9vxe/UqzAUKei6KQUEp4wCCuqdBz0fP82f3MEDvfYBex/+4C/DxNcDHEmD+7DitYDQl8lxseK2ZfbpBDLUsDPFRSgkvcvslGAMZlYyVKGREdzS3AWor0/LE4h40ZlfEuajxA+SWfuK4B1Z5kn6DamvlovrGITcl2SImQd23a8TD4aX1IpVSmjeB1kNQ+dJeeRs4OMduTcAoc7BMoQEJC55uMUk0lVhvBO72fLymkiWMxgdvWlmVXUe1nRcJqrBUWCpIrOwdPba+fFLljkiJbUy6UakELiuR7uYziGAQVOrht4KktpqhyrzQ3EXTr1f4cnQ7xJP+YHhdbv1LfzKa/gV/19fojTSzhxmKljRa0RjNLbBE68Fi3DLZyzNB+rk7g4QufOcHE424jcrDbLFI4ESMpDgWGVSWgUAz8G0wa3ups9RB7o86wndFaAnjYo8zsHBZRGCqgJoxlRmV/CBdDB4k0vhi5Vo/i7yL/ugS34xvh5PRxWh4jsdXeHB1eTkcTK8mePB7f/x5eJjBC5KaJwgQKNK0tHd8VxAZ1/UxjB6MG4ufytlmSQ1xtHqFKf32O8L+hYA9N9+F+wRVqJ17Hu60Z0F3/h8fC+o1gW/e9/X/LZn1rmS+9kfT0fgzbu/97XB8M7x+Sybrt2XCzDuNeeRjHIYIgwQYxxgFLy+pMADe+Q+p6c/pPAsAAA=='),
+            'scripts/site_odds_v167_live_audit.py': ('22b0535a9bd917f836e9c5566bca5f23d66f5980b3b1786a59ccb238d465f313', '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'),
+          }
+          for dest,(expected,b64) in objects.items():
+            content=gzip.decompress(base64.b64decode(b64))
+            assert hashlib.sha256(content).hexdigest()==expected, dest+' SHA mismatch'
+            p=Path(dest);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(content)
+          print('V167 verifiers integrity PASS:',len(objects))
+          PYIN
+      - name: Run offline structural mapping regression tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_site_odds_v167*.py' -v
+          python3 -m py_compile scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py
+      - name: Compare two LIVE official pages before patching any collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_odds_v167_live_audit.py
+          git diff --check
+      - name: Commit audit safely; auto-enable collector guard only after 2x120 PASS
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py tests/test_site_odds_v167.py data/site_odds/verification_v167.json .github/workflows/site-odds.yml
+          if git diff --cached --quiet; then
+            echo 'V167 already current, nothing to write'
+            exit 0
+          fi
+          git commit -m 'V167: independently audit official 120-combo odds mapping; guard only after PASS'
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              echo 'V167 audit / guarded collector committed to main'
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'V167 push failed; do not claim deployed' >&2
+          exit 1
