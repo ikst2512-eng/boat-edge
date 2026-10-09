@@ -1058,6 +1058,7 @@ body{background:
 <link rel="stylesheet" href="./assets/boat_edge_v136_accuracy.css?v=137">
 <link rel="stylesheet" href="./assets/boat_edge_v139_input_audit.css?v=139">
 <link rel="stylesheet" href="./assets/boat_edge_v140_budget.css?v=140">
+<link rel="stylesheet" href="./assets/boat_edge_v163_nav_stats.css?v=163">
 </head>
 <body>
 <div class="app">
@@ -1562,6 +1563,21 @@ function getBeforeMap(d){
   const actual = new Map((d?.actual_entry||[]).map(x=>[Number(x.lane), Number(x.course)]));
   return {bf, starts, racers, actual};
 }
+/* BE162_STRICT_REAL_BEFOREINFO: count values, not placeholder rows. */
+function be162BeforeCoverage(d){
+  const bf=d?.beforeinfo||{};
+  const st=(bf.start_exhibition||[]).filter(x=>num(x?.st)!==null).length;
+  const ex=(bf.racers||[]).filter(x=>num(x?.exhibition_time)!==null).length;
+  const pairs=(d?.actual_entry||[]).map(x=>[Number(x.lane),Number(x.course)]);
+  const entry=pairs.length===6 && new Set(pairs.map(x=>x[0])).size===6 &&
+    new Set(pairs.map(x=>x[1])).size===6 && pairs.every(([lane,course])=>lane>=1&&lane<=6&&course>=1&&course<=6);
+  const original=(d?.original_exhibition?.boats||[]).filter(x=>
+    (x?.values||[]).some(v=>num(v)!==null)).length;
+  const official=d?.source_audit?.beforeinfo?.status==="ok";
+  const w=bf.weather||{};
+  const water=num(w.wind_speed_ms)!==null||num(w.wave_cm)!==null;
+  return {st,ex,entry,original,official,water,ready:(st>=4||ex>=4||entry)};
+}
 function normalizeExhibition(racers){
   const times = racers.map(x=>num(x.exhibition_time)).filter(v=>v!==null);
   if(!times.length) return {};
@@ -1795,7 +1811,7 @@ function getPrediction(d){
 function getPredictionStatus(d){
   if(hasFormalPrediction(d)) return {kind:"green", text:"正式予想"};
   const bf = d.beforeinfo || {};
-  const hasSome = (bf.racers||[]).length || (d.actual_entry||[]).length;
+  const hasSome = be162BeforeCoverage(d).ready;
   return hasSome ? {kind:"orange", text:"暫定予想"} : {kind:"gray", text:"準備中"};
 }
 function makeRaceSubtitle(d){
@@ -2056,7 +2072,7 @@ function renderRaceMasthead(d,pred){
   const a=worlds.find(x=>x.key==="A")?.probability;
   const b=worlds.find(x=>x.key==="B")?.probability;
   const mode=pred.mode==="formal"?"正式CURRENT":"最新方針準拠・参考";
-  const beforeReady=(d.beforeinfo?.racers||[]).length>0 || (d.beforeinfo?.start_exhibition||[]).length>0;
+  const beforeReady=be162BeforeCoverage(d).ready;
   el.innerHTML=`
     <div class="mast-panel">
       <div class="mast-label">RACE READ</div>
@@ -2091,13 +2107,14 @@ function renderHome(){
 
 
 function inputCompleteness(d){
+  const b=be162BeforeCoverage(d);
   const present = {
-    "出走表": !!(d.racers||[]).length,
-    "直前": !!(d.beforeinfo?.racers||[]).length,
-    "実進入": !!(d.actual_entry||[]).length,
-    "展示ST": !!(d.beforeinfo?.start_exhibition||[]).length,
-    "水面": !!d.beforeinfo?.weather,
-    "オリジナル展示": !!(d.original_exhibition?.boats||[]).length
+    "出走表": (d.racers||[]).length===6,
+    "直前": b.official && b.ready,
+    "実進入": b.entry,
+    "展示ST": b.st>=4,
+    "水面": b.official && b.water,
+    "オリジナル展示": b.original>=4
   };
   const total = Object.keys(present).length;
   const ok = Object.values(present).filter(Boolean).length;
@@ -2179,7 +2196,7 @@ function renderBeforeQuick(d,pred){
   const entryRows=[...actual.entries()].sort((a,b)=>a[0]-b[0]);
   const entryChanged=entryRows.some(([lane,course])=>Number(lane)!==Number(course));
   const entryText=entryRows.length?entryRows.map(([lane,course])=>`${lane}→${course}`).join(" "):"未取得";
-  const beforeReady=racers.length>0 || stRows.length>0 || entryRows.length>0;
+  const beforeReady=be162BeforeCoverage(d).ready;
   el.innerHTML=`
     <div class="before-quick-card ${bestST?"hot":""}">
       <div class="qk">展示STトップ</div>
@@ -2397,7 +2414,7 @@ function renderDirectMode(d,pred){
   const memo=selectedMemoRows(d,pred);
   const diffs=currentPredictionDiff(d,pred).slice(0,5);
   const {bf,starts,actual}=getBeforeMap(d);
-  const beforeReady=(bf.racers||[]).length>0 || starts.size>0 || actual.size>0;
+  const beforeReady=be162BeforeCoverage(d).ready;
   const entryRows=[...actual.entries()].sort((a,b)=>a[0]-b[0]);
   const entryChanged=entryRows.some(([lane,course])=>Number(lane)!==Number(course));
   const mode=pred.mode==="formal"?"正式CURRENT":"最新方針準拠・参考";
@@ -2569,7 +2586,8 @@ function renderBefore(d, pred){
     ["気温 / 水温", `${f(bf.weather?.air_temp_c)}℃ / ${f(bf.weather?.water_temp_c)}℃`]
   ].map(x=>`<div class="card strip-card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join("");
   const names = new Map((d.racers||[]).map((r,i)=>[laneNo(r,i), r.name]));
-  document.getElementById("beforeRows").innerHTML = (bf.racers || []).map((r,i)=>{
+  const measured=be162BeforeCoverage(d);
+  document.getElementById("beforeRows").innerHTML = (measured.ready ? (bf.racers || []) : []).map((r,i)=>{
     const lane = r.lane ?? (i+1);
     const s = (pred.scores || []).find(x=>x.lane===lane);
     const memo = s ? (s.lane===1 ? "イン残り軸" : s.attackScore > s.insideScore ? "攻め候補" : "相手候補") : "－";
@@ -2969,7 +2987,7 @@ function renderUrgency(d,pred){
   if(sec!=null && sec<=120 && sec>=0){cls="hot";main="締切2分前"; }
   else if(sec!=null && sec<=300 && sec>=0){cls="warn";main="締切5分前"; }
   else if(sec!=null && sec<0){main="締切済";}
-  const beforeReady=(d.beforeinfo?.racers||[]).length>0 || (d.beforeinfo?.start_exhibition||[]).length>0;
+  const beforeReady=be162BeforeCoverage(d).ready;
   el.className=`urgency-ribbon ${cls}`;
   el.innerHTML=`<div class="u-left"><span class="u-dot"></span><div><div class="u-main">${main}</div><div class="u-sub">${beforeReady?"直前データ取得済み":"直前データ公開待ち"} / ${pred.mode==="formal"?"正式予想":"暫定予想"}</div></div></div><div class="u-time">${formatCountdown(sec)}</div>`;
 }
@@ -2991,7 +3009,7 @@ function flashUpdatePulse(){
   setTimeout(()=>el.classList.remove("flash"),1800);
 }
 
-function renderRace(d){
+function renderRace(d,opts={}){
   state.race = d;
   pushRecentRace(d);
   const pred = getPrediction(d);
@@ -3026,9 +3044,11 @@ function renderRace(d){
   renderDataTab(d, pred);
   renderAuditTab(d, pred);
 
-  document.querySelectorAll("#raceTabs [data-tab]").forEach((b,i)=>b.classList.toggle("on", i===0));
-  document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active", v.id==="tab-pred"));
-  showView("raceView");
+  if(!opts.silent){
+    document.querySelectorAll("#raceTabs [data-tab]").forEach((b,i)=>b.classList.toggle("on", i===0));
+    document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active", v.id==="tab-pred"));
+    showView("raceView");
+  }
 }
 async function loadRace(file, jcd){
   state.currentVenue = jcd;
@@ -3084,16 +3104,41 @@ function updateGlobalDataViews(){
     `rc ${sourceCounts.race_cards ?? "－"} / stt ${sourceCounts.stt ?? "－"} / tkz ${sourceCounts.tkz ?? "－"} / sui ${sourceCounts.sui ?? "－"} / oe ${sourceCounts.original_exhibition ?? "－"}` :
     "読込後反映";
 }
+let be162RefreshBusy=false;
+async function be162RefreshVisibleRace(){
+  if(be162RefreshBusy || document.visibilityState!=="visible")return;
+  if(!document.getElementById("raceView")?.classList.contains("active"))return;
+  const original=state.race;
+  const key=String(original?.race_key||"");
+  if(!/^\d{8}-\d{2}-\d{2}$/.test(key))return;
+  const today=new Date(Date.now()+9*3600000).toISOString().slice(0,10).replaceAll("-","");
+  if(key.slice(0,8)!==today)return; // Never poll formal 2026-10-08 or any settled historical cohort.
+  be162RefreshBusy=true;
+  try{
+    const response=await fetch(`./data/races/${key}.json?live=${Date.now()}`,{cache:"no-store"});
+    if(!response.ok)return;
+    const race=await response.json();
+    if(race.race_key!==key)return;
+    if(race.meta?.results_seen!==false || race.meta?.unlock!==false || race.meta?.scoring!==false)return;
+    const signature=r=>JSON.stringify([r.meta?.updated_at,r.beforeinfo,r.actual_entry,r.original_exhibition,r.source_audit?.beforeinfo?.status]);
+    if(signature(race)===signature(original))return;
+    const overlay=await loadFormalOverlay(key);
+    if(state.race?.race_key!==key)return;
+    renderRace(mergeFormalOverlay(race,overlay),{silent:true});
+  }catch(_){/* retain last successfully loaded race; show stale status through source time */}
+  finally{be162RefreshBusy=false;}
+}
 async function refreshAll(force=false){
   await refreshFormalStatus();
   await refreshToday();
   await refreshModel();
   updateGlobalDataViews();
+  await be162RefreshVisibleRace();
 }
 let passiveRefreshTimer=null;
 function startPassiveRefresh(){
   clearInterval(passiveRefreshTimer);
-  passiveRefreshTimer=setInterval(async()=>{if(document.visibilityState==="visible") await refreshAll(true);},120000);
+  passiveRefreshTimer=setInterval(async()=>{if(document.visibilityState==="visible") await refreshAll(true);},30000);
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible") refreshAll(true);});
 
@@ -3104,8 +3149,9 @@ startPassiveRefresh();
 </script>
 <script src="./assets/boat_edge_final_v48.js"></script>
 <!-- BOAT_EDGE_V85_SAFE_MODE: accumulated simple JS disabled -->
-<script src="./assets/boat_edge_v108.js?v=135"></script>
+<script src="./assets/boat_edge_v108.js?v=163"></script>
 <script defer src="./assets/boat_edge_v136_accuracy.js?v=137"></script>
 <script defer src="./assets/boat_edge_v139_input_audit.js?v=139"></script>
+<script src="./assets/boat_edge_v163_nav_stats.js?v=163"></script>
 </body>
 </html>

@@ -4,7 +4,8 @@
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??"－").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const n=v=>Number(v);
+/* BE162_STRICT_REAL_BEFOREINFO: null/blank is unavailable, never a measured zero. */
+const n=v=>(v===null||v===undefined||String(v).trim()==="")?NaN:Number(v);
 const pct=v=>Number.isFinite(n(v))?(n(v)<=1?n(v)*100:n(v)).toFixed(1)+"%":"－";
 const yen=v=>Number.isFinite(n(v))?Math.round(n(v)).toLocaleString("ja-JP")+"円":"－";
 
@@ -30,6 +31,7 @@ let serverHistoryByKey={};
 let selectedDate=null;
 let selectedVenue=null;
 let lastRaceKey=null;
+let be160LiveDayActivated=null;
 const jsonCache=new Map();
 
 async function J(url,ttl=30000){
@@ -55,7 +57,7 @@ function clearRaceCache(key){
 function raceOf(){try{return state?.race||null}catch(_){return null}}
 function predOf(r=raceOf()){try{return r&&typeof getPrediction==="function"?getPrediction(r):null}catch(_){return null}}
 function activeView(){return $(".view.active")?.id||"homeView"}
-function todayYmd(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`}
+function todayYmd(){return new Date(Date.now()+9*3600000).toISOString().slice(0,10).replaceAll("-","")}
 function raceMinutesToDeadline(race){
   const date=String(race?.meta?.date||"");
   const deadline=String(race?.meta?.deadline||"");
@@ -102,11 +104,25 @@ function siteBack(){
 
 /* ---------- archive / BOATERS-like home ---------- */
 async function loadArchiveIndex(){
-  if(archiveIndex)return archiveIndex;
-  archiveIndex=await J("./data/site_archive/index.json",60000);
+  archiveIndex=await J("./data/site_archive/index.json",60000)||archiveIndex;
   return archiveIndex;
 }
-async function loadArchiveDay(ymd){return await J(`./data/site_archive/${ymd}.json`,60000)}
+async function loadArchiveDay(ymd){
+  // Fresh racing cards appear in today.json before the archive writer publishes them.
+  if(ymd===todayYmd()){
+    const live=await J("./data/today.json",15000);
+    if(String(live?.date||"").replaceAll("-","")===ymd&&Array.isArray(live.venues)&&live.venues.length){
+      return {ymd,venue_count:live.venues.length,venues:live.venues.map(v=>({
+        jcd:String(v.jcd||"").padStart(2,"0"),venue:v.venue,event:v.event,
+        races:(v.races||[]).filter(r=>/^data\/races\/\d{8}-\d{2}-\d{2}\.json$/.test(String(r.file||""))).map(r=>({
+          race_key:r.race_key,race_no:r.race_no,deadline:r.deadline,file:r.file,
+          jcd:String(v.jcd||"").padStart(2,"0"),result_status:"live",has_odds:false
+        }))
+      }))};
+    }
+  }
+  return await J(`./data/site_archive/${ymd}.json`,60000);
+}
 function ensureHomeHub(){
   const home=$("#homeView");if(!home)return null;
   let el=$("#be108Hub");
@@ -120,6 +136,7 @@ function resultText(r){
     const hit=serverHistoryByKey?.[r.race_key]?.hit_any?" 🎯":"";
     return `結果 ${r.trifecta||"確定"}${pay}${hit}`;
   }
+  if(String(r.race_key||"").startsWith(todayYmd()))return "当日出走表 / 結果はレース画面で確認";
   return r.has_odds?"オッズあり":"保存データ";
 }
 function venueGrid(day){
@@ -216,9 +233,15 @@ async function renderHomeHub(){
   const host=ensureHomeHub();if(!host)return;
   await loadServerHistoryIndex();
   const idx=await loadArchiveIndex();
-  const dates=[...(idx?.dates||[])].map(x=>x.ymd).sort();
-  if(!dates.length){host.innerHTML='<div class="be108-empty">保存データ準備中</div>';return}
-  if(!selectedDate||!dates.includes(selectedDate))selectedDate=dates.includes(todayYmd())?todayYmd():dates[dates.length-1];
+  const live=await J("./data/today.json",15000);
+  const liveDay=String(live?.date||"").replaceAll("-","");
+  const hasLiveDay=liveDay===todayYmd()&&Array.isArray(live?.venues)&&live.venues.length>0;
+  const dates=[...new Set([...(idx?.dates||[]).map(x=>x.ymd),...(hasLiveDay?[liveDay]:[])])].sort();
+  if(!dates.length){host.innerHTML='<div class="be108-empty">出走表・保存データ準備中</div>';return}
+  if(hasLiveDay&&be160LiveDayActivated!==liveDay){
+    selectedDate=liveDay;selectedVenue=null;be160LiveDayActivated=liveDay;
+  }
+  if(!selectedDate||!dates.includes(selectedDate))selectedDate=hasLiveDay?liveDay:dates[dates.length-1];
   const day=await loadArchiveDay(selectedDate);
   if(selectedVenue&&!(day?.venues||[]).some(v=>String(v.jcd)===String(selectedVenue)))selectedVenue=null;
   const i=dates.indexOf(selectedDate),prev=dates[i-1]||"",next=dates[i+1]||"";
@@ -392,7 +415,7 @@ function be122OriginalMap(race){
       const x=n(v);
       if(Number.isFinite(x))row[labels[i]||`metric_${i}`]=x;
     });
-    out.set(lane,row);
+    if(Object.keys(row).length)out.set(lane,row);
   }
   return {labels,out};
 }
@@ -410,10 +433,11 @@ function be122MetricScores(map,label){
   return score;
 }
 function be122MethodFit(c,course){
-  if(!c)return null;
+  if(!c)return NaN;
+  const best=(...xs)=>{const a=xs.map(n).filter(Number.isFinite);return a.length?Math.max(...a):NaN};
   if(course===1)return n(c.escape);
-  if(course===2)return Math.max(n(c.sashi)??0,n(c.makuri)??0);
-  if(course===3||course===4)return Math.max(n(c.makuri)??0,n(c.makuri_sashi)??0);
+  if(course===2)return best(c.sashi,c.makuri);
+  if(course===3||course===4)return best(c.makuri,c.makuri_sashi);
   return n(c.makuri_sashi);
 }
 async function be122ScenarioAdjusted(race,pred){
@@ -484,7 +508,7 @@ async function be122ScenarioAdjusted(race,pred){
       const fit=be122MethodFit(c,course);
       if(Number.isFinite(fit)){
         f*=1+be122Clamp(((fit/100)-.45)*.15,-.05,.08);
-        if(course===4&&Math.max(n(c.makuri)??0,n(c.makuri_sashi)??0)>=50)f*=1.035;
+        if(course===4&&[n(c.makuri),n(c.makuri_sashi)].some(v=>Number.isFinite(v)&&v>=50))f*=1.035;
       }
     }
 
@@ -544,8 +568,8 @@ function be131ExpandedReferencePrediction(race,pred){
 
   const worldA=pred.worlds?.find(x=>x.key==="A")||pred.worlds?.[0]||{};
   const worldB=pred.worlds?.find(x=>x.key==="B")||pred.worlds?.[1]||{};
-  const pa=n(worldA.probability)??50;
-  const pb=n(worldB.probability)??(100-pa);
+  const pa=Number.isFinite(n(worldA.probability))?n(worldA.probability):50;
+  const pb=Number.isFinite(n(worldB.probability))?n(worldB.probability):(100-pa);
 
   const aCandidates=[];
   const seconds=supporters.filter(x=>x.lane!==1);
@@ -1120,8 +1144,12 @@ wrapRenderRace();
 installEvents();
 fixBottom();cleanTabs();installBackButtons();
 renderHomeHub();
+// Refresh the home venue/date list after the collector publishes new race cards.
+setInterval(()=>{
+  if(document.visibilityState==="visible"&&activeView()==="homeView")renderHomeHub();
+},120000);
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="visible"&&activeView()==="homeView")be135RefreshUpcoming();
+  if(document.visibilityState==="visible"&&activeView()==="homeView")renderHomeHub();
 });
 document.addEventListener("click",e=>{
   if(e.target.closest?.('.bottomnav [data-view="homeView"]'))

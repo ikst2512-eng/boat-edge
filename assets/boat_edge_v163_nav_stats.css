@@ -1,0 +1,47 @@
+/* BOAT EDGE V163: original compact navigation and factual stats, independent of BOATERS assets. */
+.race-head{top:calc(var(--be163-topbar-height,60px) + var(--be163-nav-height,0px));}
+.topbar .brand[data-be163-home="1"]{cursor:pointer;border-radius:12px;touch-action:manipulation}
+.topbar .brand[data-be163-home="1"]:focus-visible{outline:3px solid #1f5eff;outline-offset:4px}
+#be163RaceNav[hidden]{display:none!important}
+#be163RaceNav{position:sticky;top:var(--be163-topbar-height,60px);z-index:58;padding:8px 11px 6px;background:#f9fbff;border-bottom:1px solid #d8e3f1;box-shadow:0 5px 14px rgba(18,51,95,.07)}
+.be163-nav-top{display:flex;align-items:center;gap:9px;min-width:0;max-width:980px;margin:auto}
+.be163-nav-top>b{color:#173b70;font-size:13px;white-space:nowrap}
+#be163Venue{flex:1;min-width:110px;max-width:290px;border:1px solid #cbdcee;border-radius:10px;background:white;color:#15335f;padding:8px 10px;font-weight:800;font-size:13px}
+#be163Status{color:#758aa6;font-size:10px;margin-left:auto;white-space:nowrap}
+.be163-race-strip{display:flex;max-width:980px;margin:7px auto 0;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding-bottom:3px}
+.be163-race-strip::-webkit-scrollbar{display:none}
+.be163-race{flex:0 0 65px;min-height:57px;padding:6px 3px;border:1px solid #dbe3ec;border-radius:10px;background:#fff;color:#1260b7;font-weight:900;text-align:center}
+.be163-race b{display:block;font-size:15px}
+.be163-race small{display:block;color:#78879b;font-size:9px;font-weight:600;margin-top:2px}
+.be163-race em{display:block;font-style:normal;color:#168665;font-size:8px;font-weight:800}
+.be163-race.on{background:#173b70;border-color:#173b70;color:#fff}
+.be163-race.on small,.be163-race.on em{color:#dceafa}
+.be163-empty{font-size:11px;color:#667c95;padding:8px}
+#be163TrioStats,#be163MethodStats{margin:4px 0 12px!important}
+.be163-stats-card{padding:12px;border:1px solid #d9e4ef;border-radius:14px;background:#fff;box-shadow:0 3px 8px rgba(16,47,95,.045)}
+.be163-stats-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.be163-stats-head h3{font-size:16px;margin:0;color:#172f50;font-weight:950}
+.be163-stats-head span{font-size:10px;color:#64809d;text-align:right}
+.be163-note,.be163-foot{font-size:10px;color:#5d7896;line-height:1.55;margin:7px 0}
+.be163-table-scroll{overflow-x:auto;border:1px solid #dce5ee;border-radius:9px;scrollbar-width:thin;margin-top:9px}
+.be163-data-table{width:100%;min-width:540px;border-collapse:separate;border-spacing:0;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}
+.be163-data-table th,.be163-data-table td{white-space:nowrap;padding:12px 8px;border-right:1px solid #e7edf3;border-bottom:1px solid #e7edf3}
+.be163-data-table thead th{position:sticky;top:0;background:#f3f7fc;font-size:11px;font-weight:800;color:#57728f;z-index:1}
+.be163-data-table tbody th{position:sticky;left:0;z-index:2;text-align:left;background:#fff;color:#173b70;font-size:11px;font-weight:800}
+.be163-data-table thead th:first-child{position:sticky;left:0;z-index:3}
+.be163-data-table tbody tr:last-child td,.be163-data-table tbody tr:last-child th{border-bottom:0}
+.be163-data-table td:last-child,.be163-data-table th:last-child{border-right:0}
+.be163-lane{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;font-size:13px;font-weight:950;margin-right:5px;background:#fff;border:1px solid #d8e1eb;color:#172f50}
+.be163-lane.lane-2{background:#262b33;color:#fff}.be163-lane.lane-3{background:#d73536;color:#fff}.be163-lane.lane-4{background:#1975cf;color:#fff}.be163-lane.lane-5{background:#f3d63a;color:#1e293b}.be163-lane.lane-6{background:#089b77;color:#fff}
+.be163-data-table .be163-strong{background:#fff0ba;color:#9a3412;font-weight:950}
+.be163-method-table{min-width:780px}
+@media(max-width:640px){
+ #be163RaceNav{top:var(--be163-topbar-height,60px);padding:6px 8px 5px}
+ #be163Venue{padding:7px 6px;min-width:95px;max-width:180px;font-size:12px}
+ #be163Status{font-size:9px}
+ .be163-nav-top>b{font-size:12px}
+ .be163-race{flex-basis:61px;min-height:55px}
+ .be163-stats-card{padding:9px;border-radius:12px}
+ .be163-stats-head h3{font-size:15px}
+ .be163-data-table th,.be163-data-table td{padding:10px 6px}
+}
