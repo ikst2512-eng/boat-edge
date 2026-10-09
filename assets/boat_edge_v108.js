@@ -932,6 +932,7 @@ async function renderPredictionModes(race,pred){
     return {...x,odds:displayOdds,oddsBasis:resultConfirmed?(displayOdds!==null?'official_final':'final_unavailable'):(livePrice!==null?'fresh_official':'unavailable')};
   });
   const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
+  window.BoatEdgeV174?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes);
 
   let snapStatus="🎯履歴は締切15分前から保存";
   if(inFinalWindow)snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
