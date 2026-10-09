@@ -1,0 +1,123 @@
+name: BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '2-59/5 0-14,23 * * *' # two minutes after V182 and before V185's next check
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v186-predeadline-scratch-freshness
+  cancel-in-progress: false
+
+jobs:
+  refresh-verified-scratch-evidence:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore independently hashed scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          from pathlib import Path
+          import gzip,base64,hashlib
+          assets={
+            'scripts/site_v186_refresh_scratch.py': ('267a72986fb7b76cbf631c649475b0fadaf9798acea5ebdb8e303346b9a1bcc1',
+              'H4sIAAAAAAAC/81XW4scRRR+n19RWQ3V7c72zizskMymEkLYEBRi2F0DMVmbmu7qmcr2dA9V1XvJsg+LxkQx5E0fFIyiIEG8gKJEyZ/ZTJKf4TnVPT09F0IQH2z2Updzq1'
+              'PfudTCwsL15pkWWSIbYlfuyuiAJIKrpVDwMJaJILC7QnSguAl6ZFcoGcmAG5kmdZKkZKBEKAOc6mUldBYb7dVqW72SjyeJUEQmRiRIxeP4gOwpaYQmaYLjnkgIaA5FEggS'
+              '9HjSFXqNmJ7UJBZ8V+ha0BPBjgh9bog2PBaEJyHp8x0QAUpWqSbnWLPVJyE3nIhYdmVHxtIckIjL2CNbKEqJCMzrgbTqEYiRfQEy+4OqNRw8sAcTsS+CzIhwfBTS45rczr'
+              'QhKku82sLCQi1SaZ/4fpSZTAnfJ7I/SJUBE5PUWB06JwHjBGobEYzmdWvDnTQpRqGIDc9ZBtz0YtkZcVyDaa0Y39bofyVqtbc3t9hIglMKcHpppjQ767q1d9ZvMCW8IO0P'
+              'ZCwcRT9YadwKD1tHS/B3pfj7JnVrtVBEJDOBs+u2awQ+ow7yAX4hG1nsoXFSp1Gq+tw42ijg8JQYxDwQDn2f1ulio9FuNChoH7ErAf5JSOhxPWEtDjxQ6hIZwa65I5MohU'
+              'vUglyFLcsv9gMxMMTZOhiIdaVSVb/O4ywfuu1CsqW2Ryiu2lFpatroNATqXntkfnE4WGLwW7UHXJkbbNKQH9hdOFyE+w49feN0/3RIcwIUzVC0VZKvBWmWGHZIcwDGwt+T'
+              'SZju0XajTkfoC+2sJ+LQt0j2A65m1joCPCvQD7hTehA+ihj0wfdaJl3LJvYl2J90/U6cYozYRUCeH2YCxkeWG8QRNYAYJBqwI0LHWr1MMV6WFVyapq7XjdOOE9FDe/ajpQ'
+              'sX4MdDmMEtjlGwIw6YGoBbRL9cg4sDjQRw5kVZHPcxUThA6LaDFGI+yURJiohChQwFe3HKQ+2AOAW5xjdi3ziQBNIQzsNoZqIzVQCNQPDu5jQE6u8lErhGeJhR2heGM9Tq'
+              'dYVxKE6pS8Anh0djdBfZjiH+EdFIldMjbsCQRbpFF6d2Cia7C3hfbJy1qK96pkyjkIMQou3qfeaYuVle2PYia67N2i8TzZyRoKUp0E4EkesZyDqxrwVIAd+6y63G9D05jX'
+              'MMRZ5jKy33X5hTEE3DHIlLGq0CVsGYhnTvFyVEaH8X0ildBqwBSI5yjE0bCQI8qf0IM9Z8IydCYUI5fm+Qq+vX1zdIV0D1gQuEnN5VAnL7RPYP0yDrQ13C0OAdbStQGo3T'
+              'vTeleA6aQUQVzGj3f4zm+aedvRcEWxrkyES0++Bd6p5i8A/BXu5pqAywm8P6FLPx/noentXJs1CaSmwVsu3yTIxhrmN2q2KkTYDzKH0Etg1HnOUckUAAYSNQ9SUcfEwCKd'
+              'RkGg9G0x2KchFOpUBccCCClsqVmZA532y91WogYUlzHjgWx7UVogfaAs2aU8gEF9+ko0S8zbZUxVN5DeSAFEaHd38c/v1weO/Jy99/efnNDyfHPw0ffj58+sXJ8WfPv3r8'
+              '4tsnLx8/ODl+enL89cnxz83W8P7Hz/76/tmfnw4ffndy/BGdkCmjQqw9J6Z4SFFjHNit3L+Uum1rYbG4zShZJtS7ncrE2bdFYh8F3JzhrueDbVS2786DynRFm4hH4MrzTX'
+              'N10l95oatColL6pjFhGYwFRE71KkgUaquE84HRMSUiOmYOFFYLKHTMa2LgdXBQxcKLPx4N799rrsIlDz95gFCw4Hjx5W8wff7h3eGjX+fDYvWVsPgfQGM+PCo3PA2SUvjI'
+              'dS4WTfTeKAvOdDsTIuwJxm8FOAWWynGj6taqmRzSfp64wwy6f/RLXSQae3iuAynZZQ49aB1qGxKuQIG/Nb9KWZsAK+jHV2f/U6zQO4kYZLIPopyroKlPc68VPhi3kuXhiw'
+              '7YEtRqYJvvJ7wPjxHGqO/3uUx8n+ZK7buCq+6AK10+RS6qri2D13BRWboBm1x03LWBx0Pwa7Hs0KUlaPlTWjfQldteuA7NN4cHYN4YUw8Cco2zgWd1IaMurmCgJArAZ6d/'
+              'eWN984q/eWnj4talK4QuVq5k1MdzfFuk9fL5Abc61fXMuzlsdbEEaht/kBv+ATDt6tHpDgAA'
+            ),
+            'scripts/site_v186_patch_ui.py': ('72f567531463afd14571b6124b13734233028b1d735fe967ecf88a94cb01a11c',
+              'H4sIAAAAAAAC/6VTTU/bMBi+91eYHkiCSqAHEKIElLXpqFZa1JRpN8tNHGqROpHtDqb1sOxD22ETt+0wpCG0E2JsmvYhsYk/E6XwM+Y0Bca2yzZfXj+y3+d93sd+8/l8FR'
+              'EfOH7AsQsIBdVaw6zD4twaIB4QXQwCOs2JwIA7DAmnKyOigHDABfLlKQOowzEVej6fz3ks6IEQia5POoD0woAJsC5hLjTSoCqEunhH74qer2glboQ6w8iFAu8IFVMncAnd'
+              'NJS+8BYULddDbAszQ7nRNNvQqty04O3iwjy0yy2zXV6F1ZZlrzYs24ZVs1aH5XrTtipKTqrOEgENRNoQX8wBuXjQZw42FEVJEfHURr/XwUwnvEqo7E/tEcq1yck0LBuz2W'
+              'bJKM5p90f5ADgB5eKCx13Rsx1EfZeIFb2DvYBhQr2gJGuMUhgOffR/NWemwN+0D6Zmrom9ixnxCHZNYVSQwHqIGMeqLZj0WR0Ld7rY2cIuRGIwUBRNK11jQJs4S6XBtqpN'
+              'XxFeXJNdjYmY7BVu4XsTRurOBRoMLgzyg7SOPPWQz/FgMCaQa+JXX67KaDJ/Ey+B6flZuUZguTg/NULaJQPDos8oUIZH+8n+p/jRt2T35fDLszg6Tp4cJd93k6cn558/nB'
+              '2cnB++iKPnw71DeSE5fRVHp3H0Jo7eJ7tv4+hxun8YxQ+i849fJTx7fZxEe8N3B0rpX78A4hzLGeC6E/SpULP7mmEUC0r2mrW2dfmk5Wajbd1pw7WabdcaNzMGbnB9/JHG'
+              '6YUxLBQzA0J9m0nTsinihd/mCEu3F/+kJpuTn9Ssma1bVgtWNtbrtbLZTscplF9FqGOxbbN+pXajBleb9QpcN21bVvkBwsQBiUoEAAA='
+            ),
+            'tests/test_v186_refresh.py': ('9fcb4f5ce135d9e3a0b47b1a1904c4d34bb1e7774a303bb3b73db178bc355b17',
+              'H4sIAAAAAAAC/51VzW7bRhC+6yl4CZZE1xQpy2khgwfZlmO3iR1YSnMQhMVKu4y2JrnE7jKyY/iQU9tD3yHosSh66qHopQ8TNM1jdJakaP2hTUsY2p+ZnZ/vmxnHSqZOTs'
+              '08EVNHpLlUxnkOx1ZsBYaneSwSvpSMuF2puj0Ris+MVLeVHqOGG5E2essztj+MJ4aWuzcy461apVrAq18YkWB9q/E3WmZYF9NcyRnXuqVnSuQmsuG4hNg4CPF8xbVMXnPX'
+              '83OqeGb0OJy0UaWr21oYTl6HXzwmisegOicgoWY29/Nb1NJ5tO7X1zmfEZtDZT+RM2qEzFzUGEK4su210s3HqWQFPCqfW0Ouzr1DyKQW6LHO/YymfBKlh7BNJGVc+fwGXF'
+              'Yabuq1MrmIlni5naDzGIdB+dfBATZvRBbLKPW/HI681kKY+Q4OXM+h2mG9lgOfkrKGjHmHrj21EZinbUUBVOT56TUTyq2xi0aq4Ot6ZeI1aFxbCDrNK690wXjs5IVxVSZx'
+              'KrLCcI1nVDFSH6IQT83qAVC95iw6pYnm2CYB9mlW+a6itt81v41iZBEIgzDYC8K9O/DQCzrsHjVKrOARIPZZU1ju0k+9eg+qchbdIZs2AdOoBz8YpdxQ1LuzqXLUK73tgb'
+              'MwQBgxTlkiMrgHL742Ki45QY/Oeo+eIe8eN6bLD2lZKDBOCyaMtVm6skDYgzbUFBpcyGswHXOLJiMUFF2If287/lUEPc8XWsZSpdS4W443PzTloMptpfwvzw9kbfi9v28c'
+              'b1dSO0Z3AOm9b9sWKmShbOEYfmNce+OzIs21CyR4D5Rots1IjeIKIZZ+iBzCtmWzK/I5vNHR/nq46yihuupQr95gpDi1ofbQXz/+/vGnHz789t37t3+8f/vLh5/f/fnu14'
+              '/ff4scETu1usOhWJ0LmFgPIIC0qd7ev/XMp+Gj2Qo8iptCZbYRyivBdDS2jRbisOthu+vgcH+917pBJdnH4VrbdQ6q+y7ufF7tDuxUeei+shsrSTlyll1aduWkmiUweOox'
+              'WmaLgYUqWqo1hyGuxogn4pWYwhRciIzJBZpE0QFWG0q1EWADxN0t8ZwnjEDZJnX7gFLo0IxtyFbK3GpsmbFpQf5ai+zVmg1+I7SBS7KsCRDuL59H45IOO5y1+19JhZJiFa'
+              'ee50B0ljtHZM4YuBsHE2yXsFo61XIwmUxW46agNm6KdeII7ZTMlLFXwpVGgMCBg9WqX7cVbtqybNamOv8g298lWzWdSeN8Cjg2xe6kwadEXi+jjA3fWVKHy/itwka1BLi8'
+              'XY0FHV32R2Rw8mRAvrb/oMvgAPTdM6piYhdjrVyJzLjIGiGnV4PhGRkeX/VHx2fk9MXoxdWAvDy/OLl8SYaj/tMBOe5fndTbo8HpJYifnQ+H5xdP4FX/ghw9vTz+ijzvD4'
+              'fIa/0Nwe1Kh1cJAAA='
+            ),
+          }
+          for dst,(digest,*chunks) in assets.items():
+              data=gzip.decompress(base64.b64decode(''.join(chunks)))
+              assert hashlib.sha256(data).hexdigest()==digest, f'VERIFICATION_SHA_MISMATCH {dst}'
+              p=Path(dst);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+          print('V186_SHA_BOUND_SCRIPTS_RESTORED_PASS')
+          PYRESTORE
+      - name: Re-evaluate V182 scratch flags then refresh timestamp for near-deadline races
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          python3 scripts/site_v182_scratch_scan.py
+          python3 scripts/site_v186_refresh_scratch.py
+          python3 scripts/site_v186_patch_ui.py
+          python3 tests/test_v186_refresh.py
+          python3 - <<'PYCHECK'
+          from pathlib import Path
+          page=Path('index.html').read_text(encoding='utf8')
+          assert page.count('BOAT_EDGE_V186_SCRATCH_FRESHNESS_FAIL_CLOSED')==1
+          assert 'BOAT_EDGE_V182_SCRATCH_FAIL_CLOSED' in page
+          assert Path('scripts/site_v185_role_shadow.py').is_file()
+          print('V186_UI_FRESHNESS_AND_V185_MODEL_PRESERVED_PASS')
+          PYCHECK
+          git diff --check
+      - name: Commit source verification and UI guard without changes to prediction models
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html scripts/site_v186_refresh_scratch.py scripts/site_v186_patch_ui.py tests/test_v186_refresh.py
+          git add -A -- data/site_scratches_v182/
+          if git diff --cached --quiet; then echo V186_FRESHNESS_NO_CHANGE; exit 0; fi
+          git commit -m 'V186 recheck scratch evidence near deadline and make UI fail closed on stale checks'
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then echo V186_VERIFIED_SCRATCH_FRESHNESS_APPLIED; exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+            python3 tests/test_v186_refresh.py
+          done
+          echo V186_PUSH_RETRY_EXHAUSTED >&2
+          exit 1
