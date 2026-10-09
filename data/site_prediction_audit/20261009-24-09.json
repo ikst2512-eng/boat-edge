@@ -2,10 +2,10 @@
   "schema_version": "boat-edge-final15m-audit-v125",
   "race_key": "20261009-24-09",
   "first_audited_at": "2026-10-09T10:00:15.006917+00:00",
-  "last_audited_at": "2026-10-09T10:00:15.006919+00:00",
-  "latest_snapshot_sha256": "0a2676defdbcd226a495e267b7f9640e23192e20d52b2b1c915a48e4ba69ce2a",
-  "latest_snapshot_saved_at": "2026-10-09T09:55:20.421649+00:00",
-  "revision_count": 1,
+  "last_audited_at": "2026-10-09T10:18:51.988331+00:00",
+  "latest_snapshot_sha256": "f402daef6c9911e669620cafc94a65b2ca8891a3067a71b147b46e731df26250",
+  "latest_snapshot_saved_at": "2026-10-09T10:09:23.829078+00:00",
+  "revision_count": 2,
   "revisions": [
     {
       "snapshot_sha256": "0a2676defdbcd226a495e267b7f9640e23192e20d52b2b1c915a48e4ba69ce2a",
@@ -101,12 +101,107 @@
         "top10_nonempty": true
       },
       "pass": true
+    },
+    {
+      "snapshot_sha256": "f402daef6c9911e669620cafc94a65b2ca8891a3067a71b147b46e731df26250",
+      "saved_at": "2026-10-09T10:09:23.829078+00:00",
+      "first_saved_at": "2026-10-09T09:55:20.421643+00:00",
+      "minutes_to_deadline": 0.6,
+      "prediction_kind": "SITE_REFERENCE_V122",
+      "selection_policy": "V122_SCENARIO_AWARE_PROBABILITY_FIRST",
+      "used_inputs": [
+        "当地3か月コース",
+        "展示タイム"
+      ],
+      "race_sha256_snapshot": "d612cf00508631399da037460388529e65d949fcc64c4c5d5c952b1f7baeae91",
+      "odds_sha256_snapshot": "c3824bd92be529caeef990f874cce64fcdaf0b2fe11ba36f64ca0d704e8ef717",
+      "grade": "A",
+      "mode_ticket_counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 12,
+        "narrow": 3
+      },
+      "hit_mode_top10": [
+        {
+          "rank": 1,
+          "combo": "1-4-5",
+          "p": 16.180503961352606,
+          "odds": 15.7
+        },
+        {
+          "rank": 2,
+          "combo": "1-5-4",
+          "p": 16.168625032992416,
+          "odds": 31.5
+        },
+        {
+          "rank": 3,
+          "combo": "1-5-6",
+          "p": 16.139174969524646,
+          "odds": 36.4
+        },
+        {
+          "rank": 4,
+          "combo": "1-6-5",
+          "p": 16.08626850809927,
+          "odds": 54.5
+        },
+        {
+          "rank": 5,
+          "combo": "1-4-6",
+          "p": 15.933001605644112,
+          "odds": 18.8
+        },
+        {
+          "rank": 6,
+          "combo": "5-1-4",
+          "p": 3.935301457479766,
+          "odds": 135.7
+        },
+        {
+          "rank": 7,
+          "combo": "5-1-6",
+          "p": 3.916883618152864,
+          "odds": 129.2
+        },
+        {
+          "rank": 8,
+          "combo": "5-1-2",
+          "p": 3.89349621112979,
+          "odds": 151.5
+        },
+        {
+          "rank": 9,
+          "combo": "6-1-5",
+          "p": 3.877133222256323,
+          "odds": 205.6
+        },
+        {
+          "rank": 10,
+          "combo": "4-1-5",
+          "p": 3.8696114133682005,
+          "odds": 64.5
+        }
+      ],
+      "intrinsic_flags": {
+        "schema_v123": true,
+        "final_15m": true,
+        "pre_result_guards": true,
+        "race_sha_present": true,
+        "odds_sha_present_or_missing_source": true,
+        "minutes_in_window": true,
+        "ranking_policy_ok": true,
+        "prediction_kind_ok": true,
+        "top10_nonempty": true
+      },
+      "pass": true
     }
   ],
   "current_state_info": {
-    "race_sha256_current": "d612cf00508631399da037460388529e65d949fcc64c4c5d5c952b1f7baeae91",
-    "odds_sha256_current": "8085955e3bde39171329140f225f4e908cd5bc7571fa53a0107f73dcac386897",
-    "race_still_matches_latest_snapshot": true,
+    "race_sha256_current": "a514be542fe9c4005d0cfd97a8b9e72f48ff4b210357a72a2cd8e81a5fd8fb8a",
+    "odds_sha256_current": "c3824bd92be529caeef990f874cce64fcdaf0b2fe11ba36f64ca0d704e8ef717",
+    "race_still_matches_latest_snapshot": false,
     "odds_still_matches_latest_snapshot": true,
     "note": "Current-source mismatch after snapshot time is informational only; snapshot-time hashes remain the evidence."
   },
