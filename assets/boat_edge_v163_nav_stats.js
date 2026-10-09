@@ -234,6 +234,6 @@
     setInterval(tick,3000);
     setInterval(()=>{if(!document.hidden)loadDay(true).then(renderNavigation);},60000);
   }
-  window.BoatEdgeV163={courseSummary,verifiedCourseMap,racerTrioRows,bestLane,jstDay};
+  window.BoatEdgeV163={courseSummary,verifiedCourseMap,racerTrioRows,bestLane,jstDay,refresh:()=>loadDay(true).then(renderNavigation)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

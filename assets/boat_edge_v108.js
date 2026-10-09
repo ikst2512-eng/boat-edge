@@ -344,7 +344,46 @@ function allTickets(pred){
   }
   return out.sort((a,b)=>b.p-a.p);
 }
-async function oddsFor(key){return (await J(`./data/site_odds/${key}.json`,30000))?.trifecta_odds||{}}
+/* BOAT_EDGE_V166_ODDS_FRESHNESS: do not represent an unverified or old snapshot as live odds. */
+const be166OddsMeta=new Map();
+const be166OddsPrice = v => (v!==null && v!==undefined && v!=='' && Number.isFinite(Number(v)) && Number(v)>0)?Number(v):null;
+function be166OddsStatus(key,postResult){
+  if(postResult)return '<div class="be166-odds-status">結果確定後：オッズは締切前保存時点の参考値（締切時オッズとの一致は未保証）。配分・的中判定は当時の保存記録だけで照合。</div>';
+  const m=be166OddsMeta.get(key);
+  if(!m || m.status==='missing')return '<div class="be166-odds-status warning">公式3連単オッズ未取得。予測順位はオッズに依存しません。</div>';
+  if(m.status==='invalid')return '<div class="be166-odds-status warning">公式オッズ検証不一致。誤った倍率は表示せず、再取得を待ちます。</div>';
+  const link=m.sourceUrl?'<a target="_blank" rel="noopener noreferrer" href="'+esc(m.sourceUrl)+'">公式オッズで確認</a>':'';
+  const stamp=m.fetchedAt?esc(new Date(m.fetchedAt).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'})):'取得時刻不明';
+  const warning=m.status!=='fresh';
+  const msg=m.status==='past_deadline'?'締切後の取得値は購入前オッズとして表示しません':m.status==='stale'?'収集時刻が古いため現在オッズとして表示しません':'公式取得時点のオッズ（リアルタイムとは異なる場合あり）';
+  return '<div class="be166-odds-status '+(warning?'warning':'')+'">公式3連単オッズ '+stamp+' JST / '+msg+'。収集は約5分ごと。'+link+'</div>';
+}
+async function oddsFor(key){
+  const doc=await J(`./data/site_odds/${key}.json`,5000);
+  const missing={status:'missing'};
+  if(!doc){be166OddsMeta.set(key,missing);return {}}
+  const odds=doc.trifecta_odds;
+  const entries=odds&&typeof odds==='object'?Object.entries(odds):[];
+  const validKey=s=>{const a=s.split('-').map(Number);return /^([1-6]-){2}[1-6]$/.test(s)&&new Set(a).size===3};
+  const fetchedAt=Date.parse(doc.fetched_at||'');
+  const good=doc.race_key===key && doc.schema_version==='boat-edge-site-odds-v71' &&
+    doc.results_seen===false && doc.scoring===false && doc.phase==='PRE_RESULT_PURCHASE_ONLY' &&
+    Number.isFinite(fetchedAt) && entries.length>=80 && entries.length<=120 &&
+    entries.every(([combo,v])=>validKey(combo)&&be166OddsPrice(v)!==null) &&
+    Number(doc.available_count)===entries.length;
+  if(!good){be166OddsMeta.set(key,{status:'invalid'});return {}}
+  const now=Date.now(), ageMins=(now-fetchedAt)/60000;
+  const datePart=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+  const deadline=Date.parse(datePart+'T'+String(doc.deadline||'')+':00+09:00');
+  const pastDeadline=Number.isFinite(deadline)&&fetchedAt>deadline+30000;
+  const future=ageMins<-.5;
+  const stale=ageMins>9;
+  const status=!Number.isFinite(deadline)||future?'invalid':pastDeadline?'past_deadline':stale?'stale':'fresh';
+  const sourceUrl=/^https:\/\/www\.boatrace\.jp\/owpc\/pc\/race\/odds3t\?/.test(String(doc.source_url||''))?doc.source_url:null;
+  be166OddsMeta.set(key,{status,fetchedAt:doc.fetched_at,sourceUrl,ageMins});
+  return status==='fresh'?odds:{};
+}
+
 async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}
 async function courseStatsFor(jcd){
   const code=String(jcd||"").padStart(2,"0");
@@ -925,7 +964,7 @@ async function renderPredictionModes(race,pred){
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
-  panel.innerHTML=`${sourceBar}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
   $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};
@@ -1140,6 +1179,8 @@ function installEvents(){
 }
 
 try{selectedDate=localStorage.getItem(KDATE)||null;selectedVenue=localStorage.getItem(KVENUE)||null}catch(_){}
+window.BoatEdgeV166Invalidate=key=>{if(key)clearRaceCache(key);be166OddsMeta.delete(key);};
+window.BoatEdgeV166RefreshHome=()=>renderHomeHub();
 wrapRenderRace();
 installEvents();
 fixBottom();cleanTabs();installBackButtons();
