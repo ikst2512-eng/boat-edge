@@ -1,0 +1,198 @@
+name: BOAT EDGE V166 - Fresh Official Odds and Global Refresh
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V166_ONE_UPLOAD.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v166-safe-site-update
+  cancel-in-progress: false
+
+jobs:
+  refresh-odds-ui:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Restore 2811f24a6b93c7966316b260b8ccf8860b5e133c0fe6eec04566a46a4908acfa-verified site-only installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYIN'
+          import base64,gzip,hashlib,io,tarfile
+          from pathlib import Path
+          payload = """
+            H4sIAAAAAAAC/+08a3fbxpX5rF8BKz4CEYIgKVmyDBrSyrIc2/XrWEpOt7ZLg8BQhA0CLABSUmmeY8m1427juM80ddJtmjqpj5uk3d10101c57
+            +Uph+f8hf23pnBi6Rkp218zp7lHFsiBzN37tx7577mQgdOLqyUlw6+ulR+vTgzUz5yYnll4dgxpbHx0j+vFaDN7NlDf0Pr+z1ZKBZmwj7WXyxO
+            T+19SSi89AJa0w90D5Z/6f9ne3lXvul7+Yrl5InTEhobQc11psbGx8cPgGQIKBkCSobgWwHJuY69Ibim6QtVj/g1h/i+kBUaxPMtPyBOIHiEPh
+            AqzSBwHcFygLq2TTxl7IQrNDxiWkZgwQPirFoOEdaItVoLfFkwXBhlBK4nA2T3+8QR3GbQaOIjgNe08YPrCVXXq+u2AEADIhg13VklpjL2mq+v
+            EjXEXTiwnUjDDGJcFC4JeqMB+7gk+MSu5gLiB7jfMVi4LjT0oGZbFcGqN1wvEE7B1zH+WfdWG7rnk/C736w0PNcAGoyNHV84/S1N7Fv55MGDy+
+            VDp5eWD59YWl4Wxw6vHD+mIcSMaDkmWVdqQd0WpbHFk6eXeL/u+yTw8xVXD8rEXCXlVrEwq1zwYRSAnNp+1MxU2dFbZaSMz8YvHDxYPrq8w4yZ
+            MudWPH5x+fkmGD7OGDNJVXAdg2SQO7YpCw5Zk4VAX5XUMQGa4TadQPMV+jsDIyTabVXZk11akY3D5umWT4QFWNZDCVnyPNfLVMU2QOuoAllvgH
+            gQE5Yj8EU3gB2OUUN5WXUDoU3hdUQG3yNB03MEX/FIw9YBPcQNUSsCzowpr51YXDly8oTmiaKYf0XYkXGqYLqC46JwgwT7KOa6IzSdFvGsqoU4
+            ebh7wXf0hl+Dcbov2FaL0IOiCK/kxwwXzoFQIQD7JPQdJ4GuAT7Ccb2RkUr9j095lkEETWgJ2pyQae3SNKdp28LEhICfmyA5VTg7ZtghivjpRL
+            NegWNm+YcsB05qhn3PtCQpfgrf5grSfPRFRbilsWrTYYcywmAZpKjpZy6SDbnh+sFpegKl9hiyLpPo4YQW95tWSzBskBltnALJ4dZzPgUzPvf4
+            zz9+9O/vPf7g896nt3oP3vzq/q3u1t3ulSvdrc+7m398/D/v966/0fvhjYdf/rr3yTuPfrX1eOsv3c1Peze3nly+0rt8+6v719kYeJSYeAfGPL
+            x3+ckbnwGQR+/dhelP7tz/6v4Pu5e3nl690bt+rXvli8e3fvDw3ie967dhaRjW++vPEAhMpGs9ufPO0zf/s7v5fnfzJ93N3z+++vvej6/D9P15
+            2NCcWBpDEUbe1LUU85RVEiB1pBIjya66cOmSUFfYhjXgSd3yfctZFZ+PRMKa7jkwfHyud/Xj3v2bU08v/653451os7C73s23ew9+Cbg9/Pz6o3
+            sfP33/2sO/3oAdJQjyh4cPcFPdzV92Nx90N9/tbv0svRfANImj5bR02zL/Thxj5G6/B3R/eO8GZ8blrSd3b3c3f9fd/E3v8o3Hb70BWD757Z3H
+            tz9HnDZvdS9v9q7d4PvZ+mnvwdXu5m8pxr8aRnrbci5qgLbb9AzymmfPi/t1UDEesEAbL1ds3bk4DifT1sYd120Qh3hwVkFPEc8j3rhQg4/auJ
+            glvpFJQJGy4sBGUAI++PzJ3Rv78/qcqIoJJIAE9QZgUSUB2BBzIZhHeHiED4IlyiQeSErgHnMN3SYrVp0sBx6QLCNe0HNHT4lyO4C+74AKU8UF
+            39LzK+7FDVeUa4CVKk7mTGvVCkS5bjnNgMQdHUlSRUYvEN7e9S+A1o/eeSuBHmeNFnIXtQJV1EkR9uPnyP2G7gdlk+gmEJiI8yI/hg/epEcPF4
+            Ojh6z7r/u9qx/C8UwfPZCxj0KuxvImqskl0PYj6N7Nt56+e43h3t18s3cT4P4AxKO7tfn45oPee3eeD7TI+BVRgqmJaC6oie6Vu92tD7pX/tDd
+            +rK7dbt75X0K8I+Pf/Gn7iY8+lHv/c/whG+CHvk30BSUPM8n/WI2w6k8L/IPKCIJOeo/tDCFik1WFI4urwh5+A48yIog5IwgiNhnP5hGRbX5c0
+            T08paYRXHPitEp6Izp/oZjCJGORpwOgWVE7dOOmGu6hqav6VYgHM2cV/KmHuh5dNjKODy/uw2jO2DlXee8PA0etpQQC6aotDbbpxpprk6o2wC2
+            1E6rP5+pP5mPlUqchu1OJwKMK2swV4EjUAXbrVNc4oXBjHoW8TXsnZgINhrErbJJIDlu5QJMEedP0t8KH5vBx5J65lwMhWqwb5ENzdfm2qxLB4
+            fDb9hWkBFzoqTUwcYyixehmf9u5kwxN3MuJ7UnO/TT7ryCbmDGlyYm8FQvwwZ1SfGt7xNAZ6oTLxgddA1PvkIdwgxukz8o68GlSyAX8YxV1zUp
+            ITxwRcpANoAIP9EsY68Ps+p6uYU+tOvg5tHnyqHPlWM+N0pha28RzTx1bygs5hSXfUJwTlW3wXmKILqodfq7GzXdx92Ip04vlcG3ee3YSvnUa6
+            cXDy8sL5VPnjj2r9EC/b5ErNwQFmeGYoMPH9TmtNnCYO9+rThZCMGFjwjscSOTOWO49Yort85J2lzIvgztA+KnnSDwUbj3I6VxoxTXW7pl6xWb
+            lKn3J8He0liEEowc2E6EI7kPrWFnqDQ77hpjOHzISLIAAcdxCG60DHzPxfTJz2AAG/MeDiI5pXsBMlzxbdxSQd4DSiMnZuOuPfJMf9eMPJsQoV
+            BNp2SOg86KK2KW2xmkSjiWSmFWVAuFbGEf/EyKJOr+gyHMfm6HAIAb0cbmws7sVHqD1SaQimicHPtzynTKaNrRo7l9qQdoIXZtu/KlSwzufMQV
+            NYnyfJ/xUulK89zeqAOmL7L6Wv67tSBo+OrZ/Nn82traWQXPGp7Ls8qFxtm8u9YwzubxP+3L49GbCs7Oc+2QoDIDWW56NqWzNJ/u5J61IOwodH
+            JEXzWtQeQIY5mTryMlTFVsYdlO5xFPtd1BcwHxDIvLQI2Vq5YNWhPCFpcHZBhwarQjj8GoBHpEN8sBWQ8yxDFcE9WG2AyquVkeSoEqIXwCRqnP
+            noCRKJ+AAeuzJ0AwiMGzYDl0MQitTEHcPk7FcbiLRODIiJLBXhlByIiDfAh1H1tCp0ElWwbjOL6ULIAcQbCp2/YGTQnQWA6TGw0dOCEm5+6EEQ
+            dJ1x8GEikdgqQwIVikxlATdzLu4b6e067TgwmCmLa3ly6BFhNjVtJonW4+REJOBcQyHCLQvMx8M+uqI2qcWTBJGxdgMw6xFcsBZ5vmNM7vbjOJ
+            PaB7nd1tZpzw8zidBaL4HLOGRZ8M0qLrVC2vTkxpCPDBbdFQX2xZvgW2QXCrVcsAhrAdoQOeZ+cnKeHxfHHN0xunCQTZ3mlMHUilsw7PYi21wL
+            z40CPKkfCJa5ZjumvKARCPJZAOTB8ccTjdCKp98EvABiFHDZvoFOiiDuecxY9p/WASmwT8SQcWHgL8NBO8w24dziVYUI+iil8PNysU26+5AbIO
+            UmqAhL12hJHIQOwEyxlgPj3alFL0gI1tT4IpDRMyYKWWm/W67m3IYapkkfYe1xsyKlhvxbPc0+6aL1dAvR4D8ZAvgJbXNzoJDL8B8DI/vSoS0H
+            Z1E/oygdckELzViJNhND2ht6xVun8phc+q7VZAnEgrke8kvoArQrAK5saqg6hawH57g1OOql1KOaokwL2vgVacE0Fd7EeHn8WvfrBhIywShGGr
+            kn9mGm6+pUHP+NxZJwGUJWwjcNtiUXHNDYaFb3hWAyylZzx71QvRovvzbB5dPQJGVw8TwWxAOjHXr6pXkPRjzGx5TYdaD7numiS0WrIht2Se7t
+            X6DFtoRHA8WESa4hVj68D1N7NIQ7Oa02UqLInUqULWgY8++nm4mWk4DAFZ9agsUG0feZ5itA5ggE84kvH62BrgNkA0Qumi22gQI+Mght5mP8Li
+            gaXizCQzd5hgFFFTTPLT/zrTbXi+2QiG6CRLO4akR3x4wlIcTg9m0hO7pRaYy0IYCI4N28bi4aXFbwmnFjA7OiUwmwEmzzJhMZYUpVBhPs/T+i
+            WBk5LdCJhcJGKx6GMkzdEnGNlH4BQ2YD9Zt5ABDOoNF+8ipG1pyzbP8uPx9qnnET9aXF7uF4QZgcmPUG/SfC2s29CNi7AsmCc/QeSkh7Xmob2m
+            DlBNHu4CxVMYQxJTjGdOYV5WYkprhylVkKQGSswZXEnGuTKjw7m0yMZ3GwqeyDOiA1wRZTGXYwdMBpaz9RvSOZn2aewYD5OWhVOnjh1ZOqiGDg
+            X6WSmzHN0myQJXrx5eDNEoOJRnWeAxMswG5lB2HV0eLkbsMuF13W4SdpFAtQlXMU0INsro0ANj2a5fFpaZ18NklYKOBUmACMHx8epJyNQhUsEb
+            qKq1jgEK4Ev1gVDVLxLw42ybxuyoxSQl6T9StSsuHFgEGh6A/9+G/6AVQc4Xvr3IBCfwNtTUuO/wcRU9PCxk3SBwMtOXJCqGcz57Di6vOvwmJc
+            zrhFv0QYM6eGQD1yYesoSvoWsQQrwgv1QUB/xzkE1KA13W+z1TnCemPHpxMBdB9WFqYnLC+Hah0/iO08TtAuFnrDaY9XnGOs/jA9M1x5/TX2Y+
+            Mh57R68TevJ3CGVkcYf7vnODRpVeFZapNS6XJUxMAEPyuFKsOseeW50Mh7YDukM0T1LrLC8dO5RbWVpeoXZK2Jffp4bGSE4e79Wm7plyf8Qj01
+            iBZnDz4CNb4GayABV8NaLDAWO2AK9BwTSVy7jrchkEq1yu65ZTLnPb1dDCe2NlwVtt1mHFU/jNAz+8oegmxPu8G84opQpgaAGptDPcmZG5LYTY
+            LLyvFs8NTs7lUB+LMqg4HYRAExUwgPDY1xosZYRjQ4YAyvhN4cY2BqwmtWOsVJBrlD90FnW85AiANPbSqP0fbduerhdW/1MsTE0V+up/JqeLxV
+            H9z4tovPghLvRRhbruNMHFCRMoDT32wUrs/kOgdUCRh99oVmzLoBVC4JGdPEE9n4MuBMXoHJmWT5NfcY0PqN/AbUIPL+exXeOijH6/Vd2g7r9N
+            i30sh4bYURVFBsP1ttgE3csCjkSKdzdeAIG5pbpQ+V6TeBvLhK2W8ROZb5YAoJmT6PY2zutn970yRTP4BbzGPbJ8kmd8pSh3XyxIYVXJgm3jDZ
+            PML3tsAiFB099gly5y4Op+gFfAnhbmgnkyWq8SvLBqaXP5754127OdHPyc5D93p1PNLZZdxtlxlQYtrcrQ2z++rLY7I75M/YFXqffMw0SGGL0D
+            qYSX/JUSz3ohLoHbwKmw10ZF92A43pbAl3BwiLkAS0TENSCADciSTZjZYejA3IqCl3ha2AHfLVMTh2DFIWI2fCGAfcIE8Hl1z9JzEFQTG0jKr4
+            U3P+1eudW9cr+7dY9+foN+/rK79dNH73726O0/hRuEpSHyAbcH7bkm/u3aFwIfED23AhtwewbczTu9qx8/fftHj+5d725+Gd9Kb/20d+3Gk7uf
+            PHlwn0MEIilglYljLtYs2wT6wn7BHtMU2zFaDAcWXjRAbMCA89PDsU1yopPkrOVU3UzdX02wltgxbzn9lnn2MuLtLmJLbRi4HYdMqwWjMfUa8i
+            MNCR+leeFBTIDuRrjSwADGLKuFoxquDQcfRkXrYyYoRR1AsNThzkSKVbBZBF6zTJM47ORw+cRcKR4ftxlk4rMklRLnClAKR1DNEAPCXF6pI09P
+            86tuXLsvpKEEOAoRSqbp2Zzg7FDAA36XTnUdPs/iD8VyDLtpEj8jzovSvDghqvghy0iqidnE/WCbJlFVcHNzPqggInYS7IIFFPeiFNQ8dw1z4w
+            KP0A6vrJwSxCw+ZpRPywv2Y0iV2W5LXMpCzYCnHvQRP8v8IKCCotThNWdaqE1KVEm0Kwqoa8xsmWxY38lip+rhvU/+dvkjkbOUSq2YPJysioaP
+            kpIKB4IAgF0H3/ZcKQx622NhgifDqwD4RkDB0kCN70+UGFfipyxnW+Lz0U+NFlAaTaAEx7f3xkePf3zt0Xt3H7314eP/vhWi1DHQLGXKUrtvVn
+            frz7R65Hrv6p2Hf/0ZqAgGp7v5h97t/3j0i1+KoTgj+gyrIVnqeYWjOq8Afbdf7crHlHJ/wfqpj36/w2q8vgGo0SJUb7cssqaw7yCRcL4jIeOD
+            gHw1t05eh3Gi1N4J2+TFwrPwfRfxvfJ+hC8ox0c3bz7++RcplDuDuGAszHHhTEMdh73MSCKC9BsXBFrni8VMUdGjOE/7aFTNLlljPDscJiMTht
+            zciuLg+SgQj8ozOHrcINPkxsRE8qJ+FksKmMeQkSKUU0KLbccrIKBlWCgYNoYfaBO3jkk6rmsifSTyfAri6+dpUUBWpCdfTIEB1EMY0d520STD
+            oGoJn2NSt05vIrcFVSeBPp+qL9nFC0kuXeob1HTQc9v2Ma9DCZ8PYhUXorAYPI0UiobbIp4N/lrsiPTrCry+OUTdyJN8bEplhAAYkQcGD/AmBj
+            xE9rDOJRa/+SEFPZECC6/f0ti0UzlWXkFhOeAaJYQeTNsq2X5L84PPI+bJfLuSGvaUUivGeGWiZeU2SwWqqEw7KWJ0Ep/zeeE0yXHvP527heky
+            HIKgBpYYC+gsXFgIanogvGoFh5uV2PMXarqPyVFBX9UtRxk4FPRWfLsDEScY04dCYRqA+vRYKtTHT5zRz6uhnFirgetAo424EmM+ihL6Hkhqv0
+            yma0UR2MREf4UL9mLxMPotoFLm6fdvoGBUFQcqRRM0oQYb1PXTX3+QdG2xMLG/IvbTR+9dfvznLVZzGVc0fnX/elTD2Lv+4dPLP8cyxt5P7jx6
+            7zdYV5kWI2qZv86qf4wKnr+6f5MWC+NarFI4CXtbG8XKR8EDiYwrM1N8yQHLGsp6ZLMieCyzLDHsweI9vXIHHQlqob+6f0vMRiMvuJaD1vELHr
+            BxjyQygLtSBpABTIUbCQ8qQhUJPciTt//05KObIQPuMB4kyD7gyjHHeocoqRN7h5ET3heaWAE4lpG32GGldZHLTy81MZ6gGg/1LK1+j54PhkYH
+            Tx7nqByD0aBdZVxDbmP2P9RFXHBwacRoe69Fa3NXC2ugJBw9yuz9Q/k/w/dfVP6vMLl3b//7f5N7C3tG+b8XlP9bdOsNfKFq2JVr4tU+fGsPK3
+            iF5VMLAo08MCnHc0fthgvmGTSF6geWcXGjMzYkH9Wu696q5eRsUg1UvRm4JdcDf0Tdt69Utcm6WhAKAu3GlCG4MeDF4FVbDh+WwJ9edXJgROu+
+            agA+xCtdAN5Z1Y2cwfRI2A3mMLdmmUFN3TvZWKdfa/Q9Q3VqL3xvgC4C5aTONtaFYgE6KgyLInz3XfDahZcrVXOmOs0f5DxQZk1fLRZxrG5cXP
+            Vc8AnVl4le3VOtQiRtu576cnHPtKHDRgCXHNaNq0VcnH5lbzmq+wqF0loNS7r9Bg1fXCzVglXWc35NB80GBIA5AiLmrVb0THFSnp6Si4VpWSnM
+            SCWj6fmwUsPFchRvKIXVUOW3XVjCCjZUZSach17V8ElV0NJ+jud72+DFIdXVqZgexeo0gZ3yJznw/3wSqIBrCC+VUIploWqtE7NE2U2pQSWMfa
+            y4YEnqKvg9RmZ2HyyVFYjTosFYTgdrkrMcWCPHhoFB/X6OvjKpFmcKpbq+zhk8PYkMZGLFJGoYzwb4a0yZs9VikpmU3pPT03L4X9m3V4pEBfGj
+            oEJe752q7C3sxOu9wOsUY5GpU4AsEHNmiuwtTE0Npd0ZlsE61w6PgAPOX2dMGXghJRpAD8eq3kB5HnZI8HkOBU2l0sZpNQ2YFIR9z3ccDMMkwM
+            ek7Fenq/uqJKTH5J7p6b3VPtrvC0nCKISgqfTws1hUpoftS+Ev17RTq1Wrs4SE8PmigNJMpRCiMDuJ2b5hEAW9zcZYTo14VlBCLyhnEohO6UWv
+            igGeh6ilODiL0P6FVvJlYoGb2Qf7kNqh1kO6z8Ax4N8FBUvwAEWdek1+iou72GvDuhPEwyue7pjtWGEVQk72DUGU2wli4oihCjaCNDOb4C2oPa
+            GPHXh4O+Al9b35itfl/9zLv2fb/5ni1J7+9/8nC6P7vxfSeBLC1zzyvablkYxY9UVJbtXjjlYdOljJR9yJBRwq68zz27joTWasIq36NCY4ZNlk
+            ecMxdnizXcYqtdl4Nr6GrwEIhSr8k9XMs1/QjicTx0zPHciRY14rrGUSZVwMJrONZPDbXGFiAqDM8ScMrIFlEgiXpQbxmQyDoufp14NKY/m8EL
+            6sIliggQIBa0YCsAACC9Z9LMVhL7lEqZO6ZTqoegTPtW3M5Chj6dd/cAUtSkjAUtmpwiv0vjJCBFOOeLsYjUrOjTMPf/9FJ1umVvtHVygW5eJM
+            BA8TM+d3tzn2nVxhMleYPZ94Nb2uXyRY6wQxKOYFTa3dAW3mZfCLrhVL+n5tpqRns1LYWYHOCnZWEp0GdBrYaUAnBuYQk1cmJvCXMTFRwV+SeQ
+            YQ0Tu53e0K/jA6589pxUllKnwrzITYF2HxCkCemgzvdh0TrL7WPqpSucOUFB8nE99Q17U5ToZ1ScYprk0gYm3VsSrqiHOCrNGQGOs+QeCy42ed
+            oGb5Ci+/0/jvEu2kicj0a+mlaPRhLPXuKxArjcscPylBWGo3DrqAaljY106/kahu+z6iHObUVCw9i1NjalJEc5NDZIC/36TSP5ghnF5YXBLlxM
+            tT59lLWnl8RSt6Q0u50KDvZ+XhH37nL2fN10wtFpyJC4apFSYnPMfVZs/L9JVHdfsXHuVkmltlF/c8a82/hcKt1mpyqoBRjSVS7nsREYxroQNS
+            kolkoE0lhhZVaQUgPhedmPYlfN7imU/OJSVZdVliGkoB9avbGf5aLDzwMy2J56hkWLZvXAiJJa3DP1rAbxdlMSwSoIhls5EaTCKAkkRLC1kOP3
+            EJOvytZ0x+/R1gBl/CR0ARYiHF2oqixFSLBVCcLEzOFKExzSF2tqfX9jSOCPk1yRj9HYVn4rv9GeFqPH1MXugu2MuTz95DdCJSOyhOsx08n9p/
+            oRtLvyv67A2mj3lbLOaKuUlR3dMZPOf/8D6+Ji7wMKF2KGZTojo9BLPJbx63bYQ5G4rCP1uYB/ChlvcFClL0N12eT2GyF8piRTf079yktBz3CB
+            TbXc2cpyXM6OcKp5deBeu1fOTkCVbIvLtNZ3TyxYIa38Ux+8nfwAk2eD0zfa/eT9Qyw2d60vP4Z3xy4bGATr1FzFz0J4xMWtpHXYTzEsup82s2
+            wv/QAiJK6D0ukUphcTdZt4JF9JWLnVEOftRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbdRGbd
+            RG7Rtp/wuXNba2AHgAAA==
+          """
+          blob=base64.b64decode(''.join(payload.split()))
+          assert hashlib.sha256(blob).hexdigest()=='2811f24a6b93c7966316b260b8ccf8860b5e133c0fe6eec04566a46a4908acfa', 'V166 bundle integrity mismatch'
+          allowed={'BOAT_EDGE_V166_INSTALL.py','boat_edge_v166_refresh.js','boat_edge_v166_refresh.css','BOAT_EDGE_V166_TEST.js'}
+          with tarfile.open(fileobj=io.BytesIO(gzip.decompress(blob)),mode='r:') as tar:
+              members=tar.getmembers()
+              assert {m.name for m in members}==allowed and all(m.isfile() for m in members), 'Unexpected file in bundle'
+              for m in members:
+                  raw=tar.extractfile(m).read()
+                  Path(m.name).write_bytes(raw)
+          print('V166 bundle 2811f24a6b93c7966316b260b8ccf8860b5e133c0fe6eec04566a46a4908acfa256 verified; only installer/UI assets unpacked')
+          PYIN
+          mkdir -p assets
+          cp boat_edge_v166_refresh.js assets/boat_edge_v166_refresh.js
+          cp boat_edge_v166_refresh.css assets/boat_edge_v166_refresh.css
+
+      - name: Verify install anchors, no formal writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 BOAT_EDGE_V166_INSTALL.py self-test
+          python3 BOAT_EDGE_V166_INSTALL.py check
+
+      - name: Apply V166 display and odds freshness update
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 BOAT_EDGE_V166_INSTALL.py apply
+          node --check assets/boat_edge_v108.js
+          node --check assets/boat_edge_v163_nav_stats.js
+          node --check assets/boat_edge_v166_refresh.js
+          node BOAT_EDGE_V166_TEST.js
+          git diff --check
+          python3 - <<'PYIN'
+          from pathlib import Path
+          h=Path('index.html').read_text(encoding='utf-8')
+          c=Path('assets/boat_edge_v108.js').read_text(encoding='utf-8')
+          assert h.count('boat_edge_v166_refresh.js')==1
+          assert h.count('boat_edge_v166_refresh.css')==1
+          assert c.count('BOAT_EDGE_V166_ODDS_FRESHNESS')==1
+          assert 'boat_edge_v165_racer_stats.js?v=165' in h
+          print('V166 HTML + V165 continuity PASS')
+          PYIN
+
+      - name: Commit ONLY site UI files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/boat_edge_v108.js assets/boat_edge_v163_nav_stats.js \
+            assets/boat_edge_v166_refresh.js assets/boat_edge_v166_refresh.css
+          python3 - <<'PYIN'
+          import subprocess
+          allowed={'index.html','assets/boat_edge_v108.js','assets/boat_edge_v163_nav_stats.js',
+                   'assets/boat_edge_v166_refresh.js','assets/boat_edge_v166_refresh.css'}
+          modified=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert modified<=allowed, f'Unexpected modification: {modified-allowed}'
+          print('V166 modified only:', sorted(modified))
+          PYIN
+          if git diff --cached --quiet; then
+            echo 'V166 already applied; no commit required'
+            exit 0
+          fi
+          git commit -m "V166: validate official odds freshness and enable refresh on every page"
+          for round in 1 2 3; do
+            if git push; then
+              echo 'V166 site code pushed; wait for GitHub Pages deployment'
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep 2
+          done
+          echo 'ERROR: push unsuccessful - NOT DEPLOYED' >&2
+          exit 1
