@@ -44,12 +44,14 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 ## TODO GUARD
 - ACTIVE contains only incomplete tasks. Browser completion is never inferred from JS text.
 
+
+## PRESERVED HISTORICAL TODO / USER NOTES
+Read-only history, not additional current-model certification.
+- [x] V133 browser/server parity PASS for all four prediction modes.
+- [x] V133 mode policy fixed at 的中重視10 / バランス10 / 波乱12・15・18 / 激絞り3.
+- [x] Live V133 FINAL_15M snapshot + audit PASS — `20261008-01-03`.
 - V109 replaces the legacy result collector without changing V108 UI.
-
 - V109 treats confirmed + payout null as incomplete and refetches it.
-
 - V109 payout parser supports ¥ / ￥ / 円.
-
 - V109 backfills historical confirmed payout gaps from 2026-10-07.
-
 - V109 keeps result/trifecta data factual; missing payout is never fabricated.
