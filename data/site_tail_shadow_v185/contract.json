@@ -1,0 +1,19 @@
+{
+  "schema_version": "boat-edge-v185-tail-role-prospective-contract-v1",
+  "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
+  "first_eligible_date": "2026-10-10",
+  "candidate_id": "V185_THIRD_ROLE_TRIO_EXHIBITION_CONDITIONAL_70_30_V1",
+  "hypothesis": "3rd-place role must use racer national/local and motor/boat trio rates, relative original exhibition foot and ST, not solely head-strength ranks",
+  "weights": {
+    "V180_base": 0.7,
+    "tail_role_adjustment": 0.3,
+    "second_coef": 0.65,
+    "third_coef": 1.05
+  },
+  "ranking_rules": "Odds never affect scores. Preserve P(head) from V180 and change only P(2nd,3rd | head). Use observed >=4 boat measurements and omit missing contributions; avoid imputations.",
+  "checks": "First immutable Git addition commit predeadline; same-commit original race, scratch and site snapshot SHA; deterministic regeneration of all 120 scores; only then read separately confirmed site result.",
+  "measurement": "Hit rate Top3, Top5, Top10 for site-current, V180 and V185; V185 Top15/Top20 opportunity; settlement 10-20x diagnostic, never a pre-race ranking weight",
+  "gates": "No change to production ranking/weights. No adoption absent untouched multi-day Fresh improvement. Formal Fresh100 remains separate and result-locked.",
+  "no_model_promotion": true,
+  "no_outcome_access_in_freeze": true
+}
