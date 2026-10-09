@@ -348,7 +348,7 @@ function allTickets(pred){
 const be166OddsMeta=new Map();
 const be166OddsPrice = v => (v!==null && v!==undefined && v!=='' && Number.isFinite(Number(v)) && Number(v)>0)?Number(v):null;
 function be166OddsStatus(key,postResult){
-  if(postResult)return '<div class="be166-odds-status">結果確定後：オッズは締切前保存時点の参考値（締切時オッズとの一致は未保証）。配分・的中判定は当時の保存記録だけで照合。</div>';
+  if(postResult)return '<div class="be166-odds-status">結果確定：的中組み合わせは公式払戻から確定倍率を計算。他の買い目は確定倍率未取得として表示。保存時の予想・配分・オッズ履歴は改変しません。</div>';
   const m=be166OddsMeta.get(key);
   if(!m || m.status==='missing')return '<div class="be166-odds-status warning">公式3連単オッズ未取得。予測順位はオッズに依存しません。</div>';
   if(m.status==='invalid')return '<div class="be166-odds-status warning">公式オッズ検証不一致。誤った倍率は表示せず、再取得を待ちます。</div>';
@@ -885,7 +885,7 @@ function renderTicketRows(rows,win,postResult=false,officialPayout100=null){
       const estimate=hasOdds&&stake?`的中時想定払戻 ${money(Math.round(stake*odd))}`:'払戻概算：オッズ未取得';
       details=`現在の参考配分 ${money(stake)} / ${estimate}`;
     }
-    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${hasOdds?odd.toFixed(1)+'倍':'オッズ－'}</small><span class="be140-ticket-money">${details}</span></div>`;
+    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${postResult?(hasOdds?'確定 '+odd.toFixed(1)+'倍':'確定倍率－'):(hasOdds?odd.toFixed(1)+'倍':'オッズ－')}</small><span class="be140-ticket-money">${details}</span></div>`;
   }).join('');
 }
 async function renderPredictionModes(race,pred){
@@ -922,7 +922,15 @@ async function renderPredictionModes(race,pred){
 
   const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;
   const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
-  const rows=baseRows.map(x=>({...x,odds:x.odds??(Number.isFinite(n(odds[x.combo]))?n(odds[x.combo]):null)}));
+  const officialPay100=resultConfirmed?Number(result?.trifecta_payout_yen_per_100):NaN;
+  const validFinal=resultConfirmed&&Boolean(officialResult)&&Number.isFinite(officialPay100)&&officialPay100>0;
+  const rows=baseRows.map(x=>{
+    // V168: independent display odds; never overwrite historical pre-race freeze.
+    // On a completed race only the winning combination has a verified final price.
+    const livePrice=be166OddsPrice(odds?.[x.combo]);
+    const displayOdds=resultConfirmed?(validFinal&&x.combo===officialResult?officialPay100/100:null):livePrice;
+    return {...x,odds:displayOdds,oddsBasis:resultConfirmed?(displayOdds!==null?'official_final':'final_unavailable'):(livePrice!==null?'fresh_official':'unavailable')};
+  });
   const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
 
   let snapStatus="🎯履歴は締切15分前から保存";
