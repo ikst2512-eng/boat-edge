@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 1,
     "deadline": "08:47",
-    "updated_at": "2026-10-10T08:21:38+09:00",
+    "updated_at": "2026-10-10T08:38:45+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,40 +19,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261010&jcd=18&rno=1",
-      "fetched_at": "2026-10-10T08:21:38+09:00",
-      "sha256": "74b1efa539702354e534f21db66065aea2ccff00501bf5f109b1743ed836d235",
+      "fetched_at": "2026-10-10T08:38:45+09:00",
+      "sha256": "7c9d9f17e837f5c6d51b2a69642426f47b8f49fa9534a3b91890804ebf3b12b6",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261010&jcd=18&rno=1",
-      "fetched_at": "2026-10-10T08:21:38+09:00",
-      "sha256": "026416c38fade88131780d914965152f44f795dfc2ce4aa8c76121c174ad773f",
+      "fetched_at": "2026-10-10T08:38:45+09:00",
+      "sha256": "a2bc8e11de686b61d89642a004177899c9494b62ba868b484ac6425e81f923bb",
       "error": null
     },
     "stt": {
-      "status": "not_published",
+      "status": "ok",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/10.csv",
-      "fetched_at": null,
-      "sha256": null
+      "fetched_at": "2026-10-10T08:42:13+09:00",
+      "sha256": "c31e30407c15c254fb71631b6100d6c9a9927fb9ab274cdc4f4b819564152429"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "ok",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/10.csv",
-      "fetched_at": null,
-      "sha256": null
+      "fetched_at": "2026-10-10T08:42:13+09:00",
+      "sha256": "f42051f9e9d4bed30aa539a1c3d470174617df239bbc3ffe319e9dcf1782bd3b"
     },
     "sui": {
-      "status": "not_published",
+      "status": "ok",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/10.csv",
-      "fetched_at": null,
-      "sha256": null
+      "fetched_at": "2026-10-10T08:42:13+09:00",
+      "sha256": "0a2431d37f99b9cd658d4826488b5ed0961db6693014c3822a674c9976c8bdb7"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "ok",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/10.csv",
-      "fetched_at": null,
-      "sha256": null
+      "fetched_at": "2026-10-10T08:42:13+09:00",
+      "sha256": "81528a1736cec341137187c65b615426e8eec3da46faf676a1827f2fa7b1eee6"
     }
   },
   "racers": [
@@ -277,64 +277,209 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
-        "tilt": 0.0,
-        "raw_text": "1 広次 修 52.0kg 0.0 R"
+        "weight_kg": 52.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.92,
+        "tilt": 0.0
       },
       {
         "lane": 2,
-        "exhibition_time": null,
-        "tilt": 0.0,
-        "raw_text": "2 吉原 聖人 51.5kg 0.0 R"
+        "weight_kg": 51.5,
+        "adjustment_kg": 0.5,
+        "exhibition_time": 6.93,
+        "tilt": 0.0
       },
       {
         "lane": 3,
-        "exhibition_time": null,
-        "tilt": -0.5,
-        "raw_text": "3 福山 恵里奈 48.0kg -0.5 R"
+        "weight_kg": 48.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.98,
+        "tilt": -0.5
       },
       {
         "lane": 4,
-        "exhibition_time": null,
-        "tilt": 0.0,
-        "raw_text": "4 楠原 翔太 54.5kg 0.0 リング×4 R"
+        "weight_kg": 54.5,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 7.0,
+        "tilt": 0.0
       },
       {
         "lane": 5,
-        "exhibition_time": null,
-        "tilt": 0.0,
-        "raw_text": "5 西尾 亮輔 52.1kg 0.0 R"
+        "weight_kg": 52.1,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.92,
+        "tilt": 0.0
       },
       {
         "lane": 6,
-        "exhibition_time": null,
-        "tilt": -0.5,
-        "raw_text": "6 冨成 謙児 52.0kg -0.5 R"
+        "weight_kg": 52.0,
+        "adjustment_kg": 0.0,
+        "exhibition_time": 6.89,
+        "tilt": -0.5
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "course": 1,
+        "st": "0.01",
+        "exhibition_f": false
+      },
+      {
+        "lane": 2,
+        "course": 2,
+        "st": "0.08",
+        "exhibition_f": false
+      },
+      {
+        "lane": 3,
+        "course": 3,
+        "st": "0.14",
+        "exhibition_f": false
+      },
+      {
+        "lane": 4,
+        "course": 4,
+        "st": "0.12",
+        "exhibition_f": false
+      },
+      {
+        "lane": 5,
+        "course": 5,
+        "st": "0.11",
+        "exhibition_f": false
+      },
+      {
+        "lane": 6,
+        "course": 6,
+        "st": "0.12",
+        "exhibition_f": false
+      }
+    ],
     "weather": {
-      "air_temp_c": null,
-      "water_temp_c": null,
+      "observed_at": "0805",
       "wind_speed_ms": 1.0,
-      "wave_cm": 1.0
+      "wind_direction": 2,
+      "wave_cm": 1.0,
+      "weather_code": 1,
+      "air_temp_c": 21.0,
+      "water_temp_c": 24.0
     }
   },
   "validation": {
     "result_unlock_token": null,
     "result": null
   },
-  "actual_entry": [],
+  "actual_entry": [
+    {
+      "lane": 1,
+      "course": 1,
+      "exhibition_st": 0.01,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.01"
+    },
+    {
+      "lane": 2,
+      "course": 2,
+      "exhibition_st": 0.08,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.08"
+    },
+    {
+      "lane": 3,
+      "course": 3,
+      "exhibition_st": 0.14,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.14"
+    },
+    {
+      "lane": 4,
+      "course": 4,
+      "exhibition_st": 0.12,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.12"
+    },
+    {
+      "lane": 5,
+      "course": 5,
+      "exhibition_st": 0.11,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.11"
+    },
+    {
+      "lane": 6,
+      "course": 6,
+      "exhibition_st": 0.12,
+      "exhibition_f": false,
+      "exhibition_st_raw": "0.12"
+    }
+  ],
+  "original_exhibition": {
+    "labels": [
+      "一周",
+      "まわり足"
+    ],
+    "boats": [
+      {
+        "lane": 1,
+        "name": "広次 修",
+        "values": [
+          37.26,
+          11.68
+        ]
+      },
+      {
+        "lane": 2,
+        "name": "吉原 聖人",
+        "values": [
+          37.62,
+          11.84
+        ]
+      },
+      {
+        "lane": 3,
+        "name": "福山 恵里奈",
+        "values": [
+          37.94,
+          11.79
+        ]
+      },
+      {
+        "lane": 4,
+        "name": "楠原 翔太",
+        "values": [
+          37.83,
+          11.85
+        ]
+      },
+      {
+        "lane": 5,
+        "name": "西尾 亮輔",
+        "values": [
+          38.05,
+          12.08
+        ]
+      },
+      {
+        "lane": 6,
+        "name": "冨成 謙児",
+        "values": [
+          38.05,
+          12.09
+        ]
+      }
+    ]
+  },
   "current_model_input": {
     "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
     "source_presence": {
       "race_cards": true,
-      "stt": false,
-      "tkz": false,
-      "sui": false,
-      "original_exhibition": false
+      "stt": true,
+      "tkz": true,
+      "sui": true,
+      "original_exhibition": true
     },
-    "core7_ready": false,
+    "core7_ready": true,
     "formal_prediction_ready": false,
     "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
