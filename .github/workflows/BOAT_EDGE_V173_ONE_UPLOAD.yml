@@ -1,0 +1,155 @@
+name: BOAT EDGE V173 - Head Dispersion and Missing-Tail Audit RESEARCH ONLY
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V173_ONE_UPLOAD.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '45 0 * * *' # 09:45 JST; previous-day website-only settled audits; no formal Fresh
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v173-frozen-reference-near-miss
+  cancel-in-progress: false
+
+jobs:
+  frozen-reference-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current website repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore independent SHA-checked V173 researcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          import base64,gzip,hashlib
+          from pathlib import Path
+          packed = (
+            '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'
+            'Mouy2zg5AAA='
+          )
+          raw=gzip.decompress(base64.b64decode(''.join(packed.split())))
+          want='c8d038bb685952699bd839e3477bdd93da6a96e821edb09ea54cd58f6bf7c156'
+          if hashlib.sha256(raw).hexdigest()!=want:
+              raise SystemExit('V173_RESEARCH_SCRIPT_SHA_MISMATCH')
+          p=Path('/tmp/boat_edge_v173_head_tail_research.py');p.write_bytes(raw)
+          print('V173_SOURCE_SHA_PASS',want,'script_bytes',len(raw))
+          PYRESTORE
+      - name: Run 8 independent shape and leakage prevention tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 /tmp/boat_edge_v173_head_tail_research.py --self-test
+          python3 -m py_compile /tmp/boat_edge_v173_head_tail_research.py
+      - name: Audit only matched post-October-9 website frozen records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 /tmp/boat_edge_v173_head_tail_research.py --repo . --output data/site_learning/v173_head_tail_diagnostic.json
+          python3 - <<'PYAUDIT'
+          import json
+          from pathlib import Path
+          p=Path('data/site_learning/v173_head_tail_diagnostic.json')
+          a=json.loads(p.read_text(encoding='utf-8'))
+          assert a['schema_version']=='boat-edge-v173-frozen-head-tail-diagnostics-v1'
+          assert a['historical_mode']=='RETROSPECTIVE_DIAGNOSTIC_ONLY_NOT_FRESH_VALIDATION'
+          assert a['formal_2026_10_08_touched'] is False
+          assert a['formal_results_seen'] is False
+          assert a['production_model_weights_changed'] is False
+          assert a['eligible_races']>=1
+          assert all(day>='20261009' for day in a['distinct_dates'])
+          print('V173_SAFETY_GATES_PASS',a['eligible_races'],'races',a['excluded_records'],'excluded')
+          PYAUDIT
+      - name: Commit only V173 descriptive website audit file
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- data/site_learning/v173_head_tail_diagnostic.json
+          git diff --cached --quiet && { echo 'V173_NO_CHANGE'; exit 0; }
+          python3 - <<'PYSCOPE'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          allowed=['data/site_learning/v173_head_tail_diagnostic.json']
+          if paths!=allowed:raise SystemExit('V173_UNEXPECTED_STAGED_WRITE '+repr(paths))
+          print('V173_NO_MODEL_NO_FORMAL_WRITE_PASS')
+          PYSCOPE
+          git commit -m 'V173 publish read-only frozen reference head/tail near-miss diagnostic'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then exit 0; fi
+            echo "V173_SAFE_PUSH_RETRY_${attempt}"
+            git fetch origin main
+            git rebase origin/main
+            sleep 2
+          done
+          echo 'V173_PUSH_FAILED; no success claim' >&2
+          exit 1
