@@ -1,0 +1,156 @@
+name: BOAT EDGE V193 - Official Odds Two-Venue Research Verification
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/V193.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '10,40 0-14,23 * * *' # JST 08:10-23:40; future scheduled retries
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v193-live-odds-structural-research
+  cancel-in-progress: false
+
+jobs:
+  retry-verified-odds:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout complete original history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install original V167 dependencies
+        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Restore original SHA-256 checked V167 code and run negative tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYBOOT'
+          from pathlib import Path
+          import subprocess
+          workflow=Path('.github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml').read_text(encoding='utf-8')
+          begin="          python3 - <<'PYIN'\n"
+          end="          PYIN\n"
+          if workflow.count(begin)!=1 or workflow.count(end)!=1:
+              raise SystemExit('V193_ORIGINAL_HASHED_VERIFIER_NOT_FOUND')
+          section=workflow.split(begin,1)[1].split(end,1)[0]
+          lines=section.splitlines()
+          if not lines or any(line.strip() and not line.startswith('          ') for line in lines):
+              raise SystemExit('V193_SOURCE_INDENT_UNEXPECTED')
+          code='\n'.join(line[10:] if line.strip() else '' for line in lines)+'\n'
+          subprocess.run(['python3','-c',code],check=True)
+          for filename in ['scripts/site_odds_v167_dom_verifier.py',
+              'scripts/site_odds_v167_live_audit.py','tests/test_site_odds_v167.py',
+              'tests/test_site_odds_v167_runner.py']:
+              assert Path(filename).is_file(), filename
+          print('V193_ORIGINAL_V167_SHA_256_SOURCE_VERIFIED')
+          PYBOOT
+          python3 -m py_compile scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py
+          PYTHONPATH="$PWD" python3 -m unittest discover -s tests -p 'test_site_odds_v167*.py' -v
+      - name: Fetch independent official live DOM for two venues or wait safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$PWD" python3 scripts/site_odds_v167_live_audit.py
+          python3 - <<'PYGATE'
+          import datetime,json
+          from pathlib import Path
+          path=Path('data/site_odds/verification_v167.json')
+          if not path.is_file():
+              raise SystemExit('V193_NO_OFFICIAL_LIVE_AUDIT_REPORT')
+          obj=json.loads(path.read_text(encoding='utf-8'))
+          jst=datetime.timezone(datetime.timedelta(hours=9))
+          now=datetime.datetime.now(jst)
+          samples=obj.get('samples',[])
+          status=obj.get('status','UNAVAILABLE')
+          if obj.get('date_jst')!=now.strftime('%Y-%m-%d'):
+              raise SystemExit('V193_STALE_LIVE_AUDIT_DATE')
+          if obj.get('result_payout_combined_apis_accessed') is not False:
+              raise SystemExit('V193_FORBIDDEN_OUTCOME_ACCESS')
+          if obj.get('formal_2026_10_08_unchanged') is not True or obj.get('model_weights_changed') is not False:
+              raise SystemExit('V193_FORMAL_OR_PREDICTION_MUTATION')
+          complete=(status=='TWO_LIVE_RACES_120_PARITY_PASS'
+              and obj.get('collector_guard_promoted') is True
+              and len(samples)==2
+              and len({item.get('venue') for item in samples})==2
+              and all(item.get('status')=='PASS' and item.get('checked')==120
+                  and item.get('available')==120 and item.get('values_not_compared_across_time') is True
+                  for item in samples))
+          # The V167 runner stages a *proposed* guard locally, but it is never
+          # installed by V193. We only retain audit evidence on two true passes.
+          if status=='FAIL_UNVERIFIED_NO_COLLECTOR_CHANGE' or any(i.get('status')=='FAIL' for i in samples):
+              raise SystemExit('V193_OFFICIAL_DOM_MAPPING_MISMATCH_NO_PROMOTION')
+          if not complete:
+              print('V193_WAITING_FOR_TWO_INDEPENDENT_LIVE_120_PARITY',json.dumps({
+                  'status':status,'venues':[
+                      {'venue':i.get('venue'),'status':i.get('status'),
+                       'checked':i.get('checked'),'error':i.get('error')}
+                      for i in samples]},ensure_ascii=False,sort_keys=True))
+              Path('/tmp/v193_waiting').touch()
+          else:
+              out={
+                  'schema_version':'boat-edge-v193-official-live-dom-audit-only-v1',
+                  'status':'TWO_INDEPENDENT_LIVE_DOM_COMBO_PRICE_MAPPING_PASS',
+                  'date_jst':now.strftime('%Y-%m-%d'),
+                  'verified_at_jst':now.isoformat(),
+                  'original_v167_status':status,
+                  'scope':'Official live DOM 120-combo label-to-price mapping; NOT cross-time odds freshness or source-price guarantee',
+                  'races_verified':2,'combinations_verified':240,
+                  'samples':samples,
+                  'production_odds_collector_changed':False,
+                  'prediction_model_changed':False,
+                  'formal_result_or_payout_apis_accessed':False,
+                  'production_guard_promoted':False,
+                  'no_historical_backfill':True
+              }
+              dest=Path('data/site_odds')/('verification_v193_'+now.strftime('%Y%m%d')+'.json')
+              if not dest.exists():
+                  dest.parent.mkdir(parents=True,exist_ok=True)
+                  dest.write_text(json.dumps(out,ensure_ascii=False,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+              print('V193_TWO_LIVE_VENUES_240_MAPPING_VERIFIED_AUDIT_ONLY')
+          PYGATE
+          # Important: never deploy a workflow change proposed by V167.
+          git restore -- .github/workflows/site-odds.yml
+          git diff --check
+      - name: Commit only real two-venue parity evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -e /tmp/v193_waiting ]; then
+            echo V193_NO_PASS_EVIDENCE_NO_PRODUCTION_CHANGE
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          day="$(TZ=Asia/Tokyo date +%Y%m%d)"
+          file="data/site_odds/verification_v193_${day}.json"
+          test -s "$file"
+          cp "$file" /tmp/v193_proved.json
+          for attempt in 1 2 3 4; do
+            # Never write any other file, no workflow mutation, no prediction promotion.
+            mkdir -p data/site_odds
+            if [ ! -f "$file" ]; then cp /tmp/v193_proved.json "$file"; fi
+            git add -- "$file"
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V193_EVIDENCE_ALREADY_COMMITTED
+              exit 0
+            fi
+            git commit -m "V193 independent official DOM 120x2 verified audit-only ${day}"
+            if git push origin HEAD:main; then
+              echo V193_TWO_VENUE_AUDIT_PROOF_COMMITTED
+              exit 0
+            fi
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo V193_PUSH_RETRIES_EXHAUSTED >&2
+          exit 1
