@@ -1,0 +1,118 @@
+name: BOAT EDGE V187 - Fix V186 Inline JS Parse Blocker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V187_V186_INLINE_JS_SYNTAX_FIX.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v187-inline-js-syntax-guard
+  cancel-in-progress: false
+
+jobs:
+  repair-inline-js:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Fix duplicated lexical declaration only inside V186 guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYFIX'
+          from pathlib import Path
+          import re
+          page=Path('index.html')
+          src=page.read_text(encoding='utf-8')
+          anchor='/* BOAT_EDGE_V186_SCRATCH_FRESHNESS_FAIL_CLOSED */'
+          start=src.find(anchor)
+          assert start>=0 and src.count(anchor)==1,'V186_GUARD_MISSING_OR_DUPLICATED'
+          end=src.find('\n    }',start)
+          assert end>start,'V186_GUARD_END_NOT_FOUND'
+          part=src[start:end]
+          old='const age=source?.fetched_at?Date.now()-Date.parse(source.fetched_at):Infinity;'
+          old2='!Number.isFinite(age)||age>15*60000'
+          new='const beforeInfoAge=source?.fetched_at?Date.now()-Date.parse(source.fetched_at):Infinity;'
+          new2='!Number.isFinite(beforeInfoAge)||beforeInfoAge>15*60000'
+          if old in part:
+              assert part.count(old)==1 and part.count(old2)==1,'V186_UNEXPECTED_JS_CONTEXT'
+              part=part.replace(old,new,1).replace(old2,new2,1)
+              src=src[:start]+part+src[end:]
+              page.write_text(src,encoding='utf-8')
+              print('V187_DUPLICATE_CONST_AGE_FIXED')
+          else:
+              assert new in part and new2 in part,'V186_ALREADY_CHANGED_DIFFERENTLY'
+              print('V187_ALREADY_FIXED')
+          assert 'const age=Date.now()-verifiedAt;' in part
+          assert 'const beforeInfoAge=' in part
+          assert 'if(audit?.race_key!==d?.race_key||audit?.blocked!==false||' in part
+          print('V187_SCRATCH_STOP_GUARDS_PRESERVED')
+          PYFIX
+      - name: Parse-check all inline scripts and static JavaScript bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYSCRIPT'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script\b[^>]*>(.*?)</script\s*>',html,flags=re.I|re.S)
+          assert scripts,'V187_NO_INLINE_SCRIPTS_FOUND'
+          folder=Path('/tmp/v187_inline_js');folder.mkdir(parents=True,exist_ok=True)
+          count=0
+          for idx,code in enumerate(scripts):
+              if not code.strip():continue
+              (folder/f'inline_{idx}.js').write_text(code,encoding='utf-8')
+              count+=1
+          assert count>0,'V187_NO_EXECUTABLE_JS'
+          print(f'V187_INLINE_SCRIPT_COUNT={count}')
+          PYSCRIPT
+          for s in /tmp/v187_inline_js/*.js; do node --check "$s"; done
+          node --check assets/boat_edge_v108.js
+          python3 - <<'PYTEST'
+          from pathlib import Path
+          import re
+          src=Path('index.html').read_text(encoding='utf-8')
+          block=src[src.index('function be182StopReason('):src.index('async function be182FetchScratch(')]
+          assert 'const age=Date.now()-verifiedAt;' in block
+          assert 'const beforeInfoAge=source?.fetched_at' in block
+          assert '!Number.isFinite(beforeInfoAge)||beforeInfoAge>15*60000' in block
+          assert '欠場・取消の公式出走確認が未取得または古い' in block
+          assert '締切直前の公式直前情報が未確認・古い' in block
+          print('V187_LIVE_SCRATCH_FAIL_CLOSED_STATIC_TEST_PASS')
+          PYTEST
+          git diff --check
+      - name: Commit parse-only repair with safe retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html
+          if git diff --cached --quiet; then
+            echo V187_PATCH_ALREADY_PRESENT
+            exit 0
+          fi
+          git commit -m 'V187 fix V186 duplicate const age and validate all inline JS'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then
+              echo V187_INLINE_JS_PARSE_FIXED_AND_PUBLISHED
+              exit 0
+            fi
+            git fetch origin main
+            git rebase origin/main
+            for s in /tmp/v187_inline_js/*.js; do node --check "$s"; done
+          done
+          echo V187_PUSH_RETRIES_EXHAUSTED >&2
+          exit 1
