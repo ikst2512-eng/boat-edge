@@ -1,0 +1,112 @@
+name: BOAT EDGE V191 - One-time Immutable Scorer Bootstrap
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/V191.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v190-immutable-prospective-score
+  cancel-in-progress: false
+
+jobs:
+  verified-score:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout complete Git history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify V184 provenance and twice-deterministic future-only scoring
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/site_v184_patch.py
+          test -f scripts/site_v184_integrity.py
+          test -f tests/test_v184_integrity.py
+          test -f scripts/site_v180_shadow.py
+          test -f scripts/site_v183_audit.py
+          python3 scripts/site_v184_patch.py
+          python3 -m py_compile scripts/site_v183_audit.py scripts/site_v184_integrity.py scripts/site_v184_patch.py
+          python3 tests/test_v184_integrity.py
+          python3 - <<'PYVERIFY'
+          from pathlib import Path
+          score=Path('scripts/site_v183_audit.py').read_text(encoding='utf-8')
+          assert score.count('V184_COMMITTED_BYTES_AND_SOURCE_REPRODUCIBILITY')==1
+          assert 'verify_shadow_commit_binding(root,rel,p.read_bytes(),data,added)' in score
+          print('V191_COMMITTED_BLOB_GUARD_ACTIVE')
+          PYVERIFY
+          python3 scripts/site_v183_audit.py --repo . --out /tmp/V191_RUN1.json
+          python3 scripts/site_v183_audit.py --repo . --out /tmp/V191_RUN2.json
+          cmp /tmp/V191_RUN1.json /tmp/V191_RUN2.json
+          python3 - <<'PYCHECK'
+          from pathlib import Path
+          import json
+          data=json.loads(Path('/tmp/V191_RUN1.json').read_text(encoding='utf-8'))
+          assert data['formal_current_results_accessed'] is False
+          assert data['prediction_weights_changed'] is False
+          assert data['pre_result_commit_provenance_required'] is True
+          assert data['candidate_id']=='V180_SITE_REFERENCE_SHADOW_HEAD_SECOND_THIRD_CONDITIONAL_v1_85_15'
+          print('V191_TWICE_DETERMINISTIC_FUTURE_ONLY',data['settled_races'],data['pending_results'],len(data['invalid_shadows']))
+          PYCHECK
+          cp /tmp/V191_RUN1.json data/site_tail_shadow_v180/evaluation_v183.json
+          git diff --check
+
+      - name: Commit guarded scorer and evidence only (never workflow files)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            # Another site updater may have advanced main. Rebuild the same
+            # audited result from the newest checked-out main, not a stale commit.
+            python3 scripts/site_v184_patch.py
+            python3 tests/test_v184_integrity.py
+            python3 scripts/site_v183_audit.py --repo . --out data/site_tail_shadow_v180/evaluation_v183.json
+            git add -- scripts/site_v183_audit.py data/site_tail_shadow_v180/evaluation_v183.json
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V191_GUARDED_SCORER_ALREADY_CURRENT
+              exit 0
+            fi
+            git commit -m 'V190 run immutable V184-gated prospective score without workflow rewrite'
+            if git push origin HEAD:main; then
+              echo V191_IMMUTABLE_SCORER_COMMITTED
+              exit 0
+            fi
+            echo "V191_RETRY_$attempt_AFTER_REMOTE_UPDATE"
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo V191_PUSH_FAILED_AFTER_RETRIES >&2
+          exit 1
+
+      - name: Disable obsolete V183 schedule without changing workflow files
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          endpoint="repos/${GITHUB_REPOSITORY}/actions/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml"
+          state="$(gh api "$endpoint" --jq '.state')"
+          if [ "$state" = active ]; then
+            gh api -X PUT "$endpoint/disable"
+          elif [ "$state" != disabled_manually ]; then
+            echo "V190_UNEXPECTED_OLD_WORKFLOW_STATE=$state" >&2
+            exit 1
+          fi
+          newstate="$(gh api "$endpoint" --jq '.state')"
+          test "$newstate" = disabled_manually
+          echo V191_OLD_V183_SCHEDULE_DISABLED_VERIFIED
+
