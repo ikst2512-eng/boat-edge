@@ -1,0 +1,179 @@
+name: BOAT EDGE V174 - Evidence Confidence and Mode Overlap Clarification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V174.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v174-confidence-presentation-only
+  cancel-in-progress: false
+
+jobs:
+  clarity-not-model-edit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout latest website source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Restore SHA-verified display sources and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          import base64,gzip,hashlib
+          from pathlib import Path
+          objects = {
+          'assets/boat_edge_v174_confidence.js': ('3d8e41ce18b1785d74f035bf5568bc8748103e4276dabbf0b0e72fa84a0ef78c',
+                  'H4sIAAAAAAAC/51Z63PbVBb/3r9CKWyv1MhyQhno2lU8IXWhQ5N0kiwzTDZrZOvGUaNIQZKTGNszsdP3g7LLUh6F0pbSzcISYIGlj9D+MYqd5FP/hT3'
+                  'nXkmWnJTZ2X5wpHvPPefc8/idc9T0YeG18eEpIX/89bzw1uCrL2cEumTo1CrRVFFzqS7ohrtoalXBsFyParpgzwoVq6SZRtHRPNg3LI86lmYKJdua5S'
+                  'eVA4IgHA/O2ZZZVYQTjv0etYRFh+pGyTNsy5UFzyjNUw8elqlRnsMHzdKFWdtZAG6uB9wFzaEgzbMrpTmqK8Lh9AFRlNShGqm4FEgc4EWyB1C06wmTI'
+                  '2/kR4dVUrQ1L0X1Mk0tDb56JDXLRKfmQPmUpxlmSje0smW7IN4Fivj58dN5lUyenMoXJvIn8hP5sZF84fT45FRhMj81dSo/mh+bKoyPnXq7MDY+VTgx'
+                  'PjE6fKpwYiI/+UaXyej48fykWpszvAzZ/uzs1oPvdi9c27l/g8hFzdTAOBnir33gr/3TX/vJbz0k8pxtwlrnp7tbD39s//jR7o0rRLY0x7GXYfXp6vY'
+                  'vt/zWZdKIBLyZf3tSHS+eoSVPmadVV2QSJdg3qRc5T7Uqpik7tGyAlaqqRZeFUW1RlGRTc703aVUlRF62nXnDKquzmunSiD91S+qKOjQJxrXK4kouR4'
+                  'ikOBR8WaJievrQsaGDZCZdlkvqkFgjh0iGHNIWFrNEJsfw2fTwcQgfy+zxID6+W7Hx5SA5CC8vHPljljSmSzMSaj0L0YQBISxBTOn5QH9Rl2oYRcas2'
+                  'KfX67riQgQsaIUl6rhA3Keq3Nt8y16kbAX8hws8hAoOdSum5xZcSvEAu2a9jlzhX0T10sBLrxQGBwoDRwtBnHVpdWXRsfUK06+wYOvULASxWijNaVY5'
+                  'ThvxnQOT2xCZwBuPAAWZyE9NjE+ezo9MnXwrXzh+cvj1MYiqkyOxYMIoKrw1fOrk8eGpk+NjJGLYN1ZZKFJHMdyTkGll6oi6Qk2jbBRNWnDAKa6Eiia'
+                  'XjqkD9XqfrmimGdMM3hS2DTr1ngDyYcfRqiCH/QUpkPmeAc4p6JCKKKWvd00xqVX25iSHehXHEsJAEoRgAWNVoeCzqjivDu1zEdBomiwDtBRI//yMdO'
+                  'hQ79KQOrB38dge7TGQGrFY0iq64U2AiqIuoxO6wdQbZXArlkDTSDYT3gSzh12E5wRks6smtWDksrVHk/j1EQVc2ZIRKDPi4MDAYVxIW5Li2SeMFaqLg'
+                  '5Ksa1U38xzDNvi1uBKLmuPSEXuhaGN+1vjikppM1AXNK81Bmg6mXplJxX7TUpbd/jkX1NSl6YEZBRDb8ESSIlI2pAPgmKSeqEmKa7xHVVU9kkPSDGPQ'
+                  'iOdvmXpvAMa6Ygl1dKVAw5INAO6qtUYWEk4M14ACK0mSFCFaZUsgIcsPTuPijCrG3+r1Aal/MNsIdORb2bj/0Tv5FcAswxLx2Y1FQaBCxXGo5alsN6d'
+                  'w9zMbJdMgoMM4CR57gr7HkkwZtWuL4DhESvJ47Ijt6BTqYgjqQOMY1OU3BrPbjieKmlyUwgwSi9ODM1IqeNHwpV6P3ga6W0V8keJxjDqpgTyIlUVRnJ'
+                  '6Xl2aA9Xw/aV//defSBYH0L/WTbShNknLGBvsRIS2QOBfLtgaj28waJtR/TO95kIZgNwgH99wRAh/CSA3DiVkdkNKr16dnJBl8vmBb+/Dkx5Q5zRXnp'
+                  'QTbKMXwSjL+TlUXqZsJL8dJZdRV9mxPMzNWIEbmeEgxPCwNoLqaQXUgtAnWYpIj7Ytf797+zm/9rX32m/a5i37zY795v3Plid8837nxsL153V9t7X77'
+                  'ye65a+3fPgSy7Z/Pdr740m9+6reu+K2W39zwm//wm9/7zRbUbr8JB2/6rQ/hFMkEYBxJNDwUyOr+7u3zW79d23pwGX79JnC6tNt84Df/05UJSjWv7ty'
+                  '70PnoB7/5bfvieUZ2FcS2b//c/gA0vRqT+el+AoMuBISGgtbhulwBvMovZ/3mU2TVus60vhJIxwtxhtHBjfYPfwVNdv79q988u31zo0vT6IFj3oegS2'
+                  'mVZaLbBeT0X/6s1442UvD7UvD7YloBDPTEANrgUL0O4IY5yA7X6x74GuCDvWHM2Sx1yN5CFEYslnrALz2JQ/OIQVikuDohueuUOC5Mz8/klKBNrdfDJ'
+                  'YzZLKffixdwVtqrRsiZtyQqELHsAxzvoroYXGoF3eSyq5PcSmYlpzBIhPAP8uI1G8JUs6SuDmFacfYcqsEs/PW5RVqI2QWuFZCzrQZPMd49Ki6wRs91'
+                  'yaVs2EfCejZwZZceSIYGX5GiBWicKNTi6J31rZJi0RUP/kBJrlAp5BJYAWROGQvUrnhojjCSiNRdB3YW5Lo8IMUBwXMqdE/0IZ0YhVzQ9wYGiYXJomZ'
+                  'RU9XtUmUBYejdCjQuk6B6CUBCJC8U6eDA0dPRBDOK4UB4XWUn9zI0tSIwnFYUhREkOQ6bpkgUxjSFoZXy7EXBBQObRJoBX1s6xgd3VLp9/tzu2vrW0z'
+                  'u7tzfbj+7Xd5vvt99/zAeM7fcvBAmzAn9WvBEb+ivL4zkTmrWP6RJXMWz/A4sJYLpqMg08x4Z9dhAugNCcNymaJtdrG04aGIO/xEWFHBkI7WOKHjtoR'
+                  'VcoVjzPthR0eU6BcjrsQUbAIhUJdEhaqktPABcYjiZE8e5e7et7rrjBoynXrjgwrnJaIiV1pTheqnwvh1U+0+0qwzGLtxWJc5a2QMNTpPPdVwiea3f9'
+                  'tQv+2reAmZHLOp9/07n3+c76JiBqjzefbV5sX2/trK4927yUvBWMOg5VuWo5/kfB7rKf/AHYPNu8RrqgwP0WCwhABFRO2rPBlrsHuf96TjLJ0t4tvhE'
+                  'cxgmU2/T5Xn715VT0hUGnOJCTGJL18eNSLWATJWPJoXDPIP4gBowlOBb4rwRg5I6h3cn+AgL+grBPLCva4iIAxMicYepiID3biBuduX0Krhy51W/94r'
+                  'fu+WuBm7YeXezANA8FcePL7QdPoIxyv4/8aWIiPzblNx/sPL67/fd11kjs0wwEsZZ7Z/vmV50vH3ceQCF/KrxYCxyMQ0MjHb1ajQl/7XH0ivNDo/Px1'
+                  '9gNrLa2Hl9u37yFHcjav/y1Tb/1sH3zUefzS93Iu/sIIux5/ck7kUokrkv3as2rELft6zfaTz4Gco5KsAvdEPQA0Ay0V+9hF5EQxe99f+fO+va9R702'
+                  'iIUdd2Yy7CLbS3u3u5ux8IPSoga1KYuAFrgQEHuJqmFtwW9L2DZUoDAA0FKd5Ngam45z7LcAjPiQA6rx4xLy5o/ZRokNWgWplj4MZVQomzZ0VsLhdCJ'
+                  'yDGvWVuOzSFQBy7ykSvsACJSB/wEj7cUAbeEpCbVoBcv2fj8FGRPIG8fwqgEjPCPV2Mnfzzok2ZtzCY5Z0EqBQZk63rB+BswZpZtItFloYiDjiMwkhr'
+                  'mGai9Q19XKMSjqQwtKwbJKYq3mBm9ZIQJ31iH1vt+9eX5n/WL7yTm/eafbiAacKLQ8tW6ycW7vQHfduXwLAhUDGFvrDc7t2eZnL9ZQsMKGiwbAceydj'
+                  'RmN7fWN3Tu3AJ8xaSJ4AY0To0SoeT8I++LWIB+wQJQQ8MPpBDObvbAppQGDF2R3/MshJFBIzwcYpMGtexcSwvGScQ3CTp83rrjCPyvGtfp/5ESnGWls'
+                  'jOongr96NQJDPq0AErKUPxugwSpOHEB2ZHf1q/a1T+IVke19D9PIHv81up0uxl4SIgJ9pN4tNR5NDUhz6KyqteRHzwbrFDW3apW6/eIshdSOPhHxtrE'
+                  'LJY6qLWuGx6kgn9LYjqRdw6MF6ModC5in8btzAYOlgOWn0P3grJxxbSu3pELCELlW0kpzNEMsO4VfDClpxAuho9jz+/VQeiDfYbxElru9H7Wk6DOwzm'
+                  '/fg1aGtQQGorqAvQOCVmidsFUODBOZxLAMz2Ctf2CPiLDHWD1d/GgFYBUYjBcBCpaokwTd5NRlF13+nbrnDP/iH0uxffp3ISHVoQB6rjdsGQuM0wkHc'
+                  'SoxRuxLEkwUUpalUnTFIAalLGio2FwrMYLIoq1XwZXYPpwCbM9gOy27laLnUMpeAq9yiy5DW28vK6/ZmpfXyxT/x0WtheOxnPCjHLWbcqyEyN2BUXbo'
+                  'LMxsc5mED3D2BlNE+gGC69VJrG5oAdPWdBwspWhf00EiPKDy1IILk+Pjo0EKnQJq8JPcdb9cs/H/MIJ7cciJxUb2QEPC3/8CX2wQj1caAAA='
+                ),
+                'assets/boat_edge_v174_confidence.css': ('50456f27c228975bc224700dba23aead74cbec075acc8c8fa3df4318a083e5a6',
+                  'H4sIAAAAAAAC/4WQwW6DMBBE7/mKlXJpo5pAGgg1l35F74u9wKpgW8YpaSP+vU5Q1Eaq1OOuZnbm7XYDb9lhL2EgHI+eNDgcA3QcwGOgJzA2AIIjLzw'
+                  'qgomNYdOC87bGmnsOnwlstqukpnhG0AdrMoqEpoDcnwc8iYl16OQuzd2paqwJYuQvkll6GyfitgsyT9OqZ0OiW+YsySvrUMUEmZR5NaBv2YhgnXyO1i'
+                  'lWJDFGAUlj/YD9fCsxWE1C9eij9bzY5Is7QQpZFp0OtY4I1waQ7eKmtl5fATUfx6XZspJRD6PtWcNaHXRJqqpRvbfeHo2W66ZosGkqZXvr5XpX7Iui+'
+                  'I14SbtHKvJ59TqQZnz4eU1RxsTH878vzC66+S/I+8x5Xn0Dhf8ljNcBAAA='
+                ),
+                'scripts/site_v174_patch.py': ('96d0bc34548fcabd59d975269eb71e524002ca52dbd3e84723abfde0d24ee4e3',
+                  'H4sIAAAAAAAC/41VYWvbOhT97l+hejDZzHVXKGyk80LXFd5G15Zl9DG2IVT7OtGrIxlJbhrG/vu713LSpA2s+ZBY8tG5956rcxPH8fXhmyNWKdc2crl'
+                  'vdLNkZSOt8kumtPOyaaRXRh8zbVg5k3oKjnnD5qaCxjFjWWuhUiVhmIXS2MrlcRxHtTVz1ko/a9QNU/PWWM+ucBkNz9JOW2kdRNHp5dczcXJx+s/l14'
+                  'IzVhoMS991kVhwXeNP8VnZOVQvX0JdA8a6g4mW7TinLNw4/0G/v8Y5HVIV6BL2Ct01TTrewgd4AG9gRw+PCRWTESCzZuHSYz5k9/EjpbZQujKL/IOR/'
+                  'qyaAik3zi1MlfNgx3lyC8vseSnvyGvUf1PIz5O1HO9caVXrmbNlEecH0jnw7uAGExCAGYi7wzevxR3oDoQsy87Kcpn/58Z3Be7H798dhOPvAycV8QzC'
+                  'I/EgyIrsaIvsdLJia5S+xbY3Rez8sgE3A/Axm1mon8VeujU9j6IKauTCe1iCMBoSD/c+M02VaVhkeIrW6Shi+FE1oxV2sdM+wfdpURyGV/Sx4Dure8g'
+                  'OOFKme1twqRywa9l0cGatsUnNfw/x/oxYZVXt6abL+Y2adqZzTOpyZmzGnFyw34+Y//A0epRDPlRF76mgV/yn5q+oqsM0lD1YLbHG+BHZZKgT/QQFbR'
+                  '7wHWK+fov94aFCXcH9gOyf85mfN3xVvTa+58rhHi+rS1KqhzYDdrU7eqIE/6KcU3rKnPLAnOlsCaxW2OqhTGPVVGnZiD7VPoYFWQmqO8EmmwpPF7zz9'
+                  'f7bx0dC0iGFvx1CtcCGIJt3ZCt8tjFKspVxM36NQq0mHJsZc7tFOSi3i7N/la3tmAUTESGOzM8TFgzxF7aN/Q2qwUIDF64GlhfsX0tK94NY1jhXGN6L'
+                  '4cLRxav6dUujVleKxq7DMetcvm71Wqi9YkudUd+cBdEHoR+Q2W7N12x99ht0/XoUGveEMJS6m5EuMQ7/h8iDcVbNIhs/BYZAARl6QLhejKeAQdk1U2s'
+                  'V7vY6i8mnb2fi8uL8u/h0Mfl2cn4urk566SMsVQgt5yBEUXAh5lJpIXhwoWyL1d9VfmKn3Ry0v6KVTdJjnN+yqoQc9hO+v0825Bn6WuJfQcFzjig7dQ'
+                  'VCexICo9sG4wbnk+kT2s/pdJpG/wOatXyPmwcAAA=='
+                ),
+                'tests/test_v174.py': ('16ac1da64239d06cda168f07eae3a63881900253665ab8b3db602fdc43a9d6fb',
+                  'H4sIAAAAAAAC/71VXW/TMBR976+I9hJHi1ImIYG6BWm0nRgPDHWDF4YsN7lpDI7d2TfbCuK/YzcfzaK1tAiRlya318fnnnPi8GKpNHql5IhgMPQQimX'
+                  'GBQwyrQpvyTAXfO7xqu2jfaz+MByB3p+8ekltS5I3DVwaZEKE3vhqNqXnH8bvrmZhdT+ZhO+vm5K7s4Xx9fp3MEgEM8a7rFaDvrFUDGlIRe5xzAwEo4'
+                  'FnrxQyzwB+WhIDIquL7nKPkRsgbqawSx0xplcTriFBpVckOF33aaUwdgORdlkkWQFBC0favqFv6QEaP4iK7ynXZFfTcK4YUkgXTqAXr6NvbtmDdoIhP'
+                  'CLx304vrCK30j/uqHTs38rzi5vpzNafR+cyhccox0L08M5c7Y3DawV2aGfDpv48XsqQDTOlCybauZZMg0QT3+gS/rhqmGmAH2AHVLJH6eeRBlMKNNQA'
+                  'yKNRxoSBXzUR5x8C0xP1IGsLNxYkApgsl6TbapCu87aOGlUygb7zde42RGuTnSMap3clE2RPpzSwtJoiiBJVSiRNfoPwJHiatQr+UpI6z1vt6oBug6j'
+                  'fhQMwWnF46lKOsJcwm+2RIcRfOvvd1ZvMVxaWBJ612buzEB7pMgl3qPd1r437zqyZhP+YSU8jVsz5ouS4omxuTyoqlY2TRs4ETXImF3abnnRK8wWXTM'
+                  'T7OHLQG9sgb97Xzfo52FkhPiSstUgtxAPHvCvyjHFjGz4zUcJUa6WD0SHu/AWVsJqiZ0F1alAJ96ApqjLJIT0kr7uIbT+WOiaF+5xLlmjBjeFyQZlMc'
+                  'qWrwPSJJs6lfZQ5dZ1PDsdU8ww7h7ISafx8ak7bDNqe/2J2f5+wYRAMBjzzKHWfSErj2Ke0YFxS6o/a77QrWGq/AVyK/J9UCAAA'
+                ),
+                'tests/test_v174_js.cjs': ('c0c268e287590a6b4e08e0684bbb3f14d8af02a06f285e9e90d26ea40fcaa3b7',
+                  'H4sIAAAAAAAC/5VWXW/bNhR9z6/gwwDJCKXaVpu2NjwgTZXNQ2oXltFhaAOWkmibDUV6JGUnM/zfdynJH03dNn0jxctzv865VKaksYgaw7QdaPZvyTX'
+                  'zPaly1qs/PjNW88x6rf5ZVtnOzCO7mTkcropHh6vicGgyzZd2MDOhZjS/5oIlDzLzPefImmepopawfM7IqvPyOYE7M54zmbHwi/GwV9rZqyMsKvNU3Q'
+                  '82ay5zte5ttjhXWVkwaXsbB/+QWGpZzxOK5lzOPUzzPF7B8Q03lkmm/dZmi7bb/tmqCHUph3LE1ldKWnZv/TpS3DjZOy0GzZew9hq+gZBjiPgDBNw/q'
+                  'wsWqju/wJ77hAqVl4IhzebOqWb5IYF8sDHZghWUrJg2XMme5woQuAIEUIAomGn1H5PBApIJLOUiyDmdS2UszwxYeNhkagkZJsNpTCbxdTyJR1cxeT9O'
+                  'piSJp9Ob+F08mpLx6OYfMhpPyfV48u7yhlxP4uRPD8+ULqggmplSWEMMY7I3o8Kw3Um33b0gnTZpvyJWlRBq3pwvNWSVWQiZQH5MkDXj8wVgZAsq53u'
+                  'zBaSsgDoA5cx63iSeTsbJ+/hqOvwQk7fDyz9GEOrw6ihCFxr5cHkzfHs5HY5HHmaCz3kqGNE0Y6bXab/AVAjo8H4LnTBkwW0vel2vUyookKYXRc2ZEr'
+                  'C5qDeSag1s6XSBLhAfl5klOfDE9D56LuFOu/3auwVSCGZRpkppB+3+2ayUVb4IqpDd+YKmTOCZbG1m0m/1K7Pz8z7UBYIyobG5Km241tyCCt5fJgnyz'
+                  'qs7594n6bW2ZzWMo0iEoPt8xlmOIAyKaJaxpQWeYL81+L0hFAiKCr8IV1Rw4HAtCj9vYatL1nKMqvEuUd1NBHgiR1UbUCPHpyBuwjDMTxLDOdq2cIV4'
+                  '5PC6MkWC0TsE11KeA9CvOjrBs++4SxzfUVGCelKG1iw1UOFASfHwZJ+NZL6SwglPE2YY1dkCSWUR9LVQ9hcq+FOBfCe/oazQkAZConlJ9dNdVqJwqxB'
+                  'WR7zvttvbE57GKSCugHQgHBS9fgZCOumKljm3EwjHz7EHtl4rdMFhL3oZdrxTgGu6Yii6eCIihHiAfB5Gx5AjBQxO3QCB2tc1WXO7AGkho0qdsZ/gyx'
+                  'IqUQeN3foI+g3NQdxFyiWtZK3ZF5btO7x5BLmk2rArMFe+1wk6QXcH2P+hYRS8AMPdYnt4RIASZrBxI+vjxkWhemDUDSJviw/7CNwc9l1wC+e3eDfcH'
+                  't+8xVW7Pz66gL/nIKrygGvNQPwGb3ukhfrxQvV7hKiAjSvcipmTLdi9dn4zUTvtoN0N2q88XKX+zdjaO6jbYFBKXb8zhu7Yw5M8HGE/Zvrfjo8Khqyg'
+                  'S8TuadaMdQQPOahbBh3kHtgmk03dovtBETq8+H4pKJd+3aymNrjpDm6KvCt9s8V7s7rGt9sdz7+my30IFS+UxN1vDiCszonPLs7pw5IZHLX626+EIuH'
+                  'HB5TiRlVKUy64fUBcur8dkA7M2Yp0J0rpuYkESgJj9IOUqxwqIe3Le/Kx++x+eshfCZnGyTQhv22qUm+JewM/yc9w7X+9PRbbbwoAAA=='
+                )
+          }
+          for path,(sha,encoded) in objects.items():
+              raw=gzip.decompress(base64.b64decode(encoded))
+              assert hashlib.sha256(raw).hexdigest()==sha, 'V174_BUNDLED_SHA_INVALID '+path
+              p=Path(path)
+              if p.exists() and p.read_bytes()!=raw:
+                  raise SystemExit('V174_UNEXPECTED_EXISTING_FILE '+path)
+              p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(raw)
+          print('V174_FIVE_PAYLOAD_HASHES_PASS')
+          PYRESTORE
+      - name: Verify source controls and real display patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=scripts python3 -m unittest discover -s tests -p 'test_v174.py' -v
+          node --check assets/boat_edge_v174_confidence.js
+          node tests/test_v174_js.cjs
+          python3 -m py_compile scripts/site_v174_patch.py
+          python3 scripts/site_v174_patch.py --root .
+          git diff --check
+          python3 - <<'PYGUARDS'
+          from pathlib import Path
+          s=Path('assets/boat_edge_v108.js').read_text()
+          h=Path('index.html').read_text()
+          assert s.count('window.BoatEdgeV174?.register?.(')==1
+          assert h.count('./assets/boat_edge_v174_confidence.js?v=174')==1
+          assert h.count('./assets/boat_edge_v174_confidence.css?v=174')==1
+          assert 'boat_edge_v173' not in h
+          print('V174_DISPLAY_HOOK_AND_NO_FORMAL_CHANGE_PASS')
+          PYGUARDS
+      - name: Commit only UI changes and enable new site display
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- assets/boat_edge_v108.js assets/boat_edge_v174_confidence.js assets/boat_edge_v174_confidence.css index.html
+          python3 - <<'PYFILES'
+          import subprocess
+          files=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          allowed={'assets/boat_edge_v108.js','assets/boat_edge_v174_confidence.js','assets/boat_edge_v174_confidence.css','index.html'}
+          if not files.issubset(allowed):raise SystemExit('V174_FORBIDDEN_PATH '+repr(files))
+          print('V174_UI_ONLY_STAGED '+repr(sorted(files)))
+          PYFILES
+          git diff --cached --quiet && { echo 'V174_ALREADY_PRESENT'; exit 0; }
+          git commit -m 'V174 display audited mode hit rates and head overlap, remove fake confidence percent'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then
+              echo 'V174_UI_COMMITTED; formal and frozen predictions unchanged'
+              exit 0
+            fi
+            echo "V174_REBASE_RETRY_${attempt}"
+            git fetch origin main
+            git rebase origin/main
+            sleep 2
+          done
+          echo 'V174_PUSH_FAILED' >&2
+          exit 1
