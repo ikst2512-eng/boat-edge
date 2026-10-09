@@ -1,0 +1,145 @@
+name: BOAT EDGE V184 - Immutable Shadow Commit Binding and Reproducibility
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V184_IMMUTABLE_SHADOW_AUDIT.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v184-shadow-integrity
+  cancel-in-progress: false
+
+jobs:
+  enforce-original-commit-and-source:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout full history including first shadow commit
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore individually SHA-verified integrity code and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          from pathlib import Path
+          import base64,gzip,hashlib
+          assets={
+            'scripts/site_v184_integrity.py': (
+              'ee2ae20c90c6ce99477653ab8eecb3b8c1f10cdb1031d417fa1c284eac077658',
+              'H4sIAAAAAAAC/41XbXPaxhb+zq/Y+Naz0q2QgaaelGu1Q4wc09rgAZzclFCNkBaztZA0uys7jsf/vWdfJAsMbviAtNqz5/085+zBwcHH9ru3iK'
+              '7XhQgXCUE8K1hEjpaUcdGMsvWaCnRHGF3SKBQ0S9EyYwjO/ISWhSgYHKCCNBlZEkbSCJarMM7u3cZ0RTlaZ3EBPOOMcJRmAjESxvDHi0RwB+Xh'
+              'Q1bIF2C5DpPmGeyskAjZDREcgZgsjrnbODg4aCxZtkZBoEUGAeibZ0ygMAWuSi3eMJ9WIV8ldOH8zbPUWYdi5TDi8GKRsywinGtOcSiIoGtS8i'
+              'nXjvz7lqX6JSaJCPWBHBgB15L+CpZ6Q1of3LXftQJteEkRhWlMJduAZfdg4tXoYnD6udE49//vMeKCY3OaEIvhv2at5i9hczl/fNt6sn7rVsvO'
+              '2yf7tx+w3WjEZKk0LERk3dndBoKfYA/6Rf5irzTAlUpRnimPCosLBidcRvIkjIiF/8QO/rHV6rZa2Lar44yAV1MUuyEv7bfKFxeE2oiCAq74Rt'
+              'NlhkjCCRrCljpPvkYkF8iaPuTEZyxjzscwKczrCBJnmWT3amV3jRx1VhklGCHBIskWFssy4ehsc6SvjZUgV6YNOM1dFkkCJkUrZZRJTMgRjG0X'
+              'RBBm2bZadzGiqQqYXMqnyyGnBL+nYmXhI6zJvnzZoMOuW61dnidUKNLutpMqwzcCkHvPGeayIrVm+IYKcDZfZffYWeJHrfBT91EKeMJzJ7qPPW'
+              '11mKukhlLIC+FNWaGzD9Zeu+NEKxLdemcheP1FxHKwLAY66afc1R+jLCae19oTptFER6am7qR63RcmVf4PJsEDbUmwoJDg6Y2OHCMJVOEdcaKC'
+              'AQwIR9M6YRyT2DgRynisOVt5yKEkAAxkjYL36Q1NwyR5MHgjSIxyJkFFAoVBJNtVXPw7kkpzxYqgLG3GlN8inoY5OFqlg6lCUIcwFK3C9IaAKK'
+              'oKUqaSFI0WDzq70hVYJsAKABJEQpZQOASBQ71+H8kYQOKscxddFlwglXxI4SLSemLJSRDulvbVc5ZymsJxgETLOCOmkVC5t7WtnKR3S9+rcDtY'
+              'QnNwOZhMBsMPwfvBsA9P7FRBvSUPnoFbQEwLM6jxAD5ie48isOdA9VRKABA9lxXDndaX+PH4qQn/HfOPHTij6OE5676bnwBV57jdarfwi9qoaz'
+              '0YfuxdDPrB2fX0euwHf/ifa4qD0p6yWuttvGn/Dyl/eyXW1UhkMErIMnYp2tKSlwgBMrbhYZd33/f6weno8nIwDQb9moqAo99I6m0hFDCtcr1S'
+              'RpOCn1XJ7BIyGg8+DIa9i2By3uuPPgXD0dQInfp1oRWzN54ppF3cDBO/P4DTQe9s6o+Ds8F4UvKsO1qVTiAxx1ti8Gt4pBoWVJfMN+ibQVk8/O'
+              'gRQvzkyr6J64dViu9yRI155Yv6me/zyOh6fOorjwyGLw0AlqahuyCy8/OxVZdguyvyNaZQ4sKy32zUgiHTh3bgeF2Zq7FvUmAy7F1NzkEX8LEs'
+              'vMve9PS8po4Efc3Zk36CzApjvqnSBtzWeuF1SiU0b2LsRli1J36fjIZl9Ww6YhtVlNRnVNHrbSR448Fje7uMeXAPIA4NCqjwmQpH++fL1+vaaG'
+              'nAaJePqizQsmqpdgvSlKwJZG4w9s/8sT8EZh/bnQ7e1hFGR8itLKGRskLPT9+jmqb8Ds14eEfiIBR4T+pU29uqqR4Q/MvxbaLvUX06uPT3pV0M'
+              'o3NCU/I86gHK5fLFMtD8o4I9JX2GS3I8tx18+PlwfRgfnncPL/HzNKjnOW9j5FMjr7UCJtz7xbbtvSPhvw9/f5CH/cne93v9i8HQL7tbHbOky6'
+              'oesDtgm41Afi4bgVqcqN5wUvqg3GudWOWnpqKzXQHXhyTgJMpSKGT76Lh14rWPX42VgaoKwQA9Kms+QVmMPm2mnKWU2SPw107rv8etnXBwARi/'
+              'Cw93NO4ZXBjg2jB/PH4LHdt0v+2EVJhg8NCBtmi/npLjHiSkhMHr4fvR9bCORf9BU5i+pALP1xy0ljPSggArmCbjIqLyMqmuSGpUMzOeqSOYnG'
+              'oDnqDRLdz43JdzNfmakwjGQW/zOmWy4nkeXmZFGpsqnOEacZjeQsq0Oy08r4jBhwlJLXUGahc2ZYLIT6U4/XVXVFSnuLoG+JKDw4U//DCtF6rW'
+              'haHQWcjLxDeaVzwdLe/ZNqNKOJPzzyLD8zfeopqHYK1gJ1xwCyh4lDEo5SZcpuBWZ8j0R4jjr23SbHc2Oe+J6mkPcLvfm+qOO/avxqP+9eng/Y'
+              'W/ZcUi5MSbsUo5ZRaTRpUIIwGa4/kMr2B2g4eJIp5veLqeiJKnLL5AZDnMj+Bl+WX3VDbxVUG9omUJPiXOODtR6E/Csj69g76ZpTsvpa/WQBVt'
+              'fzwejWvCDbG6rOGr3mSCzTjU+Af7cD9AUhEAAA=='
+            ),
+            'scripts/site_v184_patch.py': (
+              '2f3022d7cdc42660ad8cd8ae7163b7453a3c406cf34be5d122b94073bd0c1552',
+              'H4sIAAAAAAAC/71UTWvjMBC951do2YOS4rqE7aGk+JDEpgTSJCRO2Z6EYo0TbW3JSHJbU/rfdxQ7admFhb1UBwlpPjTz3pNyo0tScXco5I7Ist'
+              'LGkRVue1Xklz61mZGVs1dWOmDPw5sfjNdCurBq6ODWRlVogAvm4NX1QWVaSLWPaO3yyxs66JXcPIGJ6MPw5ppNl/f3szRNYjZ5TJMNGy9itllu'
+              '19OErZPVehlvp7PJbD5LH2lP5qSNJUo7IhWxox7BoQBEARGllHQDPb2LfuJN63I2qGdeSBHyqgIl+m/U8AzYEzR0hFNAsW6rFR216/vgNtPKSV'
+              'XDOct3MhbYqtSKF+TAjSDW6WpEcmmsI5kuS+nIDnJtgPjkRCAUhVRAaoswkIvKwKUBWxfuglhdG3Sxilf2oF14vqU1RL+wCJbLAvpGa3dFBXe8'
+              'BR2zCJn5Mtgp2tKrnL5hG++hj6MDBOSY0EBVfBk6/8nqiLgDdOBxIUCQO49foXefcnIljm4dXB4Qwh0e4WR5CSfY77ebFCXisgPapCXcOJnz7B'
+              'OuuVf2SbXXTCoHeyNdc1L5MxiZN8weuNAvrE3LdlJ5BX+QA1ltIGhRCDqq/hV5ZA/9i6B7GbvGge0PAs9ncGx70PuDnfaSr1JvbeGIsDZyL9FW'
+              'NOTMYQc7tWcph5/yTWtjQDlS1o7vig8tWzxBThUgMPgeSGX0MyiuPH/aYHvOFci2zfBKtQ9PWsXubZjpWrl++6wH36LhyHCJBW4a66BMXqXrt5'
+              '/HdpH8XCVTr7MH/wl1EpuPH5fblLaQ2siG/gEgUl3GwG+DYWuuwhfj5XD8q2zw929VYXmn+2aLOFklOC1StloncTKO57NFwu5mKZvMlxN2tx2v'
+              'YzZereazJMbg3/xAIL5JBQAA'
+            ),
+            'tests/test_v184_integrity.py': (
+              'adb2b914333de99dfdd5e4fa9fb0a383da10aa3c6c1e4e8dbd2bfc3a74ce0235',
+              'H4sIAAAAAAAC/41XW2/bNhR+z68QsAdKG61ITpMVNgTMa5w2QJsUsduhMAKClmibiyRqJBXHDfzfd3iR3STuxYBlijw8/M7tO/RCiipoqF6VfB'
+              '7wqhFSBx/h9WhhFjSrmgUvWbcyZeaXys05lyzXQm6cXEE107zayXXv2Dy+itoNClZqeuRF1EZh1c4bKXKmFBYK/6tEjVdUGSjYScEobjUvjyaZ'
+              'ARUSYtAQEsWSKVHeszCKGypZrdUsvT1GKpe80QodgfbYWBXzWjGpwwQrLcNJFO2O55qR+/R1QtSKFmIdUBWo1fPVE0LbgmuzaN6csd3iK8JrzZ'
+              'aS601n9z2TfLHxKkkuqoprMud1wevl0VHBFkFeFSGVS4XzdYFZfZ9dgXeiwVEAH8l0K+tg75VYtvVOOut2wBdr9qCzqWwZzmkDuxgRrW7abm7F'
+              '8js7jGKlC1hyhysKHmvwQzRovNvi6q7gMvQ+dLvZA1eaCK9g2MRraSyebzRToVrFOa1FHT6AL9dcrw7kRBgZh+nCWyWEdtHTRTQ09s/QkmuEEa'
+              '/tT+8/dIuN1NPVXNQLvoRBCxGMWUV5CS+AQf/FHmjVlCwGB//C1ppWDMZT2NlJW2B3bJOhftI/S5M06SVpLzlBw4LRouQ1y1CaDpIEDcErVqgH'
+              'MmkyTdLB6Sks/JEkdnnBpdIvJPp7CXsUAJ0Llc0W6JFue49z+OZbFCyEDGjA60DSesnCFP8Z2bn5gbn82RxfBCWrw0eK5zjfRll2cmuPWnGdzR'
+              '6RPRENcowaNFiUguoQ4PEII6XpHSMbVqNBmiTJ1mrn2OpndVsxCcUbOsQzELmNvGJRsu9pfv1c89nPFJ8kg1f9TrWqaZM9QvWuIMwEikhxAUrQ'
+              'HJT3WLFkPYgjTPdM6fUWvKZl7z7tn0BUzVa1EpqsocrEGjZdXF6N3pP09AOsSpozAnFGA3gAYMkKnmtQTu5AHIQnl9MxuRlfjG/GV2/G5HPa78'
+              'O2ShSMNKLkOeyEjP94/f7yzRdssZoP6rIEDboRIIHiKgjVaKAVRjYvyH7OvoNmXreQwkQLstdxGnukwBv90zOARdHvZ68wWrZUFgoNHhHQXVtq'
+              'RRQz3r2gpYIT27oU+d3uVeVCAs/49+03cI09Vg0kh/nRPL9jQJMDeN9iZCL7dBomttuti43MM1MzxwhInR5b8vvGj53/FTqG5AYvb2PD42houQ'
+              'Y2YyPhCm4hGfvKMnCoG4VmCZvIgBwwOi08yUQR1CGU1fNzNXBAR66Gu4/3QA6fb7Rgd5iD4AJiT8nM4pNTh+yhAQYDAdOFMt+KYheV8AXGeMUe'
+              'Cr4ELbCVKtNnvIkzpEQr9wG9zbInqi0UQ+UGfChUDGMuofu9vZyS0afpu+sbcj6ajl/wytmeV6zsm+sPHy6n0/HPxZ3535IkLQp4xt8hUNO5HD'
+              'fDo4KHsyyYM6hqFuyS1+02fcmdUApx1zaZ6Zaxd4JTFlo57/OSan4P8RR2NoqpgnJT/AG8arVsmMLr1QZDQi9NtWc/aqy/qBm/iLfPDOwwu5N9'
+              'HAFAQOsiABBZhj6OJhNk3ztAs325Q3Ch4EMPOfKd3JTri/z1VXwwVd0afjQsqlsoQtfFJFybTNsD8yF/KBCJz7A5VcxEAExt0gTdzpLbvRhp6A'
+              'a6vuFi0jBJgOiB7U+BlB2+zgxAZO4tLlzsnpatoeh9i/TeeCYOxjOtSzDfsJYyHkifeGcnN4dZWJ+hNNGib1Ci/Rb8TNxl6Mq0uMJVhq/coZ+c'
+              'GRpkVOYrUgsNuZchvxKMLqAIoPrEV+DHXaW7+vcyzqI5LX5mLYgcsDCxFto1XsNeXvhsVNb3Bhs10QRR9NlcDifvRufX/5DxObSYc2IBkovLm0'
+              'lXtQiDMnuuTcwnl6w9S3lkpWay84ol1KGfmu17EbgjdZeSHfd6Iafkt8DgCix2MBxuaCsWdPy9i125CTpWOcdBzaDyrCAUFoyqVtM5/B+AiJXg'
+              'mcpcIa3ypRAHHdsRo1k/lDfYLHh4V2wduNL2aeAgXt9cvjU9PXB8ElDtkFvvIxXY1hoAnQEXBBpSZtBJVi0sVFTnq8DQbuzPGQUFXyyYufIGcJ'
+              'ktrDuCti68qfYCbJRZzT0PyfyDgdqsGrMH8g/+NcEN3apcA3cvn6asnXrZB1BuOvs3zcnK/TA1hz9Oy1/NIKfkgP7sYD00cJXQoctk02lc5o7O'
+              'z8nfX6bjCZlcf7qBCxMkOVyfIGE+foKL1IdP09H08vqKXI3fwuDzmFjmjI7+B5X3rWBmDgAA'
+            ),
+            'tests/test_v183_audit.py': (
+              '0a01750a1cf3facb0927f7069d05bd063981b00c942ce8119fc04981a47a1c9d',
+              'H4sIAAAAAAAC/52SQW/bMAyF7/4VhC+ygcSznQzopYdgNbpd0iAZeikKQZHlmKgteRKTLv9+VLpgwHZosYMgUvjee6DANE0fq5sFBO082gN4c/'
+              'AmBHQWrHvl9scR+QEYWkKHPtBcu3FEguCOXhtQtoVehR72aFt2KJLvPQYwP6cBNdJwZo9pUJo9qDcweXQeOvVirj5kAs3gtUfdg3bHoeXgt1eG'
+              '3clYZbUpkjRNk867ESZF/YB7wHFynmDDbfK7DueQ8CkiUqANxlNWzgL5LFKZlB0ORsq84InccDJZzqg3lvL8ahFz5YmHlWiJ/wLp/H+W4al6/i'
+              'SC9jhREH8CApKJAQupji2PrwLELlEhel/qYs+fmlVlWea3t6IqydWl+BeoPwBUEagZ+PwXoAfusDtnoprX84WYPV2KpXiOCurRt3JERuzhXWE9'
+              'r7i4CHujPq57C5zxvbzqJ4VxDS8WIuFlsZSJuKAyLqD8utreNevmTm62D4/NerX+0shtc79tdrtvD2u5We12Ik9+AcTM4zLUAgAA'
+            ),
+          }
+          for name,(expected,pieces) in assets.items():
+              data=gzip.decompress(base64.b64decode(pieces))
+              assert hashlib.sha256(data).hexdigest()==expected, f'V184_ASSET_HASH_MISMATCH {name}'
+              dest=Path(name);dest.parent.mkdir(parents=True,exist_ok=True)
+              if dest.exists() and dest.read_bytes()!=data and name not in ['tests/test_v183_audit.py']:
+                  raise SystemExit(f'V184_DIFFERENT_EXISTING_TARGET {name}')
+              dest.write_bytes(data)
+          print('V184_SOURCE_SHA256_RESTORED_PASS')
+          PYRESTORE
+      - name: Require originally committed shadow and snapshot before results
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_v184_patch.py
+          python3 scripts/site_v184_patch.py
+          python3 -m py_compile scripts/site_v183_audit.py scripts/site_v184_integrity.py scripts/site_v184_patch.py
+          python3 tests/test_v184_integrity.py
+          python3 tests/test_v183_audit.py
+          python3 scripts/site_v183_audit.py --out data/site_tail_shadow_v180/evaluation_v183.json
+          git diff --check
+          echo V184_REPRODUCIBLE_PREDEADLINE_COMMIT_BOUND_PASS
+      - name: Commit guarded scorer and tests only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- scripts/site_v183_audit.py scripts/site_v184_integrity.py scripts/site_v184_patch.py tests/test_v183_audit.py tests/test_v184_integrity.py data/site_tail_shadow_v180/evaluation_v183.json
+          if git diff --cached --quiet; then echo V184_ALREADY_INSTALLED;exit 0;fi
+          git commit -m 'V184 bind future shadow score to immutable first Git commit and source SHA'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main;then echo V184_INSTALLED;exit 0;fi
+            git fetch origin main
+            git rebase origin/main
+            python3 tests/test_v184_integrity.py
+            python3 tests/test_v183_audit.py
+          done
+          echo V184_PUSH_CONFLICT >&2
+          exit 1
