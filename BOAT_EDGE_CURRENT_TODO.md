@@ -1,61 +1,45 @@
 # BOAT EDGE CURRENT TODO
 
-Updated: 2026-10-08
-This file is auto-reconciled from repository evidence by V134. ACTIVE TODO contains unresolved work only.
+Updated: 2026-10-10
+V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read formal results.
 
 ## CURRENT
-- UI: V133-BALANCE10-WAVE12-15-18-FIXED
-- Latest prediction policy: V127 + V133 mode policy ACTIVE
-- FINAL_15M server generator: V133 ACTIVE
-- Revision-safe audit evidence: V125 + V134 reconciler
-- Browser/server parity: V133 PASS
-- TODO evidence reconciler: V134 ACTIVE
-- Formal CURRENT connected: false
-- Formal predictions_ready: false
-- Formal stage: 2026-10-08 PRE_RESULT / 5ソース待ち
-- Formal guards: results_seen=false / unlock=false / scoring=false
+- UI: V133 (repository state as recorded)
+- Latest model/formal freeze is NOT certified by this TODO.
+- Official V185 prospective freeze requires pre-deadline immutable Git evidence.
+- Browser display and model accuracy are separate certification gates.
+- Site snapshot count: 120; SHA-verified audits: 120; settled reference histories: 120.
+- 🎯 indicator strings present in JS: true; Safari confirmation: false.
+- Formal state recorded as of: 2026-10-08 (may be stale).
+- Formal guards (recorded): results_seen=False, unlock=False, scoring=False.
 
 ## ACTIVE TODO — priority order
-2. [ ] First V133-mode settled race must flow through the direct prediction-panel judgement path (`🎯 的中` / `✕ 不的中` / `判定対象外`).
-4. [ ] Connect racer×actual-course 1y/6m/3m.
-5. [ ] Connect 1-course escape resistance + 2-course wall/逃がし interaction.
-6. [ ] Connect 3/4 attack boat -> 5/6 beneficiary interaction.
-7. [ ] Connect motor recent-meet/current-meet/parts-change state.
-8. [ ] Connect venue×season/wind/tide/course and same-day completed-race LIVE water state.
-9. [ ] Formal latest prediction: audit original exhibition against both BOATERS + 競艇日和 before claiming retrieved.
+2. [ ] Safariで🎯的中・不的中・判定対象外を実機確認（コード検査だけではPASSにしない）。
+4. [ ] V185未見Freshで3着抜け31R/2着抜け20Rの改善候補を検証。Top3・Top5・Top10、A頭・非1頭を別計測。
+5. [ ] 進入実コース×1年/6か月/3か月と1×2壁・逃がし率の連動。
+6. [ ] 3/4攻め艇と5/6受益艇の展開分離。
+7. [ ] 直近節モーター、展示1周・まわり足・直線、展示ST差の個別検証。
+8. [ ] 会場×季節/風/潮と当日既走LIVE水面。欠測補完はしない。
+9. [ ] BOATERSと競艇日和の両方でオリ展照合。取得できない場合は明記。
+10. [ ] 平均信頼度81.53と観測的中40%の意味を分離し表示を校正。
+11. [ ] 的中/バランス/波乱の買い目重複を抑える候補を未見比較。
 
 ## WAITING / GATES
-- Formal CURRENT cannot replace reference prediction until predictions_ready=true and PRE_RESULT guards are valid.
-- No retrospective prediction backfill after results are known.
-- Missing values are not replaced with zero, mean, or proxy.
-- Odds never rank tickets and never decide mode ticket counts.
-- Scenario accuracy is primary; 波乱展開 may use up to 18 tickets when head scenarios genuinely split.
+- Formal Fresh untouched until gate PASS. Site reference study != formal validation.
+- Do not open formal result/payout/combined API or backfill prior predictions.
+- No odds-based ranking or missing-feature imputation.
+- Do not promote V180/V185 or any hypothesis before multi-day independent Fresh improvement.
 
 ## RECENT DONE
-- [x] Live mode counts confirmed — balance=10 / wave=[12, 15, 18] / narrow=3; V133 parity PASS.
-- [x] Live V133 FINAL_15M snapshot + audit PASS — `20261008-01-03`.
-- [x] V133 browser/server parity PASS for all four prediction modes.
-- [x] V133 mode policy fixed at 的中重視10 / バランス10 / 波乱12・15・18 / 激絞り3.
+- [x] サイト参考FINAL_15M予想：SHA照合した監査 120R。
+- [x] 4モード件数、V133固定のブラウザ・サーバーParity検査。
 
 ## TODO EVIDENCE
-- Machine-readable evidence: `data/site_todo_evidence.json`.
-- Current V133 snapshots observed: 130.
-- Current V133 audited PASS: 130.
-- Observed wave counts: [12, 15, 18].
-- Current V133 settled races: 129.
+- data/site_todo_evidence.json
+- data/site_learning/head_tail_rootcause_v196.json
+- data/site_tail_shadow_v185/quality/20261010.json
+- Source observations reflect site research only, not verified production accuracy.
+- V109 payout repair is separately tracked; no historical stake allocations inferred.
 
 ## TODO GUARD
-- ACTIVE TODO contains unfinished `[ ]` tasks only.
-- Evidence-complete tasks are removed from ACTIVE and written to RECENT DONE automatically.
-- Component versions must match `data/site_current_state.json`.
-- Legacy NEXT sections are forbidden.
-
-- V109 replaces the legacy result collector without changing V108 UI.
-
-- V109 treats confirmed + payout null as incomplete and refetches it.
-
-- V109 payout parser supports ¥ / ￥ / 円.
-
-- V109 backfills historical confirmed payout gaps from 2026-10-07.
-
-- V109 keeps result/trifecta data factual; missing payout is never fabricated.
+- ACTIVE contains only incomplete tasks. Browser completion is never inferred from JS text.
