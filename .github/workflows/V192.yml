@@ -1,0 +1,146 @@
+name: BOAT EDGE V192 - Independent Official Odds Recheck
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/V192.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v192-one-time-independent-official-odds-check
+  cancel-in-progress: false
+
+jobs:
+  independent-live-odds-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout complete source and evidence
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install already specified V167 verification dependencies
+        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+
+      - name: Restore SHA-verified independent V167 verifier without changing any workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYBOOT'
+          from pathlib import Path
+          import subprocess
+          path=Path('.github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml')
+          original=path.read_text(encoding='utf-8')
+          beginning="          python3 - <<'PYIN'\n"
+          ending="          PYIN\n"
+          if original.count(beginning)!=1 or original.count(ending)!=1:
+              raise SystemExit('V192_ORIGINAL_V167_HASHED_RESTORE_NOT_FOUND')
+          embedded=original.split(beginning,1)[1].split(ending,1)[0]
+          lines=embedded.splitlines()
+          if not lines or not all((not line.strip()) or line.startswith('          ') for line in lines):
+              raise SystemExit('V192_UNEXPECTED_V167_RESTORE_INDENTATION')
+          source='\n'.join(line[10:] if line.strip() else '' for line in lines)+'\n'
+          # Execute the EXACT existing V167 hash-verifying restore block.
+          subprocess.run(['python3','-c',source],check=True)
+          for required in (
+              'scripts/site_odds_v167_dom_verifier.py',
+              'scripts/site_odds_v167_live_audit.py',
+              'tests/test_site_odds_v167.py',
+              'tests/test_site_odds_v167_runner.py',
+          ):
+              if not Path(required).is_file():
+                  raise SystemExit('V192_MISSING_SHA_VERIFIED_SOURCE: '+required)
+          print('V192_HASHED_V167_SOURCE_RESTORED_PASS')
+          PYBOOT
+
+      - name: Execute offline 120-combination label/price mapping negative tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py
+          PYTHONPATH="$PWD" python3 -m unittest discover -s tests -p 'test_site_odds_v167*.py' -v
+
+      - name: Run official LIVE odds parity with corrected import path
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The old V167 workflow ran a script by path, leaving repository root
+          # absent from sys.path; the source uses `from scripts...` imports.
+          # PYTHONPATH makes its existing package import resolvable without
+          # altering verification logic or official odds source.
+          PYTHONPATH="$PWD" python3 scripts/site_odds_v167_live_audit.py
+          python3 - <<'PYGATE'
+          from pathlib import Path
+          import json,datetime
+          report_path=Path('data/site_odds/verification_v167.json')
+          if not report_path.is_file():
+              raise SystemExit('V192_NO_LIVE_OFFICIAL_REPORT_NO_PROMOTION')
+          r=json.loads(report_path.read_text(encoding='utf-8'))
+          jst=datetime.timezone(datetime.timedelta(hours=9))
+          today=datetime.datetime.now(jst).strftime('%Y-%m-%d')
+          samples=r.get('samples',[])
+          if (r.get('date_jst')!=today or
+              r.get('status')!='TWO_LIVE_RACES_120_PARITY_PASS' or
+              r.get('collector_guard_promoted') is not True or
+              len(samples)!=2 or
+              len({x.get('venue') for x in samples})!=2 or
+              not all(x.get('status')=='PASS' and x.get('checked')==120 and x.get('available')==120 for x in samples) or
+              r.get('result_payout_combined_apis_accessed') is not False or
+              r.get('formal_2026_10_08_unchanged') is not True or
+              r.get('model_weights_changed') is not False):
+              print('V192_LIVE_120x2_NOT_VERIFIED',json.dumps({
+                  'date':r.get('date_jst'),'status':r.get('status'),
+                  'samples':[{'venue':x.get('venue'),'status':x.get('status'),
+                              'checked':x.get('checked'),'error':x.get('error')} for x in samples]
+              },ensure_ascii=False))
+              raise SystemExit('V192_FAIL_CLOSED_UNVERIFIED_ODDS_NO_MODEL_OR_COLLECTOR_PROMOTION')
+          # The V167 auditor may stage a suggested collector guard locally.
+          # V192 does not deploy it: report the distinction explicitly.
+          r['v167_raw_status']=r['status']
+          r['status']='TWO_LIVE_RACES_120_PARITY_PASS_AUDIT_ONLY'
+          r['collector_guard_promoted']=False
+          r['collector_guard_candidate_verified']=True
+          r['production_collector_changed']=False
+          r['prediction_model_changed']=False
+          output=Path('data/site_odds/verification_v192.json')
+          output.parent.mkdir(parents=True,exist_ok=True)
+          output.write_text(json.dumps(r,ensure_ascii=False,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          print('V192_LIVE_OFFICIAL_TWO_VENUE_120_WAY_PARITY_PASS_AUDIT_ONLY')
+          PYGATE
+          git diff --check
+
+      - name: Commit independently verified report and scripts only
+        shell: bash
+        run: |
+          set -euo pipefail
+          # V167 may propose a guard change to the collector workflow. The bot
+          # cannot mutate workflow files; do NOT bypass GitHub permissions and
+          # do NOT silently promote live collector output.
+          git restore -- .github/workflows/site-odds.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py tests/test_site_odds_v167.py tests/test_site_odds_v167_runner.py data/site_odds/verification_v192.json
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo V192_EVIDENCE_ALREADY_SAVED
+            exit 0
+          fi
+          git commit -m 'V192 independent LIVE 2x120 official odds parity evidence (no collector change)'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo V192_OFFICIAL_ODDS_VERIFICATION_COMMITTED
+              exit 0
+            fi
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo V192_PUSH_FAILED_NO_UNVERIFIED_CLAIMS >&2
+          exit 1
