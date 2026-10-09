@@ -1,0 +1,213 @@
+name: BOAT EDGE V170 - Prediction Venue Accuracy by Model Mode
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V170_ONE_UPLOAD.yml'
+      - 'data/site_learning/mode_accuracy_v136.json'
+  workflow_dispatch:
+  schedule:
+    - cron: '13 0-14 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v170-reference-venue-model-stats
+  cancel-in-progress: false
+
+jobs:
+  display-site-prediction-venue-performance:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install SHA-verified site-only builder and UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYINSTALL'
+          import base64,gzip,hashlib
+          from pathlib import Path
+          parts = [
+            ('scripts/site_mode_venue_v170.py','4a3b8b239a196a1f2b7cdbc721582d40af4bbe90ea3be0b26daa1940aa42d39a',
+              'H4sIAAAAAAAC/50abXMbxfm7fsUW2rm71JIlh4TgYmbcRB6Y2rLHNpl2jHpzultZW5/uNLd7soXHM0DaaUtKCZTmAy1lYIAOH8oQAm3SFvpjEjvJ'
+              'v+jzPHvvkp20fMDavedtn/dnN09/bz6W0XxPBPM8GLPRRA3C4Hztqaeeutp6tsmkUJxFvM8jHricDUOP13uT+pgHMWcel24kRkqMORvxqB9GQweg'
+              'GqzTvtreZCqM3QGXjPZ9thJxOWjUNrnjsTDwJ+xq6/zFuhN7wMJjfOz4saNEGDAn8NjQUe5ABLusH4Wv8oDt8x6JMhBShdEEWIQglox9xXjgjUIR'
+              'qAYKXQP4IbPtfqziiNs2E8NRGCmgGYSKyMtasjVw5MAXvXT5CxkG6e+Iazpu6PvcJayUkMf7DnD1hKs0jOcorsSQZwDJWn8dOQqZpB83YFmrXW13'
+              'Xm5vsSV2WGPwn9FsGYvMOPnoxoP3PjTmYL1A69/cefDel7Q+T+tbH8LW8T8+oK1ncOv47u3jd393fPvvxlxC6QJtf/L+yTufp5AXCfmbPx/feOvk'
+              '7k3aeha3Hr771aNrH9H6EmHduXPyr3cySs8R2tefIkCriYv7d357/KdvaU0C33v99r033r73+h9oi2S+/+3b9+9eB0lTMi0S/fjLfx9//XsCI7kf'
+              '3f760c3XaH1BU75z/596TdIe/+pG4VAtEvf4iy9oD9Za3O9uH9+6RevnNI3rj25+jOsFkvbh9U9PPvgupbFAEj9887PjW9cJhsR98Nnbx1+RCha0'
+              'nO/dSE68oPX7yV9PPnjHqB3V1tavaIsZA6EI9f1f3r/zt0e/fuvhZ6TTnuOj75Nert24d+3ze9dAO3fx0yD0af/k9sf37946vvXHRzdJhsCJonCf'
+              'vvzntQff/OXeG28aR7Ury9tte2V1fX0T2MFZFi62mmCM2k/sjeXt7fZmB7Yj3nDD4Uj43IyMn5uveIeXjqw6/l3I/37fsGrtn260L2+3r9hbl9c3'
+              '2khw6yUgv9leaW+2O5fb9sb61ra91d7eXm2vtTvb9npn9Wd2Z33bXlnfXFtetVc221svGrVaDfwe2DqejXFiolsvkjdbi6TgiEO8BRREDT90PEkg'
+              'DcJQ/ECZkD5CDwJ6yYhVv37JsKyEqAzjyOV2xN0w8sw8DWjyc0nECy5tT0Qlnnt8AifKMRpS8SF9gewBXzKNNfqx71NGMQHHIhDRZ5ARCDKM8E9j'
+              'Nwrjkdmy2POsYIPSxwWLkETAdAhrOej8jpCcXQVReBusGplGGKt62K9LNxxBBnUgeQJvQzNHmW1IFA7ZMlVqfpJMxAywscuVaUjIp0PHHvNIApRh'
+              'se+BRXuho+rc2+V1zJB1StE5qfoYsqxxlqD7UQh5tpB/NRfjdCHgRJp3xb1AVxVYPLdN50Zw+HGWIKjatByU604iS5L87T44Pmiu5BlsnqFx2Q+Z'
+              '0UBtJihuGCgeqAxaI2u/7E0Ul2Z2zKQeNOTAWbhw0UwwrcaAH3hil0tl0iGq2tDum1LXyIZ11jmzMxJqKhjbenGZDYUkPy0fGKQvBFYqGEHIwBnJ'
+              'QVg4YCJWsg+KB6scHmlgrpQPjKuwtD0EmiVoVEkRbMqWCJvy+T/MnR4OKVXODazLhEcRx4oL3mnvicBLPL+Sy662IKtPC5Wu7H3AhHyrcVde6kB6'
+              'a11YMx7rkmkP0hcBtDG5KKcJuxs7kSc1n0NDdynSlpwHkOtXHF9ySP5x4IfuXmEDwiqC/JjuHJ0l1sYmnnvr5dVtpplRWgLJJI/G3DtNMOnAR9tR'
+              'xkxHTtWUQ50lQuZ42OtI5QxHM4yY9kIN7IWEDKkTVGaKu5NL1LXYC0unwmu/3Uk8NUE4S7rcSKSZxICjSIB3qJAVPT5TlaatlQGuEoAxbKiyvXCm'
+              'uioQZyZYDcoIlHlCOrsRL3IfOROoFjbUeQjNkhz6i1EqWUKKABQOadHMEeegKCmK3gKx55dY88wS1e8LV6BPEw6LA2fsCN/p+WnGTVps8uM0thcx'
+              'YsFhaQaAVbE8wrbnTEqbLdxEFfDIDsIA+zA8hVRRbteyMrsWVHInUnJfqIFptOoGksC6JgH58Einpz5WZtjDakzdWX5SfjCCrp0SXcVqmsgcELFo'
+              'A9e0ynCVcPe4kmiIUuyciqk/J2gAsNPNiU1bLIGbYz5kP7JXQDFEu/kJZtqrbxwi16NFjDRZGI5S5jljUiQeYicRP3Vk1Bo1MAlON0MBAfd4EYU2'
+              '7AkPzkSDI/o8QFOamqlF0YJ7yRoP6QQTs6IJmbushJYL/ZV+/oB+AokmcZXIVctmPbF+ejBilnRjlGwi46GZkERGwK/ZfGLahEhWazXnALFAOnVj'
+              'qDP8QOtS0CHEHHPxHBAxQx5Bkst0A9K4bCmL+qlQyBUNcwfTeq2wsRC/VTwfgmLGSsJAmxPnFtJ28rWUZ/Bs0MOoqoc/ucohf4DIHFJJJNRkVpYr'
+              'eEviRda0lG4YB6XK8xi2BP94plWd7TS70Cm2UmVxKLisEwZ8hkRaVjtygr3/QS4Exwg9WzI9NVGiKqTtc4m/70wL3WXz8xQfRcGbBXqYrneSZNXd'
+              'wb/dwtQK/4dMmnKl2F7MhDgqDnKaUjKi2T2YbffM8qinKwJm5KbO+vgT0wAma0z0dv69pLU8k+8taslSIoRVWFcExS0RjKHbyLeOKL72siIAxUHL'
+              '7Dq+a0ZhqEojYzLlAD6ODDB8AQBMDgZWiHmcOWyfOxEqXa8oLvLRSNo0TRV683T6mEWq0LQmva7GpLqI2QEVkOo2P4ceLbU1dv2wBwUM/IFKUgqc'
+              'dPOQ3pa0yvXh0Acp63SzCkmjEmbQMIJTm6XzN5C6aZxL5qWCc1Mbd8oETfMTTtpTZU5j6YHZHcyep8sB9DRrH7h+DEU89D0eQTQPQE7Jehxkh80R'
+              'p8ZJDbjQR4GiwSVEJzQt/iS9WGw15y81SnRxRBLQneRVPZpUQpe7qLvS3QMyqNw3WCUkgVcg7k7eCnVJtWCHMvHZ3ZYXj3zhOkrfBhhl0kik4Xie'
+              'WWFgFZoal48UKgz+0DWpZLzMVztAwxmB3jzz0MADQZCQxQJnyCmkHDT2IvVf3NpZbC00u0fW2dpDRyJr4nFN7b47JKjuAbvduZKnVtIkIewk6QLy'
+              'brFaFb5TCunmSsBGsmvNgixkFyIHfYRGKbaZFdS0XZxjEAJ4DkJIEmUDwnUoTWvajPAZy27CuJRXZ8Lu6HyWiQXMaKsqTg6fJ70ZSHQX/rij5bRK'
+              'CZPIEany9im4pcyqrYR9Ua2mQfpYFiE4zaJ1Kf9klq2UtUKFCLBCQFyJwFV2Uiqoa0ytns4IWO1KtUOWrT03JTy2qSpGUCO/Cbi8vraxvLn849W2'
+              'QckJZ8vzTVJmmS190FXUNLbWlldX7a3ltY0Mj74YnXUbMtgyjCHT7EvFbOozgSQVbZz6xtypYDb2hvbIxVoNHgdBDDY4lyHOgx5bVkEybFlOoVas'
+              'peOSlz0G4VQZCiTmq2ZJxKpsP1bISoEfV131FLRKEzCuOu9pJ4Q27hRGrP7EVKJQzNJOmd78NLVERVMfzlJS0t1AzqJCM5WvsNtBOBzescur3A8v'
+              'Tl0O5y2JfsKrj1vPNo0S4+R+d7FyuVuB0YUz74yQF77nZRe42f0aMwMOApVeAa0qS548s+Gozu2+H4YRUsTXj3qrWW8+V0EYRaEXa4xCl7XPxe5A'
+              'SdsdOMEu97LLtRKqlsPuoxx25dKtDIltwW4gXgVLkbIwlBaeKcMkx83yVbEMZomxjDIrEZbR0pxYQuO6U/ISDF3rZ8FI0iNXjvCRvAbEQl+Rw+WR'
+              'En3sSBL7ddY77R8VHnvxiQnGF+gX6L0W53WPY2uBF+pkRxZwjiKVCasBfoOODolC2iUtsOXOFUi16eEZnpG8W3Nx6BHZhQwt0AUY3RYkEnKv6i+9'
+              'GDxa2SMoiNShU7+kQ5uKVhk6BPeDfhF1oUtYqVcpw2aG1sMJLWEW9zAg9ujNbog/fafH/Tl27lxKUfdEe10rC1kCyfv5QsgWSiQEbjKvDB0RZBNW'
+              'SBf6OLeYRsOwGqDP0B9zs3Ipl804ViELnDHSkK70kRzXjUFrExsTgB4AUhoNMAdYuDHcgwbY1Au5tB3F0DvxA7CfHe7RMuPa2I+QD73z0UOFFw9H'
+              '0tRyAlIg8S3eka4QS8l1tyAvWlqw8MHmlcBAqMoDob4ajbAhKhA9LBX8rfby5uUX6dUSX1Sr0ZjOw+X97oxuJIUs7yNkIe5SoGyrS22LGiRKRZVj'
+              'zxIPzXHe776Q3GSNddepSSR+1m1gBsVXKOyAQJWjWCXNOSyso1nKs7Lb4FOOh/dBU/e+WxOc2doHQplGJ8S+UHj0LzAKAa/nIIkH7ceAo0I2inu+'
+              'gEDnw5GaMP3PPmA+6AsvwUD3B1vVQBzbxuiwbeRv2DZ6tG0nzyvavWv/BRsgVt5uIgAA'
+            ),
+            ('tests/test_site_mode_venue_v170.py','2771520bbd0104c0c2f5e0235ef4cc52a755634be737755dfd33754b380dfeab',
+              'H4sIAAAAAAAC/6VX227bOBB9z1dwnygjsiM7Tbd1oIdso6AFEqew3QALr0HQ0jjiWhJVkmoSFPn3HepmO5GLLAoYsknN7QzPzNAizaUyJOY6TsTq'
+              'SFTLf7XMmt8G0nwtEmjWRSaMAW2O1kqmJOfGKpL65VdcVi+0MMBSGQH7AVmBz+GfXiMV8iR0iZaFCoEpCKWKXHIXTL4FM5fc3F4Gs6OjMOFakylo'
+              '4CqM76yNOXrVTuN/YJefuIbe+IhEsCYazLfc0ZCs7Q6xPwYmzf0GACpY91w9XQp0aqR6cnrnpZiS0vg2dqfRGmQ8hV5jJvZbsRMaccNPSni5gkiE'
+              'RsiMxUJbg7SyB93yCWLJRHZ/sk0O/OBJwa0JjSk6fV8biAfpJhLKybmCzGh/rgqoY4WuV02gG3jy6cgbvR963se+N+p7H2qLDyLz6bB/2j+jLSqM'
+              '2f9JFcdTQEU6bky4VGc817E0dNz9fgf5RmQRHdPZl3nApsFVMA0mnwJ2NxyN6NYOQ/eRfEC5qy+Ti2s2PLvBt/cFV5EufYAuEqOZBsjo+IonGlxa'
+              'ZIkMN+1SI08wefX6GTf4D4gYxyBLyP2h1/c+zr2zsefh57h8ohebZ+vk2aqAMQmkmDjrtVp1mjg92zWB0dtzY6FMV7LOA+5hHviTLFB7eHrmVZ6Q'
+              'Caby9tzkeXvGmG0dxpByLAqlcQP9riQ3fYjuoW9Z0bc2+luNfkmKEnwOr9P89XY2Z7NgPr8OboLJnN1Orv9mk9s5u7qd3mCer6bB7DOq/+qM2Rvz'
+              'eDAJ2wQj4rVUZENEVtWxLURi/MVP+kpLG74B9mTPG8nqPbutDNJ01D+leyIfrciSiDXZ/OHTWCZACSANyOKXatYy6tkoWsovtuxeLurgl4vNEg/H'
+              'iHAD9vjM8/mu/JY1tUZ1yqWW0wbUFGh7eC+sow4dt9Iuxl1YHiaQOabn1s6Z4hlyftgBdSIzaEn1oJAtTq9qfQYby6V8yOru1zaxEDtOVuSNWKXT'
+              'dsjIt31+EBVprp0WrguZLhQwrkMh/Kr2sHgRvD/qHdN/Mnq+8qMBZCFic2hh1h8Qea1/4jT8OqYDa532elWobPWEXdtZ9V5XBSa4GgV1E2U65qOz'
+              '93Tp12NpUG2g8iCGx0jcY+d3Gp/wC58GHo3zEuTWcQfUnlsCQ577NbQmw9qwe5xCIgPWVo6SYptO5e9NtMPRuVWu2kzgoANlbB931JYyJV2ar5pa'
+              'lWTwveCJY1uO53YoKDCFyrCibQV0ab7QsgR7rbYDG48eB2Y9xw1fJTsckr4d5k477roCdeWC8iLCA4mYbUS6M6rRO9dWAsqWjqxQhxSdYVu7ZrOL'
+              'm6/XAXV3pBfUG9knVr8p9KGUDbpUXmVQCpaH5kDy9g0MS4WDqEpxeAyTIoJoP62W3CwVOuUmjJE0/+KdBKJtanP/YE2d53tFlQ8U8Khe9I5XlFja'
+              'kgdh4l2GTbnQoKdwD4/OHdYABEpJ5dLZ5wvSxEGxe/xfFreIqinOjEiBlbP9xW2sq5vuzOClvzd/3u3Nn/P9rvdmcLkSOJGMJDtufwfjqsBRbaF+'
+              'L7AoDiDsmC8Nt5oRs1x4FVnrUbX0ccS9au5vhplJQ4aei9Put9Dh9E55wvDKilfTmrXMxoC3HIY3EHsB2EJuTDc3zg/VjbM2v9uD6fzzlxm5+Tab'
+              'E7ydkL8CMg0uLmlHs8U2+oaOot7SUco+t1t7RzhTGbM3e8Z8nzKWcpExRsftfwq7gXn/D3G3zqMWDQAA'
+            ),
+            ('assets/boat_edge_v170_venue_accuracy.js','4c8606e938e09d9a6dca2f8c9ac3792521873b1c1a5e8f99d34846e6ee9839ab',
+              'H4sIAAAAAAAC/6VZbW/bRhL+nl/BqD0vWVGUfWnucJYowUmUtnd+CWyhwCEwBIpcW0woUiUp2YItwLLz4rR1kl7fLnXapq2T5nJN0l5bxE3cBLi/'
+              'QkuWP+Uv3OwuX/RiuwXOX0xyZ2dmZ595ZnaVfI17e+TPw6PcqamxPJc780aOq9hY01VXt0yugu05yy4rpoq5Yp2rYbOKRU6parqLNW4BFx144Gw8'
+              'h21MZKYmx/8uca8lj/G8IGeWUNXBnOPaoA2ljnGqZTou96rMO6Ita5ZaLWPTBTlbeqeK7foMNrDqWjbvCCJ2VLkmZ2ZgrjnP17JZhATJxhVDUTGf'
+              'PD+UzsTQbHJeVOUMv4SG0CgaUsqVFBJRmjwbLnnMkMd5+hgjj+9ULfISQzF4eeXEX1KocV6dFYTQtYmpM7kZeamku6No77NLu9sP969udO59gsSi'
+              'YpAgjCJv7aa39i9v7Udv9RckliwDvrV//Hr3lx9aP3y8/8l7SDQV27YW4OuLlb2fv/BW30UNMGBgl9MUV5HNqmGIVdPVDXlYrGBTgwWyj2rJ0lUs'
+              'IzCPRMeyXRnZsFwHiRBcDdt/w3UZRXE0q2USIr4my3T+8jJ5qoLknG5ibXn5+GS1XMS2pDtndRP2iWfvfE0QhCyZMRp+CJVWVJcoBd3w1VecRS93'
+              'NlAkLLnWWX0Ra/yIEEd/iBwqWyZ4eMjsCcUtSbYF7jEN45aqGNjfX3RBSfz1HAJ1rStXIoUKgLCGpyEGMoWTa9eXbOxWbZNz6xVszQG2FBeDIRQu'
+              'G7GV0QGJhK+hKq5a4gtCMJWMN8iWKE7dVLm5qsmwbliKxgPawdqcYjhYWDrGcfocf5x+Gxoiuzc0dIboNa0FXkjTTRR8rWQ0xSb4mxqM+K9kMNhu'
+              'npoO18RWa8vKgqK73Bwm/iIpSVQmSYIVDKzYJkxMli0NF2gWFhRVrcL66oUapK90wbHMbE2GxyGATTzyUlxSFbUEIDWthAPJhVFDSJFV2ZJ1UXBL'
+              'AFUuB4C1efRmPn+OQ3FbIsGrOgQUnL8TNd83mxriqYaa5IDisgL+2A4E8DhsQ9FS3ATW5nGC+J2ImCRBnU4QXxEAFaZaFUxmzLyVzxWmc2dz07nJ'
+              '07nCuamZfGEml8+P5yZyk/kCIZTC5FS+cHZqemJsvHB2OjfzJtVQsS2tSnUXIjOFBazPl1ynoJYUcx5rYIHuJZlAicwozNnYKRXAPkFeNH68JlEX'
+              'nd6YFBWNc6wqAACxeNAcrqVYAkdhjo+cHIa/VB8afPDhEHxkoAFAVQyjvtSd/Y2GAGEdgEzjWARQWGZFsTFPgUn4ZN6wgJfkV3n0ShFDZM+FcXib'
+              'LOUNOsz8JjvOxAUfbiXLcelU4tLbOl7gJAfTyYhuLxkXlnwTAVlLqo1hzTkDkzceRTOYoKRrAILDfQnEVENxnEmljH3pREUxMQwTo5JuOth2x7QL'
+              'kL2mG9pS5lxsF/G8biLRX0qj4UeCJPqhcSAEEkWBiA7EwFWKFKxhDEgOqBe7I0FN/HYciNihUaCeMJH/NwJ0GXT9Pmb8raIDjT7ksPrB9oC3LcsN'
+              'uY2+MA1BgAgeYLkwAH6Y2H4zPzEuo3TpRCZqEXafrrehBDYfte781Fq/216/ubf9PJ0EmXQls795pXN/vfX8stf86uXOevv6/dajzzpf3d/beuo1'
+              'H3vNT73mc6+56a1++HLnWjpZySAf9ymynIBwpooXIKhSTTEgKXniVJCgxFFgECiQPK+IRcKibNKirEiEIZ3zrJTOinW52PuF7CctrTKtswUbdhEF'
+              'TM0XacVwhob8h4x8MkuKWV0KZAtQIIXRxIiQ4JVAWOkVXhwUXl72FSZ8WUolXa7Ylj7gRWQcRgftRua6hw+25GvuG1pe9kNaUCFEkkEr8mmrTEmm'
+              '2DUkNGjMfy8knn/avnQDgOGtPRuAB4pzxCGUrnA0A+QYQ7+qVAlSY5n95nb72ns9apr3ATagxltZ9VZ/9la3vLX11o3VzspaaHPvyZ3W+tXWtY3d'
+              'F5+3Hv6z858nXvPS3uYjmNu6/F1r58be108BhO1rH7fXn3mr/9i7/G3r5jooTBcz7dvftX790Gv+m1mEKZ0HGyBMgfoldeAxRewdrwkOvBuil0xP'
+              'FjNc6+rG3s8329vrXvNF++E3YO0sqTGh3ywfqDRgPc7Wr+m13gg41XJZsesxP32gEFPM+712ge5YHE1zyWBE0x1XhwQvaEodRtqf3qVjUOh0A3iC'
+              'X5Qziz5UhgXJwOa8W4IG685P3H+fcPu3tlpbnwSq8KJqVDWsgf50Ejw73EuaTDEY99MTeMnWIT9p5yxIZaXC8+cv4jp0wWU8C6mJ0sWq61qsYwMt'
+              '9CVG62AiUinHUBxmxVEsMIfiPHyA3GCJm0XArqOItIjEOtEeRxB9qi4DZ4MLlm7ydLx3BYZSxEZfpCHpEvR7LLO7fc9r/tLefOE117m0Q08gHNA3'
+              'E6WkPQPisUzaqlAqpXwkx2hcYxC/KIVpq55FTAc0oszbTHvrduf+znT74+/TSaajX1dAFz3qQnIa1MhOJnvXrwK5npzefXZ3d/tdyqQHqwd66HUU'
+              'uGZQaWvzi9aN60coTbIZ8EBDdzhEoJYa0P+ptmVAgNP09QAJMlTCigb/bPKYAWSmk/CfPLOgha/hisMvobvRlxvX2x89Dl/3P/9iZP/OQzaTfU0S'
+              'Q8nAaNHS6v4iahS3i2EdKcuLfXXEKkJBrmFNXgzJN8VkWa8M3/0HCHDUzZ6emjg3Nj12ajwHEW8//qizs9ZaudX55jZEnTEYcGT7/i1CQd9/gChX'
+              'B2SNgrigOByGgeYJ5gm8HehijfBrZHZyqnBmLD9GLN1+wAKIRv1WnmQFm+cHSAMF/loCUlk8gFFAWvOlOT4IQhaKDV/uq3L0lNftHhUALckuQ1yw'
+              'HaEvgfZ+5WFNC/UeJEtPnCBtYrdQx+bR0kNDi9IClC9orAumZY4wSs3CbPLS5eygEHjOozjzLJCO1h5HAuqzTKDGtrPRS00MdvCfpECGUdWhtfDk'
+              'NNnJpytQRgDpULYA1H4ftbJ6Ynjaa0Kh3DoB+8Ty1Wt+6628340zb2WDlqFb3iqIvu+tNFmB8poPwvoaVDtSqkAVVFOw2rn3HoMQzGq9uNy51wST'
+              'YdIR4ZuXpkd2t6/CgR1msLLLSiAD9v7ljdb6FTDYevRl58ed1uW7xDtSSQdraIXFivYXPTdBY4bBo/N9tWIW2B7Ocjk41vJFOVOUFE3LQbPijgN8'
+              'MXQnPFINHZp3kR6w/VuVokTUONiVqKYJUJTquVbRbGWBd+0q6XZouxMeJ8IqAF03aZezB1mk500kYrBIiRZLrmLPY7+BPdzUgZ06OScc2af7Nwbk'
+              'SBJdksBhn3Rrsn+pQkazUhm7Srarl1teJjdpFUWbAf9c/o8iGmanHNr3wzm4q9M+TybMDp4FDujXF+WBeQe3jK9HLSPgxmt+yA4RFByPWD8HiIF2'
+              'kfOZJOJJQCWFakQfoC1qKPuJ8uXOZ3ub37S/fMZgyf0uwgM8AmX4gumTwKWUnUkWfP8BZA20ldAUeqvNsCSRLrcrL7pTFFjhdW/ta29tx1u7RtZJ'
+              'F8bykwxTRqgES+Cj2pI9oKySscS8rWu/2X119V4OnCoz0ON2dUwZn4Q5RmhBpbs4K/WRGsSILWxQMmBnWlaIiYMaMNpYHN3ss/3uXH2wSxrwR/t3'
+              'ruz+uuGtXoJu3WeZrWvtzZ+6j4wQt6OOCACpleZ+83rr+jMi0HVKYMHv4pvGwA0gzcv+G0CG757TtRzexIhq1e7NQEefN6Hk2limvJXtbeBF9q0H'
+              'd0RHlm59gTTOjK/o/e+sH9Tl6PbCv4uM6ESWQ4td/BCNh6OpnksA/wIl1c035EbhwLjYmF6a9YaGxUXzLwajy1Mhxb5EwQyvtbRupnMo/whLYSxT'
+              'gRnKjKnwquVQeidcCzEJmVY1LAc7blAxajpemBVfIcvKK0WHY1+h8M6KpAb86QRNKSQIUBTyehlbVZf+ahGxszhyctg/+4LMWyacqoDN2U8bgbPR'
+              'FWCG3QenGuIJchVIpx2xiJru6EXd0N16UDuoXsrEwaySrmnQ1vQEJigZ0KVo1oJ0ylLcnDaPyY84cuDVKFHVOwsmgepQsw1NcH0muD0nuwclAwlH'
+              '+HtmauK0BSGAbyANBweR7qC4ZJHfRYgR8Awb9AcfurOpY/RK89j/AJv/a2xiGgAA'
+            ),
+            ('assets/boat_edge_v170_venue_accuracy.css','1e948a1eee169f1e9d5824ed8bac919fe20b8162d8b119157aefee4f36089d54',
+              'H4sIAAAAAAAC/5VWy46jOhDd91dYal2pe9T0QMLTbOYTZnX3xi4nVhuMjOmkB+Xfb0ECAcLM6G4cbODUqVNVh3z/Rv4NEp+coGiUA2JBgoWKA/mE'
+              'qgVSg5XGlgxPKOGmrBl3b6Th1mjNCg3EVET9PJoK3sm370/vBSCaV7MKdFcw/nGwpq0EfZZS5oWxAiwN6jNpjFaCPIsMIhncbniWCdU2NIjqc14y'
+              'e1AVDXx82M9rJoSqDjTY4zbY4X1utLH0OYj2WRxcFnHJcd9JUzmvUb+ABgk+PWxPoA5HR7PIH9F94pN4BpaGSSLWYOEcLFyD+Quw5K9gpCmZ1nNI'
+              'fwWZIOQNI94lIituATwN0lHUZsLkrHXKVHMw1DbXqgLveAUL3uNoQouTIgtHukkv7ATVtCWef82hdite6V23W1VuuLsw4lk4QZVGQNMJ1dSafVGp'
+              'AWFw8U6W1bRf8gNexPcaZwsmw+ukaJ3DzBYd5MtYio0m4qkoQK6bqFdibJs+12xM5y7UOrt7PkUWbxJ6X3EKWJQVyRh6rPz18Lo7HXGq7jIb6zyc'
+              'G9Ddn7hgByz0Y1odKg+ByoZyqBzYQcOhdcaS7Jb1nAKRBjRw123qxgEWIqUIuNSxl22W8ZDOSscpqOsNwbt6Q2c+0Tm0OVFsUpOflHBHJOz/k2OW'
+              'xYdy3vjA7YWegjMtP27ZRIo24W9UeBm6u9dBs7oBOl7Mw5c4SddtvIseemIJSNzxbbkX3WRFPb/krldhsEHKOWvYg5Bh7uDsvKGCY+0GEb0GrRRo'
+              'ZYaRGFh8MqsY/lZtCVZxijFbzWy/bx6IUals4zx+VFp0sxi9S+S1QTNHa6CNU/zjKx+sw38s5C9PVQLONHiAByZwXTQ7SBnJYpoSFiUpy/9gZOiN'
+              'v4FdcN8IMdLaPbx/tc91UW6mOs5MoQ3/mDHLVsSiu8OmWRaxeHRYZ2q6nzWBxQp5B6vEBN1v8n7xcBjxBOuISG1ZNdRCDcy97N6ww0p2fvHfAmlf'
+              'X9duly7mdIpAsB1WfhfKVMLGNECAfZVtzOmqFrPBnooWR2Hqr78QG2yK34o5uNXodMleJPzy9KMEodgLZn0brTBDAq/d4t/ANDj+1WguDyL/L10v'
+              'l6f/ABQRW+G8CAAA'
+            ),
+          ]
+          for dest,expect,compressed in parts:
+              data=gzip.decompress(base64.b64decode(compressed))
+              found=hashlib.sha256(data).hexdigest()
+              if found!=expect: raise RuntimeError(dest+' SHA mismatch')
+              path=Path(dest)
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(data)
+              print('INSTALLED_VERIFIED',dest,found)
+          PYINSTALL
+
+      - name: Offline regression and JavaScript parser checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=scripts python3 -m unittest discover -s tests -p 'test_site_mode_venue_v170.py' -v
+          python3 -m py_compile scripts/site_mode_venue_v170.py
+          node --check assets/boat_edge_v170_venue_accuracy.js
+
+      - name: Generate descriptive V136 site prediction venue report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_mode_venue_v170.py
+
+      - name: Install display-only UI bindings without changing prediction engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYUI'
+          from pathlib import Path
+          p=Path('index.html')
+          data=p.read_text(encoding='utf-8')
+          css='<link rel="stylesheet" href="./assets/boat_edge_v170_venue_accuracy.css?v=170">'
+          js='<script src="./assets/boat_edge_v170_venue_accuracy.js?v=170"></script>'
+          if data.count('</head>')!=1 or data.count('</body>')!=1:
+              raise RuntimeError('Unexpected site structure; no UI files committed')
+          if css not in data:
+              data=data.replace('</head>',css+'\n</head>')
+          if js not in data:
+              data=data.replace('</body>',js+'\n</body>')
+          if data.count(css)!=1 or data.count(js)!=1:
+              raise RuntimeError('Duplicate UI binding')
+          p.write_text(data,encoding='utf-8')
+          print('UI_BINDINGS_PASS',css,js)
+          PYUI
+
+      - name: Commit only descriptive venue statistics and display UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/site_mode_venue_v170.py tests/test_site_mode_venue_v170.py assets/boat_edge_v170_venue_accuracy.js assets/boat_edge_v170_venue_accuracy.css data/site_learning/mode_venue_accuracy_v170.json index.html
+          if git diff --cached --quiet; then
+            echo 'NO_CHANGE'
+            exit 0
+          fi
+          git commit -m 'V170: show audited website prediction hit rate and ROI by venue (display only)'
+          git push origin HEAD:main
