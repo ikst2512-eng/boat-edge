@@ -1538,6 +1538,7 @@ async function loadFormalOverlay(raceKey){
       if(!r.ok) continue;
       const raw=await r.json();
       if(!window.BoatEdgeV177?.acceptRaw?.(raw,raceKey,state.formal))continue;
+      if(!await window.BoatEdgeV178?.verifyRaw?.(raw,raceKey,state.formal))continue;
       const norm=normalizeFormalOverlay(raw);
       if(norm) return norm;
     }catch(_){}
@@ -1554,7 +1555,8 @@ function mergeFormalOverlay(raceData, overlay){
 }
 
 function hasFormalPrediction(d){
-  return window.BoatEdgeV177?.acceptNormalized?.(d,state.formal)===true;
+  return window.BoatEdgeV177?.acceptNormalized?.(d,state.formal)===true &&
+    window.BoatEdgeV178?.isVerified?.(d,state.formal)===true;
 }
 function getBeforeMap(d){
   const bf=d?.beforeinfo||{};
@@ -3162,5 +3164,6 @@ startPassiveRefresh();
 <script src="./assets/boat_edge_v174_confidence.js?v=174"></script>
 <script src="./assets/boat_edge_v175_payout_bands.js?v=175"></script>
 <script src="./assets/boat_edge_v177_latest_bridge.js?v=177"></script>
+<script src="./assets/boat_edge_v178_verified_parity.js?v=178"></script>
 </body>
 </html>

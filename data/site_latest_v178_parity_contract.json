@@ -1,0 +1,24 @@
+{
+  "schema_version": "boat-edge-v178-verified-model-parity-contract-v1",
+  "scope": "APPROVED_FORMAL_FRESH_ONLY_NOT_SITE_REFERENCE",
+  "reader": "assets/boat_edge_v178_verified_parity.js",
+  "source_gate": "V177 approval/parent/model/date/guards all PASS; then V178 SHA binding and ranked 120 validation PASS",
+  "status_required_when_ready": [
+    "connected=true",
+    "predictions_ready=true",
+    "active_model_id matches payload formal_meta.model_id",
+    "approved_prediction_sha256_by_race[race_key] matches SHA-256 of canonical JSON of raw.derived",
+    "formalParentSha matches payload parent_sha256",
+    "target_date and PRE_RESULT guards unchanged"
+  ],
+  "prediction_required_when_ready": [
+    "derived.ranked_120 has all 120 legal and distinct 3連単 combinations",
+    "ranked_120.probability numeric within [0,1], nonincreasing, sums to 1 (+/-0.0001)",
+    "world_a and world_b each have legal nonempty tickets",
+    "ranked_120 digest verified by Web Crypto SHA-256 against independent formal_status entry",
+    "world_a / world_b have explicit 100円-unit suggested amounts summing to 1万円 with each world amount matching its world probability allocation"
+  ],
+  "site_parity": "Display formal Top3/5/10 from certified ranked_120 and detect whether site hit10 exactly matches it; never silently rewrite tickets; require the original 1万円 allocation rather than generating one to claim parity",
+  "limits": "No certified formal prediction published or promoted by this workflow; no change to predictors, allocations, payout, retrospective accuracy, PRE_RESULT freeze, unlock or scoring",
+  "activation_if_no_status_digest": "DENY_AND_KEEP_SITE_REFERENCE"
+}
