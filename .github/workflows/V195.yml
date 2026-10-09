@@ -1,0 +1,56 @@
+name: BOAT EDGE V195 - One-time V194 Bootstrap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/V195.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: boat-edge-v195-one-time-v194-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  start-v194-once:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Verify V194 source and tomorrow-only research start
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .github/workflows/BOAT_EDGE_V194.yml
+          test -s scripts/site_v180_shadow.py
+          test -s scripts/site_v185_role_shadow.py
+          python3 - <<'PY'
+          from pathlib import Path
+          w=Path('.github/workflows/BOAT_EDGE_V194.yml').read_text(encoding='utf-8')
+          a=Path('scripts/site_v180_shadow.py').read_text(encoding='utf-8')
+          b=Path('scripts/site_v185_role_shadow.py').read_text(encoding='utf-8')
+          assert 'workflow_dispatch:' in w
+          assert "cron: '3,13,23,33,43,53 0-14,23 * * *'" in w
+          assert 'pre-result-freeze-health:' in w
+          assert "FIRST_DATE = '20261010'" in a
+          assert "START='20261010'" in b
+          assert "'no_odds_for_ranking':True" in b
+          print('V195_V194_SCHEDULE_AND_PRE_RESULT_GATE_CHECK_PASS')
+          PY
+      - name: Dispatch existing V194 exactly once without changing workflows
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/workflows/BOAT_EDGE_V194.yml/dispatches" -f ref=main
+          echo 'V195_V194_WORKFLOW_DISPATCH_ACCEPTED_CHECK_V194_RUN_FOR_ACTUAL_SUCCESS'
