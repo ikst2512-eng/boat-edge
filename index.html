@@ -1821,6 +1821,12 @@ function be182StopReason(d){
     const due=Date.parse(date+'T'+deadline+':00+09:00');
     const mins=(due-Date.now())/60000;
     if(Number.isFinite(mins)&&mins>=0&&mins<=15){
+      /* BOAT_EDGE_V186_SCRATCH_FRESHNESS_FAIL_CLOSED */
+      const verifiedAt=Date.parse(String(audit?.checked_at||''));
+      const age=Date.now()-verifiedAt;
+      if(audit?.race_key!==d?.race_key||audit?.blocked!==false||
+         !Number.isFinite(verifiedAt)||age< -60000||age>16*60000)
+        return '欠場・取消の公式出走確認が未取得または古いため、買い目停止';
       const source=d?.source_audit?.beforeinfo;
       const age=source?.fetched_at?Date.now()-Date.parse(source.fetched_at):Infinity;
       if(source?.status!=='ok'||!Number.isFinite(age)||age>15*60000)
