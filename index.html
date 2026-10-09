@@ -1828,8 +1828,8 @@ function be182StopReason(d){
          !Number.isFinite(verifiedAt)||age< -60000||age>16*60000)
         return '欠場・取消の公式出走確認が未取得または古いため、買い目停止';
       const source=d?.source_audit?.beforeinfo;
-      const age=source?.fetched_at?Date.now()-Date.parse(source.fetched_at):Infinity;
-      if(source?.status!=='ok'||!Number.isFinite(age)||age>15*60000)
+      const beforeInfoAge=source?.fetched_at?Date.now()-Date.parse(source.fetched_at):Infinity;
+      if(source?.status!=='ok'||!Number.isFinite(beforeInfoAge)||beforeInfoAge>15*60000)
         return '締切直前の公式直前情報が未確認・古いため買い目停止';
     }
   }
