@@ -1,0 +1,155 @@
+name: BOAT EDGE V168 - Fix Predicted Odds After Settlement and Recover V167 Auditor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V168_ONE_UPLOAD.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v168-odds-display-and-v167-recovery
+  cancel-in-progress: false
+
+jobs:
+  patch-site-odds-presentation:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore checksum-verified site-only installer and behavior tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYINSTALL'
+          import base64, gzip, hashlib
+          from pathlib import Path
+          objects = {
+            'scripts/boat_edge_v168_odds_display_fix.py': ('514cb8b1064f1cd6a2cd6fa389cf4f9fe8035c4538e536cce3d1d1214f7858d6', (
+              'H4sIAAAAAAAC/61YbW/cxhH+fr9ifS20PIjiSTDgCidRB1mS66CqJEhygsI2iD1yqduKR7JcUrqzLEAvdi2hcZ02bZI6aZEWbiME'
+              'tYumDZLYqvNjzqdTPvkvdHaXvKNeXCdBDxBfdneemZ2deWaoH1woJzwq15hfpv4aCltxPfAvForF4psjl0YRZzEdCnyvhVzWRG4Q'
+              'ITvwXRY1qFN2I8rrKHAcjkIv4QgEfoRI4rAYlrFGGEQxCklcNwrLJFqhMUe0SewYsOL1APA8yg00B09RcIv6KIyow+yYBT7XEY/J'
+              'KoU7qEg8kATEkLSCBB5JRBHxYgrLDWFnAeQbyLLcJE4ialmZauL7QUwkXiEbilZCEnGqRIRtHqtl6xfgtVCYml+cMcWjhgnnYHS5'
+              'FpDYos4KtdZGhkeNn3NcKkxem35jOV1mrLC4ntTK60G06nrBOi9fnp9ctmamfzxjCZdY83Mz1rWF2fnJaaPV8ED66vJPZ1Nh5ju0'
+              'adRjOT4/O23JOTzO7YiFMeKRbRaN8qssqa6ZI5cuFifGy2r9BC7Mzbz1PTBGT2BIQ5aWJ5evLZlF5mphwONFeRCliIKTfYTHHbaG'
+              'bA9AzRvFGh25dGlIBMIQnFuc8BvFie7n7xz96aPuX552njzsPH/75eHD9s6n7d3d9s7T9vY/ul983Nm719m//+LrP3Yef3D0h53u'
+              'zlft7SedBzvHW7udrUcvD/fUGpjKCR7Amhdfbh3f+zeAHH30KYgfHxy+PNxvb+18c/d+Z++X7d1n3Yd3Xnz5uLP3CFTDss5/3hUg'
+              'ICh1HR988M3bn7W3P25v/6a9/Un37iedd/ZAfLwMW5rAY0Xpwv/j7mHryqLu53fa218LbTsP2tsfCtPu/r1z+OBo//dHe8/a279q'
+              '7+ynDtu63/31vfbOb48P9rpP3gfrXjx7D3Zw/NkX7e073Q+fCBfmVoInOg/e6zx/X3oIrn87/vNB99FTIZg5WDjg6d7R7r/AQz1X'
+              '9Vzb+edfjx5Lp/7uq86jfQnyXBi58+4J34jIWJx/a8nEwAM8RhHEu1kjnC7Cg9EgodY0J7QNwzCaunBJpWmIW7WqzSWNGo0Mxq8w'
+              'H0hF8zUxcb1p2EGjFtwslaqnRyp+4nmlzVJpTIW10otTzYHrMpsRb4G0RoaHTUUUUxk5VZU6TQ1XjThiLrVjYikWsVrUt0IaWSBa'
+              'qsyRubECQgp3jXjMARuJdxpzYOByEHiUgJ2p7jQsBgZOb+6kcbDg5MDEcF/fuR7cgGmEymXBqaMVJFgipHDxY+QwHnqkJXl3DPl0'
+              'jUYogMt6BIpRnXFgX2YTT/DpUERsCvxK6S1qZJDzPiKguxF6NKYOkkskw8d1itaZ7zN/RcxDSZDsieoESBeBCuYyEHCFbwCd2Smm'
+              '2ofH1uiCGDRlQsyDefJVHmrV6B/rWE4o3YxYfOYEtf5JDAyk0qZpnvR99aRjy/CnwqbSs0fpS1M3F5k53XLgMuGMV85YkVt2wTQF'
+              'dhVnSi3pC1zB8m4lPlkjzCM1j+JSRetZ0JOTFdPKpEHuhMSmsHQToh1jmWezk5dnZs3iOG8Qz5v44Qacg7CiCsYacXCFNamjjZQG'
+              'MXAAQPVS+eXhfbwJbC6lFJudRupTWlXLULEiFIQHz8fP841QARv8DgaVchaJvakCilHvlzYeSBUhXhaNhyWOBeoU1FDhS0v2FkbY'
+              'uuErQjgDsvCz5avzcwuTy1dN4zsjFhzqQpjAYduwzqdaTJuxjgLP0SHN1uFCGrRUkdHEXCRmISgTP9ZgtmSaI9BxOPlhkIThYSWR'
+              'i0GFe4V40IicBRNSFwAMOp5TKnJAhHGK3iReQmeiKIg0F28I6zYrKPFpMwSmg0QFHliRuWoHDhV4ThJ6QA0xHYP+KghRjUJDR1Ej'
+              'cJjbgqyHFuSUmUbqD2GVLpwwUtLRcpRQ5a1awjxHswGkAoiRrro/+ZxaK603h+Wz6B4zHGEt0Bq6rvV7Db1feHUMzUrswSYg/Wwv'
+              '4NDZ4ZJeQK/6aVlh0rNKoWNxwmXFVrJJBW4N5S5fhyPTRe8ljo5jZq/SWKFAslJo1m72T0PsX7frxF+hjpkPIDmR33FpTPpj0ExX'
+              'Swjps3Pl1UwvXfRezOtY9tq5HhufCx3RXyQM+mTzelo0VastKo1JXVEQwUVLPgmrBgQBFTQt7jehXsod89u3BXGN4dMeS+E4jaAs'
+              'CABTPS5S2LNTNTgM8XoQv0b+JJefqQB+EAFlsFt0SnD/mVp++3Y2AofMBLFGDo1U23COSsJbvo3cxJffGPIwr0DqrNJWaQPf7EUo'
+              'F2GZOa5/yJCkHMEHhZiVAX8mB/FKQiIoj8DnIAg8ylU6icYbTqn4LVqRYoaeF8SvL5X4XLnvzYYSTr7k+UBGcxqsItQUBUDw2XVL'
+              'fMBo4pLP/VQuH9FiiZ595ujZt4qOl4hLIoZsYtfpUC3hsehB0u8XCCsOBwbkJBU2CPO1VENoZl90xmS0kjSgP1oQb5GmXB8axHEs'
+              'kk5peGgI8O1VDEQlg8DEoluiVgyMhl8lAqzhtf6XCDFDQxohxHiqGuJFRItGDKlS0C8xJFSpEhpURUxqj5hM9fQiL8VWFG0J35vi'
+              '0xQImTiWoGaN+sDr4CcTJ7E7NHpSQJ6TKcni24qIszHFcbxWAOhMWiR4zcpFhKnqQc5mPW9OX1iGQcZ4uQjKWVLql4+TnAaOTR3Z'
+              'T07pGdkAK7N7Bp5vv/gp15ySUXt5tZD0zikZuZfzRaBHFiEk/5GCBzU8ubAw+8bMNM7tAVHoAhCeujoz9RO0MLm0hEuDLq6omiy6'
+              'beLb9SDi5oZ0xSYqI2iignXZh3uUmxfHoAw0kli0kCijXV7O/m8CbKd8J9IH1FqWqEOWZZrYskQqWRauqJQq/BcfMiclCxIAAA=='
+            )),
+            'tests/test_boat_edge_v168_odds_behavior.js': ('ffb016efc5a6bc8cb572faf4fde204e33c9134758a07d8cb6535716b1aea73a5', (
+              'H4sIAAAAAAAC/51WTXPbNhC951cgl4BKIVqsbMdDl9G0nfGhB9tjzfTiejQguZQQg4AKgLIUy/+9C4KUbNcfTS8SBC32vd33sOTB'
+              'Z3LVKCIUMbDUxGjtCK8cGNyyjksJJiVKl0AcWGcPcs3dDMo5zFbJ8clMl6Wd5bDgK6FN/M2SzwcfaGOBWGdE4ejph0JjHlLZzMDf'
+              'jTAQ0crSASPcWjBuvxt+00F/ItflJqtsbICXZ0LCdKOKEPWMxegEcSmjjatO9sd5RsNCV5UoBJeXfJOMRohnG+l+16oSpoZyct7U'
+              'OZgobE9iZF1B4fhsyTe6cbMNqNkSzAyPDtJzfn66qyjvAfCzyqJneT99gsonEiuYKr6cxDW20E7ia/99M4n9IVGCKuBjphopB5g3'
+              'dCDGhnAZ+fJju5TCRXwQS1BztxgmLGG0FtYKNScVQi6Gq2ElFJfEC0FqvlziX74LryXLnyZr1K3Sd6o/SUCVXYJQXC3KLJyWooCQ'
+              'SKgS1hcV8mJPfueDHW6E53C/kA1WHXWNMvrOZjm3cIWLGBGjdfaVDnZYqqkBTZOtsq+rLGvbst36VYMAWCWU4Sel2+3HoFss7JlQ'
+              'wkHU6bgaDLbb3fqXbDTxadLdTo9lGpUpuCNnjUKRtIpoTwyd9EzL3Q4uejdd7Taw7/iVQ3J8fIHrS6wAKMP6f6J/KQOuMaqt/HTf'
+              '1Mro76Cy6/tC17lOaTIcD48o86nSw8P4hC3TZBQfMrx/t+AtmCbovwe2jz8ajrv4L1/6+J8fx48w/maPB/AdpuhtNc/+mF6cx7Zd'
+              'i2oTBS6PqKGpsvuOUjo+jMesw0tPkvjw4fSDBEfWGTawO8ucaYDdv3Fz0mR8hPT7OlsM1qn93Krr69FN7CtjyTg+YvROKIXDqG6Q'
+              'nF3ou/a6tbKQvfHpq1l+41bYvWyz9swL4UkH6t3CqNKqw11wi9NvN0TexkyeYLahs0bxFReS5xJeZrkTjXmRn4e8rBZ7rCijSwND'
+              'wwvojNXaLXTMQM1xtOcbB0M/bpwoQvlPBKy4tBBKbz/+o0DBHDvwFtCPfn+vVlyKkjtUqR1MsEJaouoJrtsERFiC0/wNNbzj3iN7'
+              '//A+06Cqf5zhg0k3Btl6YXPwzYJvaFsk2iyxz8Drf7XnfX/7/D/s70Cqn+Yha2iiwmdwDkTUywaJ/Q8+4b79iJZPyQSXt9PmNUZ+'
+              'XGgJsdTziP6JrwKEFw5z9v3t3wlwp31xIJe/Tqcp6a5VAPA3fM3Io9smSjQpIxIfm8TbC/8NquWSq1sf2jeq2+gM5a8ONoDgNF9w'
+              'NQ8U/wFcHzyK2wgAAA=='
+            )),
+          }
+          for destination,(expected,encoded) in objects.items():
+            content=gzip.decompress(base64.b64decode(encoded))
+            assert hashlib.sha256(content).hexdigest()==expected, destination+' checksum mismatch'
+            path=Path(destination)
+            path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_bytes(content)
+          print('V168 installer integrity PASS; strict targets, no result/payout/locked cohort changes')
+          PYINSTALL
+      - name: Verify exact current site anchors before applying
+        run: |
+          python3 scripts/boat_edge_v168_odds_display_fix.py --check
+      - name: Apply V168 odds display patch and repair V167 import path
+        run: |
+          python3 scripts/boat_edge_v168_odds_display_fix.py --apply
+          node --check assets/boat_edge_v108.js
+          node --check tests/test_boat_edge_v168_odds_behavior.js
+          node tests/test_boat_edge_v168_odds_behavior.js
+          python3 -m py_compile scripts/boat_edge_v168_odds_display_fix.py
+          git diff --check
+      - name: Commit ONLY V168 site changes and V167 import recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # UI correction is published first; optional V167 workflow update must not block it.
+          git restore -- .github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml
+          git add -- assets/boat_edge_v108.js index.html scripts/boat_edge_v168_odds_display_fix.py tests/test_boat_edge_v168_odds_behavior.js
+          python3 - <<'PYVERIFY'
+          import subprocess
+          allowed={'assets/boat_edge_v108.js','index.html','scripts/boat_edge_v168_odds_display_fix.py','tests/test_boat_edge_v168_odds_behavior.js'}
+          staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert staged <= allowed, staged-allowed
+          assert 'data/site_prediction_snapshots' not in '\n'.join(staged)
+          print('V168 staged files PASS:',sorted(staged))
+          PYVERIFY
+          if git diff --cached --quiet; then
+            echo 'V168 already current; safe no-op'
+            exit 0
+          fi
+          git commit -m 'V168: correct displayed odds on settled races, refresh pre-race prices, fix V167 verifier launch'
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              echo 'V168 odds UI changes saved; V167 independent audit can run on workflow update'
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'V168 UI push failed; do not claim publication' >&2
+          exit 1
+      - name: Best-effort repair of V167 audit import path after UI is safely committed
+        shell: bash
+        run: |
+          set -euo pipefail
+          # First checkout again so the fix is based on committed main, not an uncommitted file.
+          git fetch origin main
+          git reset --hard origin/main
+          python3 scripts/boat_edge_v168_odds_display_fix.py --apply
+          git add -- .github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml
+          if git diff --cached --quiet; then
+            echo 'V167 launch fix already present'
+            exit 0
+          fi
+          git commit -m 'V168: fix V167 verifier Python module resolution'
+          if git push origin HEAD:main; then
+            echo 'V167 repaired; future 120-combo audit can run'
+          else
+            echo 'V167_WARN: GitHub token cannot update workflow; V168 UI correction is already committed'
+            # Keep release success truthful: only the optional auditor repair failed.
+          fi
