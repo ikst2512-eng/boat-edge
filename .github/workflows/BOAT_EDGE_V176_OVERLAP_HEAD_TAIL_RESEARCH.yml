@@ -1,0 +1,152 @@
+name: BOAT EDGE V176 - Overlap and Conditional Tail Research Only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V176_OVERLAP_HEAD_TAIL_RESEARCH.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v176-frozen-105r-research
+  cancel-in-progress: false
+
+jobs:
+  audit-source-locked-105r:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout full commit history for pinned V173 evidence
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore SHA-verified study (no external result API)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          import base64,gzip,hashlib,pathlib
+          payload = """
+          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
+          """
+          raw=gzip.decompress(base64.b64decode(''.join(payload.split())))
+          sha=hashlib.sha256(raw).hexdigest()
+          assert sha=="1187a7d5b32666e864892c64d671e10eb0331d2eb72eb9c1af11af319122e3ce",(sha,"V176_BUNDLED_PAYLOAD_SHA_MISMATCH")
+          p=pathlib.Path('/tmp/v176_overlap_head_tail_research.py')
+          p.write_bytes(raw)
+          print('V176_SOURCE_VERIFIED',len(raw),sha)
+          PYRESTORE
+      - name: Verify source locks and evaluate all 105 frozen races
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 /tmp/v176_overlap_head_tail_research.py --self-test
+          python3 -m py_compile /tmp/v176_overlap_head_tail_research.py
+          python3 /tmp/v176_overlap_head_tail_research.py
+          python3 - <<'PYGUARD'
+          import json
+          from pathlib import Path
+          p=Path('data/site_learning/v176_overlap_head_tail_research.json')
+          d=json.loads(p.read_text())
+          assert d['eligible_races']==105
+          assert d['status']=='RESEARCH_ONLY_NOT_PROMOTED'
+          assert d['formal_current_modified'] is False
+          assert d['production_model_modified'] is False
+          assert d['fresh_validation_pass'] is False
+          assert d['production_adoption']=='BLOCKED_PENDING_FRESH'
+          assert d['research']['win_joint_hit_hole']=={'both':30,'hit_only':9,'hole_only':6,'neither':60}
+          assert d['research']['head_tail_near_miss']['correct_head_but_missed']==53
+          print('V176_FROZEN_AUDIT_AND_GUARDS_PASS')
+          PYGUARD
+      - name: Publish research report only (never change prediction files)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- data/site_learning/v176_overlap_head_tail_research.json
+          python3 - <<'PYFILES'
+          import subprocess
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert staged in ([],['data/site_learning/v176_overlap_head_tail_research.json']),repr(staged)
+          print('V176_SAFE_RESEARCH_ONLY_STAGED',staged)
+          PYFILES
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'V176_ALREADY_CURRENT'
+            exit 0
+          fi
+          git commit -m 'V176 audit exact-overlap and conditional head-tail on pinned site reference 105R (research only)'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then
+              echo 'V176_REPORT_PUBLISHED_FORMAL_UNCHANGED'
+              exit 0
+            fi
+            echo "V176_REBASE_RETRY_${attempt}"
+            git fetch origin main
+            git rebase origin/main
+            sleep 2
+          done
+          echo 'V176_PUSH_FAILED' >&2
+          exit 1
