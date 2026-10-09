@@ -1,0 +1,168 @@
+name: BOAT EDGE V171 - Prospective Venue Mode Selection RESEARCH ONLY
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V171_ONE_UPLOAD.yml'
+  workflow_dispatch:
+  schedule:
+    # At 08:00, 08:05, 08:10 JST: before first race, immutable choice freeze.
+    - cron: '0,5,10 23 * * *'
+    # At 09:15 JST: score prior day, read ONLY audited website reference results.
+    - cron: '15 0 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v171-prospective-venue-paired
+  cancel-in-progress: false
+
+jobs:
+  research-only-venue-gate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore checksum-verified research scripts and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYINSTALL'
+          from pathlib import Path
+          import gzip,base64,hashlib
+          obj = {
+            'site_v171_prospective.py': ('592e0f6106eee702bfb9312a6e1bdac0ddb92b989bdf4b8428907e6239afd4e1',
+              'H4sIAAAAAAAC/51azY/bSHa/66+o8WRQ5JhiS/b2rEdeGpC71WPttLuNljwbr6IUKLIkcZoiuSyy25pGA4udAAESBMgle8ghhxwC5JDDYhEge8of4002'
+              '+1/kvfoQSX20B9PwjMiqV69evXofv3rFTz85KkV+NIuSI57ckGxdLNPkaevRo0cvL/tjMjj9akC+6f602yNpWQTpirdncZSE5IYnJSfBMo0CTuY5599x'
+              '4kO7Py943g79NQEqnnH4X1IQvwyjwm21rrjgfh4sSZrE6x5J+A3PCYc+QeLohpMsh5egiNJEOGSe5is/Jt3O0TMS+wl3SBEF17wgovCvORCkOUnjkMyj'
+              'mAu39VZwAaI+/ULNxkNyy2cCHto5n/OcJyDo2fCif866x69JzoM0D4UU5DmusOOKtMwDzlQPLDCP5hGwHL3qu6iP1jxPV4SxeVmUOWeMRKsszWFtSZIW'
+              'vpS5ZZryRebngqshQRrHXC3KjAn53C/jAteqaEK/4EW04hsC/e7IJ1z5ioc8Lnz1+F2acDPZ0hfLOJqZ129FmiiemV9gh2H5Bl4NUb4ZLdai1fr5aEy8'
+              'DWNrM5m1BJUI70vbbp0NryQRimM96Tz5woGNwf/s1nl/X8/Trt16fXk6GEGXRZdRQR0682EfAw5PyzTGn8TP8/SWKkp23n85OEf6O0nfo3/657/543/9'
+              'x5//9h/+799+Wxveox++/8cP3//7h+9//+E3fzDcevR/f/+vf/zD7/7nd//059/+fcUc2v/713/6z3/58Ju/o/et0cmrwes+zEFnqV+0ebjg7Ruw73aW'
+              'pyLDbbqBBjTutjJu6KUw6vJqwA6ObdBL65Ojvh68Y1cDoM+5C66TgZ1aOf1ra9Jpfzm9e3Zvt/Xjk8bjX4A+Wi0wETT0GYxJZ9/avRaBv5yD7SXEwk12'
+              'w3KVCex0CE8E2qQvgijyzvxYgMkI2F52zdfCG+clvEfSFb0nNnlM6F8l1HbBJdKQW7Qs5u1n1aRL34K99JtTaitzoffJ8ReKwF3y92G04KKwzOAkvWXf'
+              '4ntjsLFmF7otMDZDDWFCFDkwW2/Tr13omOMYi3727rPVZ+FGvjj1Q4YKsNDAmwOlXpBAyE4350A7WxdcWLYZDzvWYUjDcytP00JzAEdw5ZgoETwvLDBh'
+              'lE1S2JJCOpUI8igrhIuBha1AfUxuPkOuxtMagcQh3wwu3g5GdTH3EyjxdPDSnUIKAE4PIYUXDBTjAJNflREESnzzLsBh9QogRp1FMYRfMlvLoJj4EFBe'
+              'Ds7AdkkKoThKFhCt1lUkh1gs23BKjKbLSBRpvnYx2kmdNOWUKxVgzzsqlNQzX3A0dmggR4SiiRxJNcUwD05+VCmN3/hxqYImqO7pF1RyUPNHco5dNlVy'
+              'YFpQNQqcHAdMpmqX/CgGX6i1aN3BbsooJU2u0qetN0brtEFV17RNonlD9YSDmxHUv5oX9JeBk0m/46GF2nAXcTqz6Ocu2iW19T7h3zVMosKDOy/jeOUX'
+              'wdLKwOj5yt4QRehPBdAC62t3kadlZnVt8jNCMcx2O50vab0LPBvJQQS1UdVs+BekSRFB86bxU3KZ6MztmEwMA6WlEJ8EZQ45szhS6U5m9GrT6sZSF7eh'
+              'xkhI7UhYUBP/hVfbkR8iowDrAxGlXJiuSbHkhL/P4iiICngFv/wOuhRT3Lrnejk1APGglKi1fZJ+4jVIPyJrka+bFAaGeE0/sjKnMnS7MWIJtFV4q7zh'
+              'iGjbwNBtjKkxkt80hmbNXljzckJF4mdimRZ0Cs/+DSzKh2dcJb+pelnV1VyOdBM/Apv/BsyADyC55tZm2JHCS4Eyj1UkpEnTphx+UJSwIZ6UhhdFzFdg'
+              'YijPbZRghGAQl2YpnTZGgTMDVpKwANIZ7SlVOFRaOe1V5u9AsFhXDV3b2VmA+qPKZJjeF8hptCd1oN61ZTOV6+jUoRizBO3d3d83OKLPYxf6nMQ6uxpT'
+              'kFXoNdd2QLGcTvAXXjXd1tKVoYFKZDgrJlTrR84sXV2P2x2mtLY1Dypxr04U4IqSwtJWuyMgEkwPaJQuMc8WadZVPGZpGltKbls6lXqedKbwj3ieNgR4'
+              'OcQQeD3V8iibgaVqJr2nD406PjTq+KFR3c6hYd3DMqpkztY8ob1DWlM04E9INd1l1LQnzGSun+GpyVL7V/kPfx/wrCDW5Uh6nlM5ofM1X6uH8TrTTX2B'
+              'IAZcUb7CJghk0DRPkynNjFvuxXEk7WEehKE2qOK4M7236zgG5XU2fAxA0EAm8OOA+YtFzhc+AjBFrEh0JgQgghZ507ujoMOO9F9wMwgNll053ap3d93r'
+              'SJO/xq0xp4nK6BxlL44yAEfvqFPfIfteeevGVe9Vw02VL+83eRxExWaUuFIZBnIQeAKtEx17ppXbwdbDBpPHHunW2+SCpq4fhpYchwFqWm1qU6TebnDh'
+              'RR4FoDVllJLFxsKmLpjcSlj2btSpGyL8k1ykcMCovoGwHrNbyzQVCpxZMnxWoPIkRUR84+PRCE6uADBXUQIhMgrwvA7bC8/wEyI25hJlAp5IoS8NSwnX'
+              'iB+mGT5sgGXiSIgFGpVzSd05BBCrpd+V3pSiEAYB6HnaQdQhh8FLtWa9FGUUhA4vRm/PzoYnw8HFmL25Gl5esdP+uxGD36v+yWBEN1g1jhJeSWD0pQJd'
+              'S6UrdDk8gnkGXNYCvnX4OFsJt/K22Mu4UMM3j49JxiHpJIW/4CRLIQoJDD6ZjxotUgl25tF7HkrEkafxc1RuyBe5H6pkGyU1fugUbbR/VNYYvIJYiGyC'
+              'tEwA4s9VE2CeW0CpWIbhkNMDQFcQIEoBsc9uICXAmORzYq20Vkh7oziTEGAvjj9PPgKNgBOy2PjrFEbVGNXaUb8T5c1NItX0kXmqDTMxDdVdWRHgvIrk'
+              'oAWdXF6Mry7P2cXlmL0c9MeDC3Z5oU1p1H/95nxAm4c5ifcrxg6BOOrF/moW+mTVs9rbJmCMzNnbU2ljb79ShCMDhotn+vfWyrZtyKUg+tVgNOhfnbxi'
+              'J/2L0+EpyA6in7+j2snBXdGumEL9O0dLbbdaU6ri8zOvRoBvWO2pqW4HEG5geMFlfE9x2k1phQDQC2XFR2lQnnEdInONqJ0w956Ctw9tn5IrPi9hfp8I'
+              'PO4WYBF5XmYIuiWD5+AbEPGicFPug9Xrw0G0SFLtYsES5l+3M4BSrtGAkuihhapTc5RkJXgseFdeQhgMe4Q+rlVnFJtJ7ydTZ7dGozH8JkdihtnJmlpF'
+              'Om/Wj+UrP4nmXGAKnejcnU/kLyBWiWnhdRfpTlXiy2VCUdxVQFL1K+HdVYlQVXmrQ20je+Pfwqukn8jeKrgpfliv8EEhXiPD2FtUQg/27gysV1PpZjBt'
+              'HEd7hidNWJZHiE8WKnkcQPoA0yQdU8hCZphNdnEQw6FsoCn5e1/36zsqwDBWPgNrERESqfof6LbwixK40TdXAzjBj96ej5ms4bCTV5fDkwE7u7r8JUSN'
+              'jTdKH2yKSCtjpr3dogSkFH0ICcoinc8ZQLC4FOBBe6mbrPVmSwMFKbEmzjaVb/a6Pz55Nbz4ir0ajsaXV+/Y6FWf7udgLMychHpYG9RFyS0Se1sIpXZd'
+              'MuCh0r22N9S8OpwzrGSwbod1njGFeBkGUkCvMEIVMltboBuJBBOANJiuUSglKmpawQ52y6PFEmiDpZ8sDjFU5TtthcbAxLY+sATB8lKWmf04JiqqyNsG'
+              'dZDd3DaQ6rahdpsBmbZWoNC3DhCLiwiQXZCCiWH612WLEibAJW0JoUQzUrzwABBJJcsMLuQ5Cxp1GxrJc0AXWUYg17RzeYuQpIDOQDok4O/hsAOQyw+x'
+              'BIhZR3JAfPBclbY03qD3OnvUs0YQp8G1jgNFioVI2eLKSwB7fxpJ92cQnXxHXw/fsMu349HwdFB5zi+GF6eXv6CGoZoEbyUAHPwU0UKt5QV5hi1W1eR5'
+              'z9TxU7YAai0L/sLrHtsHplcZH+ulYI/dY/bz0Ziag4qH6z7aV9XEKwBWy3GqIkyPjJ/iuu0jqtSnqjdmPcDX5e/B0xso3sg0fP367bj/8hwDymDwywHr'
+              'n18N+qfv2OAvwXU1kk1n33r78rqa1kjvYn9SuKvrMMot9aIvBuT8LL2Wb9WA2xwXqWrntXuIxvlvTlWkI3eNtd4rG/TuYMDk0VYgeAT5R4UT7w7DCc7V'
+              'KNPfG7QinW6PuUk3athbu7qxQkG8rv0AkPmICV5cssH58Kshqn1zfKA6I8Yhz3+8IcjpN3cJkJY9xXG/baDoiuwBEzEi1zKRthVofNk/+fpseH6upc+9'
+              'qkCoGG/UNM9dEM3aznj2J56+8wK/MjS1xAX9zbXV6Q4msAdHHYzvtqnUyiBeH/LxTHJ47APZojnoISRoQKa+BgeesPHyZGhw6rB2F64WLQvqopxB9tC3'
+              '4yqbqMwQyWtdPOjJ229dyFYj3c2lxzZu9vai5rqjOI27o7pB/iDIix5ZXRhp+h8FeD1T8YHzHTgLCARZSsgWc+arWiqaqszYqSXH2pA6QTVOVRPrvE1L'
+              'jUmd+niH+niHI9YMt4hU0z6e9VphfVCjXcHP2VrFjToO31uQUlT1ctQWqPbm+WQL30yl2cs25+7eVk4gobVDaePmSX/aoW+UVH1qj0mUyXWS3ibmEkay'
+              'qviY9XuNypViXUmL2mhS1Iow0mA8oxQX/EV/PGFW0TwZ0Bri/EHmdV9J609qo6ePve5zf7LFAVpNgxYSaZo8gQYbdhaxUEcV4NvarfH9+MJmsyaCpQcq'
+              'xZBVF8nbky1UoTrV1LyWQck266SPgUd9nbp8uDtks2wzRC67To64ad85qvqaon6a6l+Nh3BI6b89HY4Hp2w0GI/P8fftS3jcOUQdPkHB6UmF4sa5RefS'
+              'Btaos6sZjtkqh9Y+YmKIy3E2FsR+tNo9TfyYI80POK7QWRniOjOeM0T6Klh0O/DXYORjXJey66sxNoO1XofgnbRn/Kc+AlwbDxIXqTxxyIQkV/Zc3bI2'
+              'PqWSd+y3UbHUxQdz+yu/jiIj/NAAZcPDkDRqYzz69kceJFyqAhp+ZbFBPir3NYCP/ApjF/IAyL2J0lJ4Wx+A1IOWodHAoGEEADuwfL/VKkuOzWGVITgd'
+              '+4UcUwsLTXc7nCNzvoDdF/qyvMIE23ejcrX7wHZZbINt6TenTPtJBbqV0d+rc6B3h9b7KJE424Rf1dYIZdivN0Z3N6IYdBscvvKjxGxE5plv29x+vijx'
+              '+vYNvuX60JfhVQfzdZdFU7BaWaWmjikvTWjgZ/hNAcQxCfFNnX97bLuN+IU6Ot571NUqAxLhZa4UA+mFnhzJPfzMzcJGV36ZAv4u0vjGHEolGPI2XykZ'
+              'k5P0G1khXhoRe3B6AVl2j75qKEZUTbJzWrFbLeDMGH6FwxjwZAw1yRjtKY22/h+A9+cRfCkAAA=='
+            ),
+            'test_v171.py': ('235f0463b8767174c80220ecd501feb20655bcba367b4594d6dd60b3e39cf3bc',
+              'H4sIAAAAAAAC/7VW30/jOBB+z1/he3IiRaEpy97SVe5lt0jc3bIIWB4WIcsk08ZHYmdtByiI//1mkraUbrsSBxdVdex4Zj5/88uqboz1THVDpa6S1qsq'
+              'mFhTs0b6Elfm39gxToP5u4e6magKFvN/nNGL91Yr78H5XkkhPXhVw0LLYh7T373R/UsBlZcxfQuCxpqplXVG9kIhyIwQUXKrfCm0rCHkTnkQN+nvqcC9'
+              'roHcqxtImhmPAjVh2ng215HAnXLehdGIbdFqwZnqBsIoaaQF7d1FernDXW5V4x3f2W4qoEn2nLaE1gQdu9dfmVx6ZXTISQOP5xiioDbFuigutSjSCZOa'
+              'kP6ij/SfVEYWYPEwqL3fF+IQBUFeSefYOegWztHCGbIeLuhPaPZJOohGAcOngAmbWtM2oYNqEuvs3QAJn7ns3XwDPTJ7qEcP16MBmxjLrpnSLOSl8jzm'
+              'JchCeNPgOTgOu/2w1w/pAEcLvrVazEDz6LFTUJMChJp8+fp5fPr4ZOaiU3qZtA35PMRJlg7jpYlsOIjJRpbuRs+ETAVrUu83Se09SfWg2APXfKRjTifm'
+              'Iwc+tFJPIaR5FMUcQQJ+kI9LrohDgeEB0uYYeHADViBzGAGu9xLGrkDxjs4VCuvYgsR0yOjceWmMA3IadPuS3gMd72mE7qU19CFYP/7Ryiqs446ZZ18O'
+              'MYAOj06/HRwcfjocH53xuYXoOVZfIlpkqBBW5uCEcqKUtvgZn/gVNJ0N938F7LnNXOpCkTPEXN1tCVrkBlcp8J2okemXAdhmnFy/Zl0b0Tm/AEyrok+1'
+              'NWPTbFX1x+nF3NOXi2C6WAnsyyzd32B8Des0uhhcbmQD8VD8vRJPl1wIZfhKKFOpNI0OK2de/hdiKEUxBV+Do4uNW6ULc7uOgAr6spFgtaJ6KO3ss7KY'
+              'Y8bOwohJx/yTAD0rUE6kcuDCc1m1MLbW2JhgNRaokmOKAtxD3JV7H3WtJRwOhu/jdBBjgL+10jROo7WjV11ayAbrD5Afbi32kjchAfO8y6AeTrgKh5rp'
+              '8pz4+xDvYlG8V3piOpE/T8+2H54Kzelfh8dUYNzWXQeychAurO5gSfWSR8tW+3MgXsn8Go9XCZcb+7YM9Bq3E5DG+3G69yICjr6K45OxOBmffvv7TByc'
+              'jMffxyuELA/mvLzCho1iSlbqfmO2b0wcV8p+7BSED/yKj9KYSz4aPmIr2riFPsbdRtyyBgSDE9G1lceOVM3o5uGxVZXSCbhrKpWreRZO2w3dwN/5/kpE'
+              '5lavRVQT4c6HUbCFp+t57Ugj9kfGvLRTIFIsj1HnVikLP1r0bEE7mXLdZe0IOynDRsJWVP6WsdWtK0qfHEC+xw49aTFjBV43alltasj/Z4Dtvzy+VhIM'
+              'L6uiu9IKkWVciJoqtuCj5RWOFkK8eFwZvIfOsmEU/AuRxCHgrwsAAA=='
+            ),
+          }
+          for file,(checksum,encoded) in obj.items():
+              raw=gzip.decompress(base64.b64decode(encoded))
+              assert hashlib.sha256(raw).hexdigest()==checksum, file+' hash mismatch'
+              target=Path('scripts' if file.startswith('site_') else 'tests')/file
+              target.parent.mkdir(exist_ok=True)
+              # Only create missing scripts; never overwrite modified or frozen records.
+              if target.exists() and target.read_bytes()!=raw:
+                  raise SystemExit('V171 code drift: '+str(target))
+              target.write_bytes(raw)
+          print('V171_SCRIPT_HASHES_PASS')
+          PYINSTALL
+      - name: Offline 12-case safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_v171.py' -v
+          python3 -m py_compile scripts/site_v171_prospective.py
+      - name: Prior-day scoring or before-race prospective freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCHEDULE="${{ github.event.schedule }}"
+          if [ "$SCHEDULE" = '15 0 * * *' ]; then
+            python3 scripts/site_v171_prospective.py score
+          else
+            python3 scripts/site_v171_prospective.py capture
+          fi
+      - name: Commit only V171 prospective research artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Permanent lock: result/odds/formal/prediction-engine folders are not writable.
+          git add -A -- data/site_learning/v171_prospective_venue/ 2>/dev/null || true
+          git diff --cached --quiet && { echo 'V171_NO_NEW_RESEARCH_ARTIFACTS'; exit 0; }
+          if git diff --cached --name-only | grep -v '^data/site_learning/v171_prospective_venue/'; then
+            echo 'V171_UNEXPECTED_STAGED_PATH'; exit 1
+          fi
+          # Gate new freeze COMMITS against the cutoff, too, not just generation.
+          if git diff --cached --name-only | grep -q '/freeze.json$'; then
+            localhm=$(TZ=Asia/Tokyo date +%H%M)
+            if [ "$localhm" -ge 0815 ]; then
+              echo 'V171_FREEZE_COMMIT_TOO_LATE; do not commit retroactively'
+              exit 0
+            fi
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'V171 record prospective research-only venue policy and audited scores'
+          for attempt in 1 2 3; do
+            if git show --pretty= --name-only HEAD | grep -q '/freeze.json$'; then
+              localhm=$(TZ=Asia/Tokyo date +%H%M)
+              if [ "$localhm" -ge 0815 ]; then
+                echo 'V171_FREEZE_PUSH_TOO_LATE; no late prospective freeze'
+                exit 1
+              fi
+            fi
+            if git push origin HEAD:main; then exit 0; fi
+            echo "V171_PUSH_RETRY $attempt"
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo 'V171_PUSH_FAILED'; exit 1
