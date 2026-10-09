@@ -888,6 +888,90 @@ function renderTicketRows(rows,win,postResult=false,officialPayout100=null){
     return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${postResult?(hasOdds?'確定 '+odd.toFixed(1)+'倍':'確定倍率－'):(hasOdds?odd.toFixed(1)+'倍':'オッズ－')}</small><span class="be140-ticket-money">${details}</span></div>`;
   }).join('');
 }
+/* BOAT_EDGE_V181_FIRST_VIEW_IMMUTABLE_AND_FINAL_ONLY */
+const BE181_FIRST_KEY='boatEdgeV181FirstShown:';
+const BE181_VIEW_KEY='boatEdgeV181ModeChoice:';
+const BE181_STATE=new Map();
+const be181KeyValid=k=>/^\d{8}-\d{2}-\d{2}$/.test(String(k||''));
+const be181TicketValid=t=>{
+  const c=String(t?.combo||'');
+  return /^[1-6]-[1-6]-[1-6]$/.test(c)&&new Set(c.split('-')).size===3;
+};
+function be181ValidModeRows(m){
+  return !!m&&typeof m==='object'&&Object.values(m).length===4&&
+    ['hit','balance','hole','narrow'].every(k=>Array.isArray(m[k]?.tickets)&&m[k].tickets.length>0&&
+      m[k].tickets.every(be181TicketValid));
+}
+function be181First(key,modes,mins,resultConfirmed){
+  if(!be181KeyValid(key))return null;
+  const name=BE181_FIRST_KEY+key;
+  let first=readLocal(name,null);
+  if(first?.schema==='V181_FIRST_SEEN_BEFORE_DEADLINE'&&first.race_key===key&&
+      be181ValidModeRows(first.modes))return first;
+  if(resultConfirmed||mins===null||mins<0||!be181ValidModeRows(
+     Object.fromEntries(Object.entries(modes).map(([k,v])=>[k,{tickets:v}]))) )return null;
+  // A once-only snapshot of the FIRST set of picks the browser actually displayed.
+  // Do not modify it when new exhibition data, odds, or a later result arrives.
+  first={schema:'V181_FIRST_SEEN_BEFORE_DEADLINE',race_key:key,first_seen_at:new Date().toISOString(),
+    modes:Object.fromEntries(Object.entries(modes).map(([k,rows])=>[k,{tickets:rows.map(t=>({combo:t.combo,p:t.p}))}]))};
+  writeLocal(name,first);
+  return first;
+}
+function be181ValidFinal(s,key){
+  if(!s||s.race_key!==key||s.snapshot_window!=='FINAL_15M'||!s.modes||
+     !['hit','balance','hole','narrow'].every(k=>Array.isArray(s.modes[k]?.tickets)&&
+     s.modes[k].tickets.length&&s.modes[k].tickets.every(be181TicketValid)))return false;
+  if(s.guards&&(s.guards.results_seen!==false||s.guards.unlock!==false||s.guards.scoring!==false))return false;
+  const m=Number(s.minutes_to_deadline);
+  return Number.isFinite(m)&&m>=0&&m<=16;
+}
+async function be181ServerFinal(key){
+  if(!be181KeyValid(key))return null;
+  try{
+    const r=await fetch(`./data/site_prediction_snapshots/${key}.json?t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)return null;
+    const s=await r.json();
+    return be181ValidFinal(s,key)?s:null;
+  }catch(_){return null;}
+}
+function be181ShowChoice(key,mins,resultConfirmed,finalSnap,first,modes,mode){
+  const after=resultConfirmed||(mins!==null&&mins<0);
+  const now=modes?.[mode]||[];
+  const original=first?.modes?.[mode]?.tickets||null;
+  const changed=original?JSON.stringify(original.map(x=>x.combo))!==JSON.stringify(now.map(x=>x.combo)):false;
+  if(after){
+    return {rows:finalSnap?.modes?.[mode]?.tickets||[],source:finalSnap?'final':'unavailable',
+      changed,first,finalSnap,selected:'final'};
+  }
+  let selected=readLocal(BE181_VIEW_KEY+key,'first');
+  if(!['first','latest'].includes(selected))selected='first';
+  return {rows:selected==='first'&&original?original:now,source:selected==='first'&&original?'first':'latest',
+    changed,first,finalSnap,selected};
+}
+function be181InstallStyle(){
+  if(document.getElementById('be181-style'))return;
+  const st=document.createElement('style');st.id='be181-style';
+  st.textContent='.be181-freeze-banner{display:grid;gap:6px;margin:8px 0;padding:12px;background:#fff9e9;border:1px solid #ebca81;border-radius:11px;color:#45361c;font-size:12px;line-height:1.5}.be181-freeze-banner small{display:block;font-size:11px;color:#6b573a}.be181-switch{display:flex;gap:7px}.be181-switch button{flex:1;border:1px solid #ac935f;border-radius:8px;padding:7px;background:white;color:#574016;font-weight:700}.be181-switch button:disabled{background:#e9dfca;opacity:.75}.be181-freeze-banner details span{display:block;padding:7px;font-family:monospace;line-height:1.8}';
+  document.head.appendChild(st);
+}
+function be181Banner(selection,mode,key,mins,finalSnap){
+  const first=selection.first,after=selection.source==='final'||selection.source==='unavailable';
+  const fixed=selection.source==='first';
+  const title=selection.source==='final'?'締切前の最終保存買い目（固定）':
+    selection.source==='unavailable'?'締切前の最終保存なし：現在の買い目は非表示':
+    fixed?'初回に見た買い目（固定）':'最新の参考買い目（更新あり）';
+  const stamp=selection.source==='final'?(finalSnap?.saved_at||finalSnap?.first_saved_at||'時刻不明'):
+    first?.first_seen_at||'初回記録なし';
+  const updated=selection.changed?'初回と最新で買い目・順位に変化あり':'初回と最新の買い目・順位は同じ';
+  const safe=x=>esc(x);
+  const counts=first?.modes?.[mode]?.tickets||[];
+  const previous=counts.map(x=>x.combo).join(' / ');
+  const buttons=after?'':`<div class="be181-switch"><button type="button" data-be181-choice="first" ${fixed?'disabled':''}>初回の買い目</button><button type="button" data-be181-choice="latest" ${fixed?'':'disabled'}>最新の買い目</button></div>`;
+  return `<div class="be181-freeze-banner" data-be181-source="${selection.source}"><b>${title}</b><small>初回/保存の記録：${safe(stamp)} ／ ${safe(updated)}</small>${buttons}`+
+     `${first?`<details><summary>初回の${safe(mode)}モード買い目を確認</summary><span>${safe(previous)}</span></details>`:''}`+
+     `<small>途中の予想更新と締切前の最終保存は別記録。結果確定後に再計算した買い目は表示・的中判定に使用しません。</small></div>`;
+}
+
 async function renderPredictionModes(race,pred){
   const key=race?.race_key;if(!key||!pred)return;
   const stack=$("#tab-pred .section.stack");if(!stack)return;
@@ -906,22 +990,25 @@ async function renderPredictionModes(race,pred){
   const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
   const serverRecord=serverSummary?await serverHistoryFor(key):null;
   const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
+  const firstShown=be181First(key,modes,mins,resultConfirmed);
 
   let snap=readLocal(snapKey(key));
   if(inFinalWindow)snap=saveFinalSnapshot(key,race,pred,modes,mins);
 
-  const finalSnap=isFinalSnapshot(snap)?snap:null;
-  const serverSnap=serverRecord?.snapshot||null;
-  const effectiveSnap=resultConfirmed?(serverSnap||finalSnap):finalSnap;
-  const settled=resultConfirmed?(serverRecord?.settlement||(finalSnap?settle(finalSnap,result):null)):null;
+  const localFinal=be181ValidFinal(snap,key)?snap:null;
+  const serverSnap=be181ValidFinal(serverRecord?.snapshot,key)?serverRecord.snapshot:null;
+  const serverFinal=(resultConfirmed||(mins!==null&&mins<0))?await be181ServerFinal(key):null;
+  const effectiveSnap=serverSnap||serverFinal||localFinal||null;
+  const settled=resultConfirmed&&effectiveSnap?(serverSnap&&serverRecord?.settlement?serverRecord.settlement:settle(effectiveSnap,result)):null;
   const win=settled?.winning_combo||null;
   const officialResult=resultConfirmed?normalizeCombo(result?.trifecta||result?.finish_order):null;
 
   let mode=localStorage.getItem(ACTIVE_MODE)||"hit";
   if(!LABELS[mode])mode="hit";
 
-  const frozenRows=effectiveSnap?.modes?.[mode]?.tickets||null;
-  const baseRows=(resultConfirmed&&frozenRows)?frozenRows:modes[mode]||[];
+  be181InstallStyle();
+  const choice=be181ShowChoice(key,mins,resultConfirmed,effectiveSnap,firstShown,modes,mode);
+  const baseRows=choice.rows;
   const officialPay100=resultConfirmed?Number(result?.trifecta_payout_yen_per_100):NaN;
   const validFinal=resultConfirmed&&Boolean(officialResult)&&Number.isFinite(officialPay100)&&officialPay100>0;
   const rows=baseRows.map(x=>{
@@ -931,7 +1018,7 @@ async function renderPredictionModes(race,pred){
     const displayOdds=resultConfirmed?(validFinal&&x.combo===officialResult?officialPay100/100:null):livePrice;
     return {...x,odds:displayOdds,oddsBasis:resultConfirmed?(displayOdds!==null?'official_final':'final_unavailable'):(livePrice!==null?'fresh_official':'unavailable')};
   });
-  const conf=(resultConfirmed&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
+  const conf=(choice.source==='final'&&effectiveSnap?.modes?.[mode]?.confidence!=null)?effectiveSnap.modes[mode].confidence:confidence(pred,mode,rows);
   window.BoatEdgeV174?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes);
   window.BoatEdgeV175?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes,odds,resultConfirmed);
 
@@ -939,8 +1026,8 @@ async function renderPredictionModes(race,pred){
   if(inFinalWindow)snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
   else if(resultConfirmed&&serverSnap)snapStatus=`サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
   else if(resultConfirmed&&finalSnap)snapStatus=`この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
-  else if(resultConfirmed&&!effectiveSnap)snapStatus="締切前の最終スナップショットなし・的中判定対象外";
-  else if(mins!==null&&mins<0)snapStatus=finalSnap?"締切済み・保存した最終予想を固定中":"締切済み・締切前スナップショットなし";
+  else if(resultConfirmed&&!effectiveSnap)snapStatus="締切前保存なし・結果を見た後の予想は非表示・判定対象外";
+  else if(mins!==null&&mins<0)snapStatus=effectiveSnap?"締切済み・締切前保存の買い目のみ表示":"締切済み・締切前保存なし（当時の買い目は復元しません）";
 
   const modeHit=Boolean(settled?.mode_hits?.[mode]);
   let cls="pending",status="判定待ち",detail="締切15分前に最終予想を保存して判定",resultText="結果未確定";
@@ -974,9 +1061,14 @@ async function renderPredictionModes(race,pred){
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
-  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div><div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
+  $$("[data-be181-choice]",panel).forEach(b=>b.onclick=()=>{
+    if(resultConfirmed||(mins!==null&&mins<0))return;
+    writeLocal(BE181_VIEW_KEY+key,b.dataset.be181Choice);
+    Promise.resolve().then(()=>afterRace(race));
+  });
   $("#be108HistoryBtn",panel).onclick=()=>{const h=$("#be108History",panel);h.hidden=!h.hidden};
 }
 async function renderMainPick(race,pred,preAdjusted=null){
@@ -1128,6 +1220,28 @@ async function afterRace(race){
   window.BoatEdgeInputAuditV139?.render(race); // V139 UI only; predictor unchanged
   cleanTabs();fixBottom();installBackButtons();enhanceRaceNav(race);
   const pred=predOf(race);
+  /* BOAT_EDGE_V182_SCRATCH_FAIL_CLOSED */
+  const stop=typeof be182StopReason==='function'?be182StopReason(race):null;
+  if(stop||pred?.mode==='blocked'){
+    for(const id of ['be108PredictionModes','be108MainPick'])document.getElementById(id)?.remove();
+    for(const id of ['buyBoard','directMode','raceCommand']){
+      const box=document.getElementById(id);if(!box)continue;
+      box.innerHTML='<div class="be182-scratch-block" role="status"><b>欠場・取消確認／買い目停止</b><span>6艇・出走可否を再確認するまで購入対象外です。保存済みの過去予想は改変しません。</span></div>';
+      box.hidden=false;box.dataset.be182Blocked='true';
+    }
+    const stack=$("#tab-pred .section.stack");
+    if(stack){let note=$("#be182ScratchStop");if(!note){note=document.createElement('div');note.id='be182ScratchStop';stack.prepend(note)}
+      note.textContent='欠場・取消／直前データ不十分：予想と買い目を停止中。'+(stop||'');
+      note.style.cssText='padding:14px;border:2px solid #c23131;border-radius:10px;background:#fff1f1;color:#7b1717;font-weight:800';
+    }
+    return; // No snapshot capture, mode generation, or result lookup for a blocked race.
+  }
+  document.getElementById('be182ScratchStop')?.remove();
+  for(const id of ['buyBoard','directMode','raceCommand']){
+    const box=document.getElementById(id);if(box?.dataset.be182Blocked==='true'){
+      box.hidden=false;delete box.dataset.be182Blocked;
+    }
+  }
   markStandouts();
 
   const adjusted=await be122ScenarioAdjusted(race,pred);
@@ -1141,6 +1255,28 @@ async function afterRace(race){
 
   if(typeof renderBuyBoard==="function")renderBuyBoard(race,adjustedPred);
   if(typeof renderDirectMode==="function")renderDirectMode(race,adjustedPred);
+  const postDeadline=raceMinutesToDeadline(race)<0;
+  const initialMode=readLocal(BE181_VIEW_KEY+race.race_key,'first')!=='latest';
+  for(const id of ['buyBoard','directMode','be108MainPick']){
+    const el=document.getElementById(id);if(!el)continue;
+    // Legacy boards use a separate live recalculation. Never show them beside
+    // a frozen-first or a post-deadline result as if they were the same tickets.
+    if(postDeadline || (initialMode&&id!=='be108MainPick')){
+      el.hidden=true;el.setAttribute('data-be181-historical-hidden','true');
+    }else if(el.getAttribute('data-be181-historical-hidden')==='true'){
+      el.hidden=false;el.removeAttribute('data-be181-historical-hidden');
+    }
+  }
+  if(!postDeadline&&initialMode){
+    const first=readLocal(BE181_FIRST_KEY+race.race_key,null);
+    const top=first?.modes?.hit?.tickets?.[0];
+    const box=document.getElementById('be108MainPick');
+    if(box&&top){
+      const combo=box.querySelector('b');if(combo)combo.textContent=top.combo;
+      const title=box.querySelector('small');if(title)title.textContent='初回に見た買い目・固定';
+      const badge=box.querySelector('em');if(badge)badge.textContent='初回固定';
+    }
+  }
   const diff=$("#predictionDiff");if(diff)diff.style.display="none";
   await augmentBuyBoard(race);
 }

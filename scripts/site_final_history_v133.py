@@ -534,7 +534,29 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
     race=read_json(race_path)
     if not race:continue
     key=race.get("race_key") or race_path.stem
+    # V182_SCRATCH_GUARD_FOR_NEW_SNAPSHOTS: fail closed on explicit scratches;
+    # never overwrite stored snapshots or alter historical betting records.
+    scratches=read_json(ROOT/"data/site_scratches_v182"/f"{key}.json") or {}
+    racers=race.get("racers") or []
+    blocked_scratches=scratches.get("race_key")==key and scratches.get("blocked") is True
+    from_recs=any((r.get("scratched") is True or r.get("withdrawn") is True or
+          r.get("absent") is True or r.get("cancelled") is True or
+          re.search(r"欠場|出走取消|取消|不出走|scratched|withdrawn",str(r.get("status") or "")+" "+str(r.get("raw_text") or ""),re.I)) for r in racers)
+    raw_date=key.split('-')[0];vv=key.split('-')[1];rr=key.split('-')[2]
+    raw_race=ROOT/"data/raw"/raw_date/f"{vv}_{rr}_racelist.html"
+    raw_before=ROOT/"data/raw"/raw_date/f"{vv}_{rr}_beforeinfo.html"
+    raw_scratch=any(p.exists() and re.search(r"欠場|出走取消|不出走|scratched|withdrawn",p.read_text(encoding="utf8",errors="replace"),re.I)
+        for p in (raw_race,raw_before))
+    if len(racers)!=6 or blocked_scratches or from_recs or raw_scratch:
+        continue
     meta=race.get("meta") or {}
+    # Last-window official source must be current; do not freeze an unverified buy list.
+    bf=(race.get('source_audit') or {}).get('beforeinfo') or {}
+    if bf.get('status')!='ok':continue
+    try:
+        fetched=datetime.fromisoformat(str(bf.get('fetched_at')))
+        if (NOW-fetched).total_seconds()>15*60:continue
+    except Exception:continue
     if meta.get("results_seen") is True or meta.get("unlock") is True or meta.get("scoring") is True:
         continue
     result=read_json(RESULTS/f"{key}.json")
