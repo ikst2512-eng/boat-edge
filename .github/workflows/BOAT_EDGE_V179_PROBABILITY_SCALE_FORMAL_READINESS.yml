@@ -1,0 +1,155 @@
+name: BOAT EDGE V179 - Probability Unit and Formal Freeze Readiness Audit
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V179_PROBABILITY_SCALE_FORMAL_READINESS.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v179-display-readiness
+  cancel-in-progress: false
+
+jobs:
+  fix-ui-unit-and-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore hash-verified patch and independent unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          from pathlib import Path
+          import gzip,base64,hashlib
+          payload={
+            'scripts/site_v179_patch.py': (
+              'ae30bcb94e270d898b98e760e8204bc5e93c43f9b88ee02996196db909bc52ed',
+              'H4sIAAAAAAAC/8VZ61PjOBL/nr9Cw9au7cWYMFt7MxfKUA4YJjUhoRLD3CxLqexYSXw4ds6Seczjf79uya8QAszeXV0+gC21ft1q9VP+6c1uzr'
+              'PdIEp2WXJLlg9inia/tba2ti733v2dXPTIkmUTlgh/xkiSZgs/jr74IkoT4ichmcqRnYz5YZQwzomfh5HYJ4MhWWYsjCaSkk/SLEpmFqC2plm6'
+              'IEtfzOMoINFimWaCnMOrmgh9wUS0YOVM+W7iny9pwlrFxD95mrRao+HQs3G1rlma0Tp3Tl0bx3a1KAnZvTUXi1hrDS+8YhTg/F0eCUZj5mcJyL'
+              'R7C9ukahu02oaF8FqrFbIpydi/8ihjMLmM/QnTeZqDQsw0Ds2E3ZmxH7DY6LQI/KIpUbPWJM0ToQONYdt7ahJ/GRN5lpREJWIJtWeUKDACyhYk'
+              'KmmlslewYcEz2HI08yPOyAioQXlulqWZruGp0nPHO/pALwbuP87dI889Jtq23Ma2hpxtbZuLTF/biQHTwPWpaRTGMEp9yV1Rdu9PBFXzj3QmB1'
+              '+hOfn8Su39qO4OnkX/P+oPfGMyp9J+C6JCR+BDM1vTNEImacIFWTrEJkm+0O/8Q2uZpYEfRHEkHsjhISmHyucM/MjYb1VLu+XSYH1p0FgalEuB'
+              'rxQCQ4ASYneXoDI6oGjBssSPMVjknPFmxMiTSHCiM2tmkd/fkwXzEw4PPxtWSyKcSMeDWJGG+YRlZOE/EM7gvFgk5vBeRhwWkqu2uXcNSpAP7f'
+              'a1Ve/Gyfy7/0AXjdWvVUe1+i7N4nCcLwBAivHGtpM8jskvvyjg8v1QTW8rbh2Cgw0Z8ChLqAZEOXTQLgF+ha3vVkzXcLqvweluwikPWZmdvSny'
+              'gR2aeDCm9mk46h/TwXB05vR7fzhebzjQlCP+RC5ZFk0jODiwkvfgS8kNZIeMEThX0tSxn0PKyeDJlG7LWTyFfIJBHtaCKe2IaHLDBO5wGoUsAa'
+              'd5hZCVW1fuMsv8kIF6QpZZwIRBaroFroeWmvj2Tc7UXGg1vuVs7f+ZlDgLf+lJiTiA6VKFJgnycMaEQewD8lX7HzK/LZSqJDhXjobGy+7Imb/U'
+              'dYRBXbOQ7r1tf/t2dW1YILF+bx9c3QODRZCag3wRsEy/b5q6gQZxbRh/daPeqHcCsdCh56NhlzoX3ofhqOd9LqzhtWcVTXXxsGTplATEtm2yBZ'
+              'ESkvSWUUbnr7i3TrS9ZxK5l05gNo2pg2ZsEn8hQzu+fN/X/pv4T+rfAo3ogXF4+AL3E+kndAy6GpxSr3f00fV+UEHlQ1OmoGE3GKWCxyEMBvCf'
+              'lE57AeyZDSrrQZsMrMIn5XOA9vAUfrFftVFpGD+4W01TOV1/c5Okd4nxtZhS9qn0jMbpx3E6gbjcffjEotlccB1KvAUvDR8j+6qxo+B7RmXN+w'
+              'WuWgXFoOtP5rp+b0aGfXBvKUZ2we8qui4WfAcB16RVafF9WTbyKrftQIH7hSVkr2222+2dB3jkwr9h3CIDBmonEyg/BSNTLJqhbM55UV2XZEWB'
+              'o0tdQHBX0sYsmYm5Udjv1fX+qlCDIa3Mzvno0t7Z+YXXDNTT6J5x+6paoWtnUE9bGew11ItI4cvoYGxv/bylmU/OF3N7MOuMPepohvksYvACYv'
+              'AYsfsS4t1aNNuMvkpbc+pefKYypb3EzPkBZs4GZse9EQRMxe9lhXV/gGP3NRxfVKhY49g2dvfaG7mu0dfUv5naehC4VuYHBV3ZFiSqJcDKXVpl'
+              'p4oTL3YUxVKFvFrJF02JH+rLopAW2UOnoME+z4pTP+T60kIiKti90CGUptAJQrmdi+nOe81QwOx+wpaC6MOx7AbMSz/OVWNglIAD7FElS9kJ61'
+              'maCtl8FrzBl0XObSkPzhU9adGAqlnVfRpY6379Llct0pDFa4vk6MY1QRZBcFtbpLpfCDRcUEUCGk1EBqpdx4BC0W6shVdtVzYviiemBU34Gfyn'
+              '2KmDXYCqqs5M25EDJRJN/AWGmqWFD/Lkl3jWMGWBUFkYZbqBHdzSijidRjHTjWt8RwJ2H3GI6wZhMfRkV8p4/CWY3C2UOrDUXtdmfQPBtVV6aU'
+              'M2h7ywJ+WgKEcTzZrFaaBrvxYqkWKtzIOESl4pT1vCz3I/C7ndVI4aWtHpJM2YrcuzUzQ48K4kMUqvgA3YK3pWYydRxgX44io97JRKVrauOKol'
+              'kH7yWHDKGcNzjTg58VFcbIibdHkC+fPmOYriBuc5kpE7vuh70BX3h0cfqTf86A4UObpEkffh3KmyF7uhgKYFQde/ybiKrUIPkQiKUCtaLM+8mJ'
+              '77b3//22M0RXMuScZzv3TrYqnKz3aQprGuhgotgi1zhAK1Ny69CsiMsS/szE+iKXiUBF2jwQNusMPDmqTQ8wia3ih21fmpu4paTfK9sWX5jngN'
+              '06Egl7y6elD69rK80DcUbMuYCVYzqfg2hCw2rlg3tAVhIYFGhYU17BpNw8UeiyBpVz3uoK3kCtDcWAax4Lq8tcHWr9JCpySwYD2DFFOWkucjlx'
+              'Z2dnrhjLD19OilC71Hzz3WjCZYQ4nrcGfDY7dPncFxWRx5zugU0tOx47n0rDc+wwueVbzGIWwWzxm5A4+OPzhPgLxwasgD1bYOPu6BUEfDfh+S'
+              '93AETyP3He26/eEnKgNBU8qVE90o5wno8APyhwf3D7njMbQkNdQzZlDKieHnFZaweVvOORQDl251BOpM8ECPhoOBvFerBXoUue32Oh5UuufuiI'
+              '6cI5dW2GAwx70jLHfpSa/vjle1pfLfOhQU8KDhUe/4FBU/8AATA5tz6fT6Trfvait1RtmVQJCcs4VPoZbnoAatowWpL3YYsNjBW+adx5flO2HE'
+              'IVM+7MhSAWiqwh3j7ZIBQnH2g/HFGewNDbbhAlDRexdjOhz0P9O6zj9FGx5dDGqwZhDtbIyuNW+sEFRtEYVapxFj5eNjymUaR5OHetf6kxXHJM'
+              '+U/wB7tlJoGAq7KElqMyqANbMiKVk8EkC5E4ujWRTEsMPa0coxZTVPr1O22nlFTK1Wl05WpGKqEkRnPWeYbWNtkcwXJdcVd31MWtl8QydYFQGr'
+              'VXeoFmKRlU6hgYzwYwaIEEPRVK7hsgsG++Z3EX4wqQjUVxJDFkL3RUGmajXjaeSAASmLkmm6EbsmeQ26MrbCGhd4/8148U0GsOtAXi2os3xJrn'
+              'UaAbqmk7cLWASpxMKhPuBIW2aaxxaRwE5Ypo6HipQWHkqhOs7xoNYLy06ZZCuoMpxoVWBpyIN3Acq660O9U5cWdDL3kxnE2Y4ssB6bQ+VBRSn2'
+              'PNUM3AkaJjbJxToixD4ZXGDPRKYTWdpgqTb0ykuHE9DbHIeVxe6TRF5SqFIRPXfKQPFEaXc3DUNORAo9V3zLSoj6cxqRrDI2ZZm8pWooEEYXPn'
+              '6rYXCAGBtUqf5dNVE4pTe/f+AnvucatX38wtL8hIKr6qDP7t7YONKROHcZnroEwiZyDUwuwxhmq2bO2B9eeJYyNGtxgw2AeuG2DBCyScGiri7B'
+              'wAQCW3aZYb5Ych3RgBHPwQJ9PokiWx0Nx7Lshj0USCg75Lm3xrb2Z6I1cxZKUDVDcAz4/ow+3tgoQQepGrvFsQ3bXYJxifI7F3TrTrfX73mf6f'
+              'jI6btU5iP1+evcGY+fWDNynePewIU5s7Htrzcd3PnVzbUMBDcYCK6eDN/mhvBq/nUXNWuXvP7+hPLxyxtol8qwRKlta5Si4VEK2U8aYOvffHy9'
+              '2CcfAAA='
+            ),
+            'tests/test_v179_probability.py': (
+              '5dda1accc4e3b9a10487fc59cce658678fea99c1edfdebaea759c0a021b2c15c',
+              'H4sIAAAAAAAC/71WbW/bNhD+nl/BBRhItqpiF1uLOlCDtHO6onkpknQDlhUEJZ1tNhKpkVRsI81/31GyHOVtaYdh/mLx7rl33h1VWRnriVu6qN'
+              'bKe3A+8lBWE1VA9MUZvTGxpiSV9LNCpUS18I943ECZONBjpR1YzwaR85YFFhMiyAvBYwvOFBfAOEItaO/Ohp+3qMusqryjnLfqnfIgLoYvXwlU'
+              'mM06M81BKJ3DIiKyzpXfyArpHPkNoafoqmOd03E4vpUO+GiD4C+HCZmoha8tMAfFZEUOPwtI1YRSSkhmtPNkamUOJEEhGyMYMq8ulF/uxC3j69'
+              'eGg9iJykFnINb0zd3N7T91p6eU1anKzsE7VMbmxhZ5RNI6n4LnJHlNLgOUEDVhflmBmZCUJElCNjFvSk83eefapZX6fKSeDiNUXKZmlEaksiaV'
+              'qSrQr5GuiwITUppa++Zwtd1qDr8+MO05TXZ2SBr3uCtC+GsUrp374VybueaXnc42uNZciEwWhcmkhzfL30FNZ1gFLF/pYgyfLZLXui7Zom+Ih0'
+              'wN+ToVa2dbsYmxY5nNGFtEiievF3FrKVkZPFOfO4mr61RXu+hIsDSXO7eD6kjdt0Vfea9M1ZtONr0rm/Zk077sQbjqFl3K2WFdpmCZ5E+GgwF/'
+              'uvnj5v2A9DHA/EaaHgHvfg/4zfeA/R3wgG8NB/+XAHbiumdDL7dDQMBCZl5InQu8wDgQPI6P273skkCIu07n24ukNzSY49fIgMPZgZPq0PjxX7'
+              'UsmIsW9wJa7iLqq1rwe6HvNaPVrpXzENNW0/IndUkfUBzQF2DVREHeToqPYDOMK8a+YKFbsdtDt6Sxb9jtd4pN85BKDCZo/eaUP6LnG3t9rWVd'
+              'MwtfIJSrTNW0NrULRfRg9e2KzZWf9e0eS+XAsWO0p0oYW2ssH92o4Y0C40KpCpkBo/9+EtCIUn7HfZkrDc6JiVSFyArjIG8unzbIdHXhnZBZho'
+              'h7I+p2Ju6hsLukXf6iLCbE2CXjRDqSXws0S8gYnzS7MufbLJy2aC69pDwuz3NlGb8B7yG2cF6WshDOS1+7OOxoFJrbsEI9LDwLlDivy8qxS+ql'
+              'xaslUBDoiD4fPH/xbDh4NniFOWj1fGzW8slMIlvSJy9+6hh7yjqPt4aOLqnFjDs6GlxFdFpLm7uGuMqKA9B0tCcLBxGtNd6X8/XRZSastvX5eH'
+              'zyaf9UfDrcP3r7QZwefRgf0tGh0YCasZwaMwb5Gl1ZyBUuY6xzU6DlinPFH85OaXL4z5Ij2keLcDP5/OcX1xlqjODxLV4Q1YgH9y28DHmBQk1V'
+              'is+fLDQRHWEOV1yBn10gp7aGq9uByKR55TTx3OT0OiZIMnlGm0dTq7fV+flBkSZrPRnt6hJsKya8Ebly2FVLvOAeJ5/ogr9O/z/oDlNj7+j4YH'
+              'df7GF5fw0x4sf4j7E4eH9y8v7wHY3QchruBVj3LV6u7Ge1bbO/ukQoqSZECC1LfFsmCRWilEoLQUfrZ2AgYO/8DQz2Fp/XCgAA'
+            ),
+          }
+          for rel,(sha,encoded) in payload.items():
+              blob=gzip.decompress(base64.b64decode(encoded))
+              assert hashlib.sha256(blob).hexdigest()==sha,'V179_ASSET_SHA_MISMATCH '+rel
+              p=Path(rel)
+              p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(blob)
+              print('V179_SOURCE_SHA_PASS',rel,sha,len(blob))
+          PYRESTORE
+      - name: Test patch fail-closed and apply site display-only updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          python3 -m unittest discover -s tests -p 'test_v179_probability.py' -v
+          python3 scripts/site_v179_patch.py
+          python3 scripts/site_v179_patch.py
+          python3 - <<'PYAUDIT'
+          from pathlib import Path
+          import json,re,subprocess
+          d=json.loads(Path('data/site_learning/v179_formal_readiness.json').read_text(encoding='utf-8'))
+          assert d['production_prediction_weights_changed'] is False
+          assert d['formal_current_scoring'] is False
+          assert d['formal_current_gate_executed'] is False
+          assert d['scope']=='SITE_CONSUMER_AND_PRE_RESULT_STATUS_ONLY_NO_FORMAL_GATE_RUN'
+          html=Path('index.html').read_text(encoding='utf-8')
+          assert 'pAraw*100/worldSum' in html and 'pBraw*100/worldSum' in html
+          assert 'verifiedTicketPercent.get(b.combo || b.ticket || b.bet)' in html
+          for bad in ['Math.round(Number(a)*100)','Math.round(Number(b)*100)','Math.round(Number(w.probability)*100)',
+                      'Math.round(Number(A.probability)*100)','Math.round(Number(B.probability)*100)',
+                      'Math.round(Number(t.probability)*1000)/10','const amounts = allocateByWeights(items.map(x=>num(x.probability) || 1), budget)']:
+              assert bad not in html,'V179_REMAINING_INCORRECT_UI_PERCENT '+bad
+          # No result/payout directories, model weights, formal status or frozen snapshots may be changed.
+          paths=subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],text=True).splitlines()
+          changed={x[3:] for x in paths}
+          allowed={'index.html','scripts/site_v179_patch.py','tests/test_v179_probability.py','data/site_learning/v179_formal_readiness.json'}
+          assert changed<=allowed,'V179_UNEXPECTED_REPO_CHANGE '+repr(changed-allowed)
+          print('V179_ONLY_UI_AND_READINESS_AUDIT_FILES_PASS',sorted(changed))
+          print('V179_FORMAL_STATUS',d['formal_first100_races'],'FRESH100_FROZEN;',d['site_core7_eligible'],'SITE_CORE7')
+          PYAUDIT
+          git diff --check
+      - name: Commit UI fix and non-formal readiness evidence only
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html scripts/site_v179_patch.py tests/test_v179_probability.py data/site_learning/v179_formal_readiness.json
+          git diff --cached --quiet && { echo V179_NO_CHANGE; exit 0; }
+          python3 - <<'PYGATE'
+          import subprocess
+          allowed={'index.html','scripts/site_v179_patch.py','tests/test_v179_probability.py','data/site_learning/v179_formal_readiness.json'}
+          got=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert got<=allowed and got,'V179_STAGED_WRITE_OUT_OF_SCOPE '+repr(got)
+          PYGATE
+          git commit -m 'V179 normalize displayed prediction percentages and audit formal freeze readiness'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then echo V179_DISPLAY_READINESS_COMMITTED; exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+            python3 -m unittest discover -s tests -p 'test_v179_probability.py'
+          done
+          echo V179_PUSH_FAILED >&2
+          exit 1
