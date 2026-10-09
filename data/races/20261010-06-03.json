@@ -8,7 +8,7 @@
     "event": "BTS玉川28周年記念Wave21杯",
     "race_no": 3,
     "deadline": "11:57",
-    "updated_at": "2026-10-10T07:30:35+09:00",
+    "updated_at": "2026-10-10T07:49:21+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261010&jcd=06&rno=3",
-      "fetched_at": "2026-10-10T07:30:35+09:00",
-      "sha256": "97d591f6f9db07018a944bc37a55b8e210697552b47a7769a914d17261e04d6b",
+      "fetched_at": "2026-10-10T07:49:21+09:00",
+      "sha256": "a3aace661618739371fa4349949388efbb831f9f0a9dd2bd489c2c7256863afd",
       "error": null
     },
     "beforeinfo": {
@@ -29,6 +29,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -253,5 +277,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

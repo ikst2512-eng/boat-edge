@@ -8,7 +8,7 @@
     "event": "オールレディース 江戸川女王決定戦KIRINCUP",
     "race_no": 9,
     "deadline": "14:52",
-    "updated_at": "2026-10-10T07:30:35+09:00",
+    "updated_at": "2026-10-10T07:49:21+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261010&jcd=03&rno=9",
-      "fetched_at": "2026-10-10T07:30:35+09:00",
-      "sha256": "58bbf83f5583a903ece5cf0e100e9b175f77c520909fd215006689b35ca20b19",
+      "fetched_at": "2026-10-10T07:49:21+09:00",
+      "sha256": "1bfb53c3d23981ea6fc1f51bdb63454c92d1a0a246be81d8acc03822014c1faf",
       "error": null
     },
     "beforeinfo": {
@@ -29,6 +29,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -289,5 +313,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

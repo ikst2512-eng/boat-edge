@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 4,
     "deadline": "10:05",
-    "updated_at": "2026-10-10T07:30:35+09:00",
+    "updated_at": "2026-10-10T07:49:21+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,16 +19,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261010&jcd=18&rno=4",
-      "fetched_at": "2026-10-10T07:30:35+09:00",
-      "sha256": "9cc5acba906534f7a043424ecf96c3f41b21a8ce3b9019220067ab54d33c53e7",
+      "fetched_at": "2026-10-10T07:49:21+09:00",
+      "sha256": "2cf737a326727f0f0a0514069ea4f7af34def40d9cd05c7604e45b419a13222f",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261010&jcd=18&rno=4",
+      "fetched_at": "2026-10-10T07:49:21+09:00",
+      "sha256": "a0b7f449a361ba32dbb06beb91f69c1dda40480a268e40a793f52829dc37aa14",
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/10.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -249,9 +273,69 @@
       "raw_text": "6 5451 / B2 知念 伶奈 佐賀/沖縄 21歳/47.0kg F1 L0 - 1.24 2.17 2.17 0.00 0.00 0.00 63 27.52 40.37 62 37.50 55.36"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山田 竜一 52.6kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 上條 嘉嗣 52.3kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 永松 良教 53.8kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 浅見 宗孝 54.1kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 林 祐介 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 知念 伶奈 47.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
