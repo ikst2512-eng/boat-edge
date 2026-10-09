@@ -1,0 +1,210 @@
+name: BOAT EDGE V178 - Verified Formal Top120 Parity Bridge
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V178_VERIFIED_PARITY.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v178-verified-parity
+  cancel-in-progress: false
+
+jobs:
+  verified-site-consumer:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current site
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore SHA-verified patch assets and contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          from pathlib import Path
+          import base64,gzip,hashlib
+          payload = {
+          'assets/boat_edge_v178_verified_parity.js': (
+            '05e0176cb83f61ea8b57a183850bcb5947d191141829adb33d230c2e6a99503e',
+              'H4sIAAAAAAAC/40Za2/b1vV7fwXVZCIZU7Rk12kimRKc1Fu7xXYRpwUG11MuySuJNUWq5JUtVRbgx5q4a7MUW9EBXYG9urZo02LANiDtvPW/TL'
+              'aTfMpf2LkPvmQp3Rfq8vC87nnfq9lL0rW1pVvS8ks/WZZeL714Rfrv3oeS49m4g+HhEbcvmX7XsyUXERySQsMP2siVOgG2HYs4vidZvhd22zjQ'
+              'n5Mk6SZu4AB7Fk5hhJrUckLiB44FlI0A47cxwALkbTleU9rBTrNFABAStAV0LvJCCYFEIer6azdvLq/ekjyfSG3fdhoOtnXp0uxziqIa1YHcDT'
+              'GQAnMiV0AFqg6R1l9eMmZ/sYEKjWLh6ubg8gvDi7PJ158t/xy+vmEPrgwL8JwTzzTK9bWVa2uURalwebOQeqaRtnHA1DE8vCOtoI6ipr4h17Gv'
+              '+23TN0KjSvod7Dek0DAMmSrrNeV8nsnQqVmVUM3nKZN1DGs97LgOUeSCrKp66LyNgWqecm50PWFz5PkeNaeyrQ6o3SWnoWwDmtd13d1dIY0CZN'
+              'P3XYw8OQv1um0TB2NAoZgaYNINPOmn62urOoc5jT5IqkSSloIA9XUnZL/wIaKQN+SZbb0NhogVVPU3fcdTZE1WZ+RNOWaxnc+nRfvmmxgcGDMa'
+              'yDNrDKRv4X4IIvTQD4iiMuZbRnVMty1gXpZnUmbZ2NpUM7KHQjZpBf6ORG29HAR+oMira6t1yq7++tKN15Zltsth7EYbXLyN7bWGEaAdowqPmi'
+              '5gu7vsLQn06V8YIImNNiYow5GHep3CBS1dZlxO0wXbpbmiYguXc16wm9Cwazr/XgeE2Ma5rJ8opgrs4Ud3sdckrZxhAH5kdBo7lRRniwZvaERh'
+              'qVZcTCRIdaOowc62jVe8huM5pM9pYAsKp+tJ4FUmjOvJdent7uaSnFB6OmMP+nAxeguFMfC8RoyHCJgeGNY3kelAkvRz6WDOrbIV7PjHVDOsZF'
+              'BBVuZ9sTgGqJamCM5i0c3PlHChNBFdbAfZdrydChhtxsgwqTALZkGMwTBy3goiLR2ZoQLEhZJaLerFYnGCRGp36hhklCpo0bhcQTMzagQ0AWhS'
+              'oJkCWgC0KNACYMpFCGxp5vP0x8rnTf6TS7nn9sUBGhYuDkz6sIa3J/iJqy/ANAaibIrjmG7cwTs0ikUAG+nQrkS0tQHxO/PlQA9dx8JKUZtXNY'
+              'AspCALDFIqpkClojosM3UyQllreRUFYOax9NnxA9cOjQ2ZLeoIigVfmfImKzYKFCDNgU4DObYB683dXbpyoGoVa3IHEYIDD+jK8Rook1LJ+UP1'
+              'amMFsj23ExutgdwQp/ONxkJoCAIqGvBZFYlDpFYT72wRQEdOBDFqLqcX95veD6QHTYlFozhdJ5rujPNGcXOGL0qblWfHaD6fhReL7EtpqhDc60'
+              'Clx/aSwQgDOm8oCtAVi5ci4bPASp2lvC7BYxK1sRHz0RhtIX4XGgv5wsIYundfUXaYcwdx9lKWxLG2MAFf1HSx3N2FtRktaE44HmLDTapMjNVb'
+              'QQo2zomlKLsTDCFJNDOJT5BrFCNQUlIJLakRv0jXdE0kuaSJUnkTRcROpdlgEB21wdKkViM6g1TSfJNYecUjuIkDheHAZtjvIlhYLH8ES5BenC'
+              'KS7WnGyEgYil9BwbdtGJG/NhzhsKF6rnywYXSdININqUbwo9EEpe0ymYRyMODxuWqdjQg0h3d3ZRinwDY7MN36O/o1H5Flu4lh6H2RetQjAbII'
+              '51zTBe9JiUH580ZNn5CFFq4DfzABk8KAMKdit+7YAOSMdOANk0E9+jA1F0jQDWkwR2QdSACYKOrJLFEPW2hu4XLd7Nep7ExoC+p4toq4JcEBFX'
+              '0sSjkKzJ/CKVlSVvIyUyuM1ty2aQwgHyNgdjindeRPFPY9K/EqdJfWS3x2GqvPYdckLjaiOLeCfof4NNghDDDMH9gGlTi0pnNktcbfxWs56U7U'
+              'dRwYD763cI8sexa4JTAyXKdNRWYfNs+GohQpDKaYrZLBF/ahpulspwlGM9AOcqJd6RymyGDSAhhH1hhzNeNS7q1G4LcVKvQ1xyNXuOc4taptG9'
+              'Vtnfgi1EuXVb2DaIrAvDynyUU5noOT2XbM/Owc07+JdhSYPVk+ifDnnoiOOTDeQpXCNJuSvjM5n5Bl4Q65SSfZcZ5TQ59GjMFHY0qjarYRT98M'
+              'kMh8VhWAFE8PFPCa7f4T5CeFdosW2onDgJptEQxuQLTTeWBji8ZORDR1KqhkOLDBndGkuwx/N9Mv/1+3EdN9LjXeT6zIlJLh8P4Hs0JqKo/Ghl'
+              'TC13rlHtfBh2EhUpUtQUt1kjl5eWenhRaqkKA/gF8R+dlMrwwtRKyWUlcHGTbDJF1bUGjhkZtWUSbIj+M1hGMLjYuBiKOyrUUFuJyp0xrw0gLc'
+              'KIuyy89jEDLYI+vwCZKpiUndhokrQkmBhup4Ecbn+pYTvi60UmjVziYY8wlAp3Unnk2rTCnnbWyzpEqYPGui9BtGbA7Ql9HFPSurdy7H8PN59h'
+              'OdZSEUGI14jb5GljOmdbi4n3B8GgGCU+qwWzvvz0hAyr6JjBRwjD84L0Ebcx/0vFRJSO8G2la6OGQ+Ze8BcGihDjYgXUSd7dVqUFBBbscFKmV2'
+              'I79YfV7enG1qllFVBnIecj+P2p0KFJFFunYJXVbpssmWz9PlW12fvbwh07cL81cr8nDD2uS9g6aQDZUP5Bmxc5MbAXpDB60njiGBKsIhEwjIw6'
+              '5h+1a3DSahgbDsYrq81n/FVmQTl4pXXo09sQIuDOVUuWXkE9i2MKJ9k33W3+pCPVmHDmEReq2iM6YFigKsKBeOPYENNbsR3ZCBB3G2v9cYjAVt'
+              'ebwbc4f/MDGPiHPkHGxMSc5M+4YAMDh6LTrCZsLlHG+aCM80DUUoEDgmSWaXEN/TfU9Wa9Q5SwRiDIBYkSHUUSHBj7xCI8PxGr4hJ1dqXLt8nq'
+              'o61q1cB0YPD86w8GlDhkOzPOPx4y0EdHRNIaYEaVaKpEhcxu1Fs3r29V9Oj+9Hd7GQR0/2Ph4d/Gp0+K/SycO7p3fuPHnn3unRHXiHYebRO5+f'
+              'fnB09vBotP/94qxZXQzBDtXR4Z9Hh3dHh19JFwc8nZQpw/FQenp8X7oF5/8ElW5BmVfV4eIs43Z7Jj5i3Ob8AX9hDH8hwY9xSsUxpFIxxTXVJp'
+              'kDIZhaDpFThy5uUVC5C5Gzoev6BB8vuW7sZt4wC1SUlAFJpqzGToiqCozWPXIdTiOQnPS2k3bH2XOX0LMQJ3AoVvWG48J0oVzjl7zq+EkvPhtT'
+              'x+vssmTc66lTH/h6BpwNjd/3mtXRwT9HB5+ODo8effzLk4dfP7l77/FnH5WKjw6+He1/wcOBWXO0/w3399Pjjy8OuF3EAALWKxXzeQETB+4eO3'
+              'D3suc9tSafPNx7fPcfUAVPHt7jawims0++PPv1nx59+MXT46Mnf7xz8u97o4PfnH347emn7472fzfa/89o//ejg98+PX5Xpi7kmt/OnjOHGCrn'
+              'IB3QMg3oT/bOPvrbyXdHZ4d/hy3wDcVxHe8IFDj95v2T7+4kcXz26SePvzjm0U3pHz4A+tHhg9Hh8ejg29Ojv0IGgOqP3nvw6Kv3mJZ/OHv3+8'
+              'dfsl199jlNmUiM2NL++2f3D0f7d9h+Ph/t7ce2P71/8HjvUGgJO2daxokEjjj94H3G9qO0OUZ7ByKe5fREFrWSaECBsx7MZqn7B+gRUwvWi1cK'
+              '4i+gDmuWqRoBtR3awyDdYawAA7JoMlDFnG3AB8aWi8JwFbWxIU/iWeE9Qne8EAdkyX4TKqxHYjaoQei/S7asgbzKMJEPnB3Pw8HLt1ZuQP2nTl'
+              'bTMAYRpoC+gFy3P8g21uH4wBayA1RqQHtW94SNhKTvQnkeK7xQdqfZRBBUQqLDGJXhElkWPqXKgTHRDwPbCWEE6ZebgWNXmqhTfqHTq7RhUHK8'
+              '8tVOTypW4Dhow07LpRK8lubgs4msrSa7ZytfaFxuXGmYFdMPwPJlihL6cCCQLtgWnsfRh0KAbKcblhm55bt+UL4wNzd/9YVGpQHqFejfVPyjC3'
+              '0X2j79U69c0hcWhpO0lmh0DlKUIHcKIsvpcdTYRLF1aeTQ6xIIj+stx7Wht6jZO2k+LcXtUswMK13CjlZrJoQcVKjs+KCyf/bGUPgfjywm4olL'
+              'MB+qus+xlFgz07fhCEKP/AHGZZp8mkU1vAEdgb0m11znp/8rxiC+UtDiIVZLTa2aGEe01KFYSx2ztPh0ryVzjsY1HlLBdHKMdIUQtfuUB+t8ro'
+              '9s9o9g/B0iaXkbFlR3DMmlyC+trYj4vAHYYDKNZY428D0LR9ujFTjKqMpzQ5U+/weuFq+Vex4AAA=='
+          ),
+          'scripts/site_v178_patch.py': (
+            'b843f71d54073ac036e2c4d63063962e060ff7f0d89a63100c383dbaf9484e17',
+              'H4sIAAAAAAAC/7WUXU/bMBSG7/MrTCfhRiuOEBdFFFOVUT40OlALXCFFbnLaekrtyHYSsl+/47RlfImhifUicuxzXp/3Oc35shUV1kRTqSJQJc'
+              'lrt9BqL2i1Wne73f0DYp2RiSMzbZYiI1YXJgEinAPrhJNaEaFSUkorpxmQRCtbLMGQXBjp6h7JDVgwJeBCp0UCJqpAzhfORgtpnTY1w4uCmdFL'
+              'THGLTE6JXObaOHKNr8F6LcwcBS0EOd8s2cDM8Sblrv2baYe9nIk0jcV6u013dozWjnZSmIkic5wyGvYEz1mT7wNtOwymwgL3d7UF8/Fh4Ovgfj'
+              'uiUqXwwBZumdHAcn/ADIg0dvDg2qASnUo157Rws519GgY6S3lLztpbFSbqih1r4YbpHBBkt89EkkDuxqLqs7YRVceIBL5D3fEcga34hiESdFIV'
+              '0LtXpPl5pI4oPOaqiZG/4LRZXJVgMlF7sbDXChRUn3+71xOVkI68Vt3vM6xAzur/50nOCEIlUhF7EPhMYbHZjliW6AKbjIch57sdOhgdX5zdXt'
+              '1OYm83Hg8HJ8MxbVIst9i1PMPSfHwHOYUBZCiNKyzCreSNkBbIpLYOlsMHiX8gbzE+vRqPBpdrwXh0MRkNbr6db5ptwBVGkXeI/9j4SxFR+hwM'
+              '59wZxLLu3aeIke3tFeU3+yXtne+YfL+af6V+djsYn3wG9EboKWwn8DM7tImROZZhEt5ikS8K58gUDcaADuPSp5Zrf/FqArGftl9yPGgdHUar/C'
+              'PqDaLinzLeMkkPUTqtj+hLq+c3o8vXJh/DO6j8ld6rx/TghTCee8mX2/SvHxj9eNqzPj/L+wjFbpwJP9/jqZG4tWHYfcqwAdfMSlYhaFjNRNt5'
+              'PRVzI9WmsZ5dfDy+ODkbxpPB6TC+9g3G52SCkb8BgAQgj4sGAAA='
+          ),
+          'tests/test_v178_verified_parity.cjs': (
+            'b44c88b93fea4997e2e1bd510b107a1e0eef8f277f29a1909c08b7df4c986758',
+              'H4sIAAAAAAAC/7VXUXPaOBB+51fkZjrYTIWwkyZNzbkZ2tJrr7kkE5K8JKkqZAE+jM1JAkJd//dbWTYmhLZpe/eAsVa7q91Pu59klsRS7VApuV'
+              'C+4P/MQsFtK04C7hlhSyoRMmU12jWW6w7kht5AVpPzycbkfFJNpgveZ2I5VUm2oWWklaYUzB9ILDgN3oYR7y1jZls6HiVb/YQqwoMhJ3P3+SGZ'
+              'cxEOQh6QKRWhWuK/pYWsmRocVt4WYeynWTkKEuan2vOyp6jinhUlNAjjoYVoEHTnPFbHoVQ85sJupNnKbEDH3H3+3E9hqARlSlvPpCf9l/IIgz'
+              'DmTPHA930lZrxeB+FU8ACgC8Ge5AuuJms7Eg9nVASgJbicRUoSyXkMCgMaSW1ezONZHCVsvGVCskRA2Ftmzru9y+MLcnlyfPr6A7k4/dA9Aa14'
+              'FkV6ZbWc8mQAAUAO4ZyTCWxAREIduaX3GpCo11sfb4L0WdaE527xfNLCiktlS6yoGHJFAkCvgWo7lDE+Ved04dmCLtAYyYb/8lWSRJzGWoIHiZ'
+              'jQiEy4okfYLEenU5HMeVCvP1AoBkPwDnsq5RYVgJ+TMdd4jrdMr2UE+G6kWUV8ktuEn3mgA2d8I27Gf8Qr1AmUGX4FxdmF2rzSpVKUTLs2n2Ax'
+              'i9/HJ3zxGqqH3wGKgqEULIJk4cEfgqqcTaD2PHhBph28VbugCzDpxgwWE+gyjNVhRwi6RLoyIdysaj9/I4jDtulinIzt+UqNJZN+Iv3r23YNUr'
+              'QjDgzgu236u3/Qpk+fNkphH4R9LeyvCRkImRYyEIYDm/7m+/16Xf+xer2v/xpmATydyZH96UlKs+aTtK8fLPtUNfls4heK0Cgzxm1bIoJC2AX5'
+              '1N11miFyVsqCxmNochCXNhM6te38PTexU/MOddWn/TACLvDs3EujBStljZUrABG2LvDTRSKigFAvXbdx8D5SIRsD1XjXxqdnVrx2bhGdJDPYpH'
+              '3HcbLbDErJ+Og/2of7wEeV2YprdGlbu87uges4L5qO23T2rHYB2oieUaW4iH2LWgDclFNlHzxbZaeL1U8lG/EJ1eQogX48S5NmU5Nm09R0s2zA'
+              'JjxERJfNuWuhsq88+KGytD3rysW7Lt7bs9D95vU0maHNfjXS2k7FfgSC3t0/8CwLDQTnn3kpqJJBwN5Q/VsmajuG1bx0nSi9nPOQIcdiUBBiMd'
+              'pCgp6mwEzrTYH2356e/9U5Jm9B8R3pnJ2dn15135Cz8y4xptZqO2TO9DnzG5I3KT6gdyPeYIZ1+NaI08v3t+k6TeeFVWB4lmPQG9H/N/9y+8iD'
+              'HSL9JdE14OXnnk2lPneht9JacUPAcGrTyJ5jU7RQs3bRTQ0c8XioRghkUIub+gDhmJ/lJ/TKAmm4vqObYowLfbRq10qGC9n3O9bNmy1roBydLa'
+              'sCGPOQL6p8VDLdK5Pae6TBfmmw/0gD11nhtg22CuZ1ICrG8KpXLKMQKNRtQI56n3/RW86udzmzhnDiuUfa5A4ZdCs9QBjnssy7+5WVr0FcDW+B'
+              '1zR1cXvdp2nGEZUjny5oCKcd1oM3xtsK1vLEm1DFRrbWQK2P17Q5cJovbtODZ3CR0d40T+IHHeBr/bZpePz9RrkGorw1NmV8cBvx0zLDtQuEpx'
+              '/ZJjRlIvktdgl3KHOFAvo1MXy1SUJ5VVx87fQebX916V/1uN532Tfcb2+wh4mm+ZYvtrlHP3oy726eqll2D8THxlSCr2Mxto9ky19aojpXcic/'
+              '4ey/L5Z1BDYPtFM14sJaD9OUPtxm+d3D77ZcjEdqEq19md0P0TY6pmVb6/fXm6ObKl89uLFbw8aXL9e31Ynzg+4qNH7O37c/QG/gC/TmaO7D1F'
+              'bHxZ0dR8nQtnRI5M8e6b3rkFenlydvyHnn5AMwYHEhgftJB4Qn3T86F++vuuSi27vokbNOr6cxzBp2A7M8KA6HdOmZCwFXddgXKFzGpcT8LlT5'
+              'wdCu/QtvwEgS7w8AAA=='
+          ),
+          'data/site_latest_v178_parity_contract.json': (
+            '8f3efbf58c7113cd19d4a0c1091235c06ea8888ae03d13bf9904611c939fafa0',
+              'H4sIAAAAAAAC/31VTY/bNhC9768Y7ClFbUtOkG7QRQ9GVou03dqGvU0RLBYERY0l1hSpkpQdJQiQU3rqvff+ifyg5tB/0SEle90E6EWQxfl478'
+              '0b+u0ZwLkTFdac7dA6afT5t3CeG+7HWJQ43k0vno3pRG4kFuPaFKjGDbfSd2NhtLdceIo5H/V1TIMhfbZcrhYvsyt2vVj9NLth16ts/YIt5jev'
+              '2Hxxy9bf32ZslV1nq2z+POtzLfICbUjmzqF3SYDAAgQWILADBNY3n/zqhp6mtQJZyX3s/HJ6cQG8aazZcZVQLGqfRNRJQSFJ2XJbOOBKwXK2Xl'
+              '+Cr1ADZT2D9YsZ5FIXUpfAdQGW6y0WMH2cAtWSlE7ixKyhs+e+dczib620BGxPlVig0RGQO4qgGJJIo/BYfOdtizGPvjYULkUo5/qE/5ySonKH'
+              'LIJmsoCae5qPg4Z3yvACNsbWXLEaPZ8cgo65kXlQ6diCuYo/fvoNyztGw8K78GBb7O6PhYn4mCLAbEBwbbQUXMEP68U8fLF8P6HBEKJjkx7AMm'
+              'q7rvgXAHvVh76HJM9tiZ6FIUR1l6tggfXPN7cwzKTVouK6pD6UcR8lPmHxvzIPACf9yFgYWcX7KYd3hSUxCl0L6bzUwsOTf97/9emPP0GYmmYe'
+              'R+sOUB+qTEjNnOdSkeNAtzW1EbCXvpIa7tLR9H4EQS8tCI8j34zAtbUDb2AKj75OxukkTdPpV4fCe2NVwXhE0r/ngFxUBHaHA0qqh3VD7bwUW9'
+              'qDL0ERiRKdh8NGQN7BL5jDc9s11PkwTV5yqSmMHI0N0kP7g3V65wJ9sd3n2JIjsggKXzdKCulhmqafPnwYt5reXVsGBNSa16bV3gXaddibwPzv'
+              'j79TZJSpZxcLDqG9WUKopLT+5FRkGpkRcRwPLnDS47D2YcWvpGsU7wYycGuaJ8nTZJrCxpoaBFrfy3KiWBw9etpEIPvQylsIRaGSnvLwNa2c6o'
+              '4+lv4SNO5ikCKR6Mji3oaEYSiXMNgxXB9grCzJQ+pI/YEEgYjdPDkbStRIvwN5GnLQSiguaxioRa5K1iRMoDk3J1wGrg/7AE2bK+kqOjM2KFgb'
+              '31uBzBmF3W6U2RMRKhPXKvQb8o11oxOQ9INW17R+RLS8Na7BeAUBF6Kl66IbnW7rxiK+wRGtK+VvQ3e69i2R6gnE2yuWZXLDtBnMxnrTxvll81'
+              'dsNr9iP2bZ8vP/grN3Z/8CndpfxZMGAAA='
+          ),
+          }
+          for name,(expected,encoded) in payload.items():
+              raw=gzip.decompress(base64.b64decode(''.join(encoded)))
+              actual=hashlib.sha256(raw).hexdigest()
+              if actual!=expected:raise SystemExit('V178_BUNDLE_SHA_MISMATCH '+name)
+              p=Path(name)
+              if p.exists() and p.read_bytes()!=raw:raise SystemExit('V178_UNEXPECTED_DIFFERING_EXISTING_PATH '+name)
+              p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(raw)
+          print('V178_FOUR_RESTORED_FILE_SHA_PASS')
+          PYRESTORE
+      - name: Enforce fail-closed bridge and prove behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_v178_patch.py --root .
+          python3 scripts/site_v178_patch.py --root .
+          node --check assets/boat_edge_v178_verified_parity.js
+          node tests/test_v178_verified_parity.cjs
+          python3 -m py_compile scripts/site_v178_patch.py
+          python3 - <<'PYAUDIT'
+          from pathlib import Path
+          import json
+          contract=json.loads(Path('data/site_latest_v178_parity_contract.json').read_text())
+          assert contract['schema_version']=='boat-edge-v178-verified-model-parity-contract-v1'
+          formal=json.loads(Path('data/formal_status.json').read_text())
+          site=json.loads(Path('data/site_current_state.json').read_text())
+          model=json.loads(Path('data/model_status.json').read_text())
+          gates=formal.get('guards') or {}
+          assert gates.get('results_seen') is False and gates.get('unlock') is False and gates.get('scoring') is False
+          assert gates.get('RESULT_UNLOCK_TOKEN') is None
+          connected=formal.get('connected') is True and formal.get('predictions_ready') is True
+          digest_map=formal.get('approved_prediction_sha256_by_race') or {}
+          full_formal=bool(connected and formal.get('active_model_id') and digest_map)
+          result={
+            'schema_version':'boat-edge-v178-site-latest-readiness-audit-v1',
+            'scope':'NO_FORMAL_VALIDATION_OR_SCORING',
+            'site_reference_prediction_policy':(site.get('latest_prediction_policy') or {}).get('version'),
+            'latest_candidate_model':model.get('model'),
+            'formal_current':formal.get('current'),
+            'formal_connected':connected,
+            'approved_sha_bindings_available':bool(digest_map),
+            'rank120_publisher_ready':bool(full_formal),
+            'formal_first100_frozen_races':(formal.get('formalFirst100') or {}).get('races'),
+            'core7_site_only':(formal.get('collector_snapshot') or {}).get('core7_eligible_count'),
+            'status':'WAIT_APPROVED_FORMAL_RANK120' if not full_formal else 'APPROVED_DIGESTS_PRESENT_VERIFY_PER_RACE_IN_BROWSER',
+            'formal_guard_unchanged':True,
+            'site_reference_weights_unchanged':True,
+            'result_accessed':False,
+            'publisher_modified':False,
+            'contract':'data/site_latest_v178_parity_contract.json'
+          }
+          p=Path('data/site_learning/v178_latest_bridge_audit.json');p.parent.mkdir(parents=True,exist_ok=True)
+          encoded=json.dumps(result,ensure_ascii=False,sort_keys=True,indent=2)+'\n'
+          if not p.exists() or p.read_text()!=encoded:p.write_text(encoded)
+          print('V178_MODEL_SYNC_GUARDS_PASS',result['status'],'formal_first100',result['formal_first100_frozen_races'])
+          PYAUDIT
+          git diff --check
+      - name: Stage only display consumer and read-only audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html assets/boat_edge_v178_verified_parity.js scripts/site_v178_patch.py tests/test_v178_verified_parity.cjs data/site_latest_v178_parity_contract.json data/site_learning/v178_latest_bridge_audit.json
+          python3 - <<'PYSTAGE'
+          import subprocess
+          staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          allowed={'index.html','assets/boat_edge_v178_verified_parity.js','scripts/site_v178_patch.py','tests/test_v178_verified_parity.cjs','data/site_latest_v178_parity_contract.json','data/site_learning/v178_latest_bridge_audit.json'}
+          assert staged.issubset(allowed), 'V178_UNEXPECTED_STAGED_FILES '+repr(staged)
+          print('V178_ONLY_APPROVED_SITE_CONSUMER_FILES',sorted(staged))
+          PYSTAGE
+          if git diff --cached --quiet; then echo V178_ALREADY_PRESENT; exit 0; fi
+          git commit -m 'V178 require SHA-bound formal Top120 and audit model/site parity without prediction changes'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then echo V178_SITE_CONSUMER_COMMITTED; exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+            node tests/test_v178_verified_parity.cjs
+            sleep 2
+          done
+          echo V178_PUSH_FAILED >&2
+          exit 1
