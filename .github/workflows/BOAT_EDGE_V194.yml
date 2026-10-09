@@ -1,0 +1,186 @@
+name: BOAT EDGE V194 - Prospective Freeze Health and Diagnostics
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/V194.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '3,13,23,33,43,53 0-14,23 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v194-prospective-freeze-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  pre-result-freeze-health:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout original source and full Git history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Prove unchanged pre-result freeze engines
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/site_v180_shadow.py
+          test -f scripts/site_v185_role_shadow.py
+          python3 -m py_compile scripts/site_v180_shadow.py scripts/site_v185_role_shadow.py
+          python3 - <<'PYSOURCE'
+          from pathlib import Path
+          a=Path('scripts/site_v180_shadow.py').read_text(encoding='utf-8')
+          b=Path('scripts/site_v185_role_shadow.py').read_text(encoding='utf-8')
+          assert "FIRST_DATE = '20261010'" in a
+          assert "START='20261010'" in b
+          assert 'V185_THIRD_ROLE_TRIO_EXHIBITION_CONDITIONAL_70_30_V1' in b
+          assert "'no_odds_for_ranking':True" in b
+          print('V194_PREDECLARED_MODEL_AND_DATE_GATE_PASS')
+          PYSOURCE
+          if test -f tests/test_v185_role_shadow.py; then
+            python3 tests/test_v185_role_shadow.py
+          fi
+
+      - name: Freeze V180 and V185 only before deadlines
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_v180_shadow.py --repo .
+          python3 scripts/site_v185_role_shadow.py --repo .
+
+      - name: Diagnose every same-day FINAL15M snapshot without opening outcomes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYDIAG'
+          from __future__ import annotations
+          import json,sys
+          from collections import Counter
+          from datetime import datetime,timezone,timedelta
+          from pathlib import Path
+          root=Path('.'); sys.path.insert(0,str((root/'scripts').resolve()))
+          import site_v180_shadow as v180
+          import site_v185_role_shadow as v185
+          now=datetime.now(timezone.utc)
+          local=now.astimezone(timezone(timedelta(hours=9)))
+          today=local.strftime('%Y%m%d')
+          root_out=root/'data/site_tail_shadow_v185/diagnostics'
+          snapshot_dir=root/'data/site_prediction_snapshots'
+          counts=Counter(); samples=[]
+          def read(path):
+              try:return json.loads(path.read_text(encoding='utf-8'))
+              except (OSError,ValueError,UnicodeError):return None
+          for source in sorted(snapshot_dir.glob(f'{today}-??-??.json')):
+              key=source.stem
+              snap=read(source)
+              counts['same_day_snapshot']+=1
+              old=root/'data/site_tail_shadow_v180/predictions'/f'{key}.json'
+              new=root/'data/site_tail_shadow_v185/predictions'/f'{key}.json'
+              if new.is_file():
+                  verdict='V185_FROZEN'
+              elif not isinstance(snap,dict):
+                  verdict='INVALID_SNAPSHOT_JSON'
+              else:
+                  deadline=v185.utc(f'{today[:4]}-{today[4:6]}-{today[6:]}T{snap.get("deadline")}:00+09:00')
+                  if not deadline:
+                      verdict='INVALID_DEADLINE'
+                  elif now>=deadline:
+                      verdict='DEADLINE_PASSED_WITHOUT_V185_FREEZE'
+                  elif deadline-now>timedelta(minutes=15):
+                      verdict='BEFORE_FINAL15M_WINDOW'
+                  elif not v180.cutoff_ok(snap,key,now):
+                      verdict='V180_FINAL15M_SOURCE_NOT_ELIGIBLE'
+                  else:
+                      race=root/'data/races'/f'{key}.json'
+                      scratch=root/'data/site_scratches_v182'/f'{key}.json'
+                      if not race.is_file():verdict='RACE_SOURCE_MISSING'
+                      elif not scratch.is_file():verdict='SCRATCH_AUDIT_MISSING'
+                      else:
+                          s=read(scratch)
+                          if not isinstance(s,dict) or s.get('race_key')!=key or s.get('source_date')!=today:
+                              verdict='SCRATCH_AUDIT_MISMATCH'
+                          elif s.get('blocked') is not False:
+                              verdict='SCRATCH_SAFETY_HOLD'
+                          else:
+                              t=v185.utc(s.get('checked_at'))
+                              if not t or t>now or now-t>timedelta(minutes=16):
+                                  verdict='SCRATCH_CHECK_TOO_OLD'
+                              else:
+                                  args=v185.valid_input(root,key,now,v180)
+                                  if not args:verdict='V185_RACE_PRE_RESULT_CONTRACT_REJECTED'
+                                  else:
+                                      product=v185.build(*args,v180)
+                                      verdict='NO_ROLE_FEATURES_OBSERVED' if product is None else 'VALID_INPUT_BUT_NOT_FROZEN'
+              counts[verdict]+=1
+              if len(samples)<160:
+                  samples.append({'race_key':key,'status':verdict,'v180_frozen':old.is_file(),'v185_frozen':new.is_file()})
+          new_day_files=list((root/'data/site_tail_shadow_v185/predictions').glob(f'{today}-??-??.json'))
+          counts['v185_frozen_today']=len(new_day_files)
+          out={
+              'schema_version':'boat-edge-v194-pre-result-freeze-health-v1',
+              'date_jst':local.strftime('%Y-%m-%d'),
+              'status':'RESEARCH_DIAGNOSTIC_NOT_ACCURACY_EVIDENCE',
+              'source_scope':'SAME_DAY_FINAL15M_SNAPSHOTS_ONLY_NO_SETTLEMENT',
+              'formal_fresh_changed':False,
+              'production_prediction_changed':False,
+              'no_result_or_payout_access':True,
+              'counts':dict(sorted(counts.items())),
+              'race_diagnostics':samples,
+              'truncated':counts['same_day_snapshot']>len(samples)
+          }
+          root_out.mkdir(parents=True,exist_ok=True)
+          target=root_out/f'{today}.json'
+          payload=json.dumps(out,ensure_ascii=False,sort_keys=True,indent=2)+'\n'
+          if not target.exists() or target.read_text(encoding='utf-8')!=payload:
+              target.write_text(payload,encoding='utf-8')
+          print('V194_PRE_RESULT_FREEZE_DIAG '+json.dumps(out['counts'],sort_keys=True,ensure_ascii=False))
+          print('V194_OUTCOME_AND_FORMAL_GATES_UNTOUCHED')
+          PYDIAG
+          git diff --check
+
+      - name: Commit frozen predictions and diagnostics without workflow modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            # Regenerate against the latest working tree after any racing update.
+            # No already committed freeze may be overwritten.
+            if [ "$attempt" -gt 1 ]; then
+              python3 scripts/site_v180_shadow.py --repo .
+              python3 scripts/site_v185_role_shadow.py --repo .
+            fi
+            if test -d data/site_tail_shadow_v180/predictions; then
+              git add -A -- data/site_tail_shadow_v180/predictions
+            fi
+            if test -d data/site_tail_shadow_v185/predictions; then
+              git add -A -- data/site_tail_shadow_v185/predictions
+            fi
+            if test -d data/site_tail_shadow_v185/diagnostics; then
+              git add -A -- data/site_tail_shadow_v185/diagnostics
+            fi
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V194_NO_NEW_PRE_RESULT_EVIDENCE_TO_COMMIT
+              exit 0
+            fi
+            git commit -m 'V194 freeze future PRE_RESULT research and record source-eligibility diagnostics'
+            if git push origin HEAD:main; then
+              echo V194_RESEARCH_EVIDENCE_COMMITTED
+              exit 0
+            fi
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo V194_PUSH_BLOCKED_NO_UNVERIFIED_FREEZE_CLAIM >&2
+          exit 1
