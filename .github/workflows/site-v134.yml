@@ -84,6 +84,9 @@ jobs:
               # MUST require the exact per-race source evidence, not a rotating daily index.
               if a.get('pass') is True and a.get('latest_snapshot_sha256')==x['sha256'] and a.get('latest_snapshot_saved_at')==d.get('saved_at'):
                   audited.append(x)
+              else:
+                  # One bad record must prevent a blanket 'all audited' PASS.
+                  excluded['sha_or_timestamp_audit_not_verified']=excluded.get('sha_or_timestamp_audit_not_verified',0)+1
               h=read(HIST/(key+'.json')) or {}
               ss=h.get('snapshot') or {};sett=h.get('settlement') or {}
               if h.get('race_key')==key and ss.get('race_key')==key and ss.get('prediction_kind')=='SITE_REFERENCE_V122' and ss.get('saved_at')==d.get('saved_at') and isinstance(sett,dict) and re.fullmatch(r'[1-6]-[1-6]-[1-6]',str(sett.get('winning_combo') or '')):
@@ -93,10 +96,13 @@ jobs:
           wave=sorted({x['hole'] for x in counts})
           mode_counts_ok=bool(counts) and all(x['hit']==10 and x['balance']==10 and x['hole'] in (12,15,18) and x['narrow']==3 for x in counts)
           status={
-           'task1_live_snapshot_audit': bool(state_ok and audited),
+           'task1_live_snapshot_audit': bool(state_ok and snapshots and len(audited)==len(snapshots)
+              and not excluded.get('bad_site_snapshot') and not excluded.get('pre_result_guard_invalid')),
            # JS static-source evidence alone does NOT prove Safari/browser 🎯 rendering.
            'task2_settled_hit_ui_path': False,
-           'task3_live_mode_counts_and_parity': bool(state_ok and mode_counts_ok and set(wave)>={12,15,18} and parity.get('balance_distinct_from_hit_on_fixed_fixture') is True)
+           'task3_live_mode_counts_and_parity': bool(state_ok and mode_counts_ok and set(wave)>={12,15,18}
+              and not excluded.get('bad_site_snapshot') and not excluded.get('pre_result_guard_invalid')
+              and parity.get('balance_distinct_from_hit_on_fixed_fixture') is True)
           }
           summary={
            'v133_snapshot_count':len(snapshots),'v133_audited_pass_count':len(audited),
@@ -160,6 +166,29 @@ jobs:
                  '- Source observations reflect site research only, not verified production accuracy.',
                  '- V109 payout repair is separately tracked; no historical stake allocations inferred.','',
                  '## TODO GUARD','- ACTIVE contains only incomplete tasks. Browser completion is never inferred from JS text.','']
+          # Historic evidence is not an active task or a claimed new test PASS.
+          # These lines were in the GitHub TODO before V134 overwrote the text.
+          legacy=[
+           '- [x] V133 browser/server parity PASS for all four prediction modes.',
+           '- [x] V133 mode policy fixed at 的中重視10 / バランス10 / 波乱12・15・18 / 激絞り3.',
+           '- [x] Live V133 FINAL_15M snapshot + audit PASS — `20261008-01-03`.',
+           '- V109 replaces the legacy result collector without changing V108 UI.',
+           '- V109 treats confirmed + payout null as incomplete and refetches it.',
+           '- V109 payout parser supports ¥ / ￥ / 円.',
+           '- V109 backfills historical confirmed payout gaps from 2026-10-07.',
+           '- V109 keeps result/trifecta data factual; missing payout is never fabricated.',
+          ]
+          # Permit user-maintained archival notes: the auto-reconciler must not erase them.
+          prev=TODO.read_text(encoding='utf-8') if TODO.exists() else ''
+          marker='## PRESERVED HISTORICAL TODO / USER NOTES'
+          if marker in prev:
+              kept=prev.split(marker,1)[1].split('\n## ',1)[0]
+              for line in kept.splitlines():
+                  line=line.strip()
+                  if line.startswith(('- ', '* ')) and line not in legacy:legacy.append(line)
+          lines.extend(['',marker,
+                        'Read-only history, not additional current-model certification.',
+                        *legacy,''])
           content='\n'.join(lines)
           if not TODO.exists() or TODO.read_text(encoding='utf-8')!=content:TODO.write_text(content,encoding='utf-8')
           # Preserve every formal-current key and all unrelated state fields.
@@ -193,13 +222,18 @@ jobs:
           assert e['summary']['v133_audited_pass_count'] <= e['summary']['v133_snapshot_count']
           assert e['summary']['v133_settled_count'] <= e['summary']['v133_snapshot_count']
           if e['status']['task1_live_snapshot_audit']:
-              assert e['summary']['v133_audited_pass_count']>0
+              assert e['summary']['v133_snapshot_count']>0
+              assert e['summary']['v133_audited_pass_count']==e['summary']['v133_snapshot_count']
+          if e['summary']['v133_audited_pass_count'] < e['summary']['v133_snapshot_count']:
+              assert e['status']['task1_live_snapshot_audit'] is False
+          assert '## PRESERVED HISTORICAL TODO / USER NOTES' in todo
+          assert '- V109 payout parser supports ¥ / ￥ / 円.' in todo
           if e['status']['task3_live_mode_counts_and_parity']:
               assert e['summary']['all_live_mode_counts_ok']
           # Never equate source string presence with Safari browser verification.
           assert e['status']['task2_settled_hit_ui_path'] is False
           assert e['summary']['ui_hit_browser_verified'] is False
-          print('V134_EXACT_SHA_NOT_ROTATING_INDEX_AND_SAFARI_NOT_CERTIFIED_PASS')
+          print('V134_EXACT_SHA_TAMPER_GUARD_AND_HISTORY_PRESERVED_PASS')
           PYVALIDATE
           git diff --check
       - name: Commit only current TODO state and evidence
