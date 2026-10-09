@@ -1537,6 +1537,7 @@ async function loadFormalOverlay(raceKey){
       const r=await fetch(`${p}?t=${Date.now()}`,{cache:"no-store"});
       if(!r.ok) continue;
       const raw=await r.json();
+      if(!window.BoatEdgeV177?.acceptRaw?.(raw,raceKey,state.formal))continue;
       const norm=normalizeFormalOverlay(raw);
       if(norm) return norm;
     }catch(_){}
@@ -1553,12 +1554,7 @@ function mergeFormalOverlay(raceData, overlay){
 }
 
 function hasFormalPrediction(d){
-  const der=d?.derived||{};
-  const worlds=[der.world_a,der.world_b,der.pattern_a,der.pattern_b].filter(Boolean);
-  const ticketsReady=worlds.some(w => (w?.tickets||w?.bets||w?.combinations||[]).length);
-  const g=d?.formal_meta?.guards || d?.derived?.guards || null;
-  const guardOK=!g || (g.results_seen===false && g.scoring!==true);
-  return ticketsReady && guardOK;
+  return window.BoatEdgeV177?.acceptNormalized?.(d,state.formal)===true;
 }
 function getBeforeMap(d){
   const bf=d?.beforeinfo||{};
@@ -3060,6 +3056,7 @@ async function loadRace(file, jcd){
     const r = await fetch(`${file}?t=${Date.now()}`, {cache:"no-store"});
     if(!r.ok) throw new Error(r.status);
     let race=await r.json();
+    await refreshFormalStatus();
     const overlay=await loadFormalOverlay(race.race_key);
     race=mergeFormalOverlay(race,overlay);
     renderRace(race);
@@ -3164,5 +3161,6 @@ startPassiveRefresh();
 <link rel="stylesheet" href="./assets/boat_edge_v174_confidence.css?v=174">
 <script src="./assets/boat_edge_v174_confidence.js?v=174"></script>
 <script src="./assets/boat_edge_v175_payout_bands.js?v=175"></script>
+<script src="./assets/boat_edge_v177_latest_bridge.js?v=177"></script>
 </body>
 </html>

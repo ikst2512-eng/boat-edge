@@ -1,0 +1,69 @@
+{
+  "schema_version": "boat-edge-v177-latest-prediction-bridge-contract-v1",
+  "site_reference": {
+    "active_policy_source": "data/site_current_state.json",
+    "prediction_engine": "UNCHANGED",
+    "odds_rank_weight": false
+  },
+  "formal_source_status": "data/formal_status.json",
+  "formal_prediction_path": "data/formal_predictions/{race_key}.json",
+  "activation_requires": [
+    "connected true",
+    "predictions_ready true",
+    "active_model_id exact match",
+    "target_date exact match",
+    "formal_gate_pass true",
+    "model_approved true",
+    "formal status and payload PRE_RESULT guards false and unlock token null",
+    "valid freeze and prediction sha256",
+    "formalParentSha exact match",
+    "valid nonduplicated trifecta tickets"
+  ],
+  "formal_prediction_payload_contract": {
+    "formal_meta": {
+      "schema_version": "boat-edge-formal-approved-overlay-v1",
+      "race_key": "YYYYMMDD-VV-RR",
+      "model_id": "EXACT_FORMAL_CURRENT_MODEL_ID",
+      "scope": "FORMAL_FRESH_APPROVED_PRE_RESULT",
+      "model_approved": true,
+      "formal_gate_pass": true,
+      "freeze_sha256": "64 lowercase hex",
+      "prediction_sha256": "64 lowercase hex",
+      "parent_sha256": "same as formal status formalParentSha",
+      "guards": {
+        "results_seen": false,
+        "unlock": false,
+        "scoring": false,
+        "RESULT_UNLOCK_TOKEN": null
+      }
+    },
+    "derived": {
+      "world_a": {
+        "tickets": [
+          {
+            "combo": "1-2-3"
+          }
+        ]
+      },
+      "world_b": {
+        "tickets": [
+          {
+            "combo": "2-1-3"
+          }
+        ]
+      }
+    }
+  },
+  "status_required_additions": [
+    "active_model_id"
+  ],
+  "research_only": {
+    "V176": "DO_NOT_PROMOTE",
+    "retrospective_top3_original": 12,
+    "retrospective_top3_shared_first": 10,
+    "retrospective_top5_original": 21,
+    "retrospective_top5_shared_first": 18
+  },
+  "guard": "Do not synthesize formal predictions, scrape outcomes before formal unlock, backfill settled prediction snapshots, or modify weights.",
+  "purpose": "Strict versioned consumer of previously independently validated formal latest predictions; not a formal validator, not a prediction publisher."
+}
