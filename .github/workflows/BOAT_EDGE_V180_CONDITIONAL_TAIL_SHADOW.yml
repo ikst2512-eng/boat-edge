@@ -1,0 +1,164 @@
+name: BOAT EDGE V180 - Prospective Tail-Conditional Shadow Freeze
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V180_CONDITIONAL_TAIL_SHADOW.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 0-14,23 * * *" # 08:00-23:59 JST (UTC cron)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v180-site-shadow
+  cancel-in-progress: false
+
+jobs:
+  freeze-only-site-reference:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore immutable research code and tests with SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYRESTORE'
+          import base64,gzip,hashlib
+          from pathlib import Path
+          payload = {
+              'scripts/site_v180_shadow.py': ('8961589505aa6c671b61b851370188b6ba530f9efececb8acf4260e5a42ca80c',
+                  'H4sIAAAAAAAC/5VZe3PbNhL/X58CSS9DMiFpyq59DhP2Ro3lRneOrbFd91qdDgOJkMSaIjkEZNnx+bvfLgCKpPxImmll4rEPLBa/3QVev379'
+                  '81nvkvSPfumTq+5hEJKizEXBpzK54UQkknsln/GSZ1NOJEtSb5pncSKTPGMpEQsW52syKzn/yv1O55wLzsrpwsuz9M4lQpbJVKZ3ZHjep+f9'
+                  'i19PLn1ylHNBslySZFnkpQR5PIZZwNBbJELm5Z3bKblYpVK4pGB3+Uq6ZJovJ0nGY9IbDlwyy8slS71jmLZwSV4SlkpeoubxSnEiyzzmqfA7'
+                  'r1+/7szKfEkona3kquSUVnJZBkownC06VVc5L1gpeNVeMLFIk0nV/FPkWfW9ZHJRfZdcy4iZ5DJZ8kpC1XYJ/n7NM/MFqkmmSQpgAxIqiiFy'
+                  '7fzz4pJEGxp7Q2Iv8lUpoveO0zkenF9c0qPeZR9mWrvB7kE36AYWIT+Q0/5V/5xM2PR6lqQpwTGvG3jBeyK4lCnYsDS7BFZdgFS/Mzw7GXz6'
+                  'HTn93DvpnX7qdwP6W++q392l3X3aPaRX3b09ejz4d//I6vROfjnDqegt9GJwiTt73D/vAxm9+Nw7OvuNfu73juhF/9PZ6RG9/Dw4P6L4Obgc'
+                  'nJ32TuhNlx4C132rc977hNTAreQ+bHGRpNwurf/uBv+J7w8ePPjdNb9/s5xOJ+YzdDl7EpLJneTCId5P6GRhh8C/ksMGZ9Wm+TBxd//Anjj+'
+                  'gt/GyZwLaRseU5blmX2ryBWjFgMb99mPV8tC2Lcu4ZlAv2FimiTRMUsF7KIAs9Frfieiy3KFbQ5+w8B3RWRbruUSK7QcF9wyzdc0Y5mmc8g7'
+                  'Yv0nsxwfThM4qG2t5Mw7rFamXI+u5BQ00wrJ8k5/4L8YzFR5lI/Ok4hcHQRpgwmAxi95kbIpsP0DNXgXBGEQWOAsFQezvthnouVc+OGDXIck'
+                  'MxiVX5NslhM4P5ycwpCi57dTXkhiX94VvF+WeemSK5au9LcTbstQdGpVNyxNYornN7fVr9MydiKSTEgG6KJHFWg4cDhjMsnz1AbHmK3SFFY5'
+                  'XYBrjLrewdhr/FoaG3JH06Q8s8HNNS9fFGkibcsDIzhRtGc2fyXz2Yzm17bIWOES2EYX8Ght9AITIDgZ12wIh3kOYg38HYWHY/KR1Ifw0frV'
+                  'flf8KopXEcppWh9OuuPDgmfYY1tvfn+zfBNbzsvsUG1/Dou0xHTBl4ze8FIAjFnOq8ia5Ex6PJ5zT/ASBjwF4bME0Nq76e7uWbiEBgf4Eotc'
+                  '0nWSAZIrFscDPKXd/S/W9+pRgtfhcUBy+NMWUeM7vQYhSsQWbFx1d3e3FEMAp0WeJlPFVSPUC/rMo5p2vmJlLCy1W/cPlbosu7PnakIGjq5D'
+                  'kKLHcELAE+HkWybwUMF5Bgd5laX59Bo+xDQvk2wOjvSCDjFncQpRKsLzWKtTdWuFLMtp+tmWfyusC9UveHZF+ZLQNkaseLTBCNCiUH5l/O9d'
+                  'xc41jvbmc/jmi1Xjhj74kXLK5yCiCQY1ALygn2A3PI5qbGv4Ho5QJiuImiWlkE/OVCN0e76xoOpGy2JDzcSG+vhpM6Y+foLThw2w0scIvl/Q'
+                  'uoRzlWSRDVM9xAZfQq6Qgltg9iNsZ+cgqFdHm7NVz7Pzjc52APChqcjHiHT3FXhhZ5OhGjr47s2fpgwzhWiW5hgTwHoja5lkK4hvVOZ044Zj'
+                  '5xlEr/fT/Re/ewbZWxDAJsI2Yr2m5s5PXX//ZdInnH/EvFngvR/fH/wI3t8+RApidEjfnKOXlEP8EFEbT9qQsEhkZKtuPQPa1bije2QyvebS'
+                  'UI3GmipPeZsMOr6DDlaMsQmEAJp1AxxRbaB2dDYM8NPddbv7bvfwpYUhWJX5WigCYOcqFjVBxpaw8FGpVVFxEBRRVEiiSWfNuFu6iM/OeMPC'
+                  '6Ko4gbb4jWROpTQGWD1oRnVDJeIAsriaVtTX4qcoXs+stX1yiQ3AVpZpqGpCCiRXdpJJV7m641SnH5NyPxEQ7SDo2eUIJo7VoP78GLTt8C09'
+                  'TAemeDp1yFTdkXzldlxlaHjMI7Fa2kt2awd+oFWybxy96BuUFfs3eLIABjbApemiIDQy7q/D7g6aMtZ014ruoakGTNEyahE7io0mcI0oWPkS'
+                  'JD1sMt04wYhAccHqPBnNoTIaQmTmcHzhT1XJYd0WkmVyi7USySHIw4Z5PJsDcGB99SdXkVy4yt5TMMYE8l6gny5wg6DiUsyPQSPOoMJYAOgQ'
+                  'qNE4hhOYSIb2AhLjoa2R8X+6IRdJCd+u7nR8xeNnqGAgUQNTkXmaT2CdRS5U4anAEjl7WKgms2RKFAcSJ1hxTlZKxQ+gIpJITwd1IlcZhHDN'
+                  '/CyON9WlYrdk2QpELJL5wiugauWQfmYrAaUqmMfUVElWrKTwK/Nt4czIYIw+R0smgDgyWIM7hKPuBPY4VkdXA47rH+6DL2sUcf3ufgvUYMsi'
+                  'xXSEv+PRBlnqswqeBae95RjG77cOfU0S8yxfKp9FYqd55HBT1XCo+Xb98dvN8f+gCTftDaGSo/3va1KoQVexbp+vaQSaaUAaf9D2GU3Hkf5S'
+                  'B3vqBr7zTtno7c2OEqdBF/YabLkIA18JW6AoC7LZHyEaaAubSIuT7kU1TzTnqZT1VbR4eI6F8iHNQVYc5DYH+RKHgkHWEd3b4MnOi0w2iI8z'
+                  'n2D3gvY629XLjZ5ZqpmkFhQ9o0ftmLruWuOg2QuDIfX2gZqujLaLqnoY92e0GL+L1h/MRkBrJFSHNiu2pWorI42AY9VhFmOma6310Gbzh1EN'
+                  'vbA//vvDtxuZfrC7c1CbUPU/aN0wa4eEyITgR1au1wcaHDHJmlJE2F6JHwTd2tL12IPT5PKLQqo2n8b6vo/JsE3v/z14axRUPPZUU0uCjm/w'
+                  'a44O2wdSWfokn7YVlmF7h0Dnvdp96rGGjA2zz2D8Nq/W7v8VVo8tKcPaN/4Kp2GbiX8QvK1XrpjtmR5UX3V0TYcxshx/h6zNDC20beraG31W'
+                  'FIBv9r2BwnBm3S8evHsB/0ss+lStya1Q+T0YDjd7CPusNRqCMi3v9vEuCku8KGXLScxIGdoeAK3mMnZrzK2zD5XEKWpMRndVNoqpPMaEmrSO'
+                  'H2au14W8nnvvqzzwvua9PfdBM27EMpZApV1XGLZl7gphFh2cXvVOBkcGUUy+oxnpNEZfMDcvbKAcn+OlBtUXgVrQhAkOqe9TWjUD9EiF3mY4'
+                  '1QCxSZaip9KmVi62Wdf2HUzYuIG56R4GXvsK3dO30J5Ot2CG5TZZ5QVs/PbtyPD87GLY/3Q5uFKX6P3e+afP9Oz05Hd6enZJj8/Ov/RO6DGM'
+                  'fG4y29zJhGivhpB8VWIpVRXToTbNpj1+PHer/DYUW71P0JlyLcQr2639ejy5WeAZCc2uJ9g3r4hCfUHUmFRvYRJbIV5aPzlY1DkwXXPI/sAd'
+                  'wnvlICHkZq7OzELIzB4a9OhoWEtDXV3sWSE2R+He2G2P7Fcj+9sj3UAPPamS5jm6bbvxLbrxZhJKGz9Hvf9t6v3nqVG3b5F3g2foS5ZdgyXh'
+                  'UFvhprfplebpgUIChK5+zlOmX5p0/aEOvc65twqMNWJvCXA8SSD/SCBLIac5gfQd9ORkzQScTRarpN/s407jPWgNx0/VKHNAzOYxMXeFsOWt'
+                  'q79QX/RXF4BVs7oG1O2mR8zwLYqqsle9KdECUqkNXa0JhWUWUiFFXWiaYq1cYWadS7e+jQa8khH27VjAl+0gmlB8hqPaYBQxZqe+YhWWDg3q'
+                  'hIhHlI272Orm11AAigEWxtEUrAjmjvgt1FKw1CjY5E74VqWwFAIOj20jw8fizLZ2g3+of576z8cnlNYFDQYoZOALyC2bJYe5nHwVfd/VeOMG'
+                  '/uNT9+9qLXkGqq/qywTJSigvIjTmDoRboH/QGjYV0ZN8tfBW8qsvy7Q53kXdVv8PZLBcriSDmiUkGYcoAG64LsHWkAZwiFv5V561nlQZGG/G'
+                  'ptJ/WeWSrbW90Ks1aNp1voH3friBkXqqgqovFjZQ1BOqy73Gld6vWYKPTkccf83l3iOxpgbceiPBCKJ88tF84zZNs9RRtBm1kUVLQ6w0Smme'
+                  '4jY0ThTpnqdoHUDR07PTo/5l//zL4HRwcTn4hIGv/0ffalS3QvrL6zgp7QJgJJPmjU7tIKxItWo11gk4tdl6iL6Zbd1OwMsATmaLcLbw1V7a'
+                  '21rW9Oa8VAao8oOnwo/BCLxiofh+BwiwcWDXyvha939F+DFs3ZaTWBA/5gm4GqDnGuZo27sWS9FJ7mhSuaIVVv66xSDLqUFMiiRWqExj6fd0'
+                  'mrJMRdVklvC4wrhOB3yCUry4ozSKLErxgpdSUz0VUfVo7vfK+WoJBh9iq7SdD4XPYsgNTDeUjJAHFbnlyruCR/jU7QLqMQBd1bAtv7rZZ1Hh'
+                  '63cAIK78vgDklc23WYRLho8Xubt58wDDtN8rHPeJ99v28y0I/T/d+m78ByEAAA=='
+              ),
+              'tests/test_v180_shadow.py': ('996e13438851b8645245d806ee99a4c645b97395e17917d120341d9b36780899',
+                  'H4sIAAAAAAAC/5VWbW/bNhD+rl9BYB8otZIiKY67udAAL3G2DGlixE6LwjAERqJjLpIokHRcJ/B/3x1txXmZ29UwRJF399zxXiWqRipDhF1K'
+                  'cRMujCh9YnjVzETJffKPlrUzU7IiDTNz4NjykiFsN4SCGW5ExVtKu/fx8SDrzUvBS8Mcnb5UFeqG5xnCZKgvK2XOjJC1S+/jXyPqU50r0Rh9'
+                  'oIXhGZ5les4KuQybFfWc6jVcJYsFwFhAhHa191GHpWQFVyH/Bro2HG7lObVcpq2tbhIlXT+O8H/oH3V88yDqmUzbKwB67pFfyN+jMYmTHjCQ'
+                  'grOiFDUn8WEvipw7vkoposRRHAVRHEQd6twwzdMJjYMkOITLxMFhkNg1CTp27Tztj2BNgtjyAXcQwwpPSwcpu4+DI9hPnbksEfZH7Ljv2LVj'
+                  '950tf2fL/32zpo6SS52WrLopGKlZxXVv8khzWd1I2st92tBexb65sZ9EgfB8KotC095v8FuTmVRE+DkRNeH1ouIK/OxaDG/q6Jo16SOEds4r'
+                  'lt1zpSHitEdvJDMBL255oLmC4wCDHsxEzcrgPk7QVBTVc2mypaghC0Do9Oyif57FR5+AqljOMwgE7cHDd2ijeCFyzKfsDviBe3Q2HmRXg9PB'
+                  '1eDieJB9jhO8OOQEzxpZihxEq3B4eX52/BXkZ0Jpk2l2z4uMGRDH+AYQ3jgaR4e9owgC/z7CJ5q2l+2wlzyxObTNG+CzmYP6Rb0wXGdGZjtq'
+                  'N+x2ux+2l4KkT4666CP6rtsBlNsFU+juR6q4XpRGZ5pzcOIpKzX36aKGSrp72upcKlHfbvdrkMcrW/G5MLgYkd9xAycYdBfz1lv7FBPtLRVP'
+                  'vfV67TANgTKkCvOFkbNZJu9cDJCP3ofq8hw9T6twpjh/4DsKsLMaShwPPO/jFqTkcDKfUKAVAssyU6y+A4/GSUSnXprC2irczzeJphN7W06n'
+                  'v6ff4QviHaOz1wQjm3ij3dK42UNH815Yhw7EMLYcaYonzxy28cAcBNvNjxzlOWzD214HQ2FJHwkuSYq92vY67drXYlE1unWzgyV5q+SiwaJ0'
+                  'bdy3AfZ6DoEfMgAoki3eZJsk04kVA3+1aTDtIeNkU/HTNAqj+MXVXluYwDXZpkEQINfSEDab8dwQqaAxY2a28kjbl0/vn+aIu62Y9IMHjYfN'
+                  'DDSLp36s+D8A/b8Qg7eISYSQ0Dk2jYdsGs3PgD4zs2ArncYIWEuAMEoyaEf3nOw6017Ix3fvLOreUh+rxQ8rfb2rxaUw86fBHo45Dk6mVidC'
+                  'wcWkWrkeYZqYApJBSWlSHPCuKWB+qjzFkwMKUWWbSfyss7YtWVPkDKu7Qii3YYrXRqdoo+cQFygHLpjynoaYmtTzwqVCoJsVON19mekOsY0X'
+                  'sl0tahdV2xu0ncISJ7Tmy3KFk/4BnAEFFjswkkHqtamGiXL70WA/IA52tmt6MKOPYNZ6Y5VDbBNPESdUkE9b88AHPJd1sc+iDfWtSRGBWiBv'
+                  '0NLUqnGImQv1GvS/k7zVZCV+XtFW+lmDsAQPWqBcqN18mWI7gvfXAWkgp4xLP+P31/AKJ+jo+nwMr5ej4eB4fPZ5kI3+6p9cfsHu+qX/Netf'
+                  'nGSXJyej7OziZDAcwAPH7bA/GtGXaMfX48vTU5zfZxfZn9f9K5T59Ol63P/jHPUMzwFtK/cvvp8Pu60KAAA='
+              ),
+              'data/site_tail_shadow_v180/contract.json': ('dbd1ce8c1f4245d4197bf066dfe4cf7f6e5c35de3e35f5a57b3eb00ca5d95d7f',
+                  'H4sIAAAAAAAC/21UYW/aMBD93l9x4jMphImpKtIkRsJAaqELlKmfLJMcjSfH9mwHSqv+950TWLuqKHLM+fLu3ruXvFwAdHKuClFwj51r6Gzi'
+                  'qz5bzdcpy9JpmqWLScpWs3Gy/MVm6Thhq3SyXCRsPZtnCQvb+Xq+XIxv2D5mV0MWDzvd/zDZAcVj6R0zFgvMJacb1XmhJEorhac//curYfcU'
+                  '0BKbSDykwGuLpUttPXOe03ruc9AffI3iPl1twZ22FZchydcuJNwvJrPx4keanM4tupIZLUV+DMfT2tcWo4IfQSt5HIHTtc0RHN9jEW2R8OgU'
+                  'eSGFQjCydpDX1qLyYGul0ILSh495IxBVVXu+lUiohHawwntUI8hqFfdoGcD26DESBQGJnMu2uUo4J9RjIMff9bjQYNFb7QzmXuypOcWNK7Xv'
+                  'UnEwVj8dKcHV0rsmUgrntQ2wENQW9JBWsOPbEAv7tprCp6AmmlBjvPPEhXuQyJ2nrhGEKtCgCi3CrpEJgkzCwc7qZ1RAswWH3kssrmljuKWh'
+                  'yCO4nMSArfYlVLpA6eAgaE+95LqqghIF/DNGg4JPPPdn6UvuSnQjovSnFgRUETHRTGgahget2MALbQKZy5aNrj2hY6NdI9pyTdYlpy4z9vM+'
+                  'zeZpwr4/sODr9oE3aVghnJH8+IldSNyibpMaKp+l1NZo15iR+sNnYs4dNnZZa/OlN+zF/YbkG+V40I8OxKckv0TfHMmi6O5LYSmL9iIUpOk1'
+                  'QrozYSfIMRZ3SO4jmSyn5ey4thWXl1hxtkfrwpSpo63mPsLiEaM9EY/Mm4mid4Uiz4WMXEmSHijxDKZNw+rDV+AuW67u0sl6vgnRVTrOJjO2'
+                  'XNw8sCD5dJnd0ldgSiezE87JrEwoU/vmnQwz6gU67N0Qznmu9/JAv9vbJIk2myjLXi9/O626MJ2H70s8vIUefOhpEw8GzfvbuXi9+AuAmIA8'
+                  'zQQAAA=='
+              ),
+          }
+          for path,(want,packed) in payload.items():
+              raw=gzip.decompress(base64.b64decode(packed))
+              assert hashlib.sha256(raw).hexdigest()==want,'V180_PAYLOAD_SHA_FAIL '+path
+              p=Path(path);p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_bytes(raw) if not p.exists() or p.read_bytes()!=raw else None
+              print('V180_SHA_PASS',path,want)
+          PYRESTORE
+      - name: Test future only cutoff odds independence and immutable replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/site_v180_shadow.py tests/test_v180_shadow.py
+          python3 tests/test_v180_shadow.py
+      - name: Freeze new site-reference races only while before local deadline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/site_v180_shadow.py --repo .
+      - name: Stage and scope-check only research additions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- scripts/site_v180_shadow.py tests/test_v180_shadow.py data/site_tail_shadow_v180/contract.json
+          git add -A -- data/site_tail_shadow_v180/predictions/ 2>/dev/null || true
+          python3 - <<'PYSCOPE'
+          import subprocess,re
+          changed=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          fixed={'scripts/site_v180_shadow.py','tests/test_v180_shadow.py','data/site_tail_shadow_v180/contract.json'}
+          for path in changed:
+              ok=path in fixed or re.fullmatch(r"data/site_tail_shadow_v180/predictions/20\d{6}-\d{2}-\d{2}\.json",path)
+              if not ok:raise SystemExit('V180_UNEXPECTED_WRITE '+path)
+              if path.endswith(".json") and "/predictions/" in path and path.split("/")[-1][:8]<"20261010":
+                  raise SystemExit('V180_BACKFILL_FORBIDDEN '+path)
+          print('V180_RESEARCH_ONLY_SCOPE_PASS',changed)
+          PYSCOPE
+          git diff --cached --check
+      - name: Commit prospective frozen research without changing formal CURRENT
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then echo V180_NO_NEW_SHADOW; exit 0; fi
+          git commit -m 'V180 prospective pre-result site-reference conditional tail shadow (research only)'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then echo V180_SHADOW_FROZEN_SUCCESS; exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+            python3 tests/test_v180_shadow.py
+          done
+          echo V180_PUSH_NOT_COMPLETE >&2
+          exit 1
