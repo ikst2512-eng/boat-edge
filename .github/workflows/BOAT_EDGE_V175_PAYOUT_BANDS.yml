@@ -1,0 +1,130 @@
+name: BOAT EDGE V175 - Payout Band Display Clarity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V175_PAYOUT_BANDS.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v175-display-only
+  cancel-in-progress: false
+
+jobs:
+  v175-odds-presentation-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout existing BOAT EDGE
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore SHA-verified sources and patch UI (not prediction)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYV175'
+          from pathlib import Path
+          import gzip,base64,hashlib
+          objects={
+            'assets/boat_edge_v175_payout_bands.js': ('cf301123cb301d47e7e56bd9a65462854247fd0626f026bc45420082c71b5a67',
+              'H4sIAAAAAAAC/50Yf1Pb5vl/PoW47CKryMKGQIIdhUtSuvbalN3R292O0Z0svcYqsuRKr4Jd23eWSSlpStMtS9a0tF1TduOSNWmX7UYJST6MkIG/8hX2vD8ky0BzvfKHrP'
+              'd5n9+/xegrwqXZi+8IM6/+dkb4ff7sREHQfMPEyBAcw/CEkmYbgmF6NUtrCI5tNYqC7Qg1Fxmmjk3HHsWmvoTwqIe1JSQAFHuK8MroUCYjqReaou8hwcMu4IrFId2xPSxc'
+              '1SzTuOxUS45aVy/gRg05ZaGuqqpIEO1F8fTp0Xfn89nJhWzq+ZtRBSMPZ+rS6dM2WhbmELwroJaJM2JWlCTFMz9AwGW8OFT2baobVT4D8nwkNYcEwSyzA2DZvmW1WvHJtw'
+              '1UNm1k9EGiKLkI+64tENQiUDPt6+rbfrWEXM62CDyHGUQxvddMGzwHOrZa9fNq7igHfqyfz+emRSLTzefEQv38OBzzOeyMTZHTBJzG4XSGnvI5OE7AcQqOonOV0OTAl23u'
+              'zTdn/jCnzifc5JiRHPOQY2o5oV5IuUizNavxAcpUHQPJ5OHJZRd5lVkIvuwhjC1kqGXN8hIXcmBsXBMij32vIHK42O47y3N1lfKcVubJ78K0wtLFa7UG4EXGevii62oNcC'
+              'T9zQC5dExM1fQ8yJI/cUZpcTpJKk+dVxQlThFgoVS1WubkTJuuF+rTCiWTlLJpYRZXnp6StJDm7dvYU2dL7yEdK2XXqc7YwAR5GRIBKmNJvTC/JOcWJCk2J/Fkq8WlJ5Bh'
+              '0MKhzMRWa5izXUINL5OgSIqF7EVckYBbkjzH/ECqVJSxgzWrwBzAyeQl21m2CznqIAthgZ7VHDmWHTeT8pkAmjFaqcnAJZXWTqLLPL1eoPleIkjEG/OlhZGRImULv+02t5'
+              'oCpF+pbztVKAmts/QSCtm3maUDd1l2R13HtJUr5mKlwDWPi2JhhAEUXhsy/DRe7yPG8Ha/4lykO67hqSTFrkDYpSJxru67LrLxm6gBrUP2a4aGwVpWOalyc9Gi6ZE0g1Af'
+              'Kzd48S182bHLpluFCuMFNzz67h+N5rl2Fp5j/Bm3wzmayIRbqwUtCxrPMOUau5/LF2KtFahSKrvJhJNoFI4VfGF4+IgubamYshAY8BRP2ELzvZCflOKzgcApKLmmiS1BVd'
+              'Yx/PDWyTjwwgDJ75hV5PiY1GfsL1Hqw4EZaXJyTkqlCHZ9REKTcjBBysS+iwPB/dGv55pmI0s1HN2vglHK+z7EfQ6U1jGUhniqhPK5c79LptwV4iwxqWtKDK7uuwQOsa0V'
+              'zcv0L6RjkrFTUymDo0IVKjRLApMFJJENF3g7xoKg/AIeWgnmt4+xYyvEldPKIsIXMWQMAFFGBM9o2T6+CMkjVkwyqGM5YJIamwW0abNkTR0YHYCmsJQibw5LZ12Jh0Xcg2'
+              'wHv0TzsxPZmtaAWGdJ9yEOTwqJBVqAgDeatKiJbwg3qUl5JpHUXaRhNGMhcgIjzavAhqAouqV53ttaFaniCbKKlGtsuVaGIn2JomeYi4Gla+IGywzyl6GE0O4haoppe8jF'
+              'F433NB10SVSiKJCmokz1Z6Rt+iQuqnqL0EKKsZGawrogHVt8xEoU5/DD9ejprWj70YvdL/b/+1nv6439ezvRwy+iZ5+EwcOwez9cWQm7O2FwI+xeDzsBIPfuduHq4N//C4'
+              'Nr+18+hHfGJOz+JVpd7326BeRh8LcweBYGX4bdW2Gny3j2rt/urT0Jg0d72x+HwYODb7f2N3fgluuJoMscVfbooD6u9GGw3fv4673t7wd0AlVu3omegRL/DIP1tCq/QBid'
+              'Lscl9TY3DrZ2e9trYfAchPXu/ECtvBZ9+K9o9+b4Yee7aP3zlMfAgffhOgy+CbtBtLYJHth7/tX+7bsvdteim5uEsrO+/+lHYffa3vZ67/Z/os/Wos4m8c/T55SQa/1i9/'
+              'qg4s2BNNNVTWGDJk4gpvqJjomDxUzK50CF3sb93k5HEEd0hW+AI+J+9ydhVMjnws7G2JQyBVjkfj5eDBdiDHGEixQE2BUB+0wam2+PCfYEwZhKYyQT9AR+MDEBb+/JPyBd'
+              'qHZ8jFJcllQH99dZPOBeU9gSIY6SdzrpY8ykLiHgtO1BsCuOhWiQR8B9ZKoDMDfdly6EwS1SAZ1Peo/v7f30Y/Tj7cM7N8LO+qA7H0C4Jvp6xlG/CaXCHH341T2ahI8OH3'
+              'zOIPs37tLobgEw+vNuGDweyM9CSoeEJurcPfhuAxInJQvSglhKdOeGBmGwGgbf7m1/dLD2TUKS9iOniReUkxykKXwXYs4RBZalkCWspKirOQqjBzNodkebd/q8WC/iLJKc'
+              'A1xW9tEP3f2/bgF6qmAe7e2s9VYeH/59de/perjypO/mlSd5MCpaXSWM1sDGB1AihH6wzfQbHu3VGDYFWD4wNEzYlEEV6SiYAAlNGz7cNMtqNI/sXO30VkC+y0xY7GFaJV'
+              'tVMjFgsvHefKnxhpEZHA4ebpBkk5pD/aqlsJ+dOJyiSH8V01BPYsisZShpo04ag82q5i6aduFcrS7koLBr9WJNMwwwtUAOQn4MICUY0sgt5OHsOfAFI5wyzqI8KvGLrKsZ'
+              'JqzSDFfTlxZdaDtG4VR5sjxV1ou6Yzlu4dRYbvzcGaNYBm2yZKVj+BZ8GmcrCJIOF/LK5AS7X2aAyYlcm5uTeKSCNEPRajUYcpcrpmVkqKF00rXp7sZ2tMEN8IoP3RyCNV'
+              'uCqQlZTr6Qkg9zkQeALt1HENm/GkhIU9sel9CWFIehZRLtSo4B+6/nl7CLUIEsFrJOtHwLNnN6bHNN20PLpm04y8olR8MzxiIi/x9RmyQoMl9+5Hihl5lI+E4ARRJRkBlG'
+              'Yw7UpX3LcjQSNVFK7iGMM1fhhYhGNmgsvjp7hefCW4ANhsv93JWbjq2jWEU2BlOJDXuwRJ7/B32P8K3TEQAA'
+            ),
+            'tests/test_v175_payout_bands.cjs': ('00fcc8794f5b348f04dd4a27ae1a47389bbc07f65af3367fe576e8b77587fdf9',
+              'H4sIAAAAAAAC/41U72/aMBD93r+i35xIxiQpbCVVVNHSqmhVqcQ0aQIUmcRA1sTeYieF0fzvOydA+NFV/USe3927d2dzgeBSnVMpWaq8lP3JopQZiIuQudVhU6o0ChQyr8'
+              '6CMnYmj+Jmsibz5IjMk5p8jbi3LnAoAm+dMhquhooq5qJY0DDic4RpGN7ljKvHSCrGWWqY66K4OssTkma8z5/Y663gii2VMZNEK9xHMRuueGAgbVbJ5lRQ5bNwzvzc/tr2'
+              'f9OVyJQ/pTyU5JdEGGVqdolMvAYvoXh14Uf7yRKo6sJHUXfiAUduQO8O5H6A2lU1ECJejBzCZiI1qtDREk8n52J2Php1SAdq8JCltoUmeGRbGNmWEk5HI+cQlcE1vgD2Al'
+              'CrRK2SrXEb2DagTok6JVtj2wJa5Los1J2YG6twFTQ2cqIHYCxNPD3wvSw98yyOMULYwg0bIzoN0H/TdehuQFOYt7deiJi5o3Ugkqlwkd1wGheowFsMqGHv4YtGq9Hew4Aa'
+              'X1AxKbaiIgxBdKPj2hYBS5WIq4dX5bttOK1SXdtp75KplxPKabz6C69PG0NYm8RaFGwfNEWJhMeXSZjaC7zQI24RzRfYOTmG+a4eNGWfUIHIuJKj+jqd44rve6t73evU3n'
+              'XqOLtOnU5hVsasT0pD/LbJJJIS/mK+HgX6XLoOxSrNWK0CfzEVs/BDgUjtT/3EgIqCF2DrpRDxnMZReHp1J08LBrX3dI6f2gZPineve1OFKKForK9vUz2AHeV9ZplYl/v7'
+              'Y5u+UEl8mg6rhS2J5vYSDuwYui5JqAoWRrNaReODXTO+HoPoXO/BVH+PjebcfHsbTUwSMz5X5RM80tQFt5of7MExNDK+zj04/0Cz0tGS+FCs5UPrsyhkPGC1VKu5mQncGY'
+              'nF3EC6C3/Q6w39m+5Tz7997A6H/fv+bfd7f/Dk66Nef/j82P3pPwwG34b+M/B6Tv8A3mykDpEGAAA='
+            ),
+          }
+          for path,(sha,encoded) in objects.items():
+              data=gzip.decompress(base64.b64decode(encoded))
+              if hashlib.sha256(data).hexdigest()!=sha:raise SystemExit('V175_PAYLOAD_SHA_MISMATCH '+path)
+              f=Path(path)
+              if f.exists() and f.read_bytes()!=data:raise SystemExit('V175_EXISTING_FILE_CONFLICT '+path)
+              f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(data)
+              print('V175_SOURCE_SHA_PASS',path,sha)
+          p=Path('assets/boat_edge_v108.js')
+          s=p.read_text()
+          hook='  window.BoatEdgeV174?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes);'
+          new='  window.BoatEdgeV175?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes,odds,resultConfirmed);'
+          if s.count(hook)!=1:raise SystemExit('V175_EXPECT_ONE_V174_HOOK')
+          if s.count(new)==0:
+              s=s.replace(hook,hook+'\n'+new)
+              p.write_text(s)
+          elif s.count(new)!=1:raise SystemExit('V175_HOOK_DUPLICATE')
+          h=Path('index.html');site=h.read_text();tag='<script src="./assets/boat_edge_v175_payout_bands.js?v=175"></script>'
+          if site.count('./assets/boat_edge_v174_confidence.js?v=174')!=1:raise SystemExit('V175_V174_ASSET_MISSING')
+          if site.count(tag)==0:
+              if site.count('</body>')!=1:raise SystemExit('V175_BODY_TAG_CONFLICT')
+              site=site.replace('</body>',tag+'\n</body>');h.write_text(site)
+          elif site.count(tag)!=1:raise SystemExit('V175_SCRIPT_DUPLICATE')
+          print('V175_UI_PATCH_APPLIED_SAFELY')
+          PYV175
+      - name: Validate V175 and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v175_payout_bands.js
+          node --check assets/boat_edge_v108.js
+          node tests/test_v175_payout_bands.cjs
+          git diff --check
+          python3 - <<'PYSCOPE'
+          import subprocess
+          allowed={'assets/boat_edge_v175_payout_bands.js','assets/boat_edge_v108.js','tests/test_v175_payout_bands.cjs','index.html'}
+          changed=set(subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],text=True).splitlines())
+          paths={x[3:] for x in changed}
+          assert paths<=allowed,repr(paths)
+          assert len(paths)<=4
+          print('V175_ONLY_UI_SOURCE_AND_TEST_FILES_PASS',sorted(paths))
+          PYSCOPE
+      - name: Commit V175 without modifying formal predictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- assets/boat_edge_v175_payout_bands.js assets/boat_edge_v108.js tests/test_v175_payout_bands.cjs index.html
+          git diff --cached --quiet && { echo 'V175_ALREADY_APPLIED'; exit 0; }
+          git commit -m 'V175 display verified 3-trifecta odds payout bands separately from scenario divergence'
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:main; then echo 'V175_UI_PATCH_PUSH_PASS'; exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+            sleep 2
+          done
+          echo 'V175_PUSH_FAILED' >&2
+          exit 1
