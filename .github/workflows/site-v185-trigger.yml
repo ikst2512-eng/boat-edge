@@ -1,0 +1,41 @@
+name: BOAT EDGE V185 - Post V133 Snapshot Trigger
+
+on:
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE V133 Balance10 Wave18 FIXED'
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: boat-edge-v185-post-v133-dispatch
+  cancel-in-progress: false
+
+jobs:
+  trigger-existing-v185:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Dispatch unchanged V185 research freeze only after successful V133
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GH_REPO}/actions/workflows/BOAT_EDGE_V185_THIRD_ROLE_FRESH_CHALLENGER.yml/dispatches" \
+            --data '{"ref":"main"}'
+          echo 'V185_POST_V133_DISPATCH_REQUEST_ACCEPTED_ONLY_NOT_FREEZE_PROOF'
