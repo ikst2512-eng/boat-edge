@@ -8,7 +8,7 @@
     "event": "第11回加藤峻二杯",
     "race_no": 11,
     "deadline": "15:55",
-    "updated_at": "2026-10-09T13:20:57+09:00",
+    "updated_at": "2026-10-09T13:40:56+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,40 +19,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261009&jcd=02&rno=11",
-      "fetched_at": "2026-10-09T13:20:57+09:00",
-      "sha256": "78758a5ced86c4a4f4445035b3ec085ed8553498e5f7ea75a32c118f0e833faa",
+      "fetched_at": "2026-10-09T13:40:56+09:00",
+      "sha256": "d15d91971d4cf350bee69f2a710e5e4aa3b73f0f1664abe49e81d3291633e9f3",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261009&jcd=02&rno=11",
+      "fetched_at": "2026-10-09T13:40:56+09:00",
+      "sha256": "952abdcd7ec24df6b063d2ec92f67b60956808b3e20371637ba44a692d125be8",
       "error": null
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/09.csv",
       "fetched_at": null,
-      "sha256": "021d06973ed037fe8e23d4f04537d26ea37365e2803efc3039c49ddbdf5aac26"
+      "sha256": "753cc24bae4cf3f75040085b24dad763f955513186361153f016a741678646a1"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/09.csv",
       "fetched_at": null,
-      "sha256": "24ee426890f30eb93c68a12fd3326d468a80df71ef03bff35f457df7bafca556"
+      "sha256": "a2e287d72ba2591052effd83942abd31874df3c5bb86ec8e15d87b1a3661fbc8"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/09.csv",
       "fetched_at": null,
-      "sha256": "56e840c66cd5ea24ddae4f5e60752a5a9cc20b12b85927e69b91ec82800f4ef0"
+      "sha256": "051be1285cb1d4c577eb7fef810f9a6365cfeaf070697de6158064c6e19bb069"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/09.csv",
       "fetched_at": null,
-      "sha256": "9fbd4bdf8df0aa73f9dab3ebc84d73538635f181f215de684ba53eb91bb7b3e3"
+      "sha256": "b30c15d593256b0c56189af7dd58ee5a150810934c7d1c8eadf3b20841a77052"
     }
   },
   "racers": [
@@ -238,9 +238,11 @@
         "quinella_rate": 42.11,
         "trio_rate": 52.63
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "6"
+      ],
       "early_race": 6,
-      "raw_text": "5 5055 / A2 眞鳥 章太 長崎/長崎 30歳/53.7kg F0 L0 0.16 5.61 35.42 55.21 5.20 30.00 50.00 34 38.46 56.41 47 42.11 52.63 6R"
+      "raw_text": "5 5055 / A2 眞鳥 章太 長崎/長崎 30歳/53.7kg F0 L0 0.16 5.61 35.42 55.21 5.20 30.00 50.00 34 38.46 56.41 47 42.11 52.63 6 6R"
     },
     {
       "lane": 6,
@@ -281,7 +283,53 @@
       "raw_text": "6 4709 / A2 岡村 将也 福岡/福岡 37歳/54.1kg F1 L0 0.15 5.48 35.48 55.91 6.26 43.48 73.91 25 18.18 30.30 76 28.95 50.00 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 石川 諒 R 4"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 柳内 敬太 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 坂本 一真 R 3"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 長谷川 暖 R 5"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 眞鳥 章太 R 6"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 岡村 将也 R 2"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
