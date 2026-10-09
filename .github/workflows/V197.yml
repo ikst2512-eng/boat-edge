@@ -1,0 +1,261 @@
+name: BOAT EDGE V197 - Immutable Third Place Research Quality Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/V197.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '9,39 0-14,23 * * *' # JST 08:09-23:39; independent research QA twice/hour
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v197-independent-third-role-research-quality
+  cancel-in-progress: false
+
+jobs:
+  validate-first-committed-research:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout original full Git history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Validate unmodified V180 and V185 model source and run future-only QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s scripts/site_v180_shadow.py
+          test -s scripts/site_v185_role_shadow.py
+          test -s scripts/site_v185_score.py
+          python3 -m py_compile scripts/site_v180_shadow.py scripts/site_v185_role_shadow.py scripts/site_v185_score.py
+          python3 - <<'PYQUALITY'
+          #!/usr/bin/env python3
+          """V197 site-only, future freeze input + immutable audit. No settlement/results read."""
+          from __future__ import annotations
+          import datetime
+          import json
+          import math
+          import sys
+          from collections import Counter
+          from pathlib import Path
+
+          JST = datetime.timezone(datetime.timedelta(hours=9))
+          MIN_DATE = '20261010'
+
+
+          def all_combos():
+              return {f'{h}-{s}-{t}' for h in '123456' for s in '123456' for t in '123456' if len({h, s, t}) == 3}
+
+          COMBOS = all_combos()
+
+
+          def metrics(doc, original_rows):
+              """Independent mathematical audit of a frozen candidate (no results)."""
+              candidate = doc['candidate_ranked_120']
+              observed = [r['combo'] for r in candidate]
+              if len(observed) != 120 or set(observed) != COMBOS:
+                  raise ValueError('CANDIDATE_120_COMBO_SET_INVALID')
+              if any(not isinstance(r.get('score'), (int, float)) or
+                     not math.isfinite(r['score']) or r['score'] < 0 for r in candidate):
+                  raise ValueError('NONFINITE_CANDIDATE_SCORE')
+              scores = [r['score'] for r in candidate]
+              if not math.isclose(sum(scores), 1.0, rel_tol=0, abs_tol=1e-9):
+                  raise ValueError('CANDIDATE_SCORE_MASS_INVALID')
+              if any((a['score'], a['combo']) < (b['score'], b['combo']) for a, b in zip(candidate, candidate[1:]) if a['score'] != b['score']):
+                  raise ValueError('CANDIDATE_NOT_DESCENDING')
+              # Sorting tie-breaking must be deterministic, not dependent on scan order.
+              if observed != [r['combo'] for r in sorted(candidate, key=lambda x: (-x['score'], x['combo']))]:
+                  raise ValueError('CANDIDATE_RANK_NOT_DETERMINISTIC')
+              if len(original_rows) != 120 or {x['combo'] for x in original_rows} != COMBOS:
+                  raise ValueError('BASELINE_120_COMBO_SET_INVALID')
+              a, b = Counter(), Counter()
+              for r in original_rows:
+                  a[r['combo'][0]] += r['score']
+              for r in candidate:
+                  b[r['combo'][0]] += r['score']
+              if any(abs(a[h] - b[h]) > 1e-9 for h in '123456'):
+                  raise ValueError('V185_HEAD_MASS_NOT_PRESERVED')
+              result = {'head_mass_preserved': True, 'source_features': doc.get('source_features_used') or []}
+              for n in (3, 5, 10):
+                  ref = doc.get(f'v180_top{n}')
+                  top = doc.get(f'candidate_top{n}')
+                  base = doc.get(f'baseline_top{n}')
+                  if top != observed[:n] or len(ref or []) != n or len(base or []) != n:
+                      raise ValueError(f'TOP{n}_SNAPSHOT_MISMATCH')
+                  result[f'top{n}_reordered_from_v180'] = top != ref
+                  result[f'top{n}_new_combos_vs_v180'] = len(set(top) - set(ref))
+                  result[f'top{n}_new_combos_vs_site'] = len(set(top) - set(base))
+              result['top1_head_changed_vs_v180'] = observed[0][0] != original_rows[0]['combo'][0]
+              return result
+
+
+          def synthetic_tests():
+              original = [{'combo': key, 'score': 1 / 120} for key in sorted(COMBOS)]
+              doc = {'candidate_ranked_120': original, 'source_features_used': ['trio_national']}
+              for n in (3, 5, 10):
+                  doc[f'v180_top{n}'] = [x['combo'] for x in original[:n]]
+                  doc[f'candidate_top{n}'] = doc[f'v180_top{n}'][:]
+                  doc[f'baseline_top{n}'] = doc[f'v180_top{n}'][:]
+              x = metrics(doc, original)
+              assert x['head_mass_preserved'] is True and x['top10_new_combos_vs_v180'] == 0
+              bad = json.loads(json.dumps(doc))
+              bad['candidate_ranked_120'][0]['score'] += 0.01
+              try:
+                  metrics(bad, original)
+              except ValueError as ex:
+                  assert str(ex) == 'CANDIDATE_SCORE_MASS_INVALID'
+              else:
+                  raise AssertionError('SYNTHETIC_CORRUPTION_NOT_DETECTED')
+              print('V197_SYNTHETIC_120_SET_HEAD_MASS_AND_CORRUPTION_TEST_PASS')
+
+
+          def report(root: Path):
+              # Import only source model and pre-result git provenance verifier.
+              # Do NOT invoke scoring(): that separately opens settled site results.
+              sys.path.insert(0, str((root / 'scripts').resolve()))
+              import site_v185_role_shadow as model
+              import site_v185_score as scorer
+              import site_v180_shadow as v180
+              now = datetime.datetime.now(datetime.timezone.utc)
+              day = now.astimezone(JST).strftime('%Y%m%d')
+              result = {'schema_version': 'boat-edge-v197-pre-result-fresh-coverage-and-head-mass-audit-v1',
+                        'scope': 'SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH',
+                        'date_jst': day[:4] + '-' + day[4:6] + '-' + day[6:],
+                        'status': 'WAIT_FIRST_ELIGIBLE_DATE' if day < MIN_DATE else 'WAIT_FIRST_FROZEN_RESEARCH',
+                        'formal_results_accessed': False, 'site_results_accessed': False,
+                        'payouts_accessed': False, 'production_predictor_changed': False,
+                        'model_weights_changed': False, 'no_historical_backfill': True,
+                        'criteria': 'Only first-committed pre-deadline future shadows verified by V185 independent Git+SHA+determinism guard',
+                        'snapshot_count_today': 0, 'currently_eligible_but_not_frozen': [],
+                        'candidate_files_today': 0, 'independently_verified_shadows_today': 0,
+                        'invalid_frozen_shadows_today': [],
+                        'features_seen_counts': {}, 'rank_change_counts': {}, 'per_race': []}
+              if day < MIN_DATE:
+                  return result
+              feats, rank_changes = Counter(), Counter()
+              for path in sorted((root / 'data/site_tail_shadow_v185/predictions').glob(f'{day}-??-??.json')):
+                  result['candidate_files_today'] += 1
+                  proven, reason = scorer.valid_freeze(root, path)
+                  if reason:
+                      result['invalid_frozen_shadows_today'].append({'race_key': path.stem, 'reason': reason})
+                      continue
+                  doc, commit = proven
+                  snap_bytes = scorer.git_blob(root, commit['sha'], f'data/site_prediction_snapshots/{path.stem}.json')
+                  if not snap_bytes:
+                      result['invalid_frozen_shadows_today'].append({'race_key': path.stem, 'reason': 'FREEZE_COMMIT_SOURCE_MISSING'})
+                      continue
+                  try:
+                      frozen = json.loads(snap_bytes)
+                      original_rows = v180.candidate_rows(frozen)
+                      flags = metrics(doc, original_rows)
+                  except (KeyError, ValueError, TypeError, AssertionError) as exc:
+                      result['invalid_frozen_shadows_today'].append({'race_key': path.stem, 'reason': 'QUALITY_CHECK_' + type(exc).__name__ + '_' + str(exc)[:70]})
+                      continue
+                  result['independently_verified_shadows_today'] += 1
+                  feats.update(flags['source_features'])
+                  for k, value in flags.items():
+                      if k.startswith('top') and (k.endswith('reordered_from_v180') or k.endswith('head_changed_vs_v180')):
+                          rank_changes[k] += int(bool(value))
+                      if k.startswith('top') and k.endswith('new_combos_vs_v180'):
+                          rank_changes[k + '_total'] += value
+                  result['per_race'].append({'race_key': path.stem, 'commit_sha': commit['sha'],
+                                             'feature_names': flags['source_features'],
+                                             'top3_changed': flags['top3_reordered_from_v180'],
+                                             'top5_changed': flags['top5_reordered_from_v180'],
+                                             'top10_changed': flags['top10_reordered_from_v180'],
+                                             'top10_new_combos': flags['top10_new_combos_vs_v180'],
+                                             'head_mass_preserved': flags['head_mass_preserved']})
+              result['features_seen_counts'] = dict(sorted(feats.items()))
+              result['rank_change_counts'] = dict(sorted(rank_changes.items()))
+              # Snapshot inputs remain PRE_RESULT only. Skip races with past deadlines.
+              for snapshot in sorted((root / 'data/site_prediction_snapshots').glob(f'{day}-??-??.json')):
+                  result['snapshot_count_today'] += 1
+                  key = snapshot.stem
+                  if (root / 'data/site_tail_shadow_v185/predictions' / f'{key}.json').exists():
+                      continue
+                  if day == now.astimezone(JST).strftime('%Y%m%d'):
+                      try:
+                          s = json.loads(snapshot.read_text(encoding='utf-8'))
+                          if v180.cutoff_ok(s, key, now) and model.valid_input(root, key, now, v180):
+                              result['currently_eligible_but_not_frozen'].append(key)
+                      except (OSError, ValueError, TypeError, UnicodeError):
+                          pass
+              if result['invalid_frozen_shadows_today']:
+                  result['status'] = 'INVALID_FROZEN_CANDIDATE_FAIL_CLOSED_RESEARCH_ONLY'
+              elif result['independently_verified_shadows_today']:
+                  result['status'] = 'IMMUTABLE_FUTURE_RESEARCH_QUALITY_PASS_NOT_ACCURACY_PROOF'
+              elif result['currently_eligible_but_not_frozen']:
+                  result['status'] = 'ELIGIBLE_LIVE_INPUT_AWAITING_FREEZE'
+              elif result['snapshot_count_today']:
+                  result['status'] = 'WAIT_PRE_RESULT_ELIGIBILITY_OR_DEADLINE'
+              else:
+                  result['status'] = 'WAIT_NEW_RACE_SNAPSHOTS'
+              return result
+
+
+          if __name__ == '__main__':
+              synthetic_tests()
+              data = report(Path('.'))
+              destination = Path('data/site_tail_shadow_v185/quality') / (data['date_jst'].replace('-', '') + '.json')
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              encoded = json.dumps(data, sort_keys=True, ensure_ascii=False, indent=2) + '\n'
+              if not destination.exists() or destination.read_text(encoding='utf-8') != encoded:
+                  destination.write_text(encoded, encoding='utf-8')
+              print('V197_QUALITY_' + data['status'], json.dumps({
+                  'snapshots': data['snapshot_count_today'],
+                  'frozen': data['candidate_files_today'],
+                  'independent_sha_verified': data['independently_verified_shadows_today'],
+                  'invalid': len(data['invalid_frozen_shadows_today']),
+                  'eligible_unfrozen': len(data['currently_eligible_but_not_frozen'])
+              }, ensure_ascii=False, sort_keys=True))
+          PYQUALITY
+          git diff --check
+
+      - name: Commit only prospectively validated coverage diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          today="$(TZ=Asia/Tokyo date +%Y%m%d)"
+          file="data/site_tail_shadow_v185/quality/${today}.json"
+          test -s "$file"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$file"
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo V197_QUALITY_REPORT_ALREADY_SAVED
+          else
+            git commit -m "V197 independent future third-role immutable source quality ${today}"
+            for attempt in 1 2 3 4 5; do
+              if git push origin HEAD:main; then
+                echo V197_QUALITY_EVIDENCE_COMMITTED
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                echo V197_PUSH_FAILED_NO_FALSE_SOURCE_CLAIM >&2
+                exit 1
+              fi
+              git fetch origin main
+              git rebase origin/main
+            done
+          fi
+          # Verify and fail closed if independent SHA/replay found a corrupt freeze.
+          # Do not read results, payouts, or formal scoring in this workflow.
+          python3 - <<'PYGATE'
+          import datetime,json
+          from pathlib import Path
+          day=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y%m%d')
+          doc=json.loads((Path('data/site_tail_shadow_v185/quality')/(day+'.json')).read_text(encoding='utf-8'))
+          if doc['invalid_frozen_shadows_today']:
+              raise SystemExit('V197_FROZEN_RESEARCH_INTEGRITY_FAILED_NO_MODEL_PROMOTION')
+          print('V197_RESEARCH_QUALITY_AUDIT_SAVED_NO_PRODUCTION_PROMOTION')
+          PYGATE
