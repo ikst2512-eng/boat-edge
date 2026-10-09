@@ -43,3 +43,13 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 
 ## TODO GUARD
 - ACTIVE contains only incomplete tasks. Browser completion is never inferred from JS text.
+
+- V109 replaces the legacy result collector without changing V108 UI.
+
+- V109 treats confirmed + payout null as incomplete and refetches it.
+
+- V109 payout parser supports ¥ / ￥ / 円.
+
+- V109 backfills historical confirmed payout gaps from 2026-10-07.
+
+- V109 keeps result/trifecta data factual; missing payout is never fabricated.
