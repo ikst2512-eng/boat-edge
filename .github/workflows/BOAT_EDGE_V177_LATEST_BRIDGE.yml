@@ -1,0 +1,129 @@
+name: BOAT EDGE V177 - Approved Latest Prediction Site Bridge
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V177_LATEST_BRIDGE.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: boat-edge-v177-bridge
+  cancel-in-progress: false
+jobs:
+  guard-and-sync-ui:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Restore hash-checked V177 bridge, strict contract, tests and patch site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_PATCH'
+          from pathlib import Path
+          import base64,gzip,hashlib,json
+          bundles=json.loads('{"assets/boat_edge_v177_latest_bridge.js": {"sha256": "83cef8a972a00c7baab890a4ca1faae81d2d66b69931d504fdd2f841f6b1e044", "payload": "H4sIAAAAAAAC/8VYW2/byBV+z69gLhDJDUVbdmI7UmjBcZzuYh3bsJ28uC49IkcyY4rUcka2FUlAbDeI9yEboA120W2ANt0ESNN2t0DRvcHI/pdqLbtP+Qs9cyFFyXLRtxqGOJcz5zbnfOeQIx8otxZnVpW527+YU+7nJieVfz16rpTDqIp8Zfbe8vLcwqpCaOQ51G8oqFaLwm3sKqXIcytYQYGrbOOIeGGguB6p+ahhXlAUZRkjNxsGcMIJA1Kv4shUFkKlFmEXGDHqHexVNikxlAgFW15QgVE1dDHQ1wNKlDBSylH4EAcKCVCNbIawhiLMaLyyh11T+WDkgqbp1nRTrRMsNVQLF7hAqswuLqwuz8yuWmopRDSLQdmsMCob25CFnwgUzm7neue2ke+5K5vIItY0bdRwWFaIZVkq4x9U1Exm5FdrKFsezd5Yb05ca18Z8UyKCdWInrBwwmop/G/nc9mJ9Wzq98pIzCOTCfCOsoJhbIIzPaqpWVXXTeI9xMBlvF/NVc/ZwtSi4AMp2ZIiaUpkkeZp0eRKtVowovwUH5YwLUSY1qNAKK05ejsRsRNGvksWy5YL/NmdemXtogvnhAj3IogISw8weF2XTNbWC4wwnrkm52GjVss1a4hSHAU2MuLlUnq5tG6WPR+G2q0w9DEKmD+ZMuV6IAIGtKIRcugKRbRONMIfeqKZmLda4gn2BgGohpmaNKrjZKMXgsSOIEobkiC2oYx8grkZwg0VSx6s1FHkkkIsr9JqVcwIk7pPiU0wDoAPP8vW64EfOlvpFeKE7DbSS8tzK/fmV+17C/OLsx/bq4sfzy3AdlD3/bO6yIU4ooRG4AxvG9ssbXzbc/vCbDiJ6eOgQjenrQklk2F8lQGWFEUVTG0XUTwQtb90m9faWfgdk79J1J45ya8udXMy4ZZQww+Rq7k4Ap1co4opMrZwwxi8Si5saqiwFa6QBqdaLRUyo9W6ODwuzrqQcWYiWy32CxeyiavIluAFjo8RQ+4DS2yDHNjh0oS3+FbsTdga7mbJQkxjuEkCMcVJIJJdAafZNURIQiNVDGuYpdmdxeW7M/P2HYiYD+2ZpaXlxftzt+2l5TlbxJA61FpQ2yS+52Bt1JjSe8qmbgoCGCDbwTO+z5DGYC4d6rgYFjWhdoTxQ2yTTTR2fYLdQf92L8VikqFMBS2AekAlXU9H4Zglvgl8z4pIH9PPz11O/H/N3DSYWjGmxjmgJ0qJHZmfZ7mAPzTJSYFsFdQiY2IRAOYgQMI7AOEOg3f+ZNjuBYhjXkEcYSJnogiqtUf4U2PEcJXsIbUAABjtW5jOjY2eVS2W7xCL01ZRTaNJ8fvfK5GeUo0zwpCbDS1V6UC9uDw6RBRFcLtzvtfaaeiEvBrEJcfBNbqMdrQI7QxFIlhPCh6Mh5S8wYt2LaAz5fW2WmzSS4fieRt8nuLCwpYzkgAhcIstsFG6Igxi6xlUHWrzAmcL/nM1hnN9dkvGsgzzfSgWg4LYcmyNwScpVcVCjKAxd6mKj6niI0ItVTVKddIQaWXIlpNnkcGRUwyJB6WIjZLGhKAytnataVkLdotFgK0YybSRtczN6Uvq+kjFcKxpralm1LyaQdVaAeDtJhv7lA2n2bDCh5fY8JN6yCaX1EswuTx+o6C215x1rnTiPMAcMFkTfhLK1Cw3dKC/Daj5SR3idQX7EB6QrerlEs6NTi0ld3wXbCJqL+NrkFtgvgyk1OVvQldi1QbZmZxdlm0CE8aADdOnuTNlmENdjxqKxAfucS/Aw5lOTma5u7OipVfTechO6U1+NjHTga6J4jkfs5mmut42HGEkpgPXShZQFUPTfZZvgelregHBEZ1xH8BdBTThgsrQ+oF3VYOLLLTTyCKq63Dtc1NZEtajJP5UXSJxHzaxIFoKoRY2LDYsmj5i7YSdqlQ1vl00ZUMA7cX93Njk1fu58XFuB1H70Q7efDzeJnEji6LYw6nui7fHzz4/fvdFPz3EuzAjkxloWITeenGj+7evjo+eyVeu7mevT7798v3Rl1eaLN4l1WCjobc38kKKomx09v/Z2X/VOTg8frZ/+ujg5x8Puwf/6HHo+UBvK++Pnil98jjdOZqpnYO/dg6OOvs/HB++7n760+nbp8fvHnf2XkLegLlCVbW90Wcw3oV89AJpdVEV57rfH3b2fuoc/Klz8KRz8JfO3tdCzc7+b05fvjl59WPn0T5jyYlh9+SPz0/+/K2k2fum+913x49fd/a+6Oy96+z9vrP/W6BXey7ovnjU/fzv3VcvTt8cHT/63elXL3r2Jzemt98f9fkI5Jy+OTz5Gri+ASFg5PujT4ExvA1P/PvJ09NXT45//fb48WH3JSj/zR1oHTbTOnb2/tDZ3/v5+6fdz16ePH8DB/s9wbwKQW5t3CxNgy60fXOkNH2TgGt9mEs/waJY2eilnzwIAc3wUmm1eBZDCgU4+nD17jwrfoJE5GhvJ14vcKCNJzyp2mVoBXy/0exhL9uAf0QagZMGuzKztA/toG+0BFk98uG1EEBGvnpGFtpBHlXKmDqbGuxeVYvbFoBABoD+6m3WawbhjqYbTQdB551XgzBLIIux2tbjd9DIDLeKgk1kPiBhoOl5nsptBzGutt6UlGK1zV21JsJU1AxeLtalLktRWPUINsFcbU14FQwA3BiBMEAjsmDJjpPJU3UjTSCy7Px9Jst26pFoRSmzUVCt67JEi3IxUIKBMqJar8lIkBV4S0C81fjI1SSIEtrwAZX7mz2+eC4myyMF/jThzbCPlQwwsUnxLp2VATqsHDTlV518BaaFCqrlx2u7hVIYgWX5XG1XIQAprnLZve5ijORGNkKuVyf53CjQ1pDrQp3mEyU3BitVeAHxgvwUzEcLJeRsVaKwHrj5y+WJ8o1yueCEfhjlL+fw+LVruFAG7bKs18vzwyzQoQqyj0f5nHm9PURnhWdSU7K5fn0yN9XHBtRux15IXMirEzQ5cGezm57vatw/erqPlPkQV3DZF96tU95aL5agskH1YE0iWIMhzzCUataxDpKI71a80RUdgIyTtm6GgkRL9CqFbgOShqk07xHooKHAG6ReovAOxiftQYUIph/BhUbQObPmO447VU9taNIaY2IU/mSE7niBG+6Yt0JE58CN7GOg1UyaZGOwdTT6W0Kjv3oYsQRhHctVUDExi396YZT8OwM7z94Q9GQfgmZuGwbMZgyopqm3F+/KQJ0HanCtwRPJaIaBk3gC+/xbIE+wwoW2zn7/AxunXajiFAAA"}, "tests/test_v177_latest_bridge.cjs": {"sha256": "9a319164114a43c3336ea5021272d3e92e09cb96b8efce71ee94f1ed4cbeb483", "payload": "H4sIAAAAAAAC/7VW33PaOBB+z1+RN9k3sgOkSRtnfJ00MXeZ5JIM0LwAoxG2MC7G5iQZSqn/91tJdgKE5O4y0wd+eHf9affbTyuFeSbkIRWCcelz9neRcGahLI+YZ4xHQvIklMjGY7ETMBZgXcx2rIsZss8PQo0rQp7MpT8WLmc0aicp666y0EIKWoqjUU4lYVHMyKL58SNJqWRCkhFPwOR+EwijQo4/PcMtkyzKl/66xIdRHhYzlkl/rZBXXQnveijNaZRkMcI0ioIFuG8TIVnGuGfZ/u/rsjw/WMxcXmTX2R1bXuaZZN+lZbLEawOPa2isFs1TVj6tP/JNiPsFEg8gyUdI+9zw5OZTa/Rc+IT6iCIoe86otE4/2HhOuY9GW6bDKVv5qNVonTYbjTOn0XQax6iGiFVpokilIIKxzBvTVDBcZGkeTqsHEeYcyq2eOkH3622PfL27vb+8Ib37m+DOy4o0LZ+SApIK4a/hKWOhZJEnecHwnLMIOpxADNFkGjMF04KRGfQ0JUnkocem22q6x8fOxcND5/4xuEJYUh4zSSJNvqrDaTacxhnC45zPaPpAOfDYnVAPisdxQXkkvPgpnzjPI38dMQ7rRN56mfM0ItRbyyScgjy8PmQ6G+Ueajot5xiVwxKbmNGemJbTNDElnjEJKCKcsBklC8YFlOYhJTZHic0xyTl0Puc5rOzAF0/pylk0EeY0ZATa4sEHP9VumHN3KKn8NY6hzYCTGCghc5CGsUKn5kBR+77z18UtaUOr/iQ1jeShExDTPCCOM/aDEdBP6+TUg5+N9mxZNbW1ZYte4LeSJOxLmlojyDtkc9mhS0tRjlVppiIbq+zsV16406UkP1hkrbd4qVum0NzqoS5ck68d6l+5u5DpPGffQIC+NacynMDO/Pd8167rGigM//R7JYwkJXxANXjWhrK1B3Zu7Xkp8t2IV/R+doY2gvYL/pMKeUqiaoTKOK73q6q+3MDZitna5m9G1hv+zaB9cwBGs1SzAKm3DqBVlmlEf4oXNC3Y8DAfH/b7aFe9yFA8xH20LfYXjgRM6Oq63Q46wV0PKYcWPVi71z0lcO25DLRrS+YQMuL5lGXa9ULvO+5N4SMMv8payxNit8bpBzQc2q+qS/OlFGYmRvWkhYv706GnqYGBsrlhasm9C/SNZr53lf80PmGA6tH4SxfRMxq/mNm/YtF3oO6bWfsxzM6YyFn68uICxz/77irfxuWkWnSmhpKlfPho84Iw+Dx4TkQ9DCxOl/qkuamWZwPX7LyBffR/AJ8ntMGN3kAznGi4CvnN+9cALmCDzwsfHEex/fNnf2i7KctiOcHN/SluoZ3A+FjlBaDRLBLPYCev1EeXNFHnAgwGMWnr7Lu6LwNrYJ8PxG+mK9VR7Ztwdd0zsffGrpgNIfV6HBgCqnucm+axhRSB1dELJ/GXzvXVHwHpBd1elzxcdLuqn/8A412DURQLAAA="}, "data/site_latest_bridge_contract.json": {"sha256": "527f62e9c0600e0437616d7195ed4d7386a024fb2018c6510f741a597ea360d9", "payload": "H4sIAAAAAAAC/6VWXW/bNhR9z68g/Gyltbs2w/oUxOo6NLYCxwk2DAVxLV1bnGlSIymnXuD/vitStGQ3QQfMD4rDe+734ZGfLxgb2LzELfAdGiu0GvzCBksNLsFijcludHWVSHBoXVIZLETuCJMsjWisuVbOQO4INhj6UMIhN7hCgypHCvVMp3ROGLFDXmkp8j23ujbeOijAwRvvlNeGfBy3jpJd/mWpkGHw7dJyVGuhvOPD7Obz9ezXdBJRuigsN6A2/AnFunQEWoG0SNaDL22lzRZkm9unqe2xhGj0p1326NQroQJXnrt1ZvvmmeaBfIP7Qy+Mbx+8v8G/a2GwSf1nqJyGqDB3WDBnavy+a2oLodifWNt5bnWBkouC4Tc6YVtweRkhDswaHac68SVzW/qazNSTtSfhQ1yoKqN3Z3UFPxYmxUAVrIK91FCwu3nK5+n9w+2CrWswhQ0L8JhaSZ1vmNMbVEzVUsZwO5BU/sog/hOQXd/MljB+/+E08R00LLkv4aWeQjClVVFXRDQIMxUrmi4wJ/INOjsg6NdXd+s74ZHWHX9b7BYdHA9/cHOCSxKHmNDDSNjHq+L9I1cazz/oM51OJsnjYzKfd5i44waT/n59s+Cfsvn0+pbfPMzn6WzBp9kkveW/TToXm+vK35IW+YnW8plf393Ns8d0wrtFnWeJxZJvs/Oj9Zws39n9/ni7MEr84Scm9ROaHIgAJX7rEvXG/Z/gEFThCLWwJaIQt054eEaOzj8wsbezZupoa+kst4gqysSwMweuvmCgsRqh1i9YwjT5w+w2u/nCF9mXdEaohuct5uD/HlqeFmhEmPKRSU/ayILDaaGRslEqwue5993Lx3apm8mMknHybtAzHo7fv8Yyhqf5lv8n3zgZ/TDfRXwGDQ7bihpI/RaF8BLXqeGZsnXXlbaGYPKSayX33c18HF15XkwyPssWxO1smi3SqAgGndG2whDU6eodpx3SSwQkOY3Gr8OIcU2FK2FsowOjt69B3/cjjkevw84j/nwciyepb0KTejlm98qVaAVJYkvz3ttgyGxuoEKma0e7QMuWSKgjNNB3yJaQb1ZC0hVB5ySeKquCypbaUTBtGM1arPYsvDftZXhlVbWptPUqck8aSlLbqhxFIn209RYN06sm6k7o2so9E6rACumhHP3nxdhLcFtY+BXRb+Wj7xYioPXQZtie9yqu6qUUtkRzObg4XPwLynlJhbcIAAA="}}')
+          for rel,v in bundles.items():
+              raw=gzip.decompress(base64.b64decode(v['payload']))
+              assert hashlib.sha256(raw).hexdigest()==v['sha256'],f'SHA_ERROR {rel}'
+              path=Path(rel);path.parent.mkdir(parents=True,exist_ok=True)
+              if path.exists() and path.read_bytes()!=raw:
+                  raise SystemExit('V177_FILE_CONFLICT '+rel)
+              path.write_bytes(raw)
+          p=Path('index.html');source=p.read_text(encoding='utf-8')
+          # Existing external formal reader must never accept unapproved/unverified files.
+          old='''      const raw=await r.json();
+                const norm=normalizeFormalOverlay(raw);'''
+          new='''      const raw=await r.json();
+                if(!window.BoatEdgeV177?.acceptRaw?.(raw,raceKey,state.formal))continue;
+                const norm=normalizeFormalOverlay(raw);'''
+          if old in source:
+              assert source.count(old)==1,'V177_AMBIGUOUS_OVERLAY_PATCH'
+              source=source.replace(old,new,1)
+          elif new not in source:raise SystemExit('V177_UNEXPECTED_OVERLAY_LOADER')
+          # Refresh formal gate status when a race is selected, so a newly approved
+          # race is accepted without needing an unrelated page refresh.
+          old_race='''    const overlay=await loadFormalOverlay(race.race_key);
+              race=mergeFormalOverlay(race,overlay);'''
+          new_race='''    await refreshFormalStatus();
+              const overlay=await loadFormalOverlay(race.race_key);
+              race=mergeFormalOverlay(race,overlay);'''
+          if old_race in source:
+              assert source.count(old_race)==1,'V177_AMBIGUOUS_RACE_REFRESH'
+              source=source.replace(old_race,new_race,1)
+          elif new_race not in source:raise SystemExit('V177_UNEXPECTED_RACE_LOAD')
+          old='''function hasFormalPrediction(d){
+            const der=d?.derived||{};
+            const worlds=[der.world_a,der.world_b,der.pattern_a,der.pattern_b].filter(Boolean);
+            const ticketsReady=worlds.some(w => (w?.tickets||w?.bets||w?.combinations||[]).length);
+            const g=d?.formal_meta?.guards || d?.derived?.guards || null;
+            const guardOK=!g || (g.results_seen===false && g.scoring!==true);
+            return ticketsReady && guardOK;
+          }'''
+          new='''function hasFormalPrediction(d){
+            return window.BoatEdgeV177?.acceptNormalized?.(d,state.formal)===true;
+          }'''
+          if old in source:
+              assert source.count(old)==1,'V177_AMBIGUOUS_FORMAL_GUARD'
+              source=source.replace(old,new,1)
+          elif new not in source:raise SystemExit('V177_UNEXPECTED_FORMAL_GUARD')
+          tag='<script src="./assets/boat_edge_v177_latest_bridge.js?v=177"></script>'
+          if tag not in source:
+              assert source.count('</body>')==1,'V177_AMBIGUOUS_SCRIPT_INJECTION'
+              source=source.replace('</body>',tag+'\n</body>')
+          assert source.count(tag)==1
+          p.write_text(source,encoding='utf-8')
+          # Must keep all existing site mode and odds plugins; never alter ranking/engine.
+          assert 'boat_edge_v174_confidence.js?v=174' in source
+          assert 'boat_edge_v175_payout_bands.js?v=175' in source
+          print('V177_APPROVED_BRIDGE_PATCH_PASS')
+          PY_PATCH
+      - name: Test approval isolation and preserve existing site prediction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v177_latest_bridge.js
+          node tests/test_v177_latest_bridge.cjs
+          python3 - <<'PY_CONTRACT'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('data/site_latest_bridge_contract.json').read_text())
+          assert c['research_only']['V176']=='DO_NOT_PROMOTE'
+          assert c['site_reference']['odds_rank_weight'] is False
+          f=json.loads(Path('data/formal_status.json').read_text())
+          if not(f.get('connected') and f.get('predictions_ready')):
+              print('V177_FORMAL_WAITING_NOT_PRETENDING_READY')
+          assert not Path('data/formal_predictions').exists() or all(p.is_file() for p in Path('data/formal_predictions').glob('*.json'))
+          print('V177_NO_WEIGHTS_NO_FROZEN_PREDICTION_CHANGE_PASS')
+          PY_CONTRACT
+          git diff --check
+      - name: Commit only site consumer contract and display changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html assets/boat_edge_v177_latest_bridge.js data/site_latest_bridge_contract.json tests/test_v177_latest_bridge.cjs
+          python3 - <<'PY_STAGE'
+          import subprocess
+          actual=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          allowed={'index.html','assets/boat_edge_v177_latest_bridge.js','data/site_latest_bridge_contract.json','tests/test_v177_latest_bridge.cjs'}
+          if not actual.issubset(allowed):raise SystemExit('V177_WRONG_PATH '+str(actual))
+          print('V177_STAGED',sorted(actual))
+          PY_STAGE
+          if git diff --cached --quiet; then echo V177_ALREADY_APPLIED; exit 0; fi
+          git commit -m 'V177 guard formal current activation and expose latest model version on site'
+          for i in 1 2 3 4; do
+            if git push origin HEAD:main; then echo V177_SITE_BRIDGE_COMMITTED; exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+            node tests/test_v177_latest_bridge.cjs
+            sleep 2
+          done
+          echo V177_PUSH_FAILED >&2
+          exit 1
