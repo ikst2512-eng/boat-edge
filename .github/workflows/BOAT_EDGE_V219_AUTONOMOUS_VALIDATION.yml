@@ -1,0 +1,118 @@
+name: BOAT EDGE V219 - Autonomous Independent Site Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V219_AUTONOMOUS_VALIDATION.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17,47 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v219-autovalidation
+  cancel-in-progress: false
+
+jobs:
+  independent-validation:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout full history on latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install pinned site-only validation runner once
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          installed=0
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PYV219_INSTALL'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+          payload=json.loads('{"scripts/boat_edge_autovalidation.py":{"sha256":"fff35187b54a86d11f3a1025884d7b631efed3d3d3f16115b9229b907f65bd7e","base64_gzip":"H4sIAAAAAAAC/7Va63PbOJL/7r8CO3NTlC6S/JjL3Ni32ipGohNObNGnh3MZrQ9Fi5DFNUWqCNK2ksr/ft0NgA+97N2q8weLJNCNRqMfvwbw81+Oc5ke34fxsYif2GqdLZL416Offvrpg2ePmdP/6DAZZqKdxNGa+XmWxMkyySUL40CsBPyLMyae/Cj3szCJmcyXSz9dd46Gwg8k8wZXX9kqFbNkucozEbTgJXkSsR/PRNvPA+AcEP8qjyCZ5UvgK1uqKQVWYSykbB35ccCyhWDzJF36ERuN7fFkxBqxeBKp+Zj56YNA4lTIPMrYPIwEvK38dZJnkiUpy+MomT0ykH6VhDBOs3M08FDMIJyhBC327D+IVJK0QU7fmB8kK9Wox1FcWshQzpIU5VTTpFl0UIdH8zRZMs7neZangnMWLldJmjE/jhPVTR6ZT+nDyk+lUCSzJIoEjSsNTS/J40ykqj3wM5GFS2EazXuL4f9vSayfAhFlvhli4ctFFN6b13/IJFbcVn6GDYbZDbyaTqk4OvpjNGbdgnGj4NtYJHkqu+fN5tHt6e/v+Y09/gQdLRDGP8aV45kfRlwuQHXP/Am6HJer3MHhLSA8P99BWNCcn2/TXHrDa/uqTqXWhEvQai51v6Fj992BMxrtGGDlr0TKZbg8LqyLP52dvuezPE3B9jQLbzLeQYxuAEKFAUl1XCe5cm6dqxEQNKxfrRaz3uO/0xOredS3xw7/7HyFtlR00FbAMhup9b9nJ38Pvv/2ow3/z/T/f4P+o0/2Vtep356ftM/vvv/2H9Tn6CgQczbz4yQOZ37UAN9pXhwx+EsF2FzMGihVJ8iXK4mNLbB6ibboy1kYdi/9SIKpSFhq/ijWsjtOc3wXYIt+lsDqNqwWTuDCaraYH0WwKOC8iq7J3jHr77HV7Ih4lgSiYeXZvP17IVWU+EEjTZLsgkwKHTICjT2JCyazVIuJtoezhG7suOhBTeGcgZtQj04oOfpxQ1NVJjggY7eu3dHIHXwEWfEDdcrSdaW3/wzDEC9ccX6/zoRsNIt20A20k7JQbtkAAtUqXmZilbGGN3LSNElbbAKqhunqt1uwTvW8VzZ3cGtfuX3+x8gbVAXUEwxlGIPhQkhUK4RR6FVe3oc/nN64yk33IxaW9xmatMN3wJvO3v9GM+osxEsQPgiZNcwykSXz1J8JnibP2krm/jKM1oUp+RIjUZdN77RKVhCdIHSjld8nftYWwYNoo4u3V4nM2lJkWSQwiLcriaJNmUT5NnS2UAFqINYFB0Nyq5i2+RNgaaw2yPl5jakKrpSg2hSIkXXTKBhm04F00LDkbCGWPodEIcFprSb7S7eYR1XZNNWOv0L2DWsycP7nBhTt9Pmo98m5tq1mTQMcRlwJDA8jF7x76Fw6Q2fQw6eRYw97n/jAG3MdsS7h46eds9az3McD0+g2ox1TBFnqM1Py7Z9fMcSo5904HLzo2h73Pu3Qn46wKqlK7s9mEDNFAMOFksyYYsL+kbToI28yhKnZvR4G5sng88D7MtgxXJl5+Wzhxw8w0gHFVXovwTWjguat0t0Mvf6kN3a9Abf73g09TAa3ztC9dJ3+DvnCmPxGaXt6d8iCDBdYNu9PZ8CdwXjoOqOS6dakEOYUIyX3UqRPuJSQbmd6fa1Ldzga8553fe2O0To/umP+4cr7wCFrcHvQB+NRc3I/XDn4se99sfZL6Q7csQvLoxhyIL11BjYa4WTQ8wYw2nVVDTWJz883JFY2ok1Ey0smXHDiZOmXLohmX46dIbevIKEPyeQnV2OaDbhb7/PIOmi72FebEvAeD+3eeMOmMKSBe5ayQZyT5UQ24i/2brEolHsDsImF79jUGngcRgShvS8jS0VGCC/hPKTIWLolBcOAm7a9o5sOLUDXWROB5c7G+ySJqLUYDBQciZikb+7XV2GHPW8yGG/6Oqb/MsIDoggQ3wipYrwvRQQoCaFA0YTOtc8jG+oFui8g2+KvBHQc01OShg9h7EfELFlC7VHoBIIMrhjMnxaunMvOpdpKlTutRK8QxU+dNZs1insgeSy+gB4IjzyX9oLQqEKzLQu0twjT4Kpgm4F6nXkeRUs/my2wDzXD7/Ti9zv2V2adnZz9dnoC2PDwDAYQi8AhR5iH3FtH2RwwPzgNELKYwz2sGCwWCQ2I0PorDEmgtH1GD2cn7ff08Df1k8ePcfIMOfKwXDf2V8THHzDa1J1ut0iLql4XYSYP6nTxptX9BIFiNB5C6J4MKX0RCHxFMX68bmyORlJR7mjqgWGxNsEIEi6m1OuOCB6L/ILAmaLgnnbKP2Tfj7gIqkpobg6A7USOfUoffIMSABVOnNF2ztpr5AU5GqYJSBhFsK1pQorESeCHA3GlP7m5cnto8RuW+TNzQdmqOk6pPE4DiFagxWwRxg/wkACkSHIIuQCyozwQDPIAA8vQ+wihkJ1aMUPRXNuKicQUbzA4N1UhIwKSWjc3ixoJiig/NSEeYlGWJlGrVLKeYJJnYKbffxThKBJPajnUkpVqSCKM8iBo41TFLRO1yPemysLvpnqkuykxuitXJRbPb6I3Am5zePBDQuX/PA+yVFLi63JGCeA8+S9Mddcg+ycDip9aWbKyILVqelgHS/PkxOAClV5NQeYz6LK1VTnU/6wgnM8FFOoAoYigrXit/DCF5Ey6hAb6fZWXJlKqASr18CqZmUyKoq8EoLk4A+o0ycGPQJx/Pz05OS4yeYudNXUcr1j564MUytk5DMz8LcP8qPodrI2p6f0Y+ArcG6oWihgysajUTqSAMoY+ZLWFpL5bap8GZAJ4bN/a7pUNKJVQAmFcripWaFdsoUG7M3yamlqfe0OId7jLg9TcwRBoI3K37raVZBmwxBUCvGAnyBWzO4VY/aFUnooXoR70+48fBZwEeCZlTi5xqHY+KtOwfJMqLkEPvHfljSB4v00VSo7/t8lqc8XqtgCAB4qwsn6vocdpBTHe7SefvhUpKoCKmAaZpzsDEiGeOxpCoRxFZERC2/8O3Qpwd0eQrMbpR1ProNBMPS8Uk6qn6kp+gEXwI9Teq6mnBCcx1xMzNPh6mOZnNhRPISQTZUloakHoP8SJzMIZw22R/2Jqgxz3LduQtXELHqFoIFZRsoYMjamIYEen4LoUAqp8GX4TrFJcsL91GQQPVe6RMuHDf9Ir9kFhqc+vJ2WaS+LnJJXIBrTR0FpRof7d4920GpfvkPZkP0oKlyQ76qfK5721xYYpGbU+qReA3l2jVTyStNil+qpRmb9KY3oWxFWLUQqGpguUxV7coTKZzBQfUB01161WNwolo9gcmatEV0BTIN9LOd2kUlBUm1DT1I//CovC+AyTmsdsoFSiLkMIoocdjAvQsMFrB6vC4Q4wK/DFa+x2gYuqxLtQRl2M3Ym4DjPqFO3qAD8K8kqIqU4ABQQTKUK4tngKhfE8TJcQ3tWhFj894WcnL5gQlL2/hhFQzkJ3Wsy30CgX4WXKurYHE/uKD51b1/nCbzzIy5iKsdS2b2gTqU8ZQ/uWyhPuYDS5vHR7rjMY1wpb4NLHjU/rLbJgMIPKOpzxyuafOaQD2ajgqqGYaq4t9kImN1A+Ova12pHCXaq3wpANkLGdcysIq5576XeDes+a1phReN2k25PDK28/NHarnZHRwYz2WEIt6nOLcTVXjPrm/KbFKkduBa7R6YY29z5bu5HNg1AYT20OKP2p0zb8/uHK632GNRh43J6MP3lDd2yTIahz3R1mYHahQVUyg0TE52nyTcQaz6BJcHUsawygxTY3rlNl8hXzeMj9NKhtEqovFu3XfDdYaIHnod3NDfFLLUmt8/ZuhuJY7izQVoL6SNxedmwUvKjdGiO4FDDRlqXn18Ld/hSqaGujNFfqRcz2cWIP+6RL8EjH6Y+4O+g7Nw78A8dTPqvwGkC7ytY2mGJMhwdWfXcDEUO5PW8Oy5VG1/W+eyQyC24AfO1MYIR4vtx4NpLJfcyUkaizkZFzYw9xnprjR9qNcP574g4hAh3tNMtyf5Y+UA1UP4qrNesNPhXCCovecEZ1Elxlbj7tZV90eMsAVfepXIuo9dGxCyMP9KoMpO4UJCmXsb+SiyQzNtvUE60Q6pYN1nu9T3lHbYcd55utV6Kxo41sJcSbIzjZk41R/mk33qB/wGgYSg7GyAGqqXNICKyQHLNFKHX5CsRoqSY4ltcAKvGxxSo7Q/UoWY+P9asGe0JkzYECf83/ITN1OoKjHCwNv9juWDsM702GQ3Tgvv2V913748Abjd0elUvmpKio+vbmv5JwpJPehiUvxOwROPl1Yy6/buYhPF4N8qgyeO3ktdq0Sboldk1JG63N17JujXijdZM4wkSc8TKp14g3WrVLlAZDmyBq/ePk2ViJAqjwoePL4s7MH6NxswPuPccvDeuXr78sfzFnHlgDg0GptaFngB3wW7ew4oaNITo/L4nwGYnOzzeJ9O0aReRja2UDR41sTmrUqKrn/VZPHEIVMWaoZs22jmqWsPQpv3v2mOMVMgWuIMd7dHmBNmn47WnF6CyCMOgQCh61qvzwVPtix+n4jTccq/hfPRfn7si7gvjfr7IvLd+ATANaiyxBJwNT0/Ou2z0IEqmCu397dxXWi8FNJgR/Lm6uVKTFW0a0LBfMbxXvoPwLdl/ptzMd7AhgFRIVRqH/DjRY6RaLlwyAdQgQIwuF2nZz4xn6gijPHREFwLC4MQRF8TLP/PtIVC7SSZbETN3PYMoDDyN7y8Yrgcxs+zDxsgjvQ3X9DtQtZykepR2rRMX8Jz+M/PswCrP1a4x7ajuF2VSDEbcMJgH50GfjZPXr8fvj0xOUFpwUZIeinU7tYI55jMDrbeJ795kPmK16N3IJ2SpsQzhhUAIFWBayezHH64IAsyR8QQynz3yK6qVSWli6HEDsjxktpLpS7Wq9YBotztSZOg/XFx2Z2jhCQObX1kmKSN3dAVaPApQdAPalTSc8b46fIORhvmRDz+1UbXIlUjIZmAGfRX64RDGw0FOQrdaVLtfRHUq8KwfpP/wmdmTrfdc2DhMZEAJIYKFhwpsIqjia3681FsgB66Y7iFTgMzDCOIuG3Ao6qN4mH0hAVqJ0Ot/kA1VL6ftt5j5hkSqCsm3/BcMA7HxtQZcGdpmWsfLunaVuHepYTHfcKpcBUQw1lKnpXrsSRqWOujsDvUkpxY4nXdXDkiSgWpjEb9aO6Ol6nXgJZSYbtMO0feEON8Ng1PpWEW6JhHFe7p0RGTpsnHWWj0GYNtSLuaBIY/DkkV6bdbLnFFWohisu8dXnhVR1ZKSXe7vgNxeJLgw5HRllC/hgFrOFSwcrxNV30kvH3GTkWaKCK8ABvkpk+NJoGpNZQrBoFPcgU8A5XXMNuGOnD3QJ+oa+65VRnTp+ABBMtzesdhv5Q1oGlj5YeNfqWAe7Azap9FbXWhYiWnUtyJx0zxeSwnJFax6ITKTLMA5pMzkVD+BFeH+O9pUPDxOk6za4Fwzlk4t3LXIRnoHyNSV0l11NTj/IwNzKBDG75l5zB+8phzIhP8wa2KuDEAuWLYLA3LD+hIL43cnJBRbiVHqYLirxFnzgS8Ogsk6ezSpXcZ472bcwnifFWQ3YaQi0o7XMxNJ5CWFWt2en5wYxjPjYvXb+9AZOcdUoybp401XJp1Yd9JVET0LPCT2yW0WOCBy1JWJ06n43cEd5unq5axFGKy8QmdYCJtxNN4Hw1u4UQsE9DABXvM7AAAdFqd+ArMQgIKaBWZq9xka1TRHSDdgGht4LPe1OvsIValRiKMUubV8Qc43udwHJgWfwn74RhtUYs95Vbj6rYVo77j7Xrz7jbQGQk/PYXwrOAdRxjl7KOfi7ctej/wOtu9M/MzEAAA=="},"tests/test_boat_edge_autovalidation.py":{"sha256":"3a6ec29b282e94594793a709d3aa565db2cdc0c91a7f132ff7216249d2d578f8","base64_gzip":"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"},"assets/boat_edge_autovalidation.js":{"sha256":"017ad240139fbe6d329f0e78ba6cf8458fa1a3ac11c3f1721ab6aa7806b4aad1","base64_gzip":"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"},"assets/boat_edge_autovalidation.css":{"sha256":"772006976fee8d00ef29625996c593caff99bbe45c78c00759a2bd8518da7ddd","base64_gzip":"H4sIAAAAAAAC/21S3W6zMAy931Mg9aaVmoqf0nZBmvYqhjgQDZIopIN9qO/+JRQYRbuxbAeOj8/xKcc4eiffUAsGVig55MowNDTSfdAq1w12rMAEWZZD8VUadZeM7viNAy+y57fEABP3lkax7jMNjAlZPosGTCnkmAdhVqhaGbqL0jhK0sfbaTs6qJKBK2lJK/4hjVIHMJYdirKy9JqGM2AYhMFN9wuGkFwdp1wqi3POlWmgXoN6VrWQSKonaHS6zLzS+BJeLwum4wQDE62u4YeWRrDMB2KxcR2LxP11b2RLDWoEu4e7VYQLe2yEbKDfx+dQ98eIm8MhK0HTNd0CDPtL5xtGWKx17iphcatyuFbZF24i6QSzFQ1fRny01ihZLkvktSq+spUYyWIRyZW1qqHnDctAb8WbHDh7R70HGzV/ffX9aUlilV4vilcseDKP9o+X352WeqbNa3SH4ALpjBPSh1HR83wfC7mX2UE+TAPMyM2d02P93GqQg/pGw2vVPaFB/nQVGlxw/C1NKN5At7FT+LNBJmDvTJ5UT27OhcPw192Mkj/Wtr/q7a/i8fYfeNehr4UDAAA="}}')
+          for rel,entry in payload.items():
+              raw=gzip.decompress(base64.b64decode(entry['base64_gzip']))
+              if hashlib.sha256(raw).hexdigest()!=entry['sha256']:
+                  raise SystemExit('V219_BUNDLED_ASSET_SHA_MISMATCH '+rel)
+              path=Path(rel)
+              if path.exists():
+                  if path.read_bytes()!=raw:raise SystemExit('V219_EXISTING_ASSET_CONFLICT_FAIL_CLOSED '+rel)
+              else:
+                  path.parent.mkdir(parents=True,exist_ok=True)
+                  path.write_bytes(raw)
+                  print('V219_INSTALL '+rel)
+          page=Path('ai-simulation.html')
+          if not page.exists():raise SystemExit('V219_AI_SIMULATION_PAGE_MISSING')
+          s=page.read_text(encoding='utf-8')
+          if 'boat_edge_v213_shadow.js' not in s:raise SystemExit('V219_REQUIRED_SHADOW_PANE_MISSING')
+          links=['<link rel="stylesheet" href="./assets/boat_edge_autovalidation.css?v=219">',
+                 '<script defer src="./assets/boat_edge_autovalidation.js?v=219"></script>']
+          for link in links:
+              if link not in s:
+                  if s.count('</head>')!=1:raise SystemExit('V219_CANNOT_LOCATE_DOCUMENT_HEAD')
+                  s=s.replace('</head>',link+'\n</head>')
+              if s.count(link)!=1:raise SystemExit('V219_DUPLICATE_UI_IMPORT')
+          if s!=page.read_text(encoding='utf-8'):
+              page.write_text(s,encoding='utf-8')
+          print('V219_INSTALL_AND_SITE_UI_SOURCE_INTEGRITY_PASS')
+          PYV219_INSTALL
+            python3 -m py_compile scripts/boat_edge_autovalidation.py tests/test_boat_edge_autovalidation.py
+            python3 tests/test_boat_edge_autovalidation.py
+            node --check assets/boat_edge_autovalidation.js
+            python3 scripts/boat_edge_autovalidation.py --dry-run
+            git add -- scripts/boat_edge_autovalidation.py tests/test_boat_edge_autovalidation.py assets/boat_edge_autovalidation.js assets/boat_edge_autovalidation.css ai-simulation.html
+            if git diff --cached --quiet; then
+              echo 'V219_INSTALL_NO_CHANGES_TESTED'
+              installed=1
+              break
+            fi
+            git commit -m 'V219 permanent audited site-only validation engine and site dashboard'
+            if git push origin HEAD:main; then
+              echo 'V219_INSTALL_COMMIT_SUCCESS'
+              installed=1
+              break
+            fi
+            sleep 2
+          done
+          test "$installed" -eq 1
+
+      - name: Compare fresh site research and preserve deterministic audit report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          finished=0
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 tests/test_boat_edge_autovalidation.py
+            python3 scripts/boat_edge_autovalidation.py
+            git add -- data/site_autovalidation/current.json data/site_autovalidation/daily/
+            if git diff --cached --quiet; then
+              echo 'V219_REPORT_UNCHANGED_NO_SPURIOUS_COMMIT'
+              finished=1
+              break
+            fi
+            git commit -m 'V219 independent site-only prospective evaluation report'
+            if git push origin HEAD:main; then
+              echo 'V219_REPORT_PUBLISHED_NO_FORMAL_UNLOCK'
+              finished=1
+              break
+            fi
+            sleep 2
+          done
+          test "$finished" -eq 1
