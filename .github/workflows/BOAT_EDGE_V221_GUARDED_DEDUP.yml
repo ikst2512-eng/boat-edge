@@ -1,0 +1,78 @@
+# V221 conservative legacy workflow dedup: exact SHAs, healthy alternatives, fail-closed.
+name: BOAT EDGE V221 - Safe Verified Legacy Workflow Dedup
+'on':
+  push:
+    branches:
+    - main
+    paths:
+    - .github/workflows/BOAT_EDGE_V221_GUARDED_DEDUP.yml
+  workflow_dispatch: null
+  schedule:
+  - cron: 29 20 * * *
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: boat-edge-v221-guarded-cleanup
+  cancel-in-progress: false
+jobs:
+  guarded-dedup:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+    - name: Checkout current provenance and content
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        fetch-depth: 0
+        persist-credentials: true
+    - name: Restore exactly pinned and fail-closed audit script
+      shell: bash
+      run: |
+        set -euo pipefail
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        for attempt in 1 2 3 4 5 6; do
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          python3 - <<'PYV221_RESTORE'
+        import base64, gzip, hashlib
+        from pathlib import Path
+        blob=gzip.decompress(base64.b64decode("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"))
+        if hashlib.sha256(blob).hexdigest()!="d30e6c08f04f5b2c45961965c18ed4abbb52f21891c284a464a24e38d6539b04":
+            raise SystemExit('V221_PINNED_SOURCE_SHA_MISMATCH')
+        p=Path('scripts/boat_edge_v221_workflow_dedup.py')
+        p.parent.mkdir(parents=True,exist_ok=True)
+        if p.exists() and p.read_bytes()!=blob:
+            raise SystemExit('V221_EXISTING_SCRIPT_CONFLICT_FAIL_CLOSED')
+        if not p.exists():p.write_bytes(blob)
+        print('V221_SCRIPT_RESTORED_AND_HASH_VERIFIED')
+        PYV221_RESTORE
+          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v221_workflow_dedup.py
+          git add -- scripts/boat_edge_v221_workflow_dedup.py
+          if git diff --cached --quiet; then echo V221_SCRIPT_ALREADY_PRESENT; exit 0; fi
+          git commit -m 'V221 install guarded non-disruptive workflow dedup audit'
+          if git push origin HEAD:main; then echo V221_SCRIPT_INSTALL_SUCCESS; exit 0; fi
+          if [ "$attempt" -eq 6 ]; then echo V221_INSTALL_RETRIES_EXHAUSTED; exit 1; fi
+        done
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - name: Audit and disable only proven duplicate workflows
+      shell: bash
+      run: |
+        set -euo pipefail
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        for attempt in 1 2 3 4 5 6; do
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v221_workflow_dedup.py
+          git add -- data/site_ops_v221/workflow_dedup_current.json
+          if git diff --cached --quiet; then echo V221_AUDIT_SAME_STATE_NO_COMMIT; exit 0; fi
+          git commit -m 'V221 persist verified legacy-workflow cleanup state'
+          if git push origin HEAD:main; then echo V221_AUDIT_COMMIT_SUCCESS; exit 0; fi
+          if [ "$attempt" -eq 6 ]; then echo V221_AUDIT_PUSH_RETRIES_EXHAUSTED; exit 1; fi
+        done
+      env:
+        GH_TOKEN: ${{ github.token }}
