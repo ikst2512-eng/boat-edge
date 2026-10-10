@@ -1,0 +1,132 @@
+name: BOAT EDGE V200 - Sequential Predeadline V185 V199 Freeze
+
+on:
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE V133 Balance10 Wave18 FIXED'
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v200-sequential-immutable-freeze
+  cancel-in-progress: false
+
+jobs:
+  freeze-research:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current full history, not the stale triggering commit
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Freeze V185 first and V199 second with independent predeadline commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          model_sha='630c52003d490372203f80d6a8061e5301ec4f39f5a624e0882fa8180e8716f1'
+
+          for stage in v185 v199; do
+            completed=false
+            for attempt in 1 2 3 4 5 6; do
+              # Never transplant uncommitted research across a changed parent.
+              git fetch --no-tags origin main
+              git reset --hard origin/main
+              test -s scripts/site_v185_role_shadow.py
+              test -s scripts/site_v185_score.py
+              test -s scripts/site_v180_shadow.py
+              test "$(sha256sum scripts/site_v199_research.py | cut -d' ' -f1)" = "$model_sha"
+              python3 -m py_compile scripts/site_v185_role_shadow.py scripts/site_v185_score.py scripts/site_v199_research.py
+
+              if [ "$stage" = v185 ]; then
+                python3 scripts/site_v185_role_shadow.py --repo .
+                # Only *new untracked* V185 research files may be discarded.
+                # Never rewrite committed snapshots or publish a freeze too near deadline.
+                python3 - <<'PYSAFE'
+          import datetime, json
+          from pathlib import Path
+          p=Path('data/site_tail_shadow_v185/predictions')
+          now=datetime.datetime.now(datetime.timezone.utc)
+          removed=kept=0
+          for f in p.glob('20??????-??-??.json'):
+              import subprocess
+              tracked=subprocess.run(['git','ls-files','--error-unmatch','--',str(f)],capture_output=True).returncode==0
+              if tracked:continue
+              try:
+                  d=json.loads(f.read_text(encoding='utf-8'))
+                  key=d['race_key'];hm=d['source_deadline']
+                  deadline=datetime.datetime.fromisoformat(f'{key[:4]}-{key[4:6]}-{key[6:8]}T{hm}:00+09:00').astimezone(datetime.timezone.utc)
+                  valid=d['guards']=={'results_seen':False,'unlock':False,'scoring':False} and (deadline-now).total_seconds()>120
+              except (ValueError,KeyError,TypeError):valid=False
+              if not valid:f.unlink();removed+=1
+              else:kept+=1
+          print('V200_V185_PREDEADLINE_2MIN_BUFFER',{'retained_uncommitted':kept,'discarded_uncommitted':removed})
+          PYSAFE
+                git add -A -- data/site_tail_shadow_v185/predictions/
+              else
+                python3 scripts/site_v199_research.py self-test
+                python3 scripts/site_v199_research.py freeze --model-sha "$model_sha"
+                # The V199 model itself verifies a >2 minute cutoff before freezing.
+                # Validate remaining time again before the Git commit and remote push.
+                python3 - <<'PYSAFE'
+          import datetime, json, subprocess
+          from pathlib import Path
+          now=datetime.datetime.now(datetime.timezone.utc)
+          p=Path('data/site_shadow_v199/predictions')
+          p.mkdir(parents=True,exist_ok=True)
+          kept=removed=0
+          for f in p.glob('20??????-??-??.json'):
+              if subprocess.run(['git','ls-files','--error-unmatch','--',str(f)],capture_output=True).returncode==0:continue
+              try:
+                  d=json.loads(f.read_text(encoding='utf-8'))
+                  key=d['race_key'];hm=d['deadline']
+                  deadline=datetime.datetime.fromisoformat(f'{key[:4]}-{key[4:6]}-{key[6:8]}T{hm}:00+09:00').astimezone(datetime.timezone.utc)
+                  valid=d['pre_result_guard']=={'results_seen':False,'unlock':False,'scoring':False} and (deadline-now).total_seconds()>120
+              except (ValueError,KeyError,TypeError):valid=False
+              if valid:kept+=1
+              else:f.unlink();removed+=1
+          print('V200_V199_PREDEADLINE_2MIN_BUFFER',{'retained_uncommitted':kept,'discarded_uncommitted':removed})
+          PYSAFE
+                git add -A -- data/site_shadow_v199/predictions/
+              fi
+              git diff --cached --check
+              if git diff --cached --quiet; then
+                echo "V200_${stage}_NO_NEW_ELIGIBLE_SOURCE"
+                completed=true
+                break
+              fi
+              # Never include result, payout, formal gate or workflow changes in this commit.
+              if git diff --cached --name-only | grep -Ev '^data/site_(tail_shadow_v185|shadow_v199)/predictions/'; then
+                echo V200_DISALLOWED_STAGED_FILE >&2
+                exit 1
+              fi
+              git commit -m "V200 research-only ${stage} immutable predeadline freeze"
+              if git push origin HEAD:main; then
+                echo "V200_${stage}_PREDEADLINE_REMOTE_COMMIT_ACCEPTED"
+                completed=true
+                break
+              fi
+              echo "V200_${stage}_RETRY_${attempt}_CONCURRENT_MAIN_UPDATE"
+            done
+            if [ "$completed" != true ]; then
+              echo "V200_${stage}_COMMIT_NOT_VERIFIED_ABORT" >&2
+              exit 1
+            fi
+          done
+          # A succeeded workflow means only that the safe attempt ran; never infer
+          # that any race qualified or prediction accuracy improved.
+          echo V200_SEQUENTIAL_FREEZE_COMPLETED_NO_ACCURACY_CLAIM
