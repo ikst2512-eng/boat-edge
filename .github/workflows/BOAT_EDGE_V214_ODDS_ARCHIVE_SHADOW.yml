@@ -1,0 +1,168 @@
+name: BOAT EDGE V214 - Freeze Original Odds With Prospect Shadow Diagnostics
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V214_ODDS_ARCHIVE_SHADOW.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: boat-edge-v214-prospective-diagnostics
+  cancel-in-progress: false
+jobs:
+  prospect-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install forward-only odds archive hook and diagnostic UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PYV214'
+          from pathlib import Path
+          import hashlib,base64,gzip,json
+          FILES={"assets/boat_edge_v214_health.css": {"gzip_b64": "H4sIAAAAAAAC/y2N0Q6CIBhGX8WNa5uYacJj9AQgP8giYD8YVuvdc9rlt33nHCKhpd0ti7ykTxRKWW/YGNeKNnHlMqACZHTbKTirKjJppUFyKaa7wbB4xYg+66uWfAouICPt2Ml+4Dr4XCf7BkY3mjvroZ7Bmjkzeur/4hqFsktiw/Z4CDTW7+nmiO+KcjD9peHhCahdKHVBEZnwrzIDwvcH/ViahsIAAAA=", "sha256": "8a9af837196cf8ba49edafc8e64ca36c54771b1c465a561bb3464c5ca1c24d42"}, "assets/boat_edge_v214_health.js": {"gzip_b64": "H4sIAAAAAAAC/31VXW8TRxR9z69Y1KqzS5wNoSBVsVwExEKR0gQ5KVKF0DLeHePB6xl3ZtYhsi3FTmnSCkRVpEKVVE1aWqVRCV8poADhv3SztnnqX+idXdskbenLyt45995zzz1zd/SoceH42AmjIsiIIDLwlSF5IFxiFAn2VTFlSFLBAitiFAQvG+c/mDIw84wCF2XsG9LlgrIrtnF0dMg0rczHNRRIYkglqKtQeqgQMFdRzgzKqDKtmsuZVEYFM+JnPO4GZcKU/XlAxMIs8YmruDDRe/HxiCxij88jK00L5pH4Vb3+zpA8gSZmFVaBRJYliAoESw8l1fJvK7mCQCdZn+h/JvJoFfLnbepl0MEM8Mr1sZTTuEx6JyNycKTINXWWMwUpMqizuhN9dTNcWg6XXoat12Fzu31vrbv5svP10/aTZtj6tvPTbnfr5v7z+38u/orScR82ZZIIdYaAiMTMp5KX/2jJ1mU/jMvqltJDWC4w1xgIKkgB5lUETZVY6OkqMngeU2UUiHKLkGLUwwqPSqqIU8EVIhxJy6Mw6YJPrxSVU4W+HDcQQktzVXJ2ChoangCFbMbnTStVc7FbJOOIceABXFEjmYaweclSRcHnjawQmu2JYydAyYRFtcdCxDnNOKRqS8hUxkcyGXRm5vSck504l3W085zzuayTy85+OjXnTEyePjc9Mzs3eda5MIbqdR3FK0QHzU7OZZ2Z6anPDuKnZ/q/ctnTE+gwpaQgsOrZgGWqNowfKDkuD5iS9XqtkfaJMsqY6sN5ysBwjsAukacuJ4M13q8dPmjkjFED5tt9trH/fLG7vAMIZleJoAVKPCcxrQN1vIV6/Vgjd3kcdW7tRWub4WKz82w9WlkeOxkurh2PVr7UvmluJ/6IHux1H22Eza2weQeujRY5kcwLfOIkN9JR3MMLVswWRa9ut+/8Ei3vdv942N3Y1L5b3Wl/9zDaux42N1C/aaK1kJmZ/FWwlQ1zFpRIk1l2gfqKCNO8WLoEt7akJf7PJpBlSy6UaeJUHoD5i2OXRjA8rJhkkt72CbuiijGz4Qz669Xa/vOb3adPDDTcA5RxRZdKVXUxsyYZrsgiV06ZSgnrYxzt7660l56017b2X/8Q3b+LUgMIDjyqNCWngKlPvD62s/pz+8cXOiIeA0S4sKXcohOwEriXOVw4eZ+7JR3S/n09Wt/pX0XN7S2+Jy5cNJ/0ke2l69H6o7B5I7p1L2x+gVLc82RMAhiX4zBIP2AftrbCpaWwtZsY4wCpOE7RMtH4XiXKqtin3oGw9vetaOUFEHvT/C36ZqVf7hCxAfgAK8bBlPMOqTou7GQKt504HznHT14bR31DbXcfPwNsZ3W7Z64GTLxeL1nDaBwNV4dRDiZ8lVNmIjC2vi2HF5yeabrh6pZNYtX+f/slq08X3bz75sbjxIvhYgsESbSHfQj9tdcBA5Z9AMbt3IOG7oTNvbC5GrZuAxilG42hwXZLv3Plwy7LJShknbKx52WrAJuiEqiBs5HrU7eEUr1MVrqhDTvIFptbr3uSAev7HHswSWQNzv+db2Lmk17fU4AmHkrpb1qqxplLxpUICCxH4sPHL/nUpYcaln7+DXfHP/RhBwAA", "sha256": "9a5f34c54e9a6515f6f5adeb62cd3fee1ec73c181195686116b441ebdffcbc30"}, "scripts/boat_edge_v214_preflight.py": {"gzip_b64": "H4sIAAAAAAAC/4VWTW/bOBC9+1ewLQJKqCI36e4elOrgbdzURZoUiRugCAKCEcc2W4kUSMppGvS/75CUHad2sLpIHM68eeR86dWLYWfN8FaqIaglae/dQqu3g5cvX14dHvxFWgP7BmxXu32t6nsiJJ8rbZ2sbE4ugAtLDK+A2GoBoqshIzOjf4EiVvHWLrSzhCtBrO4MasFSClAVap2Nr8YXJCLbHL0NZNNq44jgDpxsgHBLhMvId6tVRlruFrW8zQg385YbCwN005BbzR0DMQe2RLLMLrjQd6RHQkbVj0x0wGbaZLXmIrN8Cdmny2n2dfp+cPn+4/jzqKT/no+mbHx8Mmb+xOzLxZhdjC+/nk7Z8WR0cnZ+OZ28Z1cHdCBgRngnpEuM1i5T+i4tBgQfpwW/L3Gdc+u5/9IKEnST5taZmZckdO/bXrMnaBoMpBLws/SUAtSQ4qn5MMDk/sA0JdqQh99R2bLoAMGSYJnPwSXeBmhGaZrmBtoao5DQ/SAoy2AQrEE5I8GW1zdHeN0cwW25Ap6tseM5/IN3RZagOkCSZMNbkFmaXd+kj8org5ACqB+Uor4X7VL3zw+4L/3+oyZDUaB+RDBgZR+0BKXZo6LAdKul6g+9hYrHUdp5+6LSykmksqVTw8yVCars++jlTjteMwuoL2ySDv958xzq4bvS274rD/5+Hr0tN6JppQOG5SNk5aRWbF0QdOjP9Zr2kX7OY5tjcGayhiQtYuBKusJgjbRWqjndMobawvaF+4dXFbQORNaDhfKImdyGXN5phWRWhmsWSzByJkH09cZQLu63qfTZdh3fN2W/DrGM39mb9PXB9hFixua8bUGJ5OExQQqfDzETabGRa1GSZo8ZUuzImjTbecLNhzYYVweW+VgjiO6QgP/ODhA9kqb9PfyOF2bAdUaRB+o7YMNpEdtKhmvdIhF6OZmO2fnZ6bfNznJ2vvq6GI+OMaF9MbPvFp2GenxKla66K4t9NNYsLVbVm9E7rFQfiVB0RQ0q6W9xTZtVeBhMvp69/cODgQotWMShRW99Xbw9vMlojW2N6VsLZolR50jS9zppNdZow13yx81STF/GWYtUF9wC04YFxZrNsOEv2Nw3rmJqOvgdemrDpUr6NsHbctXi85GZdw0y+eJXJkmPeJtzgQR6Oba7fZ+/NEMUjoOkpDndqYV0+0LjJW4HeK+ANX/kEcp+vuRf8J3w3Mt8V7W6XmL9Bcv/HzhxMHld9FeGFWL50gpl5L9CfeJcy1djzgsTnEbpYF36iGfJGY4QTGKJ2pf31kEz/olzh4YJNTm7Gp1Ojtl08nncH8vz324+vAXDrGyG2IZmtZwvXKRddcbgzcQGdKRrEUeRB3kyeNBt+cfACxuvyGippSDYCK3jypETieNWN43Eca87Z3HKx5kQ88ke+f+IkD7E5xLpLMy6euNnIh9sdD4k5Fl499dPM/vGy3E7VvaTrfTJ1rqc0hdlxFlLnmLsrqy11e7tm8cOi5QRK6oX/vci3GLml31kjFSrwGED+HA6Ofk43WwFvjXQzIciF13T2sTbZqBsZzBHbSVl+YFj1uDEQ2eMKd4AY2VJGfOFwxgtYgEN/gN4uwwGywkAAA==", "sha256": "647f250a94d94fb18221605354e4f0259725043a7c62948a6e0676e350c76aa5"}, "scripts/boat_edge_v214_shadow.py": {"gzip_b64": "H4sIAAAAAAAC/41a61LcyBX+z1Nod+OStNaIAa9d3gE5xdrjmMQGCjBbu+ykqxn1MFo00kQtcTHFM+Rf8idPkIfI22yeI9/pi9RzgQ3lAqn79Ln1ucvffLXZyGrzIis2RXHtze/qaVm82Pj666/Ptre+846Oh73j4cnnj6deNps1Nb/IhVemqfTklKflTa8s8jvvbw3Ps0k25nVWFh4vUu/o8OTUHqxEXZVyLsZ1di28y4qnWXEZbxyUHh/XOLk553NRefOmGk+5FF4mceQyk7WoRLrjZUUq5gK/itqbVOXMm5TVjOfe+0rIqSIGTre8C15cVWWexxunU+H5k0qIL8L35grlwfBseAysPCXcsslrb87rqYw9X4q6zgF4ePDxJ68EIQshiZA3rzL8Bt0vovDAQpUJGZN6NrLZvKxqj1eXc15JYd9TXos6mwmPSy+t7Sq4mObZhX39VZaFfZ6BEftMTDlgldjY+Hz6NknrmFB+KQsRN/V4488np+5aYJ5Tkdc8mJZNJZPvw3DjL8OfkkrE43I2z3IRVP5ft/u/pPevHnq/pL+k6tcf/HDj7eGnHw6XAM+3eq9GPec3AZ68/TD8tJf4PxzunbLhuz8NGTT/gh0dH54cDd+e7p8N2cmHvXeHP7KzLX9jIxUTLy95GpBU4WDDw09d3Q1gD01VKB3EtC8VQEy3w2pxWweiGJdkI4nf1JPeax+i0FlxOxbz2gsOT4ZVVVbRGc8boR5Di/MA2tCEJb8WCm9UXvxqiCsyuCxcYzy7SrMq0C8yOa0aEYlb2Bwrr9Rb2J24qbJaaM4Uz2kzm8sAaCMYS1MJxuU4y5L3PJcikrg3diXuDM5M2W2yHT73fyn8aEUyzawyoEA6OlIP9MPpoq1NxWT/mSyVB9SBrCscguLmOR+LwP/Zj/zn/f6g37cqox+jGh5z2RoMjCr0sgkW6y9ZMSk9kZOXkPZcTZ/ezcWyrqPDa1FN8vLmMc2njWBgMIASonFejq+MWCBXlLUHo4wnTZ5DgPFUiQDAMPTgZbQNM+x2K59sdEC//IhANb5Foktm5aoLR+b0QCTOB69Hz9X5yH/207PZs/TZh8GzT36nP62KBM4VLuvK1UqnilXZyc0rfvOIxZsgECN0br985Vj9xV0tZBCG8VTcptmlkHWwQNJY/Cq98VSMr4KqLOtI2XpR3hiykDhRBBBGZ4/rn3Tvoo38CqogA2ZZcY2onvrqsEw6T3axZTIrZM0LqE9GaTau1UXK+FLUQYvKD79K8GeRjiz4XE7LepEO0JrD7f4NfKi8IRz++/2DvY9s6+Un36EyR5YAYWQedgVQBXiyfzpkx8P3w+PhwVuEqa3tbf8R8pCCiTy7zJDZWh54cRcY9JcNr1LpR/cPoVq4CilBkezK4VWSuEKS8iCvzhtMCgFf95uCrA0PclxWcHo/XFI1OGf6DFNU2IQj/FqNI4CliYkMRiW0xHgNRDvkZonragYmhT3lWSFsBDD3pI5aH8MxpT9aewOT6V4I4yN6In9YvKumqLM8CXCkR3YX12XNcwg/LgvE9HDzVd/lYHs3UQd2k62XiyTKppZZKlgqxjAnXKO5cfd0f1cTUmyuIwW0rxbR0sVOsoLnWy9XUIHfR1DtJq8QQderAIZubYQ3aVZrnyDv2/QRc/impETh2KOC8jeVHxZ8JpRz3D8oDNrPk4WI0ZofnTPWzaX0W5OjnEI4HIAcwQ5pq2NSBRfyAk3hEVkUBgJeNLpxRWFhvWBmU0h2vfV6+xGxVEQiW7Gmqw9pXtWmNeHW312IpZChLNPdvyCXAreLTrgkoz7AmuIK91ywsmL22OM0x+R/EqUTnnHPdSNVICmvfOs1rWR2wRpSu7HGmL5fMSbDXEfKmtQ33l6hS2uyCe/H/dMPh59RdqMQVbEaEcTTp7wJbswqANkYpTecW+/1NIdAExusVMcPnOqdkk1P3KL21tTGfA7+gGDeVemo6W+mKHjPtl680MWvV6Oq7kzbIn8PXZQ5iBu7kpGXU5WvMKO48hqpiKrq+mZKfANRVpnS30O9SIIg2+a5p5iKTeIjTmAqsNDEhDbC2Zq3glIrHG0DSCZP+GHLnb+psVxDJ/7mxL+HjT307l1qDzEVeX6Hn8w8cSmRAbnvcSYZ3UgQ6jJqmRGCdbxFY9Yu1hJwXQiLjgOVWviJINdbch0V2dcoh5DZwNKR+GqtIgfLhaIJygaGod5U5kduhGdJiczSLx91WrOjui/lSGgkme4H2dHn47cf9k6GjIyidS8jtTqsH9+oCP0UfyongS/jTMuVRKAQ9Ay6Fe98s+KcWugVz+R5ri4xMVKhCZzAXri+WffqqvJGJjZdz8pUOIWDP0UuoDcNbxbrDIGpNljORwqL0jeS//loh0qJBC2qqQep2IBJzajeIFqdclbrMYLTJdkAAtdZ0YgWGp3eRZkQhAnM9O6HOwgBF87yHEuQ0VnREj9BVWGiWr2t6FV76ZScCkLt5qIISDa1Est5noFCD/YNg3lBAGqDZCU1rEpBqzFPU4PyCa5IrihA18JrtGR11244MBBtLQj153BxlBJQg8L0yBYQrFF1W3XQyd2tft8efr1LUWU32X65egj14iWVLok1PaX93xXTHluRg19IvdSChD3zDqbDN/24v4aLb7xjfkNp4YJfZLicTOiYfnB4iqyBTgapTKSxNzyjGM5R0vDLokQsH3sVL64oYdF4KPIKgSwFgHbEI7NL8BC3lBCr82wGvqo7Jq4TIvktONuEulxxF8HeJFsxaknjLTGf05QouDfGPNCW6M8ZoiCbC/h0UaMJKBsAKXv4LlwowZVpm/1ON9F2SD3RDeihoOik7jC5LAHnw0J0NswtV6bMYBzzIs2oXWWv2fbLW3/B/WmUINLAvEbU0eV8dpFy73YQ9G7P17I1irChNTAKw/PBCx1SDP37LlYPqGno2oWBPO9eRt0GJZwBKu+4GzuEUXsn9ONfCxgNEOgIod8i/7//+vdvf//Hb//5px+aprIoWyD7voyKQmbOEMKJneXGbuSWr+BKRfcn+FouiQe6II4W8h8Rct9Hy0hMveaUroO24HuCuJ4/KnDUiAuAvqkvB76eoTKyW0qrSyjITAQSFhKcmpAy6z7+QM2W2txhXSCyCMdwQnaHJnQAB/qWwqyBCB+ibnhQCRoyBmaoGUkYY0K7piTQg1FkId3jCorDBpasW5xbOUZJYgmbM742OiNXIptZsBbcCr5CQPsQidEeXpJs1J0xREPH0KU+ZtpmfVTvqMNRP3zkOHL0759903+SOLxMQtkz7g/0xFRNAOa4Nt8dlVL1wxBK2dHe0fC4q4po6f3h8ae9j+w9KqYPrVn4Y5R0VJdcCX25fcQvZRh29s3EhAqT5d0mhSwUAlnK7/Tmyz5+WsRGCEZuCXMyeVnJBST6kuymeY18PRN3z9jLa/FO0JzCAtn0bl6i7Ie9Uv3VCUC3Ga2HcjRugqdcQVteSFHRSKQqs+UIT4Zvzm0qMttq4EmP3bCzU4C+Zty+lYcMQXtqJjVHl4ivuEK6nr0jXOTZ8B37tH/AiJOT4enpR7w799tdGzhTvl9QiSrVwIl6JOPU4N34s4XPOfXz8EYEJ/zW5SJiqNDy5WAoqCijSmQHo/Pz3nf9AQL+g3btGc+KwPgxnyf2G0W8V102Mxw5orfKFJV8TkUUuhm9Z6v2aDwtM+giObcfUyL7sYSYodiBFLMeQ69HTZAfgReO3Jr4sf8oZEHDPb2ZYFsxSgCo0HcIS2I+isRH+BvwmNZoaCvL/FoYEYDDtEs8plmUnm3TaEvdtTsTxmI30jVZGmuDimeAPLmjeenwlirR/YOzvY/779jp/qeh4fACilltNNU9ymym0ze85lJUCYFuWsO6pu8kesNpL8dNRZ8f1oCaHbcVzVPdMmosuolYiTPGGvzB+eihbdLy1MQyDYziWoOvq4EtrEUURmRu4RrtmC89H+k70DEzujJqMqcToDtvUY3sXBoWJZYbx5UMMLLsU2ChQ2Db9gvq9Qme3n0++rj/do9GwHtv7dUpi1CWjfxjDLprn+oSoTGhTO1M/tWXALQyE/UNwXw1cLofeZXNZXL/sANvzMQNcmV/R0fFpCtb1UdEWK5KFrqiC/6vUQUaxLy8CBRnz/3eH/+If9ogQqdpt5WxHfUTGdLPajWvIOkDRzfJ16Flxx0lt4gigl0/U15qQMw42Qx5n5oHq9nvWsasBp8nW0vr47JKI9RBEDxZ97ljmSN9YmA/1ZquQK+GO6Qau9aKGppbWyZOsWOgLvlcMzBK1JvSil5BNfC8O6RKqHtfz69tJrGioe4XN8x4uSboD/RfBFbgZRoljigqkc8lKycr9ePDcgNo4or6fAk9e+33alUhm4ARwRc7XYGTZE35t9Jb2ji0ipuerGTq9sWNGVS5ZQGcNlDmZhAtzj4WQRdtWrFuTkVAHjq9YkaJQ316Ng6POmn4s50vnbDPB8fDvXd+5HytJenWfK61X5bzhehgstzAVRcqzwahetGv7SjG6HDFK7u5iTNSXqp91/sDuaROaB0OtyULyWYphq1AdY3H73qrBrVvMLM32Hy+8J8J0Nk2NSL5dviY31LvvP57gfkc5m8q7s67aD967ttA5szOFlEyZwSqVx6bgy74fgfoDiWX6Wvj7WCd24GUk6yC+H73RbrlpzunXncTrcH1qkEUSFwidmpIYzZ+Vzb12l2m96jwVRX7Fn3MX3ePTtYGpScnbthfN/DSlKIA7hSpgYe+Dr28m/TXiyV4VdBwAj2SmYAoeJ3Ba/IGrW3bnI6I4bqdSSQJcbMoENluM6cKLdA3sdJPRjhUUBOiB5ckcDmZZOMMCcYozCiLFJcYyRaoeN5KL5doWSLb/vA6We7VzW13Vpc49+9CLorUBgw3pdDF2fU1wc6J0zsL0W8pUD8RULvOIQyfDJi6X9Et6NHx8Gz/8PMJHt8fH/48PPCjlk0bHpEHNRYnpC6yFa77zzDt/34JNzYgPWP0/YMxhFjGqEVhjGYX1Kps/A/R2v8miCYAAA==", "sha256": "209378d6b818489f89557c06ff8ca5cd680984ed5a0fa1967a921368542a50d8"}}
+          PATCH=gzip.decompress(base64.b64decode('H4sIAAAAAAAC/5VUXW/aMBR976+4y16SqaRfax8QeWAt01ApVJAiVdNkmfiGeA1xZBsorfrfZxtGoJR2y0vi+Nxzvw8AwGcYnp58JZ3e5TXpXV0NyKB3179s1SEVck4lq4kiX8BoobGGjzTRUE5lklGFNc0nCIIxBTjjDIsEwwNwjHGGCkGZnwmVCqg0By0kMhhhLuYw6DZvB6AE6AyhlJaZK82LMQxPzs5gzDVQxlZk5XSUc2UYLXoCVIsJT2hugppznTmKnGpUJjIpVImJ5jM0t6kUT1iAKmipMqGXsZGZTdYGTUqqs8hmfJR6zw+4eAl/K1F4GzCV0ciah2PUvueMzK/T8wsvcCieVkCgBXvNHnJFUp6jH9QdvmIe5WIUvUZLpIzYQis/WOOND1PsLOejcOnbrxiCMMNHxscmdz+IonUslbfKIxNJ5BzYJP1XrgMQEp5ftsy0XGzzVFzzDIuImZrbCQhNnSdcCTMuE6p9paW/9rgsXIo6yZARqr0gCPZwKjpD9h6pbcRPz8Es06+9TDOacxb5O7dbtVhGJmmCxLTeM9UzL9vDfzEr7fhbG++23yL91uCuE5NbszU/moMW6XU7994HVLaCoX7iRSqAKyiEhq4o8AMrl/z/m1lnjWiDosHyvSbHjcjfgNYqiiDUQtOcKExEwcyMNqKT8y8Xxzs0243BxwRLDf6Q5lNsSSnkYbwoV1/XuHAfQf3dZn6nucItxHr1HGCf9UqBIqc3R8sNthfe35WvPa+XZnP99zKFpdGyQoeTB8alvzyoKJZTPHQSRsSDO+3OZqUVKyaHV/4bmb8J3xSHT1GlAW+b20dSbkS4Py3sQrkq+56T+qXKt69al80+ad/c3MXNb+1OO74nw3av04zbva63mwCaFtTfG85VoHPJNa4i3ZCqgz8zaOnabAYAAA==')).decode('utf-8')
+          for relative,spec in FILES.items():
+              f=Path(relative); raw=gzip.decompress(base64.b64decode(spec['gzip_b64']))
+              if hashlib.sha256(raw).hexdigest()!=spec['sha256']:raise SystemExit('V214_EMBEDDED_SHA_BAD '+relative)
+              if f.exists():
+                  if f.read_bytes()!=raw:raise SystemExit('V214_ASSET_CONFLICT '+relative)
+              else:
+                  f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(raw)
+                  print('V214_INSTALLED '+relative)
+          src=Path('scripts/site_final_history_v133.py')
+          if not src.is_file():raise SystemExit('V214_V133_MISSING')
+          text=src.read_text(encoding='utf-8')
+          marker='    if write_if_changed(SNAPS/f"{key}.json",snap):'
+          if 'V214_LOCK_ODDS_SOURCE' not in text:
+              if text.count(marker)!=1:raise SystemExit('V214_V133_ANCHOR_MISSING')
+              src.write_text(text.replace(marker,PATCH+marker,1),encoding='utf-8')
+              print('V214_PRE_RESULT_ODDS_ARCHIVE_HOOK_INSTALLED')
+          page=Path('ai-simulation.html')
+          if not page.exists() or 'boat_edge_v213_shadow.js?v=213' not in page.read_text(encoding='utf-8'):
+              raise SystemExit('V214_REQUIRES_V213_SITE')
+          text=page.read_text(encoding='utf-8')
+          links=['<link rel="stylesheet" href="./assets/boat_edge_v214_health.css?v=214">','<script defer src="./assets/boat_edge_v214_health.js?v=214"></script>']
+          for link in links:
+              if link not in text:
+                  if text.count('</head>')!=1:raise SystemExit('V214_BAD_DOCUMENT_HEAD')
+                  text=text.replace('</head>',link+'\n</head>')
+          if any(text.count(link)!=1 for link in links):raise SystemExit('V214_DUPLICATE_ASSET_LINK')
+          if text!=page.read_text(encoding='utf-8'):page.write_text(text,encoding='utf-8')
+          print('V214_INSTALL_SOURCE_ARCHIVE_AND_DIAGNOSTICS_PASS')
+          PYV214
+            python3 -m py_compile scripts/site_final_history_v133.py scripts/boat_edge_v214_shadow.py scripts/boat_edge_v214_preflight.py
+            node --check assets/boat_edge_v214_health.js
+            git add -- scripts/site_final_history_v133.py scripts/boat_edge_v214_shadow.py scripts/boat_edge_v214_preflight.py assets/boat_edge_v214_health.js assets/boat_edge_v214_health.css ai-simulation.html
+            if git diff --cached --quiet; then echo 'V214_INSTALL_NO_CHANGE_PASS'; break; fi
+            git commit -m 'V214 preserve original pre-result odds bytes and diagnose shadow source gaps'
+            if git push origin HEAD:main; then echo 'V214_INSTALL_PERSISTED'; break; fi
+            if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Check actual pre-result source gaps
+        shell: bash
+        run: |
+          set -euo pipefail
+           git config user.name 'github-actions[bot]'
+           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+           for retry in 1 2 3 4 5 6 7 8; do
+             git fetch --no-tags origin main
+             git reset --hard origin/main
+             python3 scripts/boat_edge_v214_preflight.py
+             git add -- data/site_paper_sim/preflight_v214_current.json
+             if git diff --cached --quiet; then echo 'V214_NO_CHANGES_PREFLIGHT'; break; fi
+             git commit -m 'Check actual pre-result source gaps'
+             if git push origin HEAD:main; then echo 'V214_COMMITTED_PREFLIGHT'; break; fi
+             if [ "$retry" -eq 8 ]; then exit 1; fi
+           done
+      - name: Freeze V214 immutable-odds shadow candidates without results
+        shell: bash
+        run: |
+          set -euo pipefail
+           git config user.name 'github-actions[bot]'
+           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+           for retry in 1 2 3 4 5 6 7 8; do
+             git fetch --no-tags origin main
+             git reset --hard origin/main
+             python3 scripts/boat_edge_v214_shadow.py freeze
+             git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
+             if git diff --cached --quiet; then echo 'V214_NO_CHANGES_SHADOW_FREEZE'; break; fi
+             git commit -m 'Freeze V214 immutable-odds shadow candidates without results'
+             if git push origin HEAD:main; then echo 'V214_COMMITTED_SHADOW_FREEZE'; break; fi
+             if [ "$retry" -eq 8 ]; then exit 1; fi
+           done
+      - name: Keep daily 50000 yen paper simulation running
+        shell: bash
+        run: |
+          set -euo pipefail
+           git config user.name 'github-actions[bot]'
+           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+           for retry in 1 2 3 4 5 6 7 8; do
+             git fetch --no-tags origin main
+             git reset --hard origin/main
+             python3 scripts/boat_edge_v211_paper_sim.py select
+             git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+             if git diff --cached --quiet; then echo 'V214_NO_CHANGES_PAPER_FREEZE'; break; fi
+             git commit -m 'Keep daily 50000 yen paper simulation running'
+             if git push origin HEAD:main; then echo 'V214_COMMITTED_PAPER_FREEZE'; break; fi
+             if [ "$retry" -eq 8 ]; then exit 1; fi
+           done
+      - name: Grade previously frozen shadow outcomes only
+        shell: bash
+        run: |
+          set -euo pipefail
+           git config user.name 'github-actions[bot]'
+           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+           for retry in 1 2 3 4 5 6 7 8; do
+             git fetch --no-tags origin main
+             git reset --hard origin/main
+             python3 scripts/boat_edge_v214_shadow.py settle
+             git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
+             if git diff --cached --quiet; then echo 'V214_NO_CHANGES_SHADOW_SETTLE'; break; fi
+             git commit -m 'Grade previously frozen shadow outcomes only'
+             if git push origin HEAD:main; then echo 'V214_COMMITTED_SHADOW_SETTLE'; break; fi
+             if [ "$retry" -eq 8 ]; then exit 1; fi
+           done
+      - name: Settle previously committed paper entries only
+        shell: bash
+        run: |
+          set -euo pipefail
+           git config user.name 'github-actions[bot]'
+           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+           for retry in 1 2 3 4 5 6 7 8; do
+             git fetch --no-tags origin main
+             git reset --hard origin/main
+             python3 scripts/boat_edge_v211_paper_sim.py settle
+             git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+             if git diff --cached --quiet; then echo 'V214_NO_CHANGES_PAPER_SETTLE'; break; fi
+             git commit -m 'Settle previously committed paper entries only'
+             if git push origin HEAD:main; then echo 'V214_COMMITTED_PAPER_SETTLE'; break; fi
+             if [ "$retry" -eq 8 ]; then exit 1; fi
+           done
+      - name: Disable replaced V213 scheduler only after V214 success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/BOAT_EDGE_V213_SHADOW_ROI.yml/disable"; then
+            echo 'V214_OLD_SCHEDULER_DISABLED'
+          else
+            echo 'V214_MANUAL_DISABLE_OLD_SCHEDULER_NEEDED'
+          fi
