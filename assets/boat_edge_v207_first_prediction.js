@@ -11,13 +11,13 @@ const text=(el,v)=>{if(el&&el.textContent!==String(v))el.textContent=String(v);}
 const digit=(s)=>{const x=Number(String(s||'').replace(/,/g,''));return Number.isSafeInteger(x)&&x>=0?x:null;};
 const money=x=>x===null?'未確認':Number(x).toLocaleString('ja-JP')+'円';
 const lanes=combo=>{const parts=String(combo||'').match(/^([1-6])-([1-6])-([1-6])$/);return parts?parts.slice(1):null;};
-let showFive=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
+let showFive=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
 function skeleton(){
  const host=$('#raceView .race-summary');if(!host)return null;
  let box=$('#be207Top');
  if(!box){
   box=document.createElement('section');box.id='be207Top';box.className='be207-top';box.setAttribute('aria-label','3連単予想・買い目');
-  box.innerHTML=`<div class="be207-topline"><div><span class="be207-eyebrow">BOAT EDGE</span><strong>3連単の予想</strong></div><span class="be207-version">画面 V207</span></div>
+  box.innerHTML=`<div class="be207-topline"><div><span class="be207-eyebrow">BOAT EDGE</span><strong>3連単の予想</strong></div><span class="be207-version">画面 V208</span></div>
    <div class="be207-condition" role="status"><strong></strong><span></span></div>
    <div class="be207-mode-label">予想スタイル <small>タップで切替</small></div>
    <div class="be207-modes" role="group" aria-label="予想スタイル"></div>
@@ -25,7 +25,7 @@ function skeleton(){
    <div class="be207-freeze"></div>
    <div class="be207-listhead"><strong>上位買い目</strong><span>確率順・オッズで順位を変更しません</span></div>
    <div class="be207-bets"></div>
-   <div class="be207-actions"><button type="button" data-be207="five">上位5点</button><button type="button" data-be207="all">全買い目・詳細 →</button></div>
+   <div class="be207-actions"><button type="button" data-be207="five">上位5点</button><button type="button" data-be207="all">全買い目を表示</button></div><div class="be208-detail-actions"><button type="button" data-be207="detail">詳しいデータ・監査を開く</button></div>
    <div class="be207-bottom"><div class="be207-budget"></div><div class="be207-odds"></div></div>`;
   const first=$('.summary-top',host);
   if(first)first.insertAdjacentElement('afterend',box);else host.prepend(box);
@@ -78,15 +78,15 @@ function render(){
   $('#be207Top')?.remove();document.documentElement.classList.remove('be207-ready');return;
  }
  const key=r.race_key,st=safety(r),sum=window.BoatEdgeV204.summarize(p),settled=sum.settled;
- if(key!==activeKey){activeKey=key;showFive=false;lastSig='';}
+ if(key!==activeKey){activeKey=key;showFive=false;showAll=false;document.documentElement.classList.remove('be208-details-on');lastSig='';}
  const rows=$$('.be108-ticket-list > .be108-ticket',p);
  const mode=$('.be108-mode-tabs .on',p)?.dataset.be108Mode||'unknown';
  const stage=str('#scenarioHero .scenario-main')||'展開説明は現在確認できません';
  const freeze=window.BoatEdgeV204.sourceLabel?.(p)||'買い目保存状態未確認';
  const fresh=Boolean(sum.fresh&&!settled);
- const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,fresh,settled,
+ const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showAll,fresh,settled,
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
-  rows.slice(0,5).map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
+  rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
  if(sig===lastSig&&box.classList.contains('ready'))return;
  rendering=true;
@@ -99,18 +99,19 @@ function render(){
   text($('.be207-explain span',box),stage);
   text($('.be207-freeze',box),'買い目：'+freeze+(settled?'／結果確定後の保存表示':''));
   const list=$('.be207-bets',box);list.replaceChildren();
-  const count=showFive?5:3;
+  const count=showAll?rows.length:showFive?5:3;
   if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=rows.length?'出走可否の確認が必要なため、買い目の表示を停止中です。':'買い目を表示できません。直前データ・欠場情報を確認してください。';list.append(w);}
   else rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh)));
-  const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<=3;
+  const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<=3||showAll;
   text(five,showFive?'上位3点に戻す':'上位5点を見る');
   const all=$('[data-be207="all"]',box);all.hidden=stop;
+  text(all,showAll?'上位3点に戻す':'全買い目を表示');
   const total=str('#be204Budget [data-be204="total"]',p);
   text($('.be207-budget',box),'参考配分合計 '+(total||'未確認')+(rows.length?' ／ 全'+rows.length+'点':''));
   text($('.be207-odds',box),fresh?'公式オッズ取得確認済み（表示時点）': '公式オッズ未確認・想定払戻は非表示');
   document.documentElement.classList.add('be207-ready');
   const brand=$('.brandtext small');
-  if(brand&&/^(?:v\d+|サイトV20[3456])$/i.test(brand.textContent.trim()))text(brand,'サイトV207');
+  if(brand&&/^(?:v\d+|サイトV20[3456])$/i.test(brand.textContent.trim()))text(brand,'サイトV208');
   lastSig=sig;
  }finally{rendering=false;}
 }
@@ -125,9 +126,11 @@ function init(){if(once)return;once=true;
   const command=btn.dataset.be207;
   if(command==='five'){showFive=!showFive;lastSig='';render();return;}
   if(command==='scenario'){$('#raceTabs [data-tab="scenario"]')?.click();return;}
-  if(command==='all'){
-   // The complete, unmodified ticket list remains in the original prediction panel.
-   const anchor=$('#be108PredictionModes');anchor?.scrollIntoView({behavior:'smooth',block:'start'});
+  if(command==='all'){showAll=!showAll;showFive=false;lastSig='';render();return;}
+  if(command==='detail'){
+   const expanded=document.documentElement.classList.toggle('be208-details-on');
+   text(btn,expanded?'詳しいデータ・監査を閉じる':'詳しいデータ・監査を開く');
+   return;
   }
  });
  const source=$('#tab-pred'),scenario=$('#tab-scenario');
@@ -137,6 +140,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V207'};
+window.BoatEdgeV207={render,displayOnly:true,version:'V208-UI'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

@@ -1,0 +1,32 @@
+/* BOAT EDGE V208 — BOATERS-like information hierarchy, not copied branding/assets.
+   Display-only CSS. All audit, frozen-result and historical data remain in DOM. */
+/* The yellow V181 selector is removed from the customer UI, even when the
+   compact quickview cannot mount. Underlying immutable first/final records stay. */
+#be108PredictionModes .be181-freeze-banner{display:none!important}
+/* The newest verified pre-deadline predictions are already shown at the top.
+   Collapse old duplicate panels in the normal view. Reveal through '詳細データ'. */
+html.be207-ready:not(.be208-details-on) #tab-pred #be108PredictionModes,
+html.be207-ready:not(.be208-details-on) #tab-pred #be108MainPick,
+html.be207-ready:not(.be208-details-on) #tab-pred #be202Essential,
+html.be207-ready:not(.be208-details-on) #tab-pred #decision,
+html.be207-ready:not(.be208-details-on) #tab-pred #inputCompleteness,
+html.be207-ready:not(.be208-details-on) #tab-pred #predictionDiff,
+html.be207-ready:not(.be208-details-on) #tab-pred #buyBoard,
+html.be207-ready:not(.be208-details-on) #tab-pred #worlds,
+html.be207-ready:not(.be208-details-on) #tab-pred #predictionAlert,
+html.be207-ready:not(.be208-details-on) #tab-pred .section.stack > div:has(> #boats) {display:none!important}
+/* Compact forecast rows and six-boat table are the main content. */
+html.be207-ready #be207Top{border-color:#cddbe8;margin-bottom:8px}
+html.be207-ready #be207Top .be207-topline{margin-bottom:7px}
+html.be207-ready #be207Top .be207-condition{padding:7px 8px;margin-bottom:8px}
+html.be207-ready #be207Top .be207-freeze{margin:7px 0;color:#526f88;font-weight:700}
+html.be207-ready #be206Quick{margin:8px 0}
+html.be207-ready #raceView .race-head{position:relative;top:auto}
+/* Keep the race view lean; the detail button opens the original audits on demand. */
+#be207Top .be208-detail-actions{margin-top:7px;display:flex}
+#be207Top .be208-detail-actions button{width:100%;min-height:38px;border:1px solid #d3dfe9;border-radius:7px;background:#fff;color:#315f84;font-size:11px;font-weight:850;padding:8px 10px;text-align:center}
+#be207Top .be208-detail-actions button:focus-visible{outline:3px solid #76addd;outline-offset:2px}
+/* Keep 3-boat ticket numbers legible without the original wall of cards. */
+#be207Top .be207-bets{margin-bottom:2px}
+#be207Top .be207-ticket{padding-top:8px;padding-bottom:8px}
+@media(max-width:390px){html.be207-ready #be207Top{margin-top:6px}#be207Top .be207-condition{font-size:10px}}

@@ -943,10 +943,10 @@ function be181ShowChoice(key,mins,resultConfirmed,finalSnap,first,modes,mode){
     return {rows:finalSnap?.modes?.[mode]?.tickets||[],source:finalSnap?'final':'unavailable',
       changed,first,finalSnap,selected:'final'};
   }
-  let selected=readLocal(BE181_VIEW_KEY+key,'first');
-  if(!['first','latest'].includes(selected))selected='first';
-  return {rows:selected==='first'&&original?original:now,source:selected==='first'&&original?'first':'latest',
-    changed,first,finalSnap,selected};
+  // V208 UI default: always show the newest available pre-deadline prediction.
+  // Immutable first-seen evidence is still captured by be181First above;
+  // after deadline the branch above ONLY shows the approved frozen final snapshot.
+  return {rows:now,source:'latest',changed,first,finalSnap,selected:'latest'};
 }
 function be181InstallStyle(){
   if(document.getElementById('be181-style'))return;
