@@ -1,21 +1,56 @@
 {
-  "candidate_files_today": 0,
+  "candidate_files_today": 1,
   "criteria": "Only first-committed pre-deadline future shadows verified by V185 independent Git+SHA+determinism guard",
   "currently_eligible_but_not_frozen": [],
   "date_jst": "2026-10-10",
-  "features_seen_counts": {},
+  "features_seen_counts": {
+    "exhibition_time": 1,
+    "quinella_local": 1,
+    "quinella_national": 1,
+    "trio_boat": 1,
+    "trio_local": 1,
+    "trio_motor": 1,
+    "trio_national": 1
+  },
   "formal_results_accessed": false,
-  "independently_verified_shadows_today": 0,
+  "independently_verified_shadows_today": 1,
   "invalid_frozen_shadows_today": [],
   "model_weights_changed": false,
   "no_historical_backfill": true,
   "payouts_accessed": false,
-  "per_race": [],
+  "per_race": [
+    {
+      "commit_sha": "6789cca8c1d804ead3cff678a708e70baff26937",
+      "feature_names": [
+        "trio_national",
+        "trio_local",
+        "trio_motor",
+        "trio_boat",
+        "exhibition_time",
+        "quinella_national",
+        "quinella_local"
+      ],
+      "head_mass_preserved": true,
+      "race_key": "20261010-23-05",
+      "top10_changed": true,
+      "top10_new_combos": 0,
+      "top3_changed": false,
+      "top5_changed": false
+    }
+  ],
   "production_predictor_changed": false,
-  "rank_change_counts": {},
+  "rank_change_counts": {
+    "top10_new_combos_vs_v180_total": 0,
+    "top10_reordered_from_v180": 1,
+    "top1_head_changed_vs_v180": 0,
+    "top3_new_combos_vs_v180_total": 0,
+    "top3_reordered_from_v180": 0,
+    "top5_new_combos_vs_v180_total": 0,
+    "top5_reordered_from_v180": 0
+  },
   "schema_version": "boat-edge-v197-pre-result-fresh-coverage-and-head-mass-audit-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
   "site_results_accessed": false,
-  "snapshot_count_today": 1,
-  "status": "WAIT_PRE_RESULT_ELIGIBILITY_OR_DEADLINE"
+  "snapshot_count_today": 2,
+  "status": "IMMUTABLE_FUTURE_RESEARCH_QUALITY_PASS_NOT_ACCURACY_PROOF"
 }
