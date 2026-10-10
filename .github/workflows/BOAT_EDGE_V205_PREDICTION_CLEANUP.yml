@@ -1,0 +1,153 @@
+name: BOAT EDGE V205 - Prediction Cleanup With Safety Source Visible
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V205_PREDICTION_CLEANUP.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v205-ui-only
+  cancel-in-progress: false
+
+jobs:
+  display-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout main with full history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install V205 with sha-verified assets and invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PYINSTALL'
+          from pathlib import Path
+          from hashlib import sha256
+          import base64, gzip
+          embedded = {
+            'assets/boat_edge_v205_clean.js': (
+              'caf64cd4089a2e2bd60259068f6a73fb69f68a82bf28450f7d1673a172b1760e',
+              'H4sIAAAAAAAC/61YX2/cxhF/v0+xUg2RTCieqlZFoDN1cGq1KWpFRRX0xXECHrnSbbUi1d2l5MP5AN+5apU0gYPUSZE4ARzXdVy3kYPaS'
+              'QDFjYF+lNKnU5/6FTr7hzxSUh0V6IvE3Z2dnfnNb2dmr/4cenH53Cto8fyPF9EvZmfm0D+v3kCcCIw2GeY4FoEgSYySmHY89HKCkijiLt'
+              'pIIkxdJEi4jgWMuQjWMfyHLSmVEwlDqwnbCChMBRH30HP1mm07/kLXSjkGeUZCYTVqZNXeJnGUbHsvJoFYjNawNMJhWKQsbtTCJOYCnfF'
+              't7jI/SsJ0AywCLcz7VYpZZwVTHIqE2dzJZXmwin+KO/66v1B/bXbm1aj7g940/J01f8/UPYG5sFfAgnjNXr9yxbKcYjcLQuwrMwXrdLUV'
+              'SHQ2cbIqfRTY930rjSO8SmIcWc04pXReLTQ9ubepZhq9MBBh237dyVXo2V6jRrFA+PJmACoifzWgHLvbCVsHU8wI/EqLJRITQUC5GTdqq'
+              '2kcqnhwLGyIgLgsnC5giOnUFKbg2WXxwyQWANKE78vF6qScavRKWpKUhXgF7E+57XRryGAokk3/jG19p4W/+8LsSsikNyswaQFQCI6TAk'
+              '2PcFAbQwBwZAKGuuBJNG/JdcsVRFA8bx3+7aus/+vRzb1h/6ODz25n174e/nb/8IvPh9cfDN+5m/X3Rrf3D++/nfXfGj7ZObzbt9wIi4B'
+              'IXJPNsvVND2K2YTsQsoO/3hreeiRVXX//4Mvd40qy/qdZ/wMLEDc+hSljEgEZJdspprcwI6sEAD7Owu81Pa5df4nIw22jwmCQ75yaumj8'
+              'tTZxHEEk5VfAIHDUuuSROKRphHkh70k6OVXAKmsGt2KOBi1Mj/v878cfap+H3+xk/U8K1Ip9cGjIyKYMNOw+EfPRm18e7Pwu6z84+Og+z'
+              'Az3Piwh1sYBFW3DA4DjQtBJUoE8NZjWqzkhJvTwCA0KPAwTTumBNbr5aPjG29LKnU+H7+waKwfvHn5yb3RnX4UWVr/J+jezwe+zq4PDh4'
+              '+HO38a7t45eP+zrP8X8Ofp35+MbtzL+n/I+veBfGrL9ax/K+u/B8OSk8oy6SNkpESaahxpno54R10o9GpXlGK47N+q9rTRKfRLgH2t1At'
+              'pwPkFwoUHa3BszG1LB0nx0mlqfs5/q3jOWtiRf46DCEeXo6tjakIGeJayCmgUAaUqocj8rvNbkdONB8xcRRfwwTRPNzMv/IzhiChFS1Bk'
+              'uOW4CVB6i+DtgorfXzYzsNjCUGfwUZYWvDTlwGY6P7++jjuA94Q6E/7nquFTK3K6eZXx8o9FitV4jBvDG7BRozY3HVIsI2xGeXIHC4zDv'
+              'RrKU7xgKSRxJGtLDSEki0ErYIXxc+eU39zSmEgfkPIChBy1Ayn5wsQQiqvAxkDbisgWHAsSHol8q6JRzSoPXg42sFmcDvLVQjfkqxizl1'
+              '5ZuuBbZyV1F57u7x5cezi68fW/Pr6N/vEVygZfZIM72bVdWajP1pXM2VYqRKIrpT+pB5MoCkQwrQ7yJzUskyhgJCgw8idVWZtcOPzzw9G'
+              'jz/X1PlvX+xdyq/IYgWkcM3Eu+iUEsgiLjIIMXAuvEYiCRErt68k/mmlan0T54gkmXSptAqy1sNOVBVZ/u7m5TQtKStb/o8w+gze1tXBB'
+              'ysZL+NUmD/afE3C/YQhMqbhtuab5yCeg/+jlfIgTaKrGfJ4z1fcYJbSc0zXyz6aEFhqzIleaLxwjBj8iUPWGJRQD4bnqGyzHxCk/pEwgl'
+              'VQXgCXmQ7NFk8Zq/E+RNQ43SoHVBvjVLqYB6BhTZLTBck81aNAQaXlPpi/nJJGygHJKkqBUG4wJrhFTGdCpCKpcf0RMp8jn7ZJy2UXmGR'
+              'ZYdXWg879O8lBcTEHbe2O4A0Vs7+mTjw/vPVZF7EHWHwD5iuoH/IPtpgbtvfV0/zdqSUpWquLgXVAyeu8DVRLvVoqho104Rd4Loqia9E6'
+              '9UyRra7TImOOLUNyARimq8GpQ9cBrMViUBVPPWQX71XBqqv7a1qvR82fqRLf0arZcYE19dZxjK75VSWMy1fSgpQepTrfSjwPdSpUtbAfx'
+              'GlaFrchhE/kX6Pg/IVGvo59L0kBCbWP5KptFQSraCbM4Srbj4ux6mFAabHIc6ceJfHKhhEbSTpb3INzLKy7Fa0HYKVLL7CKX7zvgIBrnx'
+              'dlpveuSNe6RQeMydAH+KbyrdhSz5Wqo6rE2Ad4qZh4updHu6CXQBW9K1aAXbUSlueBhG0cplUEY9xZXruhnU95jmEeUKrfqe4mELIGbvq'
+              '7foOVHVmN8Ts9pVNoYIvIepniI5SeMX2amphfgwCVZ3IIPiQeGVGhbyiWIMBwsn2qeCNgalqglHGgLD4tq9UcnVynHydkn7cxjA4/0SEV'
+              'UBK1pOciRlt9TU+bpupTqZ/xyC/IsJN2JyivWifH2MRE7B9rxEj2lVLrdsE1oJJ2bl567PG0JhrEeSN5BT4HZefBATwV52eBHxj8iFATn'
+              'L1qKPdal3pGYy5z6E7isbCugOmqy7BUwt0kUAWtKwXPnZmZmnGeHYotw0iKUiI4G03L/q+Yx0RTevdoJv1P43XLtcY0xrtbdU79uFGrl7'
+              'yCdlfw3BJoEqqt2nmHs+eUlk64ugLRMEpJ1bjeJQ4032IWBwYapYKMj//4HUHkOR9MRAAA='
+            ),
+            'assets/boat_edge_v205_clean.css': (
+              '18fdff542fdf43f45e5c8128ff73c73064bac7b69623cadebf5a42902b387a37',
+              'H4sIAAAAAAAC/61WTXPbNhC9+1eg9iXxiDY/JX5MOz20xzSZTqaXjA8gsCBRkwAHAC07Gv/3LCnSVhg7VarcSADv4e0CeLvXl+Sf0E+IV'
+              's0DKYHpFiyhzMk7IFQ4MMN0RCwz1LGaUMWHgZh0BrjEZVoRRg23pNSuJgYUB3NFLq/PrkpAXo+Oa+yOS9s19CEXDdwXtJGV8qSD1uYMFO'
+              '5S/NtbJ8WDxzT+KpfbjjLwSnBbAFVUtMsDv7svWmoqqcZv4pMURzrKuVRVHuNIiP9MN9rkF0m4FikUAuk8Kz9DHgQ4Of5uQVa1y9PEf1y'
+              'oJGXvnFa7UhsMI0cEsbqRnFywlGfAiv2EZyiXvc0zZCwpu62M7hXPL0QsMiFmBQFL1qhg1odaSRDOGl6WlPl+0Url1fvfGKN8RWIuNOut'
+              'dyetLBvY6d41UkEePSuOo3RdimKa8bQQFlweHjBOZ/p0NJWRfMx09JxoH7M8Jn4OY8z8GMdXkQuxgaz4Nm+Q8JiWi7yNhKOqKdDgKkmWs'
+              'oh1Rqtqd5CucJmuxJ+TvQliFsTfcnRU7RYJnxCpvw6icIn4xKmjnnXUwa/n1unu/Ga3CNQHMcczUUFCNzQ4gmqOacJRHmZhdhRuiGNCZV'
+              'GURul3UR01TtJmqT0SG1EutOO1ToR/HNtCfhglwVocCz2IYO1vkrR8PLu+JH9Dq9FpRvcx0AGi+IoorcBatAHE7u3livyhyV/vP5Jacnh'
+              'yoy01Ci+lXRG83pINqzVHL3ISXczRtrPXeM1ucV4Y/RmU10l2SwaLMbrBUQO2b5wlUqGXUafNwGTI2is1daQFZySzo5vVrm2mOFkDVOVK'
+              'uzfTANxjbBz4W3JRQuCn76hUH3Cj1fGo0A//nAP+bVwQenjyJzKURoI4kaMfDP1EDqG1+98kZA5m9D1L9vdrShEt8YlgBaFG6vOb1Q8d0'
+              '4enCvZOcyx647LY66irTyYKgtSzujcMTqeKfYydV+A8BMqfweijOEU7W2s3PtTens65STBzD1htvBLX2p9yFMNbHp8xeapRgzP8IttOG0'
+              'eVGy3kY43+0YxtSUg4OCqbqUji+27xLVq0kKahWCeJq9ELq3rf8kxrW9xyNSCItOg8jvC+awY7AP7i0/+RC7rf4uZV+S9zx+/vwNxJ2O7'
+              '2VXiwgnw9VO7/0nIIyF4DvH4r8Hrd4j1rpHWHTMHYh/zeIoa+aem9t5Xc1XkS4vjb3aLRO8AlCFv0GnMbkQ1dhP88v2jAvmqasGg/Pp59'
+              'ASPziTGpCgAA'
+            ),
+          }
+          for rel, (digest, *pieces) in embedded.items():
+              data=gzip.decompress(base64.b64decode(''.join(pieces)))
+              assert sha256(data).hexdigest()==digest,(rel,'V205_PAYLOAD_SHA_MISMATCH')
+              file=Path(rel)
+              file.parent.mkdir(parents=True,exist_ok=True)
+              if file.exists() and file.read_bytes()!=data:
+                  raise SystemExit('V205_EXISTING_ASSET_CONFLICT_ABORT: '+rel)
+              file.write_bytes(data)
+          file=Path('index.html')
+          html=file.read_text(encoding='utf-8')
+          required=[
+              '<script src="./assets/boat_edge_v203_readable.js?v=203"></script>',
+              '<script src="./assets/boat_edge_v204_prediction.js?v=204"></script>',
+              '<link rel="stylesheet" href="./assets/boat_edge_v203_readable.css?v=203">',
+              '<link rel="stylesheet" href="./assets/boat_edge_v204_prediction.css?v=204">',
+              'id="tab-pred"', 'id="raceView"',
+          ]
+          assert all(token in html for token in required),'V205_REQUIRED_V204_SITE_BASE_MISSING_ABORT'
+          css='<link rel="stylesheet" href="./assets/boat_edge_v205_clean.css?v=205">'
+          js='<script src="./assets/boat_edge_v205_clean.js?v=205"></script>'
+          if css not in html:
+              assert html.count('</head>')==1,'V205_HEAD_ANCHOR_INVALID'
+              html=html.replace('</head>',css+'\n</head>')
+          if js not in html:
+              assert html.count('</body>')==1,'V205_BODY_ANCHOR_INVALID'
+              html=html.replace('</body>',js+'\n</body>')
+          assert html.count(css)==1 and html.count(js)==1,'V205_ASSET_DUPLICATED'
+          assert html.index('boat_edge_v204_prediction.js')<html.index('boat_edge_v205_clean.js'),'V205_JS_LOAD_ORDER'
+          assert html.index('boat_edge_v204_prediction.css')<html.index('boat_edge_v205_clean.css'),'V205_CSS_LOAD_ORDER'
+          file.write_text(html,encoding='utf-8')
+          print('V205_SOURCE_BOUND_DISPLAY_ONLY_PATCH_PASS')
+          PYINSTALL
+            node --check assets/boat_edge_v205_clean.js
+            node - <<'NODECHECK'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const js=fs.readFileSync('assets/boat_edge_v205_clean.js','utf8');
+          const css=fs.readFileSync('assets/boat_edge_v205_clean.css','utf8');
+          assert(js.includes('BoatEdgeV203?.scratchHint')&&js.includes('be205-clean'));
+          assert(css.includes('be202-warning')===false,'must not hide scratch safety alert');
+          assert(!js.includes('fetch(')&&!js.includes('localStorage')&& !js.includes('sessionStorage'),'V205_MUST_NOT_FETCH_OR_CHANGE_STORAGE');
+          const context={window:{},document:{readyState:'loading',addEventListener(){},querySelector(){return null;}},Date,Math,Number,Array,JSON,String,RegExp,Set,Map};
+          vm.runInNewContext(js,context,{timeout:1000});
+          assert(typeof context.window.BoatEdgeV205?.install==='function');
+          assert(context.window.BoatEdgeV205.sourceStatus().kind==='pending');
+          console.log('V205_NODE_PRESENTATION_GUARD_PASS');
+          NODECHECK
+            # Guard allowed outputs: only the new V205 assets and index.html.
+            CHANGED=$(git status --porcelain | awk '{print $2}' | grep -v '^.github/workflows/' || true)
+            if [ -n "$CHANGED" ]; then printf '%s\n' "$CHANGED" | while IFS= read -r path; do
+              case "$path" in
+                index.html|assets/boat_edge_v205_clean.js|assets/boat_edge_v205_clean.css) ;;
+                *) echo "V205_FORBIDDEN_FILE_CHANGED: $path"; exit 1 ;;
+              esac
+            done; fi
+            git add index.html assets/boat_edge_v205_clean.js assets/boat_edge_v205_clean.css
+            if git diff --cached --quiet; then echo V205_ALREADY_INSTALLED_NO_CHANGE; exit 0; fi
+            git commit -m 'V205 clean duplicate prediction UI and promote scratch status (display only)'
+            if git push origin HEAD:main; then
+              echo V205_GITHUB_PUSH_SUCCESS
+              exit 0
+            fi
+            echo "V205_PUSH_CONFLICT_RETRY ${attempt}/8"
+          done
+          echo V205_PUSH_FAILED_AFTER_RETRIES >&2
+          exit 1
