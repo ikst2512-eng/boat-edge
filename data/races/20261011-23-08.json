@@ -8,7 +8,7 @@
     "event": "第17回虹の松原カップ",
     "race_no": 8,
     "deadline": "11:58",
-    "updated_at": "2026-10-11T07:14:03+09:00",
+    "updated_at": "2026-10-11T07:32:01+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261011&jcd=23&rno=8",
-      "fetched_at": "2026-10-11T07:14:03+09:00",
-      "sha256": "bcb6f807c4170fc2c11732f0f971d88b9152c01bdcfdc221103493761d5f362c",
+      "fetched_at": "2026-10-11T07:32:01+09:00",
+      "sha256": "e31fd49310c1fdffb59865bd352f870a9e8b5cd93d3d67b8498975f5a372243b",
       "error": null
     },
     "beforeinfo": {
@@ -29,6 +29,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/11.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/11.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/11.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/11.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -80,7 +104,7 @@
       "name": "眞鳥 康太",
       "class": "B1",
       "age": 32,
-      "weight_kg": 52.7,
+      "weight_kg": 52.5,
       "branch": "長崎",
       "birthplace": "長崎",
       "F": 0,
@@ -114,7 +138,7 @@
         "10"
       ],
       "early_race": null,
-      "raw_text": "2 5048 / B1 眞鳥 康太 長崎/長崎 32歳/52.7kg F0 L0 0.21 4.89 30.00 47.14 3.00 10.00 10.00 44 66.67 100.00 11 32.61 39.86 3 6 11 6 10"
+      "raw_text": "2 5048 / B1 眞鳥 康太 長崎/長崎 32歳/52.5kg F0 L0 0.21 4.89 30.00 47.14 3.00 10.00 10.00 44 66.67 100.00 11 32.61 39.86 3 6 11 6 10"
     },
     {
       "lane": 3,
@@ -164,7 +188,7 @@
       "name": "長尾 章平",
       "class": "A1",
       "age": 41,
-      "weight_kg": 52.9,
+      "weight_kg": 53.2,
       "branch": "山口",
       "birthplace": "山口",
       "F": 1,
@@ -198,7 +222,7 @@
         "12"
       ],
       "early_race": 12,
-      "raw_text": "4 4264 / A1 長尾 章平 山口/山口 41歳/52.9kg F1 L0 0.16 5.94 40.20 59.80 6.38 48.89 68.89 41 55.56 66.67 42 27.13 48.06 4 12 11 8 12 12R"
+      "raw_text": "4 4264 / A1 長尾 章平 山口/山口 41歳/53.2kg F1 L0 0.16 5.94 40.20 59.80 6.38 48.89 68.89 41 55.56 66.67 42 27.13 48.06 4 12 11 8 12 12R"
     },
     {
       "lane": 5,
@@ -289,5 +313,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
