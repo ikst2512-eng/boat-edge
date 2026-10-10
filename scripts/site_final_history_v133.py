@@ -38,6 +38,20 @@ def sha256_file(p:Path):
     except Exception:
         return None
 
+def be218_read_odds_once(path: Path):
+    """Read a single immutable set of original odds bytes for prediction, digest, and archive.
+
+    This function never reads results and never makes up odds when a file is missing.
+    """
+    try:
+        raw=path.read_bytes()
+        doc=json.loads(raw)
+        if not isinstance(doc, dict) or not isinstance(doc.get("trifecta_odds"), dict):
+            return {}, None, None
+        return doc, raw, hashlib.sha256(raw).hexdigest()
+    except (OSError, ValueError, UnicodeDecodeError):
+        return {}, None, None
+
 def num(v):
     if v is None or (isinstance(v,str) and not v.strip()):
         return None
@@ -582,7 +596,8 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
         wave_pred=build_fallback_expanded(race,pred)
         wave_adjusted=scenario_adjust(race,wave_pred)
 
-    odds_doc=read_json(ODDS/f"{key}.json") or {}
+    # V218_SINGLE_READ_ODDS_PROVENANCE: original bytes are shared by prediction, SHA and sidecar.
+    odds_doc,_v218_odds_blob,_v218_odds_sha=be218_read_odds_once(ODDS/f"{key}.json")
     odds=odds_doc.get("trifecta_odds") or {}
     modes=modes_from_tickets(adjusted["tickets"],odds,wave_adjusted["tickets"])
     old=read_json(SNAPS/f"{key}.json") or {}
@@ -604,7 +619,7 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
         "deadline":meta.get("deadline"),
         "grade":pred.get("grade"),
         "race_sha256":sha256_file(race_path),
-        "odds_sha256":sha256_file(ODDS/f"{key}.json"),
+        "odds_sha256":_v218_odds_sha,
         "guards":{"results_seen":False,"unlock":False,"scoring":False},
         "modes":{
             k:{
@@ -627,11 +642,11 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
     # These sidecars are stored below SNAPS so the pre-existing V133 git add
     # publishes them atomically with the latest prospectively frozen snapshot.
     _v214_odds_path=ODDS/f"{key}.json"
-    _v214_sha=snap.get("odds_sha256")
-    if _v214_sha and _v214_odds_path.is_file():
-        _v214_blob=_v214_odds_path.read_bytes()
+    _v214_sha=_v218_odds_sha
+    if _v214_sha and _v218_odds_blob is not None:
+        _v214_blob=_v218_odds_blob
         if hashlib.sha256(_v214_blob).hexdigest()==_v214_sha:
-            _v214_doc=read_json(_v214_odds_path) or {}
+            _v214_doc=odds_doc
             try:
                 _v214_when=datetime.fromisoformat(str(_v214_doc.get("fetched_at")))
                 _v214_saved=datetime.fromisoformat(str(snap["saved_at"]))
