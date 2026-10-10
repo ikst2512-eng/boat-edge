@@ -1,0 +1,32 @@
+/* V205 only becomes active after V203 scratch and V204 prediction cards both render. */
+.be205-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 8px;padding:4px 2px;color:#526f8e;font-size:11px;font-weight:850}
+.be205-actions button{border:1px solid #c8d9ec;border-radius:9px;background:#f4f9ff;color:#1c568e;padding:8px 12px;font-size:11px;font-weight:900;min-height:40px}
+.be205-actions button:focus-visible{outline:3px solid #4386bf;outline-offset:2px}
+.be205-scratch{display:grid;gap:3px;margin:0 0 10px;padding:10px 12px;background:#fff7e9;border:1px solid #e5d4ab;border-radius:10px;line-height:1.55}
+.be205-scratch strong{font-size:12px;font-weight:950;color:#714c14}
+.be205-scratch span{font-size:11px;color:#806132}
+.be205-scratch[data-state="stop"]{background:#fff0ef;border-color:#e5a7a1}
+.be205-scratch[data-state="stop"] strong{color:#ad2929}
+.be205-scratch[data-state="stop"] span{color:#933838}
+.be205-scratch[data-state="partial"]{background:#f3f7fb;border-color:#d9e5f0}
+.be205-scratch[data-state="partial"] strong{color:#23516f}
+.be205-scratch[data-state="partial"] span{color:#60758b}
+/* Remove only repeated, nonessential cards. Do NOT hide scratch warnings, official odds timestamps/links, frozen-pick controls, results indicators, or 6-boat metrics. */
+html.be205-clean:not(.be205-expanded) #be108MainPick,
+html.be205-clean:not(.be205-expanded) #be202Essential>.be202-top,
+html.be205-clean:not(.be205-expanded) #be202Essential>.be202-brief,
+html.be205-clean:not(.be205-expanded) #be202Essential>.be202-under,
+html.be205-clean:not(.be205-expanded) #be202Essential>.be202-footer,
+html.be205-clean:not(.be205-expanded) #be202Essential .be202-buttons [data-be202-tab="scenario"],
+html.be205-clean:not(.be205-expanded) #be108PredictionModes .be204-path,
+html.be205-clean:not(.be205-expanded) #be108PredictionModes .be118-source,
+html.be205-clean:not(.be205-expanded) #be108PredictionModes .be140-budget-notice,
+html.be205-clean:not(.be205-expanded) #be108PredictionModes .be108-snapshot-status,
+html.be205-clean:not(.be205-expanded) #be108PredictionModes .be175-payout-bands,
+html.be205-clean:not(.be205-expanded) #be108PredictionModes .be204-oddsstamp {display:none!important}
+/* The old V202 detail button remains callable through V205 detail mode, but is not duplicated. */
+html.be205-clean #be202Essential .be202-buttons [data-be202-detail]{display:none!important}
+html.be205-clean #be204Overview{margin-top:6px}
+html.be205-clean #be202Essential{margin-top:9px}
+html.be205-clean #be108PredictionModes .be108-ticket-list{margin-top:10px}
+@media(max-width:520px){.be205-actions{margin-top:5px}.be205-scratch{padding:9px 10px}.be205-actions button{padding:8px 11px}}
