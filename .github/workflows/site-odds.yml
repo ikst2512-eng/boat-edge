@@ -215,12 +215,75 @@ jobs:
           print(json.dumps(index,ensure_ascii=False))
           PY
 
-      - name: 保存
+      - name: 保存（競合時は取得時刻を照合して安全に再試行）
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_odds
-          git diff --cached --quiet && exit 0
-          git commit -m "Update BOAT EDGE live trifecta odds V71"
-          git push
+          # Preserve actual fetched source bytes before updating the checkout.
+          # Never rerank bets and never create odds from missing source data.
+          saved="$(mktemp -d)"
+          trap 'rm -rf "$saved"' EXIT
+          mkdir -p "$saved/site_odds"
+          cp -a data/site_odds/. "$saved/site_odds/"
+          for attempt in 1 2 3 4 5 6; do
+            git fetch origin main
+            git reset --hard origin/main
+            python3 - "$saved/site_odds" <<'PYODDSMERGE'
+          import json, re, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          src=Path(sys.argv[1]);dst=Path('data/site_odds');dst.mkdir(parents=True,exist_ok=True)
+          key_re=re.compile(r'20\d{6}-\d{2}-\d{2}\.json')
+          combo_re=re.compile(r'[1-6]-[1-6]-[1-6]')
+          def obj(p):
+              try:return json.loads(p.read_text(encoding='utf-8'))
+              except (ValueError,OSError,UnicodeError):return None
+          def stamp(value):
+              try:
+                  d=datetime.fromisoformat(str(value).replace('Z','+00:00'))
+                  return d.astimezone(timezone.utc) if d.tzinfo else None
+              except (ValueError,TypeError):return None
+          copied=skipped=0
+          for p in sorted(src.glob('*.json')):
+              if not key_re.fullmatch(p.name):continue
+              x=obj(p)
+              if not isinstance(x,dict) or x.get('race_key')!=p.stem or x.get('schema_version')!='boat-edge-site-odds-v71':continue
+              if x.get('results_seen') is not False or x.get('scoring') is not False:continue
+              odds=x.get('trifecta_odds') or {}
+              if not isinstance(odds,dict) or len(odds)<80 or any(not combo_re.fullmatch(k) or len(set(k.split('-')))!=3 for k in odds):continue
+              t=stamp(x.get('fetched_at'))
+              if not t:continue
+              target=dst/p.name
+              prev=obj(target) if target.exists() else None
+              old=stamp(prev.get('fetched_at')) if isinstance(prev,dict) else None
+              if old and old>=t:
+                  skipped+=1;continue
+              target.write_bytes(p.read_bytes());copied+=1
+          p=src/'index.json'
+          if p.exists():
+              x=obj(p);old=obj(dst/'index.json')
+              if isinstance(x,dict) and x.get('schema_version')=='boat-edge-site-odds-index-v71' and x.get('source')=='official odds3t only':
+                  new_stamp=stamp(x.get('updated_at'))
+                  old_stamp=stamp(old.get('updated_at')) if isinstance(old,dict) else None
+                  if new_stamp and (not old_stamp or new_stamp>old_stamp):
+                      (dst/'index.json').write_bytes(p.read_bytes())
+          print('V71_FRESHER_SOURCE_ONLY_RECONCILED',{'written':copied,'newer_remote_preserved':skipped})
+          PYODDSMERGE
+            git add -- data/site_odds/
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V71_FRESH_ODDS_ALREADY_PRESENT_OR_REMOTE_NEWER
+              exit 0
+            fi
+            git commit -m 'Update BOAT EDGE live trifecta odds V71 (source-time guarded)'
+            if git push origin HEAD:main; then
+              echo V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED
+              exit 0
+            fi
+            echo "V71_RETRY_${attempt}_AFTER_CONCURRENT_PUSH"
+          done
+          echo V71_PUBLISH_FAILED_AFTER_RETRIES >&2
+          exit 1
