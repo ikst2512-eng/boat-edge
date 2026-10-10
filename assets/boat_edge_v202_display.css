@@ -1,0 +1,48 @@
+/* V202: production display only — minimal, mobile-first; never changes predictions. */
+.be202-essential{display:block;background:#fff;border:1px solid #dbe4ef;border-radius:15px;padding:13px 12px 10px;color:#1a3049;box-shadow:0 4px 18px #172e4a0d;line-height:1.5;font-size:12px}
+.be202-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.be202-top h3{font-size:17px;line-height:1.3;letter-spacing:-.025em;margin:3px 0;color:#162d4c}
+.be202-kicker{font-weight:800;letter-spacing:.05em;color:#6c859f;font-size:9px}
+.be202-pred-label{font-size:10px;font-weight:850;border-radius:7px;background:#eef4fd;border:1px solid #d7e5fa;color:#22598f;padding:5px 7px}
+.be202-pred-label.formal{background:#eef9f4;color:#116747;border-color:#c9eadc}
+.be202-brief{display:flex;flex-wrap:wrap;align-items:center;gap:5px 11px;margin:10px 0;padding:9px 10px;background:#f4f7fb;border-radius:8px}
+.be202-brief strong{font-size:14px;color:#142e4c}
+.be202-okay{color:#286a4b;font-weight:800}.be202-attention{color:#b44427;font-weight:800}
+.be202-warning,.be202-after{background:#fff4ef;border:1px solid #f5d9cb;color:#90441f;border-radius:9px;padding:8px 10px;margin:8px 0;font-weight:700;font-size:11px}
+.be202-after{font-weight:600;background:#fff9ed;border-color:#f0e5bd;color:#77642a}
+.be202-under{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:baseline;margin:9px 0 8px}.be202-under b{color:#173b67}.be202-under span{font-size:11px;color:#637b92}
+.be202-chips{display:flex;flex-wrap:wrap;gap:5px}.be202-chip{display:inline-flex;gap:4px;align-items:baseline;font-weight:800;padding:4px 7px;border:1px solid;border-radius:7px;font-size:10px}.be202-chip small{font-weight:500;font-size:9px}
+.be202-good{background:#edf8f0;border-color:#d1e9d7;color:#237247}.be202-muted{background:#f4f5f7;border-color:#e5e7e9;color:#657589}
+.be202-source-note{color:#76879a;font-size:10px;margin:7px 0 10px;line-height:1.6}
+.be202-water{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.be202-water span{font-size:11px;border:1px solid #e4ebf2;border-radius:6px;padding:4px 7px;color:#61778e}.be202-water b{font-size:12px;color:#182f49;margin-left:4px}
+.be202-swipe{font-size:10px;color:#5b80a2;margin:5px 0 6px;font-weight:700}
+.be202-table-scroll{overflow-x:auto;max-width:100%;border:1px solid #e1e8f1;border-radius:9px;-webkit-overflow-scrolling:touch}
+.be202-table{font-size:11px;border-collapse:collapse;width:100%;min-width:1120px;background:#fff;font-variant-numeric:tabular-nums;line-height:1.35}
+.be202-table th,.be202-table td{padding:9px 7px;text-align:center;border-bottom:1px solid #e9eef5;white-space:nowrap;vertical-align:middle}
+.be202-table thead th{color:#667b90;background:#f5f8fc;font-size:10px;font-weight:900;position:sticky;top:0}
+.be202-table th:first-child{text-align:left;position:sticky;left:0;min-width:120px;max-width:155px;background:#fff;z-index:2}
+.be202-table thead th:first-child{background:#f5f8fc;z-index:3}
+.be202-table tr:nth-child(even) th:first-child,.be202-table tr:nth-child(even) td{background:#fbfcfe}
+.be202-boat{width:21px;height:21px;display:inline-flex;border-radius:5px;align-items:center;justify-content:center;margin-right:4px;background:#333;color:#fff;font-size:11px;font-weight:900}
+.be202-boat.b1{background:#f1f3f5;color:#172536;border:1px solid #bac4cf}.be202-boat.b2{background:#333e4b}.be202-boat.b3{background:#d64646}.be202-boat.b4{background:#317fd3}.be202-boat.b5{background:#d0a32a}.be202-boat.b6{background:#369663}
+.be202-strong{color:#bd292b;font-weight:900;background:#fff1ef;border-radius:4px;padding:2px 4px}.be202-f{color:#b33434;font-size:10px;font-weight:900}
+.be202-footer{display:flex;flex-wrap:wrap;gap:6px 15px;justify-content:space-between;color:#6d8095;font-size:10px;line-height:1.55;margin:9px 0}
+.be202-buttons{display:flex;flex-wrap:wrap;gap:7px}.be202-buttons button{border:1px solid #d9e5f0;background:#f5f8fd;color:#1e5385;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:800;cursor:pointer;min-height:34px}
+.be202-buttons button:focus-visible{outline:3px solid #4d98e1;outline-offset:2px}
+/* Remove redundant legacy scoring diagrams and audit/status panels from the main race flow.
+   Their existing DOM is retained and can be reopened via the visible detail toggle. */
+html.be202-clean #tab-pred #decision,
+html.be202-clean #tab-pred #inputCompleteness,
+html.be202-clean.be202-modes-ready #tab-pred #buyBoard,html.be202-clean.be202-modes-ready #tab-pred #worlds,
+html.be202-clean #tab-pred #boats,
+html.be202-clean #raceView #be139InputStatus,
+html.be202-clean #raceView .be178-latest-parity,
+html.be202-clean #raceView .be177-model-bridge{display:none!important}
+html.be202-clean.be202-expanded #tab-pred #decision,
+html.be202-clean.be202-expanded #tab-pred #inputCompleteness,
+html.be202-clean.be202-expanded #tab-pred #buyBoard,html.be202-clean.be202-expanded #tab-pred #worlds,
+html.be202-clean.be202-expanded #tab-pred #boats,
+html.be202-clean.be202-expanded #raceView #be139InputStatus,
+html.be202-clean.be202-expanded #raceView .be178-latest-parity,
+html.be202-clean.be202-expanded #raceView .be177-model-bridge{display:revert!important}
+@media(max-width:520px){.be202-essential{padding:10px 9px}.be202-top h3{font-size:15px}.be202-brief strong{font-size:12px}.be202-table th,.be202-table td{padding:8px 6px}.be202-table th:first-child{min-width:114px}.be202-buttons button{flex:1 1 105px;padding:8px 6px;font-size:10px}}
