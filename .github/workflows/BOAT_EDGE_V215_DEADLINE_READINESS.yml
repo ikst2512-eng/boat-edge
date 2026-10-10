@@ -1,0 +1,162 @@
+name: BOAT EDGE V215 - Next Deadline Readiness & Prospective Shadow
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V215_DEADLINE_READINESS.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: boat-edge-v215-prospective-only
+  cancel-in-progress: false
+jobs:
+  deadline-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install next-deadline readiness and diagnostics UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 - <<'PYV215_INSTALL'
+          from pathlib import Path
+          import gzip, base64,hashlib,json
+          BLOBS=json.loads("{\"assets/boat_edge_v215_readiness.css\": {\"b64\": \"H4sIAAAAAAAC/32RQW7DIBBF9z2FpayJTBLHznAabAZCSwABqZNGuXuhLpXVRTZIMPP+589sR9zRjgTkQluM8XHhQWkLg781bUN3/sZGFwQGoPklOqNFsxEn7GT7WyAho9cIp9LKpw8V3NUK2EgpmeciyyqgGWaTMy7Ahg77qRuf28U4Of8QOnrD7yAN3hg3WlmiE14ijDyiyd9i79eYtLyTydmENkH0fEIyYpoRLVPcwzEbFJ7MId/KwWRuJlF/IZQYK8MmpuCserxo8Nz+Ky9yM2p1TtB3bY2zOxwPJ17heOHGrMkSvEQg54Wk276S3dTToWPLwIttCVGFygBe61QS+p9V/a2jCK12hSj3cqibqDbMfWKQxs3LvLi9z2cM+Hz7Bqd/KYEQAgAA\", \"sha256\": \"44c75700bcc69d9851402d51be4eb03ecbad0d2cc853893fb10c0954c855171d\"}, \"assets/boat_edge_v215_readiness.js\": {\"b64\": \"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\", \"sha256\": \"8c7942f83e9472453d6844feae2740bcb3675bfe1d0eeb4f796923171ad49b8f\"}, \"scripts/boat_edge_v215_readiness.py\": {\"b64\": \"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\", \"sha256\": \"da9ef24ff38aa82db7b10e77407d8223acf619ffedab8141687666b776b2d2cd\"}}")
+          for relative,item in BLOBS.items():
+              data=gzip.decompress(base64.b64decode(item['b64']))
+              if hashlib.sha256(data).hexdigest()!=item['sha256']:raise SystemExit('V215_EMBEDDED_SHA_BAD '+relative)
+              file=Path(relative)
+              if file.exists():
+                  if file.read_bytes()!=data:raise SystemExit('V215_EXISTING_CODE_CONFLICT '+relative)
+              else:
+                  file.parent.mkdir(parents=True,exist_ok=True)
+                  file.write_bytes(data)
+                  print('V215_ADDED '+relative)
+          page=Path('ai-simulation.html')
+          if not page.exists():raise SystemExit('V215_SITE_MISSING')
+          s=page.read_text(encoding='utf-8')
+          if 'boat_edge_v214_health.js?v=214' not in s or 'boat_edge_v213_shadow.js?v=213' not in s:
+              raise SystemExit('V215_REQUIRES_V214')
+          links=['<link rel="stylesheet" href="./assets/boat_edge_v215_readiness.css?v=215">','<script defer src="./assets/boat_edge_v215_readiness.js?v=215"></script>']
+          for link in links:
+              if link not in s:
+                  if s.count('</head>')!=1:raise SystemExit('V215_INVALID_HEAD')
+                  s=s.replace('</head>',link+'\n</head>')
+          if any(s.count(link)!=1 for link in links):raise SystemExit('V215_DUPLICATE_LINK')
+          if s!=page.read_text(encoding='utf-8'):page.write_text(s,encoding='utf-8')
+          print('V215_PROSPECTIVE_READINESS_INSTALLED_NO_MODEL_CHANGE')
+          PYV215_INSTALL
+           python3 -m py_compile scripts/boat_edge_v215_readiness.py
+           node --check assets/boat_edge_v215_readiness.js
+           git add -- ai-simulation.html scripts/boat_edge_v215_readiness.py assets/boat_edge_v215_readiness.js assets/boat_edge_v215_readiness.css
+           if git diff --cached --quiet; then echo 'V215_ALREADY_INSTALLED'; break; fi
+           git commit -m 'V215 next-deadline readiness and persistent pre-result source audit'
+           if git push origin HEAD:main; then echo 'V215_INSTALL_SUCCESS'; break; fi
+           if [ "$attempt" -eq 8 ]; then exit 1; fi
+          done
+      - name: Audit upcoming races and preserve each day source gaps (NO results)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v215_readiness.py
+           git add -- data/site_paper_sim/readiness_v215_current.json data/site_paper_sim/readiness_history_v215/
+           if git diff --cached --quiet; then echo 'V215_NO_CHANGE_READINESS'; break; fi
+           git commit -m 'V215 Audit upcoming races and preserve each day source gaps (NO results)'
+           if git push origin HEAD:main; then echo 'V215_COMMITTED_READINESS'; break; fi
+           if [ "$attempt" -eq 8 ]; then exit 1; fi
+          done
+      - name: Freeze eligible V214 odds-proof shadow BEFORE results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v214_shadow.py freeze
+           git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
+           if git diff --cached --quiet; then echo 'V215_NO_CHANGE_SHADOW_FREEZE'; break; fi
+           git commit -m 'V215 Freeze eligible V214 odds-proof shadow BEFORE results'
+           if git push origin HEAD:main; then echo 'V215_COMMITTED_SHADOW_FREEZE'; break; fi
+           if [ "$attempt" -eq 8 ]; then exit 1; fi
+          done
+      - name: Continue approved-only 50000 JPY paper decisions BEFORE results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v211_paper_sim.py select
+           git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+           if git diff --cached --quiet; then echo 'V215_NO_CHANGE_PAPER_SELECT'; break; fi
+           git commit -m 'V215 Continue approved-only 50000 JPY paper decisions BEFORE results'
+           if git push origin HEAD:main; then echo 'V215_COMMITTED_PAPER_SELECT'; break; fi
+           if [ "$attempt" -eq 8 ]; then exit 1; fi
+          done
+      - name: Grade only existing frozen shadow rows AFTER earlier commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v214_shadow.py settle
+           git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
+           if git diff --cached --quiet; then echo 'V215_NO_CHANGE_SHADOW_GRADE'; break; fi
+           git commit -m 'V215 Grade only existing frozen shadow rows AFTER earlier commit'
+           if git push origin HEAD:main; then echo 'V215_COMMITTED_SHADOW_GRADE'; break; fi
+           if [ "$attempt" -eq 8 ]; then exit 1; fi
+          done
+      - name: Settle only previously saved paper purchase ledger rows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v211_paper_sim.py settle
+           git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+           if git diff --cached --quiet; then echo 'V215_NO_CHANGE_PAPER_SETTLE'; break; fi
+           git commit -m 'V215 Settle only previously saved paper purchase ledger rows'
+           if git push origin HEAD:main; then echo 'V215_COMMITTED_PAPER_SETTLE'; break; fi
+           if [ "$attempt" -eq 8 ]; then exit 1; fi
+          done
+      - name: Stop replaced V214 schedule only after successful V215 audit
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/BOAT_EDGE_V214_ODDS_ARCHIVE_SHADOW.yml/disable"; then
+            echo 'V215_PREVIOUS_SCHEDULER_DISABLED'
+          else
+            echo 'V215_OLD_SCHEDULER_NEEDS_MANUAL_STOP'
+          fi
