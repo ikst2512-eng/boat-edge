@@ -1,0 +1,149 @@
+name: BOAT EDGE V213 - Prospective Shadow ROI Audit (No Purchases)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V213_SHADOW_ROI.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: boat-edge-v213-shadow-ledger
+  cancel-in-progress: false
+jobs:
+  shadow-audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install isolated shadow model and site tab
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 - <<'PYINSTALL'
+          from pathlib import Path
+          import base64,gzip,hashlib
+          P={'scripts/boat_edge_v213_shadow.py': {'sha256': '0a745d52886ad6eb7374dd63c99fc5bb581a0e2f6bd76ae20a49c149ebc4a1b6', 'base64_gzip': 'H4sIAAAAAAAC/4Va63LbxhX+r6dAknoAxCBEybHHoQRnFJmu1dqSRqKVSRR2Z0ksRUQggGIBXezRM/Rf+6dP0Ifo26TP0e/sBQAvUjQeCdg9e/bcb/A3X23XstyeJNm2yG6c4r6a59mLra+//vpid+eFc3o27J0Nzz99GDlyzuP8tpdn6b3z95qnySyZ8irJM4dnsXN6cj6ykKWoylwWYlolN8K5KnmcZFfh1nHu8GmFk9sFL0TpFHU5nXMpnETiyFUiK1GKeM9JslgUAr+yypmV+cKZ5eWCp867Usi5ugyk7TgTnl2XeZqGW6O5cNxZKcRn4TqFQnk8vBieASuPCbes08opeDWXoeNKUVUpAE+OP/zs5LjIQki6yCnKBL9x72eROSChTIQMSR5byaLIy8rh5VXBSynse8wrUSUL4XDpxJVdBRXzNJnY199kntnnBQixz0RUB6wUW1ufRodRXIWE8nOeibCuplt/OR911zzzHIu04t48r0sZfe/7W38d/hyVIpzmiyJJhVe6f9vt/xp/efXQ+zX+NVa//uT6W4cnH388WQG83Om9Gvc6vwnw/PD98ONB5P54cjBiw7d/HjIyCnZ6dnJ+OjwcHV0M2fn7g7cnP7GLHXdrKxYzJ8157BFX/mDLwU9V3g9gD3WZKRmEtC8VQEjaYZW4qzyRTXOykcitq1nvtQtW6Ky4m4qicryT82FZ5mVwwdNaqEff4jyGNPTFkt8IhTfIJ7+Zy9U1UBbUGC6u46T09IuMRmUtAnEHm2P5tXrz2xO3ZVIJTZmiOa4XhfSANoCx1KVgXE6TJHrHUykCCb2xa3FvcCbKbqNd/7n7a+YGa5xpYpUBebIjI/VAP5wUbW0qJPtPZK48oPJkVeIQBFekfCo89xc3cJ/3+4N+34qMfoxoeMhlYzAwKt9JZlisPifZLHdESl5C0utKenRfiFVZByc3opyl+e1jko9rwUCgByEE0zSfXhu2cF2WVw6MMpzVaQoGpnPFAgB934GX0TbMsN0tXbLRAf1yAwLV+JYvXTGrrrhwpKAHuuJy8Hr8XJ0P3Gc/P1s8i5+9Hzz76Lby06KI4Fz+qqy6UmlFsc47uXnJbx+xeBMEQoTO3ZevOlY/ua+E9Hw/nIu7OLkSsvKWrjQWv37fdC6m116Z51WgbD3Lb8214DhSFyCMLh6XP8m+izZwS4iCDJgl2Q2ieuyqwzJqPbmLLZFJJiueQXwyiJNppRQpwytReQ0q1/8qwp/le2TGCznPq+V7gNYcbvZv4UP5LeFw3x0dH3xgOy8/up1bCmQJXIzMw64BqgDPj0ZDdjZ8NzwbHh8iTO3s7rqPXA8umEiTq2SCLGBp4Nm9Z9Bf1byMpRt8efDVwrVPCYp4Vw6vksQ1kpQDfnXeYFII+LpbZ2RteJDTvITTu/6KqEE502eYuoXNOMKvlTgCWByZyGBEQkuMV0C0R24WdV3NwMSwpzTJhI0ARk/qqPUxHFPyo7U3MJn2hTA+Iifyh2Vd1VmVpJGHIz2yu7DKK56C+WmeIab726/6XQp29yN1YD/aebl8RV5XMokFi8UU5gQ1Go13T/f39UWKzE1XAe2rZbSk2FmS8XTn5Roq0PsIqv3oFSLoZhHA0K2N8DpOKu0T5H3bLmIO35aUKDr2qKDcbeWHGV8I5RxfHhQG7efRUsRozI/OGevmUrqNyVFOIRwdgBTBDmmrJVIFF/ICfcMjvCgMBLxsdNOSwsJmxsymkOxm5/XuI2ypiES2Yk1XH9K0qk1rwo2/dyFWQoayzO7+hFwK1C474QqP+gCrs2voOWN5yeyxx++ckv9JlE54hp6rWqpAkl+71msazuyCNaRmY4Mxfb9mTIa49iprUt84B5mTx6hQySacn45G708+jZwEhaiK1Yggjj7lzKAxKwBkY5TecG6919MUAk2osNITI01Fq+qknY4SNbTWfHOoq1ksdvSaa9nNBFnEikZVwNH7CpM1SUJm7b294qtoE+xgtX4xscLAMJRBSiqkXTxLiq/2/vxRWzI7qilQ+kVDw3Sbwk4/nR2+PzgfMuoEGq0brtVh/fhGBY6n6FOhEnQZHa8mOE8h6Bl0a0bzZs1mNNNrBsPTVCkxMlyhN5mhyeJas13VlfmtjGwWWeSx6OQzd44QRW8a3ixWCfylMlguxwqLkjdy0uV4jzJchM7JlCmUA2FSC0qDdFcrnPUygeB0pTAAw1WS1aKBRgMyySOCMPGC3l1/ryjzSWe5wBJ47Kxojp+4VWGiErIpNFXX06mEFITaTUXmEW9qJZRFmuCGHuwbBvOCANQG8UpiWOeCVkMexwblE1QRX4GHYppX6BSqtgruwIC1jSDUNoaJRIaDGBSmR7aAYIOom2RIJ/d3+n17+PV+hBP70e7L9UMoY64oo0bW9JT0/5BNe2yNDz6ReqkB8XvmHUT7b/phfwMV3zhn/NYhuvkkgXLQkaMLR/tyMnKm8LQJIqyIQ2d4QTGSI9PyqyxHQT91Sp5dUxylqUXgZALBEwDN5EEmV6AhbG5CKk+TBegq75m4iejKb0HZNsTVZXcZ7E20E6LEMd4S8oKGF94XY8wDbYluwRAFWSHg01mF2jSvAaTs4Tt/qTJUpm32W9kEuz6V6re4D3mu5brF1CUJOB+WorMhbrVgYgbjlGdxQl0Ue812X965S+5PHa6IPfMaUKOR8sUk5s7dwOvdXW4kaxxgQ0tg7PuXgxc6pJj7v7SxekC1bFvFDuRl+zJuNyjhDFAQhm037AeNTujHvREwGiDQEUK/Be7//v2f3//xz9//+y/XN71OljdA9n0VFYXMlCGEEzmr/ca4W1WBKhXdn6BrtVIb6DotWMp/dFH3fbyKxJQRnYpq0NQhT1yux2IKHKXLEqBryp6Bq0d7jOyW0uoKCjITgYSFBKcGd8y6jztQI48md1gXCCzCKZyQ3aM3GsCBvqUwayD8h6DtadGOw8I8M2sLJIwxol1TEuh5HbKQbr0ExWEDS9YtLi0f4yiyF5szrjY6w1ck64W3EdwyvnaB9iFiozm8wtm4PWMu9TuGLvUx083po3pHHQ76/iPHkaP/+Oyb/pOXw8skhL3g7kAP8lRjWkBtbneCR9UPQyhlpwenw7O2KqKldydnH9GAv0PF9L4xC3eKko7qkmuhldtH/FKGYUeyTMyoMFndrWPwQiGQxfxeb77s46dBbJhg5JYwJ5OXFV9AopVkN81r4OpRbfeMVV6Dd4aeCRbI5vdFXs0F7JXqr5YB0mawGaojcRM85RrafCJFSZ16mSerEZ4M35zbVtfsqjkcPbYzuFYAWs3QvuWHDEF7aiI1RVeIr1AhqefgFIq8GL5lH4+OGVFyPhyNPuC9o99WbaBM+X5GJapUc5A0uRHGqUG78WcLn3JqM+GNCE74rctFxFCh+UtBkFdSRpXIDkbml73v+gME/Aft2gueZJ7xY15EdnQeHpRX9QJHTumtNEUlL6iIYtzs2ao9mM7zBLKILu2MP7AzfCKGYgdSzGYMvR41QW4AWjhya+SG7qOQGc2c9GaEbUUoAaBC3yMskZnVh6f46/GQ1miWKPP0RhgWgMO0SzykEYkeudLERem6O6rEYjtpNFkaa4OSJ4A8v6cx3vCOKtGj44uDD0dv2ejo49BQOIFg1vo7rUeZLHT6htdciTIi0G1rWDc0vtcbIY22NeS0LmkqvgHU7HRg8zTWLaPGopuItThjrMEdXI4fmiYtjU0s08AorjX4phrYwlpEfkDm5m+QjvkA8YE+T5wxIysjJnM6ArrLBtXYjkthUWK1cVzLAGNLPgUWOgSybb+gXp+g6e2n0w9Hhwc0mTw4tKpTFqEsG/nHGHTbPlU5QmNEmbozkFYDarQyMzXaNsPsTvcjr5NCRl8e9uCNibhFruzv6agYtWWr+rYFy1XJQld0T02ybNEC0YdXaT7xFGXP3d4PP+CfNgi/07TbythOoOkaks96Na8gae7eDph1aNnrTjgbRAHBbh51rjQgZsppZo9PjSnVSHIjYVaCz6OdlfVpXsYB6iAwHm2awq9SpE8M7BdE0xXoVX+PRGPXGlZ9o7XVyyl2DJSSLzUB40i9KanoFVQDz9tDqoT64uqxqs0kljXU/eKWGS/XF7oD/ReBFXiZRokj6pbA5ZLls7X68WG1ATRxRX1Vg5yd5jOqqpBNwAjgi62sQEm0ofxb6y1tHFrHTU+WM6V9cWsGVd2yAE7rKXMziJZnH8ugyzatSDenAiD3O71iQolDfRE1Do86afiLnS+ds0/HZ8ODt27Q+YhI3G34img/eKZL0cFkuUFXXKg8a4TqZb+2oxgjwzWvbOcmnUnnSu272R/IJXVCa3F0WzKfbJZi2BpU23j8obdqUPsGM3uDzedL37jR2dYVIvmu/5jfUu+8eYxtvtK424q6yzbaj5+7NpB1ZmfLKFlnBKpXHpuDLvl+C9gdSq7er423he1oB1zOkhLsu+2H0oae9px63Y+0BDeLBlEg6l5ip4Y0ZuP3eV1t3GV6jwpfVbHv0DfmTXrsZG3c9OTEDfubBl76psCDOwVq4KHVoZf3o/5mtgQvMxpOoEcyExAFrzN4Rd6gpW2b0zERXDUziSgiapYZItutC6rQPK2JtX4ywKGMmhA9uCSG89ksmSZIMEZgRlgkuMhwtnSL46z1cpHmJbDtD6+i1V7daLu1uqij/y7kMktNwOimFFKcXd8Q7Dpxem8p+q0E6icCats5+P6TAVP3K7oFPT0bXhydfDrH47uzk1+Gx27QkGnDI/KgxtIJqctk+Zv+j0bznzL8rS1wzxh9/2AMIZYxalEYo9kFtSpb/wcIj5VuECUAAA=='}, 'assets/boat_edge_v213_shadow.js': {'sha256': '2f74b3ffae34f81bdd5a5d84a4349a208379294862c1165a8726cc6422a3745c', 'base64_gzip': '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'}, 'assets/boat_edge_v213_shadow.css': {'sha256': '7862d33f90ff5aa7769ff07ef3464f45d0404ca843b0fcce924ff214795c1fc1', 'base64_gzip': 'H4sIAAAAAAAC/31Sy27bMBC85ysI+GIHpiNalixTQNGv6H0trqRFxQdIynZr+N9LJS4aN4kuFMjdnRnNzssz+7EVOWusdtBEFnpQ9szwRApNgyzCcc00xKYn002tIrWaVAuoWCA9DhDJGuagww17fnlaODA48DvO5ogJnRsb8dpaE3mg3yjF1l3qgQzyHqnroxSbsqgbO1gvF/mhKEtVa/AdGSkyd2HZ7XPYECGGq6LgBvglO0+qng4eUaeXiDxBjtoE6dEhxOVurclouCyztWj9alV34OQ+aXkgY6J0lznGb4pO1yM0PztvR6Pkoi3aqm3qo/UKvRQJJNiBFFuoCgts7wXuQdEYZDURkuFnUrGXWe1AqWTuG/uk5vGHksRiXg8LGobhvb8J6a+d5b7KDrv58eit6d7Pl//mRZVjuatfiyfwBOlrRo2eGpnCkfbvp3uozz0lx0NKEUpjzx7cF6SttfErsfm+PYiP0XjbD4/WvbZ/AE5B5EnM8BAyMTV+16gIlmnpd793eQJYXWfyNBuh7X8Rut2e/gB0et49QwMAAA=='}}
+          for name,archive in P.items():
+              b=gzip.decompress(base64.b64decode(archive['base64_gzip']))
+              if hashlib.sha256(b).hexdigest()!=archive['sha256']:raise SystemExit('V213_ARTIFACT_SHA_MISMATCH '+name)
+              f=Path(name)
+              if f.exists() and f.read_bytes()!=b:raise SystemExit('V213_EXISTING_CODE_CONFLICT '+name)
+              if not f.exists():
+                  f.parent.mkdir(parents=True,exist_ok=True)
+                  f.write_bytes(b)
+                  print('V213_ADD '+name)
+          page=Path('ai-simulation.html')
+          if not page.is_file():raise SystemExit('V213_V212_NOT_INSTALLED')
+          s=page.read_text(encoding='utf-8')
+          if 'boat_edge_v211_paper.js?v=211' not in s or '50,000' not in s or 'panel-decision' not in s:
+              raise SystemExit('V213_V212_UNRECOGNIZED_BASE')
+          css='<link rel="stylesheet" href="./assets/boat_edge_v213_shadow.css?v=213">'
+          js='<script defer src="./assets/boat_edge_v213_shadow.js?v=213"></script>'
+          if css not in s or js not in s:
+              if s.count('</head>')!=1:raise SystemExit('V213_BAD_HEAD')
+              s=s.replace('</head>',(css+'\n' if css not in s else '')+(js+'\n' if js not in s else '')+'</head>')
+          if s.count(css)!=1 or s.count(js)!=1:raise SystemExit('V213_DUPLICATED_IMPORT')
+          if s!=page.read_text(encoding='utf-8'):page.write_text(s,encoding='utf-8')
+          print('V213_ISOLATED_SHADOW_INSTALL_PASS')
+          PYINSTALL
+           python3 -m py_compile scripts/boat_edge_v213_shadow.py
+           node --check assets/boat_edge_v213_shadow.js
+           git add -- ai-simulation.html scripts/boat_edge_v213_shadow.py assets/boat_edge_v213_shadow.js assets/boat_edge_v213_shadow.css
+           if git diff --cached --quiet; then echo V213_INSTALL_ALREADY_PRESENT_PASS; break; fi
+           git commit -m 'V213 prospective shadow verification UI and engine'
+           if git push origin HEAD:main; then echo V213_INSTALL_PASS; break; fi
+           if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Freeze shadow candidates without result file access
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v213_shadow.py freeze
+           git add -- data/site_paper_sim/shadow_v213_ledger.json data/site_paper_sim/shadow_v213_current.json
+           if git diff --cached --quiet; then echo V213_FREEZE_NO_CHANGE; break; fi
+           git commit -m "V213 frozen prospective shadow candidates, no result lookup"
+           if git push origin HEAD:main; then echo V213_FREEZE_COMMITTED; break; fi
+           if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Freeze daily 50K paper selection with no result read
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v211_paper_sim.py select
+           git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+           if git diff --cached --quiet; then echo V213_PAPER_SELECT_NO_CHANGE; break; fi
+           git commit -m "V213 retains V211 daily 50k paper selection, no result reads"
+           if git push origin HEAD:main; then echo V213_PAPER_SELECT_COMMITTED; break; fi
+           if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Score only already frozen shadow predictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v213_shadow.py settle
+           git add -- data/site_paper_sim/shadow_v213_ledger.json data/site_paper_sim/shadow_v213_current.json
+           if git diff --cached --quiet; then echo V213_SETTLE_NO_CHANGE; break; fi
+           git commit -m "V213 shadow-only outcomes scored after frozen predictions"
+           if git push origin HEAD:main; then echo V213_SETTLE_COMMITTED; break; fi
+           if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Settle only earlier committed 50K paper transactions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+           git fetch --no-tags origin main
+           git reset --hard origin/main
+           python3 scripts/boat_edge_v211_paper_sim.py settle
+           git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+           if git diff --cached --quiet; then echo V213_PAPER_SETTLE_NO_CHANGE; break; fi
+           git commit -m "V213 retains V211 prior frozen paper settlement"
+           if git push origin HEAD:main; then echo V213_PAPER_SETTLE_COMMITTED; break; fi
+           if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Disable replaced V212 schedule after V213 success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -u
+          for file in BOAT_EDGE_V212_PAPER_SIM_INSTALL.yml; do
+            if gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${file}/disable"; then
+               echo "V213_PREVIOUS_SCHEDULER_DISABLED $file"
+            else
+               echo "V213_SCHEDULER_DISABLE_NEEDS_MANUAL_ACTION $file"
+            fi
+          done
+          exit 0
