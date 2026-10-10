@@ -28,21 +28,26 @@
           "5": 2
         }
       },
-      "races": 2,
+      "races": 3,
       "top10_miss_classes": {
         "combined": {
+          "THIRD_ABSENT": 1,
           "TOP10_HIT": 2
         },
         "head": {
+          "THIRD_ABSENT": 1,
           "TOP10_HIT": 2
         },
         "original": {
+          "THIRD_ABSENT": 1,
           "TOP10_HIT": 2
         },
         "second": {
+          "THIRD_ABSENT": 1,
           "TOP10_HIT": 2
         },
         "v185": {
+          "THIRD_ABSENT": 1,
           "TOP10_HIT": 2
         }
       },
@@ -53,11 +58,11 @@
         "second": 2
       },
       "top1_head_hits": {
-        "combined": 2,
-        "head": 2,
-        "original": 2,
-        "second": 2,
-        "v185": 2
+        "combined": 3,
+        "head": 3,
+        "original": 3,
+        "second": 3,
+        "v185": 3
       }
     },
     "20-50": {
@@ -278,36 +283,36 @@
           "5": 4
         }
       },
-      "races": 15,
+      "races": 16,
       "top10_miss_classes": {
         "combined": {
           "HEAD_ABSENT": 4,
           "SECOND_ABSENT": 2,
-          "THIRD_ABSENT": 4,
+          "THIRD_ABSENT": 5,
           "TOP10_HIT": 5
         },
         "head": {
           "HEAD_ABSENT": 4,
           "SECOND_ABSENT": 2,
-          "THIRD_ABSENT": 4,
+          "THIRD_ABSENT": 5,
           "TOP10_HIT": 5
         },
         "original": {
           "HEAD_ABSENT": 4,
           "SECOND_ABSENT": 2,
-          "THIRD_ABSENT": 4,
+          "THIRD_ABSENT": 5,
           "TOP10_HIT": 5
         },
         "second": {
           "HEAD_ABSENT": 4,
           "SECOND_ABSENT": 2,
-          "THIRD_ABSENT": 4,
+          "THIRD_ABSENT": 5,
           "TOP10_HIT": 5
         },
         "v185": {
           "HEAD_ABSENT": 4,
           "SECOND_ABSENT": 2,
-          "THIRD_ABSENT": 4,
+          "THIRD_ABSENT": 5,
           "TOP10_HIT": 5
         }
       },
@@ -318,11 +323,11 @@
         "second": 4
       },
       "top1_head_hits": {
-        "combined": 7,
-        "head": 6,
-        "original": 7,
-        "second": 7,
-        "v185": 7
+        "combined": 8,
+        "head": 7,
+        "original": 8,
+        "second": 8,
+        "v185": 8
       }
     },
     "non1_head": {
@@ -450,7 +455,7 @@
   "formal_results_accessed": false,
   "invalid": [],
   "model_id": "V199_UNSEEN_HEAD_SECOND_ORIGINAL_ABLATIONS_V1",
-  "pending_results": 1,
+  "pending_results": 0,
   "production_model_changed": false,
   "races": [
     {
@@ -668,6 +673,60 @@
         "v185": false
       },
       "winner": "4-2-6"
+    },
+    {
+      "actual_non1_head": false,
+      "band": "10-20",
+      "hits": {
+        "combined": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "head": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "original": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "second": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v185": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "original_abstained": true,
+      "race_key": "20261010-07-12",
+      "top10_miss_classes": {
+        "combined": "THIRD_ABSENT",
+        "head": "THIRD_ABSENT",
+        "original": "THIRD_ABSENT",
+        "second": "THIRD_ABSENT",
+        "v185": "THIRD_ABSENT"
+      },
+      "top10_new_combos": {
+        "combined": 0,
+        "head": 0,
+        "original": 0,
+        "second": 0
+      },
+      "top1_head_hits": {
+        "combined": true,
+        "head": true,
+        "original": true,
+        "second": true,
+        "v185": true
+      },
+      "winner": "1-2-3"
     },
     {
       "actual_non1_head": false,
@@ -1267,5 +1326,5 @@
   "result_access": "ONLY_CONFIRMED_SITE_FILE_AFTER_ALL_PRE_RESULT_GIT_CHECKS",
   "schema_version": "boat-edge-v199-independent-future-only-score-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
-  "settled_verified": 15
+  "settled_verified": 16
 }
