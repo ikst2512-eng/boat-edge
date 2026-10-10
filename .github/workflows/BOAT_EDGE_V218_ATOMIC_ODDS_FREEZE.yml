@@ -1,0 +1,85 @@
+name: BOAT EDGE V218 - One-Read Predeadline Odds Freeze
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V218_ATOMIC_ODDS_FREEZE.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: boat-edge-v218-atomic-odds-installer
+  cancel-in-progress: false
+jobs:
+  fix-single-source-odds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore immutable V218 audited installer by exact SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYV218_BLOB'
+          import base64,gzip,hashlib
+          from pathlib import Path
+          encoded = (
+              'H4sIAAAAAAAC/6VYX2/bNhB/96fg3AdJq6zaSdd12jTASNw1WGp7kVNsyAKBlqiYrUwJIp3EM/zdd0dKtuTGWYvlgZao+/u7490xaZkvSUHVIuNzwpdFXioy'
+              'hddO9Uylqh8XVCJV/fpJ5qJ+VmxZpDxjnU44ub46GwUowrZkXPJCyVeSKxalXNAsWnCp8nId3Q9OT71ibTkdnhKRK2IYPfYIBNJ2/A6Bv5JyyUi4lqBg9MiV'
+              'bX08GbyNPlyE4cX4t+gjCAEJMqiYS0aTSLFHZTMR5wkXd4G1UmnvLRDNJr+PxoHhR+bLUXQ1Gp5Hk/PzMJpeTT6OxsPx2cjqdBYsK1gZWJaVsJTMGXJoyXmS'
+              'yCgXMbMRMF/jVBna7XavgIRQIkFrxgDK5UrROTxJpkiekrzkd4gAQSlkvlZMkjQvSVGyhMeK58IlCb9jUrmECpBUxgt+z7yOlj8D3Ei6EpqQCHbPSoI2SVjl'
+              'KlNS85j9Jf0MsleF0fSwYALMwugQkLHkEi30aqv1ryrXxg2D+UOA/hk0taG2s/ua5HGAkfeyHLTbQLz/VkWSgwKpKOIE1OhVrBzw/4mP3h1TdleVPGWxohrg'
+              'rlNx7C3SVjG1KgXZbF0yzgUza+fgq1YHJrl1rnpyQU9+eKPN9Bbs0QBcucMeY1YoYk/CUVnmpUs+0mzFqudrwSGD2DnDVe81DHramA5kTKdTsiKjMVsyoWRw'
+              'o1lsnUhitbTvHd8C43SCvWztOm5FiqtONERahwDhtjFNX6XdzWe23nq409WQbraWW5mlOV+Q/0pwf5+JJglpCTm6gDWBjVY6hu+HOq0kT1hMS+9vYTV11Va6'
+              '0T3q1K/zLJ8330Fw8OQJesKfPQbdmhdi1/XNb4QZ/CSbSw4Y2vrb0OK319osKWhh8q/J7PwtqlTeUWoMzJum1IeDS2OQ4xuGvWyEIDgkb56lOmIH9rStfsaM'
+              'BtR4ovFUYf4dN6TB0AajTd9OuAMPDrLtCHudEqjmFiu7rrrm4AsizQnCqpdniSvYA+42D8z+iIlAenG+EsoG0naJ+S4Y+F80htRU9uvx6M/p6Gw2OtfNIYKM'
+              'fz+5IlpSsBFbn2xA3o3/49vbrbUXK0FbZYddmeYOzGdogF5BS8ls6WLEBV2yQKrSNj3HMVRVA3oosdPpDiTdL3sQUhYlF3Ufq46pYY6mw9nZ+2g4nV5ejM6B'
+              'mmWSfQNiAE0NGdA5T6Jk1I7+vAhn2D+NxvFkBlvDsxmxXgKnBudbfD/u0fASK9BftU+gLwzBsc4LMgxnPUCppLEik/HlX0QtGClWUIp008I0ZKUPBV3nDntk'
+              '8UoxTbSkgMC+ShEzY4BIwAh7Ut0QXZhq1vkKmEVS5GAh7Mg4Bw3oCbwAPbRLQWJQBrIpMaMJj6EyYm2Qi1x5XzdbLPNklbGgAZfTwWYNDUBA+9Dx0w9guqH1'
+              '5nmyxpA1+iFSuDYKeVc1+nOWuvg+lGsRNzYdx7R7YPB0TALrqSJr6SMIYbO1Mc+lxHgCR+fij+uRaRcYttEVeIbSZQHJFmwsHHcsH1fXwhJh+bi6VtVrLb96'
+              '2HYwXnacLwuskOjAB+20jU4H2hZXrQsW8TsBAQGUbh3X+oXLPINIJJGJ/q+Wa6EgqCU7K5yO+Rbsdm6Oef7A1WI3l3ozhoMqLdfnvIRRAyZQGzCUmsAcIdMV'
+              'zeCKu84rC8XpJmPaHpzAKKGKAhSQtyyCHmT51kn/5M2gPxj0Tk57/QHYXAAMDD5Mr7ABh9eXs2gKGfR+GAK4kOpAkjIVL8BRqioBvUG/NxjM+m/9k77f77/s'
+              '/wQrELYmI8vfWKCmd2r5g1Ovv93urNKNxYxlyWpZSLs2FWqQhEMVURlzHryjUFEcT+cvs1tVyXhf1S/Tp3aCDQU2+rTM/2HCNVNUYEJhG9a6YEgG1wFDFwQ7'
+              'ETpdK7bgYDbb6/liQqvEgeqbAyhubyooboMAwfjSCX1UG5Bsvv9+h8pRXH/0Xm+3zpHK3XLuu6DS1uzsxs2vtLYa8JNmyqUH6dTbGDy2jTSs+VrBMka17NzR'
+              'NS1sxKRJW4Wymfz1RUErBj4bpl097OLiHMHbwmqtOZ7HsJ06Xyt8c3BT8FNM6O3/0/WChIoqHhO6Sri+qWGXMbe4HvISTBl9RfbIO8ozrNpU4LkjMl+VMevp'
+              'u1XJNDEct3tAXULnYLpcB/JGelwk7NHeT+ivo8vJ2e+m1pr+Yjl+iwyUGNd5GsULKu5YYofj4fRg+nWxU+H14bZTuWt908xo6bnMWLqT8Mz4eJy8Nf4dJzsy'
+              'Eu9GxAOm4/PoUZZn7wKaYUf6f28xlbjmADQbhbNQDzp+/a+A9s0fJfwMA6mQMG7ABLe79BdlPqdznnG1JpCPn5mq8qt5B/uZYIusJX0C1xlIo3MJkl4taQaT'
+              'xhIucinkqSRxlkv8DKzQ/VAZnIx/ATl9xwXxEQAA'
+          )
+          source=gzip.decompress(base64.b64decode(encoded))
+          assert hashlib.sha256(source).hexdigest()=='4e51a7bff21f133f60438d6f49c713d6f5952e44df48f6081d0d45794486ff57','V218_SOURCE_HASH_MISMATCH'
+          Path('/tmp/boat_edge_v218_patch.py').write_bytes(source)
+          print('V218_PATCH_SHA256_VERIFIED')
+          PYV218_BLOB
+      - name: Freeze ticket odds, original file SHA, and sidecar from the same bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 /tmp/boat_edge_v218_patch.py
+            python3 -m py_compile scripts/site_final_history_v133.py scripts/boat_edge_v214_shadow.py scripts/boat_edge_v211_paper_sim.py
+            if [ -e tests/test_v217_odds_guard.py ]; then
+              python3 tests/test_v217_odds_guard.py
+            fi
+            git add -- scripts/site_final_history_v133.py
+            if git diff --cached --quiet; then
+              echo 'V218_ALREADY_INSTALLED_TESTS_PASS'
+              exit 0
+            fi
+            git commit -m 'V218 source-atomic predeadline odds freeze for V133 snapshots'
+            if git push origin HEAD:main; then
+              echo 'V218_COMMIT_SUCCESS_TESTS_PASS'
+              exit 0
+            fi
+            echo "V218_RETRY_FRESH_MAIN_${attempt}"
+          done
+          echo 'V218_PUSH_RETRY_EXHAUSTED' >&2
+          exit 1
