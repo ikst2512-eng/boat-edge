@@ -1,0 +1,205 @@
+name: BOAT EDGE V202 - Clear Prediction and Pre-Race Data Display
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V202_SITE_READABILITY.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v202-readability-only
+  cancel-in-progress: false
+
+jobs:
+  deploy-display-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout site with fresh Git history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Safely add compact display and preserve all existing predictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PYINSTALL'
+          from pathlib import Path
+          import base64,gzip,hashlib
+          expected={
+            'assets/boat_edge_v202_display.js': ('f7827a466be583687a393e3e3f41ab6efc964baa30ca346dea661d821fd602f0',
+              'H4sIAAAAAAAC/7U7a3fcRJbf+RWy8bYkom63HTYDbav7JBDY3SEJJFnmnPUaW92qtoXVkpHUfmx3n+MHSRxCMMNACI9ZMkwAE0jC8MyQkPwX'
+              'Ou3HJ/7C3ltVkkrqbjtndpdz6EhVt27duu97VR5+Qjp26uhZ6fizzx+XXh7Nj0q/rrwr+VZAsq5jL2uS79a9CskadRPGTE2quLV5oxJInlEh'
+              'kmn587axnHtMkqSXLbIokSXLDyxnRjKNwJAQQ046SRaIJ817rlmvkOH6PEwRyTVNX5PKJIDfmmsSGwCIaVUCy3V8yfWkquvVDFuaAWA/Jz0x'
+              '/JhSrTt0WlEbsJ9c94nkBx4skcfgvQLrAmlI9/Wi6VbqNeIEudfqxFs+Q2xSCVxP8dUYjvgVfUkvnoH1zoyypOu6U7ftZhOf6o5JqpZDzJIs'
+              'F5bUnEfgjBWiDE9kxouD8uTwjFbRi0pDzsgFOWPU5sdkTR7HZzvAxyI+ztDHQXx8re7iy6A8CC+PH356TG5NVCZVgRqnXtMX9OJCRMaCSAZ7'
+              'leUSzhVO1mtl4uUs/znLAYko7F1ZUNVS9FhAyBh9tRboyoJm6qOqXoS9AILvVJJ/u3dZLkQLc4H7nLVETMUUqPMDOKMeAGOR7+EoShEGSw5I'
+              '/Vl4VgI/3leSPBLUPYdCZTJpmnE0N0OCs1aNKEA4fQ/cF9yKYRMc5HKRXzWy//airDVmQQkL8mjWtGasQNZqllMPiDAQwJr/cB0YOupbxvBZ'
+              'd27ZlVtqQd7+YK2zcXf74xs7n/68e+My1ZRWfLQFw7bM35NlfQ7+Lw6/Mpr/T7NxpJWF31H+OzScAw0MFE4SADabsixK71U/QAboCnI35Ab+'
+              '5Bx3UVEPPf3E4SN5/A/Z+69nTnFMas63LVCrvDaSj5TsqG0rchY0RxY2sA0/OA2TegN2L8iyhsZDea15BHTcB8Ms5DWfvFbI08PZJJAqdc8D'
+              'G8DDwYpy3V/Wq4btE80kgWHZ/MVG82LIKT72/iKYInt3yz7xwHz1pEYxp3Dq97qCbkADsuDs+FjKsakp6i9KuQmYmoTBwAjqPmqxOydLmYx0'
+              'zHVtYjjKPmuqJKjMEnPKCCgrQuuXTGKYNtjF0YCuVkWlRDEylPg7Ba+aNFvjQzU4eCkXLmdqalWVgVAJULZqszkw/AoIfkQbbRV6KcBsjclf'
+              '5Rp+0jg5JpqFHqnA9BDKK5Lyk2orK448qR1JjRzRnlJbZ4cas7VWIZ8/lH8afqfVpD3FZkNVWWSM7xjz/qwbvDhr+GiOWhd7AjRYqpnzhucz'
+              'kwX6NbNO9DRbY/6krTeIzi53Nq907r/PjOzhncvbV9+So3VdRl8naiYTFHV8CBHs/HSts3Ghc/9Nhqm9frfzy58AX3v11sOfN7bvfN1e/aq9'
+              'ehsM+OEvD3be3ZIT3AiXX7zMlv92b4Ot6mx8CcCwsLPx2e7Wvd2f/vLbvYtyF8fAPrzlE8Z8tyIZnse1pkwgEhHLqbpUjb1giizNWmULETSb'
+              'E5Oi8I0FsCyjbBM9NBBmH3KMRFbFBW490ButiGXRek6LhFFQYaCeuyi5VSQsmoz9g0N0rp4AVsrhQAmil6pVgA4fbbvGZtg7pyEU8PArEyPZ'
+              'I5OhouNqVQXUEMjrJAYFYidwblJvMDQF9s8AiyWZDHst6iPh47h+pMRBqTfxgwKlwg9KNJhpVfYec3SqCk4i8OqkFe7beiz+5WIHQrpECSlJ'
+              '3bCfmSWVuW5p4oDnC57B81F0mqH38j/UdVQMz0zompHyYpkMQ5SziTMTzMLokUwGbf8MYRYEUzVQrYUoy1gA1GQG8iPPoEd1XPAiOd/6L4KL'
+              'u04E/tEk3gmCKY4CPgr8vNaoQigAb8ycd83wZixHz7dAhxLnrVKL09mikAoW+NVc1bIBBeQ8xSUuudjW2UJ+pPEnQzONwzoH8F0vUBRDK4Pb'
+              'ZySVjGy5UM4aSXd1wghmc0bZ54gn8pNZ/jQyqR4aIdmRfFFnxyhFIFEWkWBHzZgjp91Fv1u6jlEjvq6kpatq5WqXDTebjZbmzj2yfZb9NKjr'
+              'QcrhGLbgBmTwa0c9D/Jgy6f/clp6gAItrgFut4QQvQCEFCo07jKxwUfRuIK+SgGi0MRhmJ2TClhxNAuEMQH/8NQyVv7FU8fRy8S+pIyehKKh'
+              '1FAsDc5MnSeDZeZG1DFQC4fatAPmrFJsE86kDvNMv6gTbAkbUi+pJ32rSFB5+fhSfJpyVZQZPQuo5gSnYokRoS2lDuUbC8Q8jlvEmBjTmSOY'
+              'otv3RlnqgxNcka9TZWIc9ShHQ2cruFqOyGOImk3r0Agom47nwvDMHCjVNAgEyIwJ7gHoxCSdwQPo8SmS68YSe7pEZ1ynzpc6rnmrMkdJBfow'
+              '2bPMJT1UFIoK59QxboU4K5Y1tI5Ad+CSCZibVMeiHfmKBm6lIZICnBL/haRnb/XO9sVLEIpZsJVhHjXWsP9gORQdBWVDpdyi5UyBowM+h2Mv'
+              'dQO9VgeCbNtIQR7uhgQGuhwqCkg21gvC5vRd3JkOvJSaTu1JRw+nYITdai7UjhEO+taFg44eTsEIONDKIhT40oUBBw8nIXqdmNfbmABS4LIY'
+              'OrEIUqEUsgM+h49hClAgPPZj5K0pqHlhMhCjh/hMaHCm0wJqPwBKFnuN80Aejz0HKMIg3mymF4Qz8Z4VA7P8Y5EDLgy4c5mMEhYIXSccEDQZ'
+              'jCWEEw6UgBDVxZgvoOEo8sM7K50/bkF6hMrOx9qr99trm+21N3Z//A5mMEpbM7MBn9356Pudnz6UVW4oraQzCjzXmYHUSQ+dhWgZiTiOPiZ0'
+              'SEs5AUzVGiwOFnJPtiKiufLtg4JBxKsPx4tFZXHnSvsgESDVMMcoUDGFNOVHW6y6D5EjM/fBCNP9MD0VU0jZvw8WnO+HRuBSJKt9UIUw+6Bj'
+              'kk3kLw1EokXy1cKAXYDg2epOUXiuppURFtstYpqypLMMLLHB9Lg/bzhSBUp8Xx8sk9H8aBbCqjTUQBxRZr0UPUUZ1VIWIdRxSKJ+V5LZSkao'
+              'XJDl1mBxqLGU7PIQvwLxNO7wqK3xYdy9ON11Eq4QZ84qkJLVUrn0Ylhr4Bx1F1BpoLuqKTRbGACQqMDDnce6uIAQCBpS2AM8jF24h+Bdms2l'
+              '8XypF9uqg8XO397buf7zc0MNPGrMqbitNSocOsWPUbW7oqaNyTM061ewPckZwUnDEfT2JubvMutXyiV5++ZfO/c2n/n306ePnzwLsmiv/dBe'
+              'u95e3+hsru2urGOBuv4dVKoMDsLp9luf7fz4Yc8CleWez8xa81GjRaNxXoMaPyEW36vofZspNOOYcV0zlcxiwyOTAVQH6mQFSAClRByhsuEz'
+              'HI+91OoBMZnWIVspjWorWsH7BHc2YEGcQLSkcR94Zhc5GG00KnASsfeDygwio3B99ZUd6zSZx7qEHs0lkP6fZtYLGViSWVjc6V0Vo0ZZ1oOL'
+              'cUrGEzLuBZ5HjoYByCUQtVwiZNS8jCrqT6aiBdDzfLcwEkVIJsPIjnEkMujqwevZ6XuvZzFXH2B4gG6lu9chJuURkmazb5adPmykTKa10K1L'
+              'PmpKWrvlqPKWNblz4efdH77Z/cuWrOGI2uoBL5wYFpz7GuyJuQBZY0d7hFUU/sxZWYvk0nNRr7JPA9u+0V6/AThkTVQKdDJw7GL32fnXFMcN'
+              'CLgrSjGkFp2Ll9HjU5JL07A7NQSqewmZCGbR+u3eJrO1ZNtvv0WsIai2pgtMAUrywwd/7ty82lm53l693V5dg+ynvX53Z/N+5+Ot9uotsbvH'
+              'mnA7577ovJ02YlgiRYyAc4icSJ+mZ0n8yMc6YHV8PpE+JopunzEb1GwmXHTktKd+QC8ZG79av5SgpSc7FP26D0k7Rvj97LiUqo8LyYYjcxIH'
+              'IujVt0yjcqtVq2IZdi+/aNu6FzuTsFsVrsS+utBip8FmcV+agKRFAuGZeAhcSDJl0cAO18SEvPfp1t7KJ1BmQsKwiFWdOeXPE5B0zU99vwIl'
+              'q9aCNJCWV1u1YX96UpuQt7/7dO+rqxEuKBamKrW+WNg0rq/U2PJvIHh9GS43LG8K0pL5qUo/DDEEIvn19XWO5XsBCz3nAXhEmAhTQmw0RdG7'
+              'EpWEt2dfgk5xRdVDjYUY8witrZS6YQM0VJVMxkCSI099ZPfihZ0P7u69+S1E+vbqA0xyvr7WufY9a8TvrbzLvsJhqlPgyzqbtztvf47O5vxl'
+              'NttefbPz4Nzu56uJvNHV0UAzGfyNDBK4Br98MPYDpej7WLKRNqO7JZoV1owlJa/RR8+FWlERPtdlo+83ruiYhM+Vw/Rrnqp27YDbniVLAWwz'
+              'zXz74b2Vv3YuX6Xecb299rMUesME7hZzVUON9CcTIBkiOfwWR/KoGhsj+c7G+d0fz+F3kpBfjJsyer0+m0bOEJZtf/T99pVvOvfPtVf/kmAw'
+              'frCn3iiqmzy9OD0eeMVxCOs9UkJMdKTyUMOjXTCa+vFHnqZJzJF7tH+EIRHxBCaFC3sRVN9xyuRTceXhqeI4r608sVaNvXCigu25DApSARzL'
+              '055gmLMIcLQA7QkY1pMCcFRi9lwg1PrCGrEDsO+ylzRaJ+0Lc3gfmLBXdhDISwcB7LcJa0YIx+Pdif7A+2GjXbMD5pPrh0Fbp9Xcq67lKHLS'
+              'dVn+0SrGla6vkqnPnmBvsS8o9vkq2j+3Ddz5QZr29cj95qzKHPEGi/F9m2GJVYOYdNEsEJtQq1vttVWeP84eLnKIVepdwU9ywPUL7fV77bUH'
+              '48MAw6G7bRRjQZYWY2CMfepV/hA2DdBkaTiJKmWGnfdauo9V9iwCtfc4k3qIARKB3AJx6rRxfOVSZ+1riAMyLQmjeerGHZf2D1qnYTeGgZ6j'
+              'yD7tiuChLAAjeo2YPvHckH7y6BTWqe6csRzVqUYQQCjEwBYdlgW1JLZixN/IY1MS2OUl5rR7cWeoMRBv382qRcNzLGdmsMjDInjxzSvbP260'
+              '197pvP1Ve22FyzgZGt+Mrq+0V9Z2v/2pvfr6zke3IKaG8fKD9tolqjlf7H53r3Pus87G9e0rN9urXz385QH2NFdvwBKYba/C87X26nv4urLG'
+              'KKeC7ytcbKSCyo6Xi/HG63dHHt650Dl/fu/cZQhH48NlzrSHd94A4tsrb3KdXfs7MJD2Pr5qrwCdX+AXhDf+O3GKtXdSCg1gENp2tzZ2brF4'
+              'dWd786P26gatUN6nx/yovfYnSn8vAXS3AlL5T6ov0P/sNPlCLaEP7JvQhKGVJ1UMjHRvpkEGqDVwiL2UUTPKUasi9katA+zIX7TmoSjc3rqB'
+              'dx6Qd7fb6zeRKcA+LuOtzrmtzke/sGsSnY+/gYf2+qeccQgJrx/Th43tjbd37txnahEqCmgAczEfSL+ef+cAegK8iJD1K55r26AB9LUHBE7N'
+              'gmUWw1QBVXj9LvtYxGP+LO/M7a18C+qZGjxzNjUQKs21aHyk88et6EVs1EeDrD8fI6Js6lz6885bF1KDo5Ad/VNq7HByjLI2vZgOjvYATC4+'
+              'kQQ5kZw9lpw9Jsxi7MInxsqyay5jNsSTMnB5jL0mhDMbNUsfHPndYJE5ish2okQvDoc0uaLY4F+U10HuvOq6VO2Zgu/+cB0Mdfu9bzo3wfZu'
+              'o3/qnIfc8Yvtq2+BVoGmdl6/8fAX0Kobe9fOoUGvrImypm2Dr3feu4Fe7dYnbBAWdm59SNUx7DoIZh1Gwltic6Jzbl3wELdYi4J1I8BBMg8H'
+              'HjV8jXB+IPgJwWLDTP2RY1w9CCCNQEdIn6RgeZ7AJH0ZpLlzNrIJXITF7mCRHWV7/Vzn2t/A0+1++R11YZvgIOjKR0TnV4hjeJZLG9wQTBHV'
+              '5/B76dHx8Et/gyPoz9hLSd67cHn3+gUo3KjRvbN35WJ7FcqGSxASgNSd79G9bL//hQAALmgTNSrcNul6eY7VK/IZVapULKiz6hA15T7ICg5y'
+              'kZcnyJxPuBOIpX07uuXFb4WxhOnD1x/euQmhjqoSXhLrbF7evnqtK0hEQa67BQTcZV/Kxb5POXD0IWX6cYwdZ42yL01QPlJJDDUQvDU4OR3f'
+              'mQH4TAYZ71Zxba5i48d5zLD4NrLaiMaV8KM8vzHR+6oyvQXag4BJWc2BZh03KrNKWS+Wc5THL1hYqbgzMzZRZGxLlnO4wCcwCkTr9KJAeNVh'
+              'nw1zfr28YJFFYRO8lNxjEwPOtUBkbSFnmYB/GrbJctZM9/iMwq5Pe+BYEozGLNMHVsuPl8lI/qkXo/vfJ3BCVrWaYTnx/Al4exFYKMespxhK'
+              'eJkRTnTcJngwoIfuROdyluMTLzhqvgoURCBwAFRH4piyxtCDih73fcwMIRMOWUVsn9BdYON+m8DU/8keiC1XtTw/eGbWss0BXe+5iIKx/dgX'
+              'c6UXmJbC1i0R0zMW494nl0riLmyy84nXYnEnFDSukMMroOwUwi1iXDEm3CJGaA5E8IqNG+giIinnE0oS9iipbOkHRORtYgNYW3aXejKFroBJ'
+              'sDKAiPS74hGgIpIG3wbAAQrVVk7hoeNU1U/ivRpeL5B4njIVaJ4HmSq4HzdhQbsjxYwvX4Mk6VWviJMN4WJ2YmYsvOadm+s/hYGL3cWOhqIr'
+              '4Ho+cQ2rZnhz9Xk91eZOYBKcGDLFcYj3L2dPvAA0s8VqYpgPpvxI+MA53cNb8K8++JVM1rqv6QldZfUfxE1tPQsCN5dlLfwg18+xSDk6mg2w'
+              'HA+yNqBLDuHl7n+QELIEyYQJ9sFv2UeWZ/jLTiW2P49UPeLPngIZ0FvnjX6X0cUL5E+pIBj+xwZK0gBhZUJ7eF9U6Gp2q8v46D9jGzNpxwKO'
+              'hN7FShbjHONNYfKafuhQBAmvDFngLSfvznm6sWhYgUQ7n8p0bhij1DD+qdEUKuMwvQrfyr3qu06JslMfasS7taa1Bv1sVZAdN+tD0CJyK7rI'
+              'TL1Gzp1LHCf+Aw3X4Xt7FL0irhMPPUAZ12zCIeBRPFOzSemKTJJBprZLmikuSOwTOslSqoGtUncczwt/hcEJbVUM5NmU2mh1XXzGMHOauqD4'
+              'Yiy7hZHw4Gl3Gv+5FfMnKC5hjCc0+EHFXcTmd2xFidym1AuCkcL640nSpVToYfBRWy22iqTTZPPDw9LLYKaS7RqmL0GpJFkOHJ5lIxJvSkiL'
+              'xgzxWHLBzG7Wcx237tvsz9RAX2kj360HCv7FTqO/aJI07Ceklga2xKn8/8E/Em6QED6kAoEBuVvy9rejc6Fg+sGUI3ITXK5VZ0CUYrNZdXJT'
+              'U9Tq/uAZ8/OwqagwXfj06I/xcrmc4c344f1h/IsGwAUo7GUlmLV8jc6OgfuokxNWxXMhM52jnIk1F0Em8ngdV7jh3+qzdYpOep2wB2OsIORK'
+              'xKSUUzdM8/gCPKAfJxDjFJmm6LJG0rd+ia0TyKU9UHJw/a4PcinlulIRiVVFPCMhdso5wCCxo8ycLoXsXm1gEdJrIlko9Fz/LAsyvKDTB9i/'
+              'YwmN21+vetxmpA3i/ll5IvlWG/EfiOE17HpAP0Wc4oM9DGB/ctSxEF+OP9BtwPNjHouCotf2WiHl6LRipeaqgg1dvAQqR7dA5UxGnGNGqMb6'
+              'J06yubFuj8uBjrlGcNycIfi3snoj/OavhdfdtfCbqhZ/OtASdxk08Zaixn1egXKKH+d/QWuLWg3giLScZkX4aZh2/dF1Ws6MrO5jBc+eOvGM'
+              '62Cf/AWAxmQGrUlruE6FhOxndQs1srHHWir+/g8o+NUpSjwAAA=='
+            ),
+            'assets/boat_edge_v202_display.css': ('acaa8d9a1f7049833093af42e33dda7cd649f7dbb3407535c77725ed1e788829',
+              'H4sIAAAAAAAC/5VY3W7ruBG+P0/BRVBg9yDK0f/vTdHuzV4UC7TF3lMiabORRIOkju01AvQh9gn7JB3KkkxKjpNFAMdRZobfzDd/1Lev6LfQ'
+              'D0t0kIIMjeaiR4SrQ4vPSPTtGf3vv3+gjve8w+0z6kTNW+oxLpWuUE+/U4maPe53VIEBSvhoQL2gr9++vNQUDHtUKdprjtvLZLasW9G8VjVu'
+              'XndSDD0pnxhjVS0kobIMDiekRMsJeiI1jen8D09iwgdVBsnhVB0wIbzflUEE0kFoPnx43IhWyPIpwJEfF6B38tQeE3EsfRQbmRw+noIspDH2'
+              'SdXynnp7ynd7XQYvScVErz3Ff6elsfg249fisCBnLT1VuOW73uOadmp84CmNpa7+MyjN2dlrwAw4XKoDbqhXU32ktK9GwaPEh9J8VDv4kruH'
+              'oH10sSBk4I+LMKpaqjVEwlg23nsvfpjQruqw3PG+NLHwlxikIYmbxf4rb16pvNo/Xg3mvr82+OIbc5OFtMmTgllRKSy8hmuvxTVtbcyGA+eI'
+              'xF+xZ7yyiaeUxYzc4z6jCcMzljBMipwttEMKoOwumhcmJCTqZXVGweIlMEGaxdkMa3rYFBSTW7RqySlzSV/xZ+dAA2xTOVJqgAXgxUyJiQhw'
+              'MuMu5kR1cj9mGatXcbJzY0SDlJai39nRjq2MjyGnb/jFKz5f5tDlKY7rasX82ySJtclVKNlZvI7jOMw24rPlI5Y9ePI8qzPw/LKq5FvN2oSy'
+              'hBRNPQMu/DgO1qVdWJWdz6GaIpmPgbRhZb5vl2xgRewKyxZOQXgFs6BklQXMp0lNZohZlsYhXmyCGth8lBNLAhjYdoLUWFFTyrMvJg18ZCi2'
+              'baN65iDIojrN3H9CifYX192lUKOsLsIFaLPnB/UZoG+WwiLP+7HpjGpGLn7Pl3UrmYmLr7W5yYA7jcDtHDYcpKCIW4fBxKHb7kU7IYhb8ITl'
+              'zF+RSwJakGxpKFEWxkuIu0FT1wQUZcLWXYImNKPFEvYkS/JiQaHEIKHf90LTmccszbMCr9yckyAbk2B84rb51Co2/YmUS1dF8mZr382bbXHC'
+              'nK1ZuKIotcpxZnX2PciynLon1Rd3gC69KQ8ZTOMrRK+lTBtrt7gd+YGuh8ikmtS5j8PZu2SMWLqaMZnVnTSuYTlRjRSQPAJ2E9aKo3cq8aAF'
+              'WIHIcaL3cIT/l3tBCGjOgjs9CY6qX7n2FovXE0xctBiavXv+/WibHGrxQdFy/lJZYGC/mrEF4WZAsGkKf8eSY/jdDx2VvCnhuKHF0vyt1rtC'
+              '4oJCev/s/k0u9lQy3Gp60t5Y6/NIm6DXQmvROaEqYKgm1XEPTWHcHmjZizEjIUSaN7idDHWckJZusMC0hc+5TtIUGtiqPydQwk31YLcoTM8R'
+              'ipvhVcLm1byeK9iiSn9zWDluq6avtORiOWlScWNizE/fJiS8Fu2SPElyh5/fPQ5t+lSG77jqYLjj6KwfrfVl2ev9Ve9H2Lb7n1bGnj8UX51X'
+              's4bdCKkF1perY6FJ1imBxu/3RoJbHMlqOExps96Ep8dTB5DjCfEqiFEUzVW/5PuthlbEO/Bf6sD1MGAR5OYyS8MkSu9UO6jEDXtzDIWXFSQa'
+              '165E5EiQNIYfVyJ2bQQZI5Erkbg2fBzBmuFIpK6NtEjTW2JMi+C8r5GwCOtNZazyM9hco2KruZv7U3wbwGyxHUVxFH9QhAsuJsQnxxUa73CP'
+              '70tzayC5XyRrCKubW+IsVrfkGKBt9R+vQtnN9UkFXX9f7lxLCriW3GlVy9YY0CTKk+02v11sH6S42aeaQSoweBD8WjxQOZPHkT0+XcQlE82g'
+              'vO9ccTOJxKBNqMab4eRATIqcBtX0H08wpqgux/vut6/on7SDIYfgOgWuwahBLd3h5oxUIySAR4TjncSdQrgnCA+E629w+dUDXP5xT1uFmBSd'
+              'aXqow7xHEhhFZmK+fEEI/RvwS0RPHHgHWz//+g/EFZylQZSS0WSDe1Sb88WBmmffOR6tTQ4hYoRbpMVu19LxJcNed+28OLYU1J+gE44XQiCL'
+              'NqAn+ueHUrw/DPrvojvAZRgOVWorPq+JglDlSejoZ9tAPZz/JrAkz39O7ShkS9RjbKYd3BUxkf2N0yOI0CAqfjE+/Gtk4qE0PA6yHK7KmsIA'
+              'OcA+oc8fK2SjC625iJIdXeqpFz39gXcHITWkytt7UaMnyA1ivPkMMw+UPk/UPe2PWLqn8x5Fj465z9hG488Q+L7y5/j8QP8deqV5uadtgv/a'
+              'UWgAP952ocTsRj9dNi/6ltdz5vVHcWuv27dc1jX0vdccoaX/0Sprmmu6lXe2L3vXjt9t/WZOlAGCHz9Zde90e3V9+/J/OXnjaEcVAAA='
+            ),
+          }
+          for rel,(digest,*chunks) in expected.items():
+              content=gzip.decompress(base64.b64decode(''.join(chunks)))
+              assert hashlib.sha256(content).hexdigest()==digest,(rel,'PAYLOAD_HASH_MISMATCH')
+              file=Path(rel);file.parent.mkdir(parents=True,exist_ok=True)
+              if file.exists() and file.read_bytes()!=content:
+                  raise SystemExit('V202_ASSET_CONFLICT_DO_NOT_OVERWRITE_'+rel)
+              file.write_bytes(content)
+          file=Path('index.html')
+          html=file.read_text(encoding='utf-8')
+          required=['id="tab-pred"','id="tab-before"','id="be108PredictionModes"']
+          # Dynamic #be108PredictionModes is generated by assets, not literal HTML.
+          required=required[:2]+['./assets/boat_edge_v108.js','id="raceView"']
+          assert all(s in html for s in required), 'V202_CHANGED_INDEX_UNSUPPORTED_NO_PATCH'
+          css='<link rel="stylesheet" href="./assets/boat_edge_v202_display.css?v=202">'
+          js='<script src="./assets/boat_edge_v202_display.js?v=202"></script>'
+          if css not in html:
+              assert html.count('</head>')==1, 'V202_HEAD_ANCHOR_MISSING'
+              html=html.replace('</head>',css+'\n</head>')
+          if js not in html:
+              assert html.count('</body>')==1, 'V202_BODY_ANCHOR_MISSING'
+              html=html.replace('</body>',js+'\n</body>')
+          assert html.count(css)==1 and html.count(js)==1, 'V202_DUPLICATE_OR_MISSING_ASSET'
+          file.write_text(html,encoding='utf-8')
+          print('V202_SOURCE_SHA_GUARDED_SITE_PATCH_PASS',len(html))
+          PYINSTALL
+            node --check assets/boat_edge_v202_display.js
+            python3 - <<'PYVERIFY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          js=Path('assets/boat_edge_v202_display.js').read_text(encoding='utf-8')
+          css=Path('assets/boat_edge_v202_display.css').read_text(encoding='utf-8')
+          for required in ('#tab-pred','.be202-table','#be202Essential'):
+              assert required in js+css,required
+          for required in ('data-be202-tab','original_exhibition','start_exhibition','source_audit','fetch(','deadlineAt','be202-pred-label'):
+              assert required in js,required
+          for forbidden in ('data/formal_predictions/','data/site_results/','data/site_shadow_v199/predictions/'):
+              assert forbidden not in js,forbidden
+          assert 'boat_edge_v202_display.js?v=202' in html
+          assert 'boat_edge_v202_display.css?v=202' in html
+          assert 'boat_edge_v108.js' in html and 'boat_edge_v166_refresh.js' in html
+          print('V202_DISPLAY_PREDICTIONS_UNCHANGED_BETTING_UI_PRESERVED_PASS')
+          PYVERIFY
+            git add -- index.html assets/boat_edge_v202_display.js assets/boat_edge_v202_display.css
+            git diff --cached --check
+            python3 - <<'PYGUARD'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          allowed={'index.html','assets/boat_edge_v202_display.js','assets/boat_edge_v202_display.css'}
+          assert set(paths).issubset(allowed),('V202_DISALLOWED_FILE',paths)
+          print('V202_SITE_ASSETS_ONLY_NO_FORMAL_NO_PREDICTION_FILE_WRITE_PASS',paths)
+          PYGUARD
+            if git diff --cached --quiet; then
+              echo V202_SITE_DISPLAY_ALREADY_DEPLOYED
+              exit 0
+            fi
+            git commit -m 'V202 clear live pre-race data and prediction display; hide duplicate legacy panels only'
+            if git push origin HEAD:main; then
+              echo V202_SITE_READABILITY_PUBLISHED_PAGES_WILL_REBUILD
+              exit 0
+            fi
+            echo "V202_RETRY_${attempt}_CONCURRENT_MAIN_UPDATE"
+          done
+          echo V202_DEPLOY_FAILED_AFTER_RETRIES >&2
+          exit 1
