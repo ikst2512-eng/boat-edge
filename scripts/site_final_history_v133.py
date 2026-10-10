@@ -623,6 +623,36 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
             for ticket,stake in zip(row["tickets"],amounts):ticket["stake_yen"]=stake
         snap["stake_plan_version"]="V141-10000-PROSPECTIVE"
         snap["stake_saved_at"]=snap["saved_at"]
+    # V214_LOCK_ODDS_SOURCE: forward-only byte-exact purchase-time odds evidence.
+    # These sidecars are stored below SNAPS so the pre-existing V133 git add
+    # publishes them atomically with the latest prospectively frozen snapshot.
+    _v214_odds_path=ODDS/f"{key}.json"
+    _v214_sha=snap.get("odds_sha256")
+    if _v214_sha and _v214_odds_path.is_file():
+        _v214_blob=_v214_odds_path.read_bytes()
+        if hashlib.sha256(_v214_blob).hexdigest()==_v214_sha:
+            _v214_doc=read_json(_v214_odds_path) or {}
+            try:
+                _v214_when=datetime.fromisoformat(str(_v214_doc.get("fetched_at")))
+                _v214_saved=datetime.fromisoformat(str(snap["saved_at"]))
+                _v214_valid=(
+                    _v214_doc.get("race_key")==key and
+                    _v214_doc.get("phase")=="PRE_RESULT_PURCHASE_ONLY" and
+                    _v214_when.tzinfo is not None and
+                    _v214_saved.tzinfo is not None and
+                    _v214_when<=_v214_saved<dl and
+                    0<=(_v214_saved-_v214_when).total_seconds()<=15*60
+                )
+            except (ValueError,TypeError,KeyError):
+                _v214_valid=False
+            if _v214_valid:
+                _v214_sidecar=SNAPS/"odds_v214"/f"{key}-{_v214_sha}.json"
+                _v214_sidecar.parent.mkdir(parents=True,exist_ok=True)
+                if _v214_sidecar.exists():
+                    if _v214_sidecar.read_bytes()!=_v214_blob:
+                        raise RuntimeError("V214_ODDS_SIDECAR_IMMUTABILITY_VIOLATION")
+                else:
+                    _v214_sidecar.write_bytes(_v214_blob)
     if write_if_changed(SNAPS/f"{key}.json",snap):
         changed+=1;snapshots+=1
 
