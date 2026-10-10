@@ -2,24 +2,24 @@
   "by_day": {
     "20261010": {
       "classes": {
-        "HEAD_ABSENT": 4,
+        "HEAD_ABSENT": 5,
         "SECOND_ABSENT_WITH_CORRECT_HEAD": 7,
         "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 8,
-        "TOP10_HIT": 4
+        "TOP10_HIT": 5
       },
-      "verified_settled": 23
+      "verified_settled": 25
     }
   },
   "formal_guard_modified": false,
   "formal_results_accessed": false,
-  "independent_verified_settled": 23,
+  "independent_verified_settled": 25,
   "inference": "DIAGNOSTIC_NOT_PROOF_OF_IMPROVED_ACCURACY",
   "invalid_frozen_or_results": [],
   "model_id": "V198_SITE_ONLY_ROLE_MISS_AUDIT_V1",
   "no_current_model_change": true,
   "no_production_promote": true,
   "outcomes_from": "data/site_results confirmed only; no endpoint or combined API",
-  "pending_settlement": 2,
+  "pending_settlement": 1,
   "races": [
     {
       "actual_head": "3",
@@ -101,6 +101,33 @@
       "v185_top3_hit": false,
       "v185_top5_hit": true,
       "winning_combo": "1-3-4"
+    },
+    {
+      "actual_head": "3",
+      "actual_head_is_1": false,
+      "actual_second": "6",
+      "actual_third": "4",
+      "baseline_top10_hit": false,
+      "baseline_top3_hit": false,
+      "baseline_top5_hit": false,
+      "classification_v185_top10": "HEAD_ABSENT",
+      "payout_band": "OVER_50X",
+      "race_key": "20261010-02-10",
+      "source_first_git_commit": "ffba7bef176b510dbd707152c527ada4af15757f",
+      "source_first_git_commit_time_utc": "2026-10-10T06:13:39+00:00",
+      "v180_top10_hit": false,
+      "v180_top3_hit": false,
+      "v180_top5_hit": false,
+      "v185_actual_head_relative_mass_pct_NOT_CALIBRATED": 0.9969,
+      "v185_actual_second_rank_given_head": 3,
+      "v185_actual_third_rank_given_head_second": 4,
+      "v185_all120_rank": 53,
+      "v185_rank_within_actual_head": 12,
+      "v185_top10_hit": false,
+      "v185_top10_new_combos_vs_v180": 0,
+      "v185_top3_hit": false,
+      "v185_top5_hit": false,
+      "winning_combo": "3-6-4"
     },
     {
       "actual_head": "2",
@@ -402,6 +429,33 @@
     {
       "actual_head": "1",
       "actual_head_is_1": true,
+      "actual_second": "4",
+      "actual_third": "6",
+      "baseline_top10_hit": true,
+      "baseline_top3_hit": true,
+      "baseline_top5_hit": true,
+      "classification_v185_top10": "TOP10_HIT",
+      "payout_band": "10_TO_20X",
+      "race_key": "20261010-09-11",
+      "source_first_git_commit": "8ffc40f5aa86f08176c9b779f26ef14cc75a7894",
+      "source_first_git_commit_time_utc": "2026-10-10T06:41:44+00:00",
+      "v180_top10_hit": true,
+      "v180_top3_hit": false,
+      "v180_top5_hit": true,
+      "v185_actual_head_relative_mass_pct_NOT_CALIBRATED": 74.3306,
+      "v185_actual_second_rank_given_head": 3,
+      "v185_actual_third_rank_given_head_second": 1,
+      "v185_all120_rank": 4,
+      "v185_rank_within_actual_head": 4,
+      "v185_top10_hit": true,
+      "v185_top10_new_combos_vs_v180": 0,
+      "v185_top3_hit": false,
+      "v185_top5_hit": true,
+      "winning_combo": "1-4-6"
+    },
+    {
+      "actual_head": "1",
+      "actual_head_is_1": true,
       "actual_second": "2",
       "actual_third": "4",
       "baseline_top10_hit": false,
@@ -646,11 +700,11 @@
   "result_access_rule": "AFTER_V185_INITIAL_GIT_COMMIT_PREDEADLINE_SHA_REPLAY_PASS_ONLY",
   "schema_version": "boat-edge-v198-independent-immutable-site-role-miss-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
-  "site_frozen_research_files": 25,
+  "site_frozen_research_files": 26,
   "top10_classification": {
-    "HEAD_ABSENT": 4,
+    "HEAD_ABSENT": 5,
     "SECOND_ABSENT_WITH_CORRECT_HEAD": 7,
     "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 8,
-    "TOP10_HIT": 4
+    "TOP10_HIT": 5
   }
 }
