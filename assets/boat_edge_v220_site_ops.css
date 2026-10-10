@@ -1,0 +1,10 @@
+/* V220 unobtrusive 320px+ site-operations status, avoids replacing existing predictions. */
+.be220-ops{border:1px solid #d8e5ef;border-radius:12px;background:#f7faff;color:#173455;margin:6px 0 10px;padding:9px 11px;font-size:12px;line-height:1.45}
+.be220-ops .be220-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.be220-ops strong{font-size:12px}
+.be220-ops #be220Status{font-size:11px;border-radius:999px;padding:3px 8px;background:#e5edfa;color:#31537d}
+.be220-ops #be220Status.be220-issue{background:#fff0dd;color:#8c4b13}
+.be220-ops #be220Status.be220-ok{background:#eaf4f4;color:#245957}
+.be220-ops a{margin-left:auto;color:#2355aa;font-size:11px;font-weight:600;text-decoration:underline}
+.be220-ops p{margin:5px 0 0;color:#586b84;font-size:11px}
+@media(max-width:370px){.be220-ops{padding:8px 9px}.be220-ops a{margin-left:0}}
