@@ -1,6 +1,7 @@
 /* V215: show forward-only data readiness. No changes to wagers or prediction engine. */
 (()=>{'use strict';
  const $=(sel,root=document)=>root.querySelector(sel);
+ const SOURCE_DETAILS={race_file_missing:'レース情報未保存',six_racers_unverified:'出走6艇未確認',race_card_not_ok:'公式出走表未取得',race_card_stale:'公式出走表が古い',beforeinfo_not_ok:'公式直前情報未取得',beforeinfo_stale:'公式直前情報が古い',scratch_missing_or_blocked:'欠場確認不足・取消警告',scratch_stale:'欠場確認が古い',pre_result_odds_unverified:'締切前オッズ未確認',pre_result_odds_stale:'締切前オッズが古い'};
  const TEXT={snapshot_missing:'予想未保存',snapshot_invalid:'保存形式不正',snapshot_not_eligible:'予想モデル対象外',pre_result_guard_failed:'結果未参照ガード不一致',snapshot_time_invalid:'予想時刻不正',outside_decision_window:'購入時間外',not_final15:'直前予想でない',snapshot_stale:'予想が古い',snapshot_audit_sha_failed:'予想監査SHA不一致',scratch_unknown_or_blocked:'欠場・取消確認不足',scratch_source_stale:'欠場情報が古い',odds_sha_mismatch_or_missing:'保存オッズSHA不一致',odds_time_or_source_invalid:'オッズ取得時刻不正',odds_source_stale:'オッズが古い',no_raw_ev_candidate_8_25x:'期待値候補なし',verified_shadow_ready:'証跡一致（シャドー候補）'};
  function init(){const pane=$('#panel-shadow');if(!pane||$('#be215Readiness'))return;
   const box=document.createElement('section');box.id='be215Readiness';box.className='be215-readiness';
@@ -16,7 +17,8 @@
     const place=$('#be215Window');place.replaceChildren();
     for(const row of (data.current_window||[]).slice(0,6)){
       const p=document.createElement('p');p.className='be215-item';
-      p.textContent=`${row.venue} ${row.race_key.split('-')[2]}R（${row.deadline}） ${TEXT[row.reason]||row.reason}`;place.appendChild(p);
+      const gaps=(row.source_gaps||[]).map(k=>SOURCE_DETAILS[k]||k);
+      p.textContent=`${row.venue} ${row.race_key.split('-')[2]}R（${row.deadline}） ${TEXT[row.reason]||row.reason}${gaps.length?' ／ 不足情報：'+gaps.join('・'):''}`;place.appendChild(p);
     }
     const h=data.day_latest_reasons||{};
     $('#be215History').textContent=Object.keys(h).length?`本日の最終確認記録：${Object.entries(h).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${TEXT[k]||k} ${v}R`).join(' / ')}`:'締切前の監査記録を蓄積中。結果は使用しません。';

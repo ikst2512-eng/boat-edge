@@ -12,6 +12,44 @@ SCHEMA='BOAT_EDGE_V215_PRE_RESULT_READINESS_V1'
 HIST_SCHEMA='BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1'
 
 
+def source_gaps(root, key, now):
+    """Observed pre-result source gaps; not proof that a prediction engine failed.
+
+    This is strictly a diagnostic companion to the immutable shadow eligibility check.
+    No result or payout file is opened, and absent evidence never becomes a PASS.
+    """
+    race=load(root/'data/races'/(key+'.json'))
+    if not isinstance(race,dict):
+        return ['race_file_missing']
+    gaps=[]
+    racers=race.get('racers') or []
+    if len(racers)!=6:gaps.append('six_racers_unverified')
+    audit=race.get('source_audit') or {}
+    for source,max_age,label in [('race_card',16,'race_card'),('beforeinfo',15,'beforeinfo')]:
+        record=audit.get(source) or {}
+        if record.get('status')!='ok':
+            gaps.append(label+'_not_ok')
+        else:
+            stamp=parse(record.get('fetched_at'))
+            if stamp is None or not 0<=(now-stamp).total_seconds()<=max_age*60:
+                gaps.append(label+'_stale')
+    scratch=load(root/'data/site_scratches_v182'/(key+'.json')) or {}
+    if scratch.get('race_key')!=key or scratch.get('blocked') is not False:
+        gaps.append('scratch_missing_or_blocked')
+    else:
+        stamp=parse(scratch.get('checked_at'))
+        if scratch.get('race_card_source_status')!='ok' or stamp is None or not 0<=(now-stamp).total_seconds()<=900:
+            gaps.append('scratch_stale')
+    odds=load(root/'data/site_odds'/(key+'.json')) or {}
+    if odds.get('race_key')!=key or odds.get('phase')!='PRE_RESULT_PURCHASE_ONLY':
+        gaps.append('pre_result_odds_unverified')
+    else:
+        stamp=parse(odds.get('fetched_at'))
+        if stamp is None or not 0<=(now-stamp).total_seconds()<=900:
+            gaps.append('pre_result_odds_stale')
+    return gaps
+
+
 def audit(root, now):
     now=now.astimezone(UTC)
     today=now.astimezone(JST).strftime('%Y%m%d')
@@ -37,7 +75,9 @@ def audit(root, now):
                 if eligible:reason='verified_shadow_ready'
                 if not reason:reason='eligibility_unknown'
             reasons[reason]=reasons.get(reason,0)+1
-            window.append({'race_key':key,'venue':venue,'deadline':hm,'minutes_left':round(left,1),'reason':reason})
+            gaps=source_gaps(root,key,now)
+            window.append({'race_key':key,'venue':venue,'deadline':hm,'minutes_left':round(left,1),
+                           'reason':reason,'source_gaps':gaps})
         if 0<=left<=90 and len(forecast)<8:
             race=load(root/'data/races'/(key+'.json')) or {}
             card=(race.get('source_audit') or {}).get('race_card') or {}
@@ -83,6 +123,8 @@ def run(root,now):
              'last_seen_at':cur['checked_at'],
              'reason':item['reason'],
              'reasons_seen':sorted(set((old_entry or {}).get('reasons_seen',[])+[item['reason']])),
+             'source_gaps':item.get('source_gaps',[]),
+             'source_gaps_seen':sorted(set((old_entry or {}).get('source_gaps_seen',[])+item.get('source_gaps',[]))),
              'observed_checks':int((old_entry or {}).get('observed_checks',0))+1}
         seen[key]=row;changed=True
     # No backfill or result queries. A completed window's final observed diagnostics persist.
