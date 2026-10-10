@@ -1,0 +1,187 @@
+name: BOAT EDGE V204 - Mobile Prediction Display Safeguards
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V204_PREDICTION_DISPLAY_FIXED.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v204-presentation-only
+  cancel-in-progress: false
+
+jobs:
+  display-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current site
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install and audit V204 without touching prediction calculations
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PYINSTALL'
+          from pathlib import Path
+          import gzip, base64, hashlib
+          data = {
+            'assets/boat_edge_v204_prediction.js': ('d13cb59b3733f68c69173ad019f4673c929af1c47b77e40b137ea2381f5e6273',
+              'H4sIAAAAAAAC/61aW3PURhZ+96+QndRIijUaw6ZSKRvNVAjsZlkuqZjdhzUkpRm1bcUaaSJpjCe2qzxjMCZgSMhyCZAEEtgFEgi5'
+              'E+OYh/0nkTW2n/gLe053SyPNxaR298W21KdPnz7X7xw595Kw98hrR4X9+/60X/jb7qGXhd8W/iFUXGKYJd90bPzTI7av0wfHtmpq'
+              'nyAIh8k0cYXSpG5PEE8Yd1xS0j3fUwRXt6eIIfhmaYrgs2MYnlByLItQdorg+foUEUq6VapalCkQwf6ybgmWU5rCLa4AZ1Yt31OF'
+              'l3J9kiRr+Vmx6hHY64JU4kifOS6dMG3DOaHudXR/vzFBUHTZJX7VtUf6SsDVB2GJJnmKqxlOqVqGOwAfV32vStzaKEF5HFfy5Ija'
+              'JzP+kfGODcAEX8kFFQled2wf3sODa5YleW5OFKP9nj5O/kJq2rSWz729e+iYMfvKfBZ+7uY/X8wBB8+XRmGrPSFN4145Pr1GbNx5'
+              'uFouEleallXfOeiAkggnF9/VswfeFOVBMVxais80zAnT9zQP9MNe2BrnwLd59BTVJRVLLxEpp+QmFHos05TAqFXTGwXp/wx3m4C9'
+              'tpzJ2HltqGAP21XLGpmPjqvorgcCgf0SR5a19Fll3S9NSrnNC+vhjbtB/WF4obG1sLh9aiVcXjrmvSSNHTOU44MyXCMXi1EusJtI'
+              '5bFdx+Vup76p15yq/zuOvXZy4/GD5ieN5uL34cNrzTOXmstP/qtjXaIbb4HSNOp+vlub5bv8WoU44+jHPtE0TazaBhk3bWKIBeQw'
+              'TBcKqgt75+YYzxIV7h05YsHexkfp3gHP1/zW5Qx4KNjkhLAPWEm+x2Xju41MJrbbH03bBBJDnSD+UbNMJFkuGLHz4Ju0AymzPrz7'
+              'O3j1sPiaZ+q5o85UzRGVSafqDou7s1QholI27apPWi/m5WGxeeP+5herW/dXRFTSeNVm+cGDnSVyUC8SS6rIs30Cu8IUhKeGwSOq'
+              'RbLr1V3ZcZeQ90m2qNs2cUWlAhFl6L7uEYgmSjFKGY30CfyalAPoF3SrW2JB3Pz5Zrh8OjyzEtS/2nj6afjgalC/FDTOBfXPt777'
+              'Oaif3Lz+8Nnacnh9FQz/bO2MOIyJqsXF9XzgEi5/Gl7/bOvW3c3bq+Am4KC/YzMkKkJ3N28sNC8/ir06tfX2mfDspaDeCBofdDCo'
+              '2vq0blp60SLpmzyMbnI/qF8JFp/EHLc/5UKKwyL7Iybe/OCn5qmzQeMiMwf4OySE+YRFquWy7prvk6Q9XOeEp42pqlpJZ8DXLIuZ'
+              'aOjVLEvaWcv0/HzqlSgfH4kYgcF8ixhabvPHD5uf3QAZQGPh+jme3lgaZSxfHsoWq5Cb/aztACOCVpdjRlgZDjsGaXnJK69k8WUW'
+              'I6jqIXVMDN7jTWr9/PBMJtqcyfRHf6olS/e8gyC8Cnt83bQ9STyhuza4vwgpLRee+jpcuxBeuByuXwHTbzZ+AZUGjfvB4mLQWOXy'
+              'x9wS6Z5mmJYCMAF6GioUsk5FcrV8KzG235+rtAx3rIlQRhL39x1ftzSpdSfK0SL2hD+ZybBTVCyzNWlGy8/0axomAYhvvgQlugo5'
+              'XdKVImQofbCoDPE8EZ1QgWrZJmmcPSM5PSi8FkoWZdC3pWPGoFQYPqbCb7kghwsrL7ZSJrVDJlMu8DqTzJytq8FPiLcyeAkTQR03'
+              'LR+ok/fgN433lM0dqDOZmby2awh+7dF2DyX2crFm8Y4K16RCNavEQkA2MxQquILWHY5M3KukMz/5w/bCl+HK1dg/nq1dY67Dwq+V'
+              'DedTwVd2qrbPAs8iaOQK8+8XigQQyhEw57RJTnDfBhjTDxRILFDSCHioJSg/PtlvEXwCKzH0BF4IVCpoSkyzo6+p/x/Wy4SvZp14'
+              'mfNXTUy+bxw9dFAT9xjmtEC3aAOMfAp91R3It+HBnBB+e2n78tmgDjnnTJyggvp6UP/XnhywyXfyMm3fdQbyewCxOfZEes0rERvy'
+              'Ey7n2Hp+T7Hq+w6rrUBGHwYErA9ZtsfXi9pAayOXqHFx6973mDjrF7b+CY9nhd+WLu7Jsf15LlslfTpwcAF3ThM8vtJF9IruT6Lk'
+              'Fd3O//bRTSE+i9kbZMaVaP2WsLG6DGAjgGzSeBo0bgeLXwHtdv1xUP+pjfYLgcEgyPOxW8HfSagS7eihVijekM0G+DqzK8cQdmnS'
+              'cVu5FHJ3GXwcFUcz6dxcx1JJdw3uiAK6ImMho5d4xPX3EoT1EriNwldGiAUgvKLqlQqxjdcnTcvAZWQwH4c+MNV2Ogp9Hh85WBfG'
+              '8ACMcSwxGDJFB6xXTkbNXlpERIVu4ywYFYscvuP5wcMIW/HDGUfvOwKoyNdbh+wcQbza+SakoYF8UP8Ya3aneyQwR1C/y3yil8U5'
+              'ywnXNAboMngTpuw8AwVQ/JPswH3o4p5iIni0gRImJfSaYsKzIkZJgI7I5sPlrbvLPRjRzNqLEYuP5uPloP409u8ejGimN1KceiiA'
+              'UgJqNAZ6kjBo2XsdEz4UzXJloEdOGHccHyAKTwnJsEIslHLnBEaKHBLcER9lfErHDvMZha6y4KE0yfjhfsxCKBkSbOF4GtkRXyKW'
+              'Mq1bVSLPwrkEKiOxknUMCiZbTr9mL0cSvAxSclxsL1Klk5ZJjCqQX+LIUYBuB4lYsLEQnYmVwtISVQoidRthnstyCpLiTSFlpcir'
+              'NhQmc9yElikihbtwEdgpGG8z0ESRMhQxSR7hbBJvGJWbQH18iccuFyaLfRxAL7HlCsnzIz6IGKHnIfRxvmV/Vz+hPQfSKRSPaQkM'
+              'CJtkBcCkWcYWMdG/0pXovv2xrjuv+3uvlabUDUN6zj3xXK5LeTayTa/ECaEixqrvzI4J9iBG0qmjE0bm2anot/ydIlF1cVwH/Vgi'
+              '+wjiYI3YjEAeFAF5QPNDZx4UkcU5hSWacP1UUL8FsCxZP4P6N1G3dIUilOtB4+MdrNzpV71V312n6LnUAdiN5uZiw3Og+z8auJfk'
+              'rAjOJNg/x45A0WnDtsgdiZm1F7pu1aJHbqfq6FkkogENlJo24NO1TtC4STIT48hPp9GZnrHQTaNUheiWNC+NdYp/XFSQp9JySLax'
+              '+x4uZnJT5AYyy+3zfZgNDUgAGHHjOhQDBYT1R80JG7pdFywiJqcqNbskoW3BzHxTPN2MursYIkFdejMe2B4CvOWJsoLzJy0aYkkR'
+              'bKrMzfXzSaWEFGxO9c4Uqcnt/D0tOUhItr8TJM6JL0SY/A3iOoIaPWXL0H6LtJnivcNDQOqbPzyC+AwWzvGXCyuIiRYvQx8RTZZS'
+              'pxyGkvzck7xqse2g+183r56Hg6BFYx1bsNDgXT/DJoung8U1PLp+M6h/hF0Em7S0pg10Hq3tdRyL6LYU1/9dr2bZuEtlFOmBBlvS'
+              '0gOxVk9MZ+VGqpq0j8WEvMD78bTCyxWNzgi5ycrE1wtqtQIeSIx3dD9BG3vTgdEjh1WPzv7M8Zo0hjtjWytUvUqsZIVdR2GiK1xU'
+              'hZ6seGpiMKHQGFBZh+2prR7bU7HL9tQISEAXTztuT8W0qTxvLHScO2jrApqWCo9MpkcbnVqIOgV8TdMEF56NUVwtHwtY6N8ZwAz3'
+              '8xsU2r2gE8HIw8ka/7wJUFwoujHuFEROBGaUPnyXVgIcSvdFSCUJGrVoCjGSaJViLq0cpqYbclHBbo65hdyNMO6dOaXE/KYgNh98'
+              'CQX69b++9db+w0eb5+9s/nQNCjNU76DxI216llndwP6CximuyoOxA3Y9jTW7/CgxWPyaRu0vcfg2r//QvPwIQAP1U8ALB0aPPltb'
+              'TvRWfGAK1SZEaHAXkkK4fAens+kDxzqbJZrKqd7SATAobjZ+2Wk7a5FS2yOXE8NfP2aVj8nFe67GxXDhLMgVzXt5eGkRRGJkSdAj'
+              'DtOyxOjkHYThbVZ3afjodmFl8/xp0AyrzJs/nsSpaP0pysECIBHmg2IO1N2pD/p1gOXYZ2sXwqUVns+72jXu6HaSav1cUP+qNSVp'
+              'mz2BypZWtu5d2li/lQR6kOhbYou7hoKFG7uH4ILpKf81vAJkKyo6OEyyb4208ZDWiSfbN5c2foXtj+nIf6V59Sab1NMBf9sB974D'
+              '8wLH5qVHCEpv39i6u9bWDHPrddUKKwQtlYixxMwvwnOr4AVMepqmByWepwsUKQ/yp2H2WbHzgLgLTqodX3YXh7fEXW209f1aeOpO'
+              '+O2d5oMfoHhjUaffPZKG2K6fD88/Sc06QJ/xlGH93MaTq1B9w/V74SnQzcUOO4rpwcQ3uzYenw6XaLh8vtpcvYz+gXs+jwA/yPEJ'
+              '7GxrBxBuJBj9+0rbB4C23gJBCXKi11moM2/kzBonw+V7m9c/YAEM5u119zgYIndC790+/dH2LUA8Fzd+vdFGzzwi7shZgHUWU0qV'
+              'Bo1xvUSQSb+UWbXZFMocibCnV5okRhU/3bD3CbDJVyQ6U4jp5ubakGeLAy1A71VJlRwySy5kIW+KfaZvP4ThWPw2kBg94DdLCm7j'
+              'hgXQ+v5p+AOhOwEgJIklCyqhqBB8C3xbHXlRo+9UX3eh1APidzyA2gW1HRsIY+nx8fFWv9ZfTBTD6GuMXuR4GkHSUb3ocQbpyTNy'
+              'AQ7wMpPhH4Lhb5VKSz8z8juKcvyaYu/ExxEXIosfBTRZ/FcLkaMfXIr5Hqqyf7o4UvTgRsTtT31rlvHzcDtJbDtZddgrylKZLWGT'
+              'hModRsspgJl9SDf0ISFZdMuEdDE0iPAZf/4/Sxmx3VFSxKVgHJ+4+8AwLeG5j+3oTtOmZxZNy/RrLE2KCnVXdIZ416RpGMSWW9FA'
+              'P2nN93X5TxNttjXuURLgT4lbJgWlUhK9wDz9r5X4MNqMjkb/Q2A5ukE/U+5whX1HDvFh3kGgRuSJcaTMOgAUI2XQGSMLL5Bcxp//'
+              'AZgQljLhIwAA'
+            ),
+            'assets/boat_edge_v204_prediction.css': ('f7780ee80a938de8075dafbdc8f82f4d24716f5038d53ecb1420e0ae7ebb8048',
+              'H4sIAAAAAAAC/61Y227bOBB9z1dwk5eksBLdLUtAsVtst/tSdIEuCuwjJQ5tbnSDRNtxhfz7DnWzLMuXbPvihJQ4Mzxz5nCop3fk'
+              'w5ff/iYff//0kXwzddsneQFMRFJkqfq3hFTSepCl8S5opooNEHgRpRTpcvg+pEuRAqEpI98MzyC8APgOj+Td081dCGj9ywbXCtjO'
+              'muGHNVuCrMLsRSvFdzTmh1nBoNBwJkhEqm0FkytfD3iWSo3TRMQ7X6N5HoNW7koJyexDLNLnzzT6Wg//wPdmt3+KgmIgGflK0/J2'
+              'dvvPmnzK5EpEt7MSZzTcgOCvN491DFrWxlQltMBVvmHkL0QPcsqYisiwcGjY+UvQxOarx2UWC0bumAMmQPtAKygT67JeEIQ0el4W'
+              '2TplPgYItNCW6jGCeW9YDoPl7I7bfME5/uX8IYiyOCv8O8O1XMfuQ3sW0TMUVb17BAh8Q0fb9XALYrmS/kLXgxikRPdlTiMV8KPu'
+              'QtIZtEyX0jBotoawSpklvpe/9C5EKousYqLMY7rzeQwvAY3FMtUEwln6EUYMRfDvGnPNd1qErnHGV75AC0FuAdJgSXPfMMdGSYk/'
+              '6XIY/RyjV3BoqyZ649EOFPw8zrbatkAzNN1tV1DAyFS4xsDTSoWnlasCU96RojFsTMDSQWo7EXWHCVGITyQzjJgNdJTMBRrumLBQ'
+              'RFCeFDPbHdj60babWH2eRetS24hShDFU2VqqjfvW3p9temEEQftEyzgvQfpDGFNaFFh7G+io6Slm/iKSPCskTeUIgcGDQ5Dngyct'
+              'Knbkep69n+995lSuDumgsusofBX4dZLUT0cpmeU1Kw8MEORHWh1DHIWMQXgiFx3k3gByJAxRKWijNi0b5l5wph48Xe8jkQITtawG'
+              'gS66t/eLW8su9axF1Dzc0EIgJFq6TlAoIl/ScB1jBeO47I2HjXT1KmEqXrQCYqo01XFPQMAZB34BggNAG0+4G4k8OiC5c1AD1gAn'
+              '3WJONKr6xbHNZSFYn2w1CNSPhpWPMxKw3ON1kpZ+ATlQeW/NENCEvtzrM4MXDw81NebTZt8zsamGEn6wY5PPOZtAB3Sg3DlDCFWD'
+              'JzySMqFx3G8njLPouU+v4+ldeve5H0vRENz5gEhDJ+HIwYBd9iG7nCMPVq9JCyty3RPS9wYS5vgEQjxuq1EN9I64487ZWCkPo3KD'
+              'wwrprTendzVa3CG6cByTH5ka5GnMccr1iYxznfFwMcr4vC+mOihFgAvHRMZYWUqa5ONy7/SOY4Xb5wngXnLCs0ymmYSqNTrXUTQW'
+              '543Og6F2D9X7VfVEhu791fdPnzMGJXmsZ9ECZWRlDeF3VXIuL8qrs/l2LthIcKAh3cr+1N1bM0ennz0qTedihI31LFf64HNRlFKL'
+              'ViJWhXW2duz/a7c+is4XwAXTUnVhUoux362U4nkXN9msqKbF1ETQSCukcyRMraXdhI3Un9G1zPoZR+9marlFDpChINbdas270RHS'
+              'NSqt/l4V8XsF1hC9NzeG7fSw9IFxi4/7KndQmrprec5R+zZK2YB1pnVlAt4fcMo7SrzZy+TcYq51jfBe4xWS6kxr6jm9OmOvH83h'
+              'Z7ltjr9RsZ5qij078vSf5VmNbL2rkyRLYddwv6G8bz5pxtW9aheig53eQg8kvEitJp4fA5dXBdTJtUhpiteUAkVxNxlkx+4UR4O2'
+              'sX6jXX28kev7JfNEvzQ824b9/qHn8x2Uzb3pDsqEiM8vt9QnnJ5tophnXjru7FN2w2mbBtiW643b2AE+arhdoebU91vAVBUY4Y+3'
+              'TsdY+zHtZW+kX3NudYi2ceNV0QP9Omu49/4u6np2+Hrza4LspfdIjTa5jolQPlQ3ZPJW3jCtPXkuXLHd8SvtId4JdQkx97FTKrCU'
+              'yNSd7wytkcSvR7e8jlduxysyccd4U5lMmhhnaFiWBpbl5KLDpsKuo7uu93lzxD/QDxj7fsDt+wEbWyDiKva392/iDk99vWkDrnN8'
+              'eA7Or152dKIYw/yOdbIJ89Tzw1TUqjdRB5Zd18EZJT5HysuMm375HLdU5/X6enPz9K7+PErURYMs17RgPmEZwesAiYFuUDgljYEA'
+              'VlmCHrELp7tsLUn7AYighuFvvbrM1gUCIkqyTjfqU6QA1n0jvfJoU3a0/errD7f9muODrSOX1350OX+LmDhiRhc+DxadzHuOq5v2'
+              '1PXPYCy0Xm/+A99B1tqIFgAA'
+            ),
+          }
+          for rel,(digest,*chunks) in data.items():
+              content=gzip.decompress(base64.b64decode(''.join(chunks)))
+              assert hashlib.sha256(content).hexdigest()==digest,(rel,'PAYLOAD_SHA_MISMATCH')
+              path=Path(rel)
+              path.parent.mkdir(parents=True,exist_ok=True)
+              if path.exists() and path.read_bytes()!=content:
+                  raise SystemExit('V204_ASSET_CONFLICT_ABORT: '+rel)
+              path.write_bytes(content)
+          file=Path('index.html')
+          html=file.read_text(encoding='utf-8')
+          required=[
+              '<script src="./assets/boat_edge_v108.js?v=181"></script>',
+              '<script src="./assets/boat_edge_v202_display.js?v=202"></script>',
+              '<script src="./assets/boat_edge_v203_readable.js?v=203"></script>',
+              '<link rel="stylesheet" href="./assets/boat_edge_v203_readable.css?v=203">',
+              'id="tab-pred"', 'id="raceView"',
+          ]
+          assert all(x in html for x in required),'V204_REQUIRED_V203_BASE_MISSING_ABORT'
+          css='<link rel="stylesheet" href="./assets/boat_edge_v204_prediction.css?v=204">'
+          js='<script src="./assets/boat_edge_v204_prediction.js?v=204"></script>'
+          if css not in html:
+              assert html.count('</head>')==1,'V204_BAD_HEAD_ANCHOR'
+              html=html.replace('</head>',css+'\n</head>')
+          if js not in html:
+              assert html.count('</body>')==1,'V204_BAD_BODY_ANCHOR'
+              html=html.replace('</body>',js+'\n</body>')
+          assert html.count(css)==1 and html.count(js)==1,'V204_DUPLICATE_ASSET_ABORT'
+          assert html.index('boat_edge_v203_readable.js')<html.index('boat_edge_v204_prediction.js'),'V204_JS_LOAD_ORDER_ABORT'
+          assert html.index('boat_edge_v203_readable.css')<html.index('boat_edge_v204_prediction.css'),'V204_CSS_LOAD_ORDER_ABORT'
+          file.write_text(html,encoding='utf-8')
+          print('V204_SOURCE_BOUND_INDEX_PASS')
+          PYINSTALL
+            node --check assets/boat_edge_v204_prediction.js
+            node - <<'NODETEST'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const js=fs.readFileSync('assets/boat_edge_v204_prediction.js','utf8');
+          const css=fs.readFileSync('assets/boat_edge_v204_prediction.css','utf8');
+          const index=fs.readFileSync('index.html','utf8');
+          const context={window:{},document:{readyState:'loading',addEventListener:()=>{}},Number,Date,String,JSON};
+          vm.runInNewContext(js,context,{timeout:1500});
+          const api=context.window.BoatEdgeV204;
+          assert(api&&typeof api.summarize==='function'&&typeof api.sync==='function');
+          assert.equal(api.parseStake('現在の参考配分 1,200円 / 的中時想定払戻 21,600円'),1200);
+          assert.equal(api.parsePayout('現在の参考配分 1,200円 / 的中時想定払戻 21,600円'),21600);
+          assert.equal(api.parsePayout('払戻概算：オッズ未取得'),null);
+          assert.equal(api.parseStake('締切前の保存配分 6,500円'),null);
+          assert(!js.includes('fetch('),'V204_MUST_NOT_FETCH_RESULTS_OR_ODDS');
+          for(const token of ['#be108PredictionModes','.be181-freeze-banner','.be166-odds-status','#scenarioHero','.be108-ticket-list'])
+            assert(js.includes(token),'V204_SOURCE_BINDING_MISSING: '+token);
+          for(const token of ['boat_edge_v203_readable.js?v=203','boat_edge_v204_prediction.js?v=204','boat_edge_v204_prediction.css?v=204'])
+            assert(index.includes(token),'V204_INDEX_MISSING: '+token);
+          assert(css.includes('@media(max-width:520px)'),'V204_PHONE_LAYOUT_MISSING');
+          console.log('V204_PRESENTATION_ONLY_TESTS_PASS');
+          NODETEST
+            git add -- index.html assets/boat_edge_v204_prediction.js assets/boat_edge_v204_prediction.css
+            if git diff --cached --quiet; then
+              echo 'V204_ALREADY_INSTALLED_PASS'
+              exit 0
+            fi
+            git commit -m 'V204 mobile prediction readability; display only, preserve frozen picks'
+            if git push origin HEAD:main; then
+              echo 'V204_GITHUB_COMMIT_SUCCESS; Pages deployment must be checked separately'
+              exit 0
+            fi
+            echo "V204_PUSH_RETRY_${attempt}"
+          done
+          echo 'V204_PUSH_FAILED_NO_FALSE_SUCCESS'
+          exit 1
