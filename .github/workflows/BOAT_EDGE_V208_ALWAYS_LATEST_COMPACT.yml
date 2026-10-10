@@ -1,0 +1,92 @@
+name: BOAT EDGE V208 - Always Latest Before Deadline and Clean BOATERS Layout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V208_ALWAYS_LATEST_COMPACT.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v208-presentation-only
+  cancel-in-progress: false
+
+jobs:
+  install-v208:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install with final snapshot and source audit safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+           git config user.name 'github-actions[bot]'
+           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+           for attempt in 1 2 3 4 5 6 7 8; do
+             git fetch --no-tags origin main
+             git reset --hard origin/main
+             python3 - <<'PYINSTALL'
+          import base64, gzip, hashlib
+          from pathlib import Path
+          CSS = gzip.decompress(base64.b64decode('H4sIAAAAAAAC/6VWwW7jNhC95yumCIpNgsiW7SbWysCi2SQoiiLY7SabOyWOLCIUqZKUFccIUOwe9gf6E70VaI8F+i/Nof2MDikLm7RpunAvhkVqHmfem3nUcA9evjq6gNOTr07hchwn8Pv3P4Sl0zfnkRRXCEIV2lTMCa2gFGiYycvlPijtINe1QA6ZYYoLNR8ya9HZwRYAnAhbS7aMtJJLOD4/H8CRlMAaLtw+FEbfoIoM2kY6oGACtk4bkTMJnDkGBismFJ0NJ6/OBrA33BruwUWJsEQpdQuXo2QEFiXmFAbC+gC9oFwIugJHL+YNIVZo4O3X+4ALVNCW9ENbPr1cVzXLHXzXiPxqIbCFnClfUqUb5QbwVnE0cklFgaiqxrFMIhTCWDcshKIsDebacAvWsWXIbzvDUZy8NshF7rk60xwtDGg1GUWFQbzBKKMz0Kx4x02qtMLPRFVr45hyt32JClu0DhZoROHprQ1GHBmXQqF/WB9ggRkEJg1tLcGWulXAXKjd6TqIcKylZLVF0JIDb2pJBDvCYAql9eT6l5VXV4InYQBviCl6cKXRzbyEZ3/++PMfv/x09/7D3ftf79799iyUWrpKUmHjeBqFw6kQtxMWEkrUMSEt6b4L20Rb5BOGR8nZ3xjojHrjNQm3IcI4Hp9SpyonmNwIgmMuLJWxUbBQdeOOqf8kOlRoN+PhYx+ciKLYjIhm+VIzwzcKbrWR/P+mfiTRuE0wBhYDwIDGL7+CF8DFIi2Z3XlBZWnm7C48NWXH6+knY8Oc0awZ3drgQ1ZcRx4Auon3E+ZnJJhRrhUJ5h4dga6tphe6XmXkC2iiXEtt0u2c8wyTWcXMXCiCdmRKaVJf3z4BAetlGmM/86uHwdNPC6ZsyWuJo1XNuHdnHwh08ma5dA62TiVAxbN1iQfjwyJJZgXRE7Uo5qVLp3H8b6CH33rL7YESD/TYq4bleOl9eeD/RSWtrmptQ0WpQUn30QJnxFDKGqeDqt8g1kEtHxH8DCQyNQtrXR9B1lDRCnSN5J9+nS6deTD0cDVZoE1Od4/ivanfp6Fvx4h1Dtwr49MgSmZ9yxUSidT/CF7nsmoFd2U6iuPPZxVhlR2DE69U10rpiEiyWgrvPBNe4PP1RmQYF40NR2c0B3MybcXT7aIoem0mo4Mi+aLTxoobTEcE9kCq5CCe9R3i1RjF9ILDaxcxKeYqzanl0XxqNWmh6eKNFmSPND8r3TjfwenkYwXTQzqMz9Y7kS4K+mZIx74Lew0n6xGkPkEHqqkyNJa0nHtMaIUrKfqhei2jrwtd0C1Ol/Jj0k2jjD5N/jZK4dR/jl04tx+bIK4Xo3++PzdfVmRlbKdi11En4+Q50be7esIe7rXMIUE8Mbf3RCPQ29utvwBsZC/LrQkAAA=='))
+          assert hashlib.sha256(CSS).hexdigest() == '2c5e9d461a4ef59785cf0110bb7c39c94b916ae72001885d01a0d9b775dc02d1'
+          out=Path('assets/boat_edge_v208_latest_clean.css')
+          out.parent.mkdir(exist_ok=True)
+          if out.is_file() and out.read_bytes()!=CSS:
+              raise RuntimeError('V208 stylesheet collision: leave original unchanged')
+          out.write_bytes(CSS)
+          PATCH=gzip.decompress(base64.b64decode('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'))
+          exec(compile(PATCH,'v208_patch', 'exec'))
+          PYINSTALL
+             node --check assets/boat_edge_v108.js
+             node --check assets/boat_edge_v207_first_prediction.js
+             node <<'JSCHECK'
+          const fs = require('fs');
+          const vm = require('vm');
+          const s=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+          const start=s.indexOf('function be181ShowChoice('),end=s.indexOf('function be181InstallStyle(',start);
+          if(start<0||end<0||end<=start)throw Error('V181 isolated function missing');
+          const ctx={readLocal:()=> 'first'};
+          vm.runInNewContext(s.slice(start,end)+';this.pick=be181ShowChoice;',ctx);
+          const first={modes:{hit:{tickets:[{combo:'1-2-3',p:.2}]}}};
+          const modes={hit:[{combo:'1-3-4',p:.3}]};
+          const final={modes:{hit:{tickets:[{combo:'1-4-2',p:.1}]}}};
+          const pre=ctx.pick('20261011-23-04',10,false,null,first,modes,'hit');
+          if(pre.source!=='latest'||pre.rows[0].combo!=='1-3-4')throw Error('latest default not forced');
+          const closed=ctx.pick('20261011-23-04',-1,false,final,first,modes,'hit');
+          if(closed.source!=='final'||closed.rows[0].combo!=='1-4-2')throw Error('postcutoff frozen branch changed');
+          const noFinal=ctx.pick('20261011-23-04',-1,true,null,first,modes,'hit');
+          if(noFinal.source!=='unavailable'||noFinal.rows.length)throw Error('missing final must not reconstruct');
+          const v207=fs.readFileSync('assets/boat_edge_v207_first_prediction.js','utf8');
+          if(!v207.includes('showAll?rows.length:showFive?5:3'))throw Error('in-place all-tickets switch missing');
+          if(v207.includes('scrollIntoView({behavior:'))throw Error('unexpected automatic scroll');
+          if(!v207.includes('be208-details-on'))throw Error('detail toggle missing');
+          if(!v207.includes("const fresh=Boolean(sum.fresh&&!settled)"))throw Error('stale odds guard missing');
+          console.log('V208_NODE_LATEST_FINAL_NO_REWRITE_PASS');
+          JSCHECK
+             git diff --check
+             git add assets/boat_edge_v108.js assets/boat_edge_v207_first_prediction.js assets/boat_edge_v208_latest_clean.css index.html
+             if git diff --cached --quiet; then
+               echo 'V208_ALREADY_INSTALLED_PASS'
+               exit 0
+             fi
+             git commit -m 'V208 latest predeadline picks and BOATERS-like compact UI; keep frozen final'
+             if git push origin HEAD:main; then
+               echo 'V208_INSTALLED_PUSH_PASS; Pages deployment to verify separately'
+               exit 0
+             fi
+             echo "Concurrent site update; retry ${attempt}/8"
+             sleep 2
+           done
+           echo 'V208_PUSH_RETRY_EXHAUSTED' >&2
+           exit 1
