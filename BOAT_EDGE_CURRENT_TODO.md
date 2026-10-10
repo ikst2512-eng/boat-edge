@@ -1,6 +1,6 @@
 # BOAT EDGE CURRENT TODO
 
-Updated: 2026-10-10
+Updated: 2026-10-11
 V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read formal results.
 
 ## CURRENT
