@@ -1,17 +1,36 @@
 {
-  "active_window_races": 6,
-  "current_windows": [],
+  "active_window_races": 7,
+  "current_windows": [
+    {
+      "deadline_jst": "08:35",
+      "key": "20261011-23-01",
+      "missing_evidence": [],
+      "venue": "唐津"
+    },
+    {
+      "deadline_jst": "08:47",
+      "key": "20261011-18-01",
+      "missing_evidence": [
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "scratch_stale"
+      ],
+      "venue": "徳山"
+    }
+  ],
   "data_sources": {
     "collector_freshness": "CURRENT",
     "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 0,
+    "predeadline_observations": 1,
     "site_autovalidation": "EVIDENCE_REVIEW_REQUIRED"
   },
   "day_jst": "20261011",
-  "decision_window_races": 0,
+  "decision_window_races": 2,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
-  "issues": [],
+  "issues": [
+    "predeadline_incomplete"
+  ],
   "next_race": {
     "deadline_jst": "08:35",
     "race_key": "20261011-23-01",
@@ -24,5 +43,5 @@
   "scheduled_races": 156,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
   "scope": "SITE_ONLY_PRE_RESULT_OPERATIONS_NOT_FORMAL_FRESH",
-  "status": "WAITING_FOR_PREDEADLINE"
+  "status": "NEEDS_ATTENTION"
 }
