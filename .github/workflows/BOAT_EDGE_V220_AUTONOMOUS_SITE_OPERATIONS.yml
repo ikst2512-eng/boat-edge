@@ -1,0 +1,123 @@
+name: BOAT EDGE V220 - Autonomous Site Operations And Guarded Recovery
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '8,23,38,53 * * * *'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: boat-edge-v220-site-operations-guarded
+  cancel-in-progress: false
+
+jobs:
+  site-operations:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout latest main and full provenance
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install pinned site-operations audit and compact UI, fail on conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          installed=0
+          for try_no in 1 2 3 4 5 6; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PY_V220_INSTALL'
+          from pathlib import Path
+          import base64,gzip,hashlib,json
+          items=json.loads(r'''{"scripts/boat_edge_v220_site_ops.py":{"sha256":"71e2203baf6feb2c00d701e401eed5a1c23b1710076f64327b62e85719654dab","payload":"H4sIAAAAAAAC/70aaXPbNva7fgXbbgqyoWRZjTOpEmZGTZTGW0fy2HI6XceLgUXIYk2RXICUpXj83/c9HDysI2m7s5qxTAJ4D+8+AH33zUEhxcF1lBzwZOlk63yeJj+2vv3224+9XtcRnIXtNInXTiZ4W3BZxLkjo5w7acYFy6M0kS+dhC+5wJFEOrNULFjs5Ezc8Fz6jobxnYyt0yJ3UuFM0wVsx0NncHrcaY0ReZhOiwVPcumwaV4AuGRLWCDTQky5w5dRyJMp7zjnbMYB4zSF/dbOD1GSA9APTiQdyTMG9HBnJtKFkwHcnEl+sEhDHjtxehNNO8hUS01TOivyQnBKnWiRpSJ3WJKkuWanZYfEDaCUXIOEgDuPFtwC2Hffwe/PaWKeYLucWRR/yDTR4BnL53F0baFP4dUuErzV+uf5JLB43BKNOwf+ZfCT57XO37wffhgE5OfxYEKHb38ZUlQPPT+eDOngYjIejT+ML87p+HR4Npgcj0fn9OMhaf06/D0QvAMCz6KYu4L8u9f9FN4/f2jDd898/4N4rbPhm/HH4RkdnJyMfwvuCSvytF1kyGRnvYiJT1Dn7TQMpXp/aLVCPgO5stDNvH7LgU8u1voBP4KDfBMlgA6ukm7WQVuiOV/lLigzDaPkJiBFPmu/IMAgAvHVlGe5447Ph0Kkwv/I4oLrx4skAhD94m1sMwKxaYoWKZqRK7fRtAqs0jqok0imylZhdS4AAujLYjblLvkX8Pu02+13u5ay2l6rDpMNVeFDp8innhPNYDb/HCWz1OGx5JquOmc1jibrzDyNwZhncXr3RebYDaeLKClyLl3pJ+mdWbwKSrbVO9AB1uys+nUMOAEIAhfg2iuvk4O9x1SCLyWgHe/gebdV21SkRRK6sN4/VHx1XwXw8urw2bNut8abIouvMj7NeUhDUHAMnu3e+tM4nd4a8gw5YIydWRHHIPHpXMn81vMwHuAkWGk1J8in8FPYxy/i40KNzdvgZ5vJlToGwAwf3NvL/ourpwqHT578/mTxJHzyvv/kA6lUrpUWgBt6O9VbV2Slx/6GlnTQohLCSSFdkaa5f8vXNXUJ2DFQroOTBwQoZgc4KMnBjNzD4ocOOg5R0rl/UEALnrMAF3UgrLoEX+38S1aEUV6bNBSo4QaSKRNhoIb1QgShOFiiuubgE7y+Ro+geBqo5FSgrjb4wDhBzSSXdHn4oreHKwwo21HgzB5AmbBsOyDkqTCaYiSnuEjO03wfokjKgsvg8sqaKkpWc55hBiHeNwE5PRvSs+H5xcmEIChL1m657MbD9IM2/I6hX4C0nBsnShwQr0p9EpyMJxBSigRNEGPpNBUQ/SC4VNar6eiwDJJoaDQDrFCNgwJ+CmEimkUclGVpjXniVmrHJyE1d5dXQPfz/hasQipkMlpVeNAEjOkoq1VMp7ea2VrQqdbNOOo3pAwMTJk2CgF9YNuWysQAiZTANU2Fyb5mfx5Hs6/d5XWvu3sDoD3mFVPacL+GrfrKr2as8gtaJGzJophdxzt52rvF68OjPdgfsWV8q+bAYNjIGfxDxhrz12hxaDENG91pdQYWGLK2htoqkVSsbRKhNVAPfbuk3YAFQSDuTXH/OSiU4JeYeiRHVcvsEmI1uS0I0NOLszfvB+dDOh6d/L7BYAW825h2EYuw1Na71mV2GdWejbaYVBP1Y6uCULnbpMpJG1HpXZSE6Z2Sy7vj0eCEHh59IDaZV+vVnnLOekfPye5gB9XYZ57UI3ctVkTJksWRtT6TbSUUzjx0JeyhcUGdppIvlrogG512q5QLTwH87c/tIVs/XqQKAigkZqqQMMWDISVPEeBxDlKjfzbRHYA0+WoTCitmqKfkDtCMQQ8GkXxxUC6ky97hEZ0WQkA9uImQgywL1eZsx4h1vxK3WnOwE4/a+UtE7YTWLeIGuB420WNLykcLL2KQ2G2ARaGWtDIzrPkgr0JCrYr4thoIoOZfl1WXilL1ZF/DWVknZvAlTwqOWby2ixor82u13sLgDgii1lXOtAMCP+BfQTN/a8/bWBgGW4psKCorYDtc71hKd5s5IRQt0E9j0c3XaNJM5PIuyucusPcUhOVtUteUmvVWN1TlLKKqMaoeNaOIzBBRg0aPdfWoTMH8Lq9eFuIGzMNqAyUYFlwhL6VfIajIM9EvcGF1G118VytjWIfWxYC8Cn7qKjlg3YRUeK9eNNnGQcvoPUFd9JEew15f/fNLWdM/ZE76QMa+kKE7DX+rdNWHGOpozGeATndeZgy6rwevzkyvxszhUcmMFqX36rDX5EeP/785+iJPPrEB3uYj0t/TNhkRMMgNSx5cp2mstWesSTc70NrWc2PNb/U5Ri05lhF5A6rKqNuBIM5CWKpHEJXvalHErChzm6KDliuw9AYznUViUS/kNWtKnW7FUL0WqkZf/9j1NraZpnEM8UHlS0gljfT+nTMGtuxhmppHzOpUT/D/FBHkXXA9bEmcqDqCMyghDzg62ztu+9kRSAog78AlvU5JPfRD4rKp86tXwbOuDovoyEpfmj8r+Dp3dkzxVuvom0yqVZv8AQXazhV+JGZ1uWlgV4qYFRJjvGVDiFiAWEeIEiwlYp7Xdqmyp6mGQKsLpoqg6lyuPJL7ODg5fqsO4/AsbjdXKmtWSRc6PjwW3NJUYL6CqFvmepv71sprPSADnvcyFUbsJknBs6e6CVTGWWFXqducL4Bi1sS/f/DsLlG8ptdFCG90De0s7HbUhQ9qrwEXmmp5cDo80/XxbtZ1rWCwZmkcTddY+qlTIEOWKQpuCjy6cPWb3koNSVsieHVjrAP9/SYdN9jASEwrcDE6Gb/5lU7Gvw5HVZvVrPEfs90odKhxQUkXLClwmEE1v4bhZcTvyrJXHXnbuPOdMyiDTuj8kV47C7Z2WIymsYbG1xFFkgDxfSefc+cuFbd4vghuHMeOLDIwCSmdMJIZCtq5m/PEoM3nLHf4CiKACkng+tD+IDakAHwmXr8E/syZvnSAmyyNEjzmv+Z5jgGklJVBIDtbYtyOcKUyvpZV33BcyuzxibT3heBz2CujQWQUve9IxX98NuLvPbnwN44d/F0HAv6WXl7ZnyJLbItUXhU3baiq2dLfk0vvaFtQ3gytdV3s3Lx5KfBnVFKvQB91pv9T8Wyj0DpTrYk0Q973jYuQkiErCO2xARkNh2/P6WAyGY4wvpOqPUfn10SVi38bHE+OR7/Qd+Mzeno2fDscvD05Hg0tkOTlyg/j0fFkfIaLNxYmqzxI8O4EqriyUejfVoXcRhH3F0o4cqdOSvB2RCNxw3Z1G2UL78Mjz/sy8gdd0fu3/rJZyat25DWWVD6GyUZff29zal9feKkwnAF7RKVVTCe0dg5Tu+4ajSco4Q+DE/oOZt8Ty1yZIPvw4NuTQCNzn+jjAyw/a8agtO2V8iFlrKW6oevbg1fNEdSzOriZY5H6KuVjqJtpJDG7b64wNlxuhlpW86QPSveJaaMNJABd3t/2l0q6VrbpXQfsfAG9Dwr3FtJvw/e0KmBV5TJXNfHkzBzcAe77WmieQaCcY6EB4n9zcXYGxk5UEdIoUG260w1mOfUq+NFcFJHzyeAEdHcGuRJc6/jd8fAt2dU91APRrv3rBWRjdzvxV/fecgRC+htFnzYgn6DFDT4Ojk8GP58Md/dDjQIsvZZcLPU9M+lvqeT0gtLQ/K73UGoKxMGZAP9Ul9qQytKw0Mdl8LhINbmqvvFNZXUHwhDI0Rxqmc+A9XpN83kENQfUB1zY1XYDU5foEgiznamBahjKDcxaWz2pu9392O21PbWFBzhPEqKcuZKFmjUXy3cCVRHN6HTOkhvwS7w/98N0akK9ukDmYaDul8NikUkXJn10YgyMMpgIaGt5IvGSn8lpFAWaGLSsJA963lPyKSFV4ZvPO3wVyRxdCE1Jjey5sA4CQ4K9/1PozdkYgGZMHX0tbsNIuPrFEoXb4BkWvnkVhGa52o2H/sau9VCJ4ObOm0WJawSjfrEgAvvbhc5A3KgfVpyqcdd7qRd0WAitrZlzSbuN/TbxARsDdQakQ3auxIZ4Jxaj4nYWMyimdQUYgMtA/UNzUdhOhgUGgfqHKEDuL/GQ1lxksw7LVSzDB+3K5b0uLNtyeGtyL0z2BYtg/flaQkgcriKg7HikmjH6Bmt1QwPYS2BPi/HnGLAnCqHW7KvtS6tFlqo6IwO/yN2a+d0TW2aDMQPuy/32fvXwyFjtTyAa1zNpkQN9QZ28xtFxhue9vW7zpLWENr4TbDiTRqvc6RFDpPpVSZVbHfK0wahNoYpL83JVZVI1bF5g2NwU6OHtafBqW+xUedCAVSkREKqfBpG+YcYv5fyVYt8MCiB6UDWlCVtwSoOAUIouRSnpa9dq/RfVwN54JSUAAA=="},"assets/boat_edge_v220_site_ops.js":{"sha256":"ae39fefc224284875a9f4b865f169b33eb9f191002a750d369d81b28dfd0f96c","payload":"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"},"assets/boat_edge_v220_site_ops.css":{"sha256":"0880cf7153507f6868c75f58cd902239e8c0881f4d085676a84452456584ac93","payload":"H4sIAAAAAAAC/4WSwY6bMBCG73kKS7m025KFgAPYl75Dpd4HPCbWEhvZZpcW8e41EKoQadWLNbZH3z/zz7y+kF/nc0x6bSpve6fekaTnuBu+Eac8RqZDC14Z7Yjz4Hv3ncC7UcIRi10LtdINwUE5PwedRaHqJftEXl4PpwoDOzDcWBkr0LKkG4gzrRLkKAqkKPn6EVkQqncsOXcDr6B+a6zptWBHmUuQktemNZYdkzzNKOU3sI3S7BJgMUlCsbwDIUIFrAxPSRDh0mgfOfUHV2SrNEZXVM3Vs+SU0emhNnIP55xRKBfa+s1kiwOHVjU6CjbcHKtRe7S8gY4VMz/8Rx823OZjh3PeGt2M+wp2Gccl/Ln4+Zg3F773oyzLh+7S0F3xZFAwUUjYDEoTmubiU7H7s3Kux3Fns5SxEBulqLMqSf9HMW87BILMZLYhzhktab5DwLjOLWpRega9N/+SU0oB+JMTy/VjndkljrnHwUcCa7MuJAuqaOeh7VS6uwqjy3bEmwYtLlWRPWlMhx+3sLLw5QZhmkr4K0vzsE9fx4fV3dwPzpMwjenTluJpOvwFlc3gWFADAAA="},"tests/test_boat_edge_v220_site_ops.py":{"sha256":"c061f11758276daea1eeec48ca43fcf7ed0b447de9aeb741eca93f1f4e10bdfd","payload":"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"}}''')
+          for filename,info in items.items():
+              decoded=gzip.decompress(base64.b64decode(info['payload']))
+              if hashlib.sha256(decoded).hexdigest()!=info['sha256']:
+                  raise RuntimeError('V220_PINNED_PAYLOAD_MISMATCH '+filename)
+              file=Path(filename)
+              if file.exists() and file.read_bytes()!=decoded:
+                  raise RuntimeError('V220_EXISTING_ASSET_CONFLICT_FAIL_CLOSED '+filename)
+              file.parent.mkdir(parents=True,exist_ok=True)
+              if not file.exists():file.write_bytes(decoded)
+          index=Path('index.html')
+          body=index.read_text(encoding='utf-8')
+          css='<link rel="stylesheet" href="./assets/boat_edge_v220_site_ops.css?v=220">'
+          js='<script defer src="./assets/boat_edge_v220_site_ops.js?v=220"></script>'
+          if body.count('</head>')!=1 or body.count('</body>')!=1:
+              raise RuntimeError('V220_SITE_DOM_AMBIGUOUS')
+          if body.count(css)>1 or body.count(js)>1:raise RuntimeError('V220_DUPLICATE_ASSET_TAG')
+          if css not in body:body=body.replace('</head>',css+'\n</head>',1)
+          if js not in body:body=body.replace('</body>',js+'\n</body>',1)
+          index.write_text(body,encoding='utf-8')
+          print('V220_STATIC_SITE_GUARD_INSTALLED_NO_MODEL_EDIT')
+          PY_V220_INSTALL
+            PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v220_site_ops.py tests/test_boat_edge_v220_site_ops.py
+            PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
+            node --check assets/boat_edge_v220_site_ops.js
+            git add -- scripts/boat_edge_v220_site_ops.py assets/boat_edge_v220_site_ops.js assets/boat_edge_v220_site_ops.css tests/test_boat_edge_v220_site_ops.py index.html
+            if git diff --cached --quiet; then echo 'V220_INSTALL_ALREADY_CURRENT'; installed=1; break; fi
+            git commit -m 'V220 install autonomous site-operations health and safety tests'
+            if git push origin HEAD:main; then echo 'V220_INSTALLED'; installed=1; break; fi
+            if [ "$try_no" -eq 6 ]; then echo 'V220_INSTALL_RETRY_EXHAUSTED'; exit 1; fi
+          done
+          test "$installed" = 1
+
+      - name: Generate observed pre-result site-operations report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          saved=0
+          for try_no in 1 2 3 4 5 6; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py
+            git add -- data/site_ops_v220/current.json
+            if git diff --cached --quiet; then echo 'V220_OPERATIONS_UNCHANGED'; saved=1; break; fi
+            git commit -m 'V220 record observed site-only pre-result operating status'
+            if git push origin HEAD:main; then echo 'V220_OPERATIONS_RECORDED'; saved=1; break; fi
+            if [ "$try_no" -eq 6 ]; then echo 'V220_REPORT_RETRY_EXHAUSTED'; exit 1; fi
+          done
+          test "$saved" = 1
+
+      - name: Retry missed PRE_RESULT collector workflows only if no recent runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # A safe missed-cron nudge only. It is NOT a model change, formal unlock, payout fetch or purchase.
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py --recovery-plan > /tmp/v220_recovery_plan.json
+          cat /tmp/v220_recovery_plan.json
+          if ! command -v gh >/dev/null || ! command -v jq >/dev/null; then echo 'V220_RECOVERY_CLI_UNAVAILABLE_FAIL_CLOSED'; exit 0; fi
+          for wf in $(jq -r '.workflows[]?' /tmp/v220_recovery_plan.json); do
+            case "$wf" in auto-update.yml|site-odds.yml) ;; *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1;; esac
+            if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=12" 2>/dev/null); then
+               echo "V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE $wf"; continue
+            fi
+            current=$(date -u +%s)
+            # If the job has run within 15 min, even if it silently failed, don't create a storm.
+            if echo "$runs" | jq -e --argjson t "$current" '[.workflow_runs[]? | select(.created_at != null) | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < 900)] | length > 0' >/dev/null; then
+               echo "V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE $wf"; continue
+            fi
+            if gh workflow run "$wf" --ref main; then
+               echo "V220_RECOVERY_DISPATCHED_ONLY_PRE_RESULT $wf"
+            else
+               echo "V220_RECOVERY_DISPATCH_FAILED_FAIL_CLOSED $wf"
+            fi
+          done
+
