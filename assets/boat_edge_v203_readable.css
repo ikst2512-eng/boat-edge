@@ -1,0 +1,31 @@
+/* BOAT EDGE V203: compact mobile comparison. Does not change the prediction UI. */
+html.be203-active #be202Essential>.be202-table-scroll{display:none!important}
+html.be203-active.be203-fulltable #be202Essential>.be202-table-scroll{display:block!important}
+html.be203-active #be202Essential>.be202-swipe{display:none}
+html.be203-active #be202Essential>.be202-water{display:none}
+html.be203-active #be202Essential>.be202-chips,
+html.be203-active #be202Essential>.be202-source-note{display:none}
+.be203-layout{margin:9px 0 4px;color:#19324e;font-size:12px}
+.be203-health{border:1px solid #dce5ee;background:#f5f8fc;border-radius:9px;padding:9px 10px;display:grid;gap:3px;margin-bottom:9px}
+.be203-health strong{font-size:12px;color:#233e60}.be203-health span{font-size:10px;color:#526b83}
+.be203-health.be203-stop{background:#fff0ed;border-color:#d68b80}.be203-stop strong{color:#a22623}.be203-stop span{color:#873c37}
+.be203-health.be203-pending{background:#fff8e9;border-color:#ead8ac}
+.be203-source{display:grid;gap:4px;margin:7px 0 10px}.be203-source span{font-size:10px;line-height:1.6;overflow-wrap:anywhere}.be203-source .present{color:#336c50}.be203-source .absent{color:#786653}
+.be203-water{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:6px 0 12px;color:#6b7d91;font-size:11px}
+.be203-water b{font-size:12px;color:#193c5d}.be203-water small{color:#8491a0;font-size:9px}
+.be203-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:9px}.be203-heading strong{font-size:14px}.be203-heading small{color:#7c8ea1;font-size:10px}
+.be203-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.be203-card{min-width:0;background:#fff;border:1px solid #dde5ec;border-radius:11px;padding:10px;box-shadow:0 2px 8px #122b4410}
+.be203-name{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}.be203-name b{font-size:12px;color:#1c324c;white-space:normal;overflow-wrap:anywhere}.be203-name small{width:100%;padding-left:25px;color:#788a9b;font-size:10px}
+.be203-lane{display:inline-flex;flex:0 0 21px;align-items:center;justify-content:center;height:21px;border-radius:5px;background:#222;color:white;font-weight:900;font-size:11px}
+.be203-l1{background:#eee;border:1px solid #bbc6d2;color:#1c2f44}.be203-l2{background:#333}.be203-l3{background:#d14848}.be203-l4{background:#367cca}.be203-l5{background:#c89e26}.be203-l6{background:#36895a}
+.be203-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px 3px;margin:8px 0;border-top:1px solid #e7edf2;padding-top:9px}
+.be203-metrics>div{min-width:0}.be203-metrics small{display:block;color:#72879a;font-size:9px;white-space:nowrap}.be203-metrics b{display:block;margin-top:2px;font-size:12px;color:#162e49;font-variant-numeric:tabular-nums}
+.be203-metrics b.be203-red{color:#b62629;font-weight:950;background:#fff0ed;border-radius:4px;padding:1px 3px;display:inline-block}
+.be203-statmini{display:flex;gap:4px 8px;flex-wrap:wrap;border-top:1px solid #e7edf2;padding-top:8px;color:#667d91;font-size:10px}.be203-statmini b{color:#1c3651}
+.be203-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 8px;margin-top:9px;padding-top:9px;border-top:1px dashed #d8e3ec}.be203-stats span{font-size:10px;color:#5f778d}.be203-stats b{display:block;color:#16334f;font-variant-numeric:tabular-nums}
+.be203-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 5px}.be203-actions button{flex:1;border:1px solid #d1e0ee;border-radius:8px;background:#f4f8fd;color:#24527e;padding:10px 8px;min-height:40px;font-weight:800;font-size:11px;cursor:pointer}
+.be203-actions button:focus-visible{outline:2px solid #357bbd;outline-offset:2px}
+.be203-help{border-top:1px solid #e8eef3;padding-top:9px;margin-top:8px;color:#657d94;font-size:10px;line-height:1.65}
+@media(max-width:520px){.be203-cards{grid-template-columns:1fr;gap:7px}.be203-card{padding:10px 12px}.be203-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.be203-metrics small{font-size:8px}.be203-metrics b{font-size:12px}.be203-heading strong{font-size:13px}}
+@media(max-width:340px){.be203-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.be203-metrics small{font-size:9px}}
