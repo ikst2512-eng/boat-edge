@@ -104,6 +104,35 @@ def cal_ok(root,snap):
         and re.fullmatch(r'[0-9a-f]{64}',d['evidence_sha256']))
 
 
+def verified_frozen_odds(root,key,snap,taken):
+    """Validate immutable PRE_RESULT odds against the frozen snapshot's byte-exact SHA."""
+    digest=snap.get('odds_sha256')
+    if not isinstance(digest,str) or not re.fullmatch(r'[0-9a-f]{64}',digest):
+        return None,'締切前オッズの証跡なし'
+    archived=root/'data/site_prediction_snapshots'/'odds_v214'/f'{key}-{digest}.json'
+    live=root/'data/site_odds'/f'{key}.json'
+    source=archived if archived.is_file() else live
+    try:
+        raw=source.read_bytes()
+        if hashlib.sha256(raw).hexdigest()!=digest:
+            return None,'保存オッズSHA不一致'
+        odds_doc=json.loads(raw)
+    except (OSError,ValueError):
+        return None,'保存オッズ原本なし'
+    if not isinstance(odds_doc,dict):
+        return None,'オッズ原本の内容不正'
+    fetched=parse(odds_doc.get('fetched_at'))
+    if (odds_doc.get('race_key')!=key or odds_doc.get('phase')!='PRE_RESULT_PURCHASE_ONLY'
+            or not fetched or fetched>taken):
+        return None,'オッズ取得時刻／情報源不一致'
+    if not 0<=(taken-fetched).total_seconds()<=900:
+        return None,'保存時点のオッズが古い'
+    odds_values=odds_doc.get('trifecta_odds')
+    if not isinstance(odds_values,dict):
+        return None,'オッズ原本の内容不正'
+    return odds_values,None
+
+
 def evaluate(root,now,path):
     key=path.stem
     if not KEY.fullmatch(key):return None,'キー不正'
@@ -129,8 +158,9 @@ def evaluate(root,now,path):
         return None,'欠場・取消の照合不足'
     if (now-checked).total_seconds()>900 or scratch.get('race_card_source_status')!='ok':
         return None,'欠場・取消の照合が古い'
-    if not re.fullmatch(r'[0-9a-f]{64}',str(snap.get('odds_sha256') or '')):
-        return None,'締切前オッズの証跡なし'
+    # V217_ORIGINAL_ODDS_SHA_VALIDATED: do not substitute updated post-snapshot odds.
+    frozen_odds,odds_error=verified_frozen_odds(root,key,snap,taken)
+    if odds_error:return None,odds_error
     mode=snap.get('modes',{}).get('hit',{})
     rows=mode.get('tickets')
     if not isinstance(rows,list) or not rows:return None,'保存買い目なし'
@@ -140,11 +170,15 @@ def evaluate(root,now,path):
     picks=[]
     seen=set()
     for r in rows:
+        if not isinstance(r,dict):continue
         combo=r.get('combo'); p=r.get('p');odds=r.get('odds')
         if not isinstance(combo,str) or not COMBO.fullmatch(combo) or len(set(combo.split('-')))!=3 or combo in seen:continue
         seen.add(combo)
         if not isinstance(p,(int,float)) or not isinstance(odds,(int,float)):continue
         if not math.isfinite(p) or not math.isfinite(odds) or not 0<p<100 or not 8<=odds<=25:continue
+        source_odd=frozen_odds.get(combo)
+        if not isinstance(source_odd,(int,float)) or not math.isfinite(source_odd):continue
+        if abs(float(source_odd)-float(odds))>0.05:continue
         score=p/100*scale*odds
         if score>=1.15:picks.append((score,combo,p,odds))
     picks.sort(key=lambda x:(-x[0],x[1]))
