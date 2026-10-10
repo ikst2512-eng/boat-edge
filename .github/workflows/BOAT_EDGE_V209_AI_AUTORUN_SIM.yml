@@ -1,0 +1,111 @@
+name: BOAT EDGE V209 - AI Paper Autonomy 50K (Never Real Bets)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V209_AI_AUTORUN_SIM.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v209-paper-only
+  cancel-in-progress: false
+
+jobs:
+  paper-engine:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install V209 page and paper-only engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for retry in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PYINSTALL'
+          from pathlib import Path
+          import hashlib,base64,gzip,re,json
+          P={"ai-simulation.html":{"sha256":"b44c74b41defa73057a38669310676afc4f73fd5e473b0c9c455df5205191918","base64_gzip":"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"},"assets/boat_edge_v209_paper.css":{"sha256":"971ae50501fd6aedbed5e735056aff86c542fb02a3133efc84082f5027c7b4ff","base64_gzip":"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"},"assets/boat_edge_v209_paper.js":{"sha256":"ac4d4ba93e3c3e52f9c0259c1da537aae1ff581fdec81d63dfd3dcdc1bc908e4","base64_gzip":"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"},"scripts/boat_edge_v209_paper_sim.py":{"sha256":"b08a47ab2ab8cc9bde4957c16b20e32116edeb99f175d8a4633d4ef00caa42e6","base64_gzip":"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"},"data/site_paper_sim/README.txt":{"sha256":"307802b7b19107d7d8b254dcb7382e57f0c7ad5a14e3e523d4651293197deba6","base64_gzip":"H4sIAAAAAAAC/11UXU8aQRR991fsY5s0FU196CNN/Ur6FW36alBJpPErou/MjMgKimhVVNAFFaEIrEoV61r9MZeZ3f0XvTOLir4QdmbOPfeec2Y+fPV/13o/9vdqP7p97zX/oBMrO5dnQBvACsAMYBVgt+qzCKze0QHM4rUVHi0BOW1aNcHq/OjCuWhAhPKa4e5lgNREfMsulIBeSij7BfQvHgZ6CNQEaslPZol6SWzHgKSBlIEsIlyW7g/NDyyMav6x+dDMdFgLj00Exxcmg1oP15eAbAKRtNgiT2zxRp5nDhD3HKOYdKAJ7MbJr7gkyq0rICYQCjTO79K41SLj+r7IGk495sbWe3xvfD4fX1qCCOkaal7H3d1UV9uSSBdENsKPi++G5Kda57oF5L5VrHm/z6s74lrHpb7BL/5PI109n5s3Ogokd9UfO3MkDGt4wI8rdiPH9RhfXkW9PCzQMjAG9MYp3TqNvNQoGxHbZ6KS47k/drTIU7paLDsnCZHLi+qROM7iYayAfjStq2/+4WEgxZaipOT549RvebTwUmks7JysKWMNZbXymencvHPO80qwfWllGpE1r9muHohku9EJ1XUOyDrWckmSJ62HmKDRCaDLz4jphr1pCD31sgNgh8BiwE7twxs7GcO5vKHUoRrO4fljx69ENIGfz6cx3e0ELybai44H5gOd4dB8cGQ2MBucGwmHpjrHApOh0bmAjMbbn+GZaQ2RTQtzsII2Ihm/XUN8S9OWmkX8FTtJIFtAV4AYqL6UXk3M9YIb2Wz+yz7FyOuIx07sFGbUtC9T4iALDMF5oMc4HyrglKtA7h479SDi/IbX9oDWlQUMxUeVeNyQzZFTZFI3ZUltpaWvEdKesgclTtEyJcNJixoF98JCdtvCHq3grK0T6OvyltCtV16Q5d0gBl6P14j1ZPb2gVzz42WxlnkymtQ8Xje6Ku8kXXyMLWJFsiSuK5Lt7jePspeO983MTQUmtb65YHhCe1C7JM2WOcD43KN+WNXNHCLCc+cx4vL9kHepqthMGeFk3kaF6Aa+BjJ36NeLt2Si7S3BEo/vybgGzFSMpjRK1kQKExkxi1hEPjet242C3O+rDtpm+Q+8YCS9NgUAAA=="}}
+          for relative,spec in P.items():
+              target=Path(relative)
+              blob=gzip.decompress(base64.b64decode(spec['base64_gzip']))
+              if hashlib.sha256(blob).hexdigest()!=spec['sha256']:
+                  raise SystemExit('V209_SOURCE_SHA_MISMATCH '+relative)
+              if target.exists():
+                  if target.read_bytes()!=blob:
+                      raise SystemExit('V209_EXISTING_ASSET_CONFLICT '+relative)
+                  continue
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_bytes(blob)
+              print('V209_ADDED '+relative)
+          index=Path('index.html')
+          if not index.is_file():raise SystemExit('V209_NO_INDEX')
+          content=index.read_text(encoding='utf-8')
+          if 'boat_edge_v208_latest_clean.css?v=208' not in content or 'boat_edge_v207_first_prediction.js?v=207' not in content:
+              raise SystemExit('V209_REQUIRES_V208_AND_V207')
+          needle='<link rel="stylesheet" href="./assets/boat_edge_v209_paper.css?v=209">'
+          if needle not in content:
+              if content.count('</head>')!=1:raise SystemExit('V209_NO_HEAD')
+              content=content.replace('</head>',needle+'\n</head>')
+          # Place link directly NEXT TO the brand at the top of the main website.
+          link='<a class="be209-header-link" href="./ai-simulation.html">AI自走シミュレーション</a>'
+          if link not in content:
+              match=re.search(r'<div class="brandtext">BOAT EDGE <small>[^<]*</small></div>',content)
+              if not match:raise SystemExit('V209_NO_BRAND_ANCHOR')
+              content=content[:match.end()]+link+content[match.end():]
+          index.write_text(content,encoding='utf-8')
+          assert content.count(link)==1 and content.count(needle)==1
+          assert 'boat_edge_v208_latest_clean.css?v=208' in content
+          print('V209_HEADER_LINK_INSTALL_PASS')
+          PYINSTALL
+          python3 -m py_compile scripts/boat_edge_v209_paper_sim.py
+          node --check assets/boat_edge_v209_paper.js
+          if [ ! -f data/site_paper_sim/current.json ]; then python3 scripts/boat_edge_v209_paper_sim.py select; fi
+          git add -- index.html ai-simulation.html assets/boat_edge_v209_paper.css assets/boat_edge_v209_paper.js scripts/boat_edge_v209_paper_sim.py data/site_paper_sim/current.json data/site_paper_sim/ledger.json data/site_paper_sim/README.txt
+          if git diff --cached --quiet; then echo 'V209_ALREADY_INSTALLED_PASS'; break; fi
+          git commit -m 'V209 AI paper simulation dashboard 50K + guardrails'
+          if git push origin HEAD:main; then echo 'V209_INSTALL_PERSISTED'; break; fi
+          if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Independently freeze eligible paper decisions before result reads
+        shell: bash
+        run: |
+          set -euo pipefail
+          for retry in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 scripts/boat_edge_v209_paper_sim.py select
+            git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+            if git diff --cached --quiet; then echo 'V209_NO_NEW_SELECTION'; break; fi
+            git commit -m 'V209 PAPER pre-result selection without result lookahead'
+            if git push origin HEAD:main; then echo 'V209_SELECTION_FROZEN'; break; fi
+            if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
+      - name: Independently settle previously frozen paper decisions only
+        shell: bash
+        run: |
+          set -euo pipefail
+          for retry in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 scripts/boat_edge_v209_paper_sim.py settle
+            git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+            if git diff --cached --quiet; then echo 'V209_NO_SETTLEMENT'; break; fi
+            git commit -m 'V209 PAPER settle frozen purchase only'
+            if git push origin HEAD:main; then echo 'V209_SETTLED_FROZEN_ONLY'; break; fi
+            if [ "$retry" -eq 8 ]; then exit 1; fi
+          done
