@@ -1,0 +1,217 @@
+name: BOAT EDGE V198 - Independent Head Second Third Miss Diagnosis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V198_ROLE_DIAGNOSTIC.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '20,50 0-14,23 * * *' # twice/hour in JST 08:00-23:59, research scoring only
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v198-site-only-role-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose-source-verified-fresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout history for immutable first-commit evidence
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Prepare immutable site-only diagnostic and independently test classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s scripts/site_v185_score.py
+          test -s scripts/site_v185_role_shadow.py
+          test -s scripts/site_v180_shadow.py
+          python3 -m py_compile scripts/site_v185_score.py scripts/site_v185_role_shadow.py scripts/site_v180_shadow.py
+          cat > /tmp/boat_edge_v198_role_diag.py <<'PYREPORT'
+          from __future__ import annotations
+          import json,math,re,sys
+          from collections import Counter,defaultdict
+          from pathlib import Path
+
+          ROOT=Path('.')
+          sys.path.insert(0,str((ROOT/'scripts').resolve()))
+
+          MODEL='V198_SITE_ONLY_ROLE_MISS_AUDIT_V1'
+          def canonical(a):
+              return (json.dumps(a,ensure_ascii=False,sort_keys=True,indent=2,allow_nan=False)+'\n').encode('utf-8')
+          def classify(winning,top10):
+              if winning in top10:return 'TOP10_HIT'
+              h,s,_=winning.split('-')
+              if not any(c.startswith(h+'-') for c in top10):return 'HEAD_ABSENT'
+              if not any(c.startswith(h+'-'+s+'-') for c in top10):return 'SECOND_ABSENT_WITH_CORRECT_HEAD'
+              return 'THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND'
+          def self_test():
+              sample=['1-2-3','1-2-4','2-1-3']
+              assert classify('1-2-3',sample)=='TOP10_HIT'
+              assert classify('3-1-2',sample)=='HEAD_ABSENT'
+              assert classify('1-3-2',sample)=='SECOND_ABSENT_WITH_CORRECT_HEAD'
+              assert classify('1-2-5',sample)=='THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND'
+              # Concrete observed pattern 3 second misses, 1 third miss.
+              cases={
+                  '20261010-09-04':('1-2-4',['1-6-3','1-3-6','1-4-6','1-5-6']),
+                  '20261010-18-06':('1-2-4',['1-3-5','1-5-4','1-4-5']),
+                  '20261010-22-01':('1-5-4',['1-3-4','1-5-3','3-1-5']),
+                  '20261010-23-05':('1-3-2',['1-4-2','1-2-4','2-4-1'])}
+              c=Counter(classify(x,y) for x,y in cases.values())
+              assert c['SECOND_ABSENT_WITH_CORRECT_HEAD']==3,c
+              assert c['THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND']==1,c
+              print('V198_ROLE_DEFINITION_AND_4R_REGRESSION_PASS')
+          def rank_combo(rows,win):
+              return next((i+1 for i,x in enumerate(rows) if x['combo']==win),None)
+          def rank_second(rows,h,s):
+              mass={b:sum(x['score'] for x in rows if x['combo'][0]==h and x['combo'][2]==b) for b in '123456' if b!=h}
+              ordered=sorted(mass,key=lambda b:(-mass[b],b))
+              return ordered.index(s)+1 if s in ordered else None
+          def collect():
+              import site_v185_score as scorer
+              import site_v180_shadow as v180
+              import site_v185_role_shadow as v185
+              rows=[];pending=0;invalid=[];counts=Counter();day_counts=defaultdict(Counter)
+              paths=sorted((ROOT/'data/site_tail_shadow_v185/predictions').glob('20??????-??-??.json'))
+              for path in paths:
+                  if path.stem[:8]<'20261010':
+                      invalid.append({'race_key':path.stem,'reason':'HISTORICAL_BACKFILL_FORBIDDEN'})
+                      continue
+                  # This checks the first Git addition, exact frozen artifact bytes,
+                  # pre-deadline commit, source SHA, scratches, and deterministic replay.
+                  verified,reason=scorer.valid_freeze(ROOT,path)
+                  if reason:
+                      invalid.append({'race_key':path.stem,'reason':reason})
+                      continue
+                  shadow,commit=verified;key=path.stem
+                  # Critical ordering: NO result access before valid_freeze PASS.
+                  result=v185.load_json(ROOT/'data/site_results'/f'{key}.json')
+                  if not isinstance(result,dict) or result.get('status')!='confirmed':
+                      pending+=1;continue
+                  win=result.get('trifecta')
+                  if not v180.valid_combo(win):
+                      invalid.append({'race_key':key,'reason':'BAD_CONFIRMED_SITE_RESULT'})
+                      continue
+                  rank=shadow.get('candidate_ranked_120') or []
+                  if len(rank)!=120 or len({x['combo'] for x in rank})!=120 or any(
+                        not math.isfinite(float(x['score'])) or float(x['score'])<0 for x in rank):
+                      invalid.append({'race_key':key,'reason':'INVALID_120_CANDIDATE_RANKS'})
+                      continue
+                  if abs(sum(x['score'] for x in rank)-1.0)>1e-8:
+                      invalid.append({'race_key':key,'reason':'CANDIDATE_MASS_NOT_UNIT'})
+                      continue
+                  top10=shadow.get('candidate_top10') or []
+                  if top10!=[x['combo'] for x in rank[:10]]:
+                      invalid.append({'race_key':key,'reason':'CANDIDATE_TOP10_RANK_MISMATCH'})
+                      continue
+                  head,second,third=win.split('-')
+                  bucket=classify(win,top10)
+                  hc=[x for x in rank if x['combo'].startswith(head+'-')]
+                  pair=[x for x in hc if x['combo'].startswith(head+'-'+second+'-')]
+                  pct=round(sum(x['score'] for x in hc)*100,4)
+                  payout=result.get('trifecta_payout_yen_per_100')
+                  if not isinstance(payout,(int,float)) or isinstance(payout,bool) or not math.isfinite(payout) or payout<=0:
+                      band='UNKNOWN'
+                  elif payout<1000:band='UNDER_10X'
+                  elif payout<=2000:band='10_TO_20X'
+                  elif payout<=5000:band='20_TO_50X'
+                  else:band='OVER_50X'
+                  baseline=shadow['baseline_top10']
+                  v180top=shadow['v180_top10']
+                  row={
+                      'race_key':key,'source_first_git_commit':commit['sha'],
+                      'source_first_git_commit_time_utc':commit['time'].isoformat(),
+                      'winning_combo':win,'actual_head':head,'actual_second':second,'actual_third':third,
+                      'actual_head_is_1':head=='1','payout_band':band,
+                      'classification_v185_top10':bucket,
+                      'baseline_top3_hit':win in baseline[:3],
+                      'baseline_top5_hit':win in baseline[:5],
+                      'baseline_top10_hit':win in baseline,
+                      'v180_top3_hit':win in v180top[:3],
+                      'v180_top5_hit':win in v180top[:5],
+                      'v180_top10_hit':win in v180top,
+                      'v185_top3_hit':win in top10[:3],
+                      'v185_top5_hit':win in top10[:5],
+                      'v185_top10_hit':win in top10,
+                      'v185_all120_rank':rank_combo(rank,win),
+                      'v185_rank_within_actual_head':rank_combo(hc,win),
+                      'v185_actual_second_rank_given_head':rank_second(rank,head,second),
+                      'v185_actual_third_rank_given_head_second':rank_combo(pair,win),
+                      'v185_actual_head_relative_mass_pct_NOT_CALIBRATED':pct,
+                      'v185_top10_new_combos_vs_v180':len(set(top10)-set(v180top))}
+                  rows.append(row);counts[bucket]+=1
+                  day_counts[key[:8]][bucket]+=1
+              totals={k:counts[k] for k in ('TOP10_HIT','HEAD_ABSENT','SECOND_ABSENT_WITH_CORRECT_HEAD',
+                  'THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND')}
+              byday={day:{'verified_settled':sum(c.values()),'classes':dict(sorted(c.items()))} for day,c in sorted(day_counts.items())}
+              report={
+                  'schema_version':'boat-edge-v198-independent-immutable-site-role-miss-v1',
+                  'model_id':MODEL,'scope':'SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH',
+                  'result_access_rule':'AFTER_V185_INITIAL_GIT_COMMIT_PREDEADLINE_SHA_REPLAY_PASS_ONLY',
+                  'outcomes_from':'data/site_results confirmed only; no endpoint or combined API',
+                  'site_frozen_research_files':len(paths),'independent_verified_settled':len(rows),
+                  'pending_settlement':pending,'invalid_frozen_or_results':invalid,
+                  'top10_classification':totals,'by_day':byday,'races':rows,
+                  'no_current_model_change':True,'no_production_promote':True,
+                  'formal_results_accessed':False,'formal_guard_modified':False,
+                  'inference':'DIAGNOSTIC_NOT_PROOF_OF_IMPROVED_ACCURACY'}
+              assert sum(totals.values())==len(rows)
+              return report
+          if __name__=='__main__':
+              if '--self-test' in sys.argv:self_test();raise SystemExit(0)
+              path=Path(sys.argv[1])
+              data=collect()
+              if data['invalid_frozen_or_results']:
+                  print('V198_INVALID_SOURCE_NO_REPORT_PUBLISH',json.dumps(data['invalid_frozen_or_results'],ensure_ascii=False))
+                  raise SystemExit(3)
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(canonical(data))
+              print('V198_VERIFIED_ROLE_DIAG',json.dumps({'settled':data['independent_verified_settled'],
+                 'pending':data['pending_settlement'],'classes':data['top10_classification']},ensure_ascii=False,sort_keys=True))
+          PYREPORT
+          python3 -m py_compile /tmp/boat_edge_v198_role_diag.py
+          python3 /tmp/boat_edge_v198_role_diag.py --self-test
+          python3 /tmp/boat_edge_v198_role_diag.py /tmp/V198_RUN1.json
+          python3 /tmp/boat_edge_v198_role_diag.py /tmp/V198_RUN2.json
+          cmp /tmp/V198_RUN1.json /tmp/V198_RUN2.json
+          mkdir -p data/site_learning
+          cp /tmp/V198_RUN1.json data/site_learning/v198_immutable_role_diagnosis.json
+          git diff --check
+
+      - name: Save only audited research report; never overwrite frozen picks
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            python3 /tmp/boat_edge_v198_role_diag.py /tmp/V198_RETRY.json
+            mkdir -p data/site_learning
+            cp /tmp/V198_RETRY.json data/site_learning/v198_immutable_role_diagnosis.json
+            git add -- data/site_learning/v198_immutable_role_diagnosis.json
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V198_DIAGNOSTIC_ALREADY_CURRENT
+              exit 0
+            fi
+            git commit -m 'V198 immutable site-only second/third miss diagnosis (no model changes)'
+            if git push origin HEAD:main; then
+              echo V198_SITE_ONLY_DIAGNOSTIC_COMMITTED
+              exit 0
+            fi
+            echo "V198_RETRY_${attempt}_AFTER_REMOTE_UPDATE"
+          done
+          echo V198_PUBLISH_FAILED_AFTER_RETRIES >&2
+          exit 1
