@@ -1,0 +1,126 @@
+name: BOAT EDGE V217 - Verify Frozen Odds Before Paper Decisions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V217_PAPER_ODDS_PROVENANCE.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v217-paper-odds-source-audit
+  cancel-in-progress: false
+
+jobs:
+  install-and-test:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Restore pinned V217 patch and standalone provenance tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYV217_BLOBS'
+          from pathlib import Path
+          import base64,gzip,hashlib
+          records = {
+            'patch': (
+              'H4sIAAAAAAAC/8VX3W8bRRB/919xlIe9a86OE/Uz5CqZxGosObZlxxFViE6bu3W89Hx77K4bhygSSSktEqU8UZBAFMEDqmglJKR+'
+              'UMEfkzrtG/8C+3FnX+wkbWgl/OLbvZnZ38z8ZnauRUnHiCBvB3jNwJ2IUG7UxDKTkZuOfDQB8yiOOJtcI5C7yF9H7rXpqSk3ghGi'
+              'LsOdXLQJrAyheB2HMHCkZo4i6Lsc9biJQo/4OFx3QJe3sheEZAfSq4g6wEct4xqiuIWR77Yo+QSFLvF9ZlJCuH0VbdoshJHN4VUU'
+              'WjMg00ZBJPXACTUzhvidOnVqGQbYhxwJRztdDtcCZNTqRbdebDTLS4bUN+A6xCHjBm8jQ9s1pCXWJhwwY22ToyzqQY8bjYVCTphU'
+              'pn28jhh3pGBuHXETSFMua8Pps+eEu1IEt4yQcAMzaR2GHjK1ks04tQxC1VuKcq1uEHQg99omBSv57EWYba1unTuzDWwtHzsjfxTx'
+              'Lg2NCgmRDV48ute/dbP/xe293ft716/v7T7d23n48tdnLx/9tLdzf2/nLlB6kHptfA35jozTJBDBgJMMc+RGFPnY45iEbuIvA5Pa'
+              'EZHsM2CyBbZEXLezWxrIdu4jRkJtNRAmxyxK1YFWSpiRLvWQkyCRkUmec5i5LRwg0zJQwJCyq3Q43Uz5DTccbUSTTCaFmdbgvTDY'
+              'hkwSOqdTYAoNK9dGPY3ctN5x9NPQ5lg8n//9Q//Bt4Ngimw/f3z7+eNPX978Awy0VHR84jnSu1xAoCSgOEsJoJ6HIm6Y1UaRUkJt'
+              'Qb4uUo9H5XDkzP5XP+5//1s6e+MkShDYMnlH2R2z+LD/+Y3+wyfCo/0HP2vTLSQ4J3gRQcqGZjWb43cu5MAasHlEhkIPuSLTQARX'
+              '/ElGHxSIRE6QfAuGJefWmvW5hUKj6FYr5SvgQDbikojPlsv48VK6qI/x9c43/b/u7n+327/15z/P7uxfv9G/9/v+069H0hiHND/r'
+              'mMpuNj7FynHCYeAy5JFQpNWadS7m88cmTpz1YveJiG6qBL/s3/llb+czfZYuJkkD5hwMDhedDHkc6qKxjku21n/jfMcKaZNSOZPJ'
+              'iO6aIYEv25fstCkox7Yn0cfMIxqgTB4Q1Hmz1tUhPkq1WLlkwN7atvS6jblaSfgh2kjDT90PtgKGZBU6r31/JOkY6s6kHRhunxSn'
+              'DHNASDQAKgJFDRwalGywYbQ80lkjDtX6agGs94wo2YnESmJI1ppDSRxew/4402jML8F9jsMuenMoilEeoSjBkjq4I+cFzFo4FPeG'
+              'GQ2uw4P70tbgVX42mp3K55PlhVlVULPO9NlxzPrYaFLIn2YeDNBpBSvhyf8ESl1gknNOin4qaiqs1jHZGeraJg653RI3D7eOQDgU'
+              'PiSd8u5dY6YykJbM6h3lnXUpn8ufKKzCqp7wNHDRZeLJUFMukv1DtMAVU41xSLYfMZSZwDb0gDcxsm/Z4rbRHcmOS9uyzaR47ITl'
+              '8Z7CZQ9Sa62mp44ESSYpB6EhZSXKGNeBuojnDI90Qy6ti/tramRqgFhMKo1NxlGn2MOC9MvTU+fdWmFpbsEtVOYWqnV3sdRYlGsD'
+              'TFAUUWloZeZ8ftWaADNgQnXO0XMsa4Qqw5EnCqC8DDRwe2rQnvTB1XrpcqlSKLvV+fmGK+YWd7lQLs0XlorzQHqpzaSnqUPxNyvF'
+              'D2rFOaHlzleb75eL2qP4bjoc0ltptsAeQFP23jVe5daM4RPFNNZdYxzzrhjwu5Gc830jIoxnk4FWNfDch+HbgRkHXn3sbFA58aqv'
+              'HR0Te/yjRwlTUa8DhtSKdbe0uNhcKsj4KscuNwv1ebdUaSwVymWRMSsjB+GZ+Mr+uIvFmO6svDrTNvgPpZ0KfZyAE05HYDXhIgw3'
+              'zd5o+auC66n7J3bFeiUPxbC4XKo2G3FBlSpz1cVaubhUPDSiqubK9WJh/orUbBQrYsYsNBpC+F/V/R7H6Q4AAA=='
+              , '4bb4c32de1d7963ff64a4a8bf02b11421320e355e87d61fce728c703c5d3c6cd'
+            ),
+            'test': (
+              'H4sIAAAAAAAC/91YX28bxxF/56fYOg971xyPPEpybAL3IMQU7NiVBJF2G6jCYnm3FDc63h5u9yjRgoBIbtE+tHBQFE2DImgLtC8B'
+              'GqBF0KZO0X4YWkre+hU6u3tHkZIi23WL/uEDubt3OzM785v5zfKNbzQKmTf6PG2wdIyyiRqKdKl248aNNZHv0zyuizSZoCwXYoAU'
+              'k0r6aDVJkOSjIqGKxUjxESzTUSYRTWOUM1kkCsY5Q71Ot4fW7n2n93Cr0/VQKhQSfcnyMdPvqSJPpQ+aanyUiVyhGORpaYhKFKtq'
+              'dUjlMOH9amp/YMEvFE+q1fekSKtxRtX8BsVG2YAnrFa729nqhOVTfxN+HUL0E0JcH8wWyZg5rp+B5akqf2oyY1G4qNPXa2SQi5Hd'
+              'nYiIKi5SB2c0Yzlh6S5PGfa0ugaWUc4zJRt9QRVh8S4j41YQEPsqeNHPJtitmelFPSMRFyDfaNI6Hf3lGpP8RNCY5T47AFPse46R'
+              '4dbe6fbCWPnakY9FypxyHLNEUWcoilyGt123dr/zbohbzdbNoBkE9dZSvRngWm/1fmdd765C4eg3vKDpBYF3y2u1PPWYpwMRghLX'
+              'p/KiEj0G28HI9Y1vXyNn+aXl1GI2QPs5V/p8auiJ/ntuu4bgo6dVsEZ7Mc8dO5FhLy+Yxw64VETsmZlrdkQiVfBCqMHixwUg1gFx'
+              'HktlkTNCZcR5uEYTyTwJYSB7bFLK4mms97XcN/F3U3yu3dhFFDtQTikbhEUi5uluiAs1qN/CVrMFewVlXw5pa+WmORAAj8akP4HU'
+              'clzXH7KDmO9CPjnl0UUcSxKLyIFBGCz5TW/AVDRksQ1ePWjWg6DXvNVuNdvN5pvN2/CNvQw0sRBvbnUIZN7DBz2y+XDr7bur3Q7Z'
+              'WH/wLi5dWJoV80g5OY2YPnIIwCj3m+9KH6EqLIeeyvmARYoSbV14iAE/9SXchtlRaXaWMx0NB8qGKpUlfMxCPW9gQAVtSO07LQA3'
+              'BvgQtB75OjDWvdYJoQ283unNHOFal9I8GsJ6fEkkqNYHgoQkMqWZHAoFKrDZD6m3PFNXP7Ra5vVWUl8NWLNdFhA2mtrqxeiad7VN'
+              '4WWPV6aSfQCb2A/x2r311QckWPkWRPP8RHvwNMTdez0d2DUoMOtvd8ijoNXCnpF+/tktoHjr4JQFmUjGUty2+MZFClVrbzaVkcgB'
+              'tOX86KIsSccWAKY++FyKgchHFEDqxXDABMpdiAGDSyvYxskCPLT+vSgNyhXThg25wu1DrHi0xyBE7e1DHIlRX+B2CSgPZ7gdrADm'
+              'TfRgDPg/2jk68sYsLUDl6U8/OPvst9gznkxFGJy7mOjkeklsXIafkQCHKAE4E2jCZJXYJ9cooEUMB1wUPu8Kg4GMSkksrjSbArBm'
+              'QCh9WJlSwucNdB/KEuKppmRwA00jhiAtipFGKBoVUqFCMqSGjOeQ4BSoGnJ2RFFKgaf9f43th1gbjtvGcHy15bhdmX50nceAH6mu'
+              'KpCcwa3Wi/y1kDN9jWGoABbEIEPPNEwvlsZgrjQaCRHkBpHAhTCG3kUVMsRiD7vXhrZi7EZEoYjnhvO/xsxK5qPVB/furPY6d8jG'
+              'Rhd7kGYZu5S+m6ubnS1blz2dGwnhL5njSBRQiQZEQveVMAujMRgXG9uIPqoMg2YTKojo0z5PuJqAwym8G0BW5YJD87IPp7q9ohdW'
+              'LslnYw7Mp51kwYgp/ubNZXeB1Ex1riqgSRBvli+12j5Xw1kL5veY7nBoPrnDcyAQkU8cV3d7WclH4PLFBq1Mtut0hAtcMxfARdp4'
+              'y1/+WupcOsdHebYxA4rjoAsyCCIcmuD71apuyR6z1LCXUetVJdwzFbJkBQmtrkJWAuISrUNXY3rkSs52Weh2QkvtzgW1ZdsCW3RI'
+              '2aIxDCJd0BKoHvRb5y55kf6Epc5M6jbOoAJLvOOCFebx5UfbzZ3tpcpKK7CsRusMbAYd9SznUIkosq5BwdIBkixhpp4gquBJygBq'
+              'JpQIgnGAzA5bkCzBGJ4MZ2Q6z52LNAvsxdO9cpW8jlvCED//28env/v59OST6ZMn05Nn3burzz//8fPP3//qB5/h+bNeSfJzhp9z'
+              'zzY2FAduMxwHPxXHGUdaMtsJg2W/9e9lm3+qTL+uP88+/vXzL/44PfnJ2bP3p8e/nB5/9NUf/jQ9/t6Xv/h0evzJ9PjDBa++ir8A'
+              'fP+F/roaldd0rv+Z2jLn86tse/nSaCM21+aBigsXm8ut78LF5gqUvcbpAXKz5D19+rPTv3549tHJ6Q+/+Ptfnp49+f7pr35/9uyD'
+              'qzP6FfzQbP4v+MGWMjj+lyd/nh5/OnPL9PhHp09/Azn4wuNXF8eNbq+8Of5/hR04J1UOftQK3iL636kudF/dbhvB9WeXp9AsQ/n3'
+              'Kg4bSxQNabrLYtuAmMs4GnE50h2rd/7Pl4foLjzOhFT2tuUBxe7SaILYAY0UGtAk6VO4b7m1fwDjTC/XcBMAAA=='
+              , 'ba55d76b44ab86006e24d4ab32b36de9dc66e2356b797444ce68a58133a0129f'
+            ),
+          }
+          for name,(packed,sha) in records.items():
+              raw=gzip.decompress(base64.b64decode(packed))
+              if hashlib.sha256(raw).hexdigest()!=sha:
+                  raise SystemExit('V217_ARTIFACT_SHA_MISMATCH '+name)
+              dest=Path('/tmp/v217_'+name+'.py')
+              dest.write_bytes(raw)
+              print('V217_RESTORED_HASHED_'+name.upper())
+          PYV217_BLOBS
+
+      - name: Install exact-source odds guard, regress and commit without modifying workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5 6 7 8; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 /tmp/v217_patch.py
+            mkdir -p tests
+            if [ -e tests/test_v217_odds_guard.py ] && ! cmp -s tests/test_v217_odds_guard.py /tmp/v217_test.py; then
+              echo 'V217_TEST_CONFLICT_FAIL_CLOSED'; exit 1
+            fi
+            cp /tmp/v217_test.py tests/test_v217_odds_guard.py
+            python3 -m py_compile scripts/boat_edge_v211_paper_sim.py tests/test_v217_odds_guard.py
+            python3 tests/test_v217_odds_guard.py
+            git add -- scripts/boat_edge_v211_paper_sim.py tests/test_v217_odds_guard.py
+            if git diff --cached --quiet; then
+              echo 'V217_ALREADY_INSTALLED_TESTS_PASS'; exit 0
+            fi
+            git commit -m 'V217 paper simulation requires immutable SHA-matched pre-result odds evidence'
+            if git push origin HEAD:main; then
+              echo 'V217_COMMIT_SUCCESS_TESTS_PASS'; exit 0
+            fi
+            if [ "$attempt" = 8 ]; then
+              echo 'V217_PUSH_RETRY_EXHAUSTED'; exit 1
+            fi
+          done
