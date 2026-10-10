@@ -3,7 +3,7 @@ name: BOAT EDGE V190 - Immutable Prospect Score Replacement
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/V190.yml']
+    paths: ['.github/workflows/BOAT_EDGE_V190.yml']
   workflow_dispatch:
   schedule:
     - cron: '20,50 * * * *'
@@ -105,7 +105,7 @@ jobs:
               echo V190_IMMUTABLE_SCORER_COMMITTED
               exit 0
             fi
-            echo "V190_RETRY_$attempt_AFTER_REMOTE_UPDATE"
+            echo "V190_RETRY_${attempt}_AFTER_REMOTE_UPDATE"
             git fetch origin main
             git reset --hard origin/main
           done
