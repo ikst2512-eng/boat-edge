@@ -1,0 +1,59 @@
+/* BOAT EDGE V204: prediction presentation only; preserve existing prediction engine and V181 freeze. */
+#be204Overview,#be204Budget{box-sizing:border-box;min-width:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+.be204-overview{margin:11px 0;padding:13px 14px;border:1px solid #d5e2ee;border-radius:13px;background:linear-gradient(135deg,#f4f9ff,#fff);color:#163654}
+.be204-kicker{font-size:10px;font-weight:900;letter-spacing:.06em;color:#326aab;margin-bottom:8px}
+.be204-intro{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.be204-intro strong{font-size:17px;line-height:1.4;overflow-wrap:anywhere}
+.be204-intro button{flex-shrink:0;font-size:11px;font-weight:900;color:#145ca6;background:#fff;border:1px solid #bcd4ea;border-radius:9px;padding:9px 11px;min-height:40px}
+.be204-intro button:focus-visible{outline:3px solid #428bce;outline-offset:2px}
+.be204-narrative{margin:8px 0!important;font-size:11px!important;line-height:1.7!important;color:#4c6884!important}
+.be204-path{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.be204-path span{border:1px solid #cbddeb;background:#fff;border-radius:8px;padding:7px 9px;color:#234e78;font-size:10px;font-weight:800}
+.be204-timing{margin-top:9px;font-size:10px;color:#6a839c;font-variant-numeric:tabular-nums}
+.be204-budget{padding:12px;margin:12px 0 9px;border:1px solid #cfdfef;background:#fff;border-radius:10px}
+.be204-budget-title{font-weight:950;font-size:13px;color:#203d5c;margin-bottom:9px}
+.be204-budget-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.be204-budget-grid>div{min-width:0;background:#f2f7fd;border:1px solid #e0eaf5;border-radius:8px;padding:9px 7px}
+.be204-budget-grid small{display:block;color:#65809c;font-size:10px;line-height:1.4;font-weight:700}
+.be204-budget-grid b{display:block;margin-top:4px;font-size:15px;line-height:1.3;color:#193c66;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.be204-priceband{font-weight:800;color:#1f567d;font-size:11px;line-height:1.6;margin-top:9px}
+.be204-freeze{font-size:11px;color:#69552f;line-height:1.6;padding:9px;background:#fffaf0;border:1px solid #f0dfb9;border-radius:7px;margin-top:8px;overflow-wrap:anywhere}
+.be204-oddsstamp{margin-top:9px;color:#4f6a84;font-size:10px;line-height:1.6;overflow-wrap:anywhere}
+.be204-footnote{color:#708399;font-size:10px;line-height:1.7;margin:8px 0 0!important}
+#be108PredictionModes .be108-head h3{font-size:16px}
+#be108PredictionModes .be108-head p{font-size:11px;line-height:1.5}
+#be108PredictionModes .be108-mode-tabs button{font-size:12px;min-height:44px;padding:9px 5px}
+#be108PredictionModes .be108-mode-top>div:first-child b{font-size:15px;line-height:1.4}
+#be108PredictionModes .be108-mode-top>div:first-child span{font-size:11px;line-height:1.6}
+#be108PredictionModes .be108-ticket-list{gap:8px}
+#be108PredictionModes .be108-ticket{grid-template-columns:24px minmax(70px,1fr) minmax(47px,auto) minmax(50px,auto);gap:6px 8px;padding:11px 10px;border-radius:11px;min-width:0}
+#be108PredictionModes .be108-ticket>span:first-child{display:flex;align-items:center;justify-content:center;background:#edf3fa;border-radius:6px;color:#406385;font-weight:900;font-size:11px;min-height:23px}
+#be108PredictionModes .be108-ticket>b{font-size:18px;line-height:1.2;color:#173d63;font-variant-numeric:tabular-nums}
+#be108PredictionModes .be108-ticket>em{font-size:11px;font-weight:850;color:#365c7e;font-variant-numeric:tabular-nums}
+#be108PredictionModes .be108-ticket>small{font-size:12px;font-weight:900;color:#184c80;font-variant-numeric:tabular-nums}
+#be108PredictionModes .be108-ticket>.be140-ticket-money{grid-column:2/-1;font-size:11px!important;line-height:1.7;color:#5e7890;text-align:left}
+#be108PredictionModes .be108-ticket.be204-finance-ready>.be140-ticket-money{display:none}
+.be204-ticket-finance{grid-column:2/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:2px}
+.be204-ticket-finance>div{min-width:0;background:#f4f8fd;border:1px solid #e2ecf7;border-radius:8px;padding:7px 9px}
+.be204-ticket-finance small{display:block;color:#6d8299;font-size:10px;line-height:1.4}
+.be204-ticket-finance b{display:block;color:#1e4368;font-size:13px;margin-top:3px;white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.be204-ticket-finance>div:last-child{background:#edf7f3;border-color:#d4e8e0}
+.be204-ticket-finance>div:last-child b{color:#14684b}
+@media(max-width:520px){
+ .be204-intro{display:grid;gap:8px}.be204-intro strong{font-size:16px}.be204-intro button{justify-self:start}
+ .be204-path{display:grid;grid-template-columns:1fr}.be204-path span{padding:6px 9px}
+ .be204-budget-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .be204-budget-grid>div:last-child{grid-column:1/-1}
+ .be204-budget-grid b{font-size:14px}
+ #be108PredictionModes .be108-mode-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #be108PredictionModes .be108-ticket{grid-template-columns:21px minmax(60px,1fr) 45px 63px;gap:5px 6px;padding:10px 8px}
+ #be108PredictionModes .be108-ticket>b{font-size:17px}
+ #be108PredictionModes .be108-ticket>small{font-size:11px}
+ .be204-ticket-finance{gap:5px}
+ .be204-ticket-finance b{font-size:12px}
+}
+@media(max-width:340px){.be204-ticket-finance{grid-template-columns:1fr}.be204-budget-grid{grid-template-columns:1fr}.be204-budget-grid>div:last-child{grid-column:auto}}
+
+/* V204 odds guard: do not leave stale estimated payout visible while odds source is unverified. */
+#be108PredictionModes .be108-ticket.be204-odds-unverified>.be140-ticket-money{display:none}
+.be204-unverified{grid-column:2/-1;padding:8px 9px;font-size:11px;line-height:1.5;border-radius:8px;background:#fff8e9;color:#856024;border:1px solid #f1ddb3}
