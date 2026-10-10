@@ -8,12 +8,13 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 - Latest model/formal freeze is NOT certified by this TODO.
 - Official V185 prospective freeze requires pre-deadline immutable Git evidence.
 - Browser display and model accuracy are separate certification gates.
-- Site snapshot count: 153; SHA-verified audits: 153; settled reference histories: 151.
+- Site snapshot count: 154; SHA-verified audits: 153; settled reference histories: 153.
 - 🎯 indicator strings present in JS: true; Safari confirmation: false.
 - Formal state recorded as of: 2026-10-08 (may be stale).
 - Formal guards (recorded): results_seen=False, unlock=False, scoring=False.
 
 ## ACTIVE TODO — priority order
+1. [ ] FINAL_15M予想の個別監査SHAと保存時刻を確認する。
 2. [ ] Safariで🎯的中・不的中・判定対象外を実機確認（コード検査だけではPASSにしない）。
 4. [ ] V185未見Freshで3着抜け31R/2着抜け20Rの改善候補を検証。Top3・Top5・Top10、A頭・非1頭を別計測。
 5. [ ] 進入実コース×1年/6か月/3か月と1×2壁・逃がし率の連動。
@@ -31,7 +32,6 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 - Do not promote V180/V185 or any hypothesis before multi-day independent Fresh improvement.
 
 ## RECENT DONE
-- [x] サイト参考FINAL_15M予想：SHA照合した監査 153R。
 - [x] 4モード件数、V133固定のブラウザ・サーバーParity検査。
 
 ## TODO EVIDENCE
