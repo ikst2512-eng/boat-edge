@@ -17,6 +17,6 @@ The agent must change only one checkbox after implementing and checking that tas
 - [ ] A09 | Make the existing predicted race-development narrative readable as ordered start, first-turn attack, benefiting racer, and expected finish stages on iPhone. Use only existing description text; do not create probabilities or alter any prediction.
 - [ ] A10 | Keep all six racers' national, local, motor and boat metrics accessible without extra hidden tabs, using compact original comparison cards with legible labels and existing documented source-state distinctions.
 - [ ] A11 | Make the existing BOAT EDGE header and manual refresh affordance consistent and keyboard/mobile accessible across current site pages, preserving selected race and never dispatching data collection from the browser.
-- [ ] A12 | In the current paper-only simulator UI, make the saved ledger date and unverified/stale state prominent; if current-day evidence is missing, do not label past figures as today's balance or claim returns.
+- [x] A12 | In the current paper-only simulator UI, make the saved ledger date and unverified/stale state prominent; if current-day evidence is missing, do not label past figures as today's balance or claim returns.
 
 Do not append new tasks automatically. Stop once the queue is complete.
