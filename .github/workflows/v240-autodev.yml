@@ -1,0 +1,13 @@
+name: BOAT EDGE V240 - Guarded Autonomous Development
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 18 * * *'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo V240_SETUP_OK
