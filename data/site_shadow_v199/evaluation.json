@@ -234,35 +234,35 @@
           "5": 0
         }
       },
-      "races": 22,
+      "races": 23,
       "top10_miss_classes": {
         "combined": {
           "HEAD_ABSENT": 8,
-          "SECOND_ABSENT": 7,
+          "SECOND_ABSENT": 8,
           "THIRD_ABSENT": 5,
           "TOP10_HIT": 2
         },
         "head": {
           "HEAD_ABSENT": 8,
-          "SECOND_ABSENT": 7,
+          "SECOND_ABSENT": 8,
           "THIRD_ABSENT": 5,
           "TOP10_HIT": 2
         },
         "original": {
           "HEAD_ABSENT": 8,
-          "SECOND_ABSENT": 7,
+          "SECOND_ABSENT": 8,
           "THIRD_ABSENT": 5,
           "TOP10_HIT": 2
         },
         "second": {
           "HEAD_ABSENT": 8,
-          "SECOND_ABSENT": 7,
+          "SECOND_ABSENT": 8,
           "THIRD_ABSENT": 5,
           "TOP10_HIT": 2
         },
         "v185": {
           "HEAD_ABSENT": 8,
-          "SECOND_ABSENT": 7,
+          "SECOND_ABSENT": 8,
           "THIRD_ABSENT": 5,
           "TOP10_HIT": 2
         }
@@ -274,11 +274,11 @@
         "second": 5
       },
       "top1_head_hits": {
-        "combined": 2,
-        "head": 2,
-        "original": 2,
-        "second": 2,
-        "v185": 2
+        "combined": 3,
+        "head": 3,
+        "original": 3,
+        "second": 3,
+        "v185": 3
       }
     },
     "all": {
@@ -309,35 +309,35 @@
           "5": 15
         }
       },
-      "races": 55,
+      "races": 56,
       "top10_miss_classes": {
         "combined": {
           "HEAD_ABSENT": 9,
-          "SECOND_ABSENT": 12,
+          "SECOND_ABSENT": 13,
           "THIRD_ABSENT": 12,
           "TOP10_HIT": 22
         },
         "head": {
           "HEAD_ABSENT": 9,
-          "SECOND_ABSENT": 12,
+          "SECOND_ABSENT": 13,
           "THIRD_ABSENT": 12,
           "TOP10_HIT": 22
         },
         "original": {
           "HEAD_ABSENT": 9,
-          "SECOND_ABSENT": 12,
+          "SECOND_ABSENT": 13,
           "THIRD_ABSENT": 12,
           "TOP10_HIT": 22
         },
         "second": {
           "HEAD_ABSENT": 10,
-          "SECOND_ABSENT": 12,
+          "SECOND_ABSENT": 13,
           "THIRD_ABSENT": 12,
           "TOP10_HIT": 21
         },
         "v185": {
           "HEAD_ABSENT": 9,
-          "SECOND_ABSENT": 12,
+          "SECOND_ABSENT": 13,
           "THIRD_ABSENT": 12,
           "TOP10_HIT": 22
         }
@@ -349,11 +349,11 @@
         "second": 13
       },
       "top1_head_hits": {
-        "combined": 27,
-        "head": 26,
-        "original": 27,
-        "second": 27,
-        "v185": 27
+        "combined": 28,
+        "head": 27,
+        "original": 28,
+        "second": 28,
+        "v185": 28
       }
     },
     "non1_head": {
@@ -486,7 +486,7 @@
   "formal_results_accessed": false,
   "invalid": [],
   "model_id": "V199_UNSEEN_HEAD_SECOND_ORIGINAL_ABLATIONS_V1",
-  "pending_results": 1,
+  "pending_results": 0,
   "production_model_changed": false,
   "races": [
     {
@@ -2650,6 +2650,60 @@
       "winner": "1-2-4"
     },
     {
+      "actual_non1_head": false,
+      "band": ">50",
+      "hits": {
+        "combined": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "head": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "original": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "second": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v185": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "original_abstained": true,
+      "race_key": "20261011-15-12",
+      "top10_miss_classes": {
+        "combined": "SECOND_ABSENT",
+        "head": "SECOND_ABSENT",
+        "original": "SECOND_ABSENT",
+        "second": "SECOND_ABSENT",
+        "v185": "SECOND_ABSENT"
+      },
+      "top10_new_combos": {
+        "combined": 0,
+        "head": 0,
+        "original": 0,
+        "second": 0
+      },
+      "top1_head_hits": {
+        "combined": true,
+        "head": true,
+        "original": true,
+        "second": true,
+        "v185": true
+      },
+      "winner": "1-6-3"
+    },
+    {
       "actual_non1_head": true,
       "band": ">50",
       "hits": {
@@ -3463,5 +3517,5 @@
   "result_access": "ONLY_CONFIRMED_SITE_FILE_AFTER_ALL_PRE_RESULT_GIT_CHECKS",
   "schema_version": "boat-edge-v199-independent-future-only-score-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
-  "settled_verified": 55
+  "settled_verified": 56
 }
