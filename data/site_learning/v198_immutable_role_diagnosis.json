@@ -11,21 +11,22 @@
     },
     "20261011": {
       "classes": {
+        "HEAD_ABSENT": 1,
         "TOP10_HIT": 1
       },
-      "verified_settled": 1
+      "verified_settled": 2
     }
   },
   "formal_guard_modified": false,
   "formal_results_accessed": false,
-  "independent_verified_settled": 38,
+  "independent_verified_settled": 39,
   "inference": "DIAGNOSTIC_NOT_PROOF_OF_IMPROVED_ACCURACY",
   "invalid_frozen_or_results": [],
   "model_id": "V198_SITE_ONLY_ROLE_MISS_AUDIT_V1",
   "no_current_model_change": true,
   "no_production_promote": true,
   "outcomes_from": "data/site_results confirmed only; no endpoint or combined API",
-  "pending_settlement": 1,
+  "pending_settlement": 0,
   "races": [
     {
       "actual_head": "3",
@@ -1052,6 +1053,33 @@
       "v185_top3_hit": false,
       "v185_top5_hit": false,
       "winning_combo": "3-1-4"
+    },
+    {
+      "actual_head": "3",
+      "actual_head_is_1": false,
+      "actual_second": "2",
+      "actual_third": "1",
+      "baseline_top10_hit": false,
+      "baseline_top3_hit": false,
+      "baseline_top5_hit": false,
+      "classification_v185_top10": "HEAD_ABSENT",
+      "payout_band": "OVER_50X",
+      "race_key": "20261011-23-06",
+      "source_first_git_commit": "69daacd03b507dfdf28237efaaf4b53c622e3e1f",
+      "source_first_git_commit_time_utc": "2026-10-11T01:44:51+00:00",
+      "v180_top10_hit": false,
+      "v180_top3_hit": false,
+      "v180_top5_hit": false,
+      "v185_actual_head_relative_mass_pct_NOT_CALIBRATED": 2.3855,
+      "v185_actual_second_rank_given_head": 2,
+      "v185_actual_third_rank_given_head_second": 3,
+      "v185_all120_rank": 45,
+      "v185_rank_within_actual_head": 9,
+      "v185_top10_hit": false,
+      "v185_top10_new_combos_vs_v180": 0,
+      "v185_top3_hit": false,
+      "v185_top5_hit": false,
+      "winning_combo": "3-2-1"
     }
   ],
   "result_access_rule": "AFTER_V185_INITIAL_GIT_COMMIT_PREDEADLINE_SHA_REPLAY_PASS_ONLY",
@@ -1059,7 +1087,7 @@
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
   "site_frozen_research_files": 39,
   "top10_classification": {
-    "HEAD_ABSENT": 8,
+    "HEAD_ABSENT": 9,
     "SECOND_ABSENT_WITH_CORRECT_HEAD": 9,
     "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 10,
     "TOP10_HIT": 11
