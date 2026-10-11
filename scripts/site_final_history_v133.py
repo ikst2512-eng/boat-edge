@@ -548,9 +548,23 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
     race=read_json(race_path)
     if not race:continue
     key=race.get("race_key") or race_path.stem
+    # V226_IMMUTABLE_ORIGINAL_SNAPSHOT: first pre-result record remains byte-for-byte unchanged.
+    if (SNAPS/f"{key}.json").is_file():
+        continue
     # V182_SCRATCH_GUARD_FOR_NEW_SNAPSHOTS: fail closed on explicit scratches;
     # never overwrite stored snapshots or alter historical betting records.
     scratches=read_json(ROOT/"data/site_scratches_v182"/f"{key}.json") or {}
+    # V226_SOURCE_GUARD: require a newly verified official scratch check, not absence of a flag.
+    if (scratches.get('race_key')!=key or scratches.get('blocked') is not False
+            or scratches.get('race_card_source_status')!='ok'
+            or scratches.get('official_beforeinfo_source_status')!='ok'):
+        continue
+    try:
+        _v226_sc_at=datetime.fromisoformat(str(scratches.get('checked_at')))
+        if _v226_sc_at.tzinfo is None or not 0 <= (NOW-_v226_sc_at).total_seconds() <= 900:
+            continue
+    except (TypeError, ValueError, OverflowError):
+        continue
     racers=race.get("racers") or []
     blocked_scratches=scratches.get("race_key")==key and scratches.get("blocked") is True
     from_recs=any((r.get("scratched") is True or r.get("withdrawn") is True or
@@ -583,7 +597,8 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
     except Exception:
         continue
     mins=(dl-NOW).total_seconds()/60
-    if not (0<=mins<=15.999):
+    # V226_DECISION_WINDOW: align first freeze with the ten-minute V214 source freshness contract.
+    if not (0<mins<=10):
         continue
 
     race=merge_formal(race,key)
@@ -598,6 +613,25 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
 
     # V218_SINGLE_READ_ODDS_PROVENANCE: original bytes are shared by prediction, SHA and sidecar.
     odds_doc,_v218_odds_blob,_v218_odds_sha=be218_read_odds_once(ODDS/f"{key}.json")
+    # V226_ODDS_GUARD: never first-freeze a missing, partial, late or stale 120-combo board.
+    _v226_rows=odds_doc.get('trifecta_odds') or {}
+    if (_v218_odds_blob is None or not _v218_odds_sha
+            or odds_doc.get('race_key')!=key or odds_doc.get('phase')!='PRE_RESULT_PURCHASE_ONLY'
+            or len(_v226_rows)!=120):
+        continue
+    _v226_exact_combos={f'{a}-{b}-{c}' for a in range(1,7) for b in range(1,7) for c in range(1,7)
+                       if a!=b and a!=c and b!=c}
+    if set(_v226_rows)!=_v226_exact_combos:
+        continue
+    try:
+        _v226_at=datetime.fromisoformat(str(odds_doc.get('fetched_at')))
+        if _v226_at.tzinfo is None or not 0 <= (NOW-_v226_at).total_seconds() <= 900:
+            continue
+    except (TypeError, ValueError, OverflowError):
+        continue
+    if any(not isinstance(x,(float,int)) or isinstance(x,bool) or not math.isfinite(x) or x<=0
+            for x in _v226_rows.values()):
+        continue
     odds=odds_doc.get("trifecta_odds") or {}
     modes=modes_from_tickets(adjusted["tickets"],odds,wave_adjusted["tickets"])
     old=read_json(SNAPS/f"{key}.json") or {}
