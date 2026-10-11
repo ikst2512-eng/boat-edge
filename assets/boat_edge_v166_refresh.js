@@ -84,5 +84,6 @@
   }
   function init(){button();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-  window.BoatEdgeV166Refresh={refresh,oddsLabel};
+  window.BoatEdgeV166Refresh={refresh};
+  window.BoatEdgeV166Refresh.oddsLabel=oddsLabel;
 })();
