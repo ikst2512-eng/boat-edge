@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V239 | BOAT EDGE 2・3着 未見比較</title>
+<style>
+:root{color-scheme:dark;--bg:#101824;--panel:#182435;--line:#314259;--text:#eaf1fa;--dim:#aebfd1;--accent:#43c3ef}
+*{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif}main{max-width:1000px;margin:auto;padding:20px 16px 60px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}a{color:var(--accent)}h1{margin:0;font-size:1.45rem}h2{font-size:1.05rem;margin:0 0 12px}.tag{border:1px solid var(--line);border-radius:50px;padding:5px 12px;font-size:.8rem;color:var(--dim)}.sub{color:var(--dim);font-size:.9rem;line-height:1.65}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:17px;margin:12px 0}.metric{font-size:1.65rem;font-weight:750;margin:6px 0}.foot{font-size:.8rem;color:var(--dim)}table{border-collapse:collapse;width:100%;font-size:.88rem}td,th{padding:10px 7px;border-bottom:1px solid var(--line);text-align:left}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums} .scroll{overflow-x:auto}.warn{color:#ffd58d}button{color:var(--text);background:#243c54;border:1px solid var(--line);padding:9px 14px;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body><main>
+<header><div><h1>BOAT EDGE <span style="color:var(--accent)">V239</span> 2・3着 未見比較</h1><div class="sub">本番予想とは分離した未来固定・同一レース10点比較</div></div><div><a href="./index.html">トップへ</a> <button type="button" onclick="refresh()">更新</button></div></header>
+<div class="panel"><h2>安全ルール</h2><p class="sub">V232で締切前にGitHub保存された予想だけを使い、V239候補も締切前に独立してGitHub保存する。レース確定後、V234サイト限定の検証済み結果と照合。結果から過去の買い目を作り直さない。正式Freshの結果・払戻にはアクセスせず、証明までは本番採用しない。</p><span class="tag">全比較：10点</span> <span class="tag">本番モデル変更なし</span></div>
+<div class="grid"><section class="panel"><h2>当日新規固定</h2><div id="frozen" class="metric">—</div><div id="day" class="foot">確認中</div></section><section class="panel"><h2>厳格照合済み</h2><div id="scored" class="metric">—</div><div class="foot">V239未来固定分のみ</div></section><section class="panel"><h2>改善認定</h2><div id="proof" class="metric warn">未証明</div><div class="foot">多日独立未見の改善まで候補扱い</div></section></div>
+<section class="panel"><h2>同一レース・同じ10点で比較</h2><div class="scroll"><table><thead><tr><th>予想モード</th><th class="num">評価R</th><th class="num">的中R</th><th class="num">的中率</th><th class="num">基準のみ外した差</th><th class="num">基準のみ当てた差</th></tr></thead><tbody id="rows"><tr><td colspan="6" class="sub">データ確認中</td></tr></tbody></table></div><p class="sub">基準のみ外した差：V239候補だけ的中した回数。基準のみ当てた差：基準だけ的中した回数。差だけでモデルの優劣は判定しない。</p></section>
+<section class="panel"><h2>検証方式</h2><p class="sub">的中重視10点＝既存Top10。バランス10点＝同日固定の既存10点。2着分散10点＝既存Top7を保持し、予測した頭の2着候補が広がる順に最大3点を選択。2・3着反転10点＝Top7を保持し、2・3着を入れ替えた候補を最大3点追加。すべて締切前に確定する。</p><div id="pending" class="foot">照合待ち：—</div></section>
+<footer class="foot">V239 研究比較専用。表示内容は実購入・確定回収率・本番予想精度の保証ではありません。</footer>
+</main>
+<script>
+const label={hit10:'的中重視10点（基準）',balance10:'バランス10点',second_diverse10:'2着分散10点',tail_swap10:'2・3着反転10点'};
+async function getJSON(path){let u=path+'?ts='+Date.now();const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw Error(r.status);return r.json()}
+async function refresh(){try{const [p,s]=await Promise.all([getJSON('./data/site_autopilot/v239_pre_current.json'),getJSON('./data/site_autopilot/v239_score_current.json')]);
+if(p.schema!=='BOAT_EDGE_V239_PRE_SUMMARY_V1'||s.schema!=='BOAT_EDGE_V239_PAIRED_SCORE_SUMMARY_V1')throw Error('schema');
+document.getElementById('day').textContent='JST '+p.day_jst;
+document.getElementById('frozen').textContent=p.frozen_today+'R';document.getElementById('scored').textContent=s.scored_total+'R';
+const esc=(x)=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.getElementById('rows').innerHTML=Object.keys(label).map(k=>{let x=s.comparisons[k]||{};let rate=x.hit_rate_percent==null?'未算定':x.hit_rate_percent+'%';return '<tr><td>'+esc(label[k])+'</td><td class="num">'+esc(x.races??0)+'</td><td class="num">'+esc(x.hits??0)+'</td><td class="num">'+rate+'</td><td class="num">'+esc(x.paired_gain_vs_hit10??0)+'</td><td class="num">'+esc(x.paired_loss_vs_hit10??0)+'</td></tr>'}).join('');
+document.getElementById('pending').textContent='待機・除外理由：'+JSON.stringify(s.pending||{});document.getElementById('proof').textContent='未証明';}
+catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="6">未取得（まだ集計が生成されていないか、公開準備中）</td></tr>';document.getElementById('pending').textContent='データ取得できず：'+e.message}}
+refresh();
+</script>
+</body></html>
