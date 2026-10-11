@@ -31,7 +31,7 @@ class TestV243MobileSite(unittest.TestCase):
         self.assertIn('.be108-ticket>b{font-size:18px',css)
         self.assertIn('.be204-ticket-finance',css)
         self.assertIn('be204-odds-unverified',css)
-        v243=css.split('/* V243: maintain every prediction row',1)[1]
+        v243=css.split('/* V243: maintain every prediction row',1)[1].split('/* V204 odds guard:',1)[0]
         self.assertNotIn('display:none',v243)
 
     def test_live_page_loads_both_style_layers_once(self):
