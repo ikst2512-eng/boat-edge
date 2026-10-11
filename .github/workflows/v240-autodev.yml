@@ -1,13 +1,202 @@
-name: BOAT EDGE V240 - Guarded Autonomous Development
+name: BOAT EDGE V240 - Guarded Autonomous UI Development
+
 on:
+  push:
+    branches: [main, 'automation/v240-autodev-safe-20261012']
+    paths:
+      - '.github/workflows/v240-autodev.yml'
+      - 'scripts/boat_edge_v240_guard.py'
+      - 'tests/test_boat_edge_v240_guard.py'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
   workflow_dispatch:
   schedule:
     - cron: '30 18 * * *'
+
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: boat-edge-v240-guarded-autodev
+  cancel-in-progress: false
+
 jobs:
-  validate:
+  bounded-autonomous-ui-development:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
-      - run: echo V240_SETUP_OK
+      - name: Checkout main or test branch without persisting write tokens
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Audit deterministic V240 gates and unchanged formal guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          python3 -m py_compile scripts/boat_edge_v240_guard.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status=json.loads(Path("data/formal_status.json").read_text(encoding="utf-8"))
+          guards=status.get("guards") or {}
+          assert all(guards.get(k) is False for k in ("results_seen","unlock","scoring")), "FORMAL_GATE_NOT_CLOSED"
+          assert guards.get("RESULT_UNLOCK_TOKEN") is None, "FORMAL_TOKEN_PRESENT"
+          assert (status.get("formalFirst100") or {}).get("races",0)==0, "FORMAL_FRESH_ACTIVE"
+          print("V240_FORMAL_GUARD_READ_ONLY_PASS")
+          PY
+
+      - name: Determine whether AI development can run
+        id: gate
+        shell: bash
+        env:
+          OPENAI_KEY_PRESENT: ${{ secrets.OPENAI_API_KEY != '' }}
+          BRANCH_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if ! python3 scripts/boat_edge_v240_guard.py --pending; then
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            echo "V240: queue complete; no speculative edits." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$BRANCH_REF" != 'refs/heads/main' ]; then
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            echo "V240: CI validation only on test branch." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$OPENAI_KEY_PRESENT" != 'true' ]; then
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            echo "V240: code-editing agent NOT ACTIVE; GitHub Actions secret OPENAI_API_KEY is not configured." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "can_run=true" >> "$GITHUB_OUTPUT"
+            echo "V240: running isolated UI-only Codex task." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Prepare isolated no-data coding workspace
+        if: steps.gate.outputs.can_run == 'true'
+        shell: bash
+        env:
+          UI_WORK: ${{ runner.temp }}/v240-ui
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,shutil,subprocess
+          from pathlib import Path
+          from scripts.boat_edge_v240_guard import QUEUE,ALLOWED_PAGES,permitted_ui
+          src=Path.cwd()
+          dst=Path(os.environ["UI_WORK"])
+          dst.mkdir(parents=True,exist_ok=True)
+          paths=[QUEUE]+sorted(x for x in ALLOWED_PAGES if (src/x).is_file())
+          paths+=sorted(str(x) for x in (src/"assets").glob("*") if x.is_file() and permitted_ui(str(x)))
+          for name in paths:
+              inp=src/name
+              assert inp.is_file() and not inp.is_symlink(), name
+              target=dst/name
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(inp,target)
+          subprocess.run(["git","init","-q"],cwd=dst,check=True)
+          subprocess.run(["git","config","user.name","BOAT EDGE UI baseline"],cwd=dst,check=True)
+          subprocess.run(["git","config","user.email","baseline@example.invalid"],cwd=dst,check=True)
+          subprocess.run(["git","add","-A"],cwd=dst,check=True)
+          subprocess.run(["git","commit","-qm","V240 read-only UI baseline"],cwd=dst,check=True)
+          print("V240_ISOLATED_UI_ONLY_FILES",len(paths))
+          PY
+
+      - name: Codex implements exactly one preapproved UI task
+        if: steps.gate.outputs.can_run == 'true'
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          working-directory: ${{ runner.temp }}/v240-ui
+          permission-profile: ':workspace'
+          safety-strategy: drop-sudo
+          prompt: |
+            Work only in this isolated git repository containing existing UI and one backlog file.
+            Do not use the network, inspect sibling paths, read data results/payouts,
+            or attempt to interact with any formal Fresh prediction source.
+            Read BOAT_EDGE_AUTODEV_TASKS.md. Perform ONLY the FIRST unchecked Axx task.
+            Keep all other tasks and text byte identical, then change that task's
+            "- [ ]" to "- [x]" only if the task was implemented.
+            Modify 1 to 4 EXISTING tracked UI HTML/CSS/JS files. Keep fewer than
+            300 changed lines total including the task checkbox. Make a minimal,
+            accessible, iPhone Safari-compatible UI improvement. Do not add files,
+            dependencies, external scripts, remote tracking, service workers,
+            synthetic data, fabricated odds, or missing-data backfills.
+            Preserve all selection state and existing prediction, betting, stakes,
+            performance, odds and scratch data logic. Never invent current values.
+            Do not change code outside this UI sandbox. Do not run git commit.
+            If the task cannot be done with verified minimal UI-only edits,
+            leave every file unchanged and explain why.
+
+      - name: Copy back only existing UI assets; fail on unsafe agent output
+        if: steps.gate.outputs.can_run == 'true'
+        shell: bash
+        env:
+          UI_WORK: ${{ runner.temp }}/v240-ui
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,shutil,subprocess
+          from pathlib import Path
+          from scripts.boat_edge_v240_guard import QUEUE,ALLOWED_PAGES,permitted_ui
+          work=Path(os.environ["UI_WORK"])
+          home=Path.cwd()
+          statuses=subprocess.check_output(["git","status","--porcelain","--untracked-files=all"],cwd=work,text=True).splitlines()
+          assert not any(not s.startswith(" M ") for s in statuses), "V240_UNSAFE_AGENT_STATUS"
+          paths=[QUEUE]+sorted(x for x in ALLOWED_PAGES if (home/x).is_file())
+          paths+=sorted(str(x) for x in (home/"assets").glob("*") if x.is_file() and permitted_ui(str(x)))
+          for name in paths:
+              output=work/name
+              original=home/name
+              assert output.is_file() and not output.is_symlink(), "V240_UNSAFE_AGENT_FILE: "+name
+              assert output.stat().st_size <= 1000000, "V240_FILE_TOO_LARGE: "+name
+              if output.read_bytes()!=original.read_bytes():
+                  shutil.copyfile(output,original)
+          print("V240_AGENT_UI_ASSETS_COPIED_FOR_INDEPENDENT_CHECKS")
+          PY
+
+      - name: Reject unsafe changes and run independent syntax plus unit tests
+        if: steps.gate.outputs.can_run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v240_guard.py --verify
+          while IFS= read -r file; do
+            case "$file" in
+              *.js) node --check "$file";;
+            esac
+          done < <(git diff --name-only)
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v237_health.py' -q
+          git diff --check
+          echo "V240_INDEPENDENT_GUARDS_AND_TESTS_PASS"
+
+      - name: Publish gated UI-only result to main with conflict-safe retries
+        if: steps.gate.outputs.can_run == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "v240-approved-ui-${{ github.run_id }}"
+          git add -- BOAT_EDGE_AUTODEV_TASKS.md
+          git diff --name-only | while IFS= read -r name; do
+            [ -z "$name" ] || git add -- "$name"
+          done
+          git diff --cached --quiet && { echo "V240_NO_VERIFIED_EDIT"; exit 0; }
+          git commit -m 'feat(v240): guarded unattended site UI improvement'
+          gh auth setup-git
+          for attempt in 1 2 3; do
+            git fetch --no-tags origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo "V240_ABORT_SOURCE_MOVED_CONFLICT"
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo "V240_UI_ONLY_SOURCE_PUBLISHED" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "V240_PUBLISH_REJECTED_WITHOUT_FORCE_PUSH"
+          exit 1
