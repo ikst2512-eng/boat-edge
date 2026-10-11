@@ -1,0 +1,21 @@
+/* V241 navigational-only enhancement. Existing race odds, selection, models, and scratch UI untouched. */
+.be241-brand-home{font-size:19px;font-weight:950;letter-spacing:-.035em;color:#103d86;text-decoration:none;white-space:nowrap}.be241-brand-home:focus-visible,.be241-header-results:focus-visible,.be241-shortcuts a:focus-visible{outline:3px solid #3280ef;outline-offset:2px}
+.be241-header-results{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:#e4f8ed;color:#086947;border:1px solid #c3e6cf;border-radius:10px;min-height:38px;padding:7px 11px;font-size:12px;font-weight:900;text-decoration:none}
+.be241-home-shortcuts{margin:12px 14px 4px;background:#fff;border:1px solid #d9e7f4;border-radius:14px;padding:15px;box-shadow:0 6px 18px #17447c0a}
+.be241-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.be241-shortcuts a{text-decoration:none;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;padding:12px 5px;min-height:68px;border-radius:11px;background:#edf4ff;color:#174777;font-weight:900;font-size:12px;border:1px solid #d6e6fa}
+.be241-shortcuts a.b241-result-shortcut{background:#e6f8ee;color:#0d7251;border-color:#c0e7d2}
+.be241-shortcuts a span{font-size:22px;line-height:1}
+.be241-home-results{margin-top:13px;padding-top:12px;border-top:1px solid #e9eef5}
+.be241-home-result-title{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:950;color:#153a64;font-size:14px}
+.be241-home-result-title a{color:#246cdb;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.be241-home-result-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:10px}
+.be241-home-result-item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px;border-radius:10px;background:#f4f8fe;border:1px solid #e3eaf6;min-width:0}
+.be241-home-result-item strong{font-size:12px;font-weight:900;color:#173b69}
+.be241-home-result-item small{display:block;font-size:11px;color:#6680a0;margin-top:3px}
+.be241-home-result-item .hit{font-size:12px;color:#0a7a56;font-weight:950;white-space:nowrap}.be241-home-result-item .miss{font-size:11px;color:#66809a;font-weight:850;white-space:nowrap}
+.be241-home-results-status{font-size:11px;color:#687e97;margin-top:8px}
+.bottomnav a.be241-nav-link{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;flex:1;color:#2868bf;font-weight:850;text-decoration:none;font-size:11px;padding:8px 3px;border-radius:10px}
+.bottomnav a.be241-nav-link .navicon{font-size:19px;font-weight:800}
+@media(max-width:740px){.topbar{padding:9px 11px;gap:6px}.topbar .brand{gap:6px}.topbar .brand .mark{width:30px;height:30px;flex-shrink:0}.be241-brand-home{font-size:17px}.topbar .header-actions{gap:5px}.be241-header-results{padding:7px 8px;font-size:11px;min-height:36px}.topbar #runCollectorBtn{display:none}.topbar .live-pill{display:none}.topbar #refreshTopBtn{font-size:11px;padding:7px 9px;min-height:36px;box-shadow:none}.be241-home-shortcuts{padding:11px;margin:10px 11px 0}.be241-shortcuts{gap:5px}.be241-shortcuts a{font-size:11px;min-height:61px;padding:8px 1px}.be241-shortcuts a span{font-size:20px}.be241-home-result-list{grid-template-columns:1fr;gap:6px}.be241-home-result-item{padding:9px 11px}.be241-injected #homeView .hero-main{display:none}.be241-injected #homeView .hero-grid{grid-template-columns:1fr}.be241-injected #homeView .hero{padding-top:9px}.be241-injected #homeView .hero-side{padding:12px}.be241-injected #homeView .hero-stat{padding:9px}.be241-injected #homeView .hero-stat .value{font-size:18px}.be241-injected #homeView .hero-statgrid{gap:6px}}
+@media(max-width:370px){.be241-brand-home{font-size:15px}.topbar #refreshTopBtn{font-size:10px;padding:7px}.be241-header-results{font-size:10px;padding:7px}.be241-shortcuts a{font-size:10px}}

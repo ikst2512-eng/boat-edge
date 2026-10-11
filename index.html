@@ -1072,17 +1072,19 @@ body{background:
 <link rel="stylesheet" href="./assets/boat_edge_v208_latest_clean.css?v=208">
 <link rel="stylesheet" href="./assets/boat_edge_v211_paper.css?v=211">
 <link rel="stylesheet" href="./assets/boat_edge_v220_site_ops.css?v=220">
+<link rel="stylesheet" href="./assets/boat_edge_v241_home.css?v=241">
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <div class="brand">
       <div class="mark"></div>
-      <div class="brandtext">BOAT EDGE <small>v30</small></div><a class="be209-header-link" href="./ai-simulation.html" aria-label="AI自走シミュレーション"><span>AI自走</span><span>シミュレーション</span></a>
+      <a class="be241-brand-home" href="./index.html" aria-label="BOAT EDGE ホームへ">BOAT EDGE</a><a class="be209-header-link" href="./ai-simulation.html" aria-label="AI自走シミュレーション"><span>AI自走</span><span>シミュレーション</span></a>
     </div>
     <div class="header-actions">
       <div class="live-pill" id="live"><span class="live-dot"></span><span>定期収集</span></div>
-      <button class="primary-btn" id="refreshTopBtn">今すぐ更新</button>
+      <a class="be241-header-results" href="./results.html">✓ 結果・払戻</a>
+       <button class="primary-btn" id="refreshTopBtn">今すぐ更新</button>
       <button class="ghost-btn" id="runCollectorBtn">収集を開始</button>
     </div>
   </header>
@@ -1097,6 +1099,17 @@ body{background:
   </div>
 
 
+  <section class="be241-home-shortcuts" aria-label="よく使う画面">
+  <nav class="be241-shortcuts" aria-label="主要メニュー">
+    <a href="./index.html"><span>⌂</span>レース</a>
+    <a href="./results.html" class="b241-result-shortcut"><span>✓</span>結果・払戻</a>
+    <a href="./ai-simulation.html"><span>◎</span>AI自走</a>
+    <a href="./second-coverage.html"><span>≋</span>精度検証</a>
+  </nav>
+  <div class="be241-home-results"><div class="be241-home-result-title">検証済みの的中結果 <a href="./results.html">一覧を見る ›</a></div>
+  <div class="be241-home-result-list" id="be241HomeResults"><span class="be241-home-results-status">結果照合中…</span></div>
+  <div class="be241-home-results-status" id="be241HomeResultsStatus">締切前固定の予想だけを表示します。</div></div>
+</section>
   <main id="homeView" class="view active">
     <section class="hero">
       <div class="hero-grid">
@@ -1362,7 +1375,7 @@ body{background:
     <button class="on" data-view="homeView"><span class="navicon">⌂</span>ホーム</button>
     <button data-view="raceView"><span class="navicon">≋</span>レース</button>
     <button data-view="dataView"><span class="navicon">▣</span>データ状況</button>
-    <button data-view="auditView"><span class="navicon">✓</span>監査</button>
+    <a href="./results.html" class="be241-nav-link"><span class="navicon">✓</span>結果</a>
   </nav>
 </div>
 
@@ -3238,5 +3251,6 @@ startPassiveRefresh();
 <link rel="stylesheet" href="./assets/boat_edge_v223_source_visibility.css?v=223&amp;rev=244">
 <script defer src="./assets/boat_edge_v223_source_visibility.js?v=223&amp;rev=244"></script>
 <script defer src="./assets/boat_edge_v220_site_ops.js?v=220"></script>
+<script defer src="./assets/boat_edge_v241_home.js?v=241"></script>
 </body>
 </html>
