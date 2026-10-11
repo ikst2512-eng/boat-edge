@@ -1,0 +1,55 @@
+name: BOAT EDGE V247 - Evidence Only UI Regression
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v247-flow-sixboat-readability-20261012
+    paths:
+      - 'assets/boat_edge_v203_readable.js'
+      - 'assets/boat_edge_v203_readable.css'
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'results.html'
+      - 'assets/boat_edge_v241_results.js'
+      - 'assets/boat_edge_v241_results.css'
+      - '.github/workflows/v241.yml'
+      - 'tests/test_boat_edge_v247_ui.cjs'
+      - '.github/workflows/v247-ui-regression.yml'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verified-only-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run V247 and prior exact UI safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v203_readable.js
+          node --check assets/boat_edge_v204_prediction.js
+          node --check assets/boat_edge_v241_results.js
+          node tests/test_boat_edge_v247_ui.cjs
+          node tests/test_boat_edge_v244_site.cjs
+          node tests/test_boat_edge_v223_source.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v243_mobile.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          d=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=d.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('V247_FORMAL_FRESH_REMAINS_LOCKED')
+          PY
+          git diff --check
+          echo V247_SOURCE_VERIFIED_UI_ALL_TESTS_PASS
