@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light"><title>的中率改善の未見比較 | BOAT EDGE</title>
+<style>
+:root{--bg:#f4f7fb;--text:#17253b;--sub:#60728a;--stroke:#dbe4ee;--blue:#175bdd}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;font-size:15px;line-height:1.5}header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--stroke);z-index:4}header .inner{max-width:1080px;margin:auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}header a{font-weight:800;color:#113c86;text-decoration:none}header small{display:block;font-size:11px;color:var(--sub);font-weight:500}nav{margin-left:auto;display:flex;align-items:center;gap:12px}nav a{font-size:13px;font-weight:600}button{border:1px solid #d4e0ed;border-radius:10px;padding:9px 13px;background:#fff;font-size:13px;font-weight:700;color:#1850ac;cursor:pointer}main{max-width:1080px;margin:20px auto;padding:0 16px 52px}.eyebrow{color:#36568c;font-size:12px;font-weight:700;letter-spacing:.06em}.lead{font-size:14px;color:var(--sub);margin-top:4px}.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}.tile,.panel{border:1px solid var(--stroke);background:white;border-radius:16px;padding:17px;box-shadow:0 2px 9px #17458007}.tile span,.stat span{color:var(--sub);font-size:12px;display:block}.tile strong{display:block;font-size:25px;line-height:1.3;margin-top:7px;font-variant-numeric:tabular-nums}.panel{margin:12px 0}h1{margin:6px 0;font-size:24px;line-height:1.3}h2{margin:0 0 8px;font-size:18px}p{margin:7px 0}.desc{color:var(--sub);font-size:13px}.compare{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid #ecf0f5;padding:13px 0}.compare:first-of-type{border:0}.compare b{font-size:14px}.compare em{color:#2e63b0;font-style:normal;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}.compare small{font-size:11px;color:var(--sub);display:block}.notice{font-size:12px;color:var(--sub);padding:8px 0}.empty{padding:20px 0;color:var(--sub);font-size:14px}.recent{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-top:1px solid #edf1f7;padding:10px 0;font-size:12px}.chip{border:1px solid #e1e7f0;background:#f7f9fc;border-radius:999px;padding:4px 8px;color:#426181;font-size:11px;font-weight:700}.k{font-weight:800;font-variant-numeric:tabular-nums}.status{color:#61738b;font-size:12px}footer{font-size:12px;color:var(--sub);margin-top:16px}@media(min-width:700px){.row{grid-template-columns:repeat(4,minmax(0,1fr))}h1{font-size:29px}.panel{padding:22px}}
+</style></head><body>
+<header><div class="inner"><a href="./">BOAT EDGE<small>的中率改善・未見比較</small></a><nav><a href="./accuracy.html">実測精度</a><a href="./autopilot.html">自走管理</a><button id="reload">↻ 更新</button></nav></div></header>
+<main><div class="eyebrow">SITE-ONLY / FORWARD SHADOW TEST</div><h1>的中率を上げるための比較検証</h1><p class="lead">配当倍率ではなく、展開を読み切れたかを比較。現行10点と同じ10点の候補を、締切前に固定して検証する。</p>
+<section class="row"><div class="tile"><span>未見で採点済み</span><strong id="total">—</strong></div><div class="tile"><span>現行10点的中</span><strong id="base">—</strong></div><div class="tile"><span>別展開10点的中</span><strong id="alt">—</strong></div><div class="tile"><span>前日・翌日へ持ち越し可能</span><strong id="auto">自走</strong></div></section>
+<section class="panel"><h2>買い目構成別の比較</h2><div id="compare" class="empty">データを読み込み中...</div><div class="notice">「10点」と「15点」の的中率は点数が違うので単純に優劣判定しない。比較は参考診断であり、現行モデルへの自動採用はしない。</div></section>
+<section class="panel"><h2>確定結果と照合したレース</h2><div id="recent" class="empty">締切前に固定した結果だけを表示する。</div></section>
+<section class="panel"><h2>判定方針</h2><p class="desc">現行10点を基準に、上位7点＋別展開3点を同じ10点で比較。15点カバーは買い目増加時の参考として別枠で計測する。公式結果が未確定、締切前Gitコミットを確認できない、元ファイルSHAが変わったレースは採点しない。</p><p class="desc">正式Freshと別管理。結果が良く見えても、未見レースと複数日の再現性が足りるまではモデル・購入判断を変えない。</p></section>
+<footer id="updated">観測値がまだなければ「検証待ち」と表示する。</footer></main>
+<script>
+const $=id=>document.getElementById(id);
+function txt(id,s){$(id).textContent=s;}
+async function get(path){let r=await fetch('./'+path+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();}
+const names={hit10:'現行・的中重視10点',balance10:'バランス10点',scenario7plus3:'上位7＋別展開3点（10点）',coverage15:'現行10＋別展開5点（最大15点）'};
+async function refresh(){try{
+ const d=await get('data/site_autopilot/v236_score_current.json');
+ txt('total',(d.scored_total||0)+'R');
+ txt('base',(d.comparisons?.hit10?.hit??0)+'R');
+ txt('alt',(d.comparisons?.scenario7plus3?.hit??0)+'R');
+ const list=$('compare');list.replaceChildren();
+ for(const [k,title] of Object.entries(names)){
+  const m=d.comparisons?.[k]||{};const row=document.createElement('div');row.className='compare';
+  const left=document.createElement('div');const b=document.createElement('b');b.textContent=title;left.append(b);
+  const small=document.createElement('small');small.textContent=`${m.hit??0}/${m.races??0}R 的中・平均${m.avg_points??'—'}点`;left.append(small);row.append(left);
+  const right=document.createElement('em');right.textContent=m.hit_rate_percent==null?'検証待ち':m.hit_rate_percent.toFixed(1)+'%';row.append(right);list.append(row);
+ }
+ const recent=$('recent');recent.replaceChildren();const items=[...(d.examples||[])].reverse().slice(0,30);
+ if(!items.length){recent.textContent='確定結果と締切前証跡の照合を待っている。';}
+ for(const it of items){const row=document.createElement('div');row.className='recent';const id=document.createElement('span');id.className='k';id.textContent=it.race_key;row.append(id);const win=document.createElement('span');win.textContent='結果 '+it.winning;row.append(win);
+ for(const k of ['hit10','scenario7plus3']){const ch=document.createElement('span');ch.className='chip';ch.textContent=(k==='hit10'?'現行':'別展開')+(it.outcomes?.[k]?' 的中':' 不的中');row.append(ch);}recent.append(row);}
+ txt('updated',`SITE研究・未見比較 / ${d.status||'研究専用'} / 本番採用なし・正式Fresh別管理`);
+ }catch(e){txt('compare','未見比較の初回結果を待っている。');txt('recent','確定済みの検証データがまだない。');txt('total','0R');txt('base','—');txt('alt','—');txt('updated','未見検証の開始待ち・本番モデル変更なし');}}
+$('reload').addEventListener('click',refresh);refresh();
+</script></body></html>
