@@ -44,7 +44,13 @@ jobs:
                   raise SystemExit('V241_PACKAGED_BYTES_INVALID_'+name)
               if dest.exists():
                   if dest.read_bytes()!=blob:
-                      raise SystemExit('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'+name)
+                      # Public result UI is maintained independently. Preserve HTML/JS/CSS
+                      # while keeping source-hashed scorer and its tests fail-closed.
+                      if name in ('index.html','results.html','assets/boat_edge_v241_results.js',
+                                  'assets/boat_edge_v241_results.css'):
+                          print('V241_PRESERVE_INDEPENDENTLY_UPDATED_PUBLIC_UI',name)
+                      else:
+                          raise SystemExit('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'+name)
               else:
                   dest.parent.mkdir(parents=True,exist_ok=True)
                   dest.write_bytes(blob)
