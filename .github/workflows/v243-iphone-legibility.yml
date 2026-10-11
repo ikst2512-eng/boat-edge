@@ -1,0 +1,34 @@
+name: BOAT EDGE V243 - Mobile Readability No Model Change
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v243-iphone-comparison-legibility-20261012
+    paths:
+      - 'assets/boat_edge_v203_readable.css'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'tests/test_boat_edge_v243_mobile.py'
+      - '.github/workflows/v243-iphone-legibility.yml'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-site-readability-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate mobile style layers, prediction invariants and Fresh lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v243_mobile.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          git diff --check
+          echo V243_MOBILE_READABILITY_CSS_ONLY_PASS
