@@ -20,6 +20,16 @@ function source(e,required,r,now,cutoffMinutes=20){
  if(!required)return ['unknown','内容の照合不足'];
  return ['ok',jst(e.fetched_at)+'取得'];
 }
+/* A06: independent third-party collection must be explicitly logged, never inferred from CSV. */
+function providerEvidence(record,hostPattern,r,now){
+ if(record?.status!=='ok')return ['unknown','未取得（独立照合なし）'];
+ const url=String(record.source||''),hash=String(record.sha256||''),at=validTime(record.fetched_at),end=due(r);
+ if(!hostPattern.test(url)||!/^[a-f0-9]{64}$/i.test(hash)||!Number.isFinite(at)||
+    !Number.isFinite(end)||at>end||at>now+30000)
+   return ['unknown','取得証跡不一致・未確認'];
+ if(now-at>25*60000)return ['stale','以前の照合 '+jst(record.fetched_at)+'（現在値ではない）'];
+ return ['ok','独立取得 '+jst(record.fetched_at)+'（数値一致は別確認）'];
+}
 function inspect(r,scratch,odds,now=Date.now()){
  const key=String(r?.race_key||''),end=due(r),pre=KEY.test(key)&&r?.meta?.phase==='PRE_RESULT'&&
   r.meta.results_seen===false&&r.meta.unlock===false&&r.meta.scoring===false;
@@ -58,11 +68,15 @@ function inspect(r,scratch,odds,now=Date.now()){
     status==='stale'?['stale','取得値が古い '+jst(odds.fetched_at)]:['unknown','照合不一致・表示不可'];
  }
  rows.push(['3連単オッズ',...odd]);
+ rows.push(['BOATERSオリ展',...providerEvidence(audit.boaters_original_exhibition,
+   /^https:\/\/(?:www\.)?boaters-boatrace\.com\//i,r,now)]);
+ rows.push(['競艇日和オリ展',...providerEvidence(audit.keiteibiyori_original_exhibition,
+   /^https:\/\/(?:www\.)?kyoteibiyori\.com\//i,r,now)]);
  const level=sc[0]==='stop'?'stop':rows.some(x=>x[1]==='unknown'||x[1]==='stale'||x[1]==='wait')?'wait':'limited';
  const ready=rows.filter(x=>x[1]==='ok').length;
  const remaining=Math.ceil((end-now)/60000);
  return {key,phase:'PRE_RESULT',level,rows,summary:sc[0]==='stop'?'欠場・取消疑い：予想に使わない':
-    `締切${remaining}分前／取得確認 ${ready}/6項目（取消・出走確定は別）`};
+    `締切${remaining}分前／取得確認 ${ready}/${rows.length}項目（取消・出走確定は別）`};
 }
 /* Status labels are facts from the PRE_RESULT inspector, not certified live values. */
 function sourceFlags(result){
@@ -108,6 +122,6 @@ async function refresh(){
 }
 function start(){refresh();setInterval(refresh,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh();});
  document.querySelector('#refreshTopBtn')?.addEventListener('click',()=>setTimeout(refresh,1000));}
-window.BoatEdgeV223Source={inspect,refresh,sourceFlags};
+window.BoatEdgeV223Source={inspect,refresh,sourceFlags,providerEvidence};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
