@@ -3,36 +3,36 @@
   "scope": "SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",
   "formal_current_scoring": false,
   "production_prediction_weights_changed": false,
-  "predictions_evaluated": 0,
+  "predictions_evaluated": 1,
   "mode_policy": "BALANCE10_WAVE12_15_18_V133_FIXED",
   "modes": {
     "hit": {
       "label": "的中重視",
-      "evaluated": 0,
-      "hits": 0,
+      "evaluated": 1,
+      "hits": 1,
       "misses": 0,
-      "hit_rate_percent": null
+      "hit_rate_percent": 100.0
     },
     "balance": {
       "label": "バランス",
-      "evaluated": 0,
-      "hits": 0,
+      "evaluated": 1,
+      "hits": 1,
       "misses": 0,
-      "hit_rate_percent": null
+      "hit_rate_percent": 100.0
     },
     "hole": {
       "label": "波乱展開",
-      "evaluated": 0,
-      "hits": 0,
+      "evaluated": 1,
+      "hits": 1,
       "misses": 0,
-      "hit_rate_percent": null
+      "hit_rate_percent": 100.0
     },
     "narrow": {
       "label": "激絞り",
-      "evaluated": 0,
+      "evaluated": 1,
       "hits": 0,
-      "misses": 0,
-      "hit_rate_percent": null
+      "misses": 1,
+      "hit_rate_percent": 0.0
     }
   },
   "by_winning_head": {
@@ -46,11 +46,11 @@
       }
     },
     "2-6": {
-      "evaluated": 0,
+      "evaluated": 1,
       "hits": {
-        "hit": 0,
-        "balance": 0,
-        "hole": 0,
+        "hit": 1,
+        "balance": 1,
+        "hole": 1,
         "narrow": 0
       }
     }
@@ -60,7 +60,9 @@
   },
   "method": "Only V133 prospective FINAL_15M snapshots with matching V125 audit and confirmed official result; no race/result endpoint consulted, no historical prediction backfill.",
   "rank_120_available": false,
-  "latest_settlement": null,
-  "example_race_keys": [],
+  "latest_settlement": "2026-10-11T00:04:00.296682+00:00",
+  "example_race_keys": [
+    "20261011-23-01"
+  ],
   "note": "Descriptive observed hit rates, not proven predictive improvement. Site reference predictions are separate from formal Fresh validation."
 }
