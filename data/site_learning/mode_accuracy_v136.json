@@ -3,54 +3,54 @@
   "scope": "SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",
   "formal_current_scoring": false,
   "production_prediction_weights_changed": false,
-  "predictions_evaluated": 6,
+  "predictions_evaluated": 10,
   "mode_policy": "BALANCE10_WAVE12_15_18_V133_FIXED",
   "modes": {
     "hit": {
       "label": "的中重視",
-      "evaluated": 6,
-      "hits": 3,
-      "misses": 3,
+      "evaluated": 10,
+      "hits": 5,
+      "misses": 5,
       "hit_rate_percent": 50.0
     },
     "balance": {
       "label": "バランス",
-      "evaluated": 6,
-      "hits": 3,
-      "misses": 3,
+      "evaluated": 10,
+      "hits": 5,
+      "misses": 5,
       "hit_rate_percent": 50.0
     },
     "hole": {
       "label": "波乱展開",
-      "evaluated": 6,
-      "hits": 2,
-      "misses": 4,
-      "hit_rate_percent": 33.3
+      "evaluated": 10,
+      "hits": 3,
+      "misses": 7,
+      "hit_rate_percent": 30.0
     },
     "narrow": {
       "label": "激絞り",
-      "evaluated": 6,
+      "evaluated": 10,
       "hits": 1,
-      "misses": 5,
-      "hit_rate_percent": 16.7
+      "misses": 9,
+      "hit_rate_percent": 10.0
     }
   },
   "by_winning_head": {
     "1": {
-      "evaluated": 2,
+      "evaluated": 3,
       "hits": {
-        "hit": 0,
-        "balance": 0,
+        "hit": 1,
+        "balance": 1,
         "hole": 0,
         "narrow": 0
       }
     },
     "2-6": {
-      "evaluated": 4,
+      "evaluated": 7,
       "hits": {
-        "hit": 3,
-        "balance": 3,
-        "hole": 2,
+        "hit": 4,
+        "balance": 4,
+        "hole": 3,
         "narrow": 1
       }
     }
@@ -60,14 +60,18 @@
   },
   "method": "Only V133 prospective FINAL_15M snapshots with matching V125 audit and confirmed official result; no race/result endpoint consulted, no historical prediction backfill.",
   "rank_120_available": false,
-  "latest_settlement": "2026-10-11T03:37:09.243055+00:00",
+  "latest_settlement": "2026-10-11T04:40:29.643002+00:00",
   "example_race_keys": [
+    "20261011-03-05",
     "20261011-06-03",
     "20261011-08-05",
+    "20261011-09-06",
     "20261011-18-08",
     "20261011-22-03",
+    "20261011-22-05",
     "20261011-23-01",
-    "20261011-23-06"
+    "20261011-23-06",
+    "20261011-23-10"
   ],
   "note": "Descriptive observed hit rates, not proven predictive improvement. Site reference predictions are separate from formal Fresh validation."
 }
