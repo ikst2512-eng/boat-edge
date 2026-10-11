@@ -1,0 +1,175 @@
+{
+  "checked_at": "2026-10-11T05:14:00.752625+00:00",
+  "day_jst": "20261011",
+  "follow_up_order": [
+    "直前公式データと欠場照合",
+    "締切前スナップショットの保存とSHA監査",
+    "A頭・Top3/5/10・10〜20倍帯の未見比較",
+    "証明済みモデルだけ本番候補",
+    "Pagesと画面の回帰確認"
+  ],
+  "formal": {
+    "auto_unlock": false,
+    "first100_frozen": 0,
+    "guard_closed": true,
+    "results_read_by_v227": false,
+    "scoring_by_v227": false
+  },
+  "not_accuracy_or_return_guarantee": true,
+  "paper": {
+    "balance_yen": 50000,
+    "buy_races": 0,
+    "calibration_status": "未見確率校正待ち（条件成立までは仮想購入しない）",
+    "daily_budget_yen": 50000,
+    "mode": "PAPER_ONLY",
+    "real_purchases_enabled": false,
+    "spent_yen": 0
+  },
+  "prediction": {
+    "evidence_claim": "NOT_PROVEN",
+    "model_auto_promotion": false,
+    "production_improvement_proven": false,
+    "site_v185_10_20x_settled_races": 10,
+    "site_v185_candidate_top": {
+      "top10": {
+        "candidate_hits": 14,
+        "candidate_rate_percent": 31.11,
+        "control_hits": 14,
+        "control_rate_percent": 31.11,
+        "difference": 0,
+        "paired_gains": 0,
+        "paired_losses": 0
+      },
+      "top3": {
+        "candidate_hits": 6,
+        "candidate_rate_percent": 13.33,
+        "control_hits": 6,
+        "control_rate_percent": 13.33,
+        "difference": 0,
+        "paired_gains": 2,
+        "paired_losses": 2
+      },
+      "top5": {
+        "candidate_hits": 10,
+        "candidate_rate_percent": 22.22,
+        "control_hits": 9,
+        "control_rate_percent": 20.0,
+        "difference": 1,
+        "paired_gains": 1,
+        "paired_losses": 0
+      }
+    },
+    "site_v185_evaluated_races": 45,
+    "site_v199_10_20x_settled_races": 4,
+    "site_v199_evaluated_races": 24,
+    "site_v199_head_top": {
+      "top10": {
+        "candidate_hits": 9,
+        "candidate_rate_percent": 37.5,
+        "control_hits": 9,
+        "control_rate_percent": 37.5,
+        "difference": 0,
+        "paired_gains": 0,
+        "paired_losses": 0
+      },
+      "top3": {
+        "candidate_hits": 4,
+        "candidate_rate_percent": 16.67,
+        "control_hits": 4,
+        "control_rate_percent": 16.67,
+        "difference": 0,
+        "paired_gains": 0,
+        "paired_losses": 0
+      },
+      "top5": {
+        "candidate_hits": 6,
+        "candidate_rate_percent": 25.0,
+        "control_hits": 6,
+        "control_rate_percent": 25.0,
+        "difference": 0,
+        "paired_gains": 0,
+        "paired_losses": 0
+      }
+    },
+    "site_v199_head_top1": {}
+  },
+  "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
+  "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
+  "site": {
+    "collector_health_issues": [
+      "predeadline_incomplete"
+    ],
+    "current_window": [
+      {
+        "deadline_jst": "14:16",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "予想SHA監査未一致"
+        ],
+        "minutes_left": 2.0,
+        "race_key": "20261011-02-08",
+        "venue": "戸田"
+      },
+      {
+        "deadline_jst": "14:19",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 5.0,
+        "race_key": "20261011-23-12",
+        "venue": "唐津"
+      },
+      {
+        "deadline_jst": "14:22",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 8.0,
+        "race_key": "20261011-22-08",
+        "venue": "福岡"
+      },
+      {
+        "deadline_jst": "14:24",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 10.0,
+        "race_key": "20261011-03-08",
+        "venue": "江戸川"
+      },
+      {
+        "deadline_jst": "14:29",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 15.0,
+        "race_key": "20261011-18-12",
+        "venue": "徳山"
+      }
+    ],
+    "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
+    "readiness_observed_races": 55,
+    "readiness_reasons": {
+      "scratch_source_stale": 1,
+      "snapshot_audit_sha_failed": 4,
+      "snapshot_missing": 50
+    },
+    "readiness_shadow_verified_races": 0,
+    "schedule_today": true,
+    "snapshot_files_today": 14,
+    "status": "NEEDS_ATTENTION",
+    "v226_source_guard_active": true
+  }
+}
