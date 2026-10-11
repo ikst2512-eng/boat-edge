@@ -48,15 +48,23 @@ async function refresh(){
   if(!proof.verified)throw Error('unverified paper ledger');
   const m=d.money,actualDay=m.day;
   const spent=m.today_spent_yen,remaining=m.today_remaining_yen;
-  text('#simDay',dayLabel(actualDay));text('#simMode','実際の購入なし');text('#simUpdated',fmt(d.updated_at)+' 更新');
-  text('#simBalance',(remaining||0).toLocaleString('ja-JP')+'円');
-  text('#simSpent',yen(spent));text('#simTodayBuys',(m.today_paper_races??0)+'R');
+  text('#simDay',dayLabel(actualDay));
+  text('#simMode',proof.current?'実際の購入なし':'過去の保存台帳（本日未確認）');
+  text('#simUpdated',fmt(d.updated_at)+' 更新');
+  text('#simBalance',proof.current?remaining.toLocaleString('ja-JP')+'円':'―');
+  text('#simSpent',proof.current?yen(spent):'―');
+  text('#simTodayBuys',proof.current?m.today_paper_races+'R':'―');
   const profit=m.settled_stake_yen?((m.profit_yen>0?'+':'')+yen(m.profit_yen)):'未精算';text('#simProfit',profit);
   q('#simProfit')?.classList.toggle('negative',m.profit_yen<0);
   text('#simRoi',m.roi_percent==null?'未精算':Number(m.roi_percent).toFixed(1)+'%');text('#simPending',yen(m.pending_yen));
-  const active=d.strategy_status==='PAPER_ACTIVE';text('#simState',active?'仮想自走中':'精度検証待ち');q('#simState')?.classList.toggle('pill-active',active);q('#simState')?.classList.toggle('pill-wait',!active);
-  text('#simGate',d.calibration_status||'未見検証の取得待ち。条件未達のレースは見送り。');
-  const scan=d.scan||{};text('#simScanAt',fmt(scan.as_of)+' 時点');text('#simDecision',`締切前の審査 ${scan.in_window??0}R ／ 条件適合 ${scan.eligible??0}R ／ 今回の仮想購入 ${scan.paper_purchases??0}R`);
+  const active=proof.current&&d.strategy_status==='PAPER_ACTIVE';
+  text('#simState',!proof.current?'本日台帳未確認':active?'仮想自走中':'精度検証待ち');q('#simState')?.classList.toggle('pill-active',active);q('#simState')?.classList.toggle('pill-wait',!active);
+  text('#simGate',!proof.current?'この保存記録は別日のものです。本日の仮想購入状況は未確認。':
+    d.calibration_status||'未見検証の取得待ち。条件未達のレースは見送り。');
+  const scan=d.scan||{};text('#simScanAt',fmt(scan.as_of)+' 時点');
+  text('#simDecision',proof.current?
+    `締切前の審査 ${scan.in_window??0}R ／ 条件適合 ${scan.eligible??0}R ／ 今回の仮想購入 ${scan.paper_purchases??0}R`:
+    '保存日は'+actualDay+'。本日の直前審査・仮想購入の状態は未確認。');
   const rows=q('#simReviewRows');rows.replaceChildren();
   const review=scan.reviews||[];
   if(!review.length){const tr=el('tr');const td=el('td','empty','直近の締切前レースを監視中。条件成立まで購入しません。');td.colSpan=4;tr.append(td);rows.append(tr)}

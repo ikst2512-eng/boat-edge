@@ -1,0 +1,32 @@
+name: BOAT EDGE V245 - Paper Ledger Day Correctness
+
+on:
+  push:
+    branches: [main, fix/v245-paper-ledger-stale-day-20261012]
+    paths:
+      - 'assets/boat_edge_v211_paper.js'
+      - 'tests/test_boat_edge_v245_paper_day.py'
+      - '.github/workflows/v245-paper-day-regression.yml'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paper-ledger-day-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate saved-amount and stale-day correctness
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v211_paper.js
+          node tests/test_boat_edge_v244_site.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v245_paper_day.py' -v
+          git diff --check
+          echo V245_PAPER_LEDGER_STALE_DAY_GUARD_PASS
