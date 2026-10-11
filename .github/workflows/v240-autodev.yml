@@ -81,6 +81,7 @@ jobs:
         shell: bash
         env:
           UI_WORK: ${{ runner.temp }}/v240-ui
+          PYTHONDONTWRITEBYTECODE: '1'
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -137,6 +138,7 @@ jobs:
         shell: bash
         env:
           UI_WORK: ${{ runner.temp }}/v240-ui
+          PYTHONDONTWRITEBYTECODE: '1'
         run: |
           set -euo pipefail
           python3 - <<'PY'
