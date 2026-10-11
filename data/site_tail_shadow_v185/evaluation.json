@@ -1,5 +1,5 @@
 {
-  "awaiting_result": 1,
+  "awaiting_result": 0,
   "by_band": {
     "10-20": {
       "candidate_top15_hits": 7,
@@ -68,48 +68,48 @@
       "races": 3
     },
     ">50": {
-      "candidate_top15_hits": 2,
-      "candidate_top20_hits": 3,
+      "candidate_top15_hits": 3,
+      "candidate_top20_hits": 4,
       "hit": {
         "baseline": {
-          "10": 1,
+          "10": 2,
           "3": 0,
           "5": 0
         },
         "candidate": {
-          "10": 1,
+          "10": 2,
           "3": 0,
           "5": 0
         },
         "v180": {
-          "10": 1,
+          "10": 2,
           "3": 0,
           "5": 0
         }
       },
-      "races": 19
+      "races": 20
     },
     "all": {
-      "candidate_top15_hits": 21,
-      "candidate_top20_hits": 22,
+      "candidate_top15_hits": 22,
+      "candidate_top20_hits": 23,
       "hit": {
         "baseline": {
-          "10": 15,
+          "10": 16,
           "3": 7,
           "5": 10
         },
         "candidate": {
-          "10": 15,
+          "10": 16,
           "3": 6,
           "5": 11
         },
         "v180": {
-          "10": 15,
+          "10": 16,
           "3": 4,
           "5": 11
         }
       },
-      "races": 52
+      "races": 53
     },
     "unknown": {
       "candidate_top15_hits": 0,
@@ -1383,6 +1383,33 @@
       "winning_combo": "1-4-6"
     },
     {
+      "band": ">50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "e5a5d4c86b1583493ab72f6bfc8ad4aafbcd69d0",
+      "commit_time": "2026-10-11T06:31:57+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 7300,
+      "race_key": "20261011-16-10",
+      "winning_combo": "5-1-2"
+    },
+    {
       "band": "20-50",
       "candidate_top15_hit": false,
       "candidate_top20_hit": false,
@@ -1547,6 +1574,6 @@
   ],
   "schema_version": "boat-edge-v185-post-settlement-independent-site-shadow-v1",
   "scope": "SITE_REFERENCE_RESEARCH_NOT_FORMAL_FRESH",
-  "settled_verified": 52,
+  "settled_verified": 53,
   "status": "RESEARCH_ONLY"
 }
