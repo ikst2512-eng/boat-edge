@@ -8,7 +8,7 @@
     "event": "第17回虹の松原カップ",
     "race_no": 6,
     "deadline": "11:05",
-    "updated_at": "2026-10-12T07:29:31+09:00",
+    "updated_at": "2026-10-12T07:48:09+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261012&jcd=23&rno=6",
-      "fetched_at": "2026-10-12T07:29:31+09:00",
-      "sha256": "f16c0e7b3fc88af33de06ac965c8831fd2d888612593080860bbf393b28cf553",
+      "fetched_at": "2026-10-12T07:48:09+09:00",
+      "sha256": "4b196802a5b1c6396269be165a55248705332491d92702c51319727fec042d50",
       "error": null
     },
     "beforeinfo": {
@@ -29,6 +29,30 @@
       "fetched_at": null,
       "sha256": null,
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -38,7 +62,7 @@
       "name": "山口 広樹",
       "class": "B1",
       "age": 30,
-      "weight_kg": 54.1,
+      "weight_kg": 53.8,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 1,
@@ -74,7 +98,7 @@
         "9"
       ],
       "early_race": null,
-      "raw_text": "1 5053 / B1 山口 広樹 福岡/福岡 30歳/54.1kg F1 L0 0.17 3.76 18.99 31.65 0.00 0.00 0.00 43 33.33 44.44 27 28.46 41.54 3 8 1 8 8 3 9"
+      "raw_text": "1 5053 / B1 山口 広樹 福岡/福岡 30歳/53.8kg F1 L0 0.17 3.76 18.99 31.65 0.00 0.00 0.00 43 33.33 44.44 27 28.46 41.54 3 8 1 8 8 3 9"
     },
     {
       "lane": 2,
@@ -82,7 +106,7 @@
       "name": "立間 充宏",
       "class": "A2",
       "age": 51,
-      "weight_kg": 55.0,
+      "weight_kg": 55.6,
       "branch": "岡山",
       "birthplace": "岡山",
       "F": 0,
@@ -117,7 +141,7 @@
         "5"
       ],
       "early_race": null,
-      "raw_text": "2 3717 / A2 立間 充宏 岡山/岡山 51歳/55.0kg F0 L0 0.18 5.63 37.21 52.33 5.43 40.00 57.14 16 29.41 41.18 17 37.01 55.12 10 2 11 6 11 5"
+      "raw_text": "2 3717 / A2 立間 充宏 岡山/岡山 51歳/55.6kg F0 L0 0.18 5.63 37.21 52.33 5.43 40.00 57.14 16 29.41 41.18 17 37.01 55.12 10 2 11 6 11 5"
     },
     {
       "lane": 3,
@@ -212,7 +236,7 @@
       "name": "古園井 綾南",
       "class": "B2",
       "age": 24,
-      "weight_kg": 49.0,
+      "weight_kg": 48.7,
       "branch": "佐賀",
       "birthplace": "福岡",
       "F": 1,
@@ -247,7 +271,7 @@
         "6"
       ],
       "early_race": null,
-      "raw_text": "5 5428 / B2 古園井 綾南 佐賀/福岡 24歳/49.0kg F1 L0 0.19 1.00 0.00 0.00 1.11 0.00 0.00 8 6.25 25.00 14 32.85 57.66 1 6 6 7 2 6"
+      "raw_text": "5 5428 / B2 古園井 綾南 佐賀/福岡 24歳/48.7kg F1 L0 0.19 1.00 0.00 0.00 1.11 0.00 0.00 8 6.25 25.00 14 32.85 57.66 1 6 6 7 2 6"
     },
     {
       "lane": 6,
@@ -298,5 +322,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

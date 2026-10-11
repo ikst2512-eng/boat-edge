@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 4,
     "deadline": "09:53",
-    "updated_at": "2026-10-12T07:29:31+09:00",
+    "updated_at": "2026-10-12T07:48:09+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,16 +19,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261012&jcd=14&rno=4",
-      "fetched_at": "2026-10-12T07:29:31+09:00",
-      "sha256": "84dd1e67e8e6452589975f6fe66d2aa6643362d4f5061031413cf17b97896546",
+      "fetched_at": "2026-10-12T07:48:09+09:00",
+      "sha256": "4b58dfbf3649bc97cef817676dcdcfc1a2e6b4508bba989f6ab957dbbe99f860",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261012&jcd=14&rno=4",
-      "fetched_at": "2026-10-12T07:29:31+09:00",
-      "sha256": "6282f19613eb6699a676f45c1c6c27afab1ac5478be32e9d291c46ec75780807",
+      "fetched_at": "2026-10-12T07:48:09+09:00",
+      "sha256": "87485e886db2e0abfad52ab1d6c2e144234908a2285cd010549a6c9661f5b01f",
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -292,12 +316,26 @@
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": null,
-      "wave_cm": null
+      "wind_speed_ms": 0.0,
+      "wave_cm": 1.0
     }
   },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

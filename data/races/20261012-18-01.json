@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 1,
     "deadline": "08:51",
-    "updated_at": "2026-10-12T07:29:31+09:00",
+    "updated_at": "2026-10-12T07:48:09+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,16 +19,40 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261012&jcd=18&rno=1",
-      "fetched_at": "2026-10-12T07:29:31+09:00",
-      "sha256": "437803c7db88fffbf1d2d64fe33fb3f2ab2e57d57a1636c693bf1b5ea02e13fe",
+      "fetched_at": "2026-10-12T07:48:09+09:00",
+      "sha256": "921f0b29e099d84d7acb5ce3db6e492119507649b9f482fca76e5a28f36e26ce",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261012&jcd=18&rno=1",
-      "fetched_at": "2026-10-12T07:29:31+09:00",
-      "sha256": "e9ff1ea5e1b43f4f52f212153e47fe5c8016d41ec8fc3cf6774717ba19935730",
+      "fetched_at": "2026-10-12T07:48:09+09:00",
+      "sha256": "4552ebe4eba27b1ceb40889f92e0681040dcebc6e217d05c0f46c7c27458868d",
       "error": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/12.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -322,5 +346,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
