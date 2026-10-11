@@ -92,7 +92,7 @@ async function refresh(){
   text('#simBalance',proof.current?remaining.toLocaleString('ja-JP')+'円':'―');
   text('#simSpent',proof.current?yen(spent):'―');
   text('#simTodayBuys',proof.current?m.today_paper_races+'R':'―');
-  const profit=m.settled_stake_yen?((m.profit_yen>0?'+':'')+yen(m.profit_yen)):'未精算';text('#simProfit',profit);
+  const profit=evidenceStates.kind!=='unknown'&&m.settled_stake_yen>0&&Number.isSafeInteger(m.profit_yen)?((m.profit_yen>0?'+':'')+yen(m.profit_yen)):'未精算';text('#simProfit',profit);
   q('#simProfit')?.classList.toggle('negative',m.profit_yen<0);
   text('#simRoi',evidenceStates.kind==='unknown'||m.roi_percent==null||
    !Number.isFinite(m.roi_percent)?'未確認':Number(m.roi_percent).toFixed(1)+'%');
