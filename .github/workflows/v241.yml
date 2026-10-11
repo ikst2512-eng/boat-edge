@@ -46,7 +46,7 @@ jobs:
                   if dest.read_bytes()!=blob:
                       # Public result UI is maintained independently. Preserve HTML/JS/CSS
                       # while keeping source-hashed scorer and its tests fail-closed.
-                      if name in ('results.html','assets/boat_edge_v241_results.js',
+                      if name in ('index.html','results.html','assets/boat_edge_v241_results.js',
                                   'assets/boat_edge_v241_results.css'):
                           print('V241_PRESERVE_INDEPENDENTLY_UPDATED_PUBLIC_UI',name)
                       else:
