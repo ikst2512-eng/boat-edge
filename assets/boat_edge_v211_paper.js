@@ -27,6 +27,43 @@ function paperEvidence(data,now=Date.now()){
     ' / 仮想購入 '+m.today_paper_races+'R'+' / '+gate+
     (noBet?' / 条件未成立なら0円を維持':'')+(reasons?' / 見送り理由：'+reasons:'')};
 }
+/* V248 A15: never label unverified history as an actual or paper purchase. */
+function verifiedBet(row){
+ const amount=v=>Number.isSafeInteger(v)&&v>=0&&v%100===0;
+ if(!row||!['pending','settled'].includes(row.state)||
+    !amount(row.stake_yen)||row.stake_yen===0||
+    !Number.isFinite(Date.parse(row.decision_at||''))||
+    !Array.isArray(row.tickets)||!row.tickets.length)return false;
+ const keys=new Set(),tickets=row.tickets;
+ let sum=0;
+ for(const t of tickets){
+  if(!/^[1-6]-[1-6]-[1-6]$/.test(String(t?.combo||''))||new Set(t.combo.split('-')).size!==3||
+     keys.has(t.combo)||!amount(t.paper_stake_yen)||t.paper_stake_yen<=0)return false;
+  keys.add(t.combo);sum+=t.paper_stake_yen;
+ }
+ if(sum!==row.stake_yen)return false;
+ return row.state!=='settled'||(Number.isSafeInteger(row.return_yen)&&row.return_yen>=0);
+}
+function paperStates(data,proof){
+ const m=data?.money||{},amount=v=>Number.isSafeInteger(v)&&v>=0;
+ if(!proof?.verified||!amount(m.pending_yen)||!amount(m.settled_stake_yen)||
+    !Array.isArray(data?.recent_bets))return {kind:'unknown',label:'仮想結果：記録の確認待ち（補完しません）'};
+ const history=data.recent_bets;
+ if(history.some(r=>!verifiedBet(r)))return {kind:'unknown',label:'仮想結果：保存履歴の検証不一致（補完しません）'};
+ const pending=history.filter(r=>r.state==='pending').length;
+ const settled=history.filter(r=>r.state==='settled').length;
+ const noBet=proof.current&&proof.count===0&&proof.spent===0&&history.length===0;
+ const label=noBet?'本日は仮想購入0件。購入条件を満たすまで見送り':
+   '保存履歴：結果待ち '+pending+'件／結果確定 '+settled+'件'+
+     '（最近の記録のみ。総件数・確定利益ではありません）';
+ return {kind:noBet?'no-bet':pending?'pending':settled?'settled':'unknown',label};
+}
+function showPaperStates(status){
+ let e=q('#be248PaperStates');
+ if(!e){e=el('div','sim-notice');e.id='be248PaperStates';e.setAttribute('role','status');
+  e.style.margin='8px 0';q('.stat-row')?.insertAdjacentElement('afterend',e);}
+ if(e){e.dataset.state=status.kind;e.textContent=status.label;}
+}
 function showEvidence(e){
  let n=q('#be244PaperEvidence');
  if(!n){
@@ -47,6 +84,7 @@ async function refresh(){
   const proof=paperEvidence(d);showEvidence(proof);
   if(!proof.verified)throw Error('unverified paper ledger');
   const m=d.money,actualDay=m.day;
+  const evidenceStates=paperStates(d,proof);showPaperStates(evidenceStates);
   const spent=m.today_spent_yen,remaining=m.today_remaining_yen;
   text('#simDay',dayLabel(actualDay));
   text('#simMode',proof.current?'実際の購入なし':'過去の保存台帳（本日未確認）');
@@ -54,9 +92,11 @@ async function refresh(){
   text('#simBalance',proof.current?remaining.toLocaleString('ja-JP')+'円':'―');
   text('#simSpent',proof.current?yen(spent):'―');
   text('#simTodayBuys',proof.current?m.today_paper_races+'R':'―');
-  const profit=m.settled_stake_yen?((m.profit_yen>0?'+':'')+yen(m.profit_yen)):'未精算';text('#simProfit',profit);
+  const profit=evidenceStates.kind!=='unknown'&&m.settled_stake_yen>0&&Number.isSafeInteger(m.profit_yen)?((m.profit_yen>0?'+':'')+yen(m.profit_yen)):'未精算';text('#simProfit',profit);
   q('#simProfit')?.classList.toggle('negative',m.profit_yen<0);
-  text('#simRoi',m.roi_percent==null?'未精算':Number(m.roi_percent).toFixed(1)+'%');text('#simPending',yen(m.pending_yen));
+  text('#simRoi',evidenceStates.kind==='unknown'||m.roi_percent==null||
+   !Number.isFinite(m.roi_percent)?'未確認':Number(m.roi_percent).toFixed(1)+'%');
+  text('#simPending',Number.isSafeInteger(m.pending_yen)&&m.pending_yen>=0?yen(m.pending_yen):'―');
   const active=proof.current&&d.strategy_status==='PAPER_ACTIVE';
   text('#simState',!proof.current?'本日台帳未確認':active?'仮想自走中':'精度検証待ち');q('#simState')?.classList.toggle('pill-active',active);q('#simState')?.classList.toggle('pill-wait',!active);
   text('#simGate',!proof.current?'この保存記録は別日のものです。本日の仮想購入状況は未確認。':
@@ -73,13 +113,19 @@ async function refresh(){
    const c=el('td');c.append(el('span','tag'+(a.decision==='candidate'?' ok':''),a.decision==='candidate'?'候補':'見送り'));tr.append(c,el('td','',a.reason||'要確認'));rows.append(tr);
   }
   const reasonBox=q('#simReasons');reasonBox.replaceChildren();for(const [reason,count] of Object.entries(scan.skipped_by_reason||{})){reasonBox.append(el('span','',`${reason} ${count}R`))}
-  const hist=q('#simHistory');hist.replaceChildren();const history=d.recent_bets||[];text('#simHistoryCount',history.length+'件');
-  if(!history.length)hist.append(el('p','empty','まだ仮想購入はありません。条件を満たさない日は資金を使いません。'));
+  const hist=q('#simHistory');hist.replaceChildren();
+  const history=evidenceStates.kind==='unknown'?[]:d.recent_bets;
+  text('#simHistoryCount',evidenceStates.kind==='unknown'?'未確認':history.length+'件（保存分）');
+  if(!history.length)hist.append(el('p','empty',
+    evidenceStates.kind==='unknown'?'仮想履歴を検証できません。架空の購入や払戻は作りません。':
+    proof.current&&proof.count===0?'本日の仮想購入は0件です。条件が揃うまで見送ります。':
+    '表示できる検証済みの最近の購入記録はありません。'));
   for(const row of history){const wrap=el('article','sim-race'),top=el('div','sim-race-top'),tag=el('span','state'+(row.state==='pending'?' pending':''),row.state==='settled'?'結果確定':'結果待ち');
    top.append(el('b','',`${row.venue||'開催場'} ${row.race_no||'－'}R`),tag);wrap.append(top);
    wrap.append(el('p','',`仮想購入 ${yen(row.stake_yen)} ｜ 判断 ${fmt(row.decision_at)}${row.state==='settled'?' ｜ 仮想払戻 '+yen(row.return_yen):''}`));
    const tickets=el('div','sim-bets');for(const t of row.tickets||[]){tickets.append(el('span','',`${t.combo}　${yen(t.paper_stake_yen)}`))}wrap.append(tickets);hist.append(wrap)}
  }catch(e){
+  showPaperStates({kind:'unknown',label:'仮想結果：保存台帳の検証待ち。金額を補完しません。'});
   showEvidence({verified:false,message:'仮想運用の保存台帳を確認できません。予算・購入額・利益を補完しません。'});
   for(const id of ['#simBalance','#simSpent','#simTodayBuys','#simProfit','#simRoi','#simPending'])text(id,'―');
   text('#simMode','データ未確認');text('#simUpdated','最終更新未確認');
@@ -89,5 +135,5 @@ async function refresh(){
 for(const b of qa('.sim-tabs [data-tab]'))b.addEventListener('click',()=>showTab(b.dataset.tab));
 q('#simRefresh')?.addEventListener('click',refresh);showTab('decision');refresh();
 setInterval(()=>{if(!document.hidden)refresh()},60000);
-window.BoatEdgeV211PaperEvidence={paperEvidence};
+window.BoatEdgeV211PaperEvidence={paperEvidence,paperStates,verifiedBet};
 })();

@@ -14,6 +14,9 @@
     b.textContent='↻ 更新';
     b.title='現在のページのデータと公開済みオッズを再読込';
     top.appendChild(b);b.addEventListener('click',refresh);
+    /* A14: keep the existing handler, but expose just one real manual-refresh action. */
+    const duplicate=$('#refreshTopBtn');
+    if(duplicate){duplicate.hidden=true;duplicate.tabIndex=-1;duplicate.setAttribute('aria-hidden','true');}
     return b;
   }
   function info(msg){
@@ -27,11 +30,23 @@
     if(!res.ok)throw new Error('HTTP '+res.status);
     return res.json();
   }
+  /* A13: values are source-reported, never a fresh collection triggered by this button. */
+  function oddsLabel(doc,r,now=Date.now()){
+    if(!doc||doc.race_key!==r?.race_key)return '公式3連単オッズ：取得元・時刻未確認';
+    const proof=window.BoatEdgeV222Odds?.validate?.(doc,r,now);
+    const q=proof?.quality;
+    if(q!=='fresh'&&q!=='stale')return '公式3連単オッズ：証跡不一致・表示不可';
+    const at=new Date(doc.fetched_at);
+    if(!Number.isFinite(at.getTime()))return '公式3連単オッズ：取得時刻不正';
+    const stamp=at.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});
+    return '取得元 BOAT RACE公式 / '+stamp+' JST取得 / '+(q==='fresh'?'確認済み保存値（リアルタイムではない）':'古い保存値（最新として利用不可）');
+  }
   async function refresh(){
     if(busy)return;
     busy=true;const b=button();if(b){b.disabled=true;b.textContent='更新中…';}
     info('データを確認中…');
     const problems=[];
+    let oddsMessage='';
     try{
       if(typeof refreshAll==='function')await refreshAll(true);
       else problems.push('更新処理未接続');
@@ -56,20 +71,19 @@
           }
           // Re-fetch official odds file, without claiming that GitHub collector has run again.
           const odds=await freshJson('./data/site_odds/'+key+'.json').catch(()=>null);
-          if(odds?.race_key===key){
-            const when=odds.fetched_at?new Date(odds.fetched_at):null;
-            const stamp=when&&Number.isFinite(when.getTime())?when.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):'時刻不明';
-            info('画面を再読込。公式オッズの最終取得 '+stamp+'（収集は別途5分周期）');
-          }else info('画面を再読込。公式オッズは未取得／再収集待ち');
+          oddsMessage=oddsLabel(odds,incoming);
+          try{await window.BoatEdgeV223Source?.refresh?.();}catch(_){problems.push('取得状態の表示更新に失敗');}
         }catch(_){problems.push('表示中レースの再読込に失敗');}
       }
     }
-    if(problems.length)info('一部未更新：'+problems.join('・'));
-    else if(active!=='raceView')info('公開済みデータを再読込（公式オッズの新規収集とは別）');
+    if(problems.length)info('一部未更新：'+problems.join('・')+(oddsMessage?' ／ '+oddsMessage:''));
+    else if(oddsMessage)info('公開済み情報を再読込。'+oddsMessage+'。新規収集は行いません');
+    else info('公開済み情報を再読込。公式オッズの新規収集・保存済み買い目の変更は行いません');
     if(b){b.disabled=false;b.textContent='↻ 更新';}
     busy=false;
   }
   function init(){button();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   window.BoatEdgeV166Refresh={refresh};
+  window.BoatEdgeV166Refresh.oddsLabel=oddsLabel;
 })();

@@ -9,3 +9,8 @@
 .be166-odds-status.warning{background:#fff8ee;border-color:#eed6b0;color:#825500}
 .be166-odds-status a{color:inherit;text-decoration:underline;font-weight:800}
 @media(max-width:690px){.topbar{gap:6px}.topbar .header-actions{display:none!important}.topbar .brand{min-width:0;gap:8px}.topbar .brandtext{font-size:18px}#be166GlobalRefresh{min-width:68px;padding:7px 9px;font-size:12px}}
+
+/* V248 A14: one keyboard-accessible refresh button on mobile and desktop. */
+#refreshTopBtn[hidden]{display:none!important}
+#be166GlobalRefresh{min-height:44px;min-width:76px}
+@media(max-width:690px){#be166GlobalRefresh{min-height:44px;min-width:72px}}
