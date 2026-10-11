@@ -42,7 +42,7 @@ function verifiedBet(row){
   keys.add(t.combo);sum+=t.paper_stake_yen;
  }
  if(sum!==row.stake_yen)return false;
- return row.state!=='settled'||amount(row.return_yen);
+ return row.state!=='settled'||(Number.isSafeInteger(row.return_yen)&&row.return_yen>=0);
 }
 function paperStates(data,proof){
  const m=data?.money||{},amount=v=>Number.isSafeInteger(v)&&v>=0;
