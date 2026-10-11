@@ -56,6 +56,14 @@
     return sorted.length>=4&&sorted[1]-sorted[0]>=margin?sorted[0]:null;
   };
   const red=(v,best)=>best!==null&&n(v)!==null&&Math.abs(Number(v)-best)<1e-7?' be203-red':'';
+  /* A05: highlight only a six-of-six known, uniquely stronger race-relative metric. */
+  const strongest=(rows,getValue,minimumGap)=>{
+    if(rows.length!==6)return null;
+    const values=rows.map(getValue).map(n);
+    if(values.some(x=>x===null))return null;
+    const desc=values.slice().sort((a,b)=>b-a);
+    return desc[0]-desc[1]>=minimumGap?desc[0]:null;
+  };
   function header(r){
     const s=scratchHint(r),ex=src(r,'beforeinfo'),stt=src(r,'stt'),ori=src(r,'original_exhibition'),w=ex?r.beforeinfo?.weather||{}:{};
     const water=[['風',n(w.wind_speed_ms)!==null?val(w.wind_speed_ms,1)+'m/s':'－'],['波',n(w.wave_cm)!==null?val(w.wave_cm,0)+'cm':'－']];
@@ -66,6 +74,8 @@
   }
   function cards(r){
     const rows=getRows(r),lap=distinctBest(rows,'lap',.08),turn=distinctBest(rows,'turn',.04),straight=distinctBest(rows,'straight',.04),st=distinctBest(rows,'st',.03);
+    const localWin=strongest(rows,x=>x.local.win_rate,.3);
+    const motor2=strongest(rows,x=>x.motor.quinella_rate,3);
     return `<div class="be203-heading"><strong>直前の6艇比較</strong><small>選手ごとに見やすく整理</small></div>`+
       `<div class="be203-cards">${rows.map(x=>`<article class="be203-card">
         <div class="be203-name"><span class="be203-lane be203-l${x.lane}">${x.lane}</span><b>${esc(x.name)}</b><small>${esc(x.grade)} / 展示進入 ${x.course??'－'}コース</small></div>
@@ -76,11 +86,11 @@
           <div><small>まわり足</small><b class="${red(x.turn,turn)}">${val(x.turn)}</b></div>
           <div><small>直線</small><b class="${red(x.straight,straight)}">${val(x.straight)}</b></div>
         </div>
-        <div class="be203-statmini"><span>全国 <b>${val(x.national.win_rate)}</b></span><span>当地 <b>${val(x.local.win_rate)}</b></span><span>M2連 <b>${val(x.motor.quinella_rate,1)}%</b></span></div>
+        <div class="be203-statmini"><span>全国 <b>${val(x.national.win_rate)}</b></span><span>当地 <b class="${red(x.local.win_rate,localWin)}">${val(x.local.win_rate)}</b></span><span>M2連 <b class="${red(x.motor.quinella_rate,motor2)}">${val(x.motor.quinella_rate,1)}%</b></span></div>
         ${fullStats?`<div class="be203-stats"><span>平均ST <b>${val(x.avg)}</b></span><span>全国2連 <b>${val(x.national.quinella_rate,1)}%</b></span><span>全国3連 <b>${val(x.national.trio_rate,1)}%</b></span><span>当地2連 <b>${val(x.local.quinella_rate,1)}%</b></span><span>当地3連 <b>${val(x.local.trio_rate,1)}%</b></span><span>M3連 <b>${val(x.motor.trio_rate,1)}%</b></span><span>B2連 <b>${val(x.boat.quinella_rate,1)}%</b></span><span>B3連 <b>${val(x.boat.trio_rate,1)}%</b></span></div>`:''}
       </article>`).join('')}</div>`+
       `<div class="be203-actions"><button type="button" data-be203-action="stats">${fullStats?'詳細成績を閉じる':'全国・当地／モーター詳細を見る'}</button><button type="button" data-be203-action="full">${fullTable?'全項目の表を閉じる':'全項目の表を開く'}</button></div>`+
-      `<div class="be203-help">「－」は取得・照合できていない値。赤は実測差が明確な1位のみ。展示進入は本番の実進入ではありません。<br>買い目・1万円配分・的中判定は上の予想スタイルに表示し、この画面から再計算しません。</div>`;
+      `<div class="be203-help">「－」は取得・照合できていない値。赤は6艇の数値が揃い明確な差がある項目のみ（当地勝率0.3以上差・M2連率3pt以上差）。展示進入は本番の実進入ではありません。<br>買い目・1万円配分・的中判定は上の予想スタイルに表示し、この画面から再計算しません。</div>`;
   }
   function sync(force=false){
     if(inDraw)return;
@@ -128,6 +138,6 @@
     setInterval(()=>{if(!document.hidden)tick();},4000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();if(safeKey(race()?.race_key))fetchScratch(race());}});
   }
-  window.BoatEdgeV203={getRows,scratchHint,when,sync};
+  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
