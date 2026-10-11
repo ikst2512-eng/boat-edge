@@ -5,7 +5,7 @@
 <title>レース結果・的中一覧 | BOAT EDGE</title>
 <link rel="stylesheet" href="./assets/boat_edge_v241_results.css?v=241">
 </head><body>
-<header class="be241-top"><div class="be241-shell be241-top-inner"><a class="be241-logo" href="./index.html" aria-label="BOAT EDGE トップへ"><span class="be241-wave">≋</span>BOAT EDGE</a><div class="be241-head-actions"><a class="be241-home" href="./index.html">レース一覧</a><button type="button" id="be241Refresh">↻ 更新</button></div></div></header>
+<header class="be241-top"><div class="be241-shell be241-top-inner"><a class="be241-logo" href="./index.html" aria-label="BOAT EDGE トップへ"><span class="be241-wave">≋</span>BOAT EDGE</a><div class="be241-head-actions"><a class="be241-home" href="./index.html">レース一覧</a><button type="button" id="be241Refresh" aria-label="確定結果の保存済み情報を再取得（レース選択は保持）">↻ 更新</button></div></div></header>
 <main class="be241-shell">
   <div class="be241-eyebrow">BOAT EDGE / OFFICIAL RESULT AUDIT</div>
   <div class="be241-title"><div><h1>レース結果 <span>・的中一覧</span></h1><p>確定した着順と、締切前に固定した買い目を同じ画面で比較。</p></div><span class="be241-audit-tag">締切前予想を後から変更しない</span></div>
@@ -19,6 +19,12 @@
   <div class="be241-toolbar" id="be241Board"><div><h2>的中・不的中の履歴</h2><p>着順・公式払戻・仮想1万円配分を、レースごとに表示。</p></div><label>買い目モード<select id="be241Mode"><option value="hit">的中重視</option><option value="balance">バランス</option><option value="hole">波乱展開</option><option value="narrow">激絞り</option></select></label></div>
   <div class="be241-filters" role="group" aria-label="結果の表示を絞り込む"><button type="button" data-filter="all" class="on">すべて</button><button type="button" data-filter="hit">🎯 的中</button><button type="button" data-filter="miss">不的中</button><button type="button" data-filter="head">1着予想的中</button></div>
   <div class="be241-scope"><span id="be241Scope">読み込み中</span><span id="be241Updated"></span></div>
+  <aside class="be247-status-guide" aria-label="結果判定の区分">
+    <span><b class="be247-hit">🎯 検証済み的中</b>：締切前固定買い目に確定3連単あり</span>
+    <span><b class="be247-miss">検証済み不的中</b>：照合済みだが当該モードの買い目なし</span>
+    <span><b>結果待ち</b>：未判定・一覧には表示しない</span>
+    <span><b>検証対象外</b>：成績には算入しない</span>
+  </aside>
   <div class="be241-results" id="be241Results"><div class="be241-empty">検証済み結果を確認中…</div></div>
   <section class="be241-rules" id="be241Trust"><h2>判定のルール</h2><p><b>🎯的中</b>は、締切前にGitHubへ固定された当該モードの買い目に、公式確定3連単が存在した場合だけ表示。<b>1着予想的中</b>は別指標で、頭だけ的中でも🎯にはなりません。</p><p>払戻はBOAT RACE公式の100円あたり金額。仮想1万円配分の払戻・差益は固定した配分での計算例で、実購入や確定利益ではありません。オッズはここでは確定配当と区別し、締切前予想時点のオッズを書き換えません。</p><p>検証対象は<b>サイト限定</b>で、正式Freshの結果・払戻の未見ロックとは分離しています。結果がまだ登録されていないレースは、この一覧に出さず「未的中」扱いもしません。</p></section>
 </main>
