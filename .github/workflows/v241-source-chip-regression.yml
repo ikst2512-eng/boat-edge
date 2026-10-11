@@ -1,0 +1,50 @@
+name: BOAT EDGE V241 - Autonomous UI Gate and Source Labels Regression
+
+on:
+  push:
+    branches:
+      - main
+      - fix/v241-autodev-gate-source-status-20261012
+    paths:
+      - '.github/workflows/v240-autodev.yml'
+      - '.github/workflows/v241-source-chip-regression.yml'
+      - 'assets/boat_edge_v223_source_visibility.js'
+      - 'assets/boat_edge_v223_source_visibility.css'
+      - 'tests/test_boat_edge_v223_source.cjs'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify site source labels are not silently treated as current
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v223_source_visibility.js
+          node tests/test_boat_edge_v223_source.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast,json
+          workflow=Path('.github/workflows/v240-autodev.yml').read_text(encoding='utf-8')
+          source=Path('index.html').read_text(encoding='utf-8')
+          assert source.count('boat_edge_v223_source_visibility.js?v=223')==1
+          assert source.count('boat_edge_v223_source_visibility.css?v=223')==1
+          assert "PYTHONDONTWRITEBYTECODE: '1'" in workflow
+          assert 'python3 -m py_compile scripts/boat_edge_v240_guard.py' not in workflow
+          ast.parse(Path('scripts/boat_edge_v240_guard.py').read_text(encoding='utf-8'))
+          status=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=status.get('guards') or {}
+          assert all(guards.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert guards.get('RESULT_UNLOCK_TOKEN') is None
+          print('V241_UI_SOURCE_STATUS_AND_AUTODEV_SAFETY_PASS')
+          PY
