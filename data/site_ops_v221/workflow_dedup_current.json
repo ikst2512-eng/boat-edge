@@ -1,8 +1,8 @@
 {
-  "checked_at": "2026-10-10T20:58:58.950225+00:00",
+  "checked_at": "2026-10-11T20:46:15.170499+00:00",
   "current_pre_result_source_fresh": true,
-  "day_jst": "20261011",
-  "disabled_this_run": 1,
+  "day_jst": "20261012",
+  "disabled_this_run": 0,
   "formal_unlock_or_result_read": false,
   "no_model_or_paper_change": true,
   "pins_match": {
@@ -15,8 +15,8 @@
   },
   "primary_success": {
     "BOAT_EDGE_V185_THIRD_ROLE_FRESH_CHALLENGER.yml": {
-      "ok": true,
-      "reason": "SUCCESS_RUN_WITHIN_3H"
+      "ok": false,
+      "reason": "NO_RECENT_MATCHING_SUCCESS"
     },
     "BOAT_EDGE_V200_SEQUENTIAL_FRESH_FREEZE.yml": {
       "ok": true,
@@ -48,10 +48,10 @@
       "decision": "ELIGIBLE_FOR_EXACT_DISABLE"
     },
     "site-v185-trigger.yml": {
-      "action": "DISABLED_AND_VERIFIED",
+      "action": "ALREADY_DISABLED",
       "after_state": "disabled_manually",
-      "before_state": "active",
-      "decision": "ELIGIBLE_FOR_EXACT_DISABLE"
+      "before_state": "disabled_manually",
+      "decision": "SKIP_REPLACEMENT_NOT_PROVEN_ACTIVE"
     }
   },
   "unverified_actions": []
