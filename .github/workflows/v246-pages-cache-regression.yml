@@ -1,0 +1,26 @@
+name: BOAT EDGE V246 - Verify Fresh Safari Assets
+on:
+  push:
+    branches: [main, fix/v246-pages-static-asset-cache-20261012]
+    paths:
+      - 'index.html'
+      - 'ai-simulation.html'
+      - 'tests/test_boat_edge_v246_pages_cache.py'
+      - '.github/workflows/v246-pages-cache-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  asset-url-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v246_pages_cache.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v243_mobile.py' -v
+          node tests/test_boat_edge_v244_site.cjs
+          echo V246_SAFARI_ASSET_CACHE_BUST_PASS
