@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V240 | BOAT EDGE 2着候補の未見比較</title>
+<style>
+:root{color-scheme:dark;--bg:#101824;--panel:#19283a;--ink:#f1f6fc;--muted:#b4c5d8;--line:#334761;--accent:#5bd2fa}*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;background:var(--bg);color:var(--ink);margin:0}
+main{max-width:980px;margin:auto;padding:20px 16px 64px}a{color:var(--accent)}header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:14px}h1{font-size:1.45rem;margin:0}h2{font-size:1.1rem;margin:0 0 10px}p{line-height:1.7}.muted{color:var(--muted);font-size:.91rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:16px 0}.card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:16px}.figure{font-size:1.7rem;font-weight:700;margin:9px 0}table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:580px}th,td{border-bottom:1px solid var(--line);padding:10px 8px;text-align:left}td.num,th.num{text-align:right} .scroll{overflow:auto}button{background:#25435f;color:white;border:1px solid var(--line);padding:9px 13px;border-radius:7px;cursor:pointer}
+</style></head><body><main>
+<header><div><h1>BOAT EDGE V240｜2着候補・組み合わせの未見比較</h1><div class="muted">既存の本番予想を変更しない独立研究レーン</div></div><div><a href="./index.html">トップ</a> · <a href="./second-tail.html">V239</a> <button onclick="loadData()">更新</button></div></header>
+<section class="card"><h2>今回の修正理由</h2><p class="muted">V239の「2着分散10点」は、2026-10-11の過去27Rで26Rが既存10点と同一だった。V240は候補の実変更数を検査し、既存の前結果固定資料から2着候補の不足と2・3着の組み合わせを探索する。過去結果による後出し作成はしない。すべて10点で比較する。</p></section>
+<div class="cards"><div class="card"><div class="muted">今日の未来固定R</div><div class="figure" id="frozen">—</div><div class="muted" id="date">—</div></div><div class="card"><div class="muted">2着候補が実際に変化したR</div><div class="figure" id="novel">—</div><div class="muted">今日の締切前候補</div></div><div class="card"><div class="muted">結果照合済みR</div><div class="figure" id="settled">—</div><div class="muted">独立Git固定がPASSしたレースだけ</div></div><div class="card"><div class="muted">改善の認定</div><div class="figure" id="proof">未証明</div><div class="muted">複数日の未見比較・独立検証必須</div></div></div>
+<section class="card"><h2>同じ10点での対応比較</h2><div class="scroll"><table><thead><tr><th>候補</th><th class="num">評価R</th><th class="num">的中R</th><th class="num">的中率</th><th class="num">候補だけ的中</th><th class="num">基準だけ的中</th><th class="num">変更R</th></tr></thead><tbody id="comp"><tr><td colspan="7">取得中</td></tr></tbody></table></div><p class="muted">単なる変更Rが多いことは精度向上を意味しない。変更R、的中率、改善・悪化のペア数を別々に表示する。</p></section>
+<section class="card"><h2>安全管理</h2><p class="muted">V232がレース締切前にGitコミットしたサイト限定予想のみを利用。V240候補をさらに締切前に不変Gitコミットした後、確定済みのV234サイト限定採点だけで結果を照合する。正式Freshへのアクセス・過去レースへのV240予想捏造・本番モデル変更・オッズ倍率による順位補正・金銭購入はしない。</p><div id="pending" class="muted">未照合: —</div></section>
+<footer class="muted">V240 / 研究指標です。1Rの例示テストの成績や過去データへの後出し評価は精度改善の証明ではありません。</footer>
+</main><script>
+const names={hit10:'現行10点（基準）',second_coverage10:'2着候補拡張10点',pair_coverage10:'2・3着組合せ拡張10点'};
+async function readJSON(path){const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return await r.json()}
+function safe(x){return x===null||x===undefined?'—':String(x)}
+async function loadData(){
+  const pre=await readJSON('./data/site_autopilot/v240_pre_current.json').catch(()=>null);
+  const scored=await readJSON('./data/site_autopilot/v240_score_current.json').catch(()=>null);
+  document.getElementById('frozen').textContent=pre?safe(pre.frozen_today):'未取得';
+  document.getElementById('date').textContent=pre?'対象日 '+pre.day_jst:'監査ファイル未公開';
+  document.getElementById('novel').textContent=pre?safe(pre.novel_candidate_races_today?.second_coverage10):'未取得';
+  document.getElementById('settled').textContent=scored?safe(scored.scored_total):'未取得';
+  document.getElementById('proof').textContent=scored?.accuracy_improvement_proven===true?'別途確認必須':'未証明';
+  const body=document.getElementById('comp');body.replaceChildren();
+  for(const key of ['hit10','second_coverage10','pair_coverage10']){
+    const x=scored?.comparisons?.[key];const tr=document.createElement('tr');
+    for(const v of [names[key],safe(x?.races),safe(x?.hits),x?.hit_rate_percent===null||x?.hit_rate_percent===undefined?'—':x.hit_rate_percent+'%',safe(x?.paired_gain),safe(x?.paired_loss),safe(x?.changed_races)]){
+      const td=document.createElement('td');td.textContent=v;tr.append(td)
+    }body.append(tr)
+  }
+  document.getElementById('pending').textContent='未照合・除外: '+JSON.stringify(scored?.pending||{})
+}
+loadData();
+</script></body></html>
