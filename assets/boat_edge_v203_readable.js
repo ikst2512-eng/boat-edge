@@ -15,7 +15,7 @@
     const t=Date.parse(s.fetched_at),due=deadline(r);
     return time(s.fetched_at)+'取得'+(Number.isFinite(due)?(t>=due?'（締切後・予想には不使用）':'（締切前・予測使用は未確認）'):'（締切照合不可）');
   };
-  let selectedKey='',scratch=null,scratchError='',fullStats=false,fullTable=false,observer=null,inDraw=false,lastSig='';
+  let selectedKey='',scratch=null,scratchError='',fullStats=true,fullTable=false,observer=null,inDraw=false,lastSig='';
   function scratchHint(r){
     const notice=$('#be182ScratchStop');
     if(notice?.isConnected)return {type:'stop',label:'買い目停止',description:notice.textContent||'出走可否の確認待ち'};
@@ -89,7 +89,7 @@
         <div class="be203-statmini"><span>全国 <b>${val(x.national.win_rate)}</b></span><span>当地 <b class="${red(x.local.win_rate,localWin)}">${val(x.local.win_rate)}</b></span><span>M2連 <b class="${red(x.motor.quinella_rate,motor2)}">${val(x.motor.quinella_rate,1)}%</b></span></div>
         ${fullStats?`<div class="be203-stats"><span>平均ST <b>${val(x.avg)}</b></span><span>全国2連 <b>${val(x.national.quinella_rate,1)}%</b></span><span>全国3連 <b>${val(x.national.trio_rate,1)}%</b></span><span>当地2連 <b>${val(x.local.quinella_rate,1)}%</b></span><span>当地3連 <b>${val(x.local.trio_rate,1)}%</b></span><span>M3連 <b>${val(x.motor.trio_rate,1)}%</b></span><span>B2連 <b>${val(x.boat.quinella_rate,1)}%</b></span><span>B3連 <b>${val(x.boat.trio_rate,1)}%</b></span></div>`:''}
       </article>`).join('')}</div>`+
-      `<div class="be203-actions"><button type="button" data-be203-action="stats">${fullStats?'詳細成績を閉じる':'全国・当地／モーター詳細を見る'}</button><button type="button" data-be203-action="full">${fullTable?'全項目の表を閉じる':'全項目の表を開く'}</button></div>`+
+      `<div class="be203-actions"><button type="button" data-be203-action="stats" aria-expanded="${fullStats}">${fullStats?'数値を簡易表示':'全国・当地／モーター・ボートの全数値'}</button><button type="button" data-be203-action="full">${fullTable?'全項目の表を閉じる':'全項目の表を開く'}</button></div>`+
       `<div class="be203-help">「－」は取得・照合できていない値。赤は6艇の数値が揃い明確な差がある項目のみ（当地勝率0.3以上差・M2連率3pt以上差）。展示進入は本番の実進入ではありません。<br>買い目・1万円配分・的中判定は上の予想スタイルに表示し、この画面から再計算しません。</div>`;
   }
   function sync(force=false){
@@ -122,7 +122,7 @@
   let lastObserved='';
   function tick(){
     const r=race();if(!safeKey(r?.race_key))return;
-    if(lastObserved!==r.race_key){lastObserved=r.race_key;fullStats=false;fullTable=false;fetchScratch(r);}
+    if(lastObserved!==r.race_key){lastObserved=r.race_key;fullStats=true;fullTable=false;fetchScratch(r);}
     sync();
   }
   function start(){
