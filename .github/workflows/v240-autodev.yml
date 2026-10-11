@@ -35,7 +35,14 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
-          python3 -m py_compile scripts/boat_edge_v240_guard.py
+          # py_compile would create an untracked __pycache__ artifact in the checkout.
+          # That artifact would later fail our strict UI-only git status guard.
+          PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY_V240_SYNTAX'
+          import ast
+          from pathlib import Path
+          ast.parse(Path('scripts/boat_edge_v240_guard.py').read_text(encoding='utf-8'))
+          print('V240_GUARD_SYNTAX_PASS_NO_BYTECODE')
+          PY_V240_SYNTAX
           python3 - <<'PY'
           import json
           from pathlib import Path
