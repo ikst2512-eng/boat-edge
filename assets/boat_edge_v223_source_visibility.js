@@ -64,6 +64,13 @@ function inspect(r,scratch,odds,now=Date.now()){
  return {key,phase:'PRE_RESULT',level,rows,summary:sc[0]==='stop'?'欠場・取消疑い：予想に使わない':
     `締切${remaining}分前／取得確認 ${ready}/6項目（取消・出走確定は別）`};
 }
+/* Status labels are facts from the PRE_RESULT inspector, not certified live values. */
+function sourceFlags(result){
+ return ['欠場・取消','3連単オッズ'].map(label=>{
+  const row=(result?.rows||[]).find(x=>x[0]===label);
+  return {label,quality:row?.[1]||'unknown',text:row?.[2]||'未取得・未確認'};
+ });
+}
 const race=()=>{try{return typeof state!=='undefined'?state?.race:null}catch(_){return null}};
 let working=false,lastKey='';
 async function json(path){try{const r=await fetch(path+'?v223='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null;}catch(_){return null;}}
@@ -79,12 +86,20 @@ async function refresh(){
   const host=document.querySelector('#raceView .race-summary');if(!host)return;
   let node=document.querySelector('#be223Source');
   if(!node){node=document.createElement('details');node.id='be223Source';node.className='be223-source';
-   node.innerHTML='<summary><b>直前情報の取得状況</b><span class="be223-state" role="status"></span></summary><div class="be223-rows"></div><p>取得時点の監査表示。欠場・取消の確定証明、買い目の推奨、未見Fresh合格ではありません。オリ展の取得時刻は当サイトへの取り込み時刻です。</p>';
+   node.innerHTML='<summary><b>直前情報の取得状況</b><span class="be223-state" role="status"></span><span class="be223-flags" aria-label="欠場・取消と3連単オッズの取得状況"><span data-be223-flag="scratch"></span><span data-be223-flag="odds"></span></span></summary><div class="be223-rows"></div><p>取得時点の監査表示。欠場・取消の確定証明、買い目の推奨、未見Fresh合格ではありません。オリ展の取得時刻は当サイトへの取り込み時刻です。</p>';
    host.prepend(node);
   }
   if(lastKey!==key){node.open=false;lastKey=key;}
   node.dataset.level=result.level;
   node.querySelector('.be223-state').textContent=result.summary;
+  const flags=sourceFlags(result);
+  const scratchFlag=node.querySelector('[data-be223-flag="scratch"]');
+  const oddsFlag=node.querySelector('[data-be223-flag="odds"]');
+  for(const [el,flag] of [[scratchFlag,flags[0]],[oddsFlag,flags[1]]]){
+   if(!el)continue;
+   el.textContent=flag.label+'：'+flag.text;
+   el.dataset.quality=flag.quality;
+  }
   const data=node.querySelector('.be223-rows');data.replaceChildren();
   for(const [label,status,value] of result.rows){const row=document.createElement('div');row.className='be223-row';
    const l=document.createElement('span'),v=document.createElement('span');l.textContent=label;v.textContent=value;v.dataset.quality=status;
@@ -93,6 +108,6 @@ async function refresh(){
 }
 function start(){refresh();setInterval(refresh,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh();});
  document.querySelector('#refreshTopBtn')?.addEventListener('click',()=>setTimeout(refresh,1000));}
-window.BoatEdgeV223Source={inspect,refresh};
+window.BoatEdgeV223Source={inspect,refresh,sourceFlags};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
