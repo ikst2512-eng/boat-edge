@@ -44,7 +44,11 @@ jobs:
                   raise SystemExit('V238_PACKAGED_SOURCE_SHA_MISMATCH_'+name)
               if dest.exists():
                   if dest.read_bytes()!=data:
-                      raise SystemExit('V238_EXISTING_SOURCE_DRIFT_FAIL_CLOSED_'+name)
+                      # Preserve independently updated UI; keep Python scorer/test source byte-pinned.
+                      if name == 'tail-diagnostics.html':
+                          print('V238_EXISTING_UI_PAGE_PRESERVED',name)
+                      else:
+                          raise SystemExit('V238_EXISTING_SOURCE_DRIFT_FAIL_CLOSED_'+name)
               else:
                   dest.parent.mkdir(parents=True,exist_ok=True)
                   dest.write_bytes(data)

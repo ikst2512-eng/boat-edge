@@ -1,0 +1,36 @@
+name: BOAT EDGE V242 - Read Only Refresh Regression
+
+on:
+  push:
+    branches:
+      - main
+      - fix/v242-refresh-pinned-ui-20261012
+    paths:
+      - 'health.html'
+      - 'tail-diagnostics.html'
+      - '.github/workflows/v237.yml'
+      - '.github/workflows/v238.yml'
+      - '.github/workflows/v242-ui-refresh-tests.yml'
+      - 'tests/test_boat_edge_v242_ui_refresh.py'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  site-ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run V242 script syntax and safe refresh tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v242_ui_refresh.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          git diff --check
+          echo V242_SITE_REFRESH_AND_FORMAL_GUARD_PASS

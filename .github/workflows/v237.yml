@@ -45,7 +45,11 @@ jobs:
                   raise SystemExit('V237_PINNED_PAYLOAD_MISMATCH_'+file)
               p=Path(file)
               if p.exists() and p.read_bytes()!=data:
-                  raise SystemExit('V237_PINNED_EXISTING_SOURCE_DRIFT_'+file)
+                  # HTML is a separately maintained public UI; pin the collector and tests, not the page bytes.
+                  if file == 'health.html':
+                      print('V237_EXISTING_UI_PAGE_PRESERVED',file)
+                  else:
+                      raise SystemExit('V237_PINNED_EXISTING_SOURCE_DRIFT_'+file)
               if not p.exists():
                   p.parent.mkdir(parents=True,exist_ok=True)
                   p.write_bytes(data)
