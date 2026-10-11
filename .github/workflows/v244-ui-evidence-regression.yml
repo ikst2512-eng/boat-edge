@@ -1,0 +1,59 @@
+name: BOAT EDGE V244 - Four UI Improvements Evidence Guard
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v244-a04-a07-safe-site-batch-20261012
+    paths:
+      - 'assets/boat_edge_v203_readable.js'
+      - 'assets/boat_edge_v203_readable.css'
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'assets/boat_edge_v223_source_visibility.js'
+      - 'assets/boat_edge_v211_paper.js'
+      - 'ai-simulation.html'
+      - 'tests/test_boat_edge_v244_site.cjs'
+      - '.github/workflows/v244-ui-evidence-regression.yml'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safety-and-readability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify JS syntax and four independently testable behavior contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for p in assets/boat_edge_v203_readable.js assets/boat_edge_v204_prediction.js assets/boat_edge_v223_source_visibility.js assets/boat_edge_v211_paper.js; do node --check "$p"; done
+          node tests/test_boat_edge_v244_site.cjs
+          node tests/test_boat_edge_v223_source.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v243_mobile.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('.')
+          status=json.loads((root/'data/formal_status.json').read_text())
+          g=status.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          html=(root/'ai-simulation.html').read_text()
+          assert 'id="simBalance">―' in html
+          assert html.count('boat_edge_v211_paper.js?v=211')==1
+          index=(root/'index.html').read_text()
+          for script in ('boat_edge_v203_readable.js?v=203','boat_edge_v204_prediction.js?v=204',
+                         'boat_edge_v223_source_visibility.js?v=223'):
+              assert index.count(script)==1,script
+          print('V244_SAVED_SITE_SOURCES_ONLY_FORMAL_LOCK_PASS')
+          PY
+          git diff --check
+          echo V244_FOUR_SAFE_UI_TASKS_PASS
