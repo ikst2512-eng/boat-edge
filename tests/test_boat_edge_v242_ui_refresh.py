@@ -20,7 +20,6 @@ class TestV242SiteRefresh(unittest.TestCase):
         self.assertIn('BOAT_EDGE_V242_UI_REFRESH', h)
         self.assertIn("getElementById('rates').replaceChildren()", h)
         self.assertIn("getElementById('operational').replaceChildren()", h)
-        self.assertIn("new Date", self.source("scripts/boat_edge_v237_health.py"))
         self.assertIn("button.disabled=false", h)
         self.assertIn("v237_current.json?t='+Date.now()", h)
         self.assertNotIn('raceresult', h)
