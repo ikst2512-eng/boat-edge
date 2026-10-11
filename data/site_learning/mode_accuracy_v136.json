@@ -3,41 +3,41 @@
   "scope": "SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",
   "formal_current_scoring": false,
   "production_prediction_weights_changed": false,
-  "predictions_evaluated": 2,
+  "predictions_evaluated": 6,
   "mode_policy": "BALANCE10_WAVE12_15_18_V133_FIXED",
   "modes": {
     "hit": {
       "label": "的中重視",
-      "evaluated": 2,
-      "hits": 1,
-      "misses": 1,
+      "evaluated": 6,
+      "hits": 3,
+      "misses": 3,
       "hit_rate_percent": 50.0
     },
     "balance": {
       "label": "バランス",
-      "evaluated": 2,
-      "hits": 1,
-      "misses": 1,
+      "evaluated": 6,
+      "hits": 3,
+      "misses": 3,
       "hit_rate_percent": 50.0
     },
     "hole": {
       "label": "波乱展開",
-      "evaluated": 2,
-      "hits": 1,
-      "misses": 1,
-      "hit_rate_percent": 50.0
+      "evaluated": 6,
+      "hits": 2,
+      "misses": 4,
+      "hit_rate_percent": 33.3
     },
     "narrow": {
       "label": "激絞り",
-      "evaluated": 2,
-      "hits": 0,
-      "misses": 2,
-      "hit_rate_percent": 0.0
+      "evaluated": 6,
+      "hits": 1,
+      "misses": 5,
+      "hit_rate_percent": 16.7
     }
   },
   "by_winning_head": {
     "1": {
-      "evaluated": 0,
+      "evaluated": 2,
       "hits": {
         "hit": 0,
         "balance": 0,
@@ -46,12 +46,12 @@
       }
     },
     "2-6": {
-      "evaluated": 2,
+      "evaluated": 4,
       "hits": {
-        "hit": 1,
-        "balance": 1,
-        "hole": 1,
-        "narrow": 0
+        "hit": 3,
+        "balance": 3,
+        "hole": 2,
+        "narrow": 1
       }
     }
   },
@@ -60,8 +60,12 @@
   },
   "method": "Only V133 prospective FINAL_15M snapshots with matching V125 audit and confirmed official result; no race/result endpoint consulted, no historical prediction backfill.",
   "rank_120_available": false,
-  "latest_settlement": "2026-10-11T02:28:56.502336+00:00",
+  "latest_settlement": "2026-10-11T03:37:09.243055+00:00",
   "example_race_keys": [
+    "20261011-06-03",
+    "20261011-08-05",
+    "20261011-18-08",
+    "20261011-22-03",
     "20261011-23-01",
     "20261011-23-06"
   ],
