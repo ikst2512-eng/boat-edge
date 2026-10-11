@@ -5,7 +5,7 @@ const at=Date.parse('2026-10-12T08:20:00+09:00');
 function load(path,extend={}){
  const code=fs.readFileSync(path,'utf8');
  const window={...extend};
- const doc={readyState:'loading',addEventListener(){},querySelector(){return null},querySelectorAll(){return []}};
+ const doc={readyState:'loading',addEventListener(){},querySelector(){return null},querySelectorAll(){return []},createElement(){return {style:{},dataset:{},setAttribute(){},textContent:''}}};
  const ctx={window,document:doc,Date,console,setTimeout(){},setInterval(){},queueMicrotask(){},fetch:async()=>{throw Error('offline test')},
    ...extend};
  vm.runInNewContext(code,ctx,{filename:path});
