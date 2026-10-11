@@ -1,0 +1,17 @@
+/* V223: single compact evidence panel on active race, expanded only on user tap. */
+#be223Source{margin:10px 0;padding:0;background:#fff;border:1px solid #d5deeb;border-radius:11px;font-size:12px;color:#334155;overflow:hidden}
+#be223Source summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:9px 12px;list-style-position:inside}
+#be223Source summary b{font-size:12px;color:#13294b}
+#be223Source .be223-state{font-size:11px;color:#7a4e21}
+#be223Source[data-level="stop"] summary{background:#fff0f0}
+#be223Source[data-level="stop"] .be223-state{color:#b42318;font-weight:700}
+#be223Source .be223-rows{border-top:1px solid #edf1f7;padding:5px 11px}
+#be223Source .be223-row{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:start;gap:6px;padding:5px 0;border-bottom:1px solid #f0f4fa}
+#be223Source .be223-row:last-child{border:0}
+#be223Source .be223-row span:last-child{overflow-wrap:anywhere}
+#be223Source [data-quality="ok"]{color:#16704e}
+#be223Source [data-quality="limited"]{color:#5d596f}
+#be223Source [data-quality="stop"]{color:#b42318;font-weight:700}
+#be223Source [data-quality="wait"],#be223Source [data-quality="stale"],#be223Source [data-quality="unknown"]{color:#98652a}
+#be223Source p{padding:3px 12px 10px;margin:0;color:#69788a;font-size:10px;line-height:1.5}
+@media(max-width:480px){#be223Source .be223-row{grid-template-columns:91px minmax(0,1fr)}#be223Source summary{padding:8px 10px}}

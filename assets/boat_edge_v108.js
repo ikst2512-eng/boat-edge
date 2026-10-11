@@ -756,7 +756,11 @@ function writeLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_){
 /* BE141_PROSPECTIVE_STAKE_CAPTURE: only new snapshots, never backfill legacy frozen stakes. */
 function saveFinalSnapshot(key,race,pred,modes,mins){
   const previous=readLocal(snapKey(key),null);
-  const capture=!isFinalSnapshot(previous)||previous?.stake_plan_version==="V141-10000-PROSPECTIVE";
+  // V222_LOCAL_FINAL_IMMUTABLE: keep the first FINAL_15M local prediction exactly as seen.
+  // Never revise a recorded prospective ticket/odds/stake snapshot on later UI redraws.
+  // A malformed existing record is not silently replaced with a fresh-looking record.
+  if(previous!==null && previous!==undefined)return previous;
+  const capture=true;
   const savedAt=new Date().toISOString();
   const snap={
     schema:"boat-edge-v113-final-snapshot-v1",
