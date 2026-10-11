@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#102d4b"><title>未見予想の実測成績 | BOAT EDGE</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;color:#172a40;background:#f3f6fa}*{box-sizing:border-box}body{margin:0}header{position:sticky;top:0;z-index:2;background:#102d4b;color:white;padding:14px 16px}header .wrap{max-width:1020px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}header a{color:white;text-decoration:none;font-size:14px}header b{font-size:18px}header nav{display:flex;gap:14px;flex-wrap:wrap}main{max-width:1020px;margin:auto;padding:16px 13px 60px}h1{font-size:22px;margin:6px 0 8px}h2{font-size:17px;margin:24px 0 10px}p{line-height:1.65}.muted{font-size:12px;color:#5a6f85}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card,.panel{background:white;border:1px solid #dbe5f0;border-radius:12px;padding:15px}.card span{font-size:12px;color:#64758a;display:block}.card strong{font-size:26px;font-variant-numeric:tabular-nums}.card small{display:block;font-size:11px;color:#718096}.panel{margin-top:12px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e4eaf0;padding:10px 7px;text-align:left}th{color:#617082;font-weight:600}td.yes{color:#08743f;font-weight:700}td.no{color:#a52e3c;font-weight:700}button{border:0;border-radius:8px;background:#fff;color:#112f4b;font-size:14px;padding:8px 13px;cursor:pointer}a{color:#0c5db7} .disclaimer{border-left:3px solid #7a8ca2;padding:11px 14px;background:white;border-radius:0 9px 9px 0;font-size:13px}.tablewrap{overflow:auto}.pill{background:#eaf1f8;border-radius:5px;padding:3px 6px;font-size:11px;white-space:nowrap}#state{white-space:pre-line}
+@media(min-width:700px){.cards{grid-template-columns:repeat(5,1fr)}main{padding:25px}}
+</style></head><body>
+<header><div class="wrap"><div><a href="./"><b>BOAT EDGE</b></a><div style="font-size:11px;opacity:.85">未見予想・確定結果の実測</div></div><nav><a href="./cohort.html">締切前台帳</a><a href="./ai-simulation.html">仮想運用</a><button type="button" id="refresh">↻ 更新</button></nav></div></header>
+<main><h1>未見予想の実測成績</h1><p class="muted">締切前にGitHubへ保存された予想と、その後の公式確定結果だけを突き合わせる。数字が良く見えるような後付け登録はしません。</p>
+<div class="cards"><div class="card"><span>採点済み</span><strong id="settled">―</strong><small>R / 未見確定結果</small></div><div class="card"><span>頭予想</span><strong id="head">―</strong><small id="headsub">―</small></div><div class="card"><span>3連単 Top3</span><strong id="top3">―</strong><small>的中率</small></div><div class="card"><span>3連単 Top5</span><strong id="top5">―</strong><small>的中率</small></div><div class="card"><span>3連単 Top10</span><strong id="top10">―</strong><small>的中率</small></div></div>
+<div class="panel"><h2 style="margin-top:0">10〜20倍帯の実測</h2><div class="cards"><div class="card"><span>対象レース</span><strong id="bandr">―</strong><small>Top10内に10〜20倍候補</small></div><div class="card"><span>その帯で的中</span><strong id="bandhit">―</strong><small>着順＋締切前オッズ判定</small></div></div><p class="muted">帯別の仮想100円均等検証は研究値で、実購入や正式な回収率の証明ではありません。</p></div>
+<div class="panel"><h2 style="margin-top:0">各レースの固定予想と結果</h2><div class="tablewrap"><table><thead><tr><th>レース</th><th>確定3連単</th><th>頭</th><th>Top3</th><th>Top5</th><th>Top10</th><th>10〜20倍</th></tr></thead><tbody id="races"><tr><td colspan="7">読み込み中</td></tr></tbody></table></div></div>
+<div class="panel"><h2 style="margin-top:0">登録できない主な理由</h2><p id="state" class="muted">―</p></div><p class="disclaimer">精度改善は未証明。少なくとも100R以上の確定未見検証と比較モデルの同一条件対照が揃うまで、本番モデルを変更・昇格しません。正式Freshの結果解除・採点とは完全に別管理です。仮想/実購入は行いません。</p><p class="muted" id="updated">―</p></main>
+<script>
+'use strict';
+const e=id=>document.getElementById(id);
+const pct=(n,den)=>den>0?(100*n/den).toFixed(1)+'%':'未評価';
+const yn=v=>v?'○':'×';
+function show(data){
+ const n=Number(data.settled_verified_races||0);
+ e('settled').textContent=String(n);e('head').textContent=pct(data.head_hit,n);e('headsub').textContent=(data.head_hit||0)+'/'+n+'R';
+ for(const id of ['top3','top5','top10'])e(id).textContent=pct(data[id+'_hit'],n);
+ e('bandr').textContent=String(data.band_10_20x_eligible_races||0);e('bandhit').textContent=String(data.band_10_20x_hit||0);
+ const rows=data.recent||[];
+ e('races').replaceChildren(...(rows.length?rows.map(r=>{
+  const tr=document.createElement('tr');const a=[r.venue+' '+r.race_key.slice(-2)+'R',r.winning_combo,yn(r.head_hit),yn(r.top3_hit),yn(r.top5_hit),yn(r.top10_hit),yn(r.band_hit)];
+  for(let i=0;i<a.length;i++){const td=document.createElement('td');td.textContent=a[i];if(i>1)td.className=(a[i]==='○'?'yes':'no');tr.append(td)}return tr
+ }):[(()=>{const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='確定・監査済みレースはまだありません';tr.append(td);return tr})()]));
+ e('state').textContent=Object.entries(data.scoring_exclusions_this_run||{}).map(([k,v])=>k+': '+v+'R').join('\n')||'現時点の保留理由なし';
+ e('updated').textContent='更新: '+new Date(data.checked_at).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
+}
+async function update(){try{let r=await fetch('./data/site_autopilot/v234_current.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(data.schema!=='BOAT_EDGE_V234_SITE_ONLY_ACCURACY_SUMMARY_V1')throw Error('監査データ不一致');show(data)}catch(err){e('state').textContent='未公開または更新中: '+String(err.message)}}
+e('refresh').addEventListener('click',update);update();
+</script></body></html>
