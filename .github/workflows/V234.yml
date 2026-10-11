@@ -1,0 +1,209 @@
+name: BOAT EDGE V234 - Conflict-safe Prospective Freeze and Official Result Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/V234.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: boat-edge-v234-conflict-safe-source-and-scoring
+  cancel-in-progress: false
+jobs:
+  freeze-then-score-site-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Fetch full-depth main for actual Git pre-result commit-time attestation
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Prepare existing pre-result source parser dependencies
+        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Install byte-identical scorer and run 35 independent tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_V234_INSTALL'
+          from pathlib import Path
+          import json,base64,gzip,hashlib,ast
+          resources=json.loads(r'{"accuracy.html": {"gzip_b64": "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", "sha256": "7c171d36a26d9ae1508bf9d6794700cd20e7f572911ca5cc9710beea5a2cb985"}, "scripts/boat_edge_v234_settle.py": {"gzip_b64": "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", "sha256": "f993c55be5cef399c16bc12b3607670fb9af68b793aa933e4526bc546c3d5a0b"}, "tests/test_boat_edge_v234_settle.py": {"gzip_b64": "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", "sha256": "19bcb16c34b6cdb42d8fb090e3ede5b5d147c937b74729df4ed77ad28115967c"}}')
+          for name,payload in resources.items():
+              b=gzip.decompress(base64.b64decode(payload['gzip_b64']))
+              if hashlib.sha256(b).hexdigest()!=payload['sha256']:raise SystemExit('V234_EMBEDDED_SHA_MISMATCH_'+name)
+              file=Path(name)
+              if file.exists():
+                  if file.read_bytes()!=b:raise SystemExit('V234_EXISTING_SOURCE_MISMATCH_'+name)
+              else:
+                  file.parent.mkdir(parents=True,exist_ok=True)
+                  file.write_bytes(b)
+              if name.endswith('.py'):ast.parse(b.decode('utf-8'))
+          print('V234_SOURCE_HTML_AND_TEST_BYTES_PASS',len(resources))
+          PY_V234_INSTALL
+          for spec in \
+            'scripts/boat_edge_v230_fast_lane.py:2d2ca54b12b0c6c3930ac28c8c9a7d8fc62f56a8' \
+            'scripts/boat_edge_v232_pre_result_cohort.py:06b08bf3f18163a744e50f4ccaff66d9480f66e6' \
+            'scripts/boat_edge_v215_readiness.py:01da1001eeb628b6733af4d62fb089b002a370c1' \
+            'scripts/boat_edge_v214_shadow.py:2fafe6932383c0ace68d82d3cc2591591b6affdb' \
+            'scripts/boat_edge_v229_atomic_freeze.py:3112e04bee01477c70f952d44aaccb77a836d862'; do
+            path="${spec%:*}"; sha="${spec##*:}"
+            test -f "$path" && test "$(git hash-object "$path")" = "$sha" || { echo "V234_PRE_RESULT_DEPENDENCY_CHANGED_$path"; exit 1; }
+          done
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v232_pre_result_cohort.py' -v
+          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v234_settle.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v234_settle.py
+          echo V234_THIRTY_FIVE_PROSPECTIVE_AND_SETTLEMENT_REGRESSIONS_PASS
+      - name: Immutable pre-result source prediction cohort with conflict re-execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          source_success=false
+          for attempt in 1 2 3 4 5; do
+            # Discard ALL unpushed projections, then regenerate using the current exact sources.
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            # Remove only untracked local projections from a failed push. Otherwise a
+            # stale uncommitted pre-result proof could leak into the next attempt.
+            git clean -fd -- data/site_prediction_snapshots/ data/site_prediction_audit/     data/site_autopilot/v229_evidence/ data/site_autopilot/v232_cohort/     data/raw/ data/races/ data/site_odds/ data/site_scratches_v182/
+            echo "V234_PRE_RESULT_SOURCE_RESTART_ATTEMPT_${attempt}"
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v232_pre_result_cohort.py
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v215_readiness.py
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v214_shadow.py freeze
+            python3 - <<'PY_V234_STAGE'
+          from pathlib import Path
+          import json,subprocess,re
+          root=Path('.')
+          status=json.loads((root/'data/site_autopilot/v230_fast_current.json').read_text())
+          cohort=json.loads((root/'data/site_autopilot/v232_current.json').read_text())
+          assert status['schema']=='BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1'
+          assert cohort['schema']=='BOAT_EDGE_V232_SITE_PROSPECTIVE_COHORT_SUMMARY_V1'
+          assert cohort['accuracy_improvement_proven'] is False and cohort['real_or_paper_wagers_placed']==0
+          paths=['data/site_autopilot/v230_fast_current.json',
+           'data/site_autopilot/v232_current.json','data/site_autopilot/v232_cohort',
+           'data/site_paper_sim/readiness_v215_current.json','data/site_paper_sim/readiness_history_v215',
+           'data/site_paper_sim/shadow_v213_current.json','data/site_paper_sim/shadow_v213_ledger.json',
+           'data/site_prediction_snapshots','data/site_prediction_audit','data/site_autopilot/v229_evidence']
+          keys=status['targets']
+          if len(keys)>12:raise SystemExit('V234_MORE_THAN_12_OFFICIAL_TARGETS')
+          for key in keys:
+            if not re.fullmatch(r'20\d{6}-\d{2}-\d{2}',key):raise SystemExit('V234_BAD_RACE_KEY_'+key)
+            date,venue,rr=key.split('-')
+            paths.extend([f'data/races/{key}.json',f'data/site_scratches_v182/{key}.json',f'data/site_odds/{key}.json',
+               f'data/raw/{date}/{venue}_{rr}_racelist.html',f'data/raw/{date}/{venue}_{rr}_beforeinfo.html',
+               f'data/raw/{date}/{venue}_{rr}_odds3t.html.gz'])
+          for p in paths:
+            if (root/p).exists():subprocess.check_call(['git','add','-A','--',p])
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          base={'data/site_autopilot/v230_fast_current.json','data/site_autopilot/v232_current.json',
+           'data/site_paper_sim/readiness_v215_current.json','data/site_paper_sim/shadow_v213_current.json',
+           'data/site_paper_sim/shadow_v213_ledger.json'}
+          fixed=set()
+          for key in keys:
+           date,venue,rr=key.split('-')
+           fixed.update([f'data/races/{key}.json',f'data/site_scratches_v182/{key}.json',f'data/site_odds/{key}.json',
+             f'data/raw/{date}/{venue}_{rr}_racelist.html',f'data/raw/{date}/{venue}_{rr}_beforeinfo.html',
+             f'data/raw/{date}/{venue}_{rr}_odds3t.html.gz'])
+          for path in staged:
+           if path in base or path in fixed:continue
+           if re.fullmatch(r'data/site_autopilot/v232_cohort/20\d{6}-\d{2}-\d{2}\.json',path):continue
+           if re.fullmatch(r'data/site_paper_sim/readiness_history_v215/20\d{6}\.json',path):continue
+           if path.startswith('data/site_prediction_snapshots/') or path.startswith('data/site_prediction_audit/') or path.startswith('data/site_autopilot/v229_evidence/'):
+             continue
+           raise SystemExit('V234_UNEXPECTED_SOURCE_STAGED_'+path)
+          print('V234_SITE_PRE_RESULT_PUBLISH_SET',json.dumps({'files':len(staged),'new_prediction_audited':status['new_snapshots_atomic_audited'],
+            'cohort_total_today':cohort['frozen_research_races_today'],'new_cohort':cohort['new_research_races_this_run']},sort_keys=True))
+          PY_V234_STAGE
+            git diff --cached --check -- . ':(exclude)data/raw'
+            if git diff --cached --quiet; then echo V234_NO_NEW_PRE_RESULT_NOT_BACKFILLED; source_success=true; break; fi
+            git commit -m 'V234 exact-source prospective prediction and independent accuracy freeze'
+            if git push origin HEAD:main; then
+              echo V234_SITE_PRE_RESULT_ATOMIC_PUBLISHED
+              counts=$(python3 - <<'PY_V234_TAKEOVER'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('data/site_autopilot/v230_fast_current.json').read_text())
+          c=json.loads(Path('data/site_autopilot/v232_current.json').read_text())
+          print(int(s['new_snapshots_atomic_audited']),int(c['new_research_races_this_run']))
+          PY_V234_TAKEOVER
+              )
+              read -r snaps cohorts <<< "$counts"
+              if (( snaps>0 && cohorts>0 )); then
+                echo 'V234_TAKEOVER_VERIFIED=1' >> "$GITHUB_ENV"
+                echo 'V234_END_TO_END_SITE_PRE_RESULT_COHORT_VERIFIED'
+              fi
+              source_success=true; break
+            fi
+            # NEVER rebase conflicting race/snapshot files. A new attempt must be prospective.
+            echo "V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS_AND_RECHECK_NOW_$attempt"
+          done
+          if test "$source_success" != true; then echo V234_PRE_RESULT_SOURCE_PUBLISH_UNCONFIRMED; exit 1; fi
+      - name: Only after pre-result commit - score already confirmed SITE results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          scoring_success=false
+          for attempt in 1 2 3 4 5; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_autopilot/v234_scored/
+            # The scoring step alone opens confirmed site_results. Pre-result phase is finished.
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v234_settle.py
+            python3 - <<'PY_V234_STAGE_SCORE'
+          from pathlib import Path
+          import subprocess,re,json
+          root=Path('.')
+          status=json.loads((root/'data/site_autopilot/v234_current.json').read_text())
+          assert status['schema']=='BOAT_EDGE_V234_SITE_ONLY_ACCURACY_SUMMARY_V1'
+          assert status['production_accuracy_improvement_proven'] is False
+          assert status['real_or_paper_wagers_placed']==0
+          paths=['scripts/boat_edge_v234_settle.py','tests/test_boat_edge_v234_settle.py','accuracy.html',
+            'data/site_autopilot/v234_current.json','data/site_autopilot/v234_scored']
+          for p in paths:
+           if (root/p).exists():subprocess.check_call(['git','add','-A','--',p])
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          allowed=set(paths[:4])
+          for f in staged:
+           if f in allowed or re.fullmatch(r'data/site_autopilot/v234_scored/20\d{6}-\d{2}-\d{2}\.json',f):continue
+           raise SystemExit('V234_BAD_SCORE_STAGED_PATH_'+f)
+          print('V234_SCORE_ONLY_STAGING',len(staged))
+          PY_V234_STAGE_SCORE
+            git diff --cached --check
+            if git diff --cached --quiet; then echo V234_NO_NEW_VERIFIED_SETTLEMENT; scoring_success=true; break; fi
+            git commit -m 'V234 score confirmed post-result site-only frozen cohorts with Git timestamp audit'
+            if git push origin HEAD:main; then echo V234_OFFICIAL_SITE_RESULT_SCORE_PUBLISHED; scoring_success=true; break; fi
+            echo "V234_SCORE_CONFLICT_RECHECK_FROM_CURRENT_GIT_$attempt"
+          done
+          if test "$scoring_success" != true; then echo V234_RESULT_SCORE_PUBLISH_UNCONFIRMED; exit 1; fi
+      - name: Disable duplicate source schedulers only with replacement coverage
+        if: success() && github.event_name != 'schedule'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Keep distinct V228 monitoring and V229 audits until their unique work is migrated.
+          # Disable only V233, whose pre-result functionality is replaced by V234.
+          if [[ "${V234_TAKEOVER_VERIFIED:-0}" != '1' ]]; then
+            echo 'V234_LEGACY_RETAINED_UNTIL_THIS_RUN_PUBLISHED_A_NEW_PRE_RESULT_COHORT'
+            exit 0
+          fi
+          for target in 'V233.yml'; do
+           if ! state=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}" --jq '.state' 2>/dev/null); then
+             echo "V234_LEGACY_STATE_UNAVAILABLE_${target}"; continue
+           fi
+           if [[ "$state" == active ]]; then
+             gh api --method PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/disable" >/dev/null &&
+                echo "V234_OLD_SCHEDULER_DISABLED_${target}" || echo "V234_CANNOT_DISABLE_${target}"
+           fi
+          done
