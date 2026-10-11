@@ -19,9 +19,9 @@ The agent must change only one checkbox after implementing and checking that tas
 - [x] A11 | Make the existing BOAT EDGE header and manual refresh affordance consistent and keyboard/mobile accessible across current site pages, preserving selected race and never dispatching data collection from the browser.
 - [x] A12 | In the current paper-only simulator UI, make the saved ledger date and unverified/stale state prominent; if current-day evidence is missing, do not label past figures as today's balance or claim returns.
 
-- [ ] A13 | Clarify the timestamp and source (including stale/unverified) attached to odds shown in the existing race UI after user-initiated reload. Never imply that pressing refresh collects new odds or replace frozen tickets.
-- [ ] A14 | Reduce redundant mobile controls and make the top-home, selected race, and user-initiated refresh elements consistent in existing site HTML/CSS/JS. Keep selected race and navigation state intact.
-- [ ] A15 | On the saved paper-only simulation page, distinguish pending, settled and no-bet states with provenance-backed labels; do not backfill historical wagers, profits, winning tickets, or actual spending.
-- [ ] A16 | Explain existing Top3/Top5/Top10 forecasts and head-versus-trifecta confidence separately using only measured values already shown in existing prediction UI. Never claim accuracy improvement without verified prospective comparison.
+- [x] A13 | Clarify the timestamp and source (including stale/unverified) attached to odds shown in the existing race UI after user-initiated reload. Never imply that pressing refresh collects new odds or replace frozen tickets.
+- [x] A14 | Reduce redundant mobile controls and make the top-home, selected race, and user-initiated refresh elements consistent in existing site HTML/CSS/JS. Keep selected race and navigation state intact.
+- [x] A15 | On the saved paper-only simulation page, distinguish pending, settled and no-bet states with provenance-backed labels; do not backfill historical wagers, profits, winning tickets, or actual spending.
+- [x] A16 | Explain existing Top3/Top5/Top10 forecasts and head-versus-trifecta confidence separately using only measured values already shown in existing prediction UI. Never claim accuracy improvement without verified prospective comparison.
 
 Do not append new tasks automatically. Stop once the queue is complete.
