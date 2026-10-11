@@ -1,90 +1,91 @@
 {
-  "checked_at": "2026-10-11T01:29:43.902306+00:00",
+  "checked_at": "2026-10-11T01:49:06.696078+00:00",
   "current_window": [
     {
-      "deadline": "10:34",
-      "minutes_left": 4.3,
-      "race_key": "20261011-18-05",
+      "deadline": "10:53",
+      "minutes_left": 3.9,
+      "race_key": "20261011-23-06",
+      "reason": "snapshot_audit_sha_failed",
+      "source_gaps": [],
+      "venue": "唐津"
+    },
+    {
+      "deadline": "10:57",
+      "minutes_left": 7.9,
+      "race_key": "20261011-09-02",
       "reason": "snapshot_missing",
       "source_gaps": [
-        "scratch_missing_or_blocked"
+        "beforeinfo_not_ok"
+      ],
+      "venue": "津"
+    },
+    {
+      "deadline": "10:59",
+      "minutes_left": 9.9,
+      "race_key": "20261011-06-01",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "beforeinfo_not_ok"
+      ],
+      "venue": "浜名湖"
+    },
+    {
+      "deadline": "11:04",
+      "minutes_left": 14.9,
+      "race_key": "20261011-18-06",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "beforeinfo_not_ok",
+        "scratch_stale"
       ],
       "venue": "徳山"
     }
   ],
   "day_jst": "20261011",
   "day_latest_reasons": {
-    "snapshot_missing": 9
+    "snapshot_audit_sha_failed": 1,
+    "snapshot_missing": 12
   },
-  "day_observed_races": 9,
+  "day_observed_races": 13,
   "day_verified_races": 0,
   "next_race": {
-    "deadline": "10:34",
-    "race_key": "20261011-18-05",
-    "venue": "徳山",
-    "watch_start": "10:19"
+    "deadline": "10:51",
+    "race_key": "20261011-16-01",
+    "venue": "児島",
+    "watch_start": "10:36"
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
-    "snapshot_missing": 1
+    "snapshot_audit_sha_failed": 1,
+    "snapshot_missing": 3
   },
   "schedule_source_today": true,
   "scheduled_races": 156,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 1,
-    "race_card_ok": 1,
-    "snapshot_exists": 0
+    "beforeinfo_ok": 2,
+    "race_card_ok": 5,
+    "snapshot_exists": 1
   },
   "upcoming": [
     {
       "beforeinfo_status": "ok",
-      "deadline": "10:34",
-      "race_card_status": "ok",
-      "race_key": "20261011-18-05",
-      "scratch_status": "blocked",
-      "snapshot_exists": false,
-      "venue": "徳山",
-      "watch_start": "10:19"
-    },
-    {
-      "beforeinfo_status": "published_wait",
-      "deadline": "10:45",
-      "race_card_status": "ok",
-      "race_key": "20261011-08-02",
-      "scratch_status": "uncertified",
-      "snapshot_exists": false,
-      "venue": "常滑",
-      "watch_start": "10:30"
-    },
-    {
-      "beforeinfo_status": "published_wait",
-      "deadline": "10:47",
-      "race_card_status": "ok",
-      "race_key": "20261011-02-01",
-      "scratch_status": "uncertified",
-      "snapshot_exists": false,
-      "venue": "戸田",
-      "watch_start": "10:32"
-    },
-    {
-      "beforeinfo_status": "published_wait",
       "deadline": "10:51",
       "race_card_status": "ok",
       "race_key": "20261011-16-01",
-      "scratch_status": "uncertified",
+      "scratch_status": "blocked",
       "snapshot_exists": false,
       "venue": "児島",
       "watch_start": "10:36"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "10:53",
       "race_card_status": "ok",
       "race_key": "20261011-23-06",
       "scratch_status": "uncertified",
-      "snapshot_exists": false,
+      "snapshot_exists": true,
       "venue": "唐津",
       "watch_start": "10:38"
     },
@@ -117,7 +118,37 @@
       "snapshot_exists": false,
       "venue": "徳山",
       "watch_start": "10:49"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "11:07",
+      "race_card_status": "ok",
+      "race_key": "20261011-22-01",
+      "scratch_status": "uncertified",
+      "snapshot_exists": false,
+      "venue": "福岡",
+      "watch_start": "10:52"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "11:12",
+      "race_card_status": "ok",
+      "race_key": "20261011-08-03",
+      "scratch_status": "uncertified",
+      "snapshot_exists": false,
+      "venue": "常滑",
+      "watch_start": "10:57"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "11:14",
+      "race_card_status": "ok",
+      "race_key": "20261011-03-01",
+      "scratch_status": "uncertified",
+      "snapshot_exists": false,
+      "venue": "江戸川",
+      "watch_start": "10:59"
     }
   ],
-  "window_races": 1
+  "window_races": 4
 }
