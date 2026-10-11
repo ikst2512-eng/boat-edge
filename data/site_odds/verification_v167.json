@@ -1,0 +1,33 @@
+{
+  "schema_version": "boat-edge-official-odds-dom-parity-v167",
+  "date_jst": "2026-10-11",
+  "result_payout_combined_apis_accessed": false,
+  "formal_2026_10_08_unchanged": true,
+  "model_weights_changed": false,
+  "purpose": "check live official 3連単 DOM labels + numeric order before collector promotion",
+  "required_independent_races": 2,
+  "samples": [
+    {
+      "race_key": "20261011-03-07",
+      "venue": "03",
+      "official_odds_url": "https://www.boatrace.jp/owpc/pc/race/odds3t?hd=20261011&jcd=03&rno=7",
+      "status": "PASS",
+      "checked": 120,
+      "available": 120,
+      "layout": "20 rows x 6 first-lane columns, explicit boat labels",
+      "values_not_compared_across_time": true
+    },
+    {
+      "race_key": "20261011-09-08",
+      "venue": "09",
+      "official_odds_url": "https://www.boatrace.jp/owpc/pc/race/odds3t?hd=20261011&jcd=09&rno=8",
+      "status": "PASS",
+      "checked": 120,
+      "available": 120,
+      "layout": "20 rows x 6 first-lane columns, explicit boat labels",
+      "values_not_compared_across_time": true
+    }
+  ],
+  "status": "TWO_LIVE_RACES_120_PARITY_PASS",
+  "collector_guard_promoted": true
+}
