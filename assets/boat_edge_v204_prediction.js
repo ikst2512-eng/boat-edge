@@ -58,11 +58,25 @@ function flowStages(){
   {title:'④ 展開の結論',value:textOf('.flow-conclusion .v',parent)||'展開結論の取得待ち'}
  ];
 }
+/* V248 A16: Top3/5/10 are ordered ticket prefixes, not event probabilities. */
+function topKExplanation(rows){
+ const tickets=(Array.isArray(rows)?rows:[]).map(r=>{
+  const raw=textOf('b',r),match=raw.match(/(?:^|[^0-9])([1-6]-[1-6]-[1-6])(?:$|[^0-9])/);
+  if(!match)return null;
+  const combo=match[1],lanes=combo.split('-');
+  return new Set(lanes).size===3?combo:null;
+ });
+ const verified=tickets.length&&tickets.every(Boolean)&&new Set(tickets).size===tickets.length;
+ const cover=n=>verified&&tickets.length>=n?('上位'+n+'点 '+tickets.slice(0,n).join(' / ')):'保存済み順位の確認待ち';
+ return {head:verified?tickets[0][0]+'号艇（Top1買い目の1着）':'未確認（頭予想と別）',
+  top3:cover(3),top5:cover(5),top10:cover(10),
+  caution:'頭の的中確率：未校正 ／ 3連単の的中確率：未校正。Top3/5/10は買い目順位で、的中率や配当の保証ではありません。'};
+}
 function mount(p){
  let top=one('#be204Overview',p);
  if(!top){
    top=document.createElement('section');top.id='be204Overview';top.className='be204-overview';
-   top.innerHTML='<div class="be204-kicker">BOAT EDGE / 展開から買い目まで</div><div class="be244-freeze-chip" role="status"><strong data-be244="freeze"></strong><span data-be244="freeze-detail"></span></div><div class="be204-intro"><strong class="be204-scenario"></strong><button type="button" data-be204-tab="scenario">展開を詳しく見る →</button></div><p class="be204-narrative"></p><div class="be247-flow" aria-label="既存の展開図から読み取った4段階"><div class="be247-flow-grid"></div><small>図で色が強調された艇と、保存済みの展開説明だけを転記。実際の着順や的中を保証するものではありません。</small></div><div class="be204-path"><span>① 展開を確認</span><span>② 予想スタイルを選ぶ</span><span>③ 配分・オッズ・想定払戻</span></div><div class="be204-timing"></div>';
+   top.innerHTML='<div class="be204-kicker">BOAT EDGE / 展開から買い目まで</div><div class="be244-freeze-chip" role="status"><strong data-be244="freeze"></strong><span data-be244="freeze-detail"></span></div><div class="be204-intro"><strong class="be204-scenario"></strong><button type="button" data-be204-tab="scenario">展開を詳しく見る →</button></div><p class="be204-narrative"></p><div class="be247-flow" aria-label="既存の展開図から読み取った4段階"><div class="be247-flow-grid"></div><small>図で色が強調された艇と、保存済みの展開説明だけを転記。実際の着順や的中を保証するものではありません。</small></div><div class="be248-tops" role="group" aria-label="予測順位と頭予想を分けて確認"><strong>3連単の上位候補（確率・的中率とは別）</strong><div class="be248-tops-grid"><span data-be248="top3"></span><span data-be248="top5"></span><span data-be248="top10"></span></div><p><b>Top1買い目の1着：</b><span data-be248="head"></span></p><small data-be248="caution"></small></div><div class="be204-path"><span>① 展開を確認</span><span>② 予想スタイルを選ぶ</span><span>③ 配分・オッズ・想定払戻</span></div><div class="be204-timing"></div>';
    const anchor=one('.be108-mode-tabs',p)||one('.be108-mode-card',p);
    if(anchor)p.insertBefore(top,anchor);else p.appendChild(top);
  }
@@ -121,8 +135,9 @@ function sync(){
  const changed=freeze.detail;
  const stamp=asJst(race?.meta?.updated_at);
  const flow=flowStages();
+ const ranking=topKExplanation(s.rows);
  const signature=JSON.stringify([race.race_key,stage,stageNote,formal,source,changed,stamp,s.rows.length,
-   s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,flow.map(x=>x.value),textOf('.be140-budget-notice',p)]);
+   s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,flow.map(x=>x.value),ranking,textOf('.be140-budget-notice',p)]);
  if(signature===lastSignature&&one('#be204Overview',p)&&one('#be204Budget',p)&&
     s.rows.every(r=>s.settled?!one('.be204-ticket-finance',r):!s.fresh?Boolean(one('.be204-unverified',r)):parsePayout(textOf('.be140-ticket-money',r))===null||Boolean(one('.be204-ticket-finance',r))))return;
  drawing=true;
@@ -134,6 +149,8 @@ function sync(){
   set(one('[data-be244="freeze-detail"]',top),freeze.detail||'保存時刻・証跡は未確認');
   set(one('.be204-scenario',top),stage);
   set(one('.be204-narrative',top),(formal?'正式CURRENT接続：':'サイト参考の展開：')+stageNote);
+  for(const key of ['top3','top5','top10','head','caution'])
+    set(one('[data-be248="'+key+'"]',top),ranking[key]);
   const flowGrid=one('.be247-flow-grid',top);
   if(flowGrid&&flowGrid.children.length!==flow.length){
    flowGrid.replaceChildren();
@@ -171,6 +188,6 @@ function init(){
  sync();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
 }
-window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence,flowStages};
+window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence,flowStages,topKExplanation};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
