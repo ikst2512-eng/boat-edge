@@ -38,11 +38,31 @@ function summarize(p){
  const mid=prices.filter(x=>x!==null&&x>=10&&x<=20).length;
  return {rows,settled,total,confirmed,mid,fresh,odds:oddsNode?.textContent?.trim()||'公式3連単オッズ：取得状態未確認'};
 }
+/* V247 A09: reuse only notes already highlighted in the EXISTING scenario diagram. */
+function flowStages(){
+ const parent=one('#scenarioFlow');
+ const steps=parent?[...parent.querySelectorAll('.flow-step')]:[];
+ const focus=step=>{
+  if(!step)return '展開図の取得待ち';
+  const emphasized=[...step.querySelectorAll('.flow-boat.attack,.flow-boat.hot')];
+  const items=emphasized.map(b=>{
+   const lane=textOf('.n',b),name=textOf('.r',b),role=textOf('.a',b);
+   return [lane?/^[1-6]$/.test(lane)?lane+'号艇':lane:'',name,role].filter(Boolean).join('・');
+  }).filter(Boolean);
+  return items.length?'図の注目艇：'+items.join(' ／ '):'展開図に注目艇の記載なし';
+ };
+ return [
+  {title:'① スタート',value:focus(steps[0])},
+  {title:'② 1マークの攻め',value:focus(steps[1])},
+  {title:'③ 抜け出し・受益',value:focus(steps[2])},
+  {title:'④ 展開の結論',value:textOf('.flow-conclusion .v',parent)||'展開結論の取得待ち'}
+ ];
+}
 function mount(p){
  let top=one('#be204Overview',p);
  if(!top){
    top=document.createElement('section');top.id='be204Overview';top.className='be204-overview';
-   top.innerHTML='<div class="be204-kicker">BOAT EDGE / 展開から買い目まで</div><div class="be244-freeze-chip" role="status"><strong data-be244="freeze"></strong><span data-be244="freeze-detail"></span></div><div class="be204-intro"><strong class="be204-scenario"></strong><button type="button" data-be204-tab="scenario">展開を詳しく見る →</button></div><p class="be204-narrative"></p><div class="be204-path"><span>① 展開を確認</span><span>② 予想スタイルを選ぶ</span><span>③ 配分・オッズ・想定払戻</span></div><div class="be204-timing"></div>';
+   top.innerHTML='<div class="be204-kicker">BOAT EDGE / 展開から買い目まで</div><div class="be244-freeze-chip" role="status"><strong data-be244="freeze"></strong><span data-be244="freeze-detail"></span></div><div class="be204-intro"><strong class="be204-scenario"></strong><button type="button" data-be204-tab="scenario">展開を詳しく見る →</button></div><p class="be204-narrative"></p><div class="be247-flow" aria-label="既存の展開図から読み取った4段階"><div class="be247-flow-grid"></div><small>図で色が強調された艇と、保存済みの展開説明だけを転記。実際の着順や的中を保証するものではありません。</small></div><div class="be204-path"><span>① 展開を確認</span><span>② 予想スタイルを選ぶ</span><span>③ 配分・オッズ・想定払戻</span></div><div class="be204-timing"></div>';
    const anchor=one('.be108-mode-tabs',p)||one('.be108-mode-card',p);
    if(anchor)p.insertBefore(top,anchor);else p.appendChild(top);
  }
@@ -100,8 +120,9 @@ function sync(){
  const freeze=freezeEvidence(p);
  const changed=freeze.detail;
  const stamp=asJst(race?.meta?.updated_at);
+ const flow=flowStages();
  const signature=JSON.stringify([race.race_key,stage,stageNote,formal,source,changed,stamp,s.rows.length,
-   s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,textOf('.be140-budget-notice',p)]);
+   s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,flow.map(x=>x.value),textOf('.be140-budget-notice',p)]);
  if(signature===lastSignature&&one('#be204Overview',p)&&one('#be204Budget',p)&&
     s.rows.every(r=>s.settled?!one('.be204-ticket-finance',r):!s.fresh?Boolean(one('.be204-unverified',r)):parsePayout(textOf('.be140-ticket-money',r))===null||Boolean(one('.be204-ticket-finance',r))))return;
  drawing=true;
@@ -113,6 +134,16 @@ function sync(){
   set(one('[data-be244="freeze-detail"]',top),freeze.detail||'保存時刻・証跡は未確認');
   set(one('.be204-scenario',top),stage);
   set(one('.be204-narrative',top),(formal?'正式CURRENT接続：':'サイト参考の展開：')+stageNote);
+  const flowGrid=one('.be247-flow-grid',top);
+  if(flowGrid&&flowGrid.children.length!==flow.length){
+   flowGrid.replaceChildren();
+   for(let i=0;i<flow.length;i++){
+    const item=document.createElement('div'),strong=document.createElement('strong'),description=document.createElement('span');
+    item.className='be247-flow-item';strong.textContent=flow[i].title;
+    description.dataset.be247Stage=String(i);item.append(strong,description);flowGrid.append(item);
+   }
+  }
+  flow.forEach((x,i)=>set(one('[data-be247-stage="'+i+'"]',flowGrid),x.value));
   set(one('.be204-timing',top),'レースデータ更新 '+stamp+' JST（買い目の保存時刻とは別）');
   set(one('[data-be204="count"]',bottom),s.rows.length+'点');
   set(one('[data-be204="total"]',bottom),s.settled?'当時の保存配分を個別表示':s.total===null?'配分確認待ち':yen(s.total));
@@ -140,6 +171,6 @@ function init(){
  sync();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
 }
-window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence};
+window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence,flowStages};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
