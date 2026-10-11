@@ -27,5 +27,21 @@ html.be203-active #be202Essential>.be202-source-note{display:none}
 .be203-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 5px}.be203-actions button{flex:1;border:1px solid #d1e0ee;border-radius:8px;background:#f4f8fd;color:#24527e;padding:10px 8px;min-height:40px;font-weight:800;font-size:11px;cursor:pointer}
 .be203-actions button:focus-visible{outline:2px solid #357bbd;outline-offset:2px}
 .be203-help{border-top:1px solid #e8eef3;padding-top:9px;margin-top:8px;color:#657d94;font-size:10px;line-height:1.65}
-@media(max-width:520px){.be203-cards{grid-template-columns:1fr;gap:7px}.be203-card{padding:10px 12px}.be203-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.be203-metrics small{font-size:8px}.be203-metrics b{font-size:12px}.be203-heading strong{font-size:13px}}
-@media(max-width:340px){.be203-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.be203-metrics small{font-size:9px}}
+/* V243: readable iPhone racer metrics; retain all six boats, labels, source badges and taps. */
+@media(max-width:520px){
+ .be203-cards{grid-template-columns:minmax(0,1fr);gap:9px}
+ .be203-card{padding:12px 13px}
+ .be203-heading strong{font-size:14px;line-height:1.45}
+ .be203-name b{font-size:14px;line-height:1.4}
+ .be203-name small{font-size:11px;line-height:1.4}
+ .be203-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px}
+ .be203-metrics small{font-size:10px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+ .be203-metrics b{font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+ .be203-statmini,.be203-stats span{font-size:11px;line-height:1.55}
+ .be203-actions button{min-height:44px;font-size:12px}
+ .be203-help{font-size:11px;line-height:1.7}
+}
+@media(max-width:340px){
+ .be203-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .be203-metrics small{font-size:10px}
+}

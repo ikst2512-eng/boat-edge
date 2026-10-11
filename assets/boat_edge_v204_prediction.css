@@ -46,11 +46,16 @@
  .be204-budget-grid>div:last-child{grid-column:1/-1}
  .be204-budget-grid b{font-size:14px}
  #be108PredictionModes .be108-mode-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
- #be108PredictionModes .be108-ticket{grid-template-columns:21px minmax(60px,1fr) 45px 63px;gap:5px 6px;padding:10px 8px}
- #be108PredictionModes .be108-ticket>b{font-size:17px}
- #be108PredictionModes .be108-ticket>small{font-size:11px}
- .be204-ticket-finance{gap:5px}
- .be204-ticket-finance b{font-size:12px}
+ /* V243: maintain every prediction row and payout, but stop squeezing the labels on iPhone. */
+ #be108PredictionModes .be108-ticket{grid-template-columns:23px minmax(65px,1fr) minmax(44px,auto) minmax(58px,auto);gap:7px 6px;padding:11px 10px}
+ #be108PredictionModes .be108-ticket>b{font-size:18px;overflow-wrap:anywhere}
+ #be108PredictionModes .be108-ticket>em{font-size:12px;overflow-wrap:anywhere}
+ #be108PredictionModes .be108-ticket>small{font-size:12px;overflow-wrap:anywhere}
+ #be108PredictionModes .be108-mode-top>div:first-child span{font-size:12px}
+ .be204-ticket-finance{gap:7px}
+ .be204-ticket-finance b{font-size:13px;line-height:1.45}
+ #be108PredictionModes .be204-unverified{font-size:12px;line-height:1.6}
+ .be204-oddsstamp,.be204-freeze{font-size:12px;line-height:1.6}
 }
 @media(max-width:340px){.be204-ticket-finance{grid-template-columns:1fr}.be204-budget-grid{grid-template-columns:1fr}.be204-budget-grid>div:last-child{grid-column:auto}}
 
