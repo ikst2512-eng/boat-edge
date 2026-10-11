@@ -2,6 +2,14 @@
 #be204Overview,#be204Budget{box-sizing:border-box;min-width:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
 .be204-overview{margin:11px 0;padding:13px 14px;border:1px solid #d5e2ee;border-radius:13px;background:linear-gradient(135deg,#f4f9ff,#fff);color:#163654}
 .be204-kicker{font-size:10px;font-weight:900;letter-spacing:.06em;color:#326aab;margin-bottom:8px}
+/* V244 A04: source-derived freeze state, no claim of verified time without banner evidence. */
+.be244-freeze-chip{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 0 10px;padding:10px 12px;background:#f5f7fa;border:1px solid #b9cbe0;border-radius:9px;color:#284b6b;font-size:12px;line-height:1.5}
+.be244-freeze-chip strong{font-size:13px}
+.be244-freeze-chip span{overflow-wrap:anywhere}
+.be244-freeze-chip[data-freeze="final"],.be244-freeze-chip[data-freeze="first"]{background:#ebf8f1;border-color:#a4d9bc;color:#12543c}
+.be244-freeze-chip[data-freeze="latest"]{background:#fff7e8;border-color:#eed09a;color:#825b21}
+.be244-freeze-chip[data-freeze="unavailable"],.be244-freeze-chip[data-freeze="unknown"]{background:#fff4f1;border-color:#e3b7ae;color:#894d3e}
+
 .be204-intro{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .be204-intro strong{font-size:17px;line-height:1.4;overflow-wrap:anywhere}
 .be204-intro button{flex-shrink:0;font-size:11px;font-weight:900;color:#145ca6;background:#fff;border:1px solid #bcd4ea;border-radius:9px;padding:9px 11px;min-height:40px}

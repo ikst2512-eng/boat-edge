@@ -11,6 +11,14 @@ const parseStake=s=>{const m=String(s||'').match(/現在の参考配分\s*([\d,]
 const parsePayout=s=>{const m=String(s||'').match(/的中時想定払戻\s*([\d,]+)円/);return m?digits(m[1]):null;};
 const readRace=()=>{try{return typeof state==='undefined'?null:state?.race||null;}catch(_){return null;}};
 const asJst=ts=>{const d=ts?new Date(ts):null;return d&&Number.isFinite(d.getTime())?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):'未確認';};
+/* V244 A04: only the existing freeze banner can establish a stored FIRST/FINAL state. */
+function freezeEvidence(p){
+ const banner=one('.be181-freeze-banner',p),kind=banner?.dataset?.be181Source;
+ const types={first:'FIRST｜初回保存',final:'FINAL｜締切前保存',latest:'LATEST｜変動する参考予想',unavailable:'保存なし｜買い目を確認できません'};
+ const label=Object.prototype.hasOwnProperty.call(types,kind)?types[kind]:'保存状態未確認';
+ const detail=textOf('.be181-freeze-banner > small',p);
+ return {kind:kind||'unknown',label,detail,locked:kind==='first'||kind==='final'};
+}
 function sourceLabel(p){
  const kind=one('.be181-freeze-banner',p)?.dataset?.be181Source;
  return kind==='final'?'締切前に保存された買い目（固定）':
@@ -34,7 +42,7 @@ function mount(p){
  let top=one('#be204Overview',p);
  if(!top){
    top=document.createElement('section');top.id='be204Overview';top.className='be204-overview';
-   top.innerHTML='<div class="be204-kicker">BOAT EDGE V204 / 展開から買い目まで</div><div class="be204-intro"><strong class="be204-scenario"></strong><button type="button" data-be204-tab="scenario">展開を詳しく見る →</button></div><p class="be204-narrative"></p><div class="be204-path"><span>① 展開を確認</span><span>② 予想スタイルを選ぶ</span><span>③ 配分・オッズ・想定払戻</span></div><div class="be204-timing"></div>';
+   top.innerHTML='<div class="be204-kicker">BOAT EDGE / 展開から買い目まで</div><div class="be244-freeze-chip" role="status"><strong data-be244="freeze"></strong><span data-be244="freeze-detail"></span></div><div class="be204-intro"><strong class="be204-scenario"></strong><button type="button" data-be204-tab="scenario">展開を詳しく見る →</button></div><p class="be204-narrative"></p><div class="be204-path"><span>① 展開を確認</span><span>② 予想スタイルを選ぶ</span><span>③ 配分・オッズ・想定払戻</span></div><div class="be204-timing"></div>';
    const anchor=one('.be108-mode-tabs',p)||one('.be108-mode-card',p);
    if(anchor)p.insertBefore(top,anchor);else p.appendChild(top);
  }
@@ -89,7 +97,8 @@ function sync(){
  const stageNote=textOf('#scenarioHero .scenario-sub')||'展開の説明は未取得。取得済みデータだけを表示';
  const formal=Boolean(one('.be118-source.formal',p));
  const source=sourceLabel(p);
- const changed=textOf('.be181-freeze-banner > small',p);
+ const freeze=freezeEvidence(p);
+ const changed=freeze.detail;
  const stamp=asJst(race?.meta?.updated_at);
  const signature=JSON.stringify([race.race_key,stage,stageNote,formal,source,changed,stamp,s.rows.length,
    s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,textOf('.be140-budget-notice',p)]);
@@ -98,6 +107,10 @@ function sync(){
  drawing=true;
  try{
   const [top,bottom]=mount(p);if(!bottom)return;
+  const chip=one('.be244-freeze-chip',top);
+  if(chip)chip.dataset.freeze=freeze.kind;
+  set(one('[data-be244="freeze"]',top),freeze.label);
+  set(one('[data-be244="freeze-detail"]',top),freeze.detail||'保存時刻・証跡は未確認');
   set(one('.be204-scenario',top),stage);
   set(one('.be204-narrative',top),(formal?'正式CURRENT接続：':'サイト参考の展開：')+stageNote);
   set(one('.be204-timing',top),'レースデータ更新 '+stamp+' JST（買い目の保存時刻とは別）');
@@ -127,6 +140,6 @@ function init(){
  sync();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
 }
-window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel};
+window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
