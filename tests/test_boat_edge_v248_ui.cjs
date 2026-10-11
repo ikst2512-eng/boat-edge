@@ -32,7 +32,7 @@ const pending={state:'pending',decision_at:'2026-10-12T10:40:00+09:00',stake_yen
  tickets:[{combo:'1-2-3',paper_stake_yen:200},{combo:'1-3-2',paper_stake_yen:300}]};
 const settled={...pending,state:'settled',return_yen:1250};
 assert.strictEqual(p.verifiedBet(pending),true);
-assert.strictEqual(p.verifiedBet(settled),false); // non-100yen payout is not invalid: repaired below
+assert.strictEqual(p.verifiedBet(settled),true); // official-style payout need not be a 100-yen multiple
 assert.strictEqual(p.verifiedBet({...settled,return_yen:1300}),true);
 assert.strictEqual(p.verifiedBet({...pending,stake_yen:600}),false);
 assert.strictEqual(p.verifiedBet({...pending,tickets:[{combo:'1-1-2',paper_stake_yen:500}]}),false);
