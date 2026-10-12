@@ -25,6 +25,11 @@ RETIRED = (
     "site-v114.yml",
     "site-v120.yml",
     "site-v124.yml",
+    "site-v123.yml",
+    "site-v129.yml",
+    "site-v130.yml",
+    "site-v131.yml",
+    "site-v132.yml",
 )
 LIVE = "V235.yml"
 

@@ -1,0 +1,80 @@
+name: BOAT EDGE V307 - Unified UI Integration Readonly Regression
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/test_boat_edge_v*.cjs'
+      - '.github/workflows/v307-ui-integration-gate.yml'
+      - 'tests/test_boat_edge_v307_ui_ci.py'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/test_boat_edge_v*.cjs'
+      - '.github/workflows/v307-ui-integration-gate.yml'
+      - 'tests/test_boat_edge_v307_ui_ci.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v307-ui-only-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-ui-without-mutating-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Ensure V307 UI workflow cannot publish, access results, or change Fresh
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v307_ui_ci.py' -v
+      - name: Existing rendered UI safety and syntax regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v206_quickview.js
+          node --check assets/boat_edge_v249_focus.js
+          node --check assets/boat_edge_v207_first_prediction.js
+          node tests/test_boat_edge_v248_ui.cjs
+          node tests/test_boat_edge_v244_site.cjs
+          node tests/test_boat_edge_v247_ui.cjs
+      - name: Run each UI candidate's tests only when the candidate is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in \
+            tests/test_boat_edge_v297_nav.cjs \
+            tests/test_boat_edge_v298_matrix.cjs \
+            tests/test_boat_edge_v299_head_selector.cjs \
+            tests/test_boat_edge_v304_topk.cjs \
+            tests/test_boat_edge_v305_evidence.cjs \
+            tests/test_boat_edge_v306_race_switch.cjs; do
+            if [[ -f "$test" ]]; then
+              echo "CANDIDATE_TEST_PRESENT $test"
+              node "$test"
+            else
+              echo "CANDIDATE_TEST_NOT_YET_ON_BRANCH $test"
+            fi
+          done
+      - name: Formal Fresh must remain PRE_RESULT and untouched
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path("data/formal_status.json").read_text(encoding="utf-8"))
+          g=x.get("guards") or {}
+          assert all(g.get(k) is False for k in ("results_seen","unlock","scoring"))
+          assert g.get("RESULT_UNLOCK_TOKEN") is None
+          assert type((x.get("formalFirst100") or {}).get("races")) is int
+          assert x["formalFirst100"]["races"]==0
+          print("V307_FORMAL_FRESH_RESULT_UNSEEN_LOCK_PASS")
+          PY
+          git diff --exit-code -- . ':!data'
