@@ -59,7 +59,7 @@ def append_state(repo: Path, state_path: Path, attempt: int, now: datetime | Non
     today=(now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
     if attempt==1:
         history={"schema":SCHEMA,"initial_candidate_keys":sorted(current),
-                 "observations":[]}
+                 "seen_candidate_keys":sorted(current),"observations":[]}
     else:
         if not state_path.is_file():
             raise RuntimeError("V295_RETRY_WITHOUT_PRIOR_OBSERVATION")
@@ -67,24 +67,28 @@ def append_state(repo: Path, state_path: Path, attempt: int, now: datetime | Non
         if history.get("schema")!=SCHEMA or len(history.get("observations") or [])!=attempt-1:
             raise RuntimeError("V295_RETRY_ATTESTATION_STATE_MISMATCH")
     initial=set(history["initial_candidate_keys"])
-    if any(not RACE.fullmatch(k) for k in initial):
+    seen=set(history.get("seen_candidate_keys") or []) | current
+    if (any(not RACE.fullmatch(k) for k in seen | initial)
+            or not initial.issubset(seen)):
         raise RuntimeError("V295_INVALID_SAVED_RACE_KEY")
-    latest_absent=sorted(k for k in initial if k not in current and not snapshot_exists(repo,k))
-    now_tracked=sorted(k for k in initial if snapshot_exists(repo,k))
-    still_local=sorted(initial & current)
+    history["seen_candidate_keys"]=sorted(seen)
+    latest_absent=sorted(k for k in seen if k not in current and not snapshot_exists(repo,k))
+    now_tracked=sorted(k for k in seen if snapshot_exists(repo,k))
+    still_local=sorted(seen & current)
     row={"attempt":attempt,"checked_at_utc":today,
          "new_atomic_attestation_candidates":sorted(current),
-         "first_attempt_candidates_still_local":still_local,
-         "first_attempt_candidates_now_tracked":now_tracked,
-         "first_attempt_candidates_absent_unpublished":latest_absent}
+         "seen_candidate_keys_still_local":still_local,
+         "seen_candidate_keys_now_tracked":now_tracked,
+         "seen_candidate_keys_absent_unpublished":latest_absent}
     history["observations"].append(row)
     state_path.parent.mkdir(parents=True,exist_ok=True)
     state_path.write_text(json.dumps(history,sort_keys=True,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     summary={"schema":SCHEMA,"attempt":attempt,
              "first_attempt_total":len(initial),"new_this_attempt":len(current),
-             "first_candidate_tracked":len(now_tracked),
-             "first_candidate_local":len(still_local),
-             "first_candidate_absent_unpublished":len(latest_absent),
+             "ever_seen_proposed_total":len(seen),
+             "seen_candidate_tracked":len(now_tracked),
+             "seen_candidate_local":len(still_local),
+             "seen_candidate_absent_unpublished":len(latest_absent),
              "potentially_lost_keys":latest_absent,
              "interpretation":"UNPUBLISHED_AFTER_RETRY_NOT_PROOF_OF_ELIGIBILITY_OR_PERMANENT_LOSS",
              "scope":"SITE_PRE_RESULT_ONLY_NO_FORMAL_NO_RESULTS"}
@@ -103,9 +107,9 @@ def main():
     if summary:
         with open(summary,"a",encoding="utf-8") as fp:
             fp.write(f"\nV235 attempt {args.attempt}: {result['new_this_attempt']} new V229 source-evidence candidates; "
-                     f"first attempt candidates tracked={result['first_candidate_tracked']}, "
-                     f"still local={result['first_candidate_local']}, "
-                     f"absent/unpublished={result['first_candidate_absent_unpublished']} "
+                     f"seen predeadline candidates tracked={result['seen_candidate_tracked']}, "
+                     f"still local={result['seen_candidate_local']}, "
+                     f"absent/unpublished={result['seen_candidate_absent_unpublished']} "
                      "(not proof of permanent loss or valid prediction).\n")
 
 
