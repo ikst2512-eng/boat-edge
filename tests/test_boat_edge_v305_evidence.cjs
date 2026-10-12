@@ -46,7 +46,7 @@ assert(css.includes('[data-quality="ok"]'));
 assert(!/(?:fetch\(|XMLHttpRequest|rankPredictions\(|RESULT_UNLOCK_TOKEN|winning_combo|official_payout)/.test(src));
 if(fs.existsSync('index.html')){
  const html=fs.readFileSync('index.html','utf8');
- assert(html.includes('boat_edge_v304_topk_mobile.css?v=305'));
- assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=305'));
+ assert(html.includes('boat_edge_v304_topk_mobile.css?v=306'));
+ assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306'));
 }
 console.log('V305_RACE_SCOPED_EXHIBITION_PROVENANCE_FAIL_CLOSED_PASS');
