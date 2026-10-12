@@ -28,7 +28,26 @@ function ticketClarity(combos,displayAllowed=true){
  return {...unknown,head:parsed[0][0]+'号艇（Top1券の1着）',
   top3:top(3),top5:top(5),top10:top(10)};
 }
-let showFive=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
+/* V304: display amounts only when the original row explicitly records the
+ * correct reference/frozen stake kind. No allocation or payout calculation. */
+function shownStake(row,settled){
+ const raw=str('.be140-ticket-money',row);
+ const view=row?.dataset?.be257View||'';
+ if(settled){
+  if(view!=='frozen')return null;
+  const m=raw.match(/締切前の保存配分\s*([\d,]+)円/);
+  return m?digit(m[1]):null;
+ }
+ if(view!=='reference')return null;
+ const m=raw.match(/現在の参考配分\s*([\d,]+)円/);
+ return m?digit(m[1]):null;
+}
+function validTickets(rows){
+ if(!Array.isArray(rows)||rows.length===0||rows.length>120)return false;
+ const combos=rows.map(row=>extractCombo(str('b',row)));
+ return combos.every(Boolean)&&new Set(combos).size===combos.length;
+}
+let showFive=false,showTen=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
 function skeleton(){
  const host=$('#raceView .race-summary');if(!host)return null;
  let box=$('#be207Top');
@@ -49,7 +68,7 @@ function skeleton(){
    </section>
    <div class="be207-listhead"><strong>上位買い目</strong><span>確率順・オッズで順位を変更しません</span></div>
    <div class="be207-bets"></div>
-   <div class="be207-actions"><button type="button" data-be207="five">上位5点</button><button type="button" data-be207="all">全買い目を表示</button></div><div class="be208-detail-actions"><button type="button" data-be207="detail">詳しいデータ・監査を開く</button></div>
+   <div class="be207-actions" role="group" aria-label="表示する3連単買い目の件数"><button type="button" data-be207="five">Top5</button><button type="button" data-be207="ten">Top10</button><button type="button" data-be207="all">全買い目</button></div><div class="be208-detail-actions"><button type="button" data-be207="detail">詳しいデータ・監査を開く</button></div>
    <div class="be207-bottom"><div class="be207-budget"></div><div class="be207-odds"></div></div>`;
   const first=$('.summary-top',host);
   if(first)first.insertAdjacentElement('afterend',box);else host.prepend(box);
@@ -77,24 +96,26 @@ function modeButtons(p,b){
   b.dataset.sig=sig;
  }
 }
-function listRow(row,i,fresh){
+function listRow(row,i,fresh,settled){
  const node=document.createElement('div');node.className='be207-ticket';
- const v=str('b',row),nums=lanes(v),prob=str('em',row),label=str('small',row);
- const raw=str('.be140-ticket-money',row),stake=window.BoatEdgeV204?.parseStake?.(raw)??null;
+ const v=str('b',row),combo=extractCombo(v),nums=combo?lanes(combo):null;
+ const relative=str('em',row),label=str('small',row);
+ const raw=str('.be140-ticket-money',row),stake=shownStake(row,settled);
  const payout=window.BoatEdgeV204?.parsePayout?.(raw)??null;
- const actual=str('.be204-ticket-finance [data-be204="payout"]',row);
- const odds=fresh&&/^\d+(?:\.\d+)?倍$/.test(label)?label:'倍率未確認';
+ const verifiedPrice=fresh&&/^\d+(?:\.\d+)?倍$/.test(label)?label:null;
  node.innerHTML='<span class="be207-rank"></span><div class="be207-combo"></div><span class="be207-prob"></span><span class="be207-multi"></span><div class="be207-moneys"><span class="be207-stake"></span><span class="be207-pay"></span></div>';
  text($('.be207-rank',node),i+1);
- const combo=$('.be207-combo',node);
- if(nums){for(const n of nums){const chip=document.createElement('span');chip.className='be207-lane be207-l'+n;chip.textContent=n;combo.append(chip);}}
- else text(combo,v||'買い目未取得');
- text($('.be207-prob',node),prob?(prob+' 予測'):'確率未取得');
- text($('.be207-multi',node),odds);
- text($('.be207-stake',node),stake!==null?'配分 '+money(stake):'配分未確認');
- text($('.be207-pay',node),fresh&&payout!==null&&actual?'想定 '+actual:'想定払戻 未確認');
+ const comboNode=$('.be207-combo',node);
+ if(nums){for(const n of nums){const chip=document.createElement('span');chip.className='be207-lane be207-l'+n;chip.textContent=n;comboNode.append(chip);}}
+ else text(comboNode,'買い目未確認');
+ // The source "em" contains uncalibrated relative weight, not a calibrated probability.
+ text($('.be207-prob',node),relative?(relative+'（未校正）'):'相対重み 未確認');
+ text($('.be207-multi',node),verifiedPrice||'倍率未確認');
+ text($('.be207-stake',node),stake===null?'配分未確認':(settled?'締切前の保存配分 ':'未購入の参考配分 ')+money(stake));
+ text($('.be207-pay',node),!settled&&verifiedPrice&&payout!==null?'既存の想定払戻 '+money(payout):'想定払戻 未確認');
  return node;
 }
+
 function render(){
  if(rendering)return;
  const r=race(),p=$('#be108PredictionModes'),v=$('#raceView');
@@ -102,20 +123,24 @@ function render(){
   $('#be207Top')?.remove();document.documentElement.classList.remove('be207-ready');return;
  }
  const key=r.race_key,st=safety(r),sum=window.BoatEdgeV204.summarize(p),settled=sum.settled;
- if(key!==activeKey){activeKey=key;showFive=false;showAll=false;document.documentElement.classList.remove('be208-details-on');lastSig='';}
+ if(key!==activeKey){activeKey=key;showFive=false;showTen=false;showAll=false;document.documentElement.classList.remove('be208-details-on');lastSig='';}
  const rows=$$('.be108-ticket-list > .be108-ticket',p);
  const mode=$('.be108-mode-tabs .on',p)?.dataset.be108Mode||'unknown';
  const stage=str('#scenarioHero .scenario-main')||'展開説明は現在確認できません';
  const freeze=window.BoatEdgeV204.sourceLabel?.(p)||'買い目保存状態未確認';
- const fresh=Boolean(sum.fresh&&!settled);
- const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showAll,fresh,settled,
+ const proof=window.BoatEdgeV204?.oddsProof?.(r);
+ const fresh=Boolean(sum.fresh&&!settled&&proof?.quality==='verified');
+ const provenance=$('.be181-freeze-banner',p)?.dataset?.be181Source||'';
+ const rowOK=validTickets(rows);
+ const pendingScratch=!settled&&st.kind!=='partial';
+ const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
  if(sig===lastSig&&box.classList.contains('ready'))return;
  rendering=true;
  try{
-  const stop=st.kind==='stop'||!rows.length;
+  const stop=st.kind==='stop'||pendingScratch||!rowOK||!['first','final','latest'].includes(provenance);
   box.classList.add('ready');box.dataset.status=st.kind;
   text($('.be207-condition strong',box),st.title||'欠場・取消確認待ち');
   text($('.be207-condition span',box),st.detail||'出走可否未確定');
@@ -133,16 +158,24 @@ function render(){
     /内部スコア/.test(evidenceTitle)?'内部評価値（未校正・確率ではない）':'既存参考指標（校正状態不明）';
   text($('[data-be259="metric"]',box),evidenceValue?evidenceLabel+'：'+evidenceValue:'信頼度の独立した検証値は未取得');
   const list=$('.be207-bets',box);list.replaceChildren();
-  const count=showAll?rows.length:showFive?5:3;
-  if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=rows.length?'出走可否の確認が必要なため、買い目の表示を停止中です。':'買い目を表示できません。直前データ・欠場情報を確認してください。';list.append(w);}
-  else rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh)));
+  const count=showAll?rows.length:showTen?10:showFive?5:3;
+  if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent='買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';list.append(w);}
+  else rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh,settled)));
   const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<=3||showAll;
-  text(five,showFive?'上位3点に戻す':'上位5点を見る');
+  text(five,showFive?'Top3に戻す':'Top5を表示');
+  five.setAttribute('aria-pressed',String(showFive));
+  const ten=$('[data-be207="ten"]',box);ten.hidden=stop||rows.length<10||showAll;
+  text(ten,showTen?'Top3に戻す':'Top10を表示');
+  ten.setAttribute('aria-pressed',String(showTen));
   const all=$('[data-be207="all"]',box);all.hidden=stop;
-  text(all,showAll?'上位3点に戻す':'全買い目を表示');
+  text(all,showAll?'Top3に戻す':'全買い目を表示');
+  all.setAttribute('aria-pressed',String(showAll));
   const total=str('#be204Budget [data-be204="total"]',p);
-  text($('.be207-budget',box),'参考配分合計 '+(total||'未確認')+(rows.length?' ／ 全'+rows.length+'点':''));
-  text($('.be207-odds',box),fresh?'公式オッズ取得確認済み（表示時点）': '公式オッズ未確認・想定払戻は非表示');
+  text($('.be207-budget',box),settled?'締切前の保存配分がある券のみ個別表示（実購入なし）':
+    '元画面の参考配分合計：'+(total||'未確認')+' ／ '+(rowOK?rows.length+'点':'券種照合待ち')+'（実購入なし）');
+  text($('.be207-odds',box),fresh?
+    '公式3連単オッズの保存値（非リアルタイム）：'+(proof?.label||'取得状態確認中'):
+    '公式3連単オッズ未確認／想定払戻は非表示');
   document.documentElement.classList.add('be207-ready');
   const brand=$('.brandtext small');
   if(brand&&/^(?:v\d+|サイトV20[3456])$/i.test(brand.textContent.trim()))text(brand,'サイトV208');
@@ -158,9 +191,10 @@ function init(){if(once)return;once=true;
    target?.click();schedule();return;
   }
   const command=btn.dataset.be207;
-  if(command==='five'){showFive=!showFive;lastSig='';render();return;}
+  if(command==='five'){showFive=!showFive;showTen=false;showAll=false;lastSig='';render();return;}
+  if(command==='ten'){showTen=!showTen;showFive=false;showAll=false;lastSig='';render();return;}
   if(command==='scenario'){$('#raceTabs [data-tab="scenario"]')?.click();return;}
-  if(command==='all'){showAll=!showAll;showFive=false;lastSig='';render();return;}
+  if(command==='all'){showAll=!showAll;showFive=false;showTen=false;lastSig='';render();return;}
   if(command==='detail'){
    const expanded=document.documentElement.classList.toggle('be208-details-on');
    text(btn,expanded?'詳しいデータ・監査を閉じる':'詳しいデータ・監査を開く');
@@ -174,6 +208,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V259-A24-UI',ticketClarity,extractCombo};
+window.BoatEdgeV207={render,displayOnly:true,version:'V304-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
