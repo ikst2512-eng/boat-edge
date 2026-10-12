@@ -45,6 +45,12 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v256_odds_guard.py' -v
+      - name: Enforce retired Actions schedules and inspect potential concurrent main writers
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v299_workflow_inventory.py' -v
+          python3 scripts/boat_edge_v299_workflow_inventory.py
       - name: Test JST rollover and virtual balance display
         run: node --test tests/test_boat_edge_v271_health.cjs
       - name: Check live odds invalidation without fetching results
