@@ -24,7 +24,8 @@ class UIWorkflowContract(unittest.TestCase):
         for p in ('tests/test_boat_edge_v248_ui.cjs', 'tests/test_boat_edge_v244_site.cjs',
                   'tests/test_boat_edge_v247_ui.cjs','tests/test_boat_edge_v297_nav.cjs',
                   'tests/test_boat_edge_v298_matrix.cjs','tests/test_boat_edge_v299_head_selector.cjs',
-                  'tests/test_boat_edge_v304_topk.cjs'):
+                  'tests/test_boat_edge_v304_topk.cjs','tests/test_boat_edge_v305_evidence.cjs',
+                  'tests/test_boat_edge_v306_race_switch.cjs'):
             self.assertIn(p,text)
         self.assertIn('CANDIDATE_TEST_NOT_YET_ON_BRANCH',text)
         self.assertIn('V307_FORMAL_FRESH_RESULT_UNSEEN_LOCK_PASS',text)
