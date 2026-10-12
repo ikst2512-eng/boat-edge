@@ -74,4 +74,5 @@ assert(js.includes("!awaitingTicketList"),'V328 must block stale head picks');
 require('./test_boat_edge_v341_comparison_scroll.cjs');
 require('./test_boat_edge_v342_head_focus.cjs');
 require('./test_boat_edge_v342_comparison_context.cjs');
+require('./test_boat_edge_v342_comparison_values.cjs');
 

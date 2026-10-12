@@ -45,6 +45,7 @@ const tabs={
 const field=(r,path)=>path.split('.').reduce((x,k)=>x?.[k],r);
 let metric='base',layout='lanes',selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
 let lastTicketList=null,awaitingTicketList=false;
+let lastStructure='';
 /* A visually outstanding number is never inferred from 4/6 known boats. */
 function best(rows,path,margin,low){
  if(!Array.isArray(rows)||rows.length!==6||new Set(rows.map(r=>r?.lane)).size!==6||path==='course')return null;
@@ -58,13 +59,32 @@ function best(rows,path,margin,low){
 function color(row,path,x,b){
  return b!==null&&nr(x)!==null&&Math.abs(Number(x)-b)<1e-8&&!(path==='st'&&(row.f||Number(x)<0))?' best':'';
 }
-function cell(row,path,d,b){
+function cellData(row,path,d,b){
  const raw=field(row,path),n=nr(raw);
  let v=val(raw,d);
  if(path==='st'&&n!==null&&(row.f||n<0))v='F'+Math.abs(n).toFixed(2);
  if(path==='st'&&n!==null&&n>=0&&!row.f)v=n.toFixed(2);
  if(path==='course'&&n!==null)v=Number.isInteger(n)&&n>=1&&n<=6?n+'コース':'－';
- return `<td class="be206-val${color(row,path,raw,b)}${path==='st'&&(row.f||n!==null&&n<0)?' foul':''}">${esc(v)}</td>`;
+ return {text:v,className:`be206-val${color(row,path,raw,b)}${path==='st'&&(row.f||n!==null&&n<0)?' foul':''}`};
+}
+function cell(row,path,d,b){
+ const value=cellData(row,path,d,b);
+ return `<td class="${value.className}">${esc(value.text)}</td>`;
+}
+/* Retain racer buttons while only numeric cells change during same-race updates. */
+function updateComparisonValues(table,rows,orientation,metricName){
+ const specs=tabs[metricName]?.cols;
+ if(!specs||!['lanes','rows'].includes(orientation)||!Array.isArray(rows)||rows.length!==6||!table?.querySelectorAll)return false;
+ const cells=[...table.querySelectorAll('tbody td')];
+ if(cells.length!==6*specs.length)return false;
+ const leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
+ const values=orientation==='lanes'?specs.flatMap((c,i)=>rows.map(r=>cellData(r,c[1],c[2],leaders[i]))):
+   rows.flatMap(r=>specs.map((c,i)=>cellData(r,c[1],c[2],leaders[i])));
+ cells.forEach((node,i)=>{
+   setText(node,values[i].text);
+   if(node.className!==values[i].className)node.className=values[i].className;
+ });
+ return true;
 }
 function format(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
@@ -215,10 +235,11 @@ function board(){
  compactTable.hidden=layout!=='rows';matrixTable.hidden=layout!=='lanes';
  if(raceChanged)matrixTable.scrollLeft=0;
  const data=JSON.stringify([r.race_key,metric,layout,rows.map(row=>[row.lane,row.name,row.grade,row.f,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
+ const structure=JSON.stringify([r.race_key,metric,layout,rows.map(row=>[row.lane,row.name,row.grade])]);
  if(lastTable!==data||(layout==='lanes'?!$('.be206-matrix tbody',box):!$('.be206-table tbody',box))){
-   if(layout==='lanes')$('.be206-matrix',box).innerHTML=matrix(rows);
-   else $('.be206-table',box).innerHTML=format(rows);
-   lastTable=data;
+   const table=layout==='lanes'?$('.be206-matrix',box):$('.be206-table',box);
+   if(lastStructure!==structure||!updateComparisonValues(table,rows,layout,metric))table.innerHTML=layout==='lanes'?matrix(rows):format(rows);
+   lastTable=data;lastStructure=structure;
  }
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
@@ -297,7 +318,7 @@ function init(){if(started)return;started=true;
  window.addEventListener('resize',schedule,{passive:true});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,updateComparisonValues,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 

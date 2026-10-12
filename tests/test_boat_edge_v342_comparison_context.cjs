@@ -5,7 +5,13 @@ const fs=require('node:fs'),vm=require('node:vm');
 function boot(){
  const handlers={},queue=[],classes=new Set();
  const cls={add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)};
- const mode={dataset:{be108Mode:'hit'}},matrix={innerHTML:''},table={innerHTML:''};
+ function makeTable(){
+  let html='';const node={cells:[],rebuilds:0,button:{},querySelectorAll:()=>node.cells};
+  Object.defineProperty(node,'innerHTML',{get:()=>html,set:value=>{
+    html=value;node.rebuilds++;node.button={};node.cells=Array.from({length:(value.match(/<td /g)||[]).length},()=>({textContent:'',className:''}));
+  }});return node;
+ }
+ const mode={dataset:{be108Mode:'hit'}},matrix=makeTable(),table=makeTable();
  const compact={hidden:true},viewport={hidden:false,clientWidth:300,scrollWidth:650,scrollLeft:0};
  const controls={hidden:true,querySelector:()=>({})};
  const panel={hidden:true,childNodes:[],replaceChildren(){this.childNodes=[];}};
@@ -34,7 +40,7 @@ function boot(){
  function flush(){let count=0;while(queue.length){assert(++count<20);queue.shift()();}}
  function layout(value){handlers.click({target:{closest:s=>s.includes('[data-be206-layout]')?{dataset:{be206Layout:value}}:null}});flush();}
  function nextRace(){state.race={...state.race,race_key:'20261013-02-06'};list={};window.BoatEdgeV206.sync();}
- return {api:window.BoatEdgeV206,state,rows,mode,viewport,compact,layout,nextRace};
+ return {api:window.BoatEdgeV206,state,rows,mode,viewport,compact,layout,nextRace,matrix,table};
 }
 test('same-race mode changes retain the explicitly chosen row layout',()=>{
  const f=boot();f.layout('rows');assert.equal(f.compact.hidden,false);assert.equal(f.viewport.hidden,true);
@@ -49,4 +55,14 @@ test('same-race updates retain horizontal position; a new race starts at lane on
  f.mode.dataset.be108Mode='balance';f.api.sync();assert.equal(f.viewport.scrollLeft,250);
  assert.equal(JSON.stringify(f.state.race),original);assert.equal(JSON.stringify(f.rows),rows);
  f.nextRace();assert.equal(f.viewport.scrollLeft,0);
+});
+test('real board retains racer controls for value updates and rebuilds for a changed roster',()=>{
+ const f=boot(),button=f.matrix.button,rebuilds=f.matrix.rebuilds;
+ f.rows[0].national.win_rate=8;f.api.sync();
+ assert.equal(f.matrix.rebuilds,rebuilds);assert.equal(f.matrix.button,button);
+ assert.equal(f.matrix.cells[0].textContent,'8.00');
+ f.state.race.source_audit={beforeinfo:{fetched_at:'2026-10-13T06:35:00+09:00'}};f.api.sync();
+ assert.equal(f.matrix.button,button);
+ f.rows[0].name='別の選手';f.api.sync();
+ assert.equal(f.matrix.rebuilds,rebuilds+1);assert.notEqual(f.matrix.button,button);
 });
