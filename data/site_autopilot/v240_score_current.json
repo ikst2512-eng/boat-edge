@@ -3,33 +3,41 @@
   "comparisons": {
     "hit10": {
       "changed_races": 0,
-      "hit_rate_percent": 21.43,
-      "hits": 3,
+      "hit_rate_percent": 31.25,
+      "hits": 5,
       "paired_gain": 0,
       "paired_loss": 0,
       "points": 10,
-      "races": 14
+      "races": 16
     },
     "pair_coverage10": {
-      "changed_races": 14,
-      "hit_rate_percent": 28.57,
-      "hits": 4,
+      "changed_races": 16,
+      "hit_rate_percent": 37.5,
+      "hits": 6,
       "paired_gain": 2,
       "paired_loss": 1,
       "points": 10,
-      "races": 14
+      "races": 16
     },
     "second_coverage10": {
-      "changed_races": 14,
-      "hit_rate_percent": 7.14,
-      "hits": 1,
+      "changed_races": 16,
+      "hit_rate_percent": 18.75,
+      "hits": 3,
       "paired_gain": 0,
       "paired_loss": 2,
       "points": 10,
-      "races": 14
+      "races": 16
     }
   },
   "examples": [
+    {
+      "outcomes": {
+        "hit10": true,
+        "pair_coverage10": true,
+        "second_coverage10": true
+      },
+      "race_key": "20261012-02-09"
+    },
     {
       "outcomes": {
         "hit10": false,
@@ -37,6 +45,14 @@
         "second_coverage10": false
       },
       "race_key": "20261012-03-01"
+    },
+    {
+      "outcomes": {
+        "hit10": true,
+        "pair_coverage10": true,
+        "second_coverage10": true
+      },
+      "race_key": "20261012-03-09"
     },
     {
       "outcomes": {
@@ -143,15 +159,14 @@
       "race_key": "20261012-23-05"
     }
   ],
-  "new_scored_this_run": 0,
+  "new_scored_this_run": 2,
   "pending": {
-    "race_not_over": 2,
     "site_only_v234_result_unavailable": 2
   },
   "production_model_changed": false,
   "promotion_authorized": false,
   "schema": "BOAT_EDGE_V240_SCORE_SUMMARY_V1",
   "scope": "POST_RESULT_SITE_RESEARCH_NO_FORMAL_ACCESS",
-  "scored_total": 14,
+  "scored_total": 16,
   "status": "DESCRIPTIVE_ONLY_WAIT_INDEPENDENT_MULTIDAY_FRESH"
 }
