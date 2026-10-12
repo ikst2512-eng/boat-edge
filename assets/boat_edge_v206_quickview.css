@@ -84,3 +84,7 @@ html.be206-active #be108PredictionModes .be108-ticket.be206-hide-ticket{display:
 #be206Quick .be206-head-top button,
 #be206Quick .be206-foot button{min-height:44px;min-width:44px;touch-action:manipulation}
 #be206Quick .be206-foot button{padding:10px 8px}
+
+/* V321: hold previous race's raw ranked ticket list until fresh race DOM mounts. */
+html.be321-race-await #raceView #be108PredictionModes .be108-ticket-list,
+html.be321-race-await #raceView #be206MoreTickets{display:none!important}
