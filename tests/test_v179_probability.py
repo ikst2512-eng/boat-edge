@@ -25,4 +25,28 @@ class V179Tests(unittest.TestCase):
             self.assertFalse(a['site_consumer_ready_to_display_actual_formal_predictions'])
             self.assertIn('FORMAL_FRESH100_FREEZE_MISSING',a['blockers'])
             self.assertFalse(a['formal_current_scoring'])
+    def test_formal_readiness_never_uses_site_core7_as_formal_freeze(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'data').mkdir()
+            formal={'target_date':'2026-10-13','formalParentSha':'b'*64,
+                    'formalFirst100':{'races':0,'freezeManifestSha':None,'coreSha':None},
+                    'guards':{'results_seen':False,'unlock':False,'scoring':False,'RESULT_UNLOCK_TOKEN':None},
+                    'connected':False,'predictions_ready':False}
+            model={'target_date':'2026-10-13','formal_parent_sha256':'b'*64,
+                   'model':'Candidate','core7':{'eligible_count':144,'core7_100_ready':True}}
+            (root/'data/formal_status.json').write_text(json.dumps(formal))
+            (root/'data/model_status.json').write_text(json.dumps(model))
+            report=audit(root)
+            self.assertTrue(report['site_core7_ready'])
+            self.assertTrue(report['model_target_matches_formal'])
+            self.assertTrue(report['parent_sha_matches'])
+            self.assertTrue(report['pre_result_guards_pass'])
+            self.assertEqual(report['formal_first100_races'],0)
+            self.assertFalse(report['formal_freeze_ready'])
+            self.assertFalse(report['site_consumer_ready_to_display_actual_formal_predictions'])
+            self.assertIn('FORMAL_FRESH100_FREEZE_MISSING',report['blockers'])
+            self.assertIn('APPROVED_FORMAL_MODEL_NOT_CONNECTED',report['blockers'])
+            self.assertIn('NO_PER_RACE_APPROVED_PREDICTION_FILES',report['blockers'])
+            self.assertFalse(report['formal_current_gate_executed'])
+            self.assertFalse(report['formal_current_scoring'])
 if __name__=='__main__':unittest.main()
