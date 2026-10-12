@@ -266,6 +266,10 @@ jobs:
                               'fetched_at':iso,
                               'source':url
                           }
+                          # V269: a pending result with identical factual status
+                          # must not trigger a timestamp-only Pages rebuild.
+                          if old.get('status')=='pending' and old.get('source')==url:
+                              continue
                           item['target'].write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8')
                           updated+=1
                           continue
@@ -283,6 +287,13 @@ jobs:
                           'trifecta':combo,
                           'trifecta_payout_yen_per_100':payout
                       }
+                      # V269: preserve the original verified observation when
+                      # official finish, combination and payout are unchanged.
+                      # Corrected or newly available payouts still persist.
+                      factual=('schema_version','race_key','status','source',
+                               'finish_order','trifecta','trifecta_payout_yen_per_100')
+                      if all(old.get(k)==payload.get(k) for k in factual):
+                          continue
                       item['target'].write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8')
                       updated+=1
 
@@ -306,7 +317,17 @@ jobs:
               'payout_parser':'¥ / ￥ / 円',
               'complete_rule':'confirmed + trifecta + payout non-null'
           }
-          (out/'index.json').write_text(json.dumps(idx,ensure_ascii=False,indent=2),encoding='utf-8')
+          # The index timestamp is the last MATERIAL change, never a fake
+          # freshness signal generated from polling an unchanged result.
+          index_file=out/'index.json'
+          try:
+              previous=json.loads(index_file.read_text(encoding='utf-8'))
+          except (OSError,ValueError):
+              previous={}
+          stable=lambda x:{k:v for k,v in x.items() if k!='updated_at'}
+          if stable(previous)==stable(idx) and previous.get('updated_at'):
+              idx['updated_at']=previous['updated_at']
+          index_file.write_text(json.dumps(idx,ensure_ascii=False,indent=2),encoding='utf-8')
           print(json.dumps(idx,ensure_ascii=False))
           PY
 
