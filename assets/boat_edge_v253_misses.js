@@ -75,6 +75,19 @@ function element(tag,cls,txt){
  const x=document.createElement(tag);if(cls)x.className=cls;
  if(txt!==undefined)x.textContent=txt;return x;
 }
+/* V271: research-only priority is calculated from verified frozen tickets.
+   A descriptive miss count is never used as a model weight or probability. */
+function missPriority(lane){
+ const c=lane?.miss_categories?.hit10,n=lane?.races_verified;
+ if(!c||!Number.isSafeInteger(n)||n<1)return null;
+ const order=[['head_absent','1着候補なし'],['second_absent_given_head','2着組合せ抜け'],
+              ['third_absent_given_head_second','3着候補抜け']];
+ const sorted=order.map(([key,label])=>({key,label,count:c[key]}))
+  .sort((a,b)=>b.count-a.count);
+ if(!sorted.every(x=>Number.isSafeInteger(x.count)&&x.count>=0))return null;
+ if(sorted[0].count===sorted[1].count)return null;
+ return {...sorted[0],total:n,hit:c.hit};
+}
 function render(v){
  const root=document.getElementById('v253Misses');if(!root)return;
  root.replaceChildren();
@@ -82,6 +95,18 @@ function render(v){
  if(!proof){
   root.append(element('p','v253-warning','監査証拠の照合待ち。未取得・不一致の件数を推定しません。'));
   return;
+ }
+ const priority=missPriority(proof.v236);
+ if(priority){
+  const box=element('div','v271-miss-priority');
+  box.append(element('strong','', '現行10点の取りこぼし最多：'+priority.label));
+  box.append(element('p','',priority.total+'Rの締切前固定・確定後照合で '+priority.count+
+    'R。現行10点の的中は '+priority.hit+'/'+priority.total+
+    'R。分類上の最多であり、改善効果・本番採用を意味しません。'));
+  const link=element('a','', '3着重点10点の未見検証を見る →');
+  link.href='#v254Research';
+  if(priority.key==='third_absent_given_head_second')box.append(link);
+  root.append(box);
  }
  for(const lane of ['v236','v240']){
   const x=proof[lane],section=element('section','v253-lane');
@@ -144,6 +169,6 @@ function start(){
  update();
  setInterval(()=>{if(!document.hidden)update()},120000);
 }
-window.BoatEdgeV253={validated,paired,render,update};
+window.BoatEdgeV253={validated,paired,missPriority,render,update};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
