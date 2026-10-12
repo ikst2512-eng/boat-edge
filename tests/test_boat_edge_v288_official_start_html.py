@@ -52,6 +52,20 @@ signed=BeautifulSoup('''<table><thead><tr><th>スタート展示</th></tr></thea
 <span class="table1_boatImage1Number">4</span>
 <span class="table1_boatImage1Time">-0.02</span></div></td></tr></tbody></table>''','lxml')
 assert parse(signed)['start_exhibition']==[{'lane':4,'st':'-0.02'}]
+# The collector's six-boat completeness check must accept the SAME ST token
+# formats as its HTML parser. Otherwise fully populated official ST may be
+# mislabeled as "publication pending" and never frozen prospectively.
+signed_rows=[{'lane':i,'st':('.06' if i<4 else ('F.02' if i==4 else ('-0.02' if i==5 else '0.01')))}
+             for i in range(1,7)]
+signed_parsed={'racers':p['racers'],'start_exhibition':signed_rows}
+signed_state=gate(signed_parsed)
+assert signed_state['six_boat_complete'] is True,signed_state
+assert signed_state['start_exhibition_lanes']==6
+for rejected_st in ('', '0.3ms','-.','F.123', '0.999','unknown'):
+    broken=[dict(x) for x in signed_rows]
+    broken[4]['st']=rejected_st
+    assert gate({'racers':p['racers'],'start_exhibition':broken})['six_boat_complete'] is False,rejected_st
+
 # Invalid and duplicate evidence must not become a verified six-lane source.
 m=dict(p)
 m['start_exhibition']=p['start_exhibition']+[p['start_exhibition'][0]]
