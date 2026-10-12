@@ -1,0 +1,36 @@
+name: BOAT EDGE V289 - Official Six Boat Source Visibility
+on:
+  push:
+    branches: [main, fix/v289-show-urgent-exhibition-completeness]
+    paths:
+      - 'scripts/boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v289_source_visibility.py'
+      - 'autopilot.html'
+      - '.github/workflows/v289-official-source-visibility.yml'
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v289_source_visibility.py'
+      - 'autopilot.html'
+      - '.github/workflows/v289-official-source-visibility.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v289-source-visibility-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-source-ui-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test published six-boat source count handling and UI lock
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v289_source_visibility.py
+          git diff --check

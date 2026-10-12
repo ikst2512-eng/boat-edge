@@ -197,9 +197,16 @@ def compute(root,now):
     urgent_names=('beforeinfo_urgent_15m_targets','beforeinfo_urgent_15m_ok',
                   'beforeinfo_urgent_15m_published_wait','beforeinfo_urgent_15m_error')
     urgent_counts=[collector_health.get(name) for name in urgent_names]
+    # V289: partial is a SUBSET of published_wait, not a disjoint outcome.
+    # Old health data without the field may remain observable but never
+    # claims the partial count is zero. Contradictory values fail closed.
+    urgent_partial=collector_health.get('beforeinfo_urgent_15m_partial')
+    partial_valid=(urgent_partial is None or
+                   (type(urgent_partial) is int and urgent_partial>=0 and
+                    type(urgent_counts[2]) is int and urgent_partial<=urgent_counts[2]))
     urgent_fresh=age_minutes(collector_health.get('updated_at'),now)
     urgent_telemetry_ok=(urgent_fresh is not None and urgent_fresh<=30 and
-        all(type(v) is int and v>=0 for v in urgent_counts) and
+        partial_valid and all(type(v) is int and v>=0 for v in urgent_counts) and
         urgent_counts[0]==sum(urgent_counts[1:]) and
         collector_health.get('results_seen') is False and
         collector_health.get('unlock') is False and
@@ -270,6 +277,7 @@ def compute(root,now):
         'targets':urgent_counts[0] if urgent_telemetry_ok else None,
         'ok':urgent_counts[1] if urgent_telemetry_ok else None,
         'published_wait':urgent_counts[2] if urgent_telemetry_ok else None,
+        'partial_six_boat_source':urgent_partial if urgent_telemetry_ok else None,
         'error':urgent_counts[3] if urgent_telemetry_ok else None,
         'health_updated_at':collector_health.get('updated_at') if urgent_telemetry_ok else None},
       'site_prediction_freeze_observation':freeze_funnel,

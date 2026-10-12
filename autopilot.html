@@ -36,6 +36,11 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
 <p id="freezeEvidenceV286" role="status" aria-live="polite" class="explain">前日データの保存時刻・SHAと固定後の変更を確認中。</p>
 <p class="explain">締切前に監視したレースだけの件数。途中の「未固定」は最終未固定と区別し、保存時の監査記録と今のデータ整合も別々に表示します。未見検証・実際の的中率・正式Freshの合格とは別です。</p>
 </section>
+<section class="panel" aria-label="公式直前情報の6艇確認">
+<h2>公式直前情報の取得状況（締切15分前）</h2>
+<p id="officialWindowEvidenceV289" role="status" aria-live="polite" class="explain">現在の取得証拠を照合中。</p>
+<p class="explain">「取得成功」は公式の展示タイムとスタート展示STが6艇とも揃ったレースのみ。「一部取得」は公開待ちの内数で、成功件数には含めません。対象0件は監視時間外の可能性があります。</p>
+</section>
 <div class="split"><section class="panel"><h2>AI自走シミュレーション</h2><div class="facts"><div><small>当日使用額</small><b id="used">―</b></div><div><small>当日残額</small><b id="balance">―</b></div><div><small>仮想購入</small><b id="buys">―</b></div></div><p class="warning" id="simGate">校正・購入条件が未成立なら見送り。実際の購入は行わない。</p><p class="actions"><a href="./ai-simulation.html">5万円の仮想運用画面を見る →</a></p></section>
 <section class="panel"><h2>次に自動で確認する順序</h2><ol class="order"><li>公式の出走表・直前情報と欠場／取消を照合</li><li>最新オッズと締切前の予想を固定</li><li>A頭・Top3/Top5/Top10・10〜20倍帯を未見で比較</li><li>改善が証明されるまで本番モデルを維持</li><li>サイト表示とPages公開を検証</li></ol><p class="warning" id="formalGate">正式Freshの結果閲覧・採点・解除は、この機能からは行わない。</p></section></div>
 <section id="v252Evidence" class="v252-board" aria-label="締切前に固定された同一レースの予想方式を比較">
@@ -88,6 +93,25 @@ async function update(){
  const freshOps=ops?.day_jst===today&&ops?.schema==='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'&&ops?.scope==='SITE_ONLY_PRE_RESULT_OPERATIONS_NOT_FORMAL_FRESH';
  const freezeView=window.BoatEdgeV286Freeze?.summary(freshOps?ops:null,today);
  put('freezeEvidenceV286',freezeView?.text||'予想固定の監査データは未確認。');
+ // V289: six-boat readiness counts come only from the current source-audited
+ // V220 operations snapshot; never infer them from stale or old reports.
+ const official=freshOps?ops?.official_beforeinfo_urgent_15m:null;
+ let officialText='当日の締切前・公式6艇データは未確認（古いデータを使用しません）';
+ if(official?.status==='OBSERVED' &&
+    [official.targets,official.ok,official.published_wait,official.error].every(
+      n=>Number.isInteger(n)&&n>=0)) {
+   if(official.targets===0){
+     officialText='締切15分前の監視対象なし（データ取得失敗0Rとは判定しません）';
+   }else{
+     const part=Number.isInteger(official.partial_six_boat_source)
+       ? '／うち一部のみ取得 '+official.partial_six_boat_source+'R'
+       : '／一部のみ取得の内訳未確認';
+     officialText='対象 '+official.targets+'R／6艇確認済み '+official.ok+
+       'R／公開待ち・未完了 '+official.published_wait+'R'+part+
+       '／取得エラー '+official.error+'R';
+   }
+ }
+ put('officialWindowEvidenceV289',officialText);
 
  const s=a.site||{}, v=a.prediction||{}, p=(paper&&paper.money)||a.paper||{},f=a.formal||{};
  const at=new Date(a.checked_at);put('stamp',`自走監査 ${isNaN(at.getTime())?'日時未取得':at.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}（日本時間） / 定期取得データ`);
