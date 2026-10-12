@@ -53,8 +53,8 @@ def source_coverage(record):
     missing = [s for s in REQUIRED_SOURCES if not coverage[s]["present"]]
     missing_fields = [f for f in REQUIRED_FIELDS
                       if not any(f in coverage[s]["fields"] for s in REQUIRED_SOURCES)]
-    return {"sources": coverage, "missing_sources": missing,
+    # A claimed actual-course mapping cannot be independently certified by\n    # pre-deadline exhibition or predicted entry. Review must verify semantics.\n    return {"sources": coverage, "missing_sources": missing,
             "missing_required_fields": missing_fields, "reasons": sorted(set(reasons)),
             "ready_for_independent_review": not (missing or missing_fields or reasons),
-            "independently_authenticated": False,
+            "independently_authenticated": False,\n            "actual_course_semantics_verified": False,
             "model_promotion_authorized": False}
