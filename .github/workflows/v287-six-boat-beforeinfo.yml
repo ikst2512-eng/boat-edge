@@ -1,0 +1,51 @@
+name: BOAT EDGE V287 - Six Boat Official Beforeinfo Completeness
+
+on:
+  push:
+    branches: [main, fix/v287-six-boat-beforeinfo-completeness]
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - '.github/workflows/v287-six-boat-beforeinfo.yml'
+      - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
+      - 'tests/test_boat_edge_v268_beforeinfo_priority.py'
+      - 'tests/test_boat_edge_v269_urgent_telemetry.py'
+  pull_request:
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - '.github/workflows/v287-six-boat-beforeinfo.yml'
+      - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
+      - 'tests/test_boat_edge_v268_beforeinfo_priority.py'
+      - 'tests/test_boat_edge_v269_urgent_telemetry.py'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v287-source-completeness-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-beforeinfo-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate source parser partial data and retry safety without live fetch
+        run: |
+          set -euo pipefail
+          python3 tests/test_boat_edge_v268_beforeinfo_priority.py
+          python3 tests/test_boat_edge_v269_urgent_telemetry.py
+          python3 tests/test_boat_edge_v272_urgent_beforeinfo_retry.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          s=Path('.github/workflows/auto-update.yml').read_text()
+          assert 'ready=coverage["six_boat_complete"]' in s
+          assert '"six_boat_coverage":bf.get("six_boat_coverage")' in s
+          assert '"beforeinfo_urgent_15m_partial"' in s
+          assert 'if not protected_site_snapshot(DATA,key)' in s
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V287_SOURCE_COVERAGE_NO_FORMAL_RESULTS_PASS')
+          PY
+          git diff --check
