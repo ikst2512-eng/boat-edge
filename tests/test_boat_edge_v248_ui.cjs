@@ -85,4 +85,6 @@ const urgentFirst=execFileSync('python3',['tests/test_boat_edge_v274_urgent_firs
 assert(urgentFirst.includes('V274_PRE_RESULT_URGENT_FIRST_SOURCE_TIMESTAMP_LOCK_PASS'));
 const frozenEvidence=execFileSync('python3',['tests/test_boat_edge_v275_frozen_protection.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
 assert(frozenEvidence.includes('V275_FROZEN_PRE_RESULT_EVIDENCE_PRESERVATION_PASS'));
+const scheduleOwner=execFileSync('python3',['tests/test_boat_edge_v276_schedule_owner.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert(scheduleOwner.includes('V276_SINGLE_FAST_SOURCE_SCHEDULE_OWNER_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
