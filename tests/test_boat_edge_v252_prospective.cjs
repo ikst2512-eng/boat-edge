@@ -8,10 +8,35 @@ const api=context.window.BoatEdgeV252;
 assert(api&&typeof api.check236==='function'&&typeof api.check240==='function');
 const v236=JSON.parse(fs.readFileSync('data/site_autopilot/v236_score_current.json','utf8'));
 const v240=JSON.parse(fs.readFileSync('data/site_autopilot/v240_score_current.json','utf8'));
-const a=api.check236(v236),b=api.check240(v240);
-assert(a&&b,'Expected to verify frozen source-only experiment summaries');
-assert.equal(a.n,v236.scored_total);
-assert.equal(b.n,v240.scored_total);
+// Aggregate summaries intentionally retain only the latest 25/20 examples.
+// A clipped aggregate MUST fail closed. Build a clearly isolated synthetic
+// regression fixture from the actually listed rows; never publish its counts.
+function listedRowsFixture(source,keys,paired){
+ const d=JSON.parse(JSON.stringify(source));
+ if(d.examples.length===d.scored_total)return d;
+ assert(d.examples.length<d.scored_total,'Unexpected excess example rows');
+ d.scored_total=d.examples.length;
+ for(const k of keys){
+  const x=d.comparisons[k], n=d.scored_total;
+  const hits=d.examples.filter(row=>row.outcomes[k]===true).length;
+  x.races=n;x.hit_rate_percent=+(100*hits/n).toFixed(2);
+  if(paired){
+   x.hits=hits;
+   x.paired_gain=d.examples.filter(row=>row.outcomes[k]===true&&row.outcomes.hit10===false).length;
+   x.paired_loss=d.examples.filter(row=>row.outcomes[k]===false&&row.outcomes.hit10===true).length;
+   x.changed_races=k==='hit10'?0:n;
+  }else{x.hit=hits}
+ }
+ return d;
+}
+if(v236.examples.length!==v236.scored_total)assert.equal(api.check236(v236),null,'Clipped V236 must not be claimed fully verified');
+if(v240.examples.length!==v240.scored_total)assert.equal(api.check240(v240),null,'Clipped V240 must not be claimed fully verified');
+const fixture236=listedRowsFixture(v236,['hit10','balance10','scenario7plus3','coverage15'],false);
+const fixture240=listedRowsFixture(v240,['hit10','pair_coverage10','second_coverage10'],true);
+const a=api.check236(fixture236),b=api.check240(fixture240);
+assert(a&&b,'Listed-row regression fixture must verify consistently');
+assert.equal(a.n,fixture236.scored_total);
+assert.equal(b.n,fixture240.scored_total);
 assert.equal(a.rows.find(x=>x.key==='coverage15').points,15);
 assert.equal(b.rows.find(x=>x.key==='hit10').points,10);
 assert.equal(b.rows.find(x=>x.key==='pair_coverage10').points,10);
@@ -20,9 +45,9 @@ assert.equal(b.rows.find(x=>x.key==='pair_coverage10').points,10);
 for(const key of ['hit10','pair_coverage10','second_coverage10']){
  const row=b.rows.find(x=>x.key===key);
  assert(row,'Missing frozen comparator '+key);
- const expectedHits=v240.examples.filter(r=>r.outcomes[key]===true).length;
- const expectedGain=v240.examples.filter(r=>r.outcomes[key]===true&&r.outcomes.hit10===false).length;
- const expectedLoss=v240.examples.filter(r=>r.outcomes[key]===false&&r.outcomes.hit10===true).length;
+ const expectedHits=fixture240.examples.filter(r=>r.outcomes[key]===true).length;
+ const expectedGain=fixture240.examples.filter(r=>r.outcomes[key]===true&&r.outcomes.hit10===false).length;
+ const expectedLoss=fixture240.examples.filter(r=>r.outcomes[key]===false&&r.outcomes.hit10===true).length;
  assert.equal(row.hits,expectedHits,key+' frozen hits');
  assert.equal(row.gain,expectedGain,key+' prospective paired gain');
  assert.equal(row.loss,expectedLoss,key+' prospective paired loss');
@@ -30,26 +55,26 @@ for(const key of ['hit10','pair_coverage10','second_coverage10']){
 assert.equal(b.paired,true);
 assert.equal(a.paired,false);
 const mutate=(obj,fn)=>{const clone=JSON.parse(JSON.stringify(obj));fn(clone);return clone};
-assert.equal(api.check240(mutate(v240,d=>d.accuracy_improvement_proven=true)),null);
-assert.equal(api.check240(mutate(v240,d=>d.production_model_changed=true)),null);
-assert.equal(api.check240(mutate(v240,d=>d.promotion_authorized=true)),null);
-assert.equal(api.check240(mutate(v240,d=>d.scope='FORMAL_FRESH')),null);
-assert.equal(api.check240(mutate(v240,d=>d.comparisons.hit10.hits++)),null);
-assert.equal(api.check240(mutate(v240,d=>d.comparisons.hit10.hit_rate_percent=99)),null);
-assert.equal(api.check240(mutate(v240,d=>d.comparisons.pair_coverage10.points=15)),null);
-assert.equal(api.check240(mutate(v240,d=>d.comparisons.pair_coverage10.paired_gain=9)),null);
-assert.equal(api.check240(mutate(v240,d=>d.examples[1].outcomes.pair_coverage10=!d.examples[1].outcomes.pair_coverage10)),null);
-assert.equal(api.check240(mutate(v240,d=>d.examples[1].race_key=d.examples[0].race_key)),null);
-assert.equal(api.check240(mutate(v240,d=>d.examples[0].outcomes.hit10='true')),null);
-assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.hit++)),null);
-assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.avg_points=10)),null);
-assert.equal(api.check236(mutate(v236,d=>d.scope='FORMAL_FRESH')),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.accuracy_improvement_proven=true)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.production_model_changed=true)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.promotion_authorized=true)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.scope='FORMAL_FRESH')),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.comparisons.hit10.hits++)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.comparisons.hit10.hit_rate_percent=99)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.comparisons.pair_coverage10.points=15)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.comparisons.pair_coverage10.paired_gain=9)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.examples[1].outcomes.pair_coverage10=!d.examples[1].outcomes.pair_coverage10)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.examples[1].race_key=d.examples[0].race_key)),null);
+assert.equal(api.check240(mutate(fixture240,d=>d.examples[0].outcomes.hit10='true')),null);
+assert.equal(api.check236(mutate(fixture236,d=>d.comparisons.coverage15.hit++)),null);
+assert.equal(api.check236(mutate(fixture236,d=>d.comparisons.coverage15.avg_points=10)),null);
+assert.equal(api.check236(mutate(fixture236,d=>d.scope='FORMAL_FRESH')),null);
 // Additional chronologically independent date must remain explicitly represented.
-const allDays=[...new Set(v240.examples.map(x=>x.race_key.slice(0,8)))].sort();
+const allDays=[...new Set(fixture240.examples.map(x=>x.race_key.slice(0,8)))].sort();
 const newest=allDays[allDays.length-1];
 const nextDay=new Date(Date.UTC(Number(newest.slice(0,4)),Number(newest.slice(4,6))-1,Number(newest.slice(6,8))+1))
  .toISOString().slice(0,10).replace(/-/g,'');
-const day2=mutate(v240,d=>{
+const day2=mutate(fixture240,d=>{
  const newRace=JSON.parse(JSON.stringify(d.examples[0]));
  newRace.race_key=nextDay+'-14-01';d.examples.push(newRace);
  d.scored_total++;for(const [k,x] of Object.entries(d.comparisons)){
@@ -69,6 +94,8 @@ assert(crossDay&&crossDay.day===allDays[0]+'〜'+nextDay);
 // summaries clip examples to their latest 25/20 rows.
 const fullSource=JSON.parse(fs.readFileSync('data/site_autopilot/v253_miss_diagnostics_current.json','utf8'));
 const full=api.fromFullMissProof(fullSource);
+assert(fullSource.lanes.v236.races_verified<=v236.scored_total);
+assert(fullSource.lanes.v240.races_verified<=v240.scored_total);
 assert(full?.a&&full?.b,'Need complete V253 provenance-backed cohort');
 assert.equal(full.a.n,fullSource.lanes.v236.races_verified);
 assert.equal(full.b.n,fullSource.lanes.v240.races_verified);
@@ -95,7 +122,7 @@ const multiday=mutate(fullSource,d=>{
 });
 const m=api.fromFullMissProof(multiday);
 assert(m&&m.b.day.includes('20261013'),'Latest unseen day should be shown');
-const truncated=mutate(v240,d=>{d.scored_total+=20;d.comparisons.hit10.races+=20;});
+const truncated=mutate(fixture240,d=>{d.scored_total+=20;d.comparisons.hit10.races+=20;});
 assert.equal(api.check240(truncated),null,'Never claim incomplete examples verify 100% of aggregate');
 
 const html=fs.readFileSync('autopilot.html','utf8');
