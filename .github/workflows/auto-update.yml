@@ -301,8 +301,16 @@ jobs:
                       hh,mm=map(int,ds[rno-1].split(":"))
                       dl=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
                       delta=(dl-now).total_seconds()/60
-                      if -30<=delta<=150:targets.append((j,rno))
+                      if -30<=delta<=150:targets.append((j,rno,delta))
                   except: pass
+
+          # V268: urgent 0-15m beforeinfo must not queue behind races 2h away.
+          # Finished races (-30..0m) are lowest priority; never use results.
+          # Preserve the full original collection target set and source guards.
+          targets.sort(key=lambda row:(0 if 0<=row[2]<=15 else
+                                       1 if 15<row[2]<=45 else
+                                       2 if row[2]>45 else 3,
+                                       abs(row[2]),row[0],row[1]))
 
           def before_task(j,rno):
               key=f"{ymd}-{j}-{rno:02d}"
@@ -318,7 +326,7 @@ jobs:
 
           before={}
           with ThreadPoolExecutor(max_workers=8) as ex:
-              futs=[ex.submit(before_task,j,r) for j,r in targets]
+              futs=[ex.submit(before_task,j,r) for j,r,_delta in targets]
               for fut in as_completed(futs):
                   k,v=fut.result();before[k]=v
 
