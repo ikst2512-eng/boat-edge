@@ -90,7 +90,7 @@ jobs:
           assert.equal(v.modeAllowed('unknown'),false);
           assert.equal(v.modeAllowed('__proto__'),false);
           assert(labels.every(x=>Object.values(v.MODES).includes(x)));
-          assert(js.includes('selectedResultMode')&&js.includes('data.resultMode=keyMode'));
+          assert(js.includes('selectedResultMode')&&js.includes('button.dataset.resultMode=keyMode'));
           assert(js.includes("aria-pressed',String(selectedResultMode===keyMode)"));
           assert(js.includes("'&mode='+encodeURIComponent(selectedResultMode)"));
           assert(page.includes("query.get('mode')"));
