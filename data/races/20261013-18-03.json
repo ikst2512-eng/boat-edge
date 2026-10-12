@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 3,
     "deadline": "09:39",
-    "updated_at": "2026-10-13T06:56:29+09:00",
+    "updated_at": "2026-10-13T07:13:57+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=18&rno=3",
-      "fetched_at": "2026-10-13T06:57:44+09:00",
-      "sha256": "0579711ab9b4dd97d15c8e7510a4d00315e5da699bfe6b70a84f944fc04aee0b",
+      "fetched_at": "2026-10-13T07:15:27+09:00",
+      "sha256": "28d8696c1ea72de6873823c36fbdd584fa54b510a8d304322b3e3e1862bc7757",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=18&rno=3",
+      "fetched_at": "2026-10-13T07:14:35+09:00",
+      "sha256": "e6b5e82f76ca09f4a81d1bbf0d46717e97ab2f741e1ba4857f968bed885358a5",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -285,7 +291,53 @@
       "raw_text": "6 3548 / A2 室田 泰史 福井/福井 56歳/52.7kg F1 L0 0.12 4.98 28.83 45.05 6.36 46.15 69.23 70 24.07 38.89 48 33.77 50.44 9 3 12 7 11 10R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 吉田 拡郎 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 永松 良教 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 藤田 浩人 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 森下 愛梨 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 櫻井 隼 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 室田 泰史 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
