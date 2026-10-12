@@ -93,3 +93,15 @@ html.be328-await-ticket-list #be206MoreTickets{display:none!important}
  #be206Quick .be206-headpanel li{min-width:0;overflow-wrap:anywhere}
  #be206Quick .be206-layout-switch button{min-height:44px}
 }
+
+/* V338: keep selected-racer head tickets readable and prevent horizontal clipping. */
+#be206Quick .be206-headpanel{min-width:0;overflow-wrap:anywhere}
+#be206Quick .be206-headpanel .be206-head-top{min-width:0}
+#be206Quick .be206-headpanel .be206-head-top strong{min-width:0;overflow-wrap:anywhere}
+#be206Quick .be206-headpanel li b{white-space:nowrap}
+#be206Quick .be206-headpanel li span{min-width:0;overflow-wrap:anywhere}
+#be206Quick .be206-headpanel button:focus-visible{outline:3px solid #286ec2;outline-offset:2px}
+@media(max-width:390px){
+ #be206Quick .be206-headpanel{padding:9px}
+ #be206Quick .be206-headpanel li{gap:5px}
+}
