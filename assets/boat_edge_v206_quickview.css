@@ -25,3 +25,33 @@ html.be206-active #be108PredictionModes .be108-ticket.be206-hide-ticket{display:
 #be206MoreTickets{display:block;width:100%;margin:10px 0 1px;padding:11px;border:1px solid #b6d5ee;border-radius:9px;background:#f0f7ff;color:#205d91;font-size:12px;font-weight:900;min-height:44px}
 @media(max-width:390px){.be206-table th,.be206-table td{font-size:10px;padding:9px 1px}.be206-table thead th:first-child{width:35%}.be206-racername{font-size:10px}.be206-lane{width:19px;height:21px}}
 @media(min-width:650px){.be206-table{max-width:800px}.be206-table tbody th{padding-left:10px}.be206-racername{font-size:13px}.be206-table td{font-size:13px!important}.be206-table thead th:first-child{width:35%}}
+
+/* V298 — original BOAT EDGE data-sheet treatment inspired by six-lane comparison.
+ * Static layout only. No predictions, source data or evidence is concealed. */
+#be206Quick .be206-switch{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+#be206Quick .be206-switch button{font-size:11px;padding:9px 3px;min-height:44px;line-height:1.3}
+#be206Quick .be206-layout-switch{display:flex;justify-content:flex-end;gap:5px;margin:2px 0 8px}
+#be206Quick .be206-layout-switch button{border:1px solid #cad8e5;background:#f4f8fc;color:#375b7d;font-size:11px;font-weight:800;border-radius:7px;padding:8px 12px;min-height:40px}
+#be206Quick .be206-layout-switch button.on{border-color:#1d5790;background:#e6f2ff;color:#144a82}
+#be206Quick .be206-layout-switch button:focus-visible{outline:3px solid #7db2e5;outline-offset:2px}
+#be206Quick .be206-swipe-help{color:#5e7184;font-size:10px;line-height:1.6;margin:5px 0 7px}
+#be206Quick .be206-table-scroll[hidden],#be206Quick .be206-matrix-scroll[hidden]{display:none!important}
+#be206Quick .be206-matrix-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border:1px solid #dce6f0;border-radius:9px}
+#be206Quick .be206-matrix{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:650px;font-variant-numeric:tabular-nums;background:#fff}
+#be206Quick .be206-matrix th,#be206Quick .be206-matrix td{padding:9px 6px;font-size:11px;text-align:center;border-bottom:1px solid #e5ecf4;border-right:1px solid #edf1f5}
+#be206Quick .be206-matrix thead th{vertical-align:top;background:#f1f6fc;border-bottom:2px solid #cbdbea;min-width:88px}
+#be206Quick .be206-matrix thead th:first-child{width:94px;min-width:94px;text-align:left}
+#be206Quick .be206-matrix thead b{display:block;font-size:10px;line-height:1.4;margin:4px auto 2px;max-width:78px;overflow-wrap:anywhere;color:#203b58}
+#be206Quick .be206-matrix thead small{display:block;font-size:10px;color:#607a93}
+#be206Quick .be206-matrix tbody th{position:sticky;left:0;z-index:2;background:#f5f8fc;text-align:left;font-size:11px;color:#244866;min-width:94px;white-space:normal;box-shadow:2px 0 0 #d6e2ed}
+#be206Quick .be206-matrix thead th:first-child{position:sticky;left:0;z-index:3;background:#e7f0fa;box-shadow:2px 0 0 #d6e2ed}
+#be206Quick .be206-matrix tbody tr:nth-child(even) td{background:#fbfdff}
+#be206Quick .be206-matrix td.be206-val.best{background:#fff0ed;color:#b22222;font-weight:950}
+#be206Quick .be206-matrix td.be206-val.foul{color:#9f582e}
+#be206Quick .be206-matrix tr:last-child td,#be206Quick .be206-matrix tr:last-child th{border-bottom:0}
+#be206Quick .be206-matrix .be206-lane{display:inline-flex}
+@media(max-width:410px){
+ #be206Quick .be206-switch button{font-size:10px;padding:8px 2px}
+ #be206Quick .be206-layout-switch button{font-size:11px}
+ #be206Quick .be206-matrix th,#be206Quick .be206-matrix td{padding:9px 4px}
+}
