@@ -3,41 +3,41 @@
   "scope": "SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH",
   "formal_current_scoring": false,
   "production_prediction_weights_changed": false,
-  "predictions_evaluated": 1,
+  "predictions_evaluated": 4,
   "mode_policy": "BALANCE10_WAVE12_15_18_V133_FIXED",
   "modes": {
     "hit": {
       "label": "的中重視",
-      "evaluated": 1,
+      "evaluated": 4,
       "hits": 1,
-      "misses": 0,
-      "hit_rate_percent": 100.0
+      "misses": 3,
+      "hit_rate_percent": 25.0
     },
     "balance": {
       "label": "バランス",
-      "evaluated": 1,
+      "evaluated": 4,
       "hits": 1,
-      "misses": 0,
-      "hit_rate_percent": 100.0
+      "misses": 3,
+      "hit_rate_percent": 25.0
     },
     "hole": {
       "label": "波乱展開",
-      "evaluated": 1,
+      "evaluated": 4,
       "hits": 1,
-      "misses": 0,
-      "hit_rate_percent": 100.0
+      "misses": 3,
+      "hit_rate_percent": 25.0
     },
     "narrow": {
       "label": "激絞り",
-      "evaluated": 1,
+      "evaluated": 4,
       "hits": 0,
-      "misses": 1,
+      "misses": 4,
       "hit_rate_percent": 0.0
     }
   },
   "by_winning_head": {
     "1": {
-      "evaluated": 0,
+      "evaluated": 1,
       "hits": {
         "hit": 0,
         "balance": 0,
@@ -46,7 +46,7 @@
       }
     },
     "2-6": {
-      "evaluated": 1,
+      "evaluated": 3,
       "hits": {
         "hit": 1,
         "balance": 1,
@@ -60,9 +60,12 @@
   },
   "method": "Only V133 prospective FINAL_15M snapshots with matching V125 audit and confirmed official result; no race/result endpoint consulted, no historical prediction backfill.",
   "rank_120_available": false,
-  "latest_settlement": "2026-10-11T23:59:50.421526+00:00",
+  "latest_settlement": "2026-10-12T00:55:46.096109+00:00",
   "example_race_keys": [
-    "20261012-14-01"
+    "20261012-14-01",
+    "20261012-14-02",
+    "20261012-18-01",
+    "20261012-23-02"
   ],
   "note": "Descriptive observed hit rates, not proven predictive improvement. Site reference predictions are separate from formal Fresh validation."
 }
