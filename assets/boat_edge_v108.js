@@ -352,6 +352,15 @@ function be166OddsStatus(key,postResult){
   const m=be166OddsMeta.get(key);
   if(!m || m.status==='missing')return '<div class="be166-odds-status warning">公式3連単オッズ未取得。予測順位はオッズに依存しません。</div>';
   if(m.status==='invalid')return '<div class="be166-odds-status warning">公式オッズ検証不一致。誤った倍率は表示せず、再取得を待ちます。</div>';
+  if(m.status==='unverified'){
+    const count=Number.isInteger(m.observedNumericCount)&&m.observedNumericCount>=0&&m.observedNumericCount<80
+      ?'120通り中'+m.observedNumericCount+'通りのみ数値確認。'
+      :'有効な倍率を確認できません。';
+    const checked=m.checkedAt&&Number.isFinite(Date.parse(m.checkedAt))
+      ?' / 検証 '+esc(new Date(m.checkedAt).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}))+' JST'
+      :'';
+    return '<div class="be166-odds-status warning">公式オッズ未確認・購入対象外。'+count+'欠場・取消は未確認のままです。以前の価格も表示しません。'+checked+'</div>';
+  }
   const link=m.sourceUrl?'<a target="_blank" rel="noopener noreferrer" href="'+esc(m.sourceUrl)+'">公式オッズで確認</a>':'';
   const stamp=m.fetchedAt?esc(new Date(m.fetchedAt).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'})):'取得時刻不明';
   const warning=m.status!=='fresh';
@@ -362,6 +371,20 @@ async function oddsFor(key){
   const doc=await J(`./data/site_odds/${key}.json`,5000);
   const missing={status:'missing'};
   if(!doc){be166OddsMeta.set(key,missing);return {}}
+  // V256: an official source failure invalidates a previous live price map.
+  // 60/120 numerical odds do not prove a scratch; never invent a missing price.
+  if(doc.odds_validation==='REJECTED_NO_BET'){
+    const safe=doc.race_key===key && doc.schema_version==='boat-edge-site-odds-v71' &&
+      doc.phase==='PRE_RESULT_PURCHASE_ONLY' && doc.results_seen===false && doc.scoring===false &&
+      doc.no_bet===true && doc.available_count===0 &&
+      doc.trifecta_odds && typeof doc.trifecta_odds==='object' &&
+      !Object.keys(doc.trifecta_odds).length;
+    be166OddsMeta.set(key,safe?{
+      status:'unverified',checkedAt:doc.checked_at,
+      observedNumericCount:doc.observed_numeric_count
+    }:{status:'invalid'});
+    return {};
+  }
   const odds=doc.trifecta_odds;
   const entries=odds&&typeof odds==='object'?Object.entries(odds):[];
   const validKey=s=>{const a=s.split('-').map(Number);return /^([1-6]-){2}[1-6]$/.test(s)&&new Set(a).size===3};
