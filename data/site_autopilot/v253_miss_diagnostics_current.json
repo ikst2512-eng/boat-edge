@@ -9,30 +9,43 @@
       "miss_categories": {
         "balance10": {
           "head_absent": 1,
-          "hit": 3,
+          "hit": 5,
           "second_absent_given_head": 3,
           "third_absent_given_head_second": 10
         },
         "coverage15": {
           "head_absent": 1,
-          "hit": 5,
+          "hit": 7,
           "second_absent_given_head": 2,
           "third_absent_given_head_second": 9
         },
         "hit10": {
           "head_absent": 1,
-          "hit": 3,
+          "hit": 5,
           "second_absent_given_head": 3,
           "third_absent_given_head_second": 10
         },
         "scenario7plus3": {
           "head_absent": 1,
-          "hit": 3,
+          "hit": 5,
           "second_absent_given_head": 3,
           "third_absent_given_head_second": 10
         }
       },
       "races": [
+        {
+          "actual_head": "1",
+          "categories": {
+            "balance10": "hit",
+            "coverage15": "hit",
+            "hit10": "hit",
+            "scenario7plus3": "hit"
+          },
+          "date_jst": "20261012",
+          "race_key": "20261012-02-09",
+          "reported_head_hit": true,
+          "winning_combo": "1-3-2"
+        },
         {
           "actual_head": "5",
           "categories": {
@@ -58,6 +71,19 @@
           "race_key": "20261012-03-06",
           "reported_head_hit": true,
           "winning_combo": "4-3-6"
+        },
+        {
+          "actual_head": "1",
+          "categories": {
+            "balance10": "hit",
+            "coverage15": "hit",
+            "hit10": "hit",
+            "scenario7plus3": "hit"
+          },
+          "date_jst": "20261012",
+          "race_key": "20261012-03-09",
+          "reported_head_hit": true,
+          "winning_combo": "1-2-3"
         },
         {
           "actual_head": "4",
@@ -255,31 +281,43 @@
           "winning_combo": "2-1-6"
         }
       ],
-      "races_verified": 17
+      "races_verified": 19
     },
     "v240": {
       "excluded": {},
       "miss_categories": {
         "hit10": {
           "head_absent": 1,
-          "hit": 3,
+          "hit": 5,
           "second_absent_given_head": 3,
           "third_absent_given_head_second": 7
         },
         "pair_coverage10": {
           "head_absent": 2,
-          "hit": 4,
+          "hit": 6,
           "second_absent_given_head": 4,
           "third_absent_given_head_second": 4
         },
         "second_coverage10": {
           "head_absent": 3,
-          "hit": 1,
+          "hit": 3,
           "second_absent_given_head": 3,
           "third_absent_given_head_second": 7
         }
       },
       "races": [
+        {
+          "actual_head": "1",
+          "categories": {
+            "hit10": "hit",
+            "pair_coverage10": "hit",
+            "second_coverage10": "hit"
+          },
+          "date_jst": "20261012",
+          "race_key": "20261012-02-09",
+          "reported_head_hit": true,
+          "winning_combo": "1-3-2"
+        },
         {
           "actual_head": "5",
           "categories": {
@@ -291,6 +329,18 @@
           "race_key": "20261012-03-01",
           "reported_head_hit": false,
           "winning_combo": "5-1-3"
+        },
+        {
+          "actual_head": "1",
+          "categories": {
+            "hit10": "hit",
+            "pair_coverage10": "hit",
+            "second_coverage10": "hit"
+          },
+          "date_jst": "20261012",
+          "race_key": "20261012-03-09",
+          "reported_head_hit": true,
+          "winning_combo": "1-2-3"
         },
         {
           "actual_head": "4",
@@ -449,7 +499,7 @@
           "winning_combo": "2-1-6"
         }
       ],
-      "races_verified": 14
+      "races_verified": 16
     }
   },
   "method": "FROM_GIT_FROZEN_PRE_DEADLINE_TICKETS_MATCHED_TO_VERIFIED_SITE_RESULTS",
@@ -459,5 +509,5 @@
   "real_or_paper_wagers_placed": 0,
   "schema": "BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1",
   "scope": "POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS",
-  "site_verified_reference_races": 36
+  "site_verified_reference_races": 38
 }
