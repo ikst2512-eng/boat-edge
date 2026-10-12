@@ -11,6 +11,7 @@ a{color:#1266df;text-decoration:none}button{font:inherit;cursor:pointer}header{p
 main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-height:1.2;margin:8px 0 6px;letter-spacing:-.04em}h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;margin:14px 0 8px}.eyebrow{font-size:11px;font-weight:900;letter-spacing:.14em;color:#216fea}.intro{margin:7px 0 18px;color:var(--muted);font-size:12px}.stamp{font-size:11px;color:var(--muted);margin:0 0 18px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 9px 28px #134c9a0a}.card{padding:18px}.panel{padding:18px;margin-top:14px}.label{font-size:11px;font-weight:850;color:var(--muted)}.stat{font-size:25px;font-weight:950;margin-top:5px;line-height:1.2;font-variant-numeric:tabular-nums}.note{font-size:11px;color:var(--muted);margin-top:8px}.state{display:inline-flex;padding:4px 9px;border-radius:7px;background:#eaf3ff;color:#1655a9;font-size:11px;font-weight:900}.state.good{background:#e9f8f2;color:#147d5a}.state.bad{background:#fff1e9;color:var(--warn)}.state.stop{background:#fff0f2;color:var(--red)}.split{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}.meter{height:7px;overflow:hidden;border-radius:9px;background:#e4ecf7;margin-top:12px}.meter>span{height:100%;display:block;background:linear-gradient(90deg,#1461ce,#49bcff);width:0}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.facts b{display:block;font-size:20px}.facts small{color:var(--muted);font-size:10px}.records{display:grid;gap:9px}.record{display:flex;align-items:start;justify-content:space-between;gap:12px;border:1px solid #e4eefb;border-radius:12px;padding:10px 12px}.record b{font-size:12px}.record small{display:block;color:var(--muted);font-size:10px}.record .issue{max-width:65%;text-align:right;font-size:10.5px;color:#995b0d}.compare{width:100%;border-collapse:collapse;font-size:12px}.compare th,.compare td{padding:9px 6px;text-align:right;border-bottom:1px solid #e9eff8;font-variant-numeric:tabular-nums}.compare th:first-child,.compare td:first-child{text-align:left}.compare thead{color:var(--muted);font-size:10px}.muted{color:var(--muted)}.actions{margin-top:12px;font-size:12px}.order{margin:8px 0 0;padding-left:20px;color:#496581;font-size:12px}.order li{margin:5px 0}.explain{font-size:12px;line-height:1.7;color:#53708e}.warning{border-left:3px solid #f2a54b;background:#fff9ef;padding:11px 14px;border-radius:4px 10px 10px 4px;color:#845921;font-size:11px;margin-top:14px}.foot{color:#65809e;font-size:11px;margin-top:18px}.ok-word{color:#168660}.fail-word{color:#a35a20}
 @media(max-width:700px){main{padding:16px 12px}.grid{grid-template-columns:1fr 1fr;gap:9px}.card{padding:13px}.card:first-child{grid-column:span 2}.stat{font-size:22px}.split{grid-template-columns:1fr}.facts{gap:6px}.facts b{font-size:17px}.top{padding:10px 12px}.brand{font-size:15px}.links{gap:7px;font-size:10px}.links a:nth-child(2){display:none}.links button{padding:6px 8px}h1{font-size:23px}.panel{padding:14px}.record .issue{max-width:60%}}
 </style>
+<link rel="stylesheet" href="./assets/boat_edge_v252_prospective.css?v=252">
 </head>
 <body>
 <header><div class="top"><a class="brand" href="./">BOAT EDGE <small>AUTOPILOT</small></a><nav class="links"><a href="./">レース</a><a href="./ai-simulation.html">AI自走シミュレーション</a><a href="./cohort.html">未見予想の検証</a><button id="reload" type="button">↻ 更新</button></nav></div></header>
@@ -26,6 +27,16 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
 <section class="panel"><h2>AI予想の自走検証</h2><div class="state bad" id="modelGate">精度改善は未証明</div><div class="facts" style="margin-top:15px"><div><small>V185検証数</small><b id="v185">―</b></div><div><small>V199検証数</small><b id="v199">―</b></div><div><small>10〜20倍帯対象</small><b id="midOdds">―</b></div></div><h3>V185候補と現行の比較</h3><table class="compare"><thead><tr><th>指標</th><th>候補</th><th>現行</th><th>差</th></tr></thead><tbody id="comparison"><tr><td colspan="4">確認中</td></tr></tbody></table><p class="explain">選手頭の精度、展開、Top3/5/10、10〜20倍帯を未見で比較。結果が不足している間は本番モデルを自動変更しない。</p></section></div>
 <div class="split"><section class="panel"><h2>AI自走シミュレーション</h2><div class="facts"><div><small>当日使用額</small><b id="used">―</b></div><div><small>当日残額</small><b id="balance">―</b></div><div><small>仮想購入</small><b id="buys">―</b></div></div><p class="warning" id="simGate">校正・購入条件が未成立なら見送り。実際の購入は行わない。</p><p class="actions"><a href="./ai-simulation.html">5万円の仮想運用画面を見る →</a></p></section>
 <section class="panel"><h2>次に自動で確認する順序</h2><ol class="order"><li>公式の出走表・直前情報と欠場／取消を照合</li><li>最新オッズと締切前の予想を固定</li><li>A頭・Top3/Top5/Top10・10〜20倍帯を未見で比較</li><li>改善が証明されるまで本番モデルを維持</li><li>サイト表示とPages公開を検証</li></ol><p class="warning" id="formalGate">正式Freshの結果閲覧・採点・解除は、この機能からは行わない。</p></section></div>
+<section id="v252Evidence" class="v252-board" aria-label="締切前に固定された同一レースの予想方式を比較">
+  <div class="v252-heading"><h2>未見買い目・同一レースの比較</h2><button type="button" id="v252Reload">↻ 検証更新</button></div>
+  <p class="v252-intro">締切前に固定した買い目を、確定後の同じレースで比較する研究表示。10点同士と15点を分け、検証母数・拾ったR・失ったRを示す。実購入や精度改善の証明ではありません。</p>
+  <p class="v252-status" id="v252Status" role="status" aria-live="polite">保存済み監査データを確認中</p>
+  <div class="v252-pair">
+    <div class="v252-sub"><h3>同じ10点：展開・2着候補の置き方</h3><div id="v252Equal"><p>同条件の監査結果を照合中</p></div></div>
+    <div class="v252-sub"><h3>広げた15点：取りこぼしと点数の差</h3><div id="v252Wide"><p>点数の異なる監査結果を照合中</p></div></div>
+  </div>
+  <p class="v252-footer">「拾えた／失った」は同じ固定レースでの的中差。10〜20倍を狙って後から組み替えたり、精度未証明の候補を本番昇格させたりしない。10点と15点の的中率は点数が違うため、改善を直接比較できません。</p>
+</section>
 <p class="foot">BOAT EDGE V227 / 公開サイトの表示は保存済みの監査記録に基づきます。GitHub Actionsの実行成功はモデルの精度改善・回収率の保証ではありません。</p>
 </main>
 <script>
@@ -71,4 +82,5 @@ async function update(){
 $('reload').addEventListener('click',update);update();setInterval(()=>{if(!document.hidden)update()},60000);
 })();
 </script>
+<script defer src="./assets/boat_edge_v252_prospective.js?v=252"></script>
 </body></html>
