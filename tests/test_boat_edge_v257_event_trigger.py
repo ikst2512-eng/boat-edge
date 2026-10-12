@@ -90,6 +90,41 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",
             (ROOT/'scripts/boat_edge_v254_third_tail.py').read_text())
 
+    def test_v286_first_race_835_jst_has_prospective_owner_and_shadow_slots(self):
+        """Guard the UTC-23h schedules covering Japan's first saved 08:35 race.
+
+        Scheduled slots are opportunities, not proof of successfully published
+        exhibition/odds, and never authorize using results or backfilled picks.
+        """
+        import re
+        primary=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        research=WORKFLOW.read_text(encoding='utf-8')
+        def cron_slots(workflow):
+            match=re.search(r"cron: '(\d+(?:,\d+)*) ([^ ]+) \* \* \*'",workflow)
+            self.assertIsNotNone(match,'Expected real scheduled UTC slots')
+            self.assertEqual(match.group(2),'0-14,23',
+                '23 UTC must cover Japanese 08:00-08:59')
+            return set(map(int,match.group(1).split(',')))
+        parent=cron_slots(primary)
+        tail=cron_slots(research)
+        self.assertEqual(parent,set(range(2,60,5)))
+        self.assertEqual(tail,set(range(3,60,5)))
+        # 08:35 JST == 23:35 UTC on the previous calendar day.
+        # Source capture must remain >120s before deadline; independent shadow
+        # may freeze only while original Git attestation is still pre-result.
+        for minute in (22,27,32):
+            self.assertIn(minute,parent)
+            self.assertIn(minute+1,tail)
+            self.assertGreaterEqual(35-(minute+1),2)
+        self.assertIn("V274 immediately freeze qualifying V254",primary)
+        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
+        source=(ROOT/'scripts/boat_edge_v232_pre_result_cohort.py').read_text(encoding='utf-8')
+        guard=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
+        self.assertIn('120 <= (due-now).total_seconds() <= 900',source)
+        self.assertIn('90<=(deadline-now).total_seconds()<=900',guard)
+        self.assertIn('SOURCE_GIT_PROVENANCE_UNVERIFIED',guard)
+        self.assertIn('V254_FORMAL_GATE_MUST_STAY_CLOSED',guard)
+
     def test_v271_single_owner_scheduled_result_and_readiness(self):
         # Retired writers may be manually launched for recovery, but not
         # on the same 5-minute cron as their verified successors.
