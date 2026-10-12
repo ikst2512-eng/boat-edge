@@ -38,6 +38,11 @@ class V312Shadow(unittest.TestCase):
         self.assertTrue(all(len(m["top10"]) == 10 for m in value["modes"].values()))
         # Boat 6 is strongest, but its exhibition course is 1.
         self.assertTrue(all(m["top10"][0].startswith("1-") for m in value["modes"].values()))
+        # Ticket identifiers are BOAT numbers, not the first-entry course.
+        self.assertTrue(all(m["top10_boat_research_only"][0].startswith("6-")
+                            for m in value["modes"].values()))
+        self.assertTrue(all(m["top10_label_basis"] == "COURSE_NOT_BOAT_TICKET"
+                            for m in value["modes"].values()))
         self.assertFalse(value["source_bytes_independently_authenticated"])
         self.assertFalse(value["first_git_commit_before_deadline_attested"])
         self.assertFalse(value["scoring_authorized"])

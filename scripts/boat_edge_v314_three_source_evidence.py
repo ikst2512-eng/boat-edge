@@ -102,7 +102,7 @@ def capture_report(root, race_key, provider, capture, deadline):
     except ValueError:
         reasons.append("INVALID_CAPTURE_TIME")
     fields = capture.get("fields")
-    if not isinstance(fields, list) or not fields or any(
+    if not isinstance(fields, list) or any(
         not isinstance(x, str) or x not in FIELDS for x in fields
     ) or len(set(fields)) != len(fields):
         reasons.append("UNVERIFIED_FIELD_DECLARATION")
