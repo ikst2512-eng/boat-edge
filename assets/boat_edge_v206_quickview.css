@@ -78,3 +78,9 @@ html.be206-active #be108PredictionModes .be108-ticket.be206-hide-ticket{display:
 #be206Quick .be206-headpanel p{font-size:12px;line-height:1.6}
 #be206Quick .be206-headpanel>small{font-size:10px;line-height:1.6;color:#526b83;display:block}
 @media(max-width:380px){#be206Quick .be206-headpanel ol{grid-template-columns:1fr}}
+
+/* V320: all six-boat comparison actions are accessible iPhone touch targets. */
+#be206Quick .be206-layout-switch button,
+#be206Quick .be206-head-top button,
+#be206Quick .be206-foot button{min-height:44px;min-width:44px;touch-action:manipulation}
+#be206Quick .be206-foot button{padding:10px 8px}
