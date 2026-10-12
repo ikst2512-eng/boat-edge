@@ -92,6 +92,17 @@ def compute(root,now):
     evaluation=load(root/'data/site_autovalidation/current.json') or {}
     paper=load(root/'data/site_paper_sim/current.json') or {}
     formal=load(root/'data/formal_status.json') or {}
+    collector_health=load(root/'data/health.json') or {}
+    urgent_names=('beforeinfo_urgent_15m_targets','beforeinfo_urgent_15m_ok',
+                  'beforeinfo_urgent_15m_published_wait','beforeinfo_urgent_15m_error')
+    urgent_counts=[collector_health.get(name) for name in urgent_names]
+    urgent_fresh=age_minutes(collector_health.get('updated_at'),now)
+    urgent_telemetry_ok=(urgent_fresh is not None and urgent_fresh<=30 and
+        all(type(v) is int and v>=0 for v in urgent_counts) and
+        urgent_counts[0]==sum(urgent_counts[1:]) and
+        collector_health.get('results_seen') is False and
+        collector_health.get('unlock') is False and
+        collector_health.get('scoring') is False)
     schedule_ok=str(today.get('date','')).replace('-','')==day
     race_cards=[]
     if schedule_ok:
@@ -153,6 +164,13 @@ def compute(root,now):
                       'odds_index_freshness':'CURRENT' if odds_age is not None and odds_age<=30 else 'STALE_OR_UNVERIFIED',
                       'site_autovalidation':evaluation.get('status','NOT_AVAILABLE'),
                       'predeadline_observations':readiness.get('day_observed_races',0)},
+      'official_beforeinfo_urgent_15m':{
+        'status':'OBSERVED' if urgent_telemetry_ok else 'UNVERIFIED_OR_STALE',
+        'targets':urgent_counts[0] if urgent_telemetry_ok else None,
+        'ok':urgent_counts[1] if urgent_telemetry_ok else None,
+        'published_wait':urgent_counts[2] if urgent_telemetry_ok else None,
+        'error':urgent_counts[3] if urgent_telemetry_ok else None,
+        'health_updated_at':collector_health.get('updated_at') if urgent_telemetry_ok else None},
       'research_model_production_promotion':False,'paper_wager_authorized_by_this_runner':False,
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover}
