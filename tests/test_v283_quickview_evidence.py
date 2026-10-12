@@ -36,9 +36,18 @@ class QuickviewEvidenceV283(unittest.TestCase):
         self.assertIn("Array.isArray(x?.values)", source)
         self.assertIn("数値の存在は取得元・鮮度・独立照合の証明ではありません", source)
 
+    def test_completeness_uses_deadline_aware_source_evidence(self):
+        source = (ROOT / "assets/boat_edge_v206_quickview.js").read_text(encoding="utf-8")
+        start = source.index("const completeness=r=>{")
+        end = source.index("const tabs=", start)
+        section = source[start:end]
+        self.assertIn("source(r,'beforeinfo')", section)
+        self.assertIn("source(r,'original_exhibition')", section)
+        self.assertNotIn("audit[k]?.status==='ok'?'証跡あり'", section)
+
     def test_cache_bust_link(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=285"), 1)
+        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=286"), 1)
 
 if __name__ == "__main__":
     unittest.main()
