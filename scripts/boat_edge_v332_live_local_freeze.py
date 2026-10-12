@@ -128,6 +128,10 @@ def _eligible_race(root, key, now):
             raise ValueError("INVALID_SOURCE_FETCH_TIME:" + provider) from exc
         if fetched.tzinfo is None or fetched >= deadline or fetched > now:
             raise ValueError("SOURCE_NOT_ASOF_PREDEADLINE:" + provider)
+        # A timestamp older than the actual final window is not live evidence.
+        freshness_minutes = 16 if provider == "race_card" else 15
+        if (now - fetched).total_seconds() > freshness_minutes * 60:
+            raise ValueError("SOURCE_TOO_STALE_FOR_FINAL_WINDOW:" + provider)
         # The official race-card URL itself must identify this exact race.
         try:
             check_target("official", source["source"], key)
