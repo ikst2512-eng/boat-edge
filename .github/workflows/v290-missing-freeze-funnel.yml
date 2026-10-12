@@ -1,0 +1,42 @@
+name: BOAT EDGE V290 - Missing Freeze Source Gap vs Scheduler Window
+on:
+  push:
+    branches: [main, fix/v290-missing-freeze-funnel-diagnosis]
+    paths:
+      - 'scripts/boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v220_site_ops.py'
+      - '.github/workflows/v290-missing-freeze-funnel.yml'
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v220_site_ops.py'
+      - '.github/workflows/v290-missing-freeze-funnel.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v290-readonly-funnel-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  freeze-missing-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Source-only preserved observation tests and formal lock
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          s=Path('scripts/boat_edge_v220_site_ops.py').read_text()
+          assert 'not_found_without_gaps_inside_2_to_10m_window' in s
+          assert "result_url" not in s
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V290_NO_FABRICATED_FREEZE_OR_FORMAL_RESULT_PASS')
+          PY
+          git diff --check

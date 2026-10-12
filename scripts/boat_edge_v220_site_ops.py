@@ -99,8 +99,13 @@ def freeze_coverage(root,day,now):
              'v229_attestation_record_matched':0,
              'v229_atomic_evidence_matched':0,'early_missing_later_snapshot_present':0,
              'not_found_after_deadline':0,'pending_before_deadline':0,
+             'not_found_with_observed_gaps':0,'not_found_without_observed_gaps':0,
+             'not_found_last_seen_inside_2_to_10m_window':0,
+             'not_found_last_seen_outside_2_to_10m_window':0,
+             'not_found_last_seen_unverified':0,
+             'not_found_without_gaps_inside_2_to_10m_window':0,
              'snapshot_or_audit_unverified':0,'observed_gaps_for_currently_missing':{},
-             'integrity_note':'An at-freeze attestation record does not imply current race-source SHA parity or independent Git predeadline provenance.',
+             'integrity_note':'A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.',
              'status':'NO_PRE_RESULT_OBSERVATIONS'}
     path=root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json'
     history=load(path) or {}
@@ -121,10 +126,27 @@ def freeze_coverage(root,day,now):
             field='not_found_after_deadline' if matured else 'pending_before_deadline'
             summary[field]+=1
             if matured:
-                gaps=record.get('source_gaps_seen') or []
-                for gap in set(x for x in gaps if isinstance(x,str) and len(x)<=80):
-                    counts=summary['observed_gaps_for_currently_missing']
-                    counts[gap]=counts.get(gap,0)+1
+                # V290: a missing snapshot with NO observed source gap
+                # does not prove source readiness. Track the separate
+                # scheduler/freeze decision window, without any backfill.
+                gaps=record.get('source_gaps_seen')
+                has_gaps=not isinstance(gaps,list) or bool(gaps)
+                summary['not_found_with_observed_gaps' if has_gaps else
+                        'not_found_without_observed_gaps']+=1
+                if isinstance(gaps,list):
+                    for gap in set(x for x in gaps if isinstance(x,str) and len(x)<=80):
+                        counts=summary['observed_gaps_for_currently_missing']
+                        counts[gap]=counts.get(gap,0)+1
+                last_seen=moment(record.get('last_seen_at'))
+                lead=(deadline-last_seen).total_seconds()/60 if last_seen else None
+                if lead is None:
+                    summary['not_found_last_seen_unverified']+=1
+                elif 2<=lead<=10:
+                    summary['not_found_last_seen_inside_2_to_10m_window']+=1
+                    if not has_gaps:
+                        summary['not_found_without_gaps_inside_2_to_10m_window']+=1
+                else:
+                    summary['not_found_last_seen_outside_2_to_10m_window']+=1
             continue
         summary['snapshot_present']+=1
         if 'snapshot_missing' in (record.get('reasons_seen') or []):
