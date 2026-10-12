@@ -78,7 +78,7 @@ def parse_before(html):
     # the header. It carries separately labelled boat-number and ST spans.
     # Picking the next unrelated table can mistake partial/other data for ST.
     starts=[]
-    tag=soup.find('th',string=re.compile(r'^\\s*スタート展示\\s*$'))
+    tag=soup.find('th',string=re.compile(r'^\s*スタート展示\s*$'))
     table=tag.find_parent('table') if tag else None
     if table:
         for div in table.select('div.table1_boatImage1'):
@@ -88,7 +88,7 @@ def parse_before(html):
             lane_str=txt(lane_tag.get_text(' ',strip=True))
             st=txt(st_tag.get_text(' ',strip=True))
             if not re.fullmatch(r'[1-6]',lane_str):continue
-            if not re.fullmatch(r'F?\\.\\d{2}',st):continue
+            if not re.fullmatch(r'F?\.\d{2}',st):continue
             starts.append({'lane':int(lane_str),'st':st})
     full=txt(soup.get_text(' ',strip=True));weather={}
     for k,p in {'air_temp_c':r'気温\s*([\d.]+)\s*℃',
@@ -111,7 +111,7 @@ def beforeinfo_coverage(parsed):
     st={row.get('lane') for row in start if isinstance(row,dict)
         and type(row.get('lane')) is int and row['lane'] in expect
         and isinstance(row.get('st'),str)
-        and re.fullmatch(r'F?\\.\\d{2}',row['st'])}
+        and re.fullmatch(r'F?\.\d{2}',row['st'])}
     full_ex=len(racers)==6 and ex==expect
     full_st=len(start)==6 and st==expect
     return {'exhibition_lanes':len(ex),'start_exhibition_lanes':len(st),
