@@ -1,0 +1,39 @@
+/* V253 BOAT EDGE mobile-first home, no hidden race records or modified fetches.
+ * The full deadline list stays in DOM and is revealed through a visible control. */
+#homeView.be253-compact #deadlineBoard>.deadline-card:nth-child(n+7){display:none}
+#homeView .be253-more{display:block;width:100%;margin:10px 0 4px;min-height:43px;
+ border-radius:10px;border:1px solid #bcd5f2;background:#ecf5ff;color:#165a9b;
+ font-size:12px;font-weight:900;padding:10px 12px;text-align:center}
+#homeView .be253-more[hidden]{display:none!important}
+#homeView .be253-more:focus-visible{outline:3px solid #2375c2;outline-offset:2px}
+#homeView .deadline-board{scroll-margin-top:84px;-webkit-overflow-scrolling:touch}
+#homeView .venue-toolbar .venue-search{min-height:44px;font-size:13px;font-weight:800}
+#homeView .venue-toolbar .filter-chip{min-height:42px;padding:9px 12px;font-size:12px}
+#homeView .venue-toolbar .filter-chip:focus-visible{outline:3px solid #2375c2;outline-offset:2px}
+#homeView .venues .venue{min-width:0}
+#homeView .venues .racechips{max-width:100%;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:3px}
+#homeView .venues .racechip{flex:0 0 auto;min-height:45px;min-width:60px}
+#homeView .venues .racechip:focus-visible{outline:3px solid #2375c2;outline-offset:2px}
+#homeView .spotlight-grid .spotlight-card{min-height:115px}
+#homeView .spotlight-grid .spotlight-card:focus-visible{outline:3px solid #2375c2;outline-offset:2px}
+#homeView .venue-stats{font-variant-numeric:tabular-nums}
+@media(max-width:740px){
+ #homeView .venue-toolbar{gap:7px}
+ #homeView .venue-toolbar .filter-chips{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+ #homeView .venue-toolbar .filter-chip{scroll-snap-align:start}
+ #homeView .spotlight-grid{gap:8px}
+ #homeView .spotlight-grid .spotlight-card{min-height:94px;padding:11px 12px}
+ #homeView .spotlight-grid .spotlight-deadline{font-size:23px}
+ #homeView .spotlight-grid .spotlight-place{font-size:15px}
+ #homeView .deadline-card{min-width:165px;padding:12px;border-radius:12px}
+ #homeView .deadline-time{font-size:23px}
+ #homeView .deadline-place{font-size:14px}
+ #homeView .venue{padding:11px 12px}
+ #homeView .vname{font-size:15px}
+ #homeView .venues .racechip{min-width:59px}
+}
+@media(max-width:375px){
+ #homeView .deadline-card{min-width:156px}
+ #homeView .venue-toolbar .filter-chip{font-size:11px;padding:8px 9px}
+ #homeView .spotlight-grid .spotlight-card{padding:10px}
+}
