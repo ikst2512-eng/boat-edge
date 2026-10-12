@@ -29,4 +29,7 @@ x=inspect(r,null,null,Date.parse('2026-10-11T08:36:00+09:00'));assert.equal(x.ph
 const future={...r,source_audit:{...r.source_audit,beforeinfo:{status:'ok',fetched_at:'2026-10-11T08:40:00+09:00'}}};
 x=inspect(future,null,null,now);assert.equal(x.rows[0][1],'unknown');
 const bad={...r,meta:{...r.meta,results_seen:true}};x=inspect(bad,null,null,now);assert.equal(x.phase,'INVALID');
+const panelSource=fs.readFileSync('assets/boat_edge_v223_source_visibility.js','utf8');
+assert.match(panelSource,/if\(node\.parentElement!==host\)host\.prepend\(node\)/,'V321 reattaches source evidence to active race summary');
+console.log('V321_SOURCE_PANEL_REATTACH_PASS');
 console.log('V241_SOURCE_STATUS_CHIPS_AND_V223_WINDOW_TESTS_PASS: early publication wait, scratch age, block, future, deadline, formal flags');
