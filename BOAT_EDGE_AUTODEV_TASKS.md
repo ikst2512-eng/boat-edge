@@ -34,7 +34,7 @@ Do not append new tasks automatically. Stop once the queue is complete.
 
 These remain UI-only work items. Every change must use already-saved source evidence, preserve the existing race selection, and pass the V240 isolation and regression gates. Do not invent odds, exhibition measurements, hits, or simulation returns.
 
-- [ ] A21 | On the selected race card, clarify whether the latest saved official odds are current, stale, or absent using only timestamp and verification state already provided; do not imply a browser refresh fetches new odds.
+- [x] A21 | On the selected race card, clarify whether the latest saved official odds are current, stale, or absent using only timestamp and verification state already provided; do not imply a browser refresh fetches new odds.
 - [ ] A22 | Improve the existing prediction-ticket list on iPhone so the frozen order, ticket amount, and source-verified payout estimate are legible; show 未確認 instead of deriving values from missing data.
 - [ ] A23 | Make a compact six-boat stat comparison easier to scan with race-relative emphasis only for numeric values already in the UI; do not alter classes, local statistics, motor scores, or prediction ranking.
 - [ ] A24 | On an existing prediction page, distinguish the predicted head racer, trifecta Top3/5/10 coverage, and separately recorded confidence values without recalibrating or fabricating probabilities.
