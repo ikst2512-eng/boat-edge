@@ -22,11 +22,12 @@ class Tests(unittest.TestCase):
     def setUp(self):
         self.d=tempfile.TemporaryDirectory();self.addCleanup(self.d.cleanup)
         self.root=Path(self.d.name)
-        write(self.root/'data/formal_status.json',{'guards':{'results_seen':False,'unlock':False,'scoring':False,'RESULT_UNLOCK_TOKEN':None}})
+        write(self.root/'data/formal_status.json',{'guards':{'results_seen':False,'unlock':False,'scoring':False,'RESULT_UNLOCK_TOKEN':None},'formalFirst100':{'races':0}})
         self.cp=self.root/m.PATH/'v232_cohort'/f'{KEY}.json'
         hit=['1-2-3','1-3-2','1-2-4','1-4-2','1-3-4','2-1-3','2-3-1','3-1-2','4-1-2','5-1-2']
         hole=['2-4-1','3-4-1','3-1-4','1-4-3','4-2-1','2-1-4','4-1-3','1-2-6','1-6-2','6-1-2','6-2-1','1-5-2']
         self.c={'schema':'BOAT_EDGE_V232_SITE_PROSPECTIVE_ACCURACY_COHORT_V1','race_key':KEY,
+        'scope':'SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH','model_id':'SITE_REFERENCE_V122',
         'deadline_jst':DUE,'evidence_committed_at':COHORT_TIME,'snapshot_saved_at':'2026-10-12T05:56:50+00:00',
         'formal_results_seen':False,'formal_gate_unlocked':False,'paper_purchases_authorized':False,'real_purchases_authorized':False,
         'top10':hit,'frozen_mode_tickets':{'hit':[{'combo':x} for x in hit],
@@ -81,7 +82,7 @@ class Tests(unittest.TestCase):
     def test_confirmed_result_scores_only_earlier_frozen(self):
         m.freeze(self.root,self.frozen)
         p=self.root/'data/site_results'/f'{KEY}.json'
-        write(p,{'race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
+        write(p,{'schema_version':'boat-edge-site-result-v109','race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
           'trifecta':'2-4-1','finish_order':[2,4,1], 'trifecta_payout_yen_per_100':3140,
           'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
         x=m.score(self.root,m.parse(RESULT_TIME))
@@ -100,17 +101,17 @@ class Tests(unittest.TestCase):
             self.assertIsNone(s)
             self.assertEqual(reason,'shadow_not_git_frozen_before_deadline')
     def test_source_wrong_venue_rejected(self):
-        result={'race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
+        result={'schema_version':'boat-edge-site-result-v109','race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
             'trifecta':'2-4-1','finish_order':[2,4,1], 'trifecta_payout_yen_per_100':3140,
             'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=08&rno=10'}
         self.assertFalse(m.confirmed_result(result,KEY,m.parse(DUE)))
     def test_official_url_prefix_must_not_bypass_exact_race(self):
-        result={'race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
+        result={'schema_version':'boat-edge-site-result-v109','race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
             'trifecta':'2-4-1','finish_order':[2,4,1], 'trifecta_payout_yen_per_100':3140,
             'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=091&rno=10'}
         self.assertFalse(m.confirmed_result(result,KEY,m.parse(DUE)))
     def test_result_not_before_deadline(self):
-        result={'race_key':KEY,'status':'confirmed','fetched_at':COHORT_TIME,
+        result={'schema_version':'boat-edge-site-result-v109','race_key':KEY,'status':'confirmed','fetched_at':COHORT_TIME,
             'trifecta':'2-4-1','finish_order':[2,4,1], 'trifecta_payout_yen_per_100':3140,
             'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'}
         self.assertFalse(m.confirmed_result(result,KEY,m.parse(DUE)))
@@ -118,5 +119,50 @@ class Tests(unittest.TestCase):
         out=m.unique_extend(self.c['top10'],self.c['top10']+['2-4-1','3-4-1','3-1-4'],13)
         self.assertEqual(len(out),13)
         self.assertEqual(len(set(out)),13)
+
+    def test_active_or_unknown_formal_cohort_blocks_before_any_outcome_read(self):
+        for first in ({'races':1},{},{'races':False}):
+            with self.subTest(first=first):
+                status=m.load(self.root/'data/formal_status.json');status['formalFirst100']=first
+                write(self.root/'data/formal_status.json',status)
+                with patch.object(m,'load',wraps=m.load) as spy:
+                    with self.assertRaisesRegex(RuntimeError,'COHORT'):m.score(self.root,m.parse(RESULT_TIME))
+                    self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+
+    def test_candidate_tampering_is_rejected_before_result_read(self):
+        m.freeze(self.root,self.frozen)
+        path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        good=m.load(path)
+        for field,value in [('scope','FORMAL'),('race_key','20261012-01-01'),
+                            ('result_seen_at_freeze',True),('production_model_changed',True),
+                            ('comparators',{**good['comparators'],'hit10':good['comparators']['coverage15']}),
+                            ('frozen_at','2026-10-12T06:00:00+00:00')]:
+            with self.subTest(field=field):
+                write(path,{**good,field:value})
+                with patch.object(m,'load',wraps=m.load) as spy:
+                    obj,reason=m.score_row(self.root,path,m.parse(RESULT_TIME))
+                    self.assertIsNone(obj)
+                    self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+
+    def test_wrong_source_scope_key_and_day_rejected(self):
+        for field,value in [('scope','FORMAL'),('race_key','20261012-01-01'),
+                            ('deadline_jst','2026-10-13T15:07:00+09:00'),('model_id','UNPROVEN')]:
+            with self.subTest(field=field):
+                write(self.cp,{**self.c,field:value});self.original['sha256']=m.sha(self.cp)
+                obj,reason=m.prepare(self.root,self.cp,self.frozen)
+                self.assertIsNone(obj)
+
+    def test_result_rejects_nonfinite_payout_future_time_and_wrong_schema(self):
+        good={'schema_version':'boat-edge-site-result-v109','race_key':KEY,'status':'confirmed',
+              'fetched_at':RESULT_TIME,'trifecta':'2-4-1','finish_order':[2,4,1],
+              'trifecta_payout_yen_per_100':1500,
+              'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'}
+        now=m.parse(RESULT_TIME)
+        self.assertTrue(m.confirmed_result(good,KEY,m.parse(DUE),now))
+        for field,value in [('trifecta_payout_yen_per_100',float('nan')),
+                            ('trifecta_payout_yen_per_100',float('inf')),
+                            ('fetched_at','2026-10-12T07:15:00+00:00'),('schema_version','FORMAL')]:
+            with self.subTest(field=field):
+                self.assertFalse(m.confirmed_result({**good,field:value},KEY,m.parse(DUE),now))
 
 if __name__=='__main__':unittest.main()

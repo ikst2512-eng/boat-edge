@@ -24,7 +24,8 @@ def formal_guard(root):
     flags=status.get('guards') or {}
     if any(flags.get(k) is not False for k in ('results_seen','unlock','scoring')) or flags.get('RESULT_UNLOCK_TOKEN') is not None:
         raise RuntimeError('V237_FORMAL_GATE_NOT_CLOSED')
-    if (status.get('formalFirst100') or {}).get('races',0)!=0:
+    races=(status.get('formalFirst100') or {}).get('races')
+    if type(races) is not int or races!=0:
         raise RuntimeError('V237_FORMAL_FRESH_ACTIVE_NO_RESEARCH_REPORT')
 
 
@@ -53,17 +54,34 @@ def build(root,now):
         raise RuntimeError('V237_V236_SCORE_SOURCE_MISSING_OR_WRONG_SCHEMA')
     n=counter(acc,'settled_verified_races')
     if n is None:raise RuntimeError('V237_SITE_SCORE_COUNT_INVALID')
+    hits={k:counter(acc,k) for k in ('head_hit','top3_hit','top5_hit','top10_hit')}
+    if any(v is None or v>n for v in hits.values()) or not hits['top3_hit']<=hits['top5_hit']<=hits['top10_hit']:
+        raise RuntimeError('V237_REFERENCE_HIT_COUNTS_INVALID')
+    paired=counter(compare,'scored_total')
     comparisons={}
     for mode in ('hit10','balance10','scenario7plus3','coverage15'):
         record=(compare.get('comparisons') or {}).get(mode)
         if not isinstance(record,dict):raise RuntimeError('V237_COMPARATOR_MISSING_'+mode)
         races=counter(record,'races');hit=counter(record,'hit')
-        if races is None or hit is None or hit>races:raise RuntimeError('V237_INVALID_COMPARATOR_'+mode)
+        if races is None or hit is None or hit>races or races!=paired:raise RuntimeError('V237_INVALID_COMPARATOR_'+mode)
+        points=record.get('avg_points')
+        if races and (type(points) not in (int,float) or
+                not (10<=points<=15 if mode=='coverage15' else points==10)):
+            raise RuntimeError('V237_COMPARATOR_POINT_BUDGET_INVALID_'+mode)
         comparisons[mode]={'races':races,'hits':hit,'points_average':record.get('avg_points'),
                            'hit_rate_percent':round(hit/races*100,2) if races else None}
     today_registered=counter(pre,'frozen_research_races_today') if pre.get('day_jst')==day else 0
     today_challengers=counter(compare_pre,'frozen_today') if compare_pre.get('day_jst')==day else 0
     if today_registered is None or today_challengers is None:raise RuntimeError('V237_COUNT_INVALID')
+    budget=counter(money,'daily_budget_yen');spent=counter(money,'today_spent_yen')
+    paper_races=counter(money,'today_paper_races')
+    if budget!=50000 or spent is None or spent>budget or paper_races is None:
+        raise RuntimeError('V237_VIRTUAL_DAILY_BUDGET_INVALID')
+    wallet_day=money.get('day')
+    wallet_current=wallet_day==day
+    band_n=counter(acc,'band_10_20x_eligible_races');band_hits=counter(acc,'band_10_20x_hit')
+    if (band_n is None)!=(band_hits is None) or (band_n is not None and not 0<=band_hits<=band_n<=n):
+        raise RuntimeError('V237_10_20X_COUNTS_INVALID')
     values={
         'schema':SCHEMA,'scope':'SITE_ONLY_OPERATIONAL_MONITOR_NOT_FORMAL_FRESH',
         'day_jst':day,'as_of_jst':now.astimezone(JST).isoformat(),
@@ -74,9 +92,14 @@ def build(root,now):
         'research_candidates':{'pre_result_registered_today':today_challengers,
             'scored_total':counter(compare,'scored_total'),'comparisons':comparisons,
             'research_status':compare.get('status')},
-        'simulator':{'daily_budget_yen':counter(money,'daily_budget_yen'),
-            'today_spent_yen':counter(money,'today_spent_yen'),
-            'today_paper_races':counter(money,'today_paper_races'),'virtual_only':money.get('virtual_only') is True},
+        'odds_band_at_freeze':{'min':10,'max':20,'eligible_races':band_n,'hits':band_hits,
+            'selection_policy':'FROZEN_TOP10_SUBSET_NO_PRICE_BOOST'},
+        'simulator':{'daily_budget_yen':budget,'source_day_jst':wallet_day,
+            'current_day_verified':wallet_current,'source_updated_at':wallet.get('updated_at'),
+            'today_spent_yen':spent if wallet_current else None,
+            'today_remaining_yen':budget-spent if wallet_current else None,
+            'today_paper_races':paper_races if wallet_current else None,
+            'virtual_only':money.get('virtual_only') is True},
         'formal_guard_closed':True,'formal_results_read_by_v237':False,
         'production_model_changed':False,'model_promotion_authorized':False,
         'accuracy_improvement_proven':False,'retrospective_experiment_is_not_proof':True,
@@ -84,7 +107,6 @@ def build(root,now):
     }
     if values['research_candidates']['scored_total'] is None:raise RuntimeError('V237_SCORE_TOTAL_INVALID')
     if not values['simulator']['virtual_only']:raise RuntimeError('V237_SIMULATOR_NOT_VIRTUAL')
-    if values['simulator']['today_spent_yen'] is None:raise RuntimeError('V237_BUDGET_SOURCE_MISSING')
     return values
 
 

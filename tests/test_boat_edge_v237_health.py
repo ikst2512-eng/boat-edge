@@ -16,7 +16,7 @@ class TestSiteHealth(unittest.TestCase):
         self.put('data/site_autopilot/v234_current.json',{'schema':'BOAT_EDGE_V234_SITE_ONLY_ACCURACY_SUMMARY_V1','settled_verified_races':15,'head_hit':8,'top3_hit':3,'top5_hit':4,'top10_hit':5,'checked_at':'2026-10-11T13:00:00+00:00'})
         self.put('data/site_autopilot/v236_pre_current.json',{'schema':'BOAT_EDGE_V236_HITRATE_PRE_RESULT_SUMMARY_V1','day_jst':'20261011','frozen_today':2})
         self.put('data/site_autopilot/v236_score_current.json',{'schema':'BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1','scored_total':2,'comparisons':{x:{'races':2,'hit':1,'avg_points':(15 if x=='coverage15' else 10)} for x in ('hit10','balance10','scenario7plus3','coverage15')},'status':'DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION'})
-        self.put('data/site_paper_sim/current.json',{'money':{'daily_budget_yen':50000,'today_spent_yen':0,'today_paper_races':0,'virtual_only':True}})
+        self.put('data/site_paper_sim/current.json',{'money':{'day':'20261011','daily_budget_yen':50000,'today_spent_yen':0,'today_paper_races':0,'virtual_only':True}})
         self.now=dt.datetime(2026,10,11,13,20,tzinfo=dt.timezone.utc)
     def put(self,path,data):
         p=self.root/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(data))
@@ -29,6 +29,9 @@ class TestSiteHealth(unittest.TestCase):
     def test_date_rollover_does_not_relabel_yesterday(self):
         r=m.build(self.root,self.now+dt.timedelta(days=1));self.assertEqual(r['current_reference']['registered_today'],0)
         self.assertEqual(r['research_candidates']['pre_result_registered_today'],0)
+        self.assertIsNone(r['simulator']['today_spent_yen'])
+        self.assertIsNone(r['simulator']['today_remaining_yen'])
+        self.assertFalse(r['simulator']['current_day_verified'])
     def test_idempotent_no_hourly_commit_noise(self):
         self.assertTrue(m.publish(self.root,self.now))
         before=(self.root/'data/site_autopilot/v237_current.json').read_bytes()
@@ -57,5 +60,28 @@ class TestSiteHealth(unittest.TestCase):
         self.assertNotIn('data/site_results',code)
         self.assertNotIn('data/formal_prediction',code)
         self.assertNotIn('raceresult',code)
+
+    def test_daily_50k_cap_and_remaining(self):
+        s=self.get('data/site_paper_sim/current.json');s['money']['today_spent_yen']=10000
+        self.put('data/site_paper_sim/current.json',s)
+        self.assertEqual(m.build(self.root,self.now)['simulator']['today_remaining_yen'],40000)
+        for field,value in [('today_spent_yen',50100),('daily_budget_yen',100000),('today_paper_races',-1)]:
+            with self.subTest(field=field):
+                bad={**s,'money':{**s['money'],field:value}};self.put('data/site_paper_sim/current.json',bad)
+                with self.assertRaisesRegex(RuntimeError,'BUDGET'):m.build(self.root,self.now)
+
+    def test_invalid_reference_counts_and_unequal_cohorts(self):
+        s=self.get('data/site_autopilot/v234_current.json');s['top3_hit']=6
+        self.put('data/site_autopilot/v234_current.json',s)
+        with self.assertRaisesRegex(RuntimeError,'HIT_COUNTS'):m.build(self.root,self.now)
+        s['top3_hit']=3;self.put('data/site_autopilot/v234_current.json',s)
+        c=self.get('data/site_autopilot/v236_score_current.json');c['comparisons']['hit10']['races']=3
+        self.put('data/site_autopilot/v236_score_current.json',c)
+        with self.assertRaisesRegex(RuntimeError,'COMPARATOR'):m.build(self.root,self.now)
+
+    def test_ten_point_comparison_cannot_report_fifteen_points(self):
+        c=self.get('data/site_autopilot/v236_score_current.json');c['comparisons']['hit10']['avg_points']=15
+        self.put('data/site_autopilot/v236_score_current.json',c)
+        with self.assertRaisesRegex(RuntimeError,'POINT_BUDGET'):m.build(self.root,self.now)
 
 if __name__=='__main__':unittest.main()
