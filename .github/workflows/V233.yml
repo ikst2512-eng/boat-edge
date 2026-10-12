@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths: ['.github/workflows/V233.yml']
   workflow_dispatch:
-  schedule:
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
+  # V287: V234 already published 47 immutable source-bound cohorts, while
+  # V235 is the main five-minute owner. Retire V233's duplicate scheduled
+  # writer and its unsafe push/rebase contention; preserve manual recovery.
+  # Do not disable V234 fallback until V235 has a freshly attested cohort.
 
 permissions:
   contents: write
