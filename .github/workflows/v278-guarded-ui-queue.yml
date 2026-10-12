@@ -2,7 +2,7 @@ name: BOAT EDGE V278 - Review New Guarded UI Task Queue
 
 on:
   push:
-    branches: [main, fix/v278-guarded-ui-next-queue]
+    branches: [main, fix/v278-guarded-ui-next-queue, fix/v280-ui-queue-monotonic-regression]
     paths:
       - 'BOAT_EDGE_AUTODEV_TASKS.md'
       - '.github/workflows/v278-guarded-ui-queue.yml'
@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boat-edge-v278-ui-task-audit-${{ github.ref }}
+  group: boat-edge-v278-ui-task-audit-\${{ github.ref }}
   cancel-in-progress: false
 jobs:
   offline-task-and-safety-audit:
@@ -23,22 +23,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Verify only owner-requested safe UI backlog
+      - name: Verify owner-requested monotonic UI task completion
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
-          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v240_guard.py --pending
+          if PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v240_guard.py --pending; then
+            echo 'V280_QUEUE_HAS_NEXT_TASK'
+          else
+            code=$?
+            test "$code" -eq 1
+            echo 'V280_QUEUE_ALL_TASKS_COMPLETED'
+          fi
           python3 - <<'PY'
           from pathlib import Path
           import re,json
           s=Path('BOAT_EDGE_AUTODEV_TASKS.md').read_text(encoding='utf-8')
-          active=re.findall(r'^- \[ \] (A\d{2}) \| (.+)$',s,re.M)
-          assert [x[0] for x in active]==['A29','A30','A31','A32','A33']
-          assert all(len(x[1])<450 for x in active)
-          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
-          g=f['guards']
+          items=re.findall(r'^- \[([ x])\] (A\d{2}) \| (.+)$',s,re.M)
+          batch=[x for x in items if x[1] in ('A29','A30','A31','A32','A33')]
+          assert [x[1] for x in batch]==['A29','A30','A31','A32','A33']
+          flags=''.join(x[0] for x in batch)
+          assert flags=='x'*flags.count('x')+' '*flags.count(' '), 'V280_COMPLETION_MUST_BE_MONOTONIC'
+          assert all(len(x[2])<450 for x in batch)
+          assert all(x[0]=='x' for x in items if int(x[1][1:])<=28), 'V280_OLD_TASK_REGRESSION'
+          g=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))['guards']
           assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
           assert g['RESULT_UNLOCK_TOKEN'] is None
-          print('V278_OWNER_REQUESTED_FIVE_UI_TASKS_PENDING_NO_FORMAL_CHANGE')
+          print('V280_UI_QUEUE_PROGRESS_PASS',flags)
           PY
           git diff --check
