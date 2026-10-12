@@ -46,7 +46,12 @@ class ConfidenceHonesty(unittest.TestCase):
 
     def test_tampering_rejects_record_not_backfills(self):
         rows=site_rows(ROOT)
-        key=next(iter(rows))
+        # Site-only research may contain a settled race that fails this stricter
+        # independent V232 provenance gate. Test tampering on an accepted row,
+        # not on the first (potentially correctly excluded) settled record.
+        key=next((key for key, row in rows.items()
+                  if inspect(ROOT,key,row) is not None),None)
+        self.assertIsNotNone(key,'No separately source-verified row for tamper test')
         r=dict(rows[key])
         self.assertIsNotNone(inspect(ROOT,key,r))
         r["precommitted_sha256"]="f"*64 if r["precommitted_sha256"]!="f"*64 else "0"*64
