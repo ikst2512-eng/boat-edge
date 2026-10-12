@@ -75,13 +75,14 @@ function verified(r){
 function render(){
  if(!report)return;
  var mode=$('mode').value,day=$('day').value,kind=$('kind').value;
- var total=report.rows.length;
- var hitCount=report.rows.filter(function(r){return r.mode_outcomes[mode].hit;}).length;
+ var baseRows=report.rows.filter(function(r){return (!focusRace||r.race_key===focusRace)&&(day==='all'||r.date_jst===day);});
+ var total=baseRows.length;
+ var hitCount=baseRows.filter(function(r){return r.mode_outcomes[mode].hit;}).length;
  $('count').textContent=fmt(total)+'R';$('wins').textContent=fmt(hitCount)+'R';
  $('rate').textContent=total? (100*hitCount/total).toFixed(1)+'% / '+fmt(total)+'R':'まだ未算定';
- $('hitLabel').textContent=modes[mode]+'の的中';$('heads').textContent=fmt(report.rows.filter(function(r){return r.head_hit;}).length)+'R';
- var rows=report.rows.filter(function(r){var x=r.mode_outcomes[mode];return (!focusRace||r.race_key===focusRace)&&(day==='all'||day===r.date_jst)&&(kind==='all'||kind==='hit'&&x.hit||kind==='miss'&&!x.hit||kind==='head'&&r.head_hit);});
- $('scope').textContent=rows.length+'R表示 / '+total+'R照合済み';
+ $('hitLabel').textContent=modes[mode]+'の的中';$('heads').textContent=fmt(baseRows.filter(function(r){return r.head_hit;}).length)+'R';
+ var rows=baseRows.filter(function(r){var x=r.mode_outcomes[mode];return kind==='all'||kind==='hit'&&x.hit||kind==='miss'&&!x.hit||kind==='head'&&r.head_hit;});
+ $('scope').textContent=rows.length+'R表示 / '+total+'R対象・全'+report.rows.length+'R検証済み';
  if(!rows.length){$('races').innerHTML='<div class="empty">この条件の確定結果はありません。未確定は不的中扱いしません。</div>';return;}
  var markup=rows.map(function(r){
  var out=r.mode_outcomes[mode];
@@ -145,10 +146,14 @@ async function load(){
   var requested=query.get('race');
   var requestedMode=query.get('mode');
   if(Object.prototype.hasOwnProperty.call(modes,requestedMode))$('mode').value=requestedMode;
+  var previousDay=$('day').value;
+  var requestedDay=query.get('day');
   focusRace=validKey(requested)&&d.rows.some(function(r){return r.race_key===requested;})?requested:null;
   $('clearFocus').hidden=!focusRace;
   var select=$('day');select.innerHTML='<option value="all">全日付</option>';
   Array.from(new Set(d.rows.map(function(r){return r.date_jst;}))).sort().reverse().forEach(function(day){if(/^20\d{6}$/.test(day)){var item=document.createElement('option');item.value=day;item.textContent=day.slice(0,4)+'/'+day.slice(4,6)+'/'+day.slice(6,8);select.appendChild(item);}});
+  if([...select.options].some(function(o){return o.value===previousDay;}))select.value=previousDay;
+  else if(/^20\d{6}$/.test(requestedDay||'')&&[...select.options].some(function(o){return o.value===requestedDay;}))select.value=requestedDay;
   render();
   if(focusRace){var selected=document.querySelector('.race[data-key="'+focusRace+'"] .detailtoggle');if(selected)showTickets(focusRace,selected);}
   $('source').textContent='正式Freshとは別管理';
@@ -156,7 +161,12 @@ async function load(){
 }
 $('refresh').addEventListener('click',load);
 $('clearFocus').addEventListener('click',function(){focusRace=null;this.hidden=true;const next=new URL(window.location.href);next.searchParams.delete('race');window.history.replaceState(null,'',next);render();});
-['mode','day','kind'].forEach(function(x){$(x).addEventListener('change',render);});
+['mode','day','kind'].forEach(function(x){$(x).addEventListener('change',function(){
+ var next=new URL(window.location.href);
+ if(x==='mode'){next.searchParams.set('mode',$('mode').value);}
+ if(x==='day'){if($('day').value==='all')next.searchParams.delete('day');else next.searchParams.set('day',$('day').value);}
+ window.history.replaceState(null,'',next);render();
+});});
 $('races').addEventListener('click',function(event){var b=event.target.closest('[data-open]');if(b)showTickets(b.dataset.open,b);});
 load();
 })();
