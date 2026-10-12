@@ -74,3 +74,12 @@ if(typeof process!=='undefined'&&process?.versions?.node){
 assert(/#be207Top \.be305-evidence-head button\s*\{[^}]*min-height:44px[^}]*min-width:44px/.test(css),'V317 exhibition detail button 44px target');
 console.log('V317_SAFARI_EVIDENCE_TAP_TARGET_PASS');
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
+
+/* V327: require the native NodeList selector for both comparison controls. */
+const sixBoatRuntime=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
+for(const name of ['switch','layout-switch']) {
+ const selector='.be206-'+name+' button';
+ assert(sixBoatRuntime.includes('box.querySelectorAll(\''+selector+'\').forEach'),'V327 must iterate NodeList: '+selector);
+ assert(!sixBoatRuntime.includes('$(\''+selector+'\',box).forEach'),'V327 single-node crash: '+selector);
+}
+console.log('V327_SIX_BOAT_RUNTIME_NODELIST_PASS');
