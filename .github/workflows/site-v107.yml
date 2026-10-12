@@ -1,12 +1,9 @@
 name: BOAT EDGE V107 Tabs + Site Back
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v107.yml"
+  # V300: retired UI installer; never overwrite current Pages/modern Safari UI on timer or push.
+  # Explicit manual recovery only; original implementation retained unchanged.
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
