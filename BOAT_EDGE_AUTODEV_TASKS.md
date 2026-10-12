@@ -29,7 +29,7 @@ The agent must change only one checkbox after implementing and checking that tas
 - [x] A19 | In the existing six-racer comparison view, make available original-exhibition lap/turn/straight measurement differences easier to compare, without using race results, imputing missing exhibition times, or changing predictions.
 - [x] A20 | On the AI paper-simulation page, show only evidence-backed reason counts for skipped bets and a clearly separated status for pending/settled saved simulated bets. Keep daily 50,000-yen cap and no-real-money behavior unchanged.
 
-Do not append new tasks automatically. Stop once the queue is complete.
+New tasks require an explicit owner request; the AI agent must never invent or append tasks. Stop once the queue is complete.
 ## Next verified UI cycle (A21–A28)
 
 These remain UI-only work items. Every change must use already-saved source evidence, preserve the existing race selection, and pass the V240 isolation and regression gates. Do not invent odds, exhibition measurements, hits, or simulation returns.
@@ -43,3 +43,16 @@ These remain UI-only work items. Every change must use already-saved source evid
 - [x] A27 | Explain paper-only daily ¥50,000 budgeting, no-bet decisions, actual saved stake totals, and pending versus settled simulated bets without guessing missing balance or historical return.
 - [x] A28 | Reduce visual clutter on existing iPhone race cards by improving grouping and contrast for scratches, verified results, deadlines, and source freshness; keep all six racer metrics accessible and retain frozen picks unchanged.
 
+## Owner-requested next UI-only batch (2026-10-13; A29–A33)
+
+These items were explicitly requested to continue completing the BOAT EDGE site.
+The V240 isolated Codex runner must perform no more than one item per successful
+run and edit existing UI files only (never model weights, odds values, results,
+formal Fresh files, workflows, scripts, credentials, or frozen tickets).
+A checked box does not certify Safari visual behavior or prediction accuracy.
+
+- [ ] A29 | In the existing selected-race prediction view, explicitly describe saved 10-ticket p_raw_percent as relative allocation weights, not calibrated win probabilities. Keep original ticket ordering, numbers, Top3/5/10, and all 6 racers intact. Never generate or adjust probabilities.
+- [ ] A30 | On iPhone, make the currently selected venue/R and official deadline unmistakable at the top of the current race/prediction view, using only existing state. Do not reset selection or infer missing deadlines.
+- [ ] A31 | On the existing beforeinfo/original-exhibition view, separate verified six-racer exhibition/source evidence from unknown/awaiting publication in compact labels. Do not turn missing values into zero or merge official with BOATERS/競艇日和 evidence.
+- [ ] A32 | On the current AI self-drive status UI, show a compact explanation that Actions PASS or Pages SUCCESS is not proof of model accuracy and that formal Fresh stays locked when stored status says so. Do not fetch result or payout endpoints, expose credentials, or claim Safari checks.
+- [ ] A33 | On iPhone race results view, improve the visible distinction between predeadline fixed predictions, result waiting, verified hit, verified miss, and ineligible records; use only already verified stored evidence, no retrospective pick reconstruction.
