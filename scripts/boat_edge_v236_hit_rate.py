@@ -230,7 +230,7 @@ def score(root,now):
        'promotion_authorized':False,'real_or_paper_purchase':False,
        'status':'DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION',
        'examples':[{'race_key':x['race_key'],'winning':x['official_result'],'outcomes':x['outcomes']} for x in settled]}
-    changed=save_changed(root/PATH/'v236_score_current.json',s,['scored_total','comparisons','rejected_or_pending_this_run'])
+    changed=save_changed(root/PATH/'v236_score_current.json',s,['scored_total','comparisons','rejected_or_pending_this_run','examples'])
     print('V236_SITE_RESULT_PAIRED_HITRATE',json.dumps({'new':count,'total':len(settled),'comparisons':s['comparisons'],'pending':excluded,'state_written':changed},ensure_ascii=False,sort_keys=True))
     return s
 
