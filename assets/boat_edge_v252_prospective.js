@@ -42,6 +42,55 @@
    return {day:days.length===1?days[0]:days[0]+'〜'+days[days.length-1],days,n:d.scored_total,control,rows:output,
      paired,source:scope,label:paired?'同じ10点の前向き比較':'10点と15点を分けた前向き比較'};
  }
+ /* V257: V253 is a complete SHA/timestamp/result-crosschecked *site-only*
+    research report, not a truncated example slice. Recompute the full-cohort
+    comparison from individual classified ticket outcomes (never from odds). */
+ const MISSSCHEMA='BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1';
+ const MISSCOPE='POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS';
+ const cats=['hit','head_absent','second_absent_given_head','third_absent_given_head_second'];
+ function completeLane(d,lane,keys,paired){
+   const p=d?.lanes?.[lane],n=p?.races_verified;
+   if(!int(n)||n===0||n>d.site_verified_reference_races||
+      !Array.isArray(p.races)||p.races.length!==n||!p.miss_categories||
+      Object.keys(p.miss_categories).length!==keys.length)return null;
+   const seen=new Set(),days=new Set();
+   for(const r of p.races){
+     if(!goodKey(r?.race_key)||seen.has(r.race_key)||
+        r.date_jst!==r.race_key.slice(0,8)||
+        !/^([1-6]-){2}[1-6]$/.test(r.winning_combo||'')||
+        new Set(r.winning_combo.split('-')).size!==3||
+        !r.categories||Object.keys(r.categories).length!==keys.length||
+        keys.some(k=>!cats.includes(r.categories[k])))return null;
+     seen.add(r.race_key);days.add(r.date_jst);
+   }
+   const output=[];
+   for(const k of keys){
+     const counts=p.miss_categories[k],points=k==='coverage15'?15:10;
+     if(!counts||Object.keys(counts).length!==cats.length||
+        cats.some(c=>!int(counts[c]))||
+        cats.reduce((a,c)=>a+counts[c],0)!==n||
+        cats.some(c=>p.races.filter(r=>r.categories[k]===c).length!==counts[c]))return null;
+     const gain=p.races.filter(r=>r.categories[k]==='hit'&&r.categories.hit10!=='hit').length;
+     const loss=p.races.filter(r=>r.categories[k]!=='hit'&&r.categories.hit10==='hit').length;
+     output.push({key:k,n,points,hits:counts.hit,rate:100*counts.hit/n,gain,loss});
+   }
+   const sortedDays=[...days].sort(),first=sortedDays[0],last=sortedDays[sortedDays.length-1];
+   return {day:first===last?first:first+'〜'+last,days:sortedDays,n,
+     control:output.find(r=>r.key==='hit10'),rows:output,paired,source:MISSCOPE,
+     label:paired?'同じ10点・Git保存SHA照合済み':'10点と15点・Git保存SHA照合済み'};
+ }
+ function fromFullMissProof(d){
+   if(!d||d.schema!==MISSSCHEMA||d.scope!==MISSCOPE||
+      d.formal_result_access!==false||d.production_model_changed!==false||
+      d.accuracy_improvement_proven!==false||d.model_promotion_authorized!==false||
+      d.real_or_paper_wagers_placed!==0||!int(d.site_verified_reference_races)||
+      !d.lanes||Object.keys(d.lanes).length!==2)return null;
+   const a=completeLane(d,'v236',KEYS236,false);
+   const b=completeLane(d,'v240',KEYS240,true);
+   if(!a||!b)return null;
+   return {a,b};
+ }
+
  const check236=d=>evaluate(d,V236,S236,KEYS236,false);
  const check240=d=>evaluate(d,V240,S240,KEYS240,true);
  const labels={hit10:'現行10点',balance10:'バランス10点',
@@ -90,10 +139,14 @@
    pending=true;
    const status=document.getElementById('v252Status');
    status.textContent='保存済み前向き検証データを照合中';
-   const [r236,r240]=await Promise.allSettled([
+   const [r253,r236,r240]=await Promise.allSettled([
+     get('v253_miss_diagnostics_current.json'),
      get('v236_score_current.json'),get('v240_score_current.json')]);
-   const a=r236.status==='fulfilled'?check236(r236.value):null;
-   const b=r240.status==='fulfilled'?check240(r240.value):null;
+   const full=r253.status==='fulfilled'?fromFullMissProof(r253.value):null;
+   // The fully crosschecked V253 lanes stay available even after upstream
+   // summary "examples" are truncated at 20/25 rows.
+   const a=full?.a||(r236.status==='fulfilled'?check236(r236.value):null);
+   const b=full?.b||(r240.status==='fulfilled'?check240(r240.value):null);
    renderBlock(document.getElementById('v252Equal'),b);
    renderBlock(document.getElementById('v252Wide'),a);
    status.textContent=a&&b?'検証データ照合済み（モデル昇格なし）':'一部データ未確認（モデル昇格なし）';
@@ -104,7 +157,7 @@
    document.getElementById('v252Reload')?.addEventListener('click',update);
    update();setInterval(()=>{if(!document.hidden)update();},120000);
  }
- window.BoatEdgeV252={check236,check240,evaluate,renderBlock,update};
+ window.BoatEdgeV252={check236,check240,evaluate,fromFullMissProof,renderBlock,update};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
  else init();
 })();
