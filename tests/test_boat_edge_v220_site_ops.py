@@ -83,4 +83,30 @@ def test_all():
         assert not mod.write_if_changed(state,warn)
         assert 'NOT_FORMAL_FRESH' in warn['scope']
     print('V220_TESTS_PASS waiting, window deficits, fail-closed recovery, ready sources, formal separation, deterministic reports')
-if __name__=='__main__':test_all()
+def test_v271_urgent_health():
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        now=NOW
+        put(root,'data/health.json',{
+            'updated_at':now.isoformat(),'results_seen':False,'unlock':False,'scoring':False,
+            'beforeinfo_urgent_15m_targets':4,'beforeinfo_urgent_15m_ok':2,
+            'beforeinfo_urgent_15m_published_wait':1,'beforeinfo_urgent_15m_error':1})
+        ok=mod.compute(root,now)['official_beforeinfo_urgent_15m']
+        assert ok['status']=='OBSERVED' and ok['targets']==4 and ok['ok']==2
+        assert ok['published_wait']==1 and ok['error']==1
+        put(root,'data/health.json',{
+            'updated_at':now.isoformat(),'results_seen':False,'unlock':False,'scoring':False,
+            'beforeinfo_urgent_15m_targets':4,'beforeinfo_urgent_15m_ok':2,
+            'beforeinfo_urgent_15m_published_wait':1,'beforeinfo_urgent_15m_error':0})
+        bad=mod.compute(root,now)['official_beforeinfo_urgent_15m']
+        assert bad['status']=='UNVERIFIED_OR_STALE' and bad['ok'] is None
+        put(root,'data/health.json',{
+            'updated_at':now.isoformat(),'results_seen':True,'unlock':False,'scoring':False,
+            'beforeinfo_urgent_15m_targets':4,'beforeinfo_urgent_15m_ok':2,
+            'beforeinfo_urgent_15m_published_wait':1,'beforeinfo_urgent_15m_error':1})
+        assert mod.compute(root,now)['official_beforeinfo_urgent_15m']['status']=='UNVERIFIED_OR_STALE'
+    print('V271_URGENT_TELEMETRY_FAIL_CLOSED_PASS')
+
+if __name__=='__main__':
+    test_all()
+    test_v271_urgent_health()
