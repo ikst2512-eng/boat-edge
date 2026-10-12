@@ -27,7 +27,7 @@ const source=(r,k)=>{
 };
 /* Counts represent present numeric fields only, not source verification or approval. */
 const numericPresent=x=>typeof x==='number'&&Number.isFinite(x)&&x>0;
-const sixBoatCount=(items,valid)=>Array.isArray(items)&&items.length===6?
+const sixBoatCount=(items,valid)=>Array.isArray(items)&&items.length<=6?
  items.filter(valid).length:0;
 const completeness=r=>{
  const before=r?.beforeinfo||{},orig=r?.original_exhibition||{};
