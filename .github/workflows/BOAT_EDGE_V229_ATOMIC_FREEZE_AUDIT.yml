@@ -5,6 +5,14 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml']
   workflow_dispatch:
+  # V292: GitHub cron can skip/delay the narrow V229 2-10m source window.
+  # Start a guarded read of main after either independent PRE_RESULT input
+  # producer succeeds. Failed, forked, or non-main runs cannot trigger writes.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE 自動更新'
+      - 'BOAT EDGE 3連単オッズ更新 V71'
+    types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
     - cron: '1 0-14,23 * * *'
@@ -18,7 +26,12 @@ concurrency:
 
 jobs:
   atomic-prospective-site-evidence:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
