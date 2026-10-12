@@ -112,7 +112,8 @@ class RetryCase(unittest.TestCase):
         self.assertLess(wf.index("scripts/boat_edge_v230_fast_lane.py --workers 8"),
                         wf.index("scripts/boat_edge_v295_retry_trace.py"))
         self.assertLess(wf.index("scripts/boat_edge_v295_retry_trace.py"),
-                        wf.index("scripts/boat_edge_v232_pre_result_cohort.py"))
+                        wf.index("scripts/boat_edge_v232_pre_result_cohort.py",
+                                 wf.index("scripts/boat_edge_v295_retry_trace.py")))
         # No source-only status can be interpreted as a bet or calibrated accuracy.
         self.assertIn("UNPUBLISHED_AFTER_RETRY_NOT_PROOF_OF_ELIGIBILITY_OR_PERMANENT_LOSS",source)
         self.assertIn("SITE_PRE_RESULT_ONLY_NO_FORMAL_NO_RESULTS",source)
