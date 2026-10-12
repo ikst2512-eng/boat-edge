@@ -34,8 +34,18 @@ RETIRED = (
 LIVE = "V235.yml"
 
 def event_block(text: str) -> str:
-    match = re.search(r"^on:\s*\n(?P<body>.*?)(?=^(?:permissions|concurrency|jobs):)", text, re.M | re.S)
-    return match.group("body") if match else ""
+    """Extract indented events for plain or quoted GitHub YAML `on` keys.
+
+    GitHub accepts `on:`, `'on':`, and `"on":`.  Stop at the next
+    top-level key, not only permissions/jobs, so later YAML does not masquerade
+    as additional triggers. This remains a read-only textual inventory.
+    """
+    match = re.search(r"""^(?:on|'on'|"on"):[ \\t]*(?:\\#[^\\r\\n]*)?\\r?\\n""", text, re.M)
+    if not match:
+        return ""
+    following = text[match.end():]
+    boundary = re.search(r"""^(?:[A-Za-z_][\\w-]*|'[^']+'|"[^"]+")[ \\t]*:""", following, re.M)
+    return following[:boundary.start()] if boundary else following
 
 def audit(root: Path = WORKFLOWS) -> dict:
     entries = []
