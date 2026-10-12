@@ -19,10 +19,13 @@ class V257SourceTrigger(unittest.TestCase):
     def test_exact_v232_source_completion_trigger_with_conclusion_branch_guard(self):
         workflow=WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("workflow_run:",workflow)
-        # The current immutable site-only freeze pipeline is V235. V232
-        # stays available as a legacy fallback, but cannot be the sole trigger.
+        # V235 freezes new third-tail candidates synchronously BEFORE its
+        # result-only stage. Enqueuing V254 again after V235 completes is
+        # redundant and can miss the future window. Keep V232 event fallback.
         self.assertIn("'BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort'",workflow)
-        self.assertIn("'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",workflow)
+        self.assertNotIn("'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",workflow)
+        self.assertIn("cron: '3,8,13,18,23,28,33,38,43,48,53,58 0-14,23 * * *'",workflow)
+        self.assertIn("V274 immediately freeze qualifying V254",(ROOT/'.github/workflows/V235.yml').read_text())
         self.assertIn("types: [completed]",workflow)
         self.assertIn("types: [completed]",workflow)
         self.assertIn("github.event.workflow_run.conclusion == 'success'",workflow)
