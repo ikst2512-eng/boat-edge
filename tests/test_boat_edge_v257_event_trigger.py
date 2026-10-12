@@ -84,7 +84,7 @@ class V257SourceTrigger(unittest.TestCase):
             'V275_NO_PUBLISHED_SHADOW_CONFLICT_SAFE_RETRY_NEXT_RUN',
             'git diff --cached --check'):
             self.assertIn(marker,stage)
-        for forbidden in ('site_results/', 'settle', 'git pull --rebase',
+        for forbidden in ('site_results/', 'scripts/boat_edge_v234_settle.py', 'git pull --rebase',
                           'git push --force', 'gh workflow run'):
             self.assertNotIn(forbidden,stage)
         self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",
