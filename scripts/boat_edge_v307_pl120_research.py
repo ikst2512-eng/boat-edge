@@ -33,7 +33,7 @@ def rank_120(strengths, second_log=None, third_log=None):
     scale = max(strengths.values())
     weights = {c: strengths[c] / scale for c in COURSES}
     raw = []
-    for a, b, c in itertools.permutations(COURSES, 3):
+    # Iterate all ordered podiums; each course is an actual entry position.\n    for a, b, c in itertools.permutations(COURSES, 3):
         rest = sum(weights.values()) - weights[a]
         rest2 = rest - weights[b]
         p = (weights[a] / sum(weights.values())) * (weights[b] / rest) * (weights[c] / rest2)
@@ -71,7 +71,7 @@ def main():
                         help="Pre-result strengths JSON only; no result or formal data")
     args = parser.parse_args()
     data = json.loads(args.input.read_text(encoding="utf-8"))
-    if set(data) - {"strengths", "second_log", "third_log"} or "strengths" not in data:
+    if not isinstance(data, dict) or set(data) - {"strengths", "second_log", "third_log"} or "strengths" not in data:
         raise ValueError("UNRECOGNIZED_INPUT_KEYS")
     # JSON course keys are strings, internally enforce integer actual-course keys.
     def convert(x):
@@ -79,7 +79,7 @@ def main():
             return None
         if not isinstance(x, dict):
             raise ValueError("INVALID_COURSE_MAP")
-        return {int(k): v for k, v in x.items()}
+        if set(x) != {str(i) for i in COURSES}:\n            raise ValueError("SIX_ACTUAL_COURSES_REQUIRED")\n        return {int(k): v for k, v in x.items()}
     print(json.dumps(research_report(convert(data["strengths"]),
                                      convert(data.get("second_log")),
                                      convert(data.get("third_log"))),
