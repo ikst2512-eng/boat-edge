@@ -36,8 +36,8 @@ function inspect(r,scratch,odds,now=Date.now()){
  if(!pre||!Number.isFinite(end))return {key,phase:'INVALID',rows:[],level:'stop',summary:'予想データの安全条件を確認できません'};
  if(now>=end)return {key,phase:'AFTER_DEADLINE',rows:[],level:'wait',summary:'締切後：現在の取得値を締切前の予想証跡として扱いません'};
  const audit=r.source_audit||{},before=r.beforeinfo||{};
- const hasEx=(Array.isArray(before.racers)&&before.racers.filter(x=>typeof x.exhibition_time==='number'&&Number.isFinite(x.exhibition_time)&&x.exhibition_time>0).length===6)
-   ||(Array.isArray(before.start_exhibition)&&before.start_exhibition.length===6);
+ const hasEx=Array.isArray(before.racers)&&before.racers.length===6&&
+   before.racers.every(x=>typeof x?.exhibition_time==='number'&&Number.isFinite(x.exhibition_time)&&x.exhibition_time>0);
  const orig=r.original_exhibition||{};
  const hasOrig=Array.isArray(orig.labels)&&orig.labels.length>=1&&Array.isArray(orig.boats)&&orig.boats.length===6&&
   orig.boats.filter(x=>Array.isArray(x.values)&&x.values.some(v=>typeof v==='number'&&Number.isFinite(v)&&v>0)).length===6;
