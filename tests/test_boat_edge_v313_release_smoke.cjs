@@ -7,8 +7,8 @@ const src=fs.readFileSync('assets/boat_edge_v207_first_prediction.js','utf8');
 const matrix=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
 const css=fs.readFileSync('assets/boat_edge_v304_topk_mobile.css','utf8');
 const tests=[
- ['matrix-js',/boat_edge_v206_quickview\.js\?v=320/],
- ['matrix-css',/boat_edge_v206_quickview\.css\?v=320/],
+ ['matrix-js',/boat_edge_v206_quickview\.js\?v=321/],
+ ['matrix-css',/boat_edge_v206_quickview\.css\?v=321/],
  ['topk-js',/boat_edge_v207_first_prediction\.js\?v=208&amp;a24=1&amp;ui=306/],
  ['topk-css',/boat_edge_v304_topk_mobile\.css\?v=306/],
  ['safari-nav',/boat_edge_v249_focus\.js\?v=297/]
@@ -26,8 +26,10 @@ assert(src.includes('data-be207="ten"'));
 assert(src.includes('data-be207="before"'));
 assert(src.includes('holdPreviousRace'));
 assert(src.includes('BOATERS・競艇日和・オリ展CSVは別出典'));
-assert(matrix.includes("V299-UI-ONLY"));
+assert(matrix.includes("V321-UI-ONLY"));
 assert(matrix.includes('headTickets'));
+assert(matrix.includes('holdPreviousRace'));
+assert(css.includes('be321-race-await'));
 assert(css.includes('be306-race-await'));
 assert(css.includes('min-height:44px'));
 assert(!/(?:fetch\(|XMLHttpRequest|RESULT_UNLOCK_TOKEN)/.test(src));
