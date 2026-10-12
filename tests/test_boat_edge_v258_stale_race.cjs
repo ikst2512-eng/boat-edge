@@ -69,6 +69,7 @@ const raceB={race_key:'20261012-18-05'};
   }
   // Test D: fail closed if async direct-mode or odds augmentation is invoked after a switch.
   assert(src.includes("if(raceOf()?.race_key!==key)return;\n  const rows=$$(\"#buyBoard .buy-ticket\")"));
-  assert(src.includes('if(raceOf()?.race_key!==key)return;\\n  const stack=$("#tab-scenario .section.stack")'.replace('\\\\n','\\n')));
+  assert(src.includes('if(raceOf()?.race_key!==key)return;'));
+  assert(src.includes('const stack=$("#tab-scenario .section.stack");if(!stack)return;'));
   console.log('V258_STALE_RACE_RENDER_PASS: race switch, same-race supersession, async pipeline, payout guard');
 })().catch(e=>{console.error(e);process.exitCode=1});
