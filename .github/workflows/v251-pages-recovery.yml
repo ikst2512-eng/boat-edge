@@ -1,0 +1,56 @@
+name: BOAT EDGE V251 - Quiet Pages Publish Recovery
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v251-pages-recovery-provenance-20261012
+    paths:
+      - '.github/workflows/v251-pages-recovery.yml'
+      - 'scripts/boat_edge_v251_pages_recovery.py'
+      - 'tests/test_boat_edge_v251_pages_recovery.py'
+  schedule:
+    - cron: '11,31,51 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+
+concurrency:
+  group: boat-edge-pages-quiet-recovery
+  cancel-in-progress: false
+
+jobs:
+  audit-publish-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Offline Pages state-machine and formal-lock regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v251_pages_recovery.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path("data/formal_status.json").read_text(encoding="utf-8"))
+          g=s.get("guards") or {}
+          assert g.get("results_seen") is False
+          assert g.get("unlock") is False
+          assert g.get("scoring") is False
+          assert g.get("RESULT_UNLOCK_TOKEN") is None
+          print("V251_FORMAL_RESULT_UNSEEN_LOCK_PASS")
+          PY
+          git diff --check
+      - name: Confirm latest Pages deployment or request narrowly gated rebuild
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v251_pages_recovery.py
