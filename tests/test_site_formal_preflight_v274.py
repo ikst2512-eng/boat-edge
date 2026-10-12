@@ -76,6 +76,28 @@ class FormalPreflightV274(unittest.TestCase):
             status["formalFirst100"]["coreSha"] = None
             self.assertEqual(check(d, status)[2], "FORMAL_COHORT_NOT_FROZEN_100")
 
+    def test_duplicate_json_metadata_key_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            status, base = self.create(Path(d))
+            path = sorted(base.glob("*.json"))[0]
+            raw = path.read_text()
+            self.assertIn('"formal_meta": {', raw)
+            raw = raw.replace('"formal_meta": {', '"formal_meta": {"model_approved": false, ', 1)
+            path.write_text(raw)
+            self.assertEqual(check(d, status)[2], "PREDICTION_JSON_INVALID")
+            report = audit(Path(d))
+            self.assertFalse(report["site_consumer_ready_to_display_actual_formal_predictions"])
+
+    def test_duplicate_json_derived_key_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            status, base = self.create(Path(d))
+            path = sorted(base.glob("*.json"))[0]
+            raw = path.read_text()
+            self.assertIn('"derived": {', raw)
+            raw = raw.replace('"derived": {', '"derived": {"ranked_120": [], ', 1)
+            path.write_text(raw)
+            self.assertEqual(check(d, status)[2], "PREDICTION_JSON_INVALID")
+
     def test_digest_map_missing_fails_closed(self):
         with tempfile.TemporaryDirectory() as d:
             status, _ = self.create(Path(d))

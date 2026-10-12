@@ -68,6 +68,17 @@ def _valid_rank120(d):
     return seen == LEGAL and abs(total - 1) <= 0.0001
 
 
+
+def _reject_duplicate_keys(pairs):
+    """Reject ambiguous JSON where the same key is repeated in an object."""
+    obj = {}
+    for key, value in pairs:
+        if key in obj:
+            raise ValueError("DUPLICATE_JSON_KEY")
+        obj[key] = value
+    return obj
+
+
 def check(root, status):
     """Returns (pass, verified_files, reason). Never touches results or write paths."""
     prediction_dir = Path(root) / "data" / "formal_predictions"
@@ -100,7 +111,7 @@ def check(root, status):
         if not isinstance(trusted[key], str) or not SHA.fullmatch(trusted[key]):
             return False, verified, "APPROVED_DIGEST_INVALID"
         try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
+            raw = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
         except (OSError, ValueError, UnicodeError):
             return False, verified, "PREDICTION_JSON_INVALID"
         if not isinstance(raw, dict):
