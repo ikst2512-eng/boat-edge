@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 4,
     "deadline": "10:05",
-    "updated_at": "2026-10-13T07:13:57+09:00",
+    "updated_at": "2026-10-13T07:34:26+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=18&rno=4",
-      "fetched_at": "2026-10-13T07:15:30+09:00",
-      "sha256": "7b21b0bae5cd6682dff1ad6ce80d58cc6e2aa375bb925f1696763e36eebe71e6",
+      "fetched_at": "2026-10-13T07:36:22+09:00",
+      "sha256": "cbbb22ad7a85d274ec8214e8aded646df4c8ad33a1e6b673e6a4b02c4d213b49",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -39,7 +63,7 @@
       "name": "尾嶋 一広",
       "class": "A1",
       "age": 39,
-      "weight_kg": 54.3,
+      "weight_kg": 54.1,
       "branch": "兵庫",
       "birthplace": "兵庫",
       "F": 0,
@@ -74,7 +98,7 @@
         "10"
       ],
       "early_race": 11,
-      "raw_text": "1 4472 / A1 尾嶋 一広 兵庫/兵庫 39歳/54.3kg F0 L0 0.16 6.66 50.45 68.47 0.00 0.00 0.00 48 33.81 49.64 38 41.67 55.26 6 12 4 9 2 10 11R"
+      "raw_text": "1 4472 / A1 尾嶋 一広 兵庫/兵庫 39歳/54.1kg F0 L0 0.16 6.66 50.45 68.47 0.00 0.00 0.00 48 33.81 49.64 38 41.67 55.26 6 12 4 9 2 10 11R"
     },
     {
       "lane": 2,
@@ -124,7 +148,7 @@
       "name": "鈴木 峻佑",
       "class": "B1",
       "age": 42,
-      "weight_kg": 53.4,
+      "weight_kg": 53.7,
       "branch": "静岡",
       "birthplace": "静岡",
       "F": 0,
@@ -158,7 +182,7 @@
         "10"
       ],
       "early_race": null,
-      "raw_text": "3 4380 / B1 鈴木 峻佑 静岡/静岡 42歳/53.4kg F0 L0 0.17 4.67 24.76 43.81 3.88 12.50 37.50 59 37.25 54.90 41 38.12 55.61 5 2 7 1 10"
+      "raw_text": "3 4380 / B1 鈴木 峻佑 静岡/静岡 42歳/53.7kg F0 L0 0.17 4.67 24.76 43.81 3.88 12.50 37.50 59 37.25 54.90 41 38.12 55.61 5 2 7 1 10"
     },
     {
       "lane": 4,
@@ -207,7 +231,7 @@
       "name": "山室 展弘",
       "class": "B1",
       "age": 65,
-      "weight_kg": 52.2,
+      "weight_kg": 52.5,
       "branch": "岡山",
       "birthplace": "岡山",
       "F": 0,
@@ -241,7 +265,7 @@
         "11"
       ],
       "early_race": 10,
-      "raw_text": "5 3070 / B1 山室 展弘 岡山/岡山 65歳/52.2kg F0 L0 0.14 5.17 43.48 47.83 6.08 50.00 65.38 71 32.20 47.46 44 35.84 57.08 3 7 11 2 11 10R"
+      "raw_text": "5 3070 / B1 山室 展弘 岡山/岡山 65歳/52.5kg F0 L0 0.14 5.17 43.48 47.83 6.08 50.00 65.38 71 32.20 47.46 44 35.84 57.08 3 7 11 2 11 10R"
     },
     {
       "lane": 6,
@@ -289,5 +313,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

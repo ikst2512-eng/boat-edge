@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 10,
     "deadline": "13:14",
-    "updated_at": "2026-10-13T07:13:57+09:00",
+    "updated_at": "2026-10-13T07:34:26+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=18&rno=10",
-      "fetched_at": "2026-10-13T07:15:34+09:00",
-      "sha256": "7196fcdf6a4742bb890025f42407d99b915479bc01fd35c209014e3c9567da91",
+      "fetched_at": "2026-10-13T07:36:29+09:00",
+      "sha256": "10d305badc59a03bf5b082662d5a9c7bacb7aebc8414512b2ada23e66f5860ab",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -39,7 +63,7 @@
       "name": "室田 泰史",
       "class": "A2",
       "age": 56,
-      "weight_kg": 52.7,
+      "weight_kg": 52.2,
       "branch": "福井",
       "birthplace": "福井",
       "F": 1,
@@ -73,7 +97,7 @@
         "11"
       ],
       "early_race": 3,
-      "raw_text": "1 3548 / A2 室田 泰史 福井/福井 56歳/52.7kg F1 L0 0.12 4.98 28.83 45.05 6.36 46.15 69.23 70 24.07 38.89 48 33.77 50.44 9 3 12 7 11 3R"
+      "raw_text": "1 3548 / A2 室田 泰史 福井/福井 56歳/52.2kg F1 L0 0.12 4.98 28.83 45.05 6.36 46.15 69.23 70 24.07 38.89 48 33.77 50.44 9 3 12 7 11 3R"
     },
     {
       "lane": 2,
@@ -81,7 +105,7 @@
       "name": "上條 嘉嗣",
       "class": "A1",
       "age": 36,
-      "weight_kg": 52.3,
+      "weight_kg": 52.2,
       "branch": "大阪",
       "birthplace": "大阪",
       "F": 0,
@@ -116,7 +140,7 @@
         "12"
       ],
       "early_race": 2,
-      "raw_text": "2 4514 / A1 上條 嘉嗣 大阪/大阪 36歳/52.3kg F0 L0 0.19 6.88 57.38 72.95 7.81 64.52 77.42 26 37.27 50.00 71 25.89 42.86 4 12 3 10 3 12 2R"
+      "raw_text": "2 4514 / A1 上條 嘉嗣 大阪/大阪 36歳/52.2kg F0 L0 0.19 6.88 57.38 72.95 7.81 64.52 77.42 26 37.27 50.00 71 25.89 42.86 4 12 3 10 3 12 2R"
     },
     {
       "lane": 3,
@@ -124,7 +148,7 @@
       "name": "山室 展弘",
       "class": "B1",
       "age": 65,
-      "weight_kg": 52.2,
+      "weight_kg": 52.5,
       "branch": "岡山",
       "birthplace": "岡山",
       "F": 0,
@@ -158,7 +182,7 @@
         "11"
       ],
       "early_race": 4,
-      "raw_text": "3 3070 / B1 山室 展弘 岡山/岡山 65歳/52.2kg F0 L0 0.14 5.17 43.48 47.83 6.08 50.00 65.38 71 32.20 47.46 44 35.84 57.08 3 7 11 2 11 4R"
+      "raw_text": "3 3070 / B1 山室 展弘 岡山/岡山 65歳/52.5kg F0 L0 0.14 5.17 43.48 47.83 6.08 50.00 65.38 71 32.20 47.46 44 35.84 57.08 3 7 11 2 11 4R"
     },
     {
       "lane": 4,
@@ -291,5 +315,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
