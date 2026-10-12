@@ -428,7 +428,8 @@ jobs:
                                     "source":bf.get("url") if bf else None,
                                     "fetched_at":bf.get("fetched_at") if bf and bf.get("ok") else None,
                                     "sha256":bf.get("sha256") if bf else None,
-                                    "error":bf.get("error") if bf else None}},
+                                    "error":bf.get("error") if bf else None,
+                                    "six_boat_coverage":bf.get("six_boat_coverage") if bf else None}},
                     "racers":rr.get("racers",[]),
                     "beforeinfo":bf.get("parsed",{}) if bf else {},
                     "validation":{"result_unlock_token":None,"result":None}
@@ -474,6 +475,11 @@ jobs:
             "beforeinfo_urgent_15m_targets":len(urgent_keys),
             "beforeinfo_urgent_15m_ok":urgent_ok,
             "beforeinfo_urgent_15m_published_wait":urgent_wait,
+            "beforeinfo_urgent_15m_partial":sum(
+                bool((before.get(key,{}) or {}).get("six_boat_coverage",{}).get("exhibition_lanes",0) or
+                     (before.get(key,{}) or {}).get("six_boat_coverage",{}).get("start_exhibition_lanes",0))
+                and before.get(key,{}).get("status")=="published_wait"
+                for key in urgent_keys),
             "beforeinfo_urgent_15m_error":urgent_error,
             "beforeinfo_urgent_15m_retried":sum(bool(before.get(key,{}).get("urgent_retried")) for key in urgent_keys),
             "site_snapshot_immutable_races":snapshot_protected,
