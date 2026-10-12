@@ -90,7 +90,15 @@ jobs:
             # Never clean data/ wholesale: formal Fresh and unrelated histories live there.
             git clean -fd -- data/site_prediction_snapshots/ data/site_prediction_audit/ data/site_autopilot/v229_evidence/ data/site_autopilot/v232_cohort/ data/site_odds/ data/site_scratches_v182/ data/races/ data/raw/ data/site_paper_sim/raw/ data/races/ data/site_odds/ data/site_scratches_v182/
             echo "V234_PRE_RESULT_SOURCE_RESTART_ATTEMPT_${attempt}"
-            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py
+            # V295: keep the upstream V230 max worker cap (8), reducing the
+            # second network batch for 7-8 imminent races without changing
+            # source identity, six-boat exhibition or odds verification.
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8
+            # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
+            # so Git reset/clean and repeated main conflicts cannot rewrite
+            # an earlier attestation or backfill a race after deadline.
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v295_retry_trace.py \
+              --attempt "$attempt" --state-path "$RUNNER_TEMP/boat_edge_v295_retry_trace.json"
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v232_pre_result_cohort.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v215_readiness.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v214_shadow.py freeze
