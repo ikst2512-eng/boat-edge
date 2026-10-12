@@ -30,6 +30,6 @@ assert(!/(?:fetch\(|XMLHttpRequest|rankPredictions\(|RESULT_UNLOCK_TOKEN|winning
 if(fs.existsSync('index.html')){
  const html=fs.readFileSync('index.html','utf8');
  assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306'));
- assert(html.includes('boat_edge_v304_topk_mobile.css?v=306'));
+ assert(html.includes('boat_edge_v304_topk_mobile.css?v=319'));
 }
 console.log('V306_RACE_SWITCH_STALE_TICKETS_SUPPRESSED_PASS');
