@@ -58,7 +58,7 @@ class QuickviewEvidenceV283(unittest.TestCase):
 
     def test_cache_bust_link(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=299"), 1)
+        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=321"), 1)
 
 if __name__ == "__main__":
     unittest.main()
