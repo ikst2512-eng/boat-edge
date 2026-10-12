@@ -6,6 +6,8 @@ on:
       - '.github/workflows/auto-update.yml'
       - 'tests/test_boat_edge_v270_pre_result_merge.py'
       - 'scripts/boat_edge_v277_snapshot_push_guard.py'
+      - 'scripts/boat_edge_v275_frozen_protection.py'
+      - 'tests/test_boat_edge_v275_frozen_protection.py'
       - 'tests/test_boat_edge_v277_snapshot_push_guard.py'
       - '.github/workflows/v270-pre-result-conflict-regression.yml'
   workflow_dispatch:
@@ -27,6 +29,7 @@ jobs:
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v270_pre_result_merge.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v277_snapshot_push_guard.py
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v275_frozen_protection.py
           python3 - <<'PY'
           import json
           from pathlib import Path
