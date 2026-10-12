@@ -116,7 +116,8 @@ jobs:
               "normalizeCombo","allTickets",
               "be122Clamp","be122Mean","be122ActualCourseMap","be122ExStMap",
               "be122ExTimeMap","be122OriginalMap","be122MetricScores","be122MethodFit",
-              "be122ScenarioAdjusted","be122ModesFromTickets"
+              "be122ScenarioAdjusted","be131WaveRows","be132BalanceRows",
+              "be122ModesFromTickets"
           ]
           browser_defs="\n".join(extract_function(idx,n) for n in idx_funcs)
           browser_defs+="\n"+"\n".join(extract_function(js,n) for n in v108_funcs)
