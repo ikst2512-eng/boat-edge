@@ -191,9 +191,11 @@ function board(){
  const mode=$('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||'';
  const next=r.race_key+'|'+mode;
  const list=$('.be108-ticket-list',p),oldRace=ctx.split('|')[0];
+ const raceChanged=oldRace!==r.race_key;
   if(ctx!==next){
    if(oldRace&&oldRace!==r.race_key)awaitingTicketList=!list||list===lastTicketList;
-   ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';
+   ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';
+   if(raceChanged)layout='lanes';
   }
   if(awaitingTicketList&&list&&list!==lastTicketList)awaitingTicketList=false;
   if(!awaitingTicketList&&list)lastTicketList=list;
@@ -211,6 +213,7 @@ function board(){
  box.querySelectorAll('.be206-layout-switch button').forEach(b=>{const on=b.dataset.be206Layout===layout;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  const compactTable=$('.be206-table-scroll',box),matrixTable=$('.be206-matrix-scroll',box);
  compactTable.hidden=layout!=='rows';matrixTable.hidden=layout!=='lanes';
+ if(raceChanged)matrixTable.scrollLeft=0;
  const data=JSON.stringify([r.race_key,metric,layout,rows.map(row=>[row.lane,row.name,row.grade,row.f,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
  if(lastTable!==data||(layout==='lanes'?!$('.be206-matrix tbody',box):!$('.be206-table tbody',box))){
    if(layout==='lanes')$('.be206-matrix',box).innerHTML=matrix(rows);
