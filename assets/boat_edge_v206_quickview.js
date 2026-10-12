@@ -81,6 +81,35 @@ function matrix(rows){
   '<tr><th scope="row">'+esc(c[0])+'</th>'+rows.map(r=>cell(r,c[1],c[2],leaders[i])).join('')+'</tr>'
  ).join('')+'</tbody>';
 }
+/* V341: explicit horizontal navigation; only the comparison viewport moves. */
+function comparisonScrollState(view){
+ const width=Number(view?.clientWidth),total=Number(view?.scrollWidth),left=Number(view?.scrollLeft);
+ if(!Number.isFinite(width)||!Number.isFinite(total)||!Number.isFinite(left)||width<=0||total<=0)
+   return {overflow:false,previous:false,next:false,left:0,max:0};
+ const max=Math.max(0,total-width),position=Math.min(max,Math.max(0,left));
+ return {overflow:max>1,previous:position>1,next:max-position>1,left:position,max};
+}
+function updateComparisonScroll(box){
+ if(!box)return;
+ const view=$('.be206-matrix-scroll',box),controls=$('.be206-scroll-controls',box);
+ if(!view||!controls)return;
+ const status=comparisonScrollState(view);
+ controls.hidden=view.hidden||!status.overflow;
+ $('[data-be206-scroll="previous"]',controls).disabled=!status.previous;
+ $('[data-be206-scroll="next"]',controls).disabled=!status.next;
+ setText($('.be206-scroll-position',controls),status.previous?(status.next?'左右の艇へ移動できます':'右端まで表示中'):'左端から表示中');
+}
+function scrollComparison(box,direction){
+ if(!box)return false;
+ const view=$('.be206-matrix-scroll',box),status=comparisonScrollState(view);
+ if(!view||view.hidden||!status.overflow||!['previous','next'].includes(direction))return false;
+ const sticky=$('thead th:first-child',view)?.offsetWidth||0;
+ const step=Math.max(1,view.clientWidth-Math.min(sticky,view.clientWidth/2));
+ const left=Math.min(status.max,Math.max(0,status.left+(direction==='next'?step:-step)));
+ if(left===status.left)return false;
+ view.scrollTo({left,behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth'});
+ return true;
+}
 function create(root,p){
  let box=$('#be206Quick');if(box)return box;
  box=document.createElement('section');box.id='be206Quick';box.className='be206-quick';
@@ -90,10 +119,12 @@ function create(root,p){
  <div class="be206-layout-switch" role="group" aria-label="比較表の並べ方"><button type="button" data-be206-layout="lanes">6艇横並び</button><button type="button" data-be206-layout="rows">選手ごと</button></div>
  <p class="be206-swipe-help">選手名をタップすると、その艇が1着の既存買い目を表示します。6艇横並び表は左右にスワイプ。赤は同じレース内で明確に強い値だけ。</p>
  <div class="be206-table-scroll"><table class="be206-table"></table></div>
- <div class="be206-matrix-scroll" tabindex="0" aria-label="6艇横並び比較表。左右にスクロールできます"><table class="be206-matrix"></table></div>
+ <div id="be206MatrixViewport" class="be206-matrix-scroll" role="region" tabindex="0" aria-label="6艇横並び比較表。左右にスクロールできます"><table class="be206-matrix"></table></div>
+ <div class="be206-scroll-controls" role="group" aria-label="6艇比較表の横移動" hidden><button type="button" data-be206-scroll="previous" aria-controls="be206MatrixViewport">← 前の艇</button><span class="be206-scroll-position"></span><button type="button" data-be206-scroll="next" aria-controls="be206MatrixViewport">次の艇 →</button></div>
  <div class="be206-table-help"></div>
  <section class="be206-headpanel" role="status" aria-live="polite" tabindex="-1" hidden></section>
  <div class="be206-foot"><span class="be206-source"></span><button type="button" data-be206-before>直前情報を見る →</button></div>`;
+ $('.be206-matrix-scroll',box).addEventListener('scroll',()=>updateComparisonScroll(box),{passive:true});
  root.insertBefore(box,p);return box;
 }
 
@@ -189,6 +220,7 @@ function board(){
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
  renderHead(box,r,mode,st);
  document.documentElement.classList.add('be206-active');
+ updateComparisonScroll(box);
  const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV298';
 }
 function tickets(){
@@ -210,6 +242,8 @@ function sync(){if(busy)return;busy=true;try{board();tickets();}catch(err){conso
 function schedule(){if(busy||queued)return;queued=true;queueMicrotask(()=>{queued=false;sync();});}
 function init(){if(started)return;started=true;
  document.addEventListener('click',e=>{
+   const scrollBtn=e.target.closest?.('#be206Quick [data-be206-scroll]');
+   if(scrollBtn){scrollComparison($('#be206Quick'),scrollBtn.dataset.be206Scroll);return;}
    const metricBtn=e.target.closest?.('#be206Quick [data-be206-metric]');
    if(metricBtn){const next=metricBtn.dataset.be206Metric;if(tabs[next]){metric=next;lastTable='';schedule();}return;}
    const layoutBtn=e.target.closest?.('#be206Quick [data-be206-layout]');
@@ -238,8 +272,10 @@ function init(){if(started)return;started=true;
  });
  const pred=$('#tab-pred');if(pred&&typeof MutationObserver!=='undefined')new MutationObserver(schedule).observe(pred,{childList:true,subtree:true});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
+ window.addEventListener('resize',schedule,{passive:true});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,version:'V299-UI-ONLY',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,comparisonScrollState,updateComparisonScroll,scrollComparison,version:'V299-UI-ONLY',displayRevision:'V341',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+

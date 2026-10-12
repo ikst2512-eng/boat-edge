@@ -105,3 +105,12 @@ html.be328-await-ticket-list #be206MoreTickets{display:none!important}
  #be206Quick .be206-headpanel{padding:9px}
  #be206Quick .be206-headpanel li{gap:5px}
 }
+
+/* V341: reachable six-boat columns for touch, keyboard and reduced motion. */
+#be206Quick .be206-scroll-controls{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center;margin:8px 0}
+#be206Quick .be206-scroll-controls[hidden]{display:none!important}
+#be206Quick .be206-scroll-controls button{font:inherit;font-size:11px;font-weight:850;min-height:44px;padding:8px 10px;border:1px solid #bacfe3;border-radius:8px;background:#f0f7ff;color:#205d91;touch-action:manipulation;cursor:pointer}
+#be206Quick .be206-scroll-controls button:disabled{background:#f4f6f8;color:#64778a;border-color:#d7e0e8;cursor:default}
+#be206Quick .be206-scroll-position{min-width:0;text-align:center;font-size:10px;line-height:1.5;color:#506b85;overflow-wrap:anywhere}
+#be206Quick .be206-scroll-controls button:focus-visible,#be206Quick .be206-matrix-scroll:focus-visible{outline:3px solid #286ec2;outline-offset:2px}
+
