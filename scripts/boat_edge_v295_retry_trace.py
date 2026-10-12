@@ -41,8 +41,16 @@ def candidates(repo: Path) -> set[str]:
     return out
 
 
-def snapshot_exists(repo: Path, key: str) -> bool:
-    return tracked(repo, f"data/site_prediction_snapshots/{key}.json")
+def persisted_parts(repo: Path, key: str) -> tuple[bool,bool]:
+    """Git-tracked snapshot and V229 attestation are independent evidence.
+
+    Requiring both does not assert the file contents or SHA passed validation.
+    A snapshot-only commit is NEVER reported as persisted V229 proof.
+    """
+    snap=f"data/site_prediction_snapshots/{key}.json"
+    proof=f"data/site_autopilot/v229_evidence/{key}.json"
+    return ((repo/snap).is_file() and tracked(repo,snap),
+            (repo/proof).is_file() and tracked(repo,proof))
 
 
 def append_state(repo: Path, state_path: Path, attempt: int, now: datetime | None = None) -> dict:
@@ -72,13 +80,19 @@ def append_state(repo: Path, state_path: Path, attempt: int, now: datetime | Non
             or not initial.issubset(seen)):
         raise RuntimeError("V295_INVALID_SAVED_RACE_KEY")
     history["seen_candidate_keys"]=sorted(seen)
-    latest_absent=sorted(k for k in seen if k not in current and not snapshot_exists(repo,k))
-    now_tracked=sorted(k for k in seen if snapshot_exists(repo,k))
+    parts={key:persisted_parts(repo,key) for key in seen if key not in current}
+    latest_absent=sorted(k for k in parts if parts[k]==(False,False))
+    # These records are only Git file-presence claims, NOT SHA verification.
+    now_tracked=sorted(k for k in parts if parts[k]==(True,True))
+    snap_only=sorted(k for k in parts if parts[k]==(True,False))
+    proof_only=sorted(k for k in parts if parts[k]==(False,True))
     still_local=sorted(seen & current)
     row={"attempt":attempt,"checked_at_utc":today,
          "new_atomic_attestation_candidates":sorted(current),
          "seen_candidate_keys_still_local":still_local,
          "seen_candidate_keys_now_tracked":now_tracked,
+         "seen_candidate_keys_snapshot_only_without_proof":snap_only,
+         "seen_candidate_keys_proof_only_without_snapshot":proof_only,
          "seen_candidate_keys_absent_unpublished":latest_absent}
     history["observations"].append(row)
     state_path.parent.mkdir(parents=True,exist_ok=True)
@@ -87,11 +101,14 @@ def append_state(repo: Path, state_path: Path, attempt: int, now: datetime | Non
              "first_attempt_total":len(initial),"new_this_attempt":len(current),
              "ever_seen_proposed_total":len(seen),
              "seen_candidate_tracked":len(now_tracked),
+             "seen_candidate_snapshot_only":len(snap_only),
+             "seen_candidate_proof_only":len(proof_only),
              "seen_candidate_local":len(still_local),
              "seen_candidate_absent_unpublished":len(latest_absent),
              "potentially_lost_keys":latest_absent,
              "interpretation":"UNPUBLISHED_AFTER_RETRY_NOT_PROOF_OF_ELIGIBILITY_OR_PERMANENT_LOSS",
-             "scope":"SITE_PRE_RESULT_ONLY_NO_FORMAL_NO_RESULTS"}
+             "scope":"SITE_PRE_RESULT_ONLY_NO_FORMAL_NO_RESULTS",
+             "tracked_means":"BOTH_FILES_GIT_TRACKED_NOT_SHA_VALIDATED"}
     return summary
 
 
@@ -108,6 +125,8 @@ def main():
         with open(summary,"a",encoding="utf-8") as fp:
             fp.write(f"\nV235 attempt {args.attempt}: {result['new_this_attempt']} new V229 source-evidence candidates; "
                      f"seen predeadline candidates tracked={result['seen_candidate_tracked']}, "
+                     f"snapshot only={result['seen_candidate_snapshot_only']}, "
+                     f"proof only={result['seen_candidate_proof_only']}, "
                      f"still local={result['seen_candidate_local']}, "
                      f"absent/unpublished={result['seen_candidate_absent_unpublished']} "
                      "(not proof of permanent loss or valid prediction).\n")
