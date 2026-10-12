@@ -10,7 +10,8 @@ ast.parse(code)
 env={'ymd':'20261012','targets':[(19,8,7),(19,9,23),(19,10,12),(19,11,-4),(19,12,2),(1,12,15)],
      'before':{'20261012-19-08':{'status':'ok'},'20261012-19-10':{'status':'published_wait'},
                '20261012-19-12':{'status':'error'},'20261012-01-12':{'status':'ok'}}}
-exec(compile(ast.parse(code),'<V269_SOURCE_ONLY>','exec'),{},env)
+# Comprehensions resolve names from globals, so share the controlled namespace.
+exec(compile(ast.parse(code),'<V269_SOURCE_ONLY>','exec'),env,env)
 assert len(env['urgent_keys'])==4
 assert env['urgent_ok']==2
 assert env['urgent_wait']==1
