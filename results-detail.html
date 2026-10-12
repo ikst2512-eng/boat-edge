@@ -141,7 +141,10 @@ async function load(){
   var d=await response.json();
   if(d.schema!==SCHEMA||d.scope!==SCOPE||d.formal_result_access!==false||d.production_model_changed!==false||d.real_or_paper_wagers_placed!==0||!Array.isArray(d.rows)||d.rows.length!==d.settled_verified_races||!d.rows.every(verified))throw new Error('検証対象外データ');
   report=d;
-  var requested=new URLSearchParams(window.location.search).get('race');
+  var query=new URLSearchParams(window.location.search);
+  var requested=query.get('race');
+  var requestedMode=query.get('mode');
+  if(Object.prototype.hasOwnProperty.call(modes,requestedMode))$('mode').value=requestedMode;
   focusRace=validKey(requested)&&d.rows.some(function(r){return r.race_key===requested;})?requested:null;
   $('clearFocus').hidden=!focusRace;
   var select=$('day');select.innerHTML='<option value="all">全日付</option>';
