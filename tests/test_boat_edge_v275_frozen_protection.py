@@ -6,7 +6,10 @@ Never downloads odds, visits results/payouts or touches formal Fresh records.
 from pathlib import Path
 import ast
 import tempfile
+import sys
 
+# Running "python3 tests/<test>.py" puts tests/, not the repo root, on sys.path.
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
 
 wf=Path(".github/workflows/auto-update.yml").read_text(encoding="utf-8")
