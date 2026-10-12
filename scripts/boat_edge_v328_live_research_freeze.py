@@ -72,6 +72,8 @@ def live_research_freeze(root, race_key, now=None):
         if fetched.tzinfo is None or fetched >= deadline or fetched > now:
             raise ValueError("SOURCE_FETCH_NOT_PREDEADLINE:" + provider)
     candidate = build_shadow(race)
+    # Bind the exact race input bytes into the immutable V318 candidate digest.
+    candidate["race_source_sha256"] = hashlib.sha256(race_raw).hexdigest()
     report = assemble(root, race_key, deadline_jst)
     if not report["ready_for_research_review"]:
         raise ValueError("THREE_SOURCE_RECEIPTS_NOT_READY")
