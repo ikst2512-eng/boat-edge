@@ -30,6 +30,7 @@ const validate=(d,r,now)=>{
   String(d.deadline||'')!==String(r.meta?.deadline||''))return {quality:'invalid',signature:''};
  const t=Date.parse(d.fetched_at||''),deadline=due(r);
  if(!Number.isFinite(t)||!Number.isFinite(deadline)||t>deadline||t>now+30000)return {quality:'invalid',signature:''};
+ if(now>=deadline)return {quality:'past_deadline',signature:''};
  const odds=d.trifecta_odds;
  if(!odds||Array.isArray(odds)||typeof odds!=='object')return {quality:'invalid',signature:''};
  const entries=Object.entries(odds);
