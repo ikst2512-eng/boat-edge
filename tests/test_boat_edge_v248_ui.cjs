@@ -81,4 +81,6 @@ const urgentTelemetry=execFileSync('python3',['tests/test_boat_edge_v269_urgent_
 assert(urgentTelemetry.includes('V269_URGENT_PRE_RESULT_BEFOREINFO_TELEMETRY_PASS'));
 const noReinstall=execFileSync('python3',['tests/test_boat_edge_v270_no_reinstall.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
 assert(noReinstall.includes('V270_NO_OBSOLETE_SITE_OPS_REINSTALL_PASS'));
+const urgentFirst=execFileSync('python3',['tests/test_boat_edge_v274_urgent_first.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert(urgentFirst.includes('V274_PRE_RESULT_URGENT_FIRST_SOURCE_TIMESTAMP_LOCK_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');

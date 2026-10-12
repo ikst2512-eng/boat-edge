@@ -1,6 +1,12 @@
 name: BOAT EDGE V248 - Safe Odds Paper TopK UI
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - 'tests/test_boat_edge_v274_urgent_first.py'
+      - 'tests/test_boat_edge_v248_ui.cjs'
+      - '.github/workflows/v248-ui-safety-regression.yml'
   push:
     branches: [main, feat/v248-a13-a16-odds-paper-pred-ui-20261012]
     paths:
@@ -14,6 +20,8 @@ on:
       - 'BOAT_EDGE_AUTODEV_TASKS.md'
       - 'tests/test_boat_edge_v248_ui.cjs'
       - 'tests/test_boat_edge_v269_urgent_telemetry.py'
+      - 'tests/test_boat_edge_v274_urgent_first.py'
+      - '.github/workflows/auto-update.yml'
       - '.github/workflows/v248-ui-safety-regression.yml'
   workflow_dispatch:
 permissions:

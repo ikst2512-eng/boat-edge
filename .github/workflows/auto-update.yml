@@ -268,29 +268,6 @@ jobs:
               for fut in as_completed(futs):
                   j,m=fut.result();venue_meta[j]=m
 
-          # race cards
-          def race_task(j,rno):
-              key=f"{ymd}-{j}-{rno:02d}"
-              url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno={rno}"
-              if rno==1 and j in probe_cache:
-                  r,sp,racers=probe_cache[j]
-                  try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
-                  except:pass
-                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content)}
-              try:
-                  r=fetch(url,attempts=2)
-                  (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
-                  racers=parse_racers(BeautifulSoup(r.text,"lxml"))
-                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content)}
-              except Exception as e:
-                  return key,{"ok":False,"racers":[],"url":url,"error":repr(e)}
-
-          race_results={}
-          with ThreadPoolExecutor(max_workers=10) as ex:
-              futs=[ex.submit(race_task,j,r) for j in active for r in range(1,13)]
-              for fut in as_completed(futs):
-                  k,v=fut.result();race_results[k]=v
-
           # beforeinfo only near deadline
           targets=[]
           for j in active:
@@ -332,7 +309,7 @@ jobs:
                       ready=any(x.get("exhibition_time") for x in parsed["racers"]) or bool(parsed["start_exhibition"])
                   # Store only the last source response and its actual digest.
                   (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
-                  return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried}
+                  return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried,"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
                   return key,{"ok":False,"status":"error","parsed":{},"url":url,"error":repr(e)}
 
@@ -341,6 +318,33 @@ jobs:
               futs=[ex.submit(before_task,j,r) for j,r,_delta in targets]
               for fut in as_completed(futs):
                   k,v=fut.result();before[k]=v
+
+          # V274: retrieve schedule-urgent PRE_RESULT exhibition pages before bulk race cards.
+          # All race cards are still collected before building the unchanged output schema.
+          # race cards
+          def race_task(j,rno):
+              key=f"{ymd}-{j}-{rno:02d}"
+              url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno={rno}"
+              if rno==1 and j in probe_cache:
+                  r,sp,racers=probe_cache[j]
+                  try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  except:pass
+                  # Cached venue probe was fetched before bulk collection; use a
+                  # conservative start timestamp rather than falsely marking it newer.
+                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":iso}
+              try:
+                  r=fetch(url,attempts=2)
+                  (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  racers=parse_racers(BeautifulSoup(r.text,"lxml"))
+                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
+              except Exception as e:
+                  return key,{"ok":False,"racers":[],"url":url,"error":repr(e)}
+
+          race_results={}
+          with ThreadPoolExecutor(max_workers=10) as ex:
+              futs=[ex.submit(race_task,j,r) for j in active for r in range(1,13)]
+              for fut in as_completed(futs):
+                  k,v=fut.result();race_results[k]=v
 
           summary={"schema_version":"boat-edge-today-v5","date":now.strftime("%Y-%m-%d"),"updated_at":iso,
                    "phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False,
@@ -366,11 +370,11 @@ jobs:
                             "results_seen":False,"unlock":False,"scoring":False},
                     "source_audit":{
                       "race_card":{"status":"ok" if rr.get("ok") else "error","source":rr.get("url"),
-                                   "fetched_at":iso if rr.get("ok") else None,"sha256":rr.get("sha256"),
+                                   "fetched_at":rr.get("fetched_at") if rr.get("ok") else None,"sha256":rr.get("sha256"),
                                    "error":rr.get("error")},
                       "beforeinfo":{"status":bf.get("status") if bf else "not_in_window",
                                     "source":bf.get("url") if bf else None,
-                                    "fetched_at":iso if bf and bf.get("ok") else None,
+                                    "fetched_at":bf.get("fetched_at") if bf and bf.get("ok") else None,
                                     "sha256":bf.get("sha256") if bf else None,
                                     "error":bf.get("error") if bf else None}},
                     "racers":rr.get("racers",[]),
