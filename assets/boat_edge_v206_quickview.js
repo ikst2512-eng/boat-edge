@@ -130,7 +130,7 @@ function renderHead(box,r,mode,status){
  const locked=['first','final','latest'].includes(marker);
  const pre=keyOK(r?.race_key)&&r?.meta?.phase==='PRE_RESULT'&&
    r.meta.results_seen===false&&r.meta.unlock===false&&r.meta.scoring===false;
- const safe=pre&&status?.kind!=='stop'&&locked;
+ const safe=pre&&status?.kind==='partial'&&locked; // Only recently checked cancellation signals; never assert confirmed starters.
  const tickets=safe?headTickets($$('#be108PredictionModes .be108-ticket-list > .be108-ticket'),selected):null;
  const racer=(window.BoatEdgeV203?.getRows?.(r)||[]).find(x=>x.lane===selected);
  const label=marker==='final'?'締切前FINAL保存の表示':marker==='first'?'FIRST保存の表示':
