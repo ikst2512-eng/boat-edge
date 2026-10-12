@@ -113,10 +113,9 @@ async function refresh(){
   if(!node){node=document.createElement('details');node.id='be223Source';node.className='be223-source';
    node.innerHTML='<summary><b>直前情報の取得状況</b><span class="be223-state" role="status"></span><span class="be223-flags" aria-label="欠場・取消と3連単オッズの取得状況"><span data-be223-flag="scratch"></span><span data-be223-flag="odds"></span></span><span class="be223-exhibition-flags" aria-label="展示6艇と独立オリ展取得状態"><span data-be223-ex="time"></span><span data-be223-ex="original"></span><span data-be223-ex="boaters"></span><span data-be223-ex="biyori"></span></span></summary><div class="be223-rows"></div><p>取得時点の監査表示。欠場・取消の確定証明、買い目の推奨、未見Fresh合格ではありません。オリ展の取得時刻は当サイトへの取り込み時刻です。</p>';
    host.prepend(node);
-  }else if(!host.contains(node)){
-   // V322: a previously mounted source panel belongs to the active race summary.
-   host.prepend(node);
   }
+  // Preserve main V321's active host handoff and V322's prior-race concealment.
+  if(node.parentElement!==host)host.prepend(node);
   node.hidden=false;
   if(lastKey!==key){node.open=false;lastKey=key;}
   node.dataset.raceKey=key; // V250: prevent a previous race's source chip being reused for the selected race
