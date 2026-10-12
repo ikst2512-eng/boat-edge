@@ -38,15 +38,29 @@ def source_gaps(root, key, now):
         gaps.append('scratch_missing_or_blocked')
     else:
         stamp=parse(scratch.get('checked_at'))
-        if scratch.get('race_card_source_status')!='ok' or stamp is None or not 0<=(now-stamp).total_seconds()<=900:
+        if (scratch.get('race_card_source_status')!='ok' or
+                scratch.get('official_beforeinfo_source_status')!='ok' or
+                stamp is None or not 0<=(now-stamp).total_seconds()<=900):
             gaps.append('scratch_stale')
     odds=load(root/'data/site_odds'/(key+'.json')) or {}
-    if odds.get('race_key')!=key or odds.get('phase')!='PRE_RESULT_PURCHASE_ONLY':
+    if (odds.get('race_key')!=key or odds.get('phase')!='PRE_RESULT_PURCHASE_ONLY' or
+            odds.get('results_seen') is not False or odds.get('scoring') is not False):
         gaps.append('pre_result_odds_unverified')
     else:
         stamp=parse(odds.get('fetched_at'))
         if stamp is None or not 0<=(now-stamp).total_seconds()<=900:
             gaps.append('pre_result_odds_stale')
+        rows=odds.get('trifecta_odds')
+        valid=(isinstance(rows,dict) and len(rows)==120 and
+               odds.get('available_count')==120 and
+               all(f'{a}-{b}-{c}' in rows and
+                   type(rows[f'{a}-{b}-{c}']) in (int,float) and
+                   0<rows[f'{a}-{b}-{c}']<float('inf')
+                   for a in range(1,7) for b in range(1,7) for c in range(1,7)
+                   if len({a,b,c})==3))
+        if not valid:gaps.append('pre_result_odds_120_incomplete')
+        if odds.get('verified_official_dom_v167') is not True:
+            gaps.append('official_dom_proof_missing')
     return gaps
 
 
