@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+import scripts.boat_edge_v254_third_tail as v254
 from scripts.boat_edge_v254_third_tail import (
     third_tail_candidate, make_pre, freeze, formal_guard, stamp, valid
 )
@@ -61,6 +63,48 @@ class ProspectiveThirdTail(unittest.TestCase):
         row,reason=make_pre(ROOT,FROZEN,now)
         self.assertIsNone(row)
         self.assertEqual(reason,'NOT_IN_FUTURE_FREEZE_WINDOW')
+
+    def test_formal_first100_missing_nonzero_or_wrong_type_fails_before_site_reads(self):
+        # All fixtures synthetic. No result, payout or scoring files are opened.
+        now=stamp('2026-10-13T02:00:00+00:00')
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);formal=root/'data/formal_status.json'
+            formal.parent.mkdir(parents=True)
+            for label,value in (('missing',None),('nonempty',1),('bool',False),('string','0')):
+                status={'guards':{'results_seen':False,'unlock':False,
+                                  'scoring':False,'RESULT_UNLOCK_TOKEN':None}}
+                if label!='missing':
+                    status['formalFirst100']={'races':value}
+                formal.write_text(json.dumps(status),encoding='utf-8')
+                with self.subTest(label=label), patch.object(v254,'get',wraps=v254.get) as reads:
+                    with self.assertRaisesRegex(RuntimeError,'FORMAL_COHORT'):
+                        v254.formal_guard(root)
+                    with self.assertRaisesRegex(RuntimeError,'FORMAL_COHORT'):
+                        v254.make_pre(root,root/'data/site_autopilot/v232_cohort/20261013-01-01.json',now)
+                    with self.assertRaisesRegex(RuntimeError,'FORMAL_COHORT'):
+                        v254.verified_site(root)
+                    with self.assertRaisesRegex(RuntimeError,'FORMAL_COHORT'):
+                        v254.score_one(root,root/'data/site_autopilot/v254_frozen/20261013-01-01.json',{},now)
+                    with self.assertRaisesRegex(RuntimeError,'FORMAL_COHORT'):
+                        v254.freeze(root,now)
+                    with self.assertRaisesRegex(RuntimeError,'FORMAL_COHORT'):
+                        v254.score(root,now)
+                    self.assertTrue(reads.call_args_list)
+                    self.assertTrue(all(c.args[0]==formal for c in reads.call_args_list),
+                                    'No site result or research source read before formal gate')
+
+    def test_empty_formal_first100_is_accepted_without_unlocking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);formal=root/'data/formal_status.json'
+            formal.parent.mkdir(parents=True)
+            status={'guards':{'results_seen':False,'unlock':False,
+                              'scoring':False,'RESULT_UNLOCK_TOKEN':None},
+                    'formalFirst100':{'races':0}}
+            formal.write_text(json.dumps(status),encoding='utf-8')
+            self.assertIsNone(v254.formal_guard(root))
+            self.assertEqual(v254.verified_site(root),{})
+            self.assertFalse(v254.freeze(root,stamp('2026-10-13T02:00:00+00:00'))['accuracy_improvement_proven'])
+            self.assertEqual(json.loads(formal.read_text(encoding='utf-8')),status)
 
     def test_bad_formal_guard_blocks_even_research(self):
         with tempfile.TemporaryDirectory() as tmp:
