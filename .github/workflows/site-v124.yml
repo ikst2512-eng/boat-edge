@@ -1,12 +1,9 @@
 name: BOAT EDGE V124 FINAL15M Audit
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v124.yml"
+  # V303: superseded scheduled source/UI/audit writer; manual emergency recovery only.
+  # Keep implementation and historical files unchanged; successor workflows remain active.
   workflow_dispatch:
-  schedule:
-    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
 
 permissions:
   contents: write
