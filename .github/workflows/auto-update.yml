@@ -189,15 +189,25 @@ jobs:
                       try: tilt=float(tm.group(1))
                       except: pass
                   racers.append({"lane":lane,"exhibition_time":ex,"tilt":tilt,"raw_text":t})
+              # V288: official START display is the table CONTAINING the
+              # "スタート展示" header (not the next table). Boat number and ST
+              # are separate classed spans inside the same image row.
+              # Never infer ST from a racer/result/adjacent unrelated table.
               starts=[]
-              tag=soup.find(string=re.compile("スタート展示"))
-              if tag and tag.parent:
-                  table=tag.parent.find_next("table")
-                  if table:
-                      for tr in table.find_all("tr"):
-                          t=txt(tr.get_text(" ",strip=True))
-                          mm=re.search(r"\b([1-6])\b.*?(F?\.\d{2})\b",t)
-                          if mm: starts.append({"lane":int(mm.group(1)),"st":mm.group(2)})
+              tag=soup.find("th",string=re.compile(r"^\s*スタート展示\s*$"))
+              table=tag.find_parent("table") if tag else None
+              if table:
+                  for div in table.select("div.table1_boatImage1"):
+                      number=div.select_one(".table1_boatImage1Number")
+                      value=div.select_one(".table1_boatImage1Time")
+                      if not number or not value: continue
+                      lane_text=txt(number.get_text(" ",strip=True))
+                      st_text=txt(value.get_text(" ",strip=True))
+                      if not re.fullmatch(r"[1-6]",lane_text): continue
+                      # Official HTML uses .06 / F.02; allow signed and
+                      # 0-prefixed renderings, preserving the original token.
+                      if not re.fullmatch(r"(?:F|[+-])?0?\.\d{1,2}",st_text):continue
+                      starts.append({"lane":int(lane_text),"st":st_text})
               full=txt(soup.get_text(" ",strip=True))
               weather={}
               for k,p in {
@@ -315,11 +325,13 @@ jobs:
                   if (type(lane) is int and lane in expect and
                           isinstance(st,str) and re.fullmatch(r"F?\.\d{2}",st)):
                       starts.add(lane)
+              full_ex=exhibition==expect and len(parsed.get("racers",[]))==6
+              full_st=starts==expect and len(parsed.get("start_exhibition",[]))==6
               return {"exhibition_lanes":len(exhibition),
                       "start_exhibition_lanes":len(starts),
-                      "exhibition_complete":exhibition==expect,
-                      "start_exhibition_complete":starts==expect,
-                      "six_boat_complete":exhibition==expect and starts==expect}
+                      "exhibition_complete":full_ex,
+                      "start_exhibition_complete":full_st,
+                      "six_boat_complete":full_ex and full_st}
           def before_task(j,rno):
               key=f"{ymd}-{j}-{rno:02d}"
               url=f"{BASE}/owpc/pc/race/beforeinfo?hd={ymd}&jcd={j}&rno={rno}"
