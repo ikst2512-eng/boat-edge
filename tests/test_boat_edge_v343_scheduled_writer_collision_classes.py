@@ -10,7 +10,7 @@ from scripts.boat_edge_v341_scheduled_writer_path_audit import audit as v341_aud
 from scripts.boat_edge_v343_scheduled_writer_collision_classes import audit, classify_pair, path_relation
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "docs/BOAT_EDGE_01_V343_REAL_WORKFLOW_CLASSIFICATION.json"
+MANIFEST = ROOT / "tests/fixtures/BOAT_EDGE_01_V343_REAL_WORKFLOW_CLASSIFICATION.json"
 
 
 class V343StagingClassification(unittest.TestCase):
