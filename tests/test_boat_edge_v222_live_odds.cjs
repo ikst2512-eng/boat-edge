@@ -34,6 +34,7 @@ const api=ctx.window.BoatEdgeV222Odds;
  res=null;await api.poll();assert.strictEqual(shown,5,'missing evidence must invalidate current status');
  await api.poll();assert.strictEqual(shown,5,'no redrawing on repeated absent evidence');
  now=Date.parse('2026-10-11T08:36:00+09:00');
+ assert.strictEqual(api.validate(doc,race,now).quality,'past_deadline','cutoff odds source is expired');
  const fetchedBeforeCutoff=fetches;
  await api.poll();assert.strictEqual(shown,6,'cutoff must clear previously visible purchase odds once');
  assert.strictEqual(fetches,fetchedBeforeCutoff,'postdeadline must not fetch odds');

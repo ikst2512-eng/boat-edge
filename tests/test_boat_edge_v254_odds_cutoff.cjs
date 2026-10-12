@@ -52,6 +52,8 @@ const read=async()=>Object.keys(await ctx.unit.oddsFor(key)).length;
  ctx.packet={...structuredClone(packet),fetched_at:'2026-10-12T11:50:00+09:00'};
  assert.equal(await read(),0,'stale odds must not display');
  assert.equal(ctx.unit.meta.get(key).status,'stale');
+ ctx.packet={...structuredClone(packet),trifecta_odds:Object.fromEntries(Object.entries(odds).slice(0,60)),available_count:60};
+ assert.equal(await read(),0,'60 options must fail closed');
  ctx.packet={...structuredClone(packet),trifecta_odds:{...odds,'1-2-3':0}};
  assert.equal(await read(),0,'invalid combination price must fail closed');
  console.log('V254_ODDS_DISPLAY_PASS: 120, source, race deadline, result flag, cutoff, stale, zero');

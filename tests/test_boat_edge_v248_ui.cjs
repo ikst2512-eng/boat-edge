@@ -58,4 +58,13 @@ assert.match(top([rows[0],rows[0],...rows.slice(2)]).top3,/確認待ち/);
 const ui=fs.readFileSync('assets/boat_edge_v204_prediction.js','utf8');
 assert(ui.includes('be248-tops-grid'));
 assert(!ui.includes('accuracy_improvement_proven=true'));
+const {execFileSync}=require('child_process');
+for(const [file,args,expected] of [
+ ['tests/test_boat_edge_v254_odds_cutoff.cjs',[],'V254_ODDS_DISPLAY_PASS'],
+ ['tests/test_boat_edge_v222_live_odds.cjs',['assets/boat_edge_v222_live_odds.js'],'V222_PASS'],
+ ['tests/test_boat_edge_v256_formal_result_gate.cjs',[],'V256_FORMAL_RESULT_UNSEEN_GUARD_PASS']
+]){
+ const output=execFileSync(process.execPath,[file,...args],{encoding:'utf8',timeout:20000});
+ assert(output.includes(expected),'Missing isolated odds/lock test PASS: '+file);
+}
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
