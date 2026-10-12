@@ -95,6 +95,44 @@ jobs:
           assert.equal(stopped,1,'Prevent legacy hidden-card scroll');
           console.log('V252_COMPACT_RACE_NAVIGATION_16_CONTRACTS_PASS');
           NODE_V252
+          node - <<'NODE_V252_DETAILS'
+          const assert=require('node:assert/strict');
+          const classes=new Set(),listeners=[];
+          const rootNode={classList:{
+            contains:k=>classes.has(k),
+            toggle(k,active){const on=active===undefined?!classes.has(k):Boolean(active);if(on)classes.add(k);else classes.delete(k);return on},
+            remove(...names){names.forEach(n=>classes.delete(n))},
+            add(...names){names.forEach(n=>classes.add(n))}
+          }};
+          const original={textContent:'',attrs:{},setAttribute(k,v){this.attrs[k]=v}};
+          global.document={
+            documentElement:rootNode,readyState:'loading',
+            addEventListener(type,fn,capture){listeners.push({type,fn,capture})},
+            querySelector:s=>s==='#be207Top [data-be207="detail"]'?original:null,
+            querySelectorAll:()=>[]
+          };
+          let changed=0;
+          global.window={BoatEdgeV205:{change(){changed++;rootNode.classList.toggle('be205-expanded')}}};
+          delete require.cache[require.resolve('./assets/boat_edge_v252_compact.js')];
+          require('./assets/boat_edge_v252_compact.js');
+          const listener=listeners.find(q=>q.type==='click'&&q.capture===true&&
+            q.fn.toString().includes("legacy=event.target"));
+          assert(listener,'V252_DETAIL_CAPTURE_MISSING');
+          function click(){let blocked=0;listener.fn({
+            target:{closest:s=>s==='#be207Top [data-be207="detail"]'?original:null},
+            preventDefault(){blocked++},stopPropagation(){blocked++}
+          });assert.equal(blocked,2);}
+          click();
+          for(const name of ['be208-details-on','be205-expanded','be202-expanded'])
+            assert(classes.has(name),name+' must be visible in full mode');
+          assert.equal(original.attrs['aria-expanded'],'true');
+          click();
+          for(const name of ['be208-details-on','be205-expanded','be202-expanded'])
+            assert(!classes.has(name),name+' must close in compact mode');
+          assert.equal(original.attrs['aria-expanded'],'false');
+          assert.equal(changed,2,'V205 legacy detail state should be synchronized');
+          console.log('V252_ORIGINAL_DETAIL_PANEL_AND_COMPACT_RESTORE_PASS');
+          NODE_V252_DETAILS
       - name: Check original official data, visibility and formal lock remain unchanged
         shell: bash
         run: |
