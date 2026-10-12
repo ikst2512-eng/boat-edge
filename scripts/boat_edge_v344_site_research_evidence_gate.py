@@ -71,8 +71,11 @@ def check(bundles):
         status = "REPORTED_CAPTURE_FAILURES_PREVENT_COMPLETE_BATCH_PASS"
     else:
         status = "LOCAL_EVIDENCE_CHECKS_PASSED_NOT_FORMAL"
+    full120 = [row["candidate_replay"].get("all_supplied_full_120_verified", False)
+               for row in audits if "candidate_replay" in row]
     return {
         "model_id": MODEL, "status": status,
+        "all_supplied_full_120_rankings_replayed": bool(audits) and len(full120) == len(audits) and all(full120),
         "all_supplied_local_evidence_checks_passed": passed,
         "supplied_bundle_count": len(bundles),
         "completed_attempts": count, "reported_capture_failures": failures,
