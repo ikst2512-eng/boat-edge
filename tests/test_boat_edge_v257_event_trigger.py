@@ -37,6 +37,32 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_ONLY_PRE_RESULT_RESEARCH_STAGED",workflow)
         self.assertIn("V254_ONLY_SITE_RESEARCH_SCORE_STAGED",workflow)
 
+    def test_v288_safe_collector_completion_triggers_v235_even_if_cron_is_delayed(self):
+        primary=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        self.assertIn("workflow_run:",primary)
+        self.assertIn("'BOAT EDGE 自動更新'",primary)
+        self.assertIn("types: [completed]",primary)
+        job=primary.split("  freeze-then-score-site-only:",1)[1]
+        gate=job.split("    runs-on:",1)[0]
+        self.assertIn("github.ref == 'refs/heads/main'",gate)
+        self.assertIn("github.event_name != 'workflow_run'",gate)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'",gate)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'",gate)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",gate)
+        self.assertIn("cancel-in-progress: false",primary)
+        self.assertIn("  schedule:",primary)
+        self.assertIn("      - name: V274 immediately freeze qualifying V254",primary)
+        # Collectors may read official PRE_RESULT only; the downstream future
+        # research freeze remains strictly source/Git/deadline guarded.
+        self.assertIn("git reset --hard origin/main",primary)
+        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
+        collector=(ROOT/'.github/workflows/auto-update.yml').read_text(encoding='utf-8')
+        self.assertIn("name: BOAT EDGE 自動更新",collector)
+        self.assertIn("  schedule:",collector)
+        self.assertIn("V270_PRE_RESULT_SAFE_PUSH_PASS",collector)
+        self.assertNotIn("git push --force",primary)
+        self.assertNotIn("git push --force",collector)
+
     def test_v274_same_runner_future_freeze_before_any_result_scoring(self):
         v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
         source=v235.index('      - name: Immutable pre-result source prediction cohort')
