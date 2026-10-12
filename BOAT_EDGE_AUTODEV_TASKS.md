@@ -24,9 +24,9 @@ The agent must change only one checkbox after implementing and checking that tas
 - [x] A15 | On the saved paper-only simulation page, distinguish pending, settled and no-bet states with provenance-backed labels; do not backfill historical wagers, profits, winning tickets, or actual spending.
 - [x] A16 | Explain existing Top3/Top5/Top10 forecasts and head-versus-trifecta confidence separately using only measured values already shown in existing prediction UI. Never claim accuracy improvement without verified prospective comparison.
 
-- [ ] A17 | Make the user-selected race's last saved odds source timestamp and validation state persistent beside prediction tickets, not only in a temporary refresh toast; distinguish verified, stale, and missing from the pre-deadline source record.
-- [ ] A18 | On the existing verified site-results page, clearly label the sample size and settled-day cutoff for Top10/head hit rates; do not imply this proves a better production model or use formal Fresh result data.
-- [ ] A19 | In the existing six-racer comparison view, make available original-exhibition lap/turn/straight measurement differences easier to compare, without using race results, imputing missing exhibition times, or changing predictions.
-- [ ] A20 | On the AI paper-simulation page, show only evidence-backed reason counts for skipped bets and a clearly separated status for pending/settled saved simulated bets. Keep daily 50,000-yen cap and no-real-money behavior unchanged.
+- [x] A17 | Make the user-selected race's last saved odds source timestamp and validation state persistent beside prediction tickets, not only in a temporary refresh toast; distinguish verified, stale, and missing from the pre-deadline source record.
+- [x] A18 | On the existing verified site-results page, clearly label the sample size and settled-day cutoff for Top10/head hit rates; do not imply this proves a better production model or use formal Fresh result data.
+- [x] A19 | In the existing six-racer comparison view, make available original-exhibition lap/turn/straight measurement differences easier to compare, without using race results, imputing missing exhibition times, or changing predictions.
+- [x] A20 | On the AI paper-simulation page, show only evidence-backed reason counts for skipped bets and a clearly separated status for pending/settled saved simulated bets. Keep daily 50,000-yen cap and no-real-money behavior unchanged.
 
 Do not append new tasks automatically. Stop once the queue is complete.
