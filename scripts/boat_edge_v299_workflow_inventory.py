@@ -30,6 +30,13 @@ RETIRED = (
     "site-v130.yml",
     "site-v131.yml",
     "site-v132.yml",
+    # V338: retired legacy collectors, dormant V185 relay and its cleanup owner.
+    "auto-update-5min.yml",
+    "auto-update-5min 2.yml",
+    "auto-update-v10.yml",
+    "auto-update-v10 2.yml",
+    "site-v185-trigger.yml",
+    "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
 )
 LIVE = "V235.yml"
 
