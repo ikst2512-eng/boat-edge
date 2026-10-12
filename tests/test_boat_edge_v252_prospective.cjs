@@ -15,18 +15,17 @@ assert.equal(b.n,v240.scored_total);
 assert.equal(a.rows.find(x=>x.key==='coverage15').points,15);
 assert.equal(b.rows.find(x=>x.key==='hit10').points,10);
 assert.equal(b.rows.find(x=>x.key==='pair_coverage10').points,10);
-// Do not assume a frozen number of newly scored races: verify each paired
-// gain/loss from currently stored independent per-race evidence.
-const paired=(name)=>({
- gain:v240.examples.filter(x=>x.outcomes[name]&&!x.outcomes.hit10).length,
- loss:v240.examples.filter(x=>!x.outcomes[name]&&x.outcomes.hit10).length,
- hits:v240.examples.filter(x=>x.outcomes[name]).length
-});
-for(const mode of ['hit10','pair_coverage10','second_coverage10']){
- const row=b.rows.find(x=>x.key===mode);
- assert.equal(row.gain,paired(mode).gain);
- assert.equal(row.loss,paired(mode).loss);
- assert.equal(row.hits,paired(mode).hits);
+// The cohort grows automatically: only compare against frozen per-race outcomes,
+// not a prior run's hardcoded win/loss counts.
+for(const key of ['hit10','pair_coverage10','second_coverage10']){
+ const row=b.rows.find(x=>x.key===key);
+ assert(row,'Missing frozen comparator '+key);
+ const expectedHits=v240.examples.filter(r=>r.outcomes[key]===true).length;
+ const expectedGain=v240.examples.filter(r=>r.outcomes[key]===true&&r.outcomes.hit10===false).length;
+ const expectedLoss=v240.examples.filter(r=>r.outcomes[key]===false&&r.outcomes.hit10===true).length;
+ assert.equal(row.hits,expectedHits,key+' frozen hits');
+ assert.equal(row.gain,expectedGain,key+' prospective paired gain');
+ assert.equal(row.loss,expectedLoss,key+' prospective paired loss');
 }
 assert.equal(b.paired,true);
 assert.equal(a.paired,false);
@@ -46,9 +45,13 @@ assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.hit++)),null);
 assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.avg_points=10)),null);
 assert.equal(api.check236(mutate(v236,d=>d.scope='FORMAL_FRESH')),null);
 // Additional chronologically independent date must remain explicitly represented.
+const allDays=[...new Set(v240.examples.map(x=>x.race_key.slice(0,8)))].sort();
+const newest=allDays[allDays.length-1];
+const nextDay=new Date(Date.UTC(Number(newest.slice(0,4)),Number(newest.slice(4,6))-1,Number(newest.slice(6,8))+1))
+ .toISOString().slice(0,10).replace(/-/g,'');
 const day2=mutate(v240,d=>{
  const newRace=JSON.parse(JSON.stringify(d.examples[0]));
- newRace.race_key='20261013-14-01';d.examples.push(newRace);
+ newRace.race_key=nextDay+'-14-01';d.examples.push(newRace);
  d.scored_total++;for(const [k,x] of Object.entries(d.comparisons)){
   x.races++;if(newRace.outcomes[k])x.hits++;
   x.hit_rate_percent=+(100*x.hits/x.races).toFixed(2);
@@ -61,7 +64,7 @@ const day2=mutate(v240,d=>{
  }
 });
 const crossDay=api.check240(day2);
-assert(crossDay&&crossDay.day==='20261012〜20261013');
+assert(crossDay&&crossDay.day===allDays[0]+'〜'+nextDay);
 // Full SHA-attested source V253 stays verifiable when V236/V240 aggregate
 // summaries clip examples to their latest 25/20 rows.
 const fullSource=JSON.parse(fs.readFileSync('data/site_autopilot/v253_miss_diagnostics_current.json','utf8'));
