@@ -1,0 +1,48 @@
+name: BOAT EDGE V258 - Six Racer Mobile Source Comparison
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/boat_edge_v203_readable.js'
+      - 'assets/boat_edge_v203_readable.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v258_quicksix.cjs'
+      - '.github/workflows/v258-six-racer-compare.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v258-mobile-six-racer-source-only
+  cancel-in-progress: true
+
+jobs:
+  verify-mobile-six-racer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify safe per-race six-boat values and static site syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v203_readable.js
+          node tests/test_boat_edge_v258_quicksix.cjs
+          node tests/test_boat_edge_v250_ui.cjs
+      - name: Validate formal pre-result lock is untouched
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_LOCK'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=d.get('guards') or {}
+          assert all(guards.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert guards.get('RESULT_UNLOCK_TOKEN') is None
+          print('V258_FORMAL_PRE_RESULT_LOCK_PASS')
+          PY_LOCK
