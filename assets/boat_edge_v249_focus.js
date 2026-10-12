@@ -1,23 +1,36 @@
-/* BOAT EDGE V249: navigational enhancement ONLY. No fetch, odds, score,
+/* BOAT EDGE V297: race quick-navigation reliability ONLY. No fetch, odds, score,
    scratch, stake, freeze, prediction or result mutation. */
 (function(){'use strict';
 if(window.BoatEdgeV249)return;
 var NAV=[['tickets','買い目'],['racers','6艇比較'],['scenario','展開'],['before','直前']];
 function el(s,root){return (root||document).querySelector(s)}
-function text(s,root){var n=el(s,root);return n?(n.textContent||'').trim():''}
 function onceButton(button,fn){button.type='button';button.addEventListener('click',fn)}
-function tab(name,focus){
- var button=el('#raceTabs [data-tab="'+name+'"]');if(!button)return false;
- button.click();
- /* The legacy tab handler scrolls the view to the top; our scroll runs afterward. */
- window.setTimeout(function(){var target=el(focus);if(target&&target.getClientRects().length)target.scrollIntoView({behavior:'smooth',block:'start'});},160);
- return true;
+var DEST={
+ tickets:{tab:'pred',targets:['#be207Top','#be204Overview','#buyBoard','#tab-pred']},
+ racers:{tab:'pred',targets:['#tab-pred .be203-cards','#be206Quick','#boats','#tab-pred']},
+ scenario:{tab:'scenario',targets:['#scenarioFlow','#scenarioHero','#tab-scenario']},
+ before:{tab:'before',targets:['#tab-before .section','#tab-before']}
+};
+function isVisible(node){return !!(node&&node.getClientRects&&node.getClientRects().length)}
+function motion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}
+function scrollFirst(targets){
+ for(var i=0;i<targets.length;i++){
+  var target=el(targets[i]);
+  if(isVisible(target)){
+   target.scrollIntoView({behavior:motion(),block:'start'});
+   return true;
+  }
+ }
+ return false;
 }
 function navigate(to){
- if(to==='tickets'){if(!tab('pred','#be207Top'))tab('pred','#tab-pred');return}
- if(to==='racers'){if(!tab('pred','#tab-pred .be203-cards'))tab('pred','#boats');return}
- if(to==='scenario'){tab('scenario','#scenarioFlow');return}
- if(to==='before'){tab('before','#tab-before .section');return}
+ var dest=DEST[to];if(!dest)return false;
+ var button=el('#raceTabs [data-tab="'+dest.tab+'"]');if(!button)return false;
+ button.click(); // Reuse the existing tab state; never select a different race.
+ /* Rendered comparison panels can be absent while source data is loading.
+    Look for the first *visible* destination only after the tab activates. */
+ window.setTimeout(function(){scrollFirst(dest.targets)},180);
+ return true;
 }
 function build(){
  var host=el('#raceView .race-summary'),title=el('#raceTitle');if(!host||!title)return;
@@ -62,6 +75,6 @@ function refresh(){
  labels.forEach(function(pair){var span=document.createElement('span');span.textContent=pair[0];span.dataset.kind=pair[1];evidence.appendChild(span)});
 }
 function start(){refresh();window.setInterval(function(){if(!document.hidden)refresh()},3500);document.addEventListener('visibilitychange',function(){if(!document.hidden)refresh()})}
-window.BoatEdgeV249={refresh:refresh,version:'V249-DISPLAY-ONLY'};
+window.BoatEdgeV249={refresh:refresh,navigate:navigate,version:'V297-DISPLAY-NAV-ONLY'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

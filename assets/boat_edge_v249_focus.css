@@ -52,3 +52,19 @@
  #tab-card .tablewrap th,#tab-card .tablewrap td,#tab-before .tablewrap th,#tab-before .tablewrap td{padding:10px 8px}
 }
 @media(max-width:365px){#be249Focus .be249-anchors button{font-size:10px}#be249Focus .be249-heading strong{font-size:14px}}
+
+/* V297 Safari: avoid placing quick-navigation targets under the sticky race header.
+   Presentation-only: no data panels hidden or rewritten. */
+@media(max-width:650px){
+ #raceView #be207Top,
+ #raceView #be204Overview,
+ #raceView #buyBoard,
+ #raceView #tab-pred .be203-cards,
+ #raceView #be206Quick,
+ #raceView #boats,
+ #raceView #scenarioFlow,
+ #raceView #scenarioHero,
+ #raceView #tab-before .section{
+  scroll-margin-top:210px;
+ }
+}
