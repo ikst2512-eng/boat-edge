@@ -65,3 +65,9 @@ Read-only history, not additional current-model certification.
 - V126 automatically reruns when V122 runtime, V123 workflow or venue course stats change.
 
 - V126 does not modify V122 UI or V123/V125 production pipelines.
+
+- V126 compares current V122/V131/V132 browser functions with CURRENT V133 server functions against stored races.
+
+- V126 automatically reruns when runtime JS, CURRENT V133 server, or venue course stats change.
+
+- V126 is a read-only comparison that does not modify the production prediction engine.
