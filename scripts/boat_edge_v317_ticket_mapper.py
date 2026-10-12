@@ -15,7 +15,7 @@ COMBO = re.compile(r"^[1-6]-[1-6]-[1-6]$")
 
 
 def map_course_mass_to_boat_tickets(ranked, course_by_boat, entry_basis):
-    if entry_basis not in ("START_EXHIBITION_PROVISIONAL", "INDEPENDENTLY_VERIFIED_ACTUAL_ENTRY"):
+    if entry_basis not in ("START_EXHIBITION_PROVISIONAL", "ACTUAL_ENTRY_ASSERTED_NOT_AUTHENTICATED"):
         raise ValueError("ENTRY_BASIS_MUST_BE_EXPLICIT")
     if not isinstance(course_by_boat, dict) or set(course_by_boat) != COURSES:
         raise ValueError("SIX_BOATS_REQUIRED")
