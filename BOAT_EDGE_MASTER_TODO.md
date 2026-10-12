@@ -63,3 +63,10 @@
 - **正式Freshの現況（2026-10-13 01:16 JST確認）**：formalFirst100=0/100、results_seen/unlock/scoring=false、TOKEN=null。10/13はPRE_RESULTで5ソース未揃い。サイト研究と正式Freshを混ぜず継続。
 - **Pages現況**：成功デプロイは観測されているが、新たなmainへの細かい更新でキャンセルが継続。PR/Actions SUCCESSと実機Safari公開は別ゲート。
 - **次のP0**：T01キャンセル抑制の実装、T03直前0–15分の実測確認、T05自動コード編集の権限/認証条件、T06親/候補の正式 provenance 復旧。いずれも根拠が揃うまで未完了のまま。
+
+## V285–V286 publication and source integrity (2026-10-13 JST)
+
+- **V285 / PR #67 — merged**: main と Pages 最終成功 head の主要UI 6パスの最終更新コミットSHAを直接照合。時刻だけで公開済みとは判定しない。新規6件と既存8件のテストPASS。read-only。Safari実機確認とPagesキャンセル根本解消は**未完**（T01）。
+- **V286 / PR #69 — merged**: V216の5分間隔ワークフローの旧V215 gzip/base64埋め込み再インストール工程を削除。既存V265ソースを固定ハッシュで検証する読取専用工程に置換。V214締切前freeze・V211仮想select・後続settleの順序維持。新規3件とV265既存10件のテストPASS。旧経路の削減は確認済みだが、**リポジトリ全体の旧インストーラ廃止は未証明**（T02）。
+- 正式Fresh：`formalFirst100.races=0`、`results_seen=false`、`unlock=false`、`scoring=false`、`RESULT_UNLOCK_TOKEN=null`（確認時刻 `2026-10-13 01:39 JST`）。2026-10-13の出走表132R/792艇は取得済み。5ソース未取得はこの時間帯では未確定; 締切15分前の実測が必要（T03）。
+- V286 main CI `38280681075`: PASS。Pages `62a04ffb2fe6` の実行 `38280680138` は確認時点でpending。公開完了やSafari表示は未確認と区別する。
