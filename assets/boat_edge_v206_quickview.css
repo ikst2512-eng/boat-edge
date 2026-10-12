@@ -82,3 +82,14 @@ html.be206-active #be108PredictionModes .be108-ticket.be206-hide-ticket{display:
 /* V328: suppress stale ranked tickets until the selected race list is replaced. */
 html.be328-await-ticket-list #be108PredictionModes .be108-ticket-list,
 html.be328-await-ticket-list #be206MoreTickets{display:none!important}
+
+/* V338: explicit first-place selection affordance and reachable close control. */
+#be206Quick .be206-headpick-trigger{touch-action:manipulation}
+#be206Quick .be206-headpick-trigger:focus-visible{outline:3px solid #286ec2;outline-offset:2px}
+#be206Quick .be206-head-top button{min-height:44px;min-width:44px;touch-action:manipulation}
+@media(max-width:650px){
+ #be206Quick .be206-headpanel{scroll-margin-top:120px}
+ #be206Quick .be206-headpanel ol{grid-template-columns:minmax(0,1fr)}
+ #be206Quick .be206-headpanel li{min-width:0;overflow-wrap:anywhere}
+ #be206Quick .be206-layout-switch button{min-height:44px}
+}
