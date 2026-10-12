@@ -22,6 +22,14 @@ UI_PATHS = (
     "assets/boat_edge_v177_latest_bridge.js",
     "assets/boat_edge_v204_prediction.js",
     "assets/boat_edge_v241_results.js",
+    # V287: Pages must publish the actual scripts used by the mobile
+    # Autopilot view, not only the parent HTML. Missing/stale JS fails closed.
+    "assets/boat_edge_v278_next_watch.js",
+    "assets/boat_edge_v286_freeze_evidence.js",
+    "assets/boat_edge_v252_prospective.js",
+    "assets/boat_edge_v253_misses.js",
+    "assets/boat_edge_v254_tail_status.js",
+    "assets/boat_edge_v255_confidence.js",
 )
 MAX_LAG_SECONDS = 900
 
