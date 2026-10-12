@@ -71,7 +71,7 @@ jobs:
           assert(page.includes('(!focusRace||r.race_key===focusRace)'));
           assert(page.includes('id="clearFocus"')&&page.includes("showTickets(focusRace,selected)"));
           assert(page.includes("crypto.subtle.digest('SHA-256',bytes)"));
-          assert(js.includes("report.rows.every(verifiedRow)")&&!js.includes("official_payout?"));
+          assert(js.includes("data.rows.every(verifiedRow)")&&!js.includes("official_payout?"));
           assert(css.includes('data-n="1"')&&css.includes('data-n="6"'));
           const inline=[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)];
           assert.equal(inline.length,1);
