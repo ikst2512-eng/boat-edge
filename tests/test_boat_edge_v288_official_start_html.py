@@ -51,6 +51,20 @@ ambiguous=BeautifulSoup('''<table><thead><tr><th>展示<br>タイム</th></tr></
 <tbody><tr><td>1</td><td>6.79</td></tr></tbody></table>'''+official_html,'lxml')
 assert parse(ambiguous)['racers']==[], 'Duplicate exhibition table must fail closed'
 
+# V292: missing exhibition/tilt cells must NOT be filled from a later
+# unrelated column, even when a plausible 6.79 and 0.5 exist in the row.
+blank_ex=BeautifulSoup('''<table><thead><tr>
+<th>枠</th><th>写真</th><th>ボートレーサー</th><th>体重</th>
+<th>展示<br>タイム</th><th>チルト</th><th>前走成績</th>
+</tr></thead><tbody><tr><td>1</td><td>photo</td><td>選手名</td>
+<td>52.0kg</td><td></td><td></td><td>6.79 0.5</td>
+</tr></tbody></table>''','lxml')
+blank_row=parse(blank_ex)['racers']
+assert len(blank_row)==1 and blank_row[0]['lane']==1
+assert blank_row[0]['exhibition_time'] is None,blank_row
+assert blank_row[0]['tilt'] is None,blank_row
+assert gate({'racers':blank_row,'start_exhibition':[]})['six_boat_complete'] is False
+
 # The actual archived official 14-01 page encodes ST as classed spans.
 p=parse(BeautifulSoup(Path('data/raw/20261012/14_01_beforeinfo.html').read_text(),'lxml'))
 assert [x['st'] for x in p['start_exhibition']]==['.06','.09','.02','F.02','F.09','.01']
