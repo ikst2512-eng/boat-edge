@@ -155,6 +155,10 @@ def test_v284_freeze_coverage_not_early_false_miss():
         missed=mod.freeze_coverage(root,DAY,after)
         assert missed['not_found_after_deadline']==1
         assert missed['observed_gaps_for_currently_missing']=={'beforeinfo_not_ok':1}
+        assert missed['not_found_with_observed_gaps']==1
+        assert missed['not_found_without_observed_gaps']==0
+        assert missed['not_found_last_seen_outside_2_to_10m_window']==1
+        assert missed['not_found_last_seen_inside_2_to_10m_window']==0
         # A subsequent valid freeze must correct the initial 'snapshot_missing' state.
         race_file=root/f'data/races/{KEY}.json'
         race_file.parent.mkdir(parents=True,exist_ok=True)
@@ -217,8 +221,39 @@ def test_v284_freeze_coverage_not_early_false_miss():
     print('V284_NO_EARLY_MISSING_AS_FINAL_FROZEN_SHA_AUDIT_PASS')
     print('V285_SNAPSHOT_METADATA_SOURCE_DRIFT_AND_V229_RECORD_SEPARATED_PASS')
 
+def test_v290_missing_source_vs_freeze_window():
+    # No results/payouts; this only inspects already-saved V215 observations.
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp);sample(root)
+        record=lambda key,last,source_gaps:{
+            'race_key':key,'deadline':'08:35','last_seen_at':last,
+            'source_gaps_seen':source_gaps}
+        rows={
+            '20261011-23-02':record('20261011-23-02','2026-10-10T23:29:00+00:00',[]),
+            '20261011-23-03':record('20261011-23-03','2026-10-10T23:24:00+00:00',[]),
+            '20261011-23-04':record('20261011-23-04','2026-10-10T23:30:00+00:00',['beforeinfo_not_ok']),
+            '20261011-23-05':record('20261011-23-05','BAD_TIMESTAMP',None)}
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+            'day_jst':DAY,'observations':rows})
+        out=mod.freeze_coverage(root,DAY,NOW+timedelta(minutes=40))
+        assert out['not_found_after_deadline']==4
+        assert out['not_found_without_observed_gaps']==2
+        assert out['not_found_with_observed_gaps']==2
+        assert out['not_found_last_seen_inside_2_to_10m_window']==2
+        assert out['not_found_last_seen_outside_2_to_10m_window']==1
+        assert out['not_found_last_seen_unverified']==1
+        assert out['not_found_without_gaps_inside_2_to_10m_window']==1
+        assert out['observed_gaps_for_currently_missing']=={'beforeinfo_not_ok':1}
+        assert 'not proof of eligibility' in out['integrity_note']
+        # Today's metrics must not pretend the missing source was verified.
+        summary=mod.compute(root,NOW+timedelta(minutes=40))
+        assert summary['site_prediction_freeze_observation']['today']==out
+    print('V290_MISSING_FREEZE_CAUSE_AND_LAST_OBSERVATION_WINDOW_PASS')
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
     test_v272_source_change_trigger()
     test_v284_freeze_coverage_not_early_false_miss()
+    test_v290_missing_source_vs_freeze_window()
