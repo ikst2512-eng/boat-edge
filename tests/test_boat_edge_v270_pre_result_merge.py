@@ -90,6 +90,30 @@ class SourceMerge(unittest.TestCase):
         self.assertEqual(source('data/raw/20261012/19_09_beforeinfo.html'),'REMOTE_NEW_BEFORE')
         self.assertEqual(source('data/races/20261012-03-01.json'),'NEW_DISJOINT_PRE_RESULT')
         self.assertEqual(json.loads(source('data/formal_status.json'))['guards']['results_seen'],False)
+    def test_blocks_source_update_if_remote_race_was_frozen_during_collection(self):
+        # Another workflow may freeze an original race AFTER the collector
+        # started. Even a disjoint data file must not justify overwriting
+        # evidence for that now-immutable race.
+        put(self.writer,'data/site_prediction_snapshots/20261012-19-09.json',
+            '{"schema":"OFFLINE_FROZEN_PRE_RESULT_FIXTURE"}\\n')
+        self.publish_remote()
+        put(self.collector,'data/races/20261012-19-09.json',
+            'COLLECTOR_STALE_SOURCE_AFTER_FROZEN\\n')
+        put(self.collector,'data/races/20261012-03-01.json',
+            'NEW_DISJOINT_PRE_RESULT\\n')
+        process=self.execute()
+        self.assertNotEqual(process.returncode,0,
+            'V277 must reject overwrite of newly frozen remote race source')
+        self.assertIn('V277_FROZEN_RACE_SOURCE_MUTATION_BLOCKED_20261012-19-09',
+            process.stderr)
+        self.assertNotIn('V270_PRE_RESULT_SAFE_PUSH_PASS',process.stdout)
+        git(self.collector,'fetch','origin','main')
+        remote=git(self.collector,'show',
+            'origin/main:data/races/20261012-19-09.json').stdout.strip()
+        self.assertEqual(remote,'BASE_RACE')
+        self.assertNotIn('20261012-03-01',
+            git(self.collector,'ls-tree','-r','origin/main').stdout)
+
     def test_blocks_conflict_in_formal_guard(self):
         put(self.writer,'data/formal_status.json',self.lock[:-1]+', "remote_change":1}')
         self.publish_remote()
