@@ -36,6 +36,7 @@ header{position:sticky;top:0;z-index:20;background:#ffffffed;backdrop-filter:blu
 .bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;padding:9px 12px env(safe-area-inset-bottom)}.bottom nav{display:flex;max-width:800px;width:100%;justify-content:space-around;gap:7px}.bottom a{flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:850;color:#2e6497;padding:8px;border-radius:8px}.bottom a.on{background:#e7f3ff;color:#124f94}
 @media(max-width:520px){.wrap{padding:0 10px}.intro h1{font-size:22px}.brand{font-size:17px}.head-actions{gap:6px}.head-actions a{font-size:11px}.head-actions button{padding:8px;font-size:11px}.stat{padding:10px 8px}.stat strong{font-size:19px}.stat small{font-size:10px}.panel{padding:9px}.filtergrid{gap:5px}.field select{padding:8px 3px;font-size:11px}.race{padding:12px}.boat{width:30px;height:36px;font-size:19px}.payout strong{font-size:15px}.meta strong{font-size:12px}.ticket{grid-template-columns:18px minmax(90px,1fr) 1fr 1fr;gap:5px;font-size:11px}}
 @media(max-width:370px){.boat{width:27px;height:34px}.meta{gap:4px}.meta strong{font-size:11px}.ticket{grid-template-columns:15px minmax(80px,1fr) 1fr 1fr}}
+.focuswrap{display:flex;margin:0 0 12px}.focusclear{background:#e8f3ff;border:1px solid #bbd0eb;border-radius:9px;padding:10px 13px;min-height:42px;font-size:12px;color:#174b88;font-weight:900}.focusclear[hidden]{display:none!important}
 </style></head><body>
 <header><div class="wrap head"><a class="brand" href="./index.html">≋ BOAT EDGE</a><div class="head-actions"><a href="./results.html">結果一覧</a><button id="refresh" type="button">↻ 更新</button></div></div></header>
 <main class="wrap">
@@ -43,6 +44,7 @@ header{position:sticky;top:0;z-index:20;background:#ffffffed;backdrop-filter:blu
 <section class="stats" aria-label="検証済み集計"><div class="stat"><small>検証済み</small><strong id="count">—</strong><span>サイト参考予想</span></div><div class="stat"><small id="hitLabel">的中重視の的中</small><strong id="wins">—</strong><span id="rate">集計中</span></div><div class="stat"><small>1着予想的中</small><strong id="heads">—</strong><span>3連単とは別判定</span></div></section>
 <section class="panel"><div class="filtergrid"><div class="field"><label for="mode">買い目モード</label><select id="mode"><option value="hit">的中重視</option><option value="balance">バランス</option><option value="hole">波乱展開</option><option value="narrow">激絞り</option></select></div><div class="field"><label for="day">日付</label><select id="day"><option value="all">全日付</option></select></div><div class="field"><label for="kind">表示</label><select id="kind"><option value="all">全結果</option><option value="hit">🎯的中のみ</option><option value="miss">不的中のみ</option><option value="head">頭的中のみ</option></select></div></div></section>
 <div class="scope"><span id="scope">保存済み証拠を読み込み中</span><span id="source">サイト参考予想専用</span></div>
+<div class="focuswrap"><button id="clearFocus" class="focusclear" hidden type="button">← 全レースの的中履歴を見る</button></div>
 <div id="races" aria-live="polite"><div class="empty">検証済み結果を照合中…</div></div>
 <p class="footer-note">🎯は締切前に固定され、結果照合済みの当該モードの買い目のみ。買い目の詳細はGitHub保存済みの元ファイルをSHA-256で再照合できた場合にだけ表示します。オッズは予想時、公式払戻は確定後で別の数字。1万円配分・損益は仮想計算で実購入ではありません。正式Freshは結果未見ロック維持。</p>
 </main>
@@ -56,6 +58,7 @@ var SCOPE='VERIFIED_POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH';
 var FROZEN_SCOPE='SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH';
 var modes={hit:'的中重視',balance:'バランス',hole:'波乱展開',narrow:'激絞り'};
 var report=null;
+var focusRace=null;
 var $=function(id){return document.getElementById(id);};
 var fmt=function(n){return Number(n).toLocaleString('ja-JP');};
 var yen=function(n){return Number.isFinite(Number(n))?'¥'+fmt(n):'未取得';};
@@ -77,7 +80,7 @@ function render(){
  $('count').textContent=fmt(total)+'R';$('wins').textContent=fmt(hitCount)+'R';
  $('rate').textContent=total? (100*hitCount/total).toFixed(1)+'% / '+fmt(total)+'R':'まだ未算定';
  $('hitLabel').textContent=modes[mode]+'の的中';$('heads').textContent=fmt(report.rows.filter(function(r){return r.head_hit;}).length)+'R';
- var rows=report.rows.filter(function(r){var x=r.mode_outcomes[mode];return (day==='all'||day===r.date_jst)&&(kind==='all'||kind==='hit'&&x.hit||kind==='miss'&&!x.hit||kind==='head'&&r.head_hit);});
+ var rows=report.rows.filter(function(r){var x=r.mode_outcomes[mode];return (!focusRace||r.race_key===focusRace)&&(day==='all'||day===r.date_jst)&&(kind==='all'||kind==='hit'&&x.hit||kind==='miss'&&!x.hit||kind==='head'&&r.head_hit);});
  $('scope').textContent=rows.length+'R表示 / '+total+'R照合済み';
  if(!rows.length){$('races').innerHTML='<div class="empty">この条件の確定結果はありません。未確定は不的中扱いしません。</div>';return;}
  var markup=rows.map(function(r){
@@ -138,13 +141,18 @@ async function load(){
   var d=await response.json();
   if(d.schema!==SCHEMA||d.scope!==SCOPE||d.formal_result_access!==false||d.production_model_changed!==false||d.real_or_paper_wagers_placed!==0||!Array.isArray(d.rows)||d.rows.length!==d.settled_verified_races||!d.rows.every(verified))throw new Error('検証対象外データ');
   report=d;
+  var requested=new URLSearchParams(window.location.search).get('race');
+  focusRace=validKey(requested)&&d.rows.some(function(r){return r.race_key===requested;})?requested:null;
+  $('clearFocus').hidden=!focusRace;
   var select=$('day');select.innerHTML='<option value="all">全日付</option>';
   Array.from(new Set(d.rows.map(function(r){return r.date_jst;}))).sort().reverse().forEach(function(day){if(/^20\d{6}$/.test(day)){var item=document.createElement('option');item.value=day;item.textContent=day.slice(0,4)+'/'+day.slice(4,6)+'/'+day.slice(6,8);select.appendChild(item);}});
   render();
+  if(focusRace){var selected=document.querySelector('.race[data-key="'+focusRace+'"] .detailtoggle');if(selected)showTickets(focusRace,selected);}
   $('source').textContent='正式Freshとは別管理';
  }catch(e){report=null;$('races').innerHTML='<div class="empty">検証済みデータを読み込めません。未確認の的中や払戻は表示せず、更新で再試行できます。</div>';$('scope').textContent='検証待ち';$('source').textContent='未取得';}
 }
 $('refresh').addEventListener('click',load);
+$('clearFocus').addEventListener('click',function(){focusRace=null;this.hidden=true;const next=new URL(window.location.href);next.searchParams.delete('race');window.history.replaceState(null,'',next);render();});
 ['mode','day','kind'].forEach(function(x){$(x).addEventListener('change',render);});
 $('races').addEventListener('click',function(event){var b=event.target.closest('[data-open]');if(b)showTickets(b.dataset.open,b);});
 load();
