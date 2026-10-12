@@ -1,0 +1,42 @@
+name: BOAT EDGE V272 - Official Urgent Beforeinfo Bounded Retry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
+      - '.github/workflows/v272-urgent-beforeinfo-retry.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v272-offline-urgent-beforeinfo-test
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test urgent official exhibition retry without remote data
+        run: |
+          set -euo pipefail
+          python3 tests/test_boat_edge_v268_beforeinfo_priority.py
+          python3 tests/test_boat_edge_v269_urgent_telemetry.py
+          python3 tests/test_boat_edge_v272_urgent_beforeinfo_retry.py
+      - name: Formal Fresh untouched
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text(encoding='utf8'))['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V272_FORMAL_LOCK_PASS')
+          PY
