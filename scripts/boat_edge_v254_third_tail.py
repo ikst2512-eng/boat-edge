@@ -198,7 +198,9 @@ def score_one(root,path,results,now):
         result.get('first_frozen_commit')!=parent['commit'] or
         result.get('precommitted_sha256')!=parent['sha256']):
         return None,'PARENT_PREDEADLINE_GIT_PROOF_FAILED'
-    if (row.get('schema')!=FROZEN_SCHEMA or
+    if (not stamp(row.get('frozen_at')) or stamp(row['frozen_at'])>=deadline or
+        row.get('parent_snapshot_saved_at')!=(get(original) or {}).get('snapshot_saved_at') or
+        row.get('schema')!=FROZEN_SCHEMA or
         row.get('scope')!='FUTURE_PRE_RESULT_SITE_ONLY_NOT_FORMAL_FRESH' or
         row.get('results_seen_at_freeze') is not False or
         row.get('formal_result_access') is not False or
@@ -213,7 +215,7 @@ def score_one(root,path,results,now):
     if (lists['hit10']!=(get(original) or {}).get('top10') or
         lists['third_tail10']!=third_tail_candidate(lists['hit10'],
             [t.get('combo') for t in (get(original) or {}).get('frozen_mode_tickets',{}).get('hole',[])]) or
-        winning in lists['hit10'] != result['top10_hit']):
+        (winning in lists['hit10']) != result['top10_hit']):
         return None,'FROZEN_TICKETS_VS_SCORED_RESULT_MISMATCH'
     return {'schema':SCORED_SCHEMA,'scope':'POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH',
       'race_key':key,'winning_combo':winning,
