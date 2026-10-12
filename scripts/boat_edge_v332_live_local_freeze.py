@@ -89,11 +89,22 @@ def _local_capture(root, key, provider, deadline, now, expected_url=None):
     return receipt
 
 
-def _eligible_race(root, key, now):
-    path = root / "data/races" / (key + ".json")
-    if path.is_symlink():
-        raise ValueError("RACE_SYMLINK_FORBIDDEN")
-    raw = path.read_bytes()
+def candidate_from_raw(raw, key, now):
+    """Pure replay of the exact input bytes at an explicitly supplied freeze time.
+
+    This validates local metadata only; it never attests upstream authenticity.
+    """
+    if not isinstance(key, str) or KEY.fullmatch(key) is None:
+        raise ValueError("INVALID_RACE_KEY")
+    if key.startswith("20261001-"):
+        raise ValueError("FORMAL_FRESH_TARGET_EXCLUDED")
+    if not isinstance(now, datetime) or now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("AWARE_CAPTURE_CLOCK_REQUIRED")
+    now = now.astimezone(JST)
+    if now.strftime("%Y%m%d") != key[:8]:
+        raise ValueError("LIVE_INPUT_DATE_MISMATCH")
+    if type(raw) is not bytes:
+        raise ValueError("RACE_INPUT_BYTES_REQUIRED")
     race = json.loads(raw)
     if not isinstance(race, dict) or race.get("race_key") != key:
         raise ValueError("RACE_KEY_MISMATCH")
@@ -142,6 +153,36 @@ def _eligible_race(root, key, now):
     return candidate, deadline, race
 
 
+def _eligible_race(root, key, now):
+    path = root / "data/races" / (key + ".json")
+    if path.is_symlink():
+        raise ValueError("RACE_SYMLINK_FORBIDDEN")
+    raw = path.read_bytes()
+    candidate, deadline, race = candidate_from_raw(raw, key, now)
+    return candidate, deadline, race, raw
+
+
+def _save_race_input(root, key, raw):
+    """Keep the original bytes, never a reread of a changing data/races file."""
+    relative = Path("data/source_captures") / key[:8] / key / "race_input.json"
+    path = root / relative
+    for part in (path, *path.parents):
+        if part == root:
+            break
+        if part.is_symlink():
+            raise ValueError("RACE_INPUT_SNAPSHOT_SYMLINK_FORBIDDEN")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.resolve().is_relative_to(root):
+        raise ValueError("RACE_INPUT_SNAPSHOT_OUTSIDE_ROOT")
+    try:
+        with path.open("xb") as stream:
+            stream.write(raw)
+    except FileExistsError:
+        # A retry after an interrupted capture can reuse identical input only.
+        if not path.is_file() or path.read_bytes() != raw:
+            raise ValueError("IMMUTABLE_RACE_INPUT_SNAPSHOT_MISMATCH")
+
+
 def live_local_freeze(root, race_key, source_urls=None, capture=False,
                       fetcher=real_fetch, clock=None):
     """One live race. Optional opt-in fetch of missing pages; never overwrite."""
@@ -152,7 +193,7 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
         raise ValueError("FORMAL_FRESH_TARGET_EXCLUDED")
     root = Path(root).resolve()
     now = _now(clock)
-    candidate, deadline, race = _eligible_race(root, race_key, now)
+    candidate, deadline, race, race_raw = _eligible_race(root, race_key, now)
     output = root / "data/research_local_v332" / race_key[:8] / (race_key + ".json")
     if output.exists() or output.is_symlink():
         raise ValueError("IMMUTABLE_RESEARCH_FREEZE_ALREADY_EXISTS")
@@ -178,11 +219,17 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
     receipts = {provider: _local_capture(root, race_key, provider, deadline, now,
                                          source_urls.get(provider))
                 for provider in PROVIDERS}
+    # V343: the existing V336 source_captures artifact glob includes this exact
+    # input snapshot. Hash-only provenance cannot reproduce the candidate.
+    _save_race_input(root, race_key, race_raw)
     # A final live deadline guard prevents a slow validation or capture from
     # being mistaken for a frozen prospective prediction.
     now = _now(clock)
     if (deadline - now).total_seconds() < 5:
         raise ValueError("INSUFFICIENT_PREDEADLINE_WRITE_MARGIN")
+    # Input freshness must still hold at the recorded freeze instant, even if
+    # provider capture was slow. Revalidate the original bytes, not current data.
+    candidate_from_raw(race_raw, race_key, now)
     if (candidate.get("production_eligible") is not False
             or candidate.get("scoring_authorized") is not False
             or candidate.get("calibrated") is not False
