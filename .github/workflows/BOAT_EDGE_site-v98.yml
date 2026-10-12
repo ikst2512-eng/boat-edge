@@ -1,12 +1,9 @@
 name: BOAT EDGE V98 Course Stats
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v98.yml"
+  # V303: superseded scheduled source/UI/audit writer; manual emergency recovery only.
+  # Keep implementation and historical files unchanged; successor workflows remain active.
   workflow_dispatch:
-  schedule:
-    - cron: "10 21 * * *"
 
 permissions:
   contents: write
