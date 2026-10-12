@@ -79,6 +79,25 @@ jobs:
           const inline=[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)];
           assert.equal(inline.length,1);
           new Function(inline[0][1]);
+          const allModes=['hit','balance','hole','narrow'];
+          const labels=['的中重視','バランス','波乱展開','激絞り'];
+          for(const m of allModes){
+            assert.equal(v.modeAllowed(m),true,'V255_MODE_NOT_ALLOWED_'+m);
+            assert.equal(typeof v.MODES[m],'string');
+            assert(report.rows.every(r=>r.mode_outcomes[m].stake_yen===10000));
+            assert(report.rows.every(r=>r.mode_outcomes[m].hypothetical_profit_yen===r.mode_outcomes[m].hypothetical_return_yen-10000));
+          }
+          assert.equal(v.modeAllowed('unknown'),false);
+          assert.equal(v.modeAllowed('__proto__'),false);
+          assert(labels.every(x=>Object.values(v.MODES).includes(x)));
+          assert(js.includes('selectedResultMode')&&js.includes('data.resultMode=keyMode'));
+          assert(js.includes("aria-pressed',String(selectedResultMode===keyMode)"));
+          assert(js.includes("'&mode='+encodeURIComponent(selectedResultMode)"));
+          assert(page.includes("query.get('mode')"));
+          assert(page.includes("Object.prototype.hasOwnProperty.call(modes,requestedMode)"));
+          assert(index.includes('./assets/boat_edge_v251_race_result.js?v=255'));
+          assert(index.includes('./assets/boat_edge_v251_race_result.css?v=255'));
+          console.log('V255_ALL_FOUR_VERIFIED_MODES_AND_DEEPLINK_PASS',report.rows.length);
           console.log('V251_RESULT_DEEPLINK_AND_DATA_GUARDS_PASS',report.rows.length);
           JS_V251
       - name: Verify all frozen ticket source hashes and nominal 10000-yen allocations
