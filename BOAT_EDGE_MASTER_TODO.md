@@ -79,3 +79,12 @@
 - **As of 2026-10-13 02:15 JST**: 132/132 race cards, 792 racer rows; no 0–15-minute decision windows yet. Beforeinfo `0/0` at that hour is not a missing-data failure. Start of first observed window: 08:20 JST for 鳴門1R (08:35 deadline), based on V220 current status.
 - **Formal Fresh**: `formalFirst100.races=0`, `results_seen=false`, `unlock=false`, `scoring=false`, `RESULT_UNLOCK_TOKEN=null`. No formal result or payout access, no model promotion.
 - **Open gates**: T03 stays **unchecked** until 0–15-minute actual completion/partial/error counts improve across real decision windows; T01 remains unchecked despite Pages successes until cancellation reduction and Safari review are verified; T07/T13 remain unproven until matched future 10-ticket cohorts.
+
+## V290–V292 — 予想固定漏れの原因分解・実行契機強化（2026-10-13 JST）
+
+- **V290 / PR #83 main `3f8892c1e10db7cd5c5389ef8f3125ca85cd83c9`**: V215の監視対象104Rのうち、10/12時点で締切後もスナップショット未発見41Rを分類。ソース不足の観測あり23R・不足の観測なし18R。最後の監視がV229凍結対象2〜10分前だったのは22R、うち不足の観測なし9R。非存在/未観測は、実行していたこと・ソース適格・予想精度の証明ではない。V220本番JSONでも同一件数を確認。main V220 Actions `38286645912` とV290 `38286646200` SUCCESS。
+- **V291 / PR #84 main `dbdfb8827e6cfb7a0497310ed3f62f3e875a109e`**: 上記の分類をiPhone向けAutopilotの前日固定監査に連動。source-only、件数の相互整合を必須、未取得/不整合なら未確認表示。V291 main Actions `38286914526` SUCCESS。Safari目視は未検証。
+- **GitHub Actions起動履歴の追加監査**: 2026-10-12 UTC 02–05時（日本時間11–14時）のV235/V229定期実行には約20分の空白が複数存在した。ジョブ所要時間は概ね数分であり、実行遅延を単純に長いジョブ実行だけで説明しない。現行V235にはその後collector成功イベントを契機にした起動変更が加わっているため、過去の状態を現在の稼働断定に使用しない。
+- **V292 / PR #88 main `748e5291cc8be9887f4ae190eae928ba5ccbc408`**: 安全なV229 PRE_RESULT凍結監査に、mainの公式出走表collector成功・公式3連単オッズ取得成功後の`workflow_run`起動を追加。cron予定とimmutable write-once保持。failure/cancelled、fork・非mainを拒否。ブランチ・mainテストSUCCESS（`38287493864`, `38287573019`）。main反映直後の`38287590847`に`event=workflow_run`の実際の起動を確認。**起動成功と前締切固定の実際の増加は別証拠**。
+- **正式Fresh**: 2026-10-13 02:56 JST時点`formalFirst100.races=0`、`results_seen=false`、`unlock=false`、`scoring=false`、`RESULT_UNLOCK_TOKEN=null`。正式解錠・結果の先読み・未証明モデル本番昇格はしていない。
+- T01, T03, T05, T06, T07は依然**未完了**。次の監視で公式beforeinfo 6艇/全120オッズ/取消・欠場・凍結が揃った率、V229`workflow_run`完了、Pages実行成功とSafari実機を独立検証すること。
