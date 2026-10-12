@@ -87,4 +87,6 @@ const frozenEvidence=execFileSync('python3',['tests/test_boat_edge_v275_frozen_p
 assert(frozenEvidence.includes('V275_FROZEN_PRE_RESULT_EVIDENCE_PRESERVATION_PASS'));
 const scheduleOwner=execFileSync('python3',['tests/test_boat_edge_v276_schedule_owner.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
 assert(scheduleOwner.includes('V276_SINGLE_FAST_SOURCE_SCHEDULE_OWNER_PASS'));
+const frozenRemoteGate=execFileSync('python3',['tests/test_boat_edge_v277_snapshot_push_guard.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert(frozenRemoteGate.includes('V277_CONCURRENT_POST_FREEZE_SOURCE_PUSH_FAIL_CLOSED_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
