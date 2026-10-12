@@ -102,6 +102,6 @@ const html=fs.readFileSync('autopilot.html','utf8');
 assert(html.includes('id="v252Evidence"'));
 assert(html.includes('id="v252Equal"'));
 assert(html.includes('id="v252Wide"'));
-assert(html.includes('boat_edge_v252_prospective.js?v=252'));
+assert(html.includes('boat_edge_v252_prospective.js?v=257'));
 assert.equal(requests,0);
 console.log('V252_EQUAL_POINT_FORWARD_RESEARCH_GATES_PASS');
