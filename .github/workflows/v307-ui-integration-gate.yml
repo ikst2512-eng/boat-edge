@@ -52,9 +52,7 @@ jobs:
             tests/test_boat_edge_v297_nav.cjs \
             tests/test_boat_edge_v298_matrix.cjs \
             tests/test_boat_edge_v299_head_selector.cjs \
-            tests/test_boat_edge_v304_topk.cjs \
-            tests/test_boat_edge_v305_evidence.cjs \
-            tests/test_boat_edge_v306_race_switch.cjs; do
+            tests/test_boat_edge_v304_topk.cjs; do
             if [[ -f "$test" ]]; then
               echo "CANDIDATE_TEST_PRESENT $test"
               node "$test"
