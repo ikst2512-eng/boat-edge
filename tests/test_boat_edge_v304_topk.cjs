@@ -7,7 +7,7 @@ const css=fs.readFileSync('assets/boat_edge_v304_topk_mobile.css','utf8');
 const window={},document={readyState:'loading',addEventListener(){}};
 vm.runInNewContext(js,{window,document,Number,Date,Math,Set,Map,JSON,Intl},{filename:'v304.js'});
 const api=window.BoatEdgeV207;
-assert.equal(api.version,'V305-DISPLAY-ONLY');
+assert.equal(api.version,'V306-DISPLAY-ONLY');
 const list=Array.from({length:10},(_,i)=>[1,2,3,4,5,6].flatMap(a=>[1,2,3,4,5,6]
   .filter(b=>b!==a).map(b=>[a,b,[1,2,3,4,5,6].find(c=>c!==a&&c!==b)].join('-')))[i]);
 const row=(combo,view,raw)=>({
