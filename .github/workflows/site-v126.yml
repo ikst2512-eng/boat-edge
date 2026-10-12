@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: boat-edge-v126-parity
@@ -244,38 +244,10 @@ jobs:
           print({"cases":len(d["cases"]),"pass":d["pass"],"errors":d["errors"]})
           PY
 
-      - name: Update TODO
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path("BOAT_EDGE_CURRENT_TODO.md")
-          s=p.read_text(encoding="utf-8") if p.exists() else "# BOAT EDGE CURRENT TODO\n"
-          lines=[
-            "- V126 compares current V122/V131/V132 browser functions with CURRENT V133 server functions against stored races.",
-            "- V126 requires identical top10/mode ordering and probability parity within 1e-9.",
-            "- V126 fixtures cover actual-course swap, missing exhibition time, wide exhibition-ST gap and complete original-exhibition data.",
-            "- V126 automatically reruns when runtime JS, CURRENT V133 server, or venue course stats change.",
-            "- V126 is a read-only comparison that does not modify the production prediction engine."
-          ]
-          marker="## NEXT"
-          for line in lines:
-              if line not in s:
-                  s=s.replace(marker,line+"\n\n"+marker,1) if marker in s else s+"\n"+line+"\n"
-          p.write_text(s,encoding="utf-8")
-          PY
-
-      - name: Save V126 parity evidence
-        shell: bash
-        run: |
-          set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_prediction_parity/v126.json BOAT_EDGE_CURRENT_TODO.md
-          git diff --cached --quiet && exit 0
-          git commit -m "Add V122-V123 parity regression V126"
-          for n in 1 2 3; do
-            git push && exit 0
-            git pull --rebase origin main
-          done
-          git push
+      - name: Preserve source-specific parity evidence without racing the main branch
+        uses: actions/upload-artifact@v4
+        with:
+          name: v126-parity-${{ github.run_id }}
+          path: data/site_prediction_parity/v126.json
+          if-no-files-found: error
+          retention-days: 30
