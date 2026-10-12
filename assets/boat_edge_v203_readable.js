@@ -68,7 +68,7 @@
      share a pre-deadline hashed CSV acquisition record. No interpolation. */
   function exhibitionGaps(r,rows){
     const a=r?.source_audit?.original_exhibition,t=Date.parse(a?.fetched_at||''),due=deadline(r);
-    if(!safeKey(r?.race_key)||r?.meta?.results_seen!==false||r?.meta?.unlock!==false||
+    if(!safeKey(r?.race_key)||r?.meta?.results_seen!==false||r?.meta?.unlock!==false||r?.meta?.scoring!==false||
        a?.status!=='ok'||!/^[a-f0-9]{64}$/i.test(String(a?.sha256||''))||
        !Number.isFinite(t)||!Number.isFinite(due)||t>due||
        !Array.isArray(rows)||rows.length!==6||
