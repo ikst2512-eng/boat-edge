@@ -18,6 +18,12 @@ class V336WorkflowSafety(unittest.TestCase):
         self.assertIn("retention-days: 30", s)
         self.assertIn("data/research_local_v332/", s)
         self.assertIn("data/source_captures/", s)
+        # V340 exposes concrete lack-of-coverage rather than 0/0 success.
+        self.assertIn("report['run_diagnostic']", s)
+        self.assertIn("window['coverage']", s)
+        self.assertIn("RESEARCH_REPORT_SAFETY_FLAGS_INVALID", s)
+        self.assertIn("'global_uniqueness_verified':False", s)
+        self.assertIn("'research_only':True", s)
 
     def test_no_repo_write_or_formal_unlock(self):
         s = WORKFLOW.read_text(encoding="utf-8")

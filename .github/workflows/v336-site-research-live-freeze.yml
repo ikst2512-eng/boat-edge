@@ -43,12 +43,26 @@ jobs:
           import json, os
           from pathlib import Path
           report=json.loads((Path(os.environ['RUNNER_TEMP'])/'v336_report.json').read_text())
+          # V340: report source-readiness reasons, not a false "0/0 OK" claim.
+          # These flags remain strictly research-only and never authorize scoring.
+          forbidden_claims = ('formal_fresh_read', 'results_read',
+                              'accuracy_improvement_proven',
+                              'production_model_changed', 'wagers_authorized',
+                              'immutable_across_independent_actions_runs_verified')
+          if any(report.get(flag) is not False for flag in forbidden_claims):
+              raise SystemExit('RESEARCH_REPORT_SAFETY_FLAGS_INVALID')
+          window = report['window']
+          coverage = window['coverage']
+          diagnostic = report['run_diagnostic']
           print(json.dumps({
-            'selected':len(report['window']['candidates']),
+            'run_diagnostic':diagnostic,
+            'coverage':coverage,
+            'selected':len(window['candidates']),
             'frozen':report['completed_count'],
             'failures':report['failures'],
-            'formal_fresh_read':report['formal_fresh_read'],
-          },ensure_ascii=False))
+            'global_uniqueness_verified':False,
+            'research_only':True,
+          },ensure_ascii=False,sort_keys=True))
           PY
       - name: Upload immutable prospective research artifacts and audit report
         uses: actions/upload-artifact@v4
