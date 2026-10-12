@@ -1,0 +1,68 @@
+name: BOAT EDGE V253 - Home Venue Deadline Readability Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/boat_edge_v253_home.js
+      - assets/boat_edge_v253_home.css
+      - .github/workflows/v253-home-readability-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v253-readonly-home-layout
+  cancel-in-progress: true
+
+jobs:
+  verified-home:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test exact source-preserving progressive deadline layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v253_home.js
+          node - <<'NODE_V253'
+          const assert=require('node:assert/strict'),fs=require('node:fs');
+          const js=fs.readFileSync('assets/boat_edge_v253_home.js','utf8');
+          const css=fs.readFileSync('assets/boat_edge_v253_home.css','utf8');
+          const html=fs.readFileSync('index.html','utf8');
+          assert(html.includes('boat_edge_v252_compact.js'));
+          assert(html.includes('boat_edge_v251_race_result.js'));
+          assert(html.includes('boat_edge_v253_home.js'));
+          assert(html.includes('boat_edge_v253_home.css'));
+          assert.equal((html.match(/boat_edge_v253_home.js/g)||[]).length,1);
+          assert.equal((html.match(/boat_edge_v253_home.css/g)||[]).length,1);
+          for(const id of ['deadlineBoard','venueFilters','venueSearch','spotlightRaces',
+                           'venues','homeView','deadlineCount','recentRaces'])
+            assert(html.includes('id="'+id+'"'),'Missing '+id);
+          assert(css.includes('#homeView.be253-compact #deadlineBoard>.deadline-card:nth-child(n+7)'));
+          assert(css.includes('.be253-more[hidden]'));
+          assert(js.includes('const n=list.querySelectorAll'));
+          assert(js.includes("n>6"));
+          assert(js.includes("expanded=!expanded"));
+          assert(js.includes("aria-controls','deadlineBoard"));
+          assert(js.includes("button.hidden=n<=6"));
+          assert(!/fetch\s*\(|XMLHttpRequest|localStorage|sessionStorage|window\.location/.test(js));
+          assert(!/\.venue\s*\{display:none|\.racechips\s*\{display:none/.test(css));
+          // The old deadline list is never deleted or truncated. Only the first
+          // six cards are presented by default; the button exposes all the rest.
+          assert(!/list\.innerHTML|\.removeChild|\.replaceChildren|\.splice\(/.test(js));
+          console.log('V253_HOME_DEADLINE_AND_VENUE_PRESENTATION_PASS');
+          NODE_V253
+          python3 - <<'PY_V253'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=d.get('guards') or {}
+          assert g.get('results_seen') is False and g.get('unlock') is False and g.get('scoring') is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert (d.get('formalFirst100') or {}).get('races')==0
+          print('V253_UNTOUCHED_FRESH_GUARDS_PASS')
+          PY_V253
