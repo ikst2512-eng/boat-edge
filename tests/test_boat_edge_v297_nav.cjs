@@ -26,7 +26,7 @@ const document={readyState:'loading',addEventListener(){},querySelector(q){retur
 const window={setInterval(){},setTimeout(f){f()},matchMedia(){return {matches:reducedMotion}}};
 vm.runInNewContext(source,{window,document,console},{filename:'boat_edge_v249_focus.js'});
 const api=window.BoatEdgeV249;
-assert.equal(api.version,'V297-DISPLAY-NAV-ONLY');
+assert.equal(api.version,'V337-RACE-SCOPED-EVIDENCE-ONLY');
 assert.equal(api.navigate('racers'),true);
 assert.equal(active,'pred');
 assert.equal(calls.at(-1).target,'#tab-pred .be203-cards');
@@ -59,7 +59,7 @@ assert(css.includes('#raceView #tab-pred .be203-cards'));
 assert(css.includes('scroll-margin-top:210px'));
 if(fs.existsSync('index.html')){
  const html=fs.readFileSync('index.html','utf8');
- assert(html.includes('./assets/boat_edge_v249_focus.js?v=297'));
- assert(html.includes('./assets/boat_edge_v249_focus.css?v=297'));
+ assert(html.includes('./assets/boat_edge_v249_focus.js?v=337'));
+ assert(html.includes('./assets/boat_edge_v249_focus.css?v=337'));
 } // Development CI's sparse checkout omits index.html; check it when available.
 console.log('V297_NAV_VISIBLE_TARGET_FALLBACK_REDUCED_MOTION_PASS');
