@@ -210,4 +210,22 @@ jobs:
             exit 0
           fi
           git commit -m 'V170: show audited website prediction hit rate and ROI by venue (display only)'
-          git push origin HEAD:main
+          # This site research report can race many unrelated live-data workers.
+          # Never force-push and never overwrite a concurrent main update.
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if git push origin HEAD:main; then
+              echo V170_SAFE_SITE_ONLY_PUBLISH_PASS
+              exit 0
+            fi
+            git fetch origin main
+            # If another job modified the same source report, fail closed
+            # instead of resolving the conflict by inventing new statistics.
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo V170_SOURCE_CONFLICT_NO_OVERWRITE >&2
+              exit 1
+            fi
+            sleep "$((attempt * 2))"
+          done
+          echo V170_PUSH_BUSY_NO_FORCE_PUBLISH >&2
+          exit 1
