@@ -1,0 +1,58 @@
+/* BOAT EDGE V252 — compact race hierarchy only when V207 prediction and V249
+   navigation are mounted. No critical odds, scratch, entry or result hiding. */
+html.be252-ready #raceView .race-summary{min-width:0}
+html.be252-ready #be249Focus{margin:8px 0 7px;box-shadow:none}
+html.be252-ready #be249Focus .be249-heading{margin-bottom:7px}
+html.be252-ready #be249Focus .be249-heading strong{font-size:15px}
+html.be252-ready #be249Focus .be249-anchors button{min-height:46px;font-size:12px}
+html.be252-ready #be252Tools{box-sizing:border-box;min-width:0;padding:11px 12px;
+ border:1px solid #d7e3f0;border-radius:12px;background:#fff;margin:0 0 8px;
+ color:#163e68;box-shadow:0 2px 7px #1a447008}
+#be252Tools .be252-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#be252Tools .be252-kpi{min-width:0;padding:9px 8px;border:1px solid #e2ebf4;border-radius:8px;background:#f6f9fd}
+#be252Tools .be252-kpi small{display:block;font-size:10px;font-weight:850;color:#64809c;line-height:1.35}
+#be252Tools .be252-kpi strong{display:block;font-size:13px;font-weight:950;line-height:1.45;color:#183d69;overflow-wrap:anywhere;margin-top:4px}
+#be252Tools .be252-options{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+#be252Tools button{min-height:43px;border-radius:9px;border:1px solid #cadaeb;color:#20598f;background:#f1f7ff;font-size:11px;font-weight:900;padding:9px 10px}
+#be252Tools button[data-be252="card"]{background:#e7f3ff;border-color:#add0f4;color:#1254a3}
+#be252Tools button:focus-visible{outline:3px solid #287cc8;outline-offset:2px}
+#be252Tools .be252-note{font-size:10px;line-height:1.6;color:#637991;margin:7px 0 0}
+html.be252-compact.be252-ready #raceView #summaryStrip,
+html.be252-compact.be252-ready #raceView #raceCommand,
+html.be252-compact.be252-ready #raceView #raceMasthead,
+html.be252-compact.be252-ready #raceView #raceQuickNav,
+html.be252-compact.be252-ready #raceView #raceTabs{display:none!important}
+html.be252-ready #raceView #raceNav{display:flex;max-width:100%;overflow-x:auto;
+ -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin;
+ gap:5px;flex-wrap:nowrap;padding:6px 0}
+html.be252-ready #raceView #raceNav .racechip{flex:0 0 auto;min-width:51px}
+html.be252-ready #raceView #urgencyRibbon,
+html.be252-ready #raceView #freshnessStrip{font-size:11px}
+html.be252-ready #be207Top{margin-top:8px}
+html.be252-ready #be207Top .be207-topline strong{font-size:17px}
+html.be252-ready #be206Quick{scroll-margin-top:82px}
+html.be252-ready #tab-card .tablewrap,
+html.be252-ready #tab-before .tablewrap{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+html.be252-ready #tab-card table th:first-child,
+html.be252-ready #tab-card table td:first-child,
+html.be252-ready #tab-before table th:first-child,
+html.be252-ready #tab-before table td:first-child{
+ position:sticky;left:0;z-index:2;background:#f7faff;box-shadow:2px 0 4px #122f4e12}
+html.be252-ready #tab-card table td:first-child,
+html.be252-ready #tab-before table td:first-child{background:#fff}
+html.be252-ready #raceView #raceTabs{scroll-margin-top:80px}
+@media(max-width:640px){
+ #be252Tools .be252-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #be252Tools .be252-kpi{padding:8px 9px}
+ #be252Tools .be252-kpi strong{font-size:13px;line-height:1.45}
+ #be252Tools .be252-options button{flex:1 1 28%;min-width:0;padding:9px 5px;font-size:11px}
+ html.be252-ready #be249Focus .be249-anchors button{font-size:12px}
+ html.be252-ready #raceView .race-head{margin-top:0}
+ html.be252-ready #raceView .race-summary{padding:11px 10px}
+ html.be252-ready #be251Outcome{margin:7px 0}
+}
+@media(max-width:355px){
+ #be252Tools .be252-options button{font-size:10px}
+ #be252Tools .be252-kpi strong{font-size:12px}
+ html.be252-ready #be249Focus .be249-anchors button{font-size:11px}
+}
