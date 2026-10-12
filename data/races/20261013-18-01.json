@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 1,
     "deadline": "08:47",
-    "updated_at": "2026-10-13T06:00:34+09:00",
+    "updated_at": "2026-10-13T06:20:43+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=18&rno=1",
-      "fetched_at": "2026-10-13T06:02:37+09:00",
-      "sha256": "465f490e78d018dae6b400a6016ed7c53b95dde509dac1ea6a7e3bf291dacdcf",
+      "fetched_at": "2026-10-13T06:23:16+09:00",
+      "sha256": "ac2d16c19e52e1b7723477d9d650773dd64da1ebdad37b6786523a77feaf9060",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=18&rno=1",
+      "fetched_at": "2026-10-13T06:21:17+09:00",
+      "sha256": "9e8b5044c94dca550de5c2a0ea03cab0a78e754be8985784354069a995a904e3",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -282,7 +288,53 @@
       "raw_text": "6 4425 / B1 大井 清貴 山口/山口 41歳/53.9kg F0 L0 0.19 4.37 22.39 38.81 4.69 16.67 46.15 64 39.09 58.18 43 28.76 41.59 8 5 12 5 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 鳥飼 眞 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 赤峰 和也 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 川崎 公靖 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 楠原 翔太 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 久保田 凪紗 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 大井 清貴 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
