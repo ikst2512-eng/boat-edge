@@ -29,7 +29,7 @@ def official_url_matches(key: str, source_url: str) -> bool:
         return False
     try:
         u = urlsplit(str(source_url))
-        q = parse_qs(u.query, keep_blank_values=True)
+        q = parse_qs(u.query, keep_blank_values=True, strict_parsing=True)
         return (
             u.scheme == "https"
             and u.netloc == "www.boatrace.jp"
@@ -119,9 +119,12 @@ def is_safe_record(obj: object, key: str) -> bool:
     for combo, price in odds.items():
         if not COMBO.fullmatch(str(combo)) or len(set(combo.split("-"))) != 3:
             return False
+        # Official JSON prices are numeric; booleans and strings are not evidence.
+        if type(price) not in (int, float):
+            return False
         try:
             value = float(price)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return False
         if not math.isfinite(value) or value <= 0:
             return False

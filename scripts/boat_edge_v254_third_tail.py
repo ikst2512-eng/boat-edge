@@ -54,9 +54,14 @@ def write_changed(path,obj):
     path.write_text(text,encoding='utf-8');return True
 
 def formal_guard(root):
-    g=(get(root/'data/formal_status.json') or {}).get('guards') or {}
+    status=get(root/'data/formal_status.json') or {}
+    g=status.get('guards') or {}
     if any(g.get(k) is not False for k in ('results_seen','unlock','scoring')) or g.get('RESULT_UNLOCK_TOKEN') is not None:
         raise RuntimeError('V254_FORMAL_GATE_MUST_STAY_CLOSED')
+    # Unlike a false flag, a missing/nonempty formal cohort is not proof of isolation.
+    races=(status.get('formalFirst100') or {}).get('races')
+    if type(races) is not int or races!=0:
+        raise RuntimeError('V254_FORMAL_COHORT_MUST_BE_CONFIRMED_EMPTY')
 
 def git_first(root,path):
     rel=path.relative_to(root).as_posix()
@@ -88,6 +93,7 @@ def third_tail_candidate(hit,hole):
     return result
 
 def make_pre(root,path,now):
+    formal_guard(root)
     key=path.stem
     source=get(path) or {}
     deadline=stamp(source.get('deadline_jst'))
@@ -104,6 +110,7 @@ def make_pre(root,path,now):
     if (source.get('race_key')!=key or
         source.get('schema')!='BOAT_EDGE_V232_SITE_PROSPECTIVE_ACCURACY_COHORT_V1' or
         source.get('scope')!='SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH' or
+        source.get('model_id')!='SITE_REFERENCE_V122' or
         source.get('formal_results_seen') is not False or
         source.get('formal_gate_unlocked') is not False or
         source.get('paper_purchases_authorized') is not False or
@@ -173,6 +180,7 @@ def freeze(root,now):
     return obj
 
 def verified_site(root):
+    formal_guard(root)
     report=get(root/BASE/'v241_results_current.json')
     if (not report or report.get('schema')!='BOAT_EDGE_V241_VERIFIED_SITE_RESULTS_V1' or
         report.get('scope')!='VERIFIED_POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH' or
@@ -196,6 +204,7 @@ def verified_site(root):
     return out
 
 def score_one(root,path,results,now):
+    formal_guard(root)
     row=get(path) or {}
     key=path.stem
     deadline=stamp(row.get('deadline_jst'))
