@@ -110,6 +110,9 @@ def audit_one(root, row):
     if frozen["candidate"].get("model_id") != "BOAT_EDGE_V312_UNCALIBRATED_EXHIBITION_ENTRY_ABLATION":
         raise ValueError("ORIGINAL_RESEARCH_MODEL_REQUIRED")
     for provider in PROVIDERS:
+        capture_dir = Path("data/source_captures") / key[:8] / key
+        _read_no_symlink(root, capture_dir / (provider + ".html"))
+        _read_no_symlink(root, capture_dir / (provider + ".receipt.json"))
         # _local_capture validates canonical local receipt path, provider URL,
         # race ID, predeadline timestamp, fields=[] and SHA of raw HTML bytes.
         receipt = _local_capture(root, key, provider, deadline, frozen_time)
@@ -143,7 +146,7 @@ def audit(root, report):
         "local_artifacts_verified": len(verified),
         "local_artifacts_rejected": len(rejected),
         "verified": verified, "rejected": rejected,
-        "all_reported_artifacts_locally_consistent": len(rejected) == 0,
+        "all_reported_artifacts_locally_consistent": bool(completed) and len(rejected) == 0,
         "complete_actions_history_or_global_uniqueness_attested": False,
         "raw_source_identity_independently_verified": False,
         "source_capture_time_independently_attested": False,
