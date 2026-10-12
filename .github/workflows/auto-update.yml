@@ -755,11 +755,58 @@ jobs:
             exit 0
           fi
           git commit -m "自動更新: PRE_RESULT $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')"
-          for n in 1 2 3; do
-            if git push; then
+          # V270: never force-push, overwrite formal assets, or guess source fields.
+          # Another trusted source job may advance main while this collector crawls.
+          # In that case, preserve the REMOTE version of any overlapping raw/race
+          # PRE_RESULT evidence; publish only the still-disjoint collected files.
+          for n in 1 2 3 4 5 6; do
+            if git push origin HEAD:main; then
+              echo "V270_PRE_RESULT_SAFE_PUSH_PASS"
               exit 0
             fi
-            echo "push競合: rebaseして再試行 $n/3"
-            git pull --rebase origin main
+            echo "V270_PUSH_MOVED_REBASE_ATTEMPT_$n"
+            if git pull --rebase origin main; then
+              continue
+            fi
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            if [ "${#conflicts[@]}" -eq 0 ]; then
+              echo "V270_REBASE_ERROR_NO_SOURCE_CONFLICT_FAIL_CLOSED"
+              git rebase --abort || true
+              exit 1
+            fi
+            for file in "${conflicts[@]}"; do
+              case "$file" in
+                data/races/20??????-??-??.json|data/raw/20??????/??_??_*.html)
+                  echo "V270_PRESERVE_PUBLISHED_SOURCE_ON_CONFLICT $file"
+                  ;;
+                *)
+                  echo "V270_UNSAFE_CONFLICT_FAIL_CLOSED $file"
+                  git rebase --abort || true
+                  exit 1
+                  ;;
+              esac
+            done
+            for file in "${conflicts[@]}"; do
+              git checkout --ours -- "$file"
+              git add -- "$file"
+            done
+            if git diff --cached --quiet; then
+              git rebase --skip
+            else
+              GIT_EDITOR=true git rebase --continue
+            fi
+            python3 - <<'PY_V270_SAFE_LOCK'
+          import json
+          from pathlib import Path
+          obj=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=obj.get('guards') or {}
+          assert g.get('results_seen') is False
+          assert g.get('unlock') is False
+          assert g.get('scoring') is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert (obj.get('formalFirst100') or {}).get('races',0)==0
+          print('V270_FORMAL_PRE_RESULT_LOCK_PRESERVED')
+          PY_V270_SAFE_LOCK
           done
-          git push
+          echo "V270_MAIN_MOVED_SIX_TIMES_FAIL_CLOSED_NEXT_SCHEDULE_RETRY"
+          exit 1
