@@ -1,0 +1,54 @@
+/* V249 independent, presentation-only mobile race cockpit.
+   All source/odds, scratch, ranked prediction, stake and result logic stay unchanged. */
+#be249Focus{margin:10px 0 12px;position:relative;z-index:2;border:1px solid #c7d9ee;border-radius:14px;background:linear-gradient(145deg,#f8fbff,#edf6ff);padding:11px;box-shadow:0 3px 12px #143d6910;color:#183b64}
+#be249Focus .be249-eyebrow{color:#446c98;font-size:10px;font-weight:900;letter-spacing:.09em}
+#be249Focus .be249-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 10px}
+#be249Focus .be249-heading strong{font-size:16px;font-weight:950;line-height:1.35;color:#133a6c}
+#be249Focus .be249-heading small{font-size:10px;color:#526c89;text-align:right;line-height:1.5}
+#be249Focus .be249-anchors{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#be249Focus .be249-anchors button{font:inherit;min-height:43px;min-width:0;border-radius:9px;border:1px solid #cbdef3;background:#fff;color:#17538c;font-size:12px;font-weight:900;padding:9px 2px;display:flex;justify-content:center;align-items:center;gap:4px;cursor:pointer}
+#be249Focus .be249-anchors button[data-nav="tickets"]{background:#174f9f;border-color:#174f9f;color:#fff}
+#be249Focus .be249-anchors button:focus-visible,#be249Focus a:focus-visible{outline:3px solid #2672c7;outline-offset:2px}
+#be249Focus .be249-anchors button:hover{border-color:#2173d6}
+#be249Focus .be249-evidence{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;align-items:center}
+#be249Focus .be249-evidence span{border-radius:7px;padding:5px 7px;background:#eef3fa;color:#385b7f;font-weight:850;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+#be249Focus .be249-evidence span[data-kind="fixed"]{background:#e8f8ed;color:#0d714e}
+#be249Focus .be249-evidence span[data-kind="changed"],#be249Focus .be249-evidence span[data-kind="unknown"]{background:#fff4e6;color:#805817}
+#be249Focus .be249-interpret{font-size:10px;line-height:1.65;margin:8px 0 0;color:#526b87}
+#raceView .be207-top,#raceView .be203-card,#raceView .be204-overview,#raceView .be203-layout{scroll-margin-top:80px}
+#raceView .be207-top{border:1px solid #bed4ef;border-radius:14px;box-shadow:0 5px 16px #143b690a}
+#raceView .be207-listhead strong{font-size:15px;color:#153f76}
+#raceView .be207-bets{min-width:0}
+#raceView .be207-bets .be207-bet{min-width:0}
+#raceView .be203-cards .be203-card{border-color:#cfdfed;background:#fff}
+#raceView .be203-card .be203-name b{font-weight:950}
+#raceView .be203-metrics b,#raceView .be203-stats b{font-variant-numeric:tabular-nums}
+#raceView .be203-metrics small{color:#506d8a}
+#tab-card .tablewrap,#tab-before .tablewrap{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border-radius:9px}
+#tab-card .tablewrap table,#tab-before .tablewrap table{width:max-content;min-width:100%}
+#tab-card .tablewrap th,#tab-card .tablewrap td,#tab-before .tablewrap th,#tab-before .tablewrap td{font-variant-numeric:tabular-nums}
+#tab-card .tablewrap thead th{position:sticky;top:0;background:#eaf3ff;z-index:2}
+#tab-card .tablewrap th:first-child,#tab-card .tablewrap td:first-child{position:sticky;left:0;z-index:3;min-width:42px;background:#f3f8ff;box-shadow:2px 0 0 #d7e5f5}
+#tab-card .tablewrap thead th:first-child{z-index:4}
+#raceView .race-tabs{scrollbar-width:thin;overscroll-behavior-x:contain}
+#raceView .race-tabs button{min-height:42px}
+@media(max-width:650px){
+ #raceView .race-shell{padding:0 9px}
+ #raceView .race-head .race-summary{padding:10px 10px}
+ #be249Focus{padding:10px 9px;margin:9px 0 11px}
+ #be249Focus .be249-heading strong{font-size:15px}
+ #be249Focus .be249-heading small{max-width:46%}
+ #be249Focus .be249-anchors{gap:5px}
+ #be249Focus .be249-anchors button{font-size:11.5px;padding:8px 2px;min-height:45px}
+ #be249Focus .be249-evidence{gap:5px}
+ #be249Focus .be249-evidence span{font-size:10px;padding:5px 6px}
+ #raceView #raceTabs{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:7px 9px 9px;-webkit-overflow-scrolling:touch}
+ #raceView #raceTabs button{flex:0 0 auto;min-width:74px;min-height:43px;scroll-snap-align:start;font-size:12px;padding:8px 10px}
+ #raceView .be203-card{padding:13px 12px}
+ #raceView .be203-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ #raceView .be203-metrics small{font-size:10.5px}
+ #raceView .be203-metrics b{font-size:14px}
+ #tab-card .tablewrap table,#tab-before .tablewrap table{font-size:12px}
+ #tab-card .tablewrap th,#tab-card .tablewrap td,#tab-before .tablewrap th,#tab-before .tablewrap td{padding:10px 8px}
+}
+@media(max-width:365px){#be249Focus .be249-anchors button{font-size:10px}#be249Focus .be249-heading strong{font-size:14px}}
