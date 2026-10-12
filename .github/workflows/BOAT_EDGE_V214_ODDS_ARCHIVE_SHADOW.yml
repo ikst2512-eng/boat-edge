@@ -1,12 +1,7 @@
 name: BOAT EDGE V214 - Freeze Original Odds With Prospect Shadow Diagnostics
+# V342: Legacy paper writer is manual recovery ONLY. V216 owns the live chain.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/BOAT_EDGE_V214_ODDS_ARCHIVE_SHADOW.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 permissions:
   contents: write
   actions: write

@@ -1,13 +1,8 @@
 name: BOAT EDGE V211 - Daily 50K AI Paper Simulator
 
+# V342: Legacy paper writer is manual recovery ONLY. V216 owns the live chain.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/BOAT_EDGE_V211_DAILY_50K_SIM.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 
 permissions:
   contents: write

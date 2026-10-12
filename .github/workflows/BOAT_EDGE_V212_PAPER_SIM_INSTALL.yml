@@ -1,12 +1,7 @@
 name: BOAT EDGE V212 - Deploy Daily 50K Simulator (Safe Install)
+# V342: Legacy paper installer is manual recovery ONLY. V216 owns the live chain.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/BOAT_EDGE_V212_PAPER_SIM_INSTALL.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 permissions:
   contents: write
   actions: write

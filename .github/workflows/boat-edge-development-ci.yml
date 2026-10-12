@@ -50,6 +50,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v299_workflow_inventory.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v342_retired_schedulers.py' -v
           python3 scripts/boat_edge_v299_workflow_inventory.py
       - name: Audit static scheduled staging-path overlaps without disabling workflows
         env:

@@ -67,3 +67,18 @@ completion remain unproven. Never report these as delivered by V271.
 - Corrected V234's stale V215 readiness dependency pin after verifying that
   current source adds scratch freshness and exact 120-odds provenance guards;
   V235 already pins this strengthened source. No safety checks were removed.
+
+## V342 retired scheduler source guard
+
+- Built on V341's read-only staging-path overlap inventory. GitHub state showed
+  eight legacy writers already disabled manually, but their tracked YAML still
+  retained automatic push/schedule triggers.
+- V209/V211/V212/V213/V214, legacy V72/V73 health/recovery and V103 are now
+  `workflow_dispatch` only. Their recovery bodies remain available, while an
+  ordinary source edit cannot restore a five-minute main writer.
+- V216 remains the scheduled paper-only chain owner, with readiness, shadow
+  freeze, paper select, shadow settlement and paper settlement order guarded.
+  Its earlier V286 no-reinstall protection remains required.
+- Inventory counts fall from 59 to 51 scheduled workflows and from 55 to 47
+  scheduled `contents: write` candidates. This is not proof that every remaining
+  overlap is redundant; retire further writers only with replacement evidence.

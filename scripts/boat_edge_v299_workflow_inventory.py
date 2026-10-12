@@ -30,6 +30,14 @@ RETIRED = (
     "site-v130.yml",
     "site-v131.yml",
     "site-v132.yml",
+    "BOAT_EDGE_V209_AI_AUTORUN_SIM.yml",
+    "BOAT_EDGE_V211_DAILY_50K_SIM.yml",
+    "BOAT_EDGE_V212_PAPER_SIM_INSTALL.yml",
+    "BOAT_EDGE_V213_SHADOW_ROI.yml",
+    "BOAT_EDGE_V214_ODDS_ARCHIVE_SHADOW.yml",
+    "site-health.yml",
+    "site-recovery.yml",
+    "site-v103.yml",
 )
 LIVE = "V235.yml"
 

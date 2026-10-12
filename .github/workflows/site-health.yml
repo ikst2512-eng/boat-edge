@@ -1,12 +1,8 @@
 name: BOAT EDGE 稼働ステータス V72
 
+# V342: Legacy V51 health writer is manual recovery ONLY.
 on:
-  push:
-    paths:
-      - ".github/workflows/site-health.yml"
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
