@@ -40,3 +40,7 @@
 
 /* V306: a new race key must not display the previous race's raw tickets. */
 html.be306-race-await #raceView #be108PredictionModes{display:none!important}
+
+/* V317 Safari: the evidence-detail action must meet a 44px touch target. */
+#be207Top .be305-evidence-head button{min-height:44px;min-width:44px;padding:10px 8px;touch-action:manipulation}
+@media(max-width:350px){#be207Top .be305-evidence-head button{font-size:12px}}
