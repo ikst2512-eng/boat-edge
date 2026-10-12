@@ -72,6 +72,21 @@ function topKExplanation(rows){
   top3:cover(3),top5:cover(5),top10:cover(10),
   caution:'頭の的中確率：未校正 ／ 3連単の的中確率：未校正。Top3/5/10は買い目順位で、的中率や配当の保証ではありません。'};
 }
+/* V250 A17: only the selected race's V223 pre-deadline inspector may certify odds. */
+function oddsProof(r){
+ const box=one('#be223Source');
+ if(!safeKey(r?.race_key)||box?.dataset?.raceKey!==r.race_key)
+   return {quality:'unknown',label:'公式3連単オッズ：選択レースの取得証跡を確認中'};
+ const rows=[...box.querySelectorAll('.be223-row')];
+ const item=rows.find(row=>textOf('span:first-child',row)==='3連単オッズ');
+ const detail=item?one('span:last-child',item):null;
+ const status=detail?.dataset?.quality;
+ const stamp=detail?.textContent?.trim()||'';
+ if(status==='ok'&&/^\d{1,2}:\d{2}取得/.test(stamp))
+   return {quality:'verified',label:'BOAT RACE公式の保存値｜'+stamp+'（リアルタイムではありません）'};
+ if(status==='stale')return {quality:'stale',label:'BOAT RACE公式の保存値｜'+stamp+'（古い取得値・予想用の最新値ではありません）'};
+ return {quality:'unknown',label:'公式3連単オッズ：未取得・照合待ち（取得時刻は未確認）'};
+}
 function mount(p){
  let top=one('#be204Overview',p);
  if(!top){
@@ -85,7 +100,7 @@ function mount(p){
  let bottom=one('#be204Budget',card);
  if(!bottom){
    bottom=document.createElement('section');bottom.id='be204Budget';bottom.className='be204-budget';
-   bottom.innerHTML='<div class="be204-budget-title">この予想スタイルの買い目と配分</div><div class="be204-budget-grid"><div><small>表示中の買い目</small><b data-be204="count"></b></div><div><small>参考配分の合計</small><b data-be204="total"></b></div><div><small>確認済みオッズ</small><b data-be204="priced"></b></div></div><div class="be204-priceband"></div><div class="be204-freeze"></div><div class="be204-oddsstamp"></div><p class="be204-footnote"></p>';
+   bottom.innerHTML='<div class="be204-budget-title">この予想スタイルの買い目と配分</div><div class="be204-budget-grid"><div><small>表示中の買い目</small><b data-be204="count"></b></div><div><small>参考配分の合計</small><b data-be204="total"></b></div><div><small>確認済みオッズ</small><b data-be204="priced"></b></div></div><div class="be204-priceband"></div><div class="be204-freeze"></div><div class="be204-oddsstamp"></div><div class="be250-odds-proof" role="status"></div><p class="be204-footnote"></p>';
    const list=one('.be108-ticket-list',card);if(list)card.insertBefore(bottom,list);else card.appendChild(bottom);
  }
  return [top,bottom];
@@ -136,8 +151,9 @@ function sync(){
  const stamp=asJst(race?.meta?.updated_at);
  const flow=flowStages();
  const ranking=topKExplanation(s.rows);
+ const odds=oddsProof(race);
  const signature=JSON.stringify([race.race_key,stage,stageNote,formal,source,changed,stamp,s.rows.length,
-   s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,flow.map(x=>x.value),ranking,textOf('.be140-budget-notice',p)]);
+   s.total,s.confirmed,s.mid,s.settled,s.fresh,s.odds,odds,flow.map(x=>x.value),ranking,textOf('.be140-budget-notice',p)]);
  if(signature===lastSignature&&one('#be204Overview',p)&&one('#be204Budget',p)&&
     s.rows.every(r=>s.settled?!one('.be204-ticket-finance',r):!s.fresh?Boolean(one('.be204-unverified',r)):parsePayout(textOf('.be140-ticket-money',r))===null||Boolean(one('.be204-ticket-finance',r))))return;
  drawing=true;
@@ -168,6 +184,8 @@ function sync(){
   set(one('.be204-priceband',bottom),s.settled?'確定後にオッズから買い目を再評価しません。':s.fresh?'10〜20倍の買い目：'+s.mid+'点（確認済み倍率のみ・順位への反映なし）':'10〜20倍の該当点数：検証済みオッズ待ち');
   set(one('.be204-freeze',bottom),'買い目表示区分：'+source+(changed?' / '+changed:''));
   set(one('.be204-oddsstamp',bottom),s.odds);
+  const oddNode=one('.be250-odds-proof',bottom);
+  if(oddNode){oddNode.dataset.quality=odds.quality;set(oddNode,odds.label);}
   set(one('.be204-footnote',bottom),s.settled?'購入履歴ではありません。過去の買い目・配分の後付け復元をしません。':'参考配分は1万円を基準にした表示です。想定払戻は「参考配分×取得時点の公式オッズ」であり、確定払戻や利益の保証ではありません。未取得倍率から金額を作りません。');
   decorate(s.rows,s.settled,s.fresh);
   lastSignature=signature;
@@ -186,8 +204,9 @@ function init(){
  const scenario=one('#tab-scenario');
  if(scenario&&typeof MutationObserver!=='undefined')new MutationObserver(schedule).observe(scenario,{childList:true,subtree:true,characterData:true});
  sync();
+ setInterval(()=>{if(!document.hidden)sync();},10000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
 }
-window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence,flowStages,topKExplanation};
+window.BoatEdgeV204={parseStake,parsePayout,summarize,sync,sourceLabel,freezeEvidence,flowStages,topKExplanation,oddsProof};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

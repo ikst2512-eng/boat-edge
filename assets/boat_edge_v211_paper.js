@@ -58,6 +58,21 @@ function paperStates(data,proof){
      '（最近の記録のみ。総件数・確定利益ではありません）';
  return {kind:noBet?'no-bet':pending?'pending':settled?'settled':'unknown',label};
 }
+/* V250 A20: reject stale, wrong-day and uncounted skip reasons, never fill gaps. */
+function skipEvidence(scan,proof,now=Date.now()){
+  const t=Date.parse(scan?.as_of||'');
+  const day=Number.isFinite(t)?new Date(t+9*3600000).toISOString().slice(0,10).replaceAll('-',''):'';
+  if(!proof?.verified||!Number.isFinite(t)||t>now+30000||day!==proof.day||
+     !scan?.skipped_by_reason||typeof scan.skipped_by_reason!=='object'||
+     Array.isArray(scan.skipped_by_reason))
+    return {verified:false,message:'見送り理由の内訳：保存元・取得日が未確認',rows:[]};
+  const entries=Object.entries(scan.skipped_by_reason);
+  if(entries.some(([k,v])=>!k||!Number.isSafeInteger(v)||v<0))
+    return {verified:false,message:'見送り理由の内訳：記録値を確認できません',rows:[]};
+  const rows=entries.filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  return {verified:true,rows,message:rows.length?'保存済み見送り理由（'+day+'・'+fmt(scan.as_of)+'取得）':
+    '見送り理由の個別件数は未記録（0Rとは断定しません）'};
+}
 function showPaperStates(status){
  let e=q('#be248PaperStates');
  if(!e){e=el('div','sim-notice');e.id='be248PaperStates';e.setAttribute('role','status');
@@ -112,7 +127,10 @@ async function refresh(){
    const tr=el('tr');tr.append(el('td','',String(a.venue||'－')+' '+String(a.race_no||'－')+'R'),el('td','',a.deadline||'―'));
    const c=el('td');c.append(el('span','tag'+(a.decision==='candidate'?' ok':''),a.decision==='candidate'?'候補':'見送り'));tr.append(c,el('td','',a.reason||'要確認'));rows.append(tr);
   }
-  const reasonBox=q('#simReasons');reasonBox.replaceChildren();for(const [reason,count] of Object.entries(scan.skipped_by_reason||{})){reasonBox.append(el('span','',`${reason} ${count}R`))}
+  const reasonBox=q('#simReasons');reasonBox.replaceChildren();
+  const skips=skipEvidence(scan,proof);
+  reasonBox.append(el('strong','be250-reason-head',skips.message));
+  for(const [reason,count] of skips.rows)reasonBox.append(el('span','',reason+' '+count+'R'));
   const hist=q('#simHistory');hist.replaceChildren();
   const history=evidenceStates.kind==='unknown'?[]:d.recent_bets;
   text('#simHistoryCount',evidenceStates.kind==='unknown'?'未確認':history.length+'件（保存分）');
@@ -135,5 +153,5 @@ async function refresh(){
 for(const b of qa('.sim-tabs [data-tab]'))b.addEventListener('click',()=>showTab(b.dataset.tab));
 q('#simRefresh')?.addEventListener('click',refresh);showTab('decision');refresh();
 setInterval(()=>{if(!document.hidden)refresh()},60000);
-window.BoatEdgeV211PaperEvidence={paperEvidence,paperStates,verifiedBet};
+window.BoatEdgeV211PaperEvidence={paperEvidence,paperStates,verifiedBet,skipEvidence};
 })();

@@ -64,6 +64,24 @@
     const desc=values.slice().sort((a,b)=>b-a);
     return desc[0]-desc[1]>=minimumGap?desc[0]:null;
   };
+  /* V250 A19: seconds behind race-best only when all six original times
+     share a pre-deadline hashed CSV acquisition record. No interpolation. */
+  function exhibitionGaps(r,rows){
+    const a=r?.source_audit?.original_exhibition,t=Date.parse(a?.fetched_at||''),due=deadline(r);
+    if(!safeKey(r?.race_key)||r?.meta?.results_seen!==false||r?.meta?.unlock!==false||r?.meta?.scoring!==false||
+       a?.status!=='ok'||!/^[a-f0-9]{64}$/i.test(String(a?.sha256||''))||
+       !Number.isFinite(t)||!Number.isFinite(due)||t>due||
+       !Array.isArray(rows)||rows.length!==6||
+       new Set(rows.map(x=>x.lane)).size!==6)return null;
+    const result={};
+    for(const field of ['lap','turn','straight']){
+      const values=rows.map(x=>n(x[field]));
+      if(values.some(x=>x===null||x<=0))continue;
+      const best=Math.min(...values);
+      result[field]=Object.fromEntries(rows.map((x,i)=>[x.lane,Math.max(0,values[i]-best)]));
+    }
+    return Object.keys(result).length?result:null;
+  }
   function header(r){
     const s=scratchHint(r),ex=src(r,'beforeinfo'),stt=src(r,'stt'),ori=src(r,'original_exhibition'),w=ex?r.beforeinfo?.weather||{}:{};
     const water=[['風',n(w.wind_speed_ms)!==null?val(w.wind_speed_ms,1)+'m/s':'－'],['波',n(w.wave_cm)!==null?val(w.wave_cm,0)+'cm':'－']];
@@ -76,21 +94,23 @@
     const rows=getRows(r),lap=distinctBest(rows,'lap',.08),turn=distinctBest(rows,'turn',.04),straight=distinctBest(rows,'straight',.04),st=distinctBest(rows,'st',.03);
     const localWin=strongest(rows,x=>x.local.win_rate,.3);
     const motor2=strongest(rows,x=>x.motor.quinella_rate,3);
+    const gaps=exhibitionGaps(r,rows);
+    const delta=(lane,k)=>Number.isFinite(gaps?.[k]?.[lane])?'最速差 +'+gaps[k][lane].toFixed(2)+'秒':'差 未確認';
     return `<div class="be203-heading"><strong>直前の6艇比較</strong><small>選手ごとに見やすく整理</small></div>`+
       `<div class="be203-cards">${rows.map(x=>`<article class="be203-card">
         <div class="be203-name"><span class="be203-lane be203-l${x.lane}">${x.lane}</span><b>${esc(x.name)}</b><small>${esc(x.grade)} / 展示進入 ${x.course??'－'}コース</small></div>
         <div class="be203-metrics">
           <div><small>展示ST</small><b class="${red(x.st,st)}">${x.f&&x.st!==null?'F'+val(Math.abs(x.st)):val(x.st)}</b></div>
           <div><small>展示タイム</small><b>${val(x.time)}</b></div>
-          <div><small>1周</small><b class="${red(x.lap,lap)}">${val(x.lap)}</b></div>
-          <div><small>まわり足</small><b class="${red(x.turn,turn)}">${val(x.turn)}</b></div>
-          <div><small>直線</small><b class="${red(x.straight,straight)}">${val(x.straight)}</b></div>
+          <div><small>1周</small><b class="${red(x.lap,lap)}">${val(x.lap)}</b><small class="be250-ex-gap">${delta(x.lane,'lap')}</small></div>
+          <div><small>まわり足</small><b class="${red(x.turn,turn)}">${val(x.turn)}</b><small class="be250-ex-gap">${delta(x.lane,'turn')}</small></div>
+          <div><small>直線</small><b class="${red(x.straight,straight)}">${val(x.straight)}</b><small class="be250-ex-gap">${delta(x.lane,'straight')}</small></div>
         </div>
         <div class="be203-statmini"><span>全国 <b>${val(x.national.win_rate)}</b></span><span>当地 <b class="${red(x.local.win_rate,localWin)}">${val(x.local.win_rate)}</b></span><span>M2連 <b class="${red(x.motor.quinella_rate,motor2)}">${val(x.motor.quinella_rate,1)}%</b></span></div>
         ${fullStats?`<div class="be203-stats"><span>平均ST <b>${val(x.avg)}</b></span><span>全国2連 <b>${val(x.national.quinella_rate,1)}%</b></span><span>全国3連 <b>${val(x.national.trio_rate,1)}%</b></span><span>当地2連 <b>${val(x.local.quinella_rate,1)}%</b></span><span>当地3連 <b>${val(x.local.trio_rate,1)}%</b></span><span>M3連 <b>${val(x.motor.trio_rate,1)}%</b></span><span>B2連 <b>${val(x.boat.quinella_rate,1)}%</b></span><span>B3連 <b>${val(x.boat.trio_rate,1)}%</b></span></div>`:''}
       </article>`).join('')}</div>`+
       `<div class="be203-actions"><button type="button" data-be203-action="stats" aria-expanded="${fullStats}">${fullStats?'数値を簡易表示':'全国・当地／モーター・ボートの全数値'}</button><button type="button" data-be203-action="full">${fullTable?'全項目の表を閉じる':'全項目の表を開く'}</button></div>`+
-      `<div class="be203-help">「－」は取得・照合できていない値。赤は6艇の数値が揃い明確な差がある項目のみ（当地勝率0.3以上差・M2連率3pt以上差）。展示進入は本番の実進入ではありません。<br>買い目・1万円配分・的中判定は上の予想スタイルに表示し、この画面から再計算しません。</div>`;
+      `<div class="be203-help">「－」は取得・照合できていない値。赤は6艇の数値が揃い明確な差がある項目のみ（当地勝率0.3以上差・M2連率3pt以上差）。オリ展の差は同一レース6艇の締切前CSV実測値だけで計算（小さいほど速い）。BOATERS・競艇日和の独立照合とは別。展示進入は本番の実進入ではありません。<br>買い目・1万円配分・的中判定は上の予想スタイルに表示し、この画面から再計算しません。</div>`;
   }
   function sync(force=false){
     if(inDraw)return;
@@ -138,6 +158,6 @@
     setInterval(()=>{if(!document.hidden)tick();},4000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();if(safeKey(race()?.race_key))fetchScratch(race());}});
   }
-  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest};
+  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest,exhibitionGaps};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

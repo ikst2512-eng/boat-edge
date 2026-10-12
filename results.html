@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f3f7fc"><meta name="description" content="BOAT EDGE 締切前固定予想と検証済み公式結果・3連単払戻の対照一覧">
 <title>レース結果・的中一覧 | BOAT EDGE</title>
-<link rel="stylesheet" href="./assets/boat_edge_v241_results.css?v=241&amp;rev=247">
+<link rel="stylesheet" href="./assets/boat_edge_v241_results.css?v=241&amp;rev=247&amp;patch=250">
 </head><body>
 <header class="be241-top"><div class="be241-shell be241-top-inner"><a class="be241-logo" href="./index.html" aria-label="BOAT EDGE トップへ"><span class="be241-wave">≋</span>BOAT EDGE</a><div class="be241-head-actions"><a class="be241-home" href="./index.html">レース一覧</a><button type="button" id="be241Refresh" aria-label="確定結果の保存済み情報を再取得（レース選択は保持）">↻ 更新</button></div></div></header>
 <main class="be241-shell">
@@ -15,6 +15,7 @@
     <div><span>3連単 Top10 的中</span><strong id="be241Wins">—</strong><small id="be241Rate">—</small></div>
     <div><span>1着予想的中</span><strong id="be241Head">—</strong><small>独立した判定</small></div>
   </section>
+  <div class="be250-result-sample" id="be250Sample" role="status">検証の母数・確定日を確認中。精度改善は未証明。</div>
   <section class="be241-notice" id="be241Recent" aria-live="polite"><div><span class="be241-live-dot"></span><b id="be241Latest">検証データ読み込み中</b></div><p>これは保存済みのサイト参考予想を採点した履歴。未検証・未確定レースには🎯を付けません。</p></section>
   <div class="be241-toolbar" id="be241Board"><div><h2>的中・不的中の履歴</h2><p>着順・公式払戻・仮想1万円配分を、レースごとに表示。</p></div><label>買い目モード<select id="be241Mode"><option value="hit">的中重視</option><option value="balance">バランス</option><option value="hole">波乱展開</option><option value="narrow">激絞り</option></select></label></div>
   <div class="be241-filters" role="group" aria-label="結果の表示を絞り込む"><button type="button" data-filter="all" class="on">すべて</button><button type="button" data-filter="hit">🎯 的中</button><button type="button" data-filter="miss">不的中</button><button type="button" data-filter="head">1着予想的中</button></div>
@@ -29,5 +30,5 @@
   <section class="be241-rules" id="be241Trust"><h2>判定のルール</h2><p><b>🎯的中</b>は、締切前にGitHubへ固定された当該モードの買い目に、公式確定3連単が存在した場合だけ表示。<b>1着予想的中</b>は別指標で、頭だけ的中でも🎯にはなりません。</p><p>払戻はBOAT RACE公式の100円あたり金額。仮想1万円配分の払戻・差益は固定した配分での計算例で、実購入や確定利益ではありません。オッズはここでは確定配当と区別し、締切前予想時点のオッズを書き換えません。</p><p>検証対象は<b>サイト限定</b>で、正式Freshの結果・払戻の未見ロックとは分離しています。結果がまだ登録されていないレースは、この一覧に出さず「未的中」扱いもしません。</p></section>
 </main>
 <nav class="be241-bottom" aria-label="メインナビ"><a href="./index.html"><span>⌂</span>ホーム</a><a href="./index.html"><span>≋</span>予想</a><a class="current" href="./results.html" aria-current="page"><span>✓</span>結果</a><a href="./ai-simulation.html"><span>◎</span>AI自走</a></nav>
-<script defer src="./assets/boat_edge_v241_results.js?v=241&amp;rev=247"></script>
+<script defer src="./assets/boat_edge_v241_results.js?v=241&amp;rev=247&amp;patch=250"></script>
 </body></html>
