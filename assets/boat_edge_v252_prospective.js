@@ -22,24 +22,24 @@
         keys.some(k=>typeof r.outcomes[k]!=='boolean'))return null;
      seen.add(r.race_key);raceDays.add(r.race_key.slice(0,8));
    }
-   if(raceDays.size!==1)return null; // mixed dates must be clearly represented before aggregation.
+   const days=[...raceDays].sort();if(!days.length)return null;
    const output=[];
    for(const k of keys){
      const x=d.comparisons[k];
      const n=x?.races,hit=x?.hits??x?.hit,points=x?.points??x?.avg_points;
      if(n!==d.scored_total||!int(hit)||hit>n||!int(points)||points!==(k==='coverage15'?15:10))return null;
      const actual=rows.filter(r=>r.outcomes[k]).length;
-     if(actual!==hit)return null;
+     if(actual!==hit||!Number.isFinite(x.hit_rate_percent)||Math.abs(x.hit_rate_percent-100*hit/n)>0.1)return null;
      const pairedGain=rows.filter(r=>r.outcomes[k]&&!r.outcomes.hit10).length;
      const pairedLoss=rows.filter(r=>!r.outcomes[k]&&r.outcomes.hit10).length;
      if(paired&&(
        x.paired_gain!==pairedGain||x.paired_loss!==pairedLoss||
-       x.changed_races!==rows.filter(r=>r.outcomes[k]!==r.outcomes.hit10||k!=='hit10').length
+       !int(x.changed_races)||x.changed_races>n||(k==='hit10'&&x.changed_races!==0)
      ))return null;
      output.push({key:k,points,n,hits:hit,rate:100*hit/n,gain:pairedGain,loss:pairedLoss});
    }
    const control=output.find(x=>x.key==='hit10');
-   return {day:[...raceDays][0],n:d.scored_total,control,rows:output,
+   return {day:days.length===1?days[0]:days[0]+'〜'+days[days.length-1],days,n:d.scored_total,control,rows:output,
      paired,source:scope,label:paired?'同じ10点の前向き比較':'10点と15点を分けた前向き比較'};
  }
  const check236=d=>evaluate(d,V236,S236,KEYS236,false);
