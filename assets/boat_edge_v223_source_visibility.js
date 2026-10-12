@@ -111,6 +111,9 @@ async function refresh(){
    node.innerHTML='<summary><b>直前情報の取得状況</b><span class="be223-state" role="status"></span><span class="be223-flags" aria-label="欠場・取消と3連単オッズの取得状況"><span data-be223-flag="scratch"></span><span data-be223-flag="odds"></span></span><span class="be223-exhibition-flags" aria-label="展示6艇と独立オリ展取得状態"><span data-be223-ex="time"></span><span data-be223-ex="original"></span><span data-be223-ex="boaters"></span><span data-be223-ex="biyori"></span></span></summary><div class="be223-rows"></div><p>取得時点の監査表示。欠場・取消の確定証明、買い目の推奨、未見Fresh合格ではありません。オリ展の取得時刻は当サイトへの取り込み時刻です。</p>';
    host.prepend(node);
   }
+  // V321: a race-view re-render can replace its summary host. Reattach the
+  // existing source panel instead of silently updating a detached old node.
+  if(node.parentElement!==host)host.prepend(node);
   if(lastKey!==key){node.open=false;lastKey=key;}
   node.dataset.raceKey=key; // V250: prevent a previous race's source chip being reused for the selected race
   node.dataset.level=result.level;
