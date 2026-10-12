@@ -39,6 +39,26 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v23*.py' -q
+      - name: Ensure obsolete UI installers cannot race current owners
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v298*.py' -q
+      - name: Verify strict V256 official 120-price source provenance (fail closed)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v256_odds_guard.py' -v
+      - name: Enforce retired Actions schedules and inspect potential concurrent main writers
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v299_workflow_inventory.py' -v
+          python3 scripts/boat_edge_v299_workflow_inventory.py
+      - name: Guard V254 site-only research with synthetic formal-cohort fixtures
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          PYTHONPATH=tests python3 -m unittest -v \
+            test_boat_edge_v254_third_tail.ProspectiveThirdTail.test_formal_first100_missing_nonzero_or_wrong_type_fails_before_site_reads \
+            test_boat_edge_v254_third_tail.ProspectiveThirdTail.test_empty_formal_first100_is_accepted_without_unlocking \
+            test_boat_edge_v254_third_tail.ProspectiveThirdTail.test_bad_formal_guard_blocks_even_research
       - name: Test JST rollover and virtual balance display
         run: node --test tests/test_boat_edge_v271_health.cjs
       - name: Check live odds invalidation without fetching results

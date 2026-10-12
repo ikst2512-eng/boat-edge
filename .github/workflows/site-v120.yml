@@ -1,12 +1,9 @@
 name: BOAT EDGE V120 Final History Stable
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v120.yml"
+  # V303: superseded scheduled source/UI/audit writer; manual emergency recovery only.
+  # Keep implementation and historical files unchanged; successor workflows remain active.
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write

@@ -1,12 +1,9 @@
 name: BOAT EDGE V182 - Fix V181 and Scratch No Bet + 10-20 Audit
 
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/BOAT_EDGE_V182_SCRATCH_AND_MIDODDS.yml']
+  # V297: legacy restoration must not run on a timer or on a main push.
+  # Retain explicit manual emergency recovery only; V235 owns current automation.
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 
 permissions:
   contents: write

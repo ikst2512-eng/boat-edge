@@ -42,6 +42,11 @@ class V256OfficialOddsSafety(unittest.TestCase):
             URL.replace("jcd=14","jcd=18"),
             URL.replace("hd=20261012","hd=20261011"),
             URL+"#fragment",
+            URL+"&ignored",  # malformed flag was silently dropped by parse_qs
+            URL+"&ignored=1",
+            URL+"&rno=8",
+            URL+"&rno=",
+            URL.replace("jcd=14", "jcd=14;unexpected=1"),
         ):
             self.assertFalse(official_url_matches(KEY,bad))
 
@@ -59,6 +64,12 @@ class V256OfficialOddsSafety(unittest.TestCase):
         altered=valid_document()
         altered["source"]="unverified"
         self.assertFalse(is_safe_record(altered,KEY))
+        # float(True) and float("9.9") must not certify a 120-odds source.
+        for fake_price in (True, False, "9.9", None, float("inf"), float("nan")):
+            altered=valid_document()
+            altered["trifecta_odds"]["1-2-3"]=fake_price
+            with self.subTest(fake_price=repr(fake_price)):
+                self.assertFalse(is_safe_record(altered,KEY))
 
     def test_rejection_always_blanks_prices_and_never_inferrs_scratch(self):
         bad=rejected_document(key=KEY,url=URL,deadline="12:19",
