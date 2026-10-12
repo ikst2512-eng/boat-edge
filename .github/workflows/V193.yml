@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/V193.yml']
   workflow_dispatch:
-  schedule:
-    - cron: '10,40 0-14,23 * * *' # JST 08:10-23:40; future scheduled retries
+  # Scheduled V193 retries retired after V193 proof and V71 guard went live.
+  # Manual verification remains available when collector provenance changes.
 
 permissions:
   contents: write
@@ -59,6 +59,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # V71 independently enforces strict 120-combination DOM validation
+          # on every odds fetch. After installation, V193's historical
+          # self-patching V167 copy must not re-run or publish stale evidence.
+          if grep -Fqx '              verify_official_dom_price_mapping(html)' .github/workflows/site-odds.yml; then
+            echo V193_RETIRED_DUPLICATE_GUARD_ALREADY_ACTIVE
+            touch /tmp/v193_waiting
+            exit 0
+          fi
           PYTHONPATH="$PWD" python3 scripts/site_odds_v167_live_audit.py
           python3 - <<'PYGATE'
           import datetime,json
