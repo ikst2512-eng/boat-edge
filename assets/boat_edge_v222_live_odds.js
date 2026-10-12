@@ -7,6 +7,14 @@ const DAY=()=>new Date(Date.now()+9*3600000).toISOString().slice(0,10).replaceAl
 const COMBO=/^[1-6]-[1-6]-[1-6]$/;
 const KEY=/^20\d{6}-\d{2}-\d{2}$/;
 const OFFICIAL=/^https:\/\/www\.boatrace\.jp\/owpc\/pc\/race\/odds3t\?/;
+const sourceKeyMatches=(url,key)=>{
+ const parts=String(url||'').split('?')[1]?.split('&')||[];
+ const get=name=>parts.filter(part=>part.startsWith(name+'=')).map(part=>part.slice(name.length+1));
+ const hd=get('hd'),jcd=get('jcd'),rno=get('rno');
+ return hd.length===1&&hd[0]===key.slice(0,8)&&
+  jcd.length===1&&/^\d{1,2}$/.test(jcd[0])&&Number(jcd[0])===Number(key.slice(9,11))&&
+  rno.length===1&&/^\d{1,2}$/.test(rno[0])&&Number(rno[0])===Number(key.slice(12,14));
+};
 let currentKey='',signature='',quality='',busy=false;
 const race=()=>{try{return typeof state!=='undefined'?state?.race||null:null;}catch(_){return null;}};
 const due=r=>{
@@ -18,7 +26,8 @@ const due=r=>{
 const validate=(d,r,now)=>{
  if(!d||typeof d!=='object'||d.race_key!==r.race_key||d.schema_version!=='boat-edge-site-odds-v71'||
   d.phase!=='PRE_RESULT_PURCHASE_ONLY'||d.results_seen!==false||d.scoring!==false||
-  !OFFICIAL.test(String(d.source_url||''))||String(d.deadline||'')!==String(r.meta?.deadline||''))return {quality:'invalid',signature:''};
+  !OFFICIAL.test(String(d.source_url||''))||!sourceKeyMatches(d.source_url,r.race_key)||
+  String(d.deadline||'')!==String(r.meta?.deadline||''))return {quality:'invalid',signature:''};
  const t=Date.parse(d.fetched_at||''),deadline=due(r);
  if(!Number.isFinite(t)||!Number.isFinite(deadline)||t>deadline||t>now+30000)return {quality:'invalid',signature:''};
  const odds=d.trifecta_odds;
