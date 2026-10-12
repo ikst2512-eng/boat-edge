@@ -898,7 +898,7 @@ function renderTicketRows(rows,win,postResult=false,officialPayout100=null){
       const estimate=hasOdds&&stake?`的中時想定払戻 ${money(Math.round(stake*odd))}`:'払戻概算：オッズ未取得';
       details=`現在の参考配分 ${money(stake)} / ${estimate}`;
     }
-    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em>${pct(x.p)}</em><small>${postResult?(hasOdds?'確定 '+odd.toFixed(1)+'倍':'確定倍率－'):(hasOdds?odd.toFixed(1)+'倍':'オッズ－')}</small><span class="be140-ticket-money">${details}</span></div>`;
+    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em title="未校正の相対順位指標。的中確率ではありません。">相対 ${pct(x.p)}</em><small>${postResult?(hasOdds?'確定 '+odd.toFixed(1)+'倍':'確定倍率－'):(hasOdds?odd.toFixed(1)+'倍':'オッズ－')}</small><span class="be140-ticket-money">${details}</span></div>`;
   }).join('');
 }
 /* BOAT_EDGE_V181_FIRST_VIEW_IMMUTABLE_AND_FINAL_ONLY */
@@ -1074,7 +1074,7 @@ async function renderPredictionModes(race,pred){
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
-  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開確率を軸に表示</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部信頼度</small><strong>${conf}%</strong></div></div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開順位の参考表示（確率は未校正）</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部スコア（未校正）</small><strong>${conf}<span style="font-size:.65em;font-weight:700"> / 100</span></strong></div></div><div class="be255-score-note">内部スコアはランク・順位から算出した評価値。的中率・1着確率・3連単確率ではありません。買い目の相対%も未校正で、結果確定後に変更しません。</div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
   $$("[data-be181-choice]",panel).forEach(b=>b.onclick=()=>{
@@ -1093,7 +1093,7 @@ async function renderMainPick(race,pred,preAdjusted=null){
   const formal=pred.mode==="formal";
   const stage=adjusted.used.length?adjusted.used.join(" → "):"出走表";
   box.classList.toggle("be118-reference",!formal);
-  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"最新予想CURRENT方針・参考"}</small><b>${esc(top.combo)}</b><span>${pct(top.p)} / 勝負度 ${esc(pred.grade||"－")} / ${esc(stage)}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
+  box.innerHTML=`<div><small>${formal?"正式CURRENT メイン予想":"最新予想CURRENT方針・参考"}</small><b>${esc(top.combo)}</b><span>相対順位 ${pct(top.p)}（未校正） / 勝負度 ${esc(pred.grade||"－")} / ${esc(stage)}</span></div><em>${formal?"正式CURRENT":"参考"}</em>`;
 }
 async function augmentBuyBoard(race){
   const key=race?.race_key;if(!key)return;
