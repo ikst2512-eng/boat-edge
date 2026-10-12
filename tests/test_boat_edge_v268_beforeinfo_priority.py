@@ -5,7 +5,7 @@ from pathlib import Path
 
 source=Path('.github/workflows/auto-update.yml').read_text(encoding='utf8')
 start=source.index('          targets.sort(key=lambda row:')
-end=source.index('\n\n          def before_task',start)
+end=source.index('\n\n          # V272:',start) if '\n\n          # V272:' in source[start:] else source.index('\n\n          def before_task',start)
 line=source[start:end]
 assert 'abs(row[2])' in line and 'row[0],row[1]' in line
 sort_code='\n'.join(x[10:] for x in line.splitlines())
