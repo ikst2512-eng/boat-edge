@@ -1,31 +1,31 @@
 {
-  "awaiting_result": 3,
+  "awaiting_result": 0,
   "by_band": {
     "10-20": {
-      "candidate_top15_hits": 12,
-      "candidate_top20_hits": 12,
+      "candidate_top15_hits": 13,
+      "candidate_top20_hits": 13,
       "hit": {
         "baseline": {
-          "10": 11,
-          "3": 5,
-          "5": 7
+          "10": 12,
+          "3": 6,
+          "5": 8
         },
         "candidate": {
-          "10": 11,
-          "3": 4,
-          "5": 8
+          "10": 12,
+          "3": 5,
+          "5": 9
         },
         "v180": {
-          "10": 11,
-          "3": 4,
-          "5": 8
+          "10": 12,
+          "3": 5,
+          "5": 9
         }
       },
-      "races": 20
+      "races": 21
     },
     "20-50": {
-      "candidate_top15_hits": 13,
-      "candidate_top20_hits": 14,
+      "candidate_top15_hits": 14,
+      "candidate_top20_hits": 15,
       "hit": {
         "baseline": {
           "10": 8,
@@ -43,7 +43,7 @@
           "5": 3
         }
       },
-      "races": 25
+      "races": 26
     },
     "<10": {
       "candidate_top15_hits": 11,
@@ -69,7 +69,7 @@
     },
     ">50": {
       "candidate_top15_hits": 9,
-      "candidate_top20_hits": 11,
+      "candidate_top20_hits": 12,
       "hit": {
         "baseline": {
           "10": 3,
@@ -87,29 +87,29 @@
           "5": 1
         }
       },
-      "races": 40
+      "races": 41
     },
     "all": {
-      "candidate_top15_hits": 45,
-      "candidate_top20_hits": 48,
+      "candidate_top15_hits": 47,
+      "candidate_top20_hits": 51,
       "hit": {
         "baseline": {
-          "10": 33,
-          "3": 14,
-          "5": 21
+          "10": 34,
+          "3": 15,
+          "5": 22
         },
         "candidate": {
-          "10": 33,
-          "3": 10,
-          "5": 21
+          "10": 34,
+          "3": 11,
+          "5": 22
         },
         "v180": {
-          "10": 33,
-          "3": 9,
-          "5": 22
+          "10": 34,
+          "3": 10,
+          "5": 23
         }
       },
-      "races": 97
+      "races": 100
     },
     "unknown": {
       "candidate_top15_hits": 0,
@@ -2517,6 +2517,33 @@
       "winning_combo": "1-2-4"
     },
     {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "283fef63ba2f90b83de4bb04e50b33b5e99a3714",
+      "commit_time": "2026-10-12T05:58:07+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 1880,
+      "race_key": "20261012-09-10",
+      "winning_combo": "1-4-3"
+    },
+    {
       "band": ">50",
       "candidate_top15_hit": false,
       "candidate_top20_hit": false,
@@ -2542,6 +2569,33 @@
       "payout_yen_per_100": 12030,
       "race_key": "20261012-11-04",
       "winning_combo": "3-4-1"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "283fef63ba2f90b83de4bb04e50b33b5e99a3714",
+      "commit_time": "2026-10-12T05:58:07+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 4070,
+      "race_key": "20261012-11-10",
+      "winning_combo": "1-5-3"
     },
     {
       "band": "<10",
@@ -2650,6 +2704,33 @@
       "payout_yen_per_100": 6740,
       "race_key": "20261012-14-10",
       "winning_combo": "5-3-2"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "283fef63ba2f90b83de4bb04e50b33b5e99a3714",
+      "commit_time": "2026-10-12T05:58:07+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 20910,
+      "race_key": "20261012-16-09",
+      "winning_combo": "2-5-1"
     },
     {
       "band": "10-20",
@@ -2762,6 +2843,6 @@
   ],
   "schema_version": "boat-edge-v185-post-settlement-independent-site-shadow-v1",
   "scope": "SITE_REFERENCE_RESEARCH_NOT_FORMAL_FRESH",
-  "settled_verified": 97,
+  "settled_verified": 100,
   "status": "RESEARCH_ONLY"
 }
