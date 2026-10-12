@@ -20,3 +20,9 @@
 #be223Source [data-quality="wait"],#be223Source [data-quality="stale"],#be223Source [data-quality="unknown"]{color:#98652a}
 #be223Source p{padding:3px 12px 10px;margin:0;color:#69788a;font-size:10px;line-height:1.5}
 @media(max-width:480px){#be223Source .be223-row{grid-template-columns:91px minmax(0,1fr)}#be223Source summary{padding:8px 10px}}
+
+/* V282 A31: independent exhibition states; unverified data never appear confirmed */
+#be223Source .be223-exhibition-flags{display:flex;flex-wrap:wrap;gap:5px;flex-basis:100%;min-width:0}
+#be223Source .be223-exhibition-flags span{padding:5px 8px;border:1px solid #e1e7f0;border-radius:7px;background:#f8fafc;font-size:11px;line-height:1.5;overflow-wrap:anywhere;max-width:100%}
+#be223Source .be223-exhibition-flags [data-quality="ok"]{border-color:#b3dcc9;background:#eefaf4}
+#be223Source .be223-exhibition-flags [data-quality="wait"],#be223Source .be223-exhibition-flags [data-quality="stale"],#be223Source .be223-exhibition-flags [data-quality="unknown"]{border-color:#eed1aa;background:#fff7ed}

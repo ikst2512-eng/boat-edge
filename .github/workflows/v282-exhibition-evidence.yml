@@ -1,0 +1,47 @@
+name: BOAT EDGE V282 - Full Six Boat Exhibition Evidence
+on:
+  push:
+    branches: [main, fix/v282-six-boat-exhibition-evidence]
+    paths:
+      - 'assets/boat_edge_v223_source_visibility.js'
+      - 'assets/boat_edge_v223_source_visibility.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v282_exhibition_evidence.cjs'
+      - '.github/workflows/v282-exhibition-evidence.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v223_source_visibility.js'
+      - 'assets/boat_edge_v223_source_visibility.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v282_exhibition_evidence.cjs'
+      - '.github/workflows/v282-exhibition-evidence.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v282-six-boat-source-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  evidence-only-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test all six and third-party evidence separation
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v223_source_visibility.js
+          node tests/test_boat_edge_v223_source.cjs
+          node tests/test_boat_edge_v282_exhibition_evidence.cjs
+          node tests/test_boat_edge_v260_original_sources.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v246_pages_cache.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V282_FORMAL_RESULT_UNSEEN_LOCK_PASS')
+          PY
+          git diff --check
