@@ -6,10 +6,16 @@ on:
     paths:
       - 'BOAT_EDGE_AUTODEV_TASKS.md'
       - '.github/workflows/v278-guarded-ui-queue.yml'
+      - 'autopilot.html'
+      - 'assets/boat_edge_v278_next_watch.js'
+      - 'tests/test_boat_edge_v278_next_watch.cjs'
   pull_request:
     paths:
       - 'BOAT_EDGE_AUTODEV_TASKS.md'
       - '.github/workflows/v278-guarded-ui-queue.yml'
+      - 'autopilot.html'
+      - 'assets/boat_edge_v278_next_watch.js'
+      - 'tests/test_boat_edge_v278_next_watch.cjs'
 permissions:
   contents: read
 concurrency:
@@ -51,3 +57,10 @@ jobs:
           print('V280_UI_QUEUE_PROGRESS_PASS',flags)
           PY
           git diff --check
+      - name: Check source-dated next-race hint on iPhone dashboard
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v278_next_watch.js
+          node tests/test_boat_edge_v278_next_watch.cjs
+          node tests/test_boat_edge_v254_tail_status.cjs
+
