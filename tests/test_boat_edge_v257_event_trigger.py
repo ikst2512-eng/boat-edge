@@ -34,6 +34,24 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_ONLY_PRE_RESULT_RESEARCH_STAGED",workflow)
         self.assertIn("V254_ONLY_SITE_RESEARCH_SCORE_STAGED",workflow)
 
+    def test_v271_single_owner_scheduled_result_and_readiness(self):
+        # Retired writers may be manually launched for recovery, but not
+        # on the same 5-minute cron as their verified successors.
+        legacy=[
+          ROOT/'.github/workflows/site-results.yml',
+          ROOT/'.github/workflows/BOAT_EDGE_V215_DEADLINE_READINESS.yml',
+        ]
+        for path in legacy:
+            text=path.read_text(encoding='utf-8')
+            self.assertIn('workflow_dispatch:',text,path.name)
+            self.assertNotIn('  schedule:',text,path.name)
+        self.assertIn('  schedule:',
+            (ROOT/'.github/workflows/site-v109.yml').read_text(encoding='utf-8'))
+        self.assertIn('  schedule:',
+            (ROOT/'.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text(encoding='utf-8'))
+        self.assertIn('  schedule:',
+            (ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8'))
+
     def temp_root(self):
         holder=tempfile.TemporaryDirectory()
         root=Path(holder.name)
