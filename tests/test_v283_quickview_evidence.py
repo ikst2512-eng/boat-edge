@@ -47,8 +47,9 @@ class QuickviewEvidenceV283(unittest.TestCase):
 
     def test_rebuilds_six_boat_table_after_dom_replacement(self):
         source = (ROOT / "assets/boat_edge_v206_quickview.js").read_text(encoding="utf-8")
-        self.assertIn("lastTable!==data||!$('.be206-table tbody',box)", source)
+        self.assertIn("lastTable!==data||(layout==='lanes'?!$('.be206-matrix tbody',box):!$('.be206-table tbody',box))", source)
         self.assertIn("innerHTML=format(rows)", source)
+        self.assertIn("innerHTML=matrix(rows)", source)
 
     def test_partial_six_boat_arrays_are_not_zeroed(self):
         source = (ROOT / "assets/boat_edge_v206_quickview.js").read_text(encoding="utf-8")
@@ -57,7 +58,7 @@ class QuickviewEvidenceV283(unittest.TestCase):
 
     def test_cache_bust_link(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=288"), 1)
+        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=299"), 1)
 
 if __name__ == "__main__":
     unittest.main()
