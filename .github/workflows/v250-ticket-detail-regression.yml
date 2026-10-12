@@ -1,0 +1,91 @@
+name: BOAT EDGE V250 - SHA Verified Ticket Detail Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - results-detail.html
+      - .github/workflows/v250-ticket-detail-regression.yml
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['BOAT EDGE V241 - Readable Verified Results and Mobile Home']
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v250-ticket-detail-readonly-audit
+  cancel-in-progress: true
+
+jobs:
+  ticket-detail-audit:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout current site-only frozen proof without writing
+        uses: actions/checkout@v4
+      - name: Validate static mobile view, JS syntax, source isolation, and all saved stakes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_V250'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import hashlib, json, re
+          doc=Path('results-detail.html').read_text(encoding='utf-8')
+          class Scan(HTMLParser):
+              def __init__(self):
+                  super().__init__();self.ids=[];self.links=[]
+              def handle_starttag(self,tag,attrs):
+                  values=dict(attrs)
+                  if values.get('id'):self.ids.append(values['id'])
+                  if tag=='a' and values.get('href'):self.links.append(values['href'])
+          d=Scan();d.feed(doc)
+          assert len(d.ids)==len(set(d.ids)),'V250_DUPLICATE_ID'
+          assert all(s in d.ids for s in ('mode','day','kind','races','count','wins','heads','scope','refresh'))
+          assert './index.html' in d.links and './results.html' in d.links
+          assert 'crypto.subtle.digest' in doc and 'SHA-256' in doc and 'v232_cohort' in doc
+          assert 'data/site_autopilot/v241_results_current.json' in doc
+          assert 'formaldeadline_result' not in doc and 'www.boatrace.jp/owpc/' not in doc
+          script=re.findall(r'<script>([\s\S]*?)</script>',doc)
+          assert len(script)==1,'V250_INLINE_SCRIPT_COUNT'
+          Path('/tmp/boat_edge_v250_ticket_detail.js').write_text(script[0],encoding='utf-8')
+          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=f.get('guards') or {}
+          assert guards.get('results_seen') is False and guards.get('unlock') is False and guards.get('scoring') is False and guards.get('RESULT_UNLOCK_TOKEN') is None,'FORMAL_GUARD_OPEN'
+          report=json.loads(Path('data/site_autopilot/v241_results_current.json').read_text(encoding='utf-8'))
+          assert report.get('schema')=='BOAT_EDGE_V241_VERIFIED_SITE_RESULTS_V1'
+          assert report.get('scope')=='VERIFIED_POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH'
+          assert report.get('formal_result_access') is False and report.get('real_or_paper_wagers_placed')==0
+          rows=report['rows']
+          assert len(rows)==report['settled_verified_races']
+          mode_set=('hit','balance','hole','narrow')
+          for row in rows:
+              key=row['race_key']
+              assert re.fullmatch(r'20\d{6}-\d{2}-\d{2}',key),'INVALID_RACE_KEY'
+              p=Path('data/site_autopilot/v232_cohort')/(key+'.json')
+              raw=p.read_bytes()
+              assert hashlib.sha256(raw).hexdigest()==row['precommitted_sha256'],'PRECOMMIT_SHA_DRIFT'
+              saved=json.loads(raw)
+              assert saved['scope']=='SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH'
+              assert saved['race_key']==key and saved['model_id']==row['model_id']
+              assert saved.get('formal_results_seen') is False and saved.get('formal_gate_unlocked') is False
+              assert saved['deadline_jst']==row['deadline_jst']
+              assert bool(row['top10_hit'])==(row['winning_combo'] in saved['top10'])
+              assert bool(row['head_hit'])==(str(saved['head_top1'])==row['winning_combo'][0])
+              for mode in mode_set:
+                  bets=saved['frozen_mode_tickets'][mode]
+                  actual=row['mode_outcomes'][mode]
+                  assert sum(b['stake_yen'] for b in bets)==10000
+                  assert len(bets)==actual['tickets'] and len({b['combo'] for b in bets})==len(bets)
+                  assert all(b['stake_yen']>=0 and b['stake_yen']%100==0 for b in bets)
+                  winning=sum(b['stake_yen'] for b in bets if b['combo']==row['winning_combo'])
+                  assert winning==actual['winning_ticket_stake_yen']
+                  assert winning*row['official_payout_per_100_yen']//100==actual['hypothetical_return_yen']
+                  assert actual['hypothetical_profit_yen']==actual['hypothetical_return_yen']-10000
+          print('V250_TICKET_DETAIL_EVIDENCE_PASS',len(rows),'settled races')
+          PY_V250
+          node --check /tmp/boat_edge_v250_ticket_detail.js
+          echo V250_TICKET_DETAIL_READONLY_REGRESSION_PASS
