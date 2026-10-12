@@ -94,4 +94,6 @@ assert(freezeCoverage.includes('V284_NO_EARLY_MISSING_AS_FINAL_FROZEN_SHA_AUDIT_
 assert(freezeCoverage.includes('V285_SNAPSHOT_METADATA_SOURCE_DRIFT_AND_V229_RECORD_SEPARATED_PASS'));
 const frozenMobile=execFileSync(process.execPath,['tests/test_boat_edge_v286_freeze_evidence.cjs'],{encoding:'utf8',timeout:20000});
 assert(frozenMobile.includes('V286_MOBILE_FREEZE_EVIDENCE_DATE_AND_SOURCE_GATES_PASS'));
+const deadlineSourceLock=execFileSync('python3',['tests/test_boat_edge_v288_deadline_source_lock.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert(deadlineSourceLock.includes('V288_FINISHED_RACE_SOURCE_LOCK_NO_BACKFILL_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
