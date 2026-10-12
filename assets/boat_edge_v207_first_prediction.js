@@ -64,6 +64,7 @@ function evidenceFor(key){
 }
 
 let showFive=false,showTen=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
+let lastListNode=null,awaitingRaceList=false;
 function skeleton(){
  const host=$('#raceView .race-summary');if(!host)return null;
  let box=$('#be207Top');
@@ -144,8 +145,17 @@ function render(){
   $('#be207Top')?.remove();document.documentElement.classList.remove('be207-ready');return;
  }
  const key=r.race_key,st=safety(r),sum=window.BoatEdgeV204.summarize(p),settled=sum.settled;
- if(key!==activeKey){activeKey=key;showFive=false;showTen=false;showAll=false;document.documentElement.classList.remove('be208-details-on');lastSig='';}
- const rows=$$('.be108-ticket-list > .be108-ticket',p);
+ const sourceList=$('.be108-ticket-list',p);
+ // The V108 view can lag a race switch: its original ranked rows have no race
+ // attribute. Never label the old list as a new race while it is still mounted.
+ if(key!==activeKey){
+  awaitingRaceList=Boolean(activeKey)&&(!sourceList||sourceList===lastListNode);
+  activeKey=key;showFive=false;showTen=false;showAll=false;
+  document.documentElement.classList.remove('be208-details-on');lastSig='';
+ }
+ if(awaitingRaceList&&sourceList&&sourceList!==lastListNode)awaitingRaceList=false;
+ if(!awaitingRaceList&&sourceList)lastListNode=sourceList;
+ const rows=$('.be108-ticket-list > .be108-ticket',p);
  const mode=$('.be108-mode-tabs .on',p)?.dataset.be108Mode||'unknown';
  const stage=str('#scenarioHero .scenario-main')||'展開説明は現在確認できません';
  const freeze=window.BoatEdgeV204.sourceLabel?.(p)||'買い目保存状態未確認';
@@ -155,14 +165,15 @@ function render(){
  const provenance=$('.be181-freeze-banner',p)?.dataset?.be181Source||'';
  const rowOK=validTickets(rows);
  const pendingScratch=!settled&&st.kind!=='partial';
- const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,evidence,
+ const ticketViewSynced=Boolean(sourceList&&!awaitingRaceList);
+ const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,ticketViewSynced,evidence,
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
  if(sig===lastSig&&box.classList.contains('ready'))return;
  rendering=true;
  try{
-  const stop=st.kind==='stop'||pendingScratch||!rowOK||!['first','final','latest'].includes(provenance);
+  const stop=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
   box.classList.add('ready');box.dataset.status=st.kind;
   text($('.be207-condition strong',box),st.title||'欠場・取消確認待ち');
   text($('.be207-condition span',box),st.detail||'出走可否未確定');
@@ -190,7 +201,7 @@ function render(){
   text($('[data-be259="metric"]',box),evidenceValue?evidenceLabel+'：'+evidenceValue:'信頼度の独立した検証値は未取得');
   const list=$('.be207-bets',box);list.replaceChildren();
   const count=showAll?rows.length:showTen?10:showFive?5:3;
-  if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent='買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';list.append(w);}
+  if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=!ticketViewSynced?'選択した新しいレースの買い目を照合中。前レースの買い目は表示しません。':'買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';list.append(w);}
   else rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh,settled)));
   const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<5||showAll;
   text(five,showFive?'Top3に戻す':'Top5を表示');
@@ -240,6 +251,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V305-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor};
+window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
