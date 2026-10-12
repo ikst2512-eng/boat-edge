@@ -82,12 +82,47 @@
     }
     return Object.keys(result).length?result:null;
   }
+  /* A25: source-of-record boundaries for original exhibition.
+     The general BOATRACECsv import, official exhibition and the two
+     independent third-party sites are NOT interchangeable.
+     Only provenance actually present in the chosen pre-result race is shown. */
+  function independentExhibitionAudit(r){
+    const audit=r?.source_audit||{};
+    const due=deadline(r);
+    const receipt=(key,provider)=>{
+      const proof=audit.original_exhibition_sources?.[key]||audit[key];
+      const fetched=Date.parse(proof?.fetched_at||'');
+      const source=String(proof?.source||'');
+      const valid=proof?.status==='ok'&&
+        String(proof?.provider||'')===provider&&
+        (!proof?.race_key||proof.race_key===r?.race_key)&&
+        /^https:\/\//.test(source)&&
+        /^[0-9a-f]{64}$/i.test(String(proof?.sha256||''))&&
+        Number.isFinite(fetched)&&Number.isFinite(due);
+      if(!valid)return '未取得（独立サイトの証跡なし）';
+      if(fetched>=due)return time(proof.fetched_at)+' 締切後取得・予想根拠外';
+      return time(proof.fetched_at)+' 個別取得履歴あり（数値相互照合は未証明）';
+    };
+    return {
+      boaters:receipt('boaters','BOATERS'),
+      keiteibiyori:receipt('keiteibiyori','競艇日和'),
+      official:src(r,'beforeinfo')?when(r,'beforeinfo'):'未取得（公式直前情報）',
+      csv:src(r,'original_exhibition')?when(r,'original_exhibition'):'未取得（オリ展CSV）'
+    };
+  }
   function header(r){
     const s=scratchHint(r),ex=src(r,'beforeinfo'),stt=src(r,'stt'),ori=src(r,'original_exhibition'),w=ex?r.beforeinfo?.weather||{}:{};
     const water=[['風',n(w.wind_speed_ms)!==null?val(w.wind_speed_ms,1)+'m/s':'－'],['波',n(w.wave_cm)!==null?val(w.wave_cm,0)+'cm':'－']];
     const badges=[['展示タイム',ex,'beforeinfo'],['展示ST・進入',ex||stt,ex?'beforeinfo':'stt'],['オリ展CSV',ori,'original_exhibition']];
     return `<div class="be203-health be203-${s.type}" role="status"><strong>${esc(s.label)}</strong><span>${esc(s.description)}</span></div>`+
       `<div class="be203-source">${badges.map(([label,yes,key])=>`<span class="${yes?'present':'absent'}">${esc(label)}：${esc(yes?when(r,key):'未取得')}</span>`).join('')}</div>`+
+      (()=>{const proof=independentExhibitionAudit(r);return `<section class="be260-original-source" role="group" aria-label="BOATERSと競艇日和の独立取得履歴">
+        <strong>オリジナル展示の取得元（別々に表示）</strong>
+        <div class="be260-original-grid"><span><b>BOATERS</b>${esc(proof.boaters)}</span><span><b>競艇日和</b>${esc(proof.keiteibiyori)}</span>
+        <span><b>公式直前情報</b>${esc(proof.official)}（上記2サイトのオリ展とは別）</span>
+        <span><b>オリ展CSV</b>${esc(proof.csv)}（上記2サイトの独立照合ではない）</span></div>
+        <small>数値の一致確認・独立照合は証拠が揃うまで未確認と表示。取得できない値は予想へ補完しません。</small>
+      </section>`;})()+
       `<div class="be203-water">${water.map(([k,v])=>`<span>${esc(k)} <b>${esc(v)}</b></span>`).join('')}<small>オリ展CSVはBOATERS・競艇日和の二重照合とは別</small></div>`;
   }
   /* A23: an at-a-glance six-boat strip from ALREADY DISPLAYED metrics.
@@ -177,6 +212,6 @@
     setInterval(()=>{if(!document.hidden)tick();},4000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();if(safeKey(race()?.race_key))fetchScratch(race());}});
   }
-  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest,exhibitionGaps,quickSix:be258QuickSix};
+  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest,exhibitionGaps,quickSix:be258QuickSix,independentExhibitionAudit};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
