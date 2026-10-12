@@ -11,6 +11,7 @@ const TRIPLE=/^[1-6]-[1-6]-[1-6]$/;
 const PREFIX='./results-detail.html?race=';
 const MODES=Object.freeze({hit:'的中重視',balance:'バランス',hole:'波乱展開',narrow:'激絞り'});
 const modeAllowed=m=>Object.prototype.hasOwnProperty.call(MODES,m);
+const syncedMode=(active,previous,selected)=>modeAllowed(active)&&active!==previous?active:selected;
 const yen=n=>(typeof n==='number'&&Number.isSafeInteger(n)&&n>=0)?'¥'+n.toLocaleString('ja-JP'):'未確認';
 const validKey=k=>typeof k==='string'&&KEY.test(k);
 const validCombo=x=>typeof x==='string'&&TRIPLE.test(x)&&new Set(x.split('-')).size===3;
@@ -44,11 +45,11 @@ function resultFor(report,key){
  return matching.length===1&&verifiedRow(matching[0])?matching[0]:null;
 }
 if(typeof module!=='undefined'&&module.exports){
- module.exports={validKey,validCombo,verifiedReport,verifiedRow,resultFor,yen,modeAllowed,MODES};
+ module.exports={validKey,validCombo,verifiedReport,verifiedRow,resultFor,yen,modeAllowed,syncedMode,MODES};
 }
 if(typeof document==='undefined'||typeof window==='undefined')return;
 if(window.BoatEdgeV251)return;
-let report=null, status='loading', loadedAt=0, inflight=false, currentKey='',signature='',selectedResultMode='hit';
+let report=null, status='loading', loadedAt=0, inflight=false, currentKey='',signature='',selectedResultMode='hit',lastPredictionMode=null;
 const find=(s,parent=document)=>parent.querySelector(s);
 const text=(target,s)=>{if(target)target.textContent=String(s)};
 const el=(tag,cls,contents)=>{
@@ -94,7 +95,11 @@ function link(label,key){
 function render(){
  if(!view())return;
  const race=selectedRace(),key=race?.race_key||'';
- if(!validKey(key)){find('#be251Outcome')?.remove();currentKey='';signature='';return}
+ if(!validKey(key)){find('#be251Outcome')?.remove();currentKey='';signature='';lastPredictionMode=null;return}
+ if(key!==currentKey){selectedResultMode='hit';lastPredictionMode=null;signature='';}
+ const activePredictionMode=find('#be207Top .be207-modes button.on')?.dataset?.be207Mode||find('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||null;
+ selectedResultMode=syncedMode(activePredictionMode,lastPredictionMode,selectedResultMode);
+ if(modeAllowed(activePredictionMode))lastPredictionMode=activePredictionMode;
  const row=resultFor(report,key);
  const newSignature=JSON.stringify([key,status,report?.settled_verified_races||0,row?.precommitted_sha256||'',selectedResultMode,row?.mode_outcomes?.[selectedResultMode]?.hit,row?.mode_outcomes?.[selectedResultMode]?.hypothetical_return_yen,row?.official_payout_per_100_yen]);
  if(newSignature===signature&&find('#be251Outcome'))return;
