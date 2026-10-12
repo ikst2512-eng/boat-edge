@@ -78,13 +78,15 @@ async function update(){
  const freshOps=ops?.day_jst===today&&ops?.schema==='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'&&ops?.scope==='SITE_ONLY_PRE_RESULT_OPERATIONS_NOT_FORMAL_FRESH';
  const s=a.site||{}, v=a.prediction||{}, p=(paper&&paper.money)||a.paper||{},f=a.formal||{};
  const at=new Date(a.checked_at);put('stamp',`自走監査 ${isNaN(at.getTime())?'日時未取得':at.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}（日本時間） / 定期取得データ`);
- put('siteState',s.status==='MONITORING_PREDEADLINE'?'稼働中':s.status==='WAITING_FOR_PREDEADLINE'?'待機・監視':s.status==='NEEDS_ATTENTION'?'要修復':'要確認');
- put('sourceState',(s.collector_health_issues||[]).length?'未解消: '+s.collector_health_issues.join('・'):'重大な最新監査エラーは未報告');
+ const siteStatus=freshReport?s.status:(freshOps?ops.status:'UNVERIFIED');
+ put('siteState',siteStatus==='MONITORING_PREDEADLINE'?'稼働中':siteStatus==='WAITING_FOR_PREDEADLINE'?'待機・監視':siteStatus==='NEEDS_ATTENTION'?'要修復':'監査更新待ち');
+ put('sourceState',freshReport?((s.collector_health_issues||[]).length?'未解消: '+s.collector_health_issues.join('・'):'重大な最新監査エラーは未報告'):(freshOps?'当日の監視情報を参照。総合監査 '+String(a.day_jst||'日付未取得')+' 分は過去の記録':'総合監査の当日データが未更新。最新確認待ち'));
  const current=(rd&&rd.day_jst===today)?rd:null;
  const observed=current?.day_observed_races??(freshReport?s.readiness_observed_races:null);
  const verified=current?.day_verified_races??(freshReport?s.readiness_shadow_verified_races:null);
  put('observed',fmt(observed));put('verified',fmt(verified));$('verifiedBar').style.width=(observed>0?Math.min(100,100*verified/observed):0)+'%';
- put('spend',fmt(p.today_spent_yen??p.spent_yen));put('used',fmt(p.today_spent_yen??p.spent_yen)+'円');put('balance',fmt(p.balance_yen)+'円');put('buys',fmt(p.today_paper_races??p.buy_races)+'R');
+ const liveMoney=paper?.money?.day===today?paper.money:null;
+ put('spend',fmt(liveMoney?.today_spent_yen));put('used',fmt(liveMoney?.today_spent_yen)+'円');put('balance',fmt(liveMoney?.balance_yen)+'円');put('buys',fmt(liveMoney?.today_paper_races)+'R');
  put('frozen',freshReport?fmt(s.snapshot_files_today)+'R':'当日未確認');put('guard',freshReport&&s.v226_source_guard_active?'有効':'当日監査待ち');put('odds',freshReport&&s.live_odds_parity_status==='TWO_LIVE_RACES_120_PARITY_PASS'?'120通りPASS':'当日監査待ち');
  const races=$('races');races.replaceChildren();const rows=freshReport?(s.current_window||[]):[];
  if(!rows.length){
@@ -100,8 +102,10 @@ async function update(){
  }
  const ext=(valid?.performance_claim)||v.evidence_claim;
  const m=$('modelGate');m.textContent=ext==='NOT_PROVEN'?'未見改善は未証明': '判定: '+text(ext);m.className=ext==='NOT_PROVEN'?'state bad':'state';
- put('v185',fmt(v.site_v185_evaluated_races)+'R');put('v199',fmt(v.site_v199_evaluated_races)+'R');put('midOdds',fmt(v.site_v185_10_20x_settled_races)+'R');
- const tb=$('comparison');tb.replaceChildren();for(const [label,key] of [['Top3','top3'],['Top5','top5'],['Top10','top10']]){
+ put('v185',freshReport?fmt(v.site_v185_evaluated_races)+'R':'監査待ち');put('v199',freshReport?fmt(v.site_v199_evaluated_races)+'R':'監査待ち');put('midOdds',freshReport?fmt(v.site_v185_10_20x_settled_races)+'R':'監査待ち');
+ const tb=$('comparison');tb.replaceChildren();
+ if(!freshReport){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent='最新の総合監査へ更新待ち。過去の数字を当日実績として表示しません。';tr.appendChild(td);tb.appendChild(tr)}
+ for(const [label,key] of (freshReport?[['Top3','top3'],['Top5','top5'],['Top10','top10']]:[])){
  const m=v.site_v185_candidate_top?.[key]||{};const vals=[label,m.candidate_rate_percent==null?'—':m.candidate_rate_percent+'%',m.control_rate_percent==null?'—':m.control_rate_percent+'%',m.difference==null?'—':(m.difference>0?'+':'')+m.difference+'件'];let tr=document.createElement('tr');for(const val of vals){const td=document.createElement('td');td.textContent=val;tr.appendChild(td)}tb.appendChild(tr);
  }
  put('simGate',paper?.calibration_status||a.paper?.calibration_status||'未見校正が承認されるまで仮想購入しません');
