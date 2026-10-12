@@ -34,6 +34,26 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_ONLY_PRE_RESULT_RESEARCH_STAGED",workflow)
         self.assertIn("V254_ONLY_SITE_RESEARCH_SCORE_STAGED",workflow)
 
+    def test_v273_dispatch_after_durable_commit_before_any_result_scoring(self):
+        v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        source=v235.index('      - name: Immutable pre-result source prediction cohort')
+        dispatch=v235.index('      - name: V273 promptly launch V254')
+        post=v235.index('      - name: Only after pre-result commit - score already confirmed SITE results')
+        self.assertTrue(source < dispatch < post)
+        step=v235[dispatch:post]
+        self.assertIn("if: env.V235_TAKEOVER_VERIFIED == '1'",step)
+        self.assertIn('gh workflow run v254-third-tail-shadow.yml --ref main',step)
+        self.assertIn('V273_DISPATCH_UNAVAILABLE_RESEARCH_CRON_REMAINS_FAIL_CLOSED',step)
+        self.assertNotIn('site_results/',step)
+        self.assertNotIn('git commit',step)
+        self.assertNotIn('git push',step)
+        # The immediately dispatched workflow is independently guarded.
+        research=WORKFLOW.read_text(encoding='utf-8')
+        self.assertIn('workflow_dispatch:',research)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'",research)
+        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",research)
+        self.assertIn('git reset --hard origin/main',research)
+
     def test_v271_single_owner_scheduled_result_and_readiness(self):
         # Retired writers may be manually launched for recovery, but not
         # on the same 5-minute cron as their verified successors.
