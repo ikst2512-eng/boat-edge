@@ -5,7 +5,9 @@ on:
     paths: ['.github/workflows/V234.yml']
   workflow_dispatch:
   schedule:
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
+    # V287: stagger the safe legacy fallback from V235 (minute 02+5n)
+    # and V254 research (minute 03+5n). V234 runs at minute 04+5n.
+    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 0-14,23 * * *'
 permissions:
   contents: write
   actions: write
