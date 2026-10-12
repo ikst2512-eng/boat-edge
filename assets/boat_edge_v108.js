@@ -1020,23 +1020,32 @@ function be181Banner(selection,mode,key,mins,finalSnap){
      `<small>途中の予想更新と締切前の最終保存は別記録。結果確定後に再計算した買い目は表示・的中判定に使用しません。</small></div>`;
 }
 
+/* V258: only the currently selected race and latest async rendering request may touch DOM or freeze snapshots. */
+let be258PredictionSerial=0;
 async function renderPredictionModes(race,pred){
   const key=race?.race_key;if(!key||!pred)return;
-  const stack=$("#tab-pred .section.stack");if(!stack)return;
+  const serial=++be258PredictionSerial;
+  const current=()=>serial===be258PredictionSerial && raceOf()?.race_key===key;
+  const stack=$("#tab-pred .section.stack");if(!stack||!current())return;
 
   const [odds,result]=await Promise.all([oddsFor(key),resultFor(key)]);
+  if(!current())return;
   await loadServerHistoryIndex();
+  if(!current())return;
   const adjusted=await be122ScenarioAdjusted(race,pred);
+  if(!current())return;
   let waveAdjusted=adjusted;
   if(pred.mode!=="formal"){
     const wavePred=be131ExpandedReferencePrediction(race,pred);
     waveAdjusted=await be122ScenarioAdjusted(race,wavePred);
+    if(!current())return;
   }
   const modes=be122ModesFromTickets(adjusted.tickets,odds,waveAdjusted.tickets);
   const mins=raceMinutesToDeadline(race);
   const resultConfirmed=result?.status==="confirmed";
   const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
   const serverRecord=serverSummary?await serverHistoryFor(key):null;
+  if(!current())return;
   const inFinalWindow=!resultConfirmed && mins!==null && mins>=0 && mins<=15;
   const firstShown=be181First(key,modes,mins,resultConfirmed);
 
@@ -1046,6 +1055,7 @@ async function renderPredictionModes(race,pred){
   const localFinal=be181ValidFinal(snap,key)?snap:null;
   const serverSnap=be181ValidFinal(serverRecord?.snapshot,key)?serverRecord.snapshot:null;
   const serverFinal=(resultConfirmed||(mins!==null&&mins<0))?await be181ServerFinal(key):null;
+  if(!current())return;
   const effectiveSnap=serverSnap||serverFinal||localFinal||null;
   const settled=resultConfirmed&&effectiveSnap?(serverSnap&&serverRecord?.settlement?serverRecord.settlement:settle(effectiveSnap,result)):null;
   const win=settled?.winning_combo||null;
@@ -1111,9 +1121,9 @@ async function renderPredictionModes(race,pred){
 
   panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開順位の参考表示（確率は未校正）</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部スコア（未校正）</small><strong>${conf}<span style="font-size:.65em;font-weight:700"> / 100</span></strong></div></div><div class="be255-score-note">内部スコアはランク・順位から算出した評価値。的中率・1着確率・3連単確率ではありません。買い目の相対%も未校正で、結果確定後に変更しません。</div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
-  $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
+  $("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{if(!current())return;localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
   $$("[data-be181-choice]",panel).forEach(b=>b.onclick=()=>{
-    if(resultConfirmed||(mins!==null&&mins<0))return;
+    if(!current()||resultConfirmed||(mins!==null&&mins<0))return;
     writeLocal(BE181_VIEW_KEY+key,b.dataset.be181Choice);
     Promise.resolve().then(()=>afterRace(race));
   });
@@ -1133,6 +1143,7 @@ async function renderMainPick(race,pred,preAdjusted=null){
 async function augmentBuyBoard(race){
   const key=race?.race_key;if(!key)return;
   const odds=await oddsFor(key);
+  if(raceOf()?.race_key!==key)return;
   const rows=$$("#buyBoard .buy-ticket");
   if(!rows.length)return;
   let total=0;
@@ -1185,6 +1196,7 @@ async function renderCourseStats(race){
   const key=race?.race_key;if(!key)return;
   const jcd=String(race?.meta?.venue_code||key.split("-")[1]||"").padStart(2,"0");
   const stats=await courseStatsFor(jcd).catch(()=>null);
+  if(raceOf()?.race_key!==key)return;
   const stack=$("#tab-scenario .section.stack");if(!stack)return;
 
   let panel=$("#be117CourseStats");
@@ -1262,8 +1274,12 @@ async function showHeadPrediction(boat){
 }
 
 /* ---------- event-driven lifecycle ---------- */
+/* V258: latest-render-wins across quick race taps and repeat odds refreshes. */
+let be258RaceRenderSerial=0;
 async function afterRace(race){
-  if(!race?.race_key)return;
+  if(!race?.race_key || raceOf()?.race_key!==race.race_key)return;
+  const serial=++be258RaceRenderSerial;
+  const current=()=>serial===be258RaceRenderSerial&&raceOf()?.race_key===race.race_key;
   lastRaceKey=race.race_key;
   window.BoatEdgeInputAuditV139?.render(race); // V139 UI only; predictor unchanged
   cleanTabs();fixBottom();installBackButtons();enhanceRaceNav(race);
@@ -1293,13 +1309,16 @@ async function afterRace(race){
   markStandouts();
 
   const adjusted=await be122ScenarioAdjusted(race,pred);
+  if(!current())return;
   const adjustedPred=be122PredictionFromAdjusted(pred,adjusted);
 
   await Promise.all([
     renderMainPick(race,pred,adjusted),
     renderCourseStats(race)
   ]);
+  if(!current())return;
   await renderPredictionModes(race,pred);
+  if(!current())return;
 
   if(typeof renderBuyBoard==="function")renderBuyBoard(race,adjustedPred);
   if(typeof renderDirectMode==="function")renderDirectMode(race,adjustedPred);
