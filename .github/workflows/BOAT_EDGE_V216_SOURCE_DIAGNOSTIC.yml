@@ -45,6 +45,18 @@ jobs:
               if file.exists():
                   prior=hashlib.sha256(file.read_bytes()).hexdigest()
                   if prior==item['sha256']:continue
+                  # Preserve the newer V265 audited diagnostic; do not downgrade it to V216.
+                  if relative=='scripts/boat_edge_v215_readiness.py':
+                      import subprocess
+                      pinned=subprocess.check_output(['git','hash-object',str(file)],text=True).strip()
+                      if pinned=='f74705858e9bffbe28b4ce444d29aa8565ed6497':
+                          content=file.read_text(encoding='utf-8')
+                          required=('pre_result_odds_120_incomplete','official_dom_proof_missing',
+                                    'official_beforeinfo_source_status','pre_result_odds_unverified')
+                          if not all(marker in content for marker in required):
+                              raise SystemExit('V216_V265_SOURCE_MARKER_MISSING')
+                          print('V216_V265_PINNED_STRICT_SOURCE_RETAINED')
+                          continue
                   if prior!=OLD_SHA[relative]:raise SystemExit('V216_UNKNOWN_SOURCE_VERSION '+relative)
                   file.write_bytes(data)
                   print('V216_UPGRADED_VERIFIED_V215 '+relative)
@@ -63,6 +75,7 @@ jobs:
           print('V216_PRE_RESULT_SOURCE_DETAILS_SAFE_NO_MODEL_CHANGE_PASS')
           PYV216_INSTALL
            python3 -m py_compile scripts/boat_edge_v215_readiness.py
+           PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v265_readiness_sources.py
            node --check assets/boat_edge_v215_readiness.js
            git add -- ai-simulation.html scripts/boat_edge_v215_readiness.py assets/boat_edge_v215_readiness.js assets/boat_edge_v215_readiness.css
            if git diff --cached --quiet; then echo 'V216_ALREADY_INSTALLED_PASS'; break; fi
