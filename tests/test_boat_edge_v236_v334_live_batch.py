@@ -107,7 +107,7 @@ class V334LiveBatch(unittest.TestCase):
             prepare(root, lock=True)
             report = run(root, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
             self.assertEqual(report["completed_count"], 0)
-            self.assertIn("PRE_RESULT_GUARD_NOT_READY",
+            self.assertIn("RACE_WINDOW_INVALID:PRE_RESULT_GUARD_NOT_READY",
                           [x["reason"] for x in report["window"]["skipped"]])
             self.assertFalse((root / "data/source_captures").exists())
         with tempfile.TemporaryDirectory() as tmp:
