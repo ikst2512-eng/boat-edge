@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 
 from boat_edge_v307_pl120_research import rank_120
@@ -39,6 +40,11 @@ def build_shadow(race):
     for row in racers:
         if not isinstance(row, dict) or type(row.get("lane")) is not int or row["lane"] not in range(1, 7):
             raise ValueError("INVALID_RACER_LANE")
+        if re.search(r"欠場|出走取消|出走取り消し|不出走|scratched|withdrawn",
+                     str(row.get("raw_text", "")), re.IGNORECASE):
+            raise ValueError("WITHDRAWAL_TEXT_RESEARCH_EXCLUDED")
+        if row.get("withdrawn") is True or row.get("cancelled") is True:
+            raise ValueError("WITHDRAWAL_FLAG_RESEARCH_EXCLUDED")
         boat = row["lane"]
         if boat in by_boat:
             raise ValueError("DUPLICATE_RACER_LANE")
@@ -87,6 +93,8 @@ def build_shadow(race):
         "source_metadata_before_deadline": True,
         "source_bytes_independently_authenticated": False,
         "first_git_commit_before_deadline_attested": False,
+        "scratch_and_cancellation_independently_verified": False,
+        "full_latest_prediction": False,
         "boaters_original_exhibition_verified": False,
         "kyoteibiyori_original_exhibition_verified": False,
         "race_results_accessed": False,
