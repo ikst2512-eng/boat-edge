@@ -1,0 +1,96 @@
+name: BOAT EDGE V256 - Mobile Venue First Layout Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/boat_edge_v256_venue_first.js
+      - assets/boat_edge_v256_venue_first.css
+      - .github/workflows/v256-venue-first-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v256-readonly-layout-verification
+  cancel-in-progress: true
+
+jobs:
+  protect-existing-race-data-and-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate mobile-first DOM reorder without data or listener replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v256_venue_first.js
+          node - <<'NODE_V256'
+          'use strict';
+          const assert=require('node:assert/strict'),fs=require('node:fs');
+          const js=fs.readFileSync('assets/boat_edge_v256_venue_first.js','utf8');
+          const css=fs.readFileSync('assets/boat_edge_v256_venue_first.css','utf8');
+          const html=fs.readFileSync('index.html','utf8');
+          const hero={name:'hero'},spot={name:'spotlight'},search={name:'search'},
+                deadline={name:'deadline'},venue={name:'venue'},audit={name:'audit'};
+          const home={children:[hero,spot,search,deadline,venue,audit],moves:0,
+            querySelector(s){return {
+              '.venue-toolbar':toolbar,'#venues':venueList,'.home-command':spot
+            }[s]||null},
+            insertBefore(item,target){
+              assert(item!==target);
+              const old=this.children.indexOf(item),loc=this.children.indexOf(target);
+              assert(old>=0&&loc>=0);
+              this.children.splice(old,1);
+              this.children.splice(this.children.indexOf(target),0,item);
+              this.moves++;this.children.forEach((x,i)=>{
+                x.nextElementSibling=this.children[i+1]||null;
+              });
+            }
+          };
+          for(const item of home.children)item.parentElement=home;
+          home.children.forEach((x,i)=>x.nextElementSibling=home.children[i+1]||null);
+          const toolbar={closest(s){return s==='section'?search:null}};
+          const venueList={closest(s){return s==='section'?venue:null}};
+          const added=[];
+          global.document={
+            readyState:'loading',getElementById(id){return id==='homeView'?home:null},
+            documentElement:{classList:{add(name){added.push(name)}}},
+            addEventListener(){}
+          };
+          global.window={};
+          const {layout}=require('./assets/boat_edge_v256_venue_first.js');
+          assert.equal(layout(),true);
+          assert.deepEqual(home.children.map(x=>x.name),['hero','search','venue','spotlight','deadline','audit']);
+          assert.equal(home.moves,2,'Only original sections may be moved');
+          assert.equal(layout(),true,'Idempotent re-entry');
+          assert.equal(home.moves,2,'Must not reparent already ordered sections');
+          assert(added.includes('be256-venue-first'));
+          assert(!/fetch\s*\(|XMLHttpRequest|localStorage|sessionStorage|innerHTML\s*=|cloneNode\(/.test(js));
+          assert(html.includes('boat_edge_v256_venue_first.js'));
+          assert(html.includes('boat_edge_v256_venue_first.css'));
+          assert(html.includes('boat_edge_v253_home.js'));
+          assert(html.includes('boat_edge_v252_compact.js'));
+          assert(html.includes('boat_edge_v251_race_result.js'));
+          assert(html.includes('results-detail.html'));
+          assert.equal((html.match(/boat_edge_v256_venue_first.js/g)||[]).length,1);
+          assert.equal((html.match(/boat_edge_v256_venue_first.css/g)||[]).length,1);
+          assert(css.includes('@media(max-width:680px)')&&css.includes('hero-main{display:none}'));
+          assert(!css.includes('sourceMini{display:none')&&!css.includes('formalConnectMini{display:none'));
+          assert(!css.includes('venues{display:none')&&!css.includes('racechip{display:none'));
+          console.log('V256_VENUE_FIRST_PRESERVE_HANDLERS_AND_ALL_RACES_PASS');
+          NODE_V256
+          python3 - <<'PY_V256'
+          import json
+          from pathlib import Path
+          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=f['guards']
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert f['formalFirst100']['races']==0
+          print('V256_FORMAL_FRESH_LOCK_PASS')
+          PY_V256
+          git diff --check
