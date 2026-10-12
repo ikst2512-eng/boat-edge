@@ -1,0 +1,48 @@
+name: BOAT EDGE V279 - Explicit Relative Weight Source Labels
+
+on:
+  push:
+    branches: [main, fix/v279-visible-relative-weights]
+    paths:
+      - 'assets/boat_edge_v108.js'
+      - 'index.html'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+      - 'tests/test_boat_edge_v279_relative_weights.cjs'
+      - '.github/workflows/v279-relative-weights.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v108.js'
+      - 'index.html'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+      - 'tests/test_boat_edge_v279_relative_weights.cjs'
+      - '.github/workflows/v279-relative-weights.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v279-ui-label-only-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: UI-only tests and formal lock
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v108.js
+          node tests/test_boat_edge_v279_relative_weights.cjs
+          node tests/test_boat_edge_v255_ui.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          f=json.loads(Path('data/formal_status.json').read_text())
+          g=f['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V279_FORMAL_GUARDS_READ_ONLY')
+          PY
+          git diff --check
