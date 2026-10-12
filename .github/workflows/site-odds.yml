@@ -149,6 +149,9 @@ jobs:
                   except Exception:
                       unavailable.append(combo)
 
+              # V167: fail closed unless all 120 DOM labels match their odds.
+              from scripts.site_odds_v167_dom_verifier import verify_official_dom_price_mapping
+              verify_official_dom_price_mapping(html)
               # Do not publish a suspicious partial scrape.
               if len(odds) < 80:
                   raise ValueError(f"valid_odds_too_few={len(odds)}")
