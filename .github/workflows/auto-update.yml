@@ -517,6 +517,7 @@ jobs:
           from datetime import datetime, timedelta, timezone
           import requests
           from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
+          from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
