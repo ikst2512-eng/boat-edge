@@ -87,7 +87,7 @@ function matrix(rows){
 function create(root,p){
  let box=$('#be206Quick');if(box)return box;
  box=document.createElement('section');box.id='be206Quick';box.className='be206-quick';
- box.innerHTML=`<div class="be206-title"><div><small>BOAT EDGE / 6艇早見表</small><h2>6艇をひと目で比較</h2></div><span class="be206-compact-tag">比較UI V298</span></div>
+ box.innerHTML=`<div class="be206-title"><div><small>BOAT EDGE / 6艇早見表</small><h2>6艇をひと目で比較</h2></div><span class="be206-compact-tag">比較UI V321</span></div>
  <div class="be206-safety" role="status"><strong></strong><span></span></div>
  <div class="be206-switch" role="group" aria-label="6艇比較する情報"><button type="button" data-be206-metric="base">基本</button><button type="button" data-be206-metric="combo">連対・機力</button><button type="button" data-be206-metric="exhibit">直前・展示</button><button type="button" data-be206-metric="original">オリ展</button></div>
  <div class="be206-layout-switch" role="group" aria-label="比較表の並べ方"><button type="button" data-be206-layout="lanes">6艇横並び</button><button type="button" data-be206-layout="rows">選手ごと</button></div>
@@ -193,7 +193,7 @@ function board(){
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
  renderHead(box,r,mode,st);
  document.documentElement.classList.add('be206-active');
- const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV298';
+ const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV321';
 }
 function tickets(){
  if(!document.documentElement.classList.contains('be206-active'))return;
