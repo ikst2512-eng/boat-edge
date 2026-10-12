@@ -19,7 +19,12 @@ on:
   # waiting for the next scheduled poll. The script still requires verified
   # Git-committed source, a future deadline and no prior results.
   workflow_run:
-    workflows: ['BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort']
+    # V271: the live V235 pipeline also freezes source-proven V232 cohorts.
+    # Keep V232 fallback; V254 always independently verifies Git SHA, commit
+    # timestamp, future deadline and the formal result-unseen lock.
+    workflows:
+      - 'BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort'
+      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
     types: [completed]
   schedule:
     - cron: '3,8,13,18,23,28,33,38,43,48,53,58 0-14,23 * * *'
