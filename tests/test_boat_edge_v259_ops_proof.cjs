@@ -15,10 +15,13 @@ const snapshot={schema_version:'boat-edge-server-site-final-v123',snapshot_windo
  guards:{results_seen:false,unlock:false,scoring:false},stake_plan_version:'V141-10000-PROSPECTIVE',
  race_sha256:'a'.repeat(64),odds_sha256:'b'.repeat(64),modes};
 const raw=Buffer.from(JSON.stringify(snapshot)),hash=crypto.createHash('sha256').update(raw).digest('hex');
-const audit={race_key:key,pass:true,revision_count:1,latest_snapshot_sha256:hash,latest_snapshot_saved_at:saved};
+const audit={race_key:key,pass:true,revision_count:1,latest_snapshot_sha256:hash,latest_snapshot_saved_at:saved,first_audited_at:'2026-10-12T05:24:36.050+00:00',revisions:[{snapshot_sha256:hash}]};
 const evidence={race_key:key,schema:'BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1',
  scope:'SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS',snapshot_sha256:hash,snapshot_saved_at:saved,
  new_snapshot_created_this_run:true,results_seen:false,formal_fresh_unlock:false,scoring:false,
+ evidence_captured_at:'2026-10-12T05:24:36.050+00:00',official_race_card_fetched_at:'2026-10-12T05:24:16+00:00',
+ official_beforeinfo_fetched_at:'2026-10-12T05:24:25+00:00',scratch_checked_at:'2026-10-12T05:24:35+00:00',
+ odds_fetched_at:'2026-10-12T05:24:35+00:00',scratch_sha256:'d'.repeat(64),
  odds_combinations:120,stake_yen_per_mode:10000,
  race_sha256:snapshot.race_sha256,odds_sha256:snapshot.odds_sha256};
 const check=(snap=snapshot,au=audit,ev=evidence,digest=hash,deadline=clock)=>
@@ -35,6 +38,14 @@ assert.equal(check({...snapshot,modes:{...modes,hit:{tickets:[{combo:'1-2-3',sta
 assert.equal(check(snapshot,{...audit,revision_count:2}).state,'invalid');
 assert.equal(check(snapshot,audit,{...evidence,results_seen:true}).state,'invalid');
 assert.equal(check(snapshot,audit,{...evidence,odds_combinations:60}).state,'invalid');
+assert.equal(check({...snapshot,modes:{...modes,hit:{tickets:[{combo:'1-1-2',stake_yen:10000}]}}}).state,'invalid','repeated boat is not a valid 3連単 ticket');
+assert.equal(check({...snapshot,modes:{...modes,hit:{tickets:[{combo:'9-2-3',stake_yen:10000}]}}}).state,'invalid','out of range boat number');
+assert.equal(check(snapshot,{...audit,first_audited_at:'2026-10-12T05:36:00+00:00'}).state,'invalid','audit recorded only after the cutoff');
+assert.equal(check(snapshot,audit,{...evidence,evidence_captured_at:'2026-10-12T05:36:00+00:00'}).state,'invalid','evidence created after cutoff');
+assert.equal(check(snapshot,audit,{...evidence,odds_fetched_at:'2026-10-12T05:08:00+00:00'}).state,'invalid','odds source exceeds verified 15min window');
+assert.equal(check(snapshot,audit,{...evidence,official_beforeinfo_fetched_at:'2026-10-12T05:25:00+00:00'}).state,'invalid','beforeinfo timestamp cannot be later than the snapshot');
+assert.equal(check(snapshot,audit,{...evidence,scratch_sha256:'missing'}).state,'invalid','scratch SHA must be present');
+assert.equal(check(snapshot,{...audit,revisions:[{snapshot_sha256:'a'.repeat(64)}]}).state,'invalid','revision manifest must match snapshot bytes');
 const sched={date:'2026-10-12',venues:[
  {venue:'津',races:[{race_key:'20261012-09-09',deadline:'14:32'},{race_key:'20261012-09-10',deadline:'15:00'}]},
  {venue:'徳山',races:[{race_key:'20261012-18-12',deadline:'14:29'}]}
