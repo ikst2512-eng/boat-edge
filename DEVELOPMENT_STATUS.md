@@ -64,3 +64,6 @@ completion remain unproven. Never report these as delivered by V271.
 - V234/V235 dependency pins change atomically with the shared source.
 - Synthetic URL/redirect fixtures extend the existing development CI. No model
   weights, frozen evidence or formal results are changed.
+- Corrected V234's stale V215 readiness dependency pin after verifying that
+  current source adds scratch freshness and exact 120-odds provenance guards;
+  V235 already pins this strengthened source. No safety checks were removed.
