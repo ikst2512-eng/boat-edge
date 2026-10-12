@@ -52,21 +52,15 @@ jobs:
           def read_json(p):
               return json.loads(Path(p).read_text(encoding="utf-8"))
 
-          v123=Path(".github/workflows/site-v123.yml").read_text(encoding="utf-8")
-          marker="      - name: Build UI-matched FINAL_15M history"
-          start=v123.find(marker)
-          assert start>=0, "V123 build step missing"
-          py_start=v123.find("python - <<'PY'",start)
-          assert py_start>=0, "V123 python heredoc missing"
-          line_start=v123.find("\n",py_start)+1
-          py_end=v123.find("\n          PY",line_start)
-          assert py_end>=0, "V123 python heredoc end missing"
-          server_src=textwrap.dedent(v123[line_start:py_end])
+          # Compare the live browser implementation with CURRENT V133's
+          # site server functions. V123 predates deliberate V131/V132 mode
+          # changes and cannot be the mode-parity oracle anymore.
+          server_src=Path("scripts/site_final_history_v133.py").read_text(encoding="utf-8")
           cut=server_src.find("changed=0;snapshots=0;settled=0")
-          assert cut>=0, "V123 execution boundary missing"
+          assert cut>=0, "V133 source execution boundary missing"
           server_defs=server_src[:cut]
-          server_ns={"__name__":"v123_parity"}
-          exec(compile(server_defs,"v123_extracted.py","exec"),server_ns)
+          server_ns={"__name__":"v133_parity"}
+          exec(compile(server_defs,"v133_extracted.py","exec"),server_ns)
           for name in ["build_fallback","scenario_adjust","modes_from_tickets"]:
               assert callable(server_ns.get(name)), f"V123 function missing: {name}"
 
