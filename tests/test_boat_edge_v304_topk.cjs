@@ -73,4 +73,9 @@ if(typeof process!=='undefined'&&process?.versions?.node){
 /* V317 regression: evidence-detail tap area is at least 44px on Safari. */
 assert(/#be207Top \.be305-evidence-head button\s*\{[^}]*min-height:44px[^}]*min-width:44px/.test(css),'V317 exhibition detail button 44px target');
 console.log('V317_SAFARI_EVIDENCE_TAP_TARGET_PASS');
+/* V322: regression for the six-boat tab runtime crash. */
+const sixBoat=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
+assert(sixBoat.includes("$('.be206-switch button',box).forEach"));
+assert(sixBoat.includes("$('.be206-layout-switch button',box).forEach"));
+console.log('V322_SIXBOAT_SELECTOR_HOTFIX_PASS');
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
