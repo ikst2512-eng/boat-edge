@@ -1,0 +1,150 @@
+name: BOAT EDGE V336 - Prospective SITE Research Capture Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      capture:
+        description: 'Opt in to live research-only public-page capture (false = dry-run)'
+        type: boolean
+        required: true
+        default: false
+  workflow_run:
+    workflows: ['BOAT EDGE 自動更新']
+    types: [completed]
+  # UTC 23:00-14:59 = 08:00-23:59 JST; five-minute best effort, not exact timing.
+  schedule:
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 23,0-14 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v336-site-research-capture-readonly-git
+  cancel-in-progress: false
+
+jobs:
+  prospective-site-research:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Checkout current main without write credentials
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Run bounded V334 prospective research-only batch
+        shell: bash
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: '1'
+          # Schedules and trusted successful source-refresh runs are automatic;
+          # manual dispatch defaults to no network capture.
+          V336_CAPTURE: ${{ github.event_name != 'workflow_dispatch' || inputs.capture }}
+        run: |
+          set -euo pipefail
+          if [[ "$V336_CAPTURE" == "true" ]]; then
+            python3 scripts/boat_edge_v334_live_batch_runner.py --root . --capture --max-races 4 > "$RUNNER_TEMP/v336-report.json"
+          else
+            python3 scripts/boat_edge_v334_live_batch_runner.py --root . --max-races 4 > "$RUNNER_TEMP/v336-report.json"
+          fi
+      - name: Verify exact local frozen bytes and package separate research-only evidence
+        shell: bash
+        env:
+          V336_REPORT: ${{ runner.temp }}/v336-report.json
+          V336_BUNDLE: ${{ runner.temp }}/v336-artifact
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+          import hashlib, json, os, shutil
+
+          root = Path('.').resolve()
+          report_path = Path(os.environ['V336_REPORT'])
+          bundle = Path(os.environ['V336_BUNDLE'])
+          bundle.mkdir(parents=True, exist_ok=True)
+          report = json.loads(report_path.read_text(encoding='utf-8'))
+          if report.get('model_id') != 'BOAT_EDGE_V334_SITE_RESEARCH_BATCH_ONLY':
+              raise SystemExit('V336_WRONG_BATCH_MODEL')
+          if (report.get('results_read') is not False or
+              report.get('formal_fresh_read') is not False or
+              report.get('production_model_changed') is not False or
+              report.get('wagers_authorized') is not False):
+              raise SystemExit('V336_RESEARCH_ONLY_GUARD_FAIL')
+          today = datetime.now(timezone(timedelta(hours=9))).strftime('%Y%m%d')
+          if report.get('window', {}).get('date') != today:
+              raise SystemExit('V336_NONCURRENT_WINDOW_REFUSED')
+          copied = []
+          for row in report.get('completed', []):
+              key = row['race_key']
+              rel = Path(row['path'])
+              expected = Path('data/research_local_v332') / today / (key + '.json')
+              if key[:8] != today or rel != expected or rel.is_symlink():
+                  raise SystemExit('V336_COMPLETED_RACE_PATH_INVALID')
+              raw = rel.read_bytes()
+              if hashlib.sha256(raw).hexdigest() != row['sha256']:
+                  raise SystemExit('V336_FROZEN_FILE_SHA_MISMATCH')
+              frozen = json.loads(raw)
+              if (frozen.get('race_key') != key or
+                  frozen.get('model_id') != 'BOAT_EDGE_V332_LIVE_LOCAL_SHA_RESEARCH_ONLY' or
+                  frozen.get('formal_fresh_read') is not False or
+                  frozen.get('production_eligible') is not False or
+                  frozen.get('results_read') is not False):
+                  raise SystemExit('V336_FROZEN_RESEARCH_GUARD_INVALID')
+              dst = bundle / rel
+              dst.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(rel, dst)
+              copied.append(rel.as_posix())
+              for provider, receipt in frozen['source_receipts'].items():
+                  raw_rel = Path(receipt['relative_path'])
+                  expected_raw = Path('data/source_captures') / today / key / (provider + '.html')
+                  receipt_rel = expected_raw.with_name(provider + '.receipt.json')
+                  if raw_rel != expected_raw or raw_rel.is_symlink() or receipt_rel.is_symlink():
+                      raise SystemExit('V336_RAW_RECEIPT_PATH_INVALID')
+                  body = raw_rel.read_bytes()
+                  if hashlib.sha256(body).hexdigest() != receipt['sha256']:
+                      raise SystemExit('V336_SOURCE_BYTES_SHA_MISMATCH')
+                  for p in (raw_rel, receipt_rel):
+                      out = bundle / p
+                      out.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.copyfile(p, out)
+                      copied.append(p.as_posix())
+          shutil.copyfile(report_path, bundle / 'v336-report.json')
+          manifest = {
+              'scope': 'SITE_ONLY_LOCAL_SHA_RESEARCH_NOT_FORMAL',
+              'day_jst': today,
+              'completed_count': len(report['completed']),
+              'failure_count': len(report['failures']),
+              'files': sorted(set(copied)),
+              'independent_source_authentication_proven': False,
+              'results_read': False, 'model_promotion_authorized': False,
+          }
+          (bundle / 'v336-manifest.json').write_text(
+              json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + '\n',
+              encoding='utf-8')
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a', encoding='utf-8') as f:
+              f.write('### V336 prospective SITE research only\n')
+              f.write(f"Captured freezes: **{len(report['completed'])}**; "
+                      f"failed: **{len(report['failures'])}**; "
+                      f"window candidates: **{len(report['window']['candidates'])}**.\n\n")
+              f.write('An Actions SUCCESS is **not** proof of any freeze. '
+                      'Evidence is local SHA-only; no results, formal scoring, '
+                      'production model promotion or wagers.\n')
+          PY
+      - name: Preserve research evidence without pushing to main
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v336-site-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/v336-artifact/
+            ${{ runner.temp }}/v336-report.json
+          if-no-files-found: warn
+          retention-days: 30
