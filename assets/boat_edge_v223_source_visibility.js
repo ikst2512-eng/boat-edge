@@ -98,7 +98,10 @@ let working=false,lastKey='';
 async function json(path){try{const r=await fetch(path+'?v223='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null;}catch(_){return null;}}
 async function refresh(){
  if(working||document.visibilityState==='hidden'||!document.querySelector('#raceView.active'))return;
- const r=race(),key=String(r?.race_key||'');if(!KEY.test(key)||key.slice(0,8)!==nowDay())return;
+ const r=race(),key=String(r?.race_key||'');
+ const prior=document.querySelector('#be223Source');
+ if(prior?.dataset?.raceKey&&prior.dataset.raceKey!==key)prior.hidden=true;
+ if(!KEY.test(key)||key.slice(0,8)!==nowDay())return;
  working=true;
  try{
   const [latest,scratch,odds]=await Promise.all([
@@ -115,6 +118,7 @@ async function refresh(){
   // existing source panel instead of silently updating a detached old node.
   if(node.parentElement!==host)host.prepend(node);
   if(lastKey!==key){node.open=false;lastKey=key;}
+  node.hidden=false;
   node.dataset.raceKey=key; // V250: prevent a previous race's source chip being reused for the selected race
   node.dataset.level=result.level;
   node.querySelector('.be223-state').textContent=result.summary;
