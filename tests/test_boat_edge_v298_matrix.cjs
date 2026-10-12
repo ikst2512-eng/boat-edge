@@ -51,3 +51,8 @@ if(fs.existsSync('index.html')){
  assert(index.includes('boat_edge_v206_quickview.css?v=299'));
 }
 console.log('V298_SIX_LANE_MATRIX_STRICT_HIGHLIGHT_SYNTHETIC_PASS');
+
+/* V328 race transition must hide prior tickets and head picks until a new list mounts. */
+assert(js.includes('awaitingTicketList'),'V328 race transition must track pending list');
+assert(js.includes("list!==lastTicketList"),'V328 must require a fresh list node');
+assert(js.includes("!awaitingTicketList"),'V328 must block stale head picks');
