@@ -1,0 +1,96 @@
+name: BOAT EDGE V253 - Frozen Ticket Miss Attribution Audit
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v253-prospective-miss-attribution-20261012
+    paths:
+      - 'scripts/boat_edge_v253_miss_audit.py'
+      - 'tests/test_boat_edge_v253_miss_audit.py'
+      - 'tests/test_boat_edge_v253_ui.cjs'
+      - 'assets/boat_edge_v253_misses.js'
+      - 'assets/boat_edge_v253_misses.css'
+      - 'autopilot.html'
+      - '.github/workflows/v253-miss-attribution.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '12,27,42,57 0-14,23 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v253-site-research-miss-audit
+  cancel-in-progress: false
+
+jobs:
+  proof-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Check site-only locked freeze, score source and deterministic miss taxonomy
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v253_miss_audit.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v253_miss_audit.py
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v253_miss_audit.py --check
+          node --check assets/boat_edge_v253_misses.js
+          node tests/test_boat_edge_v253_ui.cjs
+          node tests/test_boat_edge_v252_prospective.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v251_pages_recovery.py' -q
+          git diff --check
+          echo V253_FROZEN_PROVENANCE_AND_MISS_CAUSES_PASS
+
+  publish-site-only-descriptive-proof:
+    if: github.ref == 'refs/heads/main'
+    needs: proof-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Publish only changed verified site-only miss report, concurrency safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          success=false
+          for attempt in 1 2 3 4; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_autopilot/v253_miss_diagnostics_current.json
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v253_miss_audit.py
+            git add -- data/site_autopilot/v253_miss_diagnostics_current.json
+            python3 - <<'PY_V253_STAGE'
+          import subprocess
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert staged==[] or staged==['data/site_autopilot/v253_miss_diagnostics_current.json'],staged
+          print('V253_ONLY_SITE_RESEARCH_REPORT_STAGED',len(staged))
+          PY_V253_STAGE
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V253_NO_CHANGED_SETTLED_SITE_RESEARCH
+              success=true
+              break
+            fi
+            git commit -m 'V253 site-only frozen prospective first second third miss diagnostics'
+            if git push origin HEAD:main; then
+              echo V253_SITE_ONLY_PROOF_PUBLISHED_MAIN
+              success=true
+              break
+            fi
+            echo "V253_MAIN_ADVANCED_REVERIFY_RETRY_${attempt}"
+          done
+          if test "$success" != true; then
+            echo V253_MAIN_CONFLICT_NOT_PUBLISHED
+            exit 1
+          fi
