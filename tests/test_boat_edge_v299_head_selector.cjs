@@ -40,7 +40,7 @@ if(fs.existsSync('index.html')){
  const home=html.indexOf('<main id="homeView"'),shortcuts=html.indexOf('class="be241-home-shortcuts"');
  const race=html.indexOf('<main id="raceView"');
  assert(home>0&&shortcuts>home&&race>shortcuts,'home shortcuts belong only inside home view');
- assert(html.includes('boat_edge_v206_quickview.css?v=299'));
- assert(html.includes('boat_edge_v206_quickview.js?v=299'));
+ assert(html.includes('boat_edge_v206_quickview.css?v=320'));
+ assert(html.includes('boat_edge_v206_quickview.js?v=320'));
 }
 console.log('V299_HEAD_SELECTION_SOURCE_ONLY_HOME_SCOPED_PASS');
