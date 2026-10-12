@@ -4,6 +4,8 @@
 (function(root){'use strict';
 const KEY=/^20\d{6}-\d{2}-\d{2}$/;
 const HEX=/^[a-f0-9]{64}$/;
+const COMBO=/^[1-6]-[1-6]-[1-6]$/;
+const within=(stamp,lo,hi)=>{const t=Date.parse(stamp||'');return Number.isFinite(t)&&Number.isFinite(lo)&&Number.isFinite(hi)&&lo<=t&&t<=hi};
 const DAY=()=>new Date(Date.now()+9*3600000).toISOString().slice(0,10).replaceAll('-','');
 function due(key,clock){
  if(!KEY.test(String(key||''))||!/^([01]?\d|2[0-3]):[0-5]\d$/.test(String(clock||'')))return NaN;
@@ -21,7 +23,7 @@ function upcoming(schedule,now,limit=3){
  return rows.sort((a,b)=>a.t-b.t||a.key.localeCompare(b.key)).slice(0,limit);
 }
 function assess(key,deadline,snapshot,audit,evidence,sha){
- if(!snapshot)return {state:'missing',label:'締切前の固定予想なし'};
+ if(!snapshot)return {state:'missing',label:'公開先に固定記録なし（公開待ち・未保存を含む）'};
  if(snapshot.race_key!==key||snapshot.snapshot_window!=='FINAL_15M'||snapshot.schema_version!=='boat-edge-server-site-final-v123'||
     snapshot.prediction_kind!=='SITE_REFERENCE_V122'||!snapshot.guards||
     ['results_seen','unlock','scoring'].some(k=>snapshot.guards[k]!==false))return {state:'invalid',label:'保存内容・安全条件が不一致'};
@@ -32,7 +34,8 @@ function assess(key,deadline,snapshot,audit,evidence,sha){
   ['hit','balance','hole','narrow'].every(mode=>{
    const rows=snapshot.modes?.[mode]?.tickets;
    return Array.isArray(rows)&&rows.length>0&&new Set(rows.map(r=>r.combo)).size===rows.length&&
-    rows.every(r=>Number.isSafeInteger(r.stake_yen)&&r.stake_yen>=0&&r.stake_yen%100===0)&&
+    rows.every(r=>typeof r.combo==='string'&&COMBO.test(r.combo)&&new Set(r.combo.split('-')).size===3&&
+     Number.isSafeInteger(r.stake_yen)&&r.stake_yen>=0&&r.stake_yen%100===0)&&
     rows.reduce((n,r)=>n+r.stake_yen,0)===10000;
   });
  if(!stakeOk)return {state:'invalid',label:'締切前配分の監査不一致'};
@@ -46,9 +49,22 @@ function assess(key,deadline,snapshot,audit,evidence,sha){
     evidence.formal_fresh_unlock!==false||evidence.scoring!==false||
     evidence.odds_combinations!==120||evidence.stake_yen_per_mode!==10000||
     evidence.race_sha256!==snapshot.race_sha256||evidence.odds_sha256!==snapshot.odds_sha256||
-    !HEX.test(String(snapshot.race_sha256||''))||!HEX.test(String(snapshot.odds_sha256||'')))
+    !HEX.test(String(snapshot.race_sha256||''))||!HEX.test(String(snapshot.odds_sha256||''))||
+    !HEX.test(String(evidence.scratch_sha256||''))||
+    !Array.isArray(audit.revisions)||audit.revisions.length!==1||
+    audit.revisions[0]?.snapshot_sha256!==sha)
   return {state:'invalid',label:'SHA・保存時刻・出典の照合不一致'};
- return {state:'verified',label:'締切前保存・SHA監査一致'};
+ // V260: timestamps belong to the original prospective operation, not to a later
+ // upload. This is consistency validation, not independent Git commit-time proof.
+ const capturedDeadline=Math.min(cutoff,saved+120000);
+ if(!within(audit.first_audited_at,saved,capturedDeadline)||
+    !within(evidence.evidence_captured_at,saved,capturedDeadline)||
+    !within(evidence.official_race_card_fetched_at,saved-960000,saved)||
+    !within(evidence.official_beforeinfo_fetched_at,saved-900000,saved)||
+    !within(evidence.scratch_checked_at,saved-900000,saved)||
+    !within(evidence.odds_fetched_at,saved-900000,saved))
+   return {state:'invalid',label:'締切前の出典時刻が未検証'};
+ return {state:'verified',label:'締切前の保存データ・SHA整合'};
 }
 if(typeof module!=='undefined'&&module.exports)module.exports={due,upcoming,assess};
 if(typeof document==='undefined'||typeof window==='undefined')return;
@@ -61,8 +77,13 @@ async function json(url){
 async function proof(r){
  const path='./data/site_prediction_snapshots/'+r.key+'.json';
  let res=null;
- try{res=await fetch(path+'?v259='+Date.now(),{cache:'no-store'})}catch(_){}
- if(!res?.ok)return assess(r.key,r.deadline,null,null,null,null);
+ try{res=await fetch(path+'?v259='+Date.now(),{cache:'no-store'})}catch(_){
+  return {state:'unverified',label:'通信失敗・保存状況は未確認'};
+ }
+ if(!res)return {state:'unverified',label:'公開サーバーの応答なし・未確認'};
+ if(!res.ok)return res.status===404?
+    assess(r.key,r.deadline,null,null,null,null):
+    {state:'unverified',label:'公開サーバー取得エラー・未確認'};
  let buffer,snapshot=null;
  try{buffer=await res.arrayBuffer();snapshot=JSON.parse(new TextDecoder().decode(buffer))}catch(_){return {state:'invalid',label:'保存JSONの読込不正'}}
  if(!window.crypto?.subtle)return assess(r.key,r.deadline,snapshot,null,null,null);
@@ -81,7 +102,8 @@ function mount(){
  let el=$('#be259OpsProof');if(el)return el;
  el=document.createElement('div');el.id='be259OpsProof';
  el.style.cssText='border-top:1px solid #d8e5ef;margin-top:7px;padding-top:6px;font-size:11px;line-height:1.5';
- const title=document.createElement('strong');title.textContent='直近レースの締切前固定（再照合）';
+ const title=document.createElement('strong');title.textContent='直近レースの締切前固定（保存証跡を再照合）';
+ title.title='保存ファイル・監査の整合性検査。Git登録時刻や正式Freshの審査とは別です';
  const msg=document.createElement('span');msg.id='be259OpsMessage';msg.style.marginLeft='8px';msg.textContent='確認中';
  const detail=document.createElement('div');detail.id='be259OpsRows';detail.style.marginTop='4px';
  el.append(title,msg,detail);host.appendChild(el);return el;

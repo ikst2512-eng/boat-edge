@@ -65,7 +65,7 @@ for(const [file,args,expected] of [
  ['tests/test_boat_edge_v222_live_odds.cjs',['assets/boat_edge_v222_live_odds.js'],'V222_PASS'],
  ['tests/test_boat_edge_v256_formal_result_gate.cjs',[],'V256_FORMAL_RESULT_UNSEEN_GUARD_PASS'],
  ['tests/test_boat_edge_v258_stale_race.cjs',[],'V258_STALE_RACE_RENDER_PASS'],
- ['tests/test_boat_edge_v259_ops_proof.cjs',[],'V259_PRE_RESULT_PROVENANCE_MONITOR_PASS']
+ ['tests/test_boat_edge_v259_ops_proof.cjs',[],'V260_PROVENANCE_SOURCE_TIME_AND_TRIFECTA_GUARD_PASS']
 ]){
  const output=execFileSync(process.execPath,[file,...args],{encoding:'utf8',timeout:20000});
  assert(output.includes(expected),'Missing isolated odds/lock test PASS: '+file);
