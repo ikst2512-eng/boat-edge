@@ -47,6 +47,22 @@ function validTickets(rows){
  const combos=rows.map(row=>extractCombo(str('b',row)));
  return combos.every(Boolean)&&new Set(combos).size===combos.length;
 }
+
+/* V305: selected-race V223 DOM is the ONLY display source. Provider receipts
+   are independent audit statuses, not inferred numeric parity or predictions. */
+function evidenceFor(key){
+ const source=$('#be223Source');
+ if(!valid(key)||source?.dataset?.raceKey!==key)
+  return {ready:false,items:[{label:'選択レースの直前データ',quality:'unknown',text:'照合待ち'}]};
+ const ids=[['展示タイム','time'],['オリ展CSV','original'],['BOATERS','boaters'],['競艇日和','biyori']];
+ return {ready:true,items:ids.map(([label,id])=>{
+  const chip=$('[data-be223-ex="'+id+'"]',source);
+  const quality=chip?.dataset?.quality||'unknown';
+  return {label,quality:['ok','limited','stop','wait','stale','unknown'].includes(quality)?quality:'unknown',
+    text:chip?.textContent?.trim()||'未取得・未確認'};
+ })};
+}
+
 let showFive=false,showTen=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
 function skeleton(){
  const host=$('#raceView .race-summary');if(!host)return null;
@@ -55,6 +71,11 @@ function skeleton(){
   box=document.createElement('section');box.id='be207Top';box.className='be207-top';box.setAttribute('aria-label','3連単予想・買い目');
   box.innerHTML=`<div class="be207-topline"><div><span class="be207-eyebrow">BOAT EDGE</span><strong>3連単の予想</strong></div><span class="be207-version">画面 V208</span></div>
    <div class="be207-condition" role="status"><strong></strong><span></span></div>
+   <section class="be305-evidence" aria-label="選択レースの直前データ取得状況">
+    <div class="be305-evidence-head"><strong>直前データの取得状況</strong><button type="button" data-be207="before">直前情報を詳しく見る →</button></div>
+    <div class="be305-evidence-items" role="list"></div>
+    <small>取得証跡の表示です。BOATERS・競艇日和・オリ展CSVは別出典。数値の一致・鮮度・出走確定は別途確認が必要です。</small>
+   </section>
    <div class="be207-mode-label">予想スタイル <small>タップで切替</small></div>
    <div class="be207-modes" role="group" aria-label="予想スタイル"></div>
    <div class="be207-explain"><strong>展開</strong><span></span><button type="button" data-be207="scenario">詳しく →</button></div>
@@ -130,10 +151,11 @@ function render(){
  const freeze=window.BoatEdgeV204.sourceLabel?.(p)||'買い目保存状態未確認';
  const proof=window.BoatEdgeV204?.oddsProof?.(r);
  const fresh=Boolean(sum.fresh&&!settled&&proof?.quality==='verified');
+ const evidence=evidenceFor(key);
  const provenance=$('.be181-freeze-banner',p)?.dataset?.be181Source||'';
  const rowOK=validTickets(rows);
  const pendingScratch=!settled&&st.kind!=='partial';
- const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,
+ const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,evidence,
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
@@ -144,6 +166,15 @@ function render(){
   box.classList.add('ready');box.dataset.status=st.kind;
   text($('.be207-condition strong',box),st.title||'欠場・取消確認待ち');
   text($('.be207-condition span',box),st.detail||'出走可否未確定');
+  const evidenceList=$('.be305-evidence-items',box);
+  evidenceList.replaceChildren();
+  for(const item of evidence.items){
+   const tag=document.createElement('div');tag.className='be305-evidence-item';tag.setAttribute('role','listitem');
+   tag.dataset.quality=item.quality;
+   const label=document.createElement('b');label.textContent=item.label;
+   const value=document.createElement('span');value.textContent=item.text;
+   tag.append(label,value);evidenceList.append(tag);
+  }
   modeButtons(p,$('.be207-modes',box));
   text($('.be207-explain span',box),stage);
   text($('.be207-freeze',box),'買い目：'+freeze+(settled?'／結果確定後の保存表示':''));
@@ -194,6 +225,7 @@ function init(){if(once)return;once=true;
   if(command==='five'){showFive=!showFive;showTen=false;showAll=false;lastSig='';render();return;}
   if(command==='ten'){showTen=!showTen;showFive=false;showAll=false;lastSig='';render();return;}
   if(command==='scenario'){$('#raceTabs [data-tab="scenario"]')?.click();return;}
+  if(command==='before'){$('#raceTabs [data-tab="before"]')?.click();return;}
   if(command==='all'){showAll=!showAll;showFive=false;showTen=false;lastSig='';render();return;}
   if(command==='detail'){
    const expanded=document.documentElement.classList.toggle('be208-details-on');
@@ -208,6 +240,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V304-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets};
+window.BoatEdgeV207={render,displayOnly:true,version:'V305-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
