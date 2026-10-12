@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: リポジトリ取得
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Python準備
         uses: actions/setup-python@v5
@@ -136,8 +138,15 @@ jobs:
                 "trifecta_payout_yen_per_100":r.get("trifecta_payout_yen_per_100"),
                 "prediction_guard":{"results_seen":False,"scoring":False}
               }
-              (out/f"{key}.json").write_text(
-                  json.dumps(row,ensure_ascii=False,indent=2),encoding="utf-8")
+              # V293: a finished row is stable until its measured contents
+              # change. A new clock tick is not new learning evidence.
+              target=out/f"{key}.json"
+              prior=load(target)
+              if (isinstance(prior,dict) and set(prior)==set(row) and
+                  all(k=="evaluated_at" or prior[k]==row[k] for k in row)):
+                  row=prior
+              else:
+                  target.write_text(json.dumps(row,ensure_ascii=False,indent=2),encoding="utf-8")
               rows.append(row)
 
           ranks=[x["winning_rank"] for x in rows if isinstance(x.get("winning_rank"),int)]
@@ -164,17 +173,63 @@ jobs:
           }
           root=Path("data/site_learning")
           root.mkdir(parents=True,exist_ok=True)
-          (root/"summary.json").write_text(
-              json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
+          # V293: unchanged prospective/retrospective metrics should not
+          # generate 30-minute timestamp-only Pages rebuild commits.
+          summary_path=root/"summary.json"
+          prior=load(summary_path)
+          if (isinstance(prior,dict) and set(prior)==set(summary) and
+              all(k=="updated_at" or prior[k]==summary[k] for k in summary)):
+              summary=prior
+          else:
+              summary_path.write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
           print(json.dumps(summary,ensure_ascii=False))
           PY
 
       - name: 変更保存
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/boat_edge_simple_v51.js data/site_learning
-          git diff --cached --quiet && exit 0
-          git commit -m "Update BOAT EDGE V70 learning and purchase layer"
-          git push
+          git add -- assets/boat_edge_simple_v51.js data/site_learning
+          python3 - <<'PY_V293_AUDIT'
+          import json,subprocess,re
+          from pathlib import Path
+          formal=json.loads(Path('data/formal_status.json').read_text(encoding='utf8'))
+          guards=formal.get('guards') or {}
+          assert all(guards.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert guards.get('RESULT_UNLOCK_TOKEN') is None
+          assert (formal.get('formalFirst100') or {}).get('races')==0
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          for path in staged:
+              if path=='assets/boat_edge_simple_v51.js' or path=='data/site_learning/summary.json':
+                  continue
+              if re.fullmatch(r'data/site_learning/evaluations/20\\d{6}-\\d{2}-\\d{2}\\.json',path):
+                  continue
+              raise SystemExit('V293_FORBIDDEN_LEARNING_STAGE_'+path)
+          print('V293_SITE_ONLY_MEASURED_LEARNING_STAGED',len(staged))
+          PY_V293_AUDIT
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo V293_LEARNING_EVIDENCE_UNCHANGED_NO_PAGES_COMMIT
+            exit 0
+          fi
+          git commit -m "V293 site-only changed learning evidence (no timestamp-only churn)"
+          # V293: concurrent source and UI writers may move main. Rebase
+          # disjoint reports only; if the report itself conflicts, fail closed
+          # and let the next scheduled run recompute from current evidence.
+          for n in 1 2 3 4 5 6; do
+            git fetch --no-tags origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo V293_LEARNING_SOURCE_CONFLICT_SKIP_UNSAFE_REBASE
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo V293_LEARNING_EVIDENCE_PUBLISHED
+              exit 0
+            fi
+            echo "V293_MAIN_MOVED_RETRY_$n"
+          done
+          echo V293_LEARNING_PUSH_RETRY_EXHAUSTED_NEXT_SCHEDULE_RECOMPUTES
+          exit 1
