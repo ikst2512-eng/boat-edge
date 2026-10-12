@@ -15,8 +15,8 @@ import math
 import re
 from urllib.parse import parse_qs, urlsplit
 
-RACE_KEY = re.compile(r"20\\d{6}-\\d{2}-\\d{2}\\Z")
-COMBO = re.compile(r"[1-6]-[1-6]-[1-6]\\Z")
+RACE_KEY = re.compile(r"20\d{6}-\d{2}-\d{2}\Z")
+COMBO = re.compile(r"[1-6]-[1-6]-[1-6]\Z")
 SCHEMA = "boat-edge-site-odds-v71"
 REJECTED = "REJECTED_NO_BET"
 OFFICIAL_SOURCE = "https://www.boatrace.jp/owpc/pc/race/odds3t"
@@ -60,7 +60,7 @@ def rejected_document(*, key: str, url: str, deadline: str,
         raise ValueError("invalid race-bound official odds URL")
     if aware_instant(checked_at) is None:
         raise ValueError("invalid checked_at")
-    observed = re.search(r"valid_odds_too_few=(\\d+)", str(error))
+    observed = re.search(r"valid_odds_too_few=(\d+)", str(error))
     count = int(observed.group(1)) if observed else None
     if count is not None and not 0 <= count < 80:
         count = None
