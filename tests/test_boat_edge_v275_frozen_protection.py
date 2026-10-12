@@ -26,16 +26,18 @@ def inline_code(stage):
 first=inline_code("PRE_RESULT耐障害取得")
 second=inline_code("5ソース同期・CURRENT準備監査")
 module="from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot"
+gate="from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed"
+assert gate in first and gate in second
 assert module in first and module in second
-assert first.count("if not protected_site_snapshot(DATA,key):")==3
-assert first.count("if protected_site_snapshot(DATA,key):")==1
-assert second.count("if protected_site_snapshot(DATA,f\"{ymd}-{venue}-{rno:02d}\"):")==1
-assert first.index("if protected_site_snapshot(DATA,key):") < first.index("doc={")
-assert second.index("if protected_site_snapshot(DATA,f\"{ymd}-{venue}-{rno:02d}\"):") < second.index("doc=json.loads(path.read_text",second.index("if protected_site_snapshot(DATA,f"))
+assert first.count("if not source_write_allowed(DATA,key,clock,datetime.now(JST)):")>=3
+assert first.count("if protected_site_snapshot(DATA,key):snapshot_protected+=1")==1
+assert 'if not source_write_allowed(DATA,key,clock,datetime.now(JST)):\n' in first
+assert 'if not source_write_allowed(DATA,race_key,clock,datetime.now(JST)):' in second
+assert first.index("if not source_write_allowed(DATA,key,clock,datetime.now(JST)):") < first.index("doc={")
+assert second.index("if not source_write_allowed(DATA,race_key,clock,datetime.now(JST)):") < second.index('audit=doc.setdefault("source_audit",{})')
 assert '"site_snapshot_immutable_races":snapshot_protected' in first
 assert '"site_snapshot_immutable_races":protected_count' in second
-assert 'if (preserved.get("current_model_input") or {}).get("core7_ready") is True:' in second
-assert 'if not protected_site_snapshot(DATA,key):\n' in first
+assert 'if (doc.get("current_model_input") or {}).get("core7_ready") is True:' in second
 assert '"beforeinfo_status":old_before.get("status","protected_source_unavailable")' in first
 assert 'from scripts.boat_edge_v275_frozen_protection' in first
 
