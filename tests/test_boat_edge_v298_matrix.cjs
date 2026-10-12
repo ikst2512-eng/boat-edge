@@ -10,6 +10,19 @@ vm.runInNewContext(js,{window,document,Date,Number,Math,Map,Set,JSON,queueMicrot
 const api=window.BoatEdgeV206;
 assert.equal(api.version,'V299-UI-ONLY');
 assert.equal(api.displayOnly,true);
+/* V338: a tap can only reveal a mounted, visible panel for the same selected race. */
+const proofKey='20261013-02-05',pane={isConnected:true,hidden:false};
+assert.equal(api.canRevealHead(proofKey,proofKey,2,2,pane),true);
+assert.equal(api.canRevealHead(proofKey,'20261013-03-05',2,2,pane),false,'never jump to previous race');
+assert.equal(api.canRevealHead(proofKey,proofKey,2,3,pane),false,'selection changed');
+assert.equal(api.canRevealHead(proofKey,proofKey,2,2,{isConnected:true,hidden:true}),false,'hidden panel');
+assert.equal(api.canRevealHead(proofKey,proofKey,2,2,{isConnected:false,hidden:false}),false,'detached panel');
+assert.equal(api.canRevealHead('bad-race',proofKey,2,2,pane),false,'invalid key');
+assert(js.includes('selectedLane=opening?lane:null'),'second tap must close selected racer');
+assert(js.includes('panel.scrollIntoView?.'),'explicit tap reveals the head panel');
+assert(js.includes("panel.focus?.({preventScroll:true})"),'keyboard and screen-reader focus');
+assert(js.includes('選手名をタップすると'),'display clear selection instruction');
+
 for(const label of ['基本','連対・機力','直前・展示','オリ展','展示タイム','展示進入','1周','まわり足','直線']){
  assert(js.includes(label),'missing sourced comparison field: '+label);
 }

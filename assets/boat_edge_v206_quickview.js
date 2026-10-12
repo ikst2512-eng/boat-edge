@@ -88,11 +88,11 @@ function create(root,p){
  <div class="be206-safety" role="status"><strong></strong><span></span></div>
  <div class="be206-switch" role="group" aria-label="6艇比較する情報"><button type="button" data-be206-metric="base">基本</button><button type="button" data-be206-metric="combo">連対・機力</button><button type="button" data-be206-metric="exhibit">直前・展示</button><button type="button" data-be206-metric="original">オリ展</button></div>
  <div class="be206-layout-switch" role="group" aria-label="比較表の並べ方"><button type="button" data-be206-layout="lanes">6艇横並び</button><button type="button" data-be206-layout="rows">選手ごと</button></div>
- <p class="be206-swipe-help">6艇横並び表は左右にスワイプして比較できます。赤は同じレース内で明確に強い値だけ。</p>
+ <p class="be206-swipe-help">選手名をタップすると、その艇が1着の既存買い目を表示します。6艇横並び表は左右にスワイプ。赤は同じレース内で明確に強い値だけ。</p>
  <div class="be206-table-scroll"><table class="be206-table"></table></div>
  <div class="be206-matrix-scroll" tabindex="0" aria-label="6艇横並び比較表。左右にスクロールできます"><table class="be206-matrix"></table></div>
  <div class="be206-table-help"></div>
- <section class="be206-headpanel" role="status" aria-live="polite" hidden></section>
+ <section class="be206-headpanel" role="status" aria-live="polite" tabindex="-1" hidden></section>
  <div class="be206-foot"><span class="be206-source"></span><button type="button" data-be206-before>直前情報を見る →</button></div>`;
  root.insertBefore(box,p);return box;
 }
@@ -202,6 +202,10 @@ function tickets(){
  setText(btn,showAll?`上位5点だけ表示`:`残り${rows.length-5}点を見る（全${rows.length}点）`);
  btn.setAttribute('aria-expanded',String(showAll));
 }
+/* Only an explicit tap may reveal and focus the selected-racer panel. Never jump during timers/race updates. */
+function canRevealHead(expected,actual,lane,current,panel){
+ return keyOK(expected)&&expected===actual&&lane===current&&!!panel&&panel.isConnected===true&&!panel.hidden;
+}
 function sync(){if(busy)return;busy=true;try{board();tickets();}catch(err){console.warn('[BOAT EDGE V206 display]',err);}finally{busy=false;}}
 function schedule(){if(busy||queued)return;queued=true;queueMicrotask(()=>{queued=false;sync();});}
 function init(){if(started)return;started=true;
@@ -213,7 +217,17 @@ function init(){if(started)return;started=true;
    const headBtn=e.target.closest?.('#be206Quick [data-be206-head]');
    if(headBtn){
      const lane=Number(headBtn.dataset.be206Head);
-     if(Number.isInteger(lane)&&lane>=1&&lane<=6){selectedLane=lane;headSig='';schedule();}
+     if(Number.isInteger(lane)&&lane>=1&&lane<=6){
+        const key=race()?.race_key;
+        const opening=selectedLane!==lane;
+        selectedLane=opening?lane:null;headSig='';schedule();
+        if(opening)queueMicrotask(()=>{
+          const panel=$('#be206Quick .be206-headpanel');
+          if(!canRevealHead(key,race()?.race_key,lane,selectedLane,panel))return;
+          panel.scrollIntoView?.({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth',block:'start'});
+          panel.focus?.({preventScroll:true});
+        });
+      }
      return;
    }
    if(e.target.closest?.('#be206Quick [data-be206-head-close]')){
@@ -226,6 +240,6 @@ function init(){if(started)return;started=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,version:'V299-UI-ONLY',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,version:'V299-UI-ONLY',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

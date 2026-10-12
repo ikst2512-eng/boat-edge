@@ -44,3 +44,34 @@ html.be306-race-await #raceView #be108PredictionModes{display:none!important}
 /* V317 Safari: the evidence-detail action must meet a 44px touch target. */
 #be207Top .be305-evidence-head button{min-height:44px;min-width:44px;padding:10px 8px;touch-action:manipulation}
 @media(max-width:350px){#be207Top .be305-evidence-head button{font-size:12px}}
+
+/* V338 / Track 03: mobile first-screen layout. Presentation only. */
+@media(max-width:650px){
+ #raceView #be207Top .be207-topline{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+ #raceView #be207Top .be305-evidence{padding:8px;margin-bottom:8px}
+ #raceView #be207Top .be305-evidence-items{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ #raceView #be207Top .be305-evidence-item{min-width:0;padding:7px}
+ #raceView #be207Top .be305-evidence-item span{overflow-wrap:anywhere}
+ #raceView #be207Top .be207-modes{display:flex;flex-wrap:wrap;gap:6px}
+ #raceView #be207Top .be207-modes button{min-height:44px;flex:1 1 88px}
+ #raceView #be207Top .be207-actions button{min-height:44px;white-space:normal;overflow-wrap:anywhere}
+ #raceView #be207Top .be207-bets{min-width:0}
+ #raceView #be207Top .be207-ticket{min-width:0}
+ #raceView #be207Top .be207-bottom{overflow-wrap:anywhere}
+}
+@media(max-width:360px){
+ #raceView #be207Top .be305-evidence-items{grid-template-columns:minmax(0,1fr)}
+ #raceView #be207Top .be207-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+/* V338: prioritize safety, scenario and verified tickets without hiding evidence. */
+#raceView #be207Top .be207-condition{overflow-wrap:anywhere}
+#raceView #be207Top .be207-explain{min-width:0;overflow-wrap:anywhere}
+#raceView #be207Top .be207-explain button{min-height:44px;min-width:44px;touch-action:manipulation}
+#raceView #be207Top .be207-freeze{overflow-wrap:anywhere}
+#raceView #be207Top .be207-listhead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:5px}
+#raceView #be207Top .be207-listhead span{overflow-wrap:anywhere}
+@media(max-width:360px){
+ #raceView #be207Top .be207-listhead{display:block}
+ #raceView #be207Top .be207-listhead span{display:block;margin-top:4px}
+}
