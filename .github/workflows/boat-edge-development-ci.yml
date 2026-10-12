@@ -45,7 +45,13 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v256_odds_guard.py' -v
-      - name: Guard V254 site-only research against unverified formal cohorts
+      - name: Enforce retired Actions schedules and inspect potential concurrent main writers
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v299_workflow_inventory.py' -v
+          python3 scripts/boat_edge_v299_workflow_inventory.py
+      - name: Guard V254 site-only research with synthetic formal-cohort fixtures
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
