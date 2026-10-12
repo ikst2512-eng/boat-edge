@@ -189,9 +189,11 @@ function render(){
    const value=document.createElement('span');value.textContent=item.text;
    tag.append(label,value);evidenceList.append(tag);
   }
-  modeButtons(p,$('.be207-modes',box));
-  text($('.be207-explain span',box),stage);
-  text($('.be207-freeze',box),'買い目：'+freeze+(settled?'／結果確定後の保存表示':''));
+  const modeHost=$('.be207-modes',box);
+  if(ticketViewSynced)modeButtons(p,modeHost);
+  else if(modeHost){if(modeHost.children.length)modeHost.replaceChildren();modeHost.dataset.sig='';}
+  text($('.be207-explain span',box),ticketViewSynced?stage:'新レースの展開を照合中');
+  text($('.be207-freeze',box),ticketViewSynced?'買い目：'+freeze+(settled?'／結果確定後の保存表示':''):'買い目：新レースの保存状態を照合中');
   const clarity=ticketClarity(rows.map(row=>str('b',row)),!stop);
   for(const field of ['head','top3','top5','top10','confidenceHead','confidenceTrifecta'])
     text($('[data-be259="'+field+'"]',box),clarity[field]);
@@ -201,7 +203,7 @@ function render(){
   const evidenceValue=str('.be108-mode-top strong',p);
   const evidenceLabel=/過去的中率/.test(evidenceTitle)?'過去実績（このレース固有の確率ではない）':
     /内部スコア/.test(evidenceTitle)?'内部評価値（未校正・確率ではない）':'既存参考指標（校正状態不明）';
-  text($('[data-be259="metric"]',box),evidenceValue?evidenceLabel+'：'+evidenceValue:'信頼度の独立した検証値は未取得');
+  text($('[data-be259="metric"]',box),!ticketViewSynced?'既存参考指標：新レースの値を照合中':evidenceValue?evidenceLabel+'：'+evidenceValue:'信頼度の独立した検証値は未取得');
   const list=$('.be207-bets',box);list.replaceChildren();
   const count=showAll?rows.length:showTen?10:showFive?5:3;
   if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=!ticketViewSynced?'選択した新しいレースの買い目を照合中。前レースの買い目は表示しません。':'買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';list.append(w);}
@@ -216,9 +218,9 @@ function render(){
   text(all,showAll?'Top3に戻す':'全買い目を表示');
   all.setAttribute('aria-pressed',String(showAll));
   const total=str('#be204Budget [data-be204="total"]',p);
-  text($('.be207-budget',box),settled?'締切前の保存配分がある券のみ個別表示（実購入なし）':
+  text($('.be207-budget',box),!ticketViewSynced?'配分：新レースの値を照合中（旧レースの値は表示しません）':settled?'締切前の保存配分がある券のみ個別表示（実購入なし）':
     '元画面の参考配分合計：'+(total||'未確認')+' ／ '+(rowOK?rows.length+'点':'券種照合待ち')+'（実購入なし）');
-  text($('.be207-odds',box),fresh?
+  text($('.be207-odds',box),!ticketViewSynced?'公式オッズ：新レースの証跡を照合中':fresh?
     '公式3連単オッズの保存値（非リアルタイム）：'+(proof?.label||'取得状態確認中'):
     '公式3連単オッズ未確認／想定払戻は非表示');
   document.documentElement.classList.add('be207-ready');
