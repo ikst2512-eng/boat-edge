@@ -16,6 +16,10 @@ RETIRED = (
     "BOAT_EDGE_V231_BYTE_EXACT_PUBLISH.yml",
     "site-v106.yml",
     "site-v108.yml",
+    "site-v104.yml",
+    "site-v107.yml",
+    "site-v110.yml",
+    "site-v111.yml",
 )
 LIVE = "V235.yml"
 
