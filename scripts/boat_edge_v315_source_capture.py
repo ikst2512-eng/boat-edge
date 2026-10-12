@@ -101,7 +101,8 @@ def capture_one(root, race_key, deadline_jst, provider, source_url,
                 / (provider + ".html"))
     root = root.resolve()
     path = root / relative
-    if path.is_symlink() or path.exists():
+    receipt_path = path.with_suffix(".receipt.json")
+    if path.is_symlink() or path.exists() or receipt_path.exists() or receipt_path.is_symlink():
         raise ValueError("IMMUTABLE_SOURCE_CAPTURE_ALREADY_EXISTS")
     raw, content_type, final_url = fetcher(source_url)
     captured = now()  # Timestamp AFTER all bytes have been received.
@@ -119,7 +120,7 @@ def capture_one(root, race_key, deadline_jst, provider, source_url,
     # Exclusive create: no overwrite, even if race metadata later changes.
     with path.open("xb") as stream:
         stream.write(raw)
-    return {
+    receipt = {
         "source_url": source_url,
         "race_key": race_key,
         "captured_at_jst": captured.isoformat(timespec="seconds"),
@@ -129,6 +130,12 @@ def capture_one(root, race_key, deadline_jst, provider, source_url,
         # NOT inferred from a successful HTTP fetch or URL.
         "fields": [],
     }
+    # Immutable sidecar for later V314 bundle assembly. A sidecar is not an
+    # independent proof of HTTP authenticity or GitHub reception time.
+    with receipt_path.open("x", encoding="utf-8") as stream:
+        json.dump(receipt, stream, ensure_ascii=False, sort_keys=True, indent=2)
+        stream.write("\n")
+    return receipt
 
 
 def main():
