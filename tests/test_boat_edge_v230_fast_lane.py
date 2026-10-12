@@ -68,6 +68,19 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.parse_before(htmlbefore()+htmlbefore())['racers'],[])
         self.assertFalse(m.beforeinfo_coverage(m.parse_before(htmlbefore()+htmlbefore()))['six_boat_complete'])
 
+    def test_v289_real_archived_official_start_and_exhibition(self):
+        # Explicit PRE_RESULT HTML fixtures, not outcomes or historical results.
+        repo=Path(__file__).resolve().parents[1]
+        for path in ('data/raw/20261012/14_01_beforeinfo.html',
+                     'data/raw/20261012/01_03_beforeinfo.html'):
+            html=(repo/path).read_text(encoding='utf8')
+            with self.subTest(path=path):
+                parsed=m.parse_before(html)
+                c=m.beforeinfo_coverage(parsed)
+                self.assertTrue(c['six_boat_complete'],c)
+                self.assertEqual(set(x['lane'] for x in parsed['start_exhibition']),set(range(1,7)))
+                self.assertEqual(set(x['lane'] for x in parsed['racers']),set(range(1,7)))
+
     def test_v289_requires_exact_six_st_and_six_exhibition_lanes(self):
         html=htmlbefore()
         parsed=m.parse_before(html)
