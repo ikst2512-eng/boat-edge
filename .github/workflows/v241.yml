@@ -70,7 +70,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           success=false
-          for attempt in 1 2 3; do
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
             git fetch --no-tags origin main
             git reset --hard origin/main
             python3 "$RUNNER_TEMP/v241_install.py"
@@ -104,6 +104,10 @@ jobs:
               echo V241_UI_AND_VERIFIED_RESULTS_GIT_PUBLISHED; success=true; break
             fi
             echo "V241_GIT_CONCURRENT_PUSH_RETRY_${attempt}"
+            # Other trusted workers may write to main during the same second.
+            # Re-fetch and rebuild from the newest main on every attempt;
+            # do not force-push or replace immutable prediction evidence.
+            sleep "$((attempt * 2))"
           done
           if test "$success" != true; then
             echo V241_SAFE_PUBLISH_FAILED; exit 1
