@@ -39,6 +39,8 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v23*.py' -q
+      - name: Ensure obsolete UI installers cannot race current owners
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v298*.py' -q
       - name: Verify strict V256 official 120-price source provenance (fail closed)
         env:
           PYTHONDONTWRITEBYTECODE: '1'
