@@ -95,6 +95,7 @@ def capture_report(root, race_key, provider, capture, deadline):
         reasons.append("RACE_IDENTITY_DECLARATION_MISMATCH")
     if not domain_matches(provider, capture.get("source_url")):
         reasons.append("WRONG_PROVIDER_DOMAIN")
+    captured = None
     try:
         captured = parse_jst(capture.get("captured_at_jst"))
         if captured >= deadline:
@@ -110,10 +111,19 @@ def capture_report(root, race_key, provider, capture, deadline):
     if not isinstance(digest, str) or not SHA.fullmatch(digest):
         reasons.append("INVALID_RECORDED_SHA256")
     date = race_key[:8]
-    expected = Path("data/source_captures") / date / race_key / (provider + ".html")
+    legacy = Path("data/source_captures") / date / race_key / (provider + ".html")
+    versioned = None
+    if captured is not None:
+        versioned = (Path("data/source_captures") / date / race_key / "versions"
+                     / (provider + "-" + captured.strftime("%Y%m%dT%H%M%S") + ".html"))
     relative = capture.get("relative_path")
-    if relative != expected.as_posix():
+    if relative == legacy.as_posix():
+        expected = legacy
+    elif versioned is not None and relative == versioned.as_posix():
+        expected = versioned
+    else:
         reasons.append("CAPTURE_PATH_NOT_CANONICAL")
+        expected = legacy  # Never read an untrusted path from JSON.
     target = root / expected
     raw = None
     if target.is_symlink() or not target.is_file():
