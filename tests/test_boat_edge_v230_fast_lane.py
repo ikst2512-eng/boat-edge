@@ -22,7 +22,13 @@ def htmlregs(scratch=False):
     return '<table>'+content+'</table>'+('欠場' if scratch else '')
 
 def htmlbefore():
-    return '<table>'+''.join(f'<tr><td>{i}</td><td>6.{i:02d} 0.0</td></tr>' for i in range(1,7))+'</table>'
+    racers='<table>'+''.join(f'<tr><td>{i}</td><td>6.{i:02d} 0.0</td></tr>' for i in range(1,7))+'</table>'
+    # Mirror the classed spans in the actual official START-display table.
+    starts='<table><tr><th>スタート展示</th></tr><tr><td>'+''.join(
+       '<div class="table1_boatImage1"><span class="table1_boatImage1Number">'
+       +str(i)+'</span><span class="table1_boatImage1Time">.12</span></div>'
+       for i in range(1,7))+'</td></tr></table>'
+    return racers+starts
 
 class FastLaneTests(unittest.TestCase):
     def setUp(self):
@@ -50,6 +56,36 @@ class FastLaneTests(unittest.TestCase):
     def test_parse_exact_six_registrations(self):
         self.assertEqual(set(m.parse_regs(htmlregs())),{str(1000+i) for i in range(1,7)})
         self.assertEqual(len(m.parse_before(htmlbefore())['racers']),6)
+    def test_v289_requires_exact_six_st_and_six_exhibition_lanes(self):
+        html=htmlbefore()
+        parsed=m.parse_before(html)
+        full=m.beforeinfo_coverage(parsed)
+        self.assertTrue(full['six_boat_complete'])
+        self.assertEqual(full['start_exhibition_lanes'],6)
+        self.assertEqual(full['exhibition_lanes'],6)
+        for bad in (
+            html.replace('class="table1_boatImage1Time">.12', 'class="table1_boatImage1Time">--',1),
+            html.replace('class="table1_boatImage1Number">6', 'class="table1_boatImage1Number">5',1),
+            html.replace('<td>6</td><td>6.06 0.0', '<td>6</td><td>-- 0.0',1),
+            html.replace('class="table1_boatImage1Time">.12', 'class="table1_boatImage1Time">.12</span></div><div class="table1_boatImage1"><span class="table1_boatImage1Number">1</span><span class="table1_boatImage1Time">.12',1)
+        ):
+            with self.subTest(bad=bad[:60]):
+                self.assertFalse(m.beforeinfo_coverage(m.parse_before(bad))['six_boat_complete'])
+
+    def test_v289_partial_beforeinfo_is_never_green_even_with_official_odds(self):
+        prices={f'{a}-{b}-{c}':10.0 for a in range(1,7) for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}
+        bad=htmlbefore().replace('class="table1_boatImage1Time">.12', 'class="table1_boatImage1Time">--',1)
+        proof=self.data()
+        proof['beforeinfo']=(bad.encode(),bad,self.now)
+        with patch.object(m,'verified_odds',return_value=prices):
+            self.assertEqual(m.update_one(self.root,KEY,proof,self.now),'source_blocked')
+        r=m.load(self.root/'data/races'/f'{KEY}.json')
+        self.assertEqual(r['source_audit']['beforeinfo']['status'],'published_wait')
+        self.assertFalse(r['source_audit']['beforeinfo']['six_boat_coverage']['six_boat_complete'])
+        scratch=m.load(self.root/'data/site_scratches_v182'/f'{KEY}.json')
+        self.assertTrue(scratch['blocked'])
+        self.assertFalse(scratch['official_beforeinfo_six_boat_complete'])
+
     def test_mismatching_official_racers_rejects_and_leaves_original(self):
         original=(self.root/'data/races'/f'{KEY}.json').read_bytes()
         d=self.data();d['racelist']=(htmlregs().replace('1001','2001').encode(),htmlregs().replace('1001','2001'),self.now)
