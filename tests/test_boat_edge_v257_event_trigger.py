@@ -108,9 +108,15 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn('  schedule:',primary)
         self.assertIn('  schedule:',shadow)
         def minute_slot(src):
-            cron=re.search(r"cron: '(\\d+(?:,\\d+)*) 0-14,23 \\* \\* \\*'",src)
-            self.assertIsNotNone(cron,'Preserve JST 08:00 and day racing window')
-            return set(map(int,cron.group(1).split(',')))
+            slots=[line.split("cron: '",1)[1].split("'",1)[0]
+                   for line in src.splitlines() if "cron: '" in line]
+            self.assertEqual(len(slots),1,
+                'Each active owner must have one verified 5-minute schedule')
+            minute,hour,dom,month,weekday=slots[0].split()
+            self.assertEqual((hour,dom,month,weekday),
+                ('0-14,23','*','*','*'),
+                '23 UTC must cover Japanese 08:00-08:59')
+            return set(map(int,minute.split(',')))
         primary_slots=minute_slot(primary)
         tail_slots=minute_slot(shadow)
         backup_slots=minute_slot(fallback)
