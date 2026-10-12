@@ -6,12 +6,20 @@ on:
       - '.github/workflows/auto-update.yml'
       - '.github/workflows/v288-official-start-html.yml'
       - 'tests/test_boat_edge_v288_official_start_html.py'
+      - 'scripts/boat_edge_v230_fast_lane.py'
+      - 'tests/test_boat_edge_v230_fast_lane.py'
+      - '.github/workflows/V235.yml'
+      - '.github/workflows/V234.yml'
       - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
   pull_request:
     paths:
       - '.github/workflows/auto-update.yml'
       - '.github/workflows/v288-official-start-html.yml'
       - 'tests/test_boat_edge_v288_official_start_html.py'
+      - 'scripts/boat_edge_v230_fast_lane.py'
+      - 'tests/test_boat_edge_v230_fast_lane.py'
+      - '.github/workflows/V235.yml'
+      - '.github/workflows/V234.yml'
       - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
 permissions:
   contents: read
@@ -32,6 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 tests/test_boat_edge_v288_official_start_html.py
+          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
           python3 tests/test_boat_edge_v268_beforeinfo_priority.py
           python3 tests/test_boat_edge_v269_urgent_telemetry.py
           python3 tests/test_boat_edge_v272_urgent_beforeinfo_retry.py
