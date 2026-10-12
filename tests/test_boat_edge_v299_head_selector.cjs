@@ -25,7 +25,7 @@ assert.equal(api.headTickets([node('1-2-3'),node('unknown')],1),null);
 assert.equal(api.headTickets([],1),null);
 assert.equal(api.headTickets(Array(121).fill(node('1-2-3')),1),null);
 assert.match(js,/r\.meta\.results_seen===false&&r\.meta\.unlock===false&&r\.meta\.scoring===false/);
-assert.match(js,/status\?\.kind!=='stop'/);
+assert.match(js,/status\?\.kind==='partial'/);
 assert.match(js,/const locked=\['first','final','latest'\]\.includes\(marker\)/);
 assert.match(js,/renderHead\(box,r,mode,st\)/);
 assert(js.includes('data-be206-head-close'));
