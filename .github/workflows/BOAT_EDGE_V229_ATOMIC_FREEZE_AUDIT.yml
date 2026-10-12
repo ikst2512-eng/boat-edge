@@ -88,6 +88,21 @@ jobs:
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_atomic_freeze.py
           git diff --check
+      # V320: independent, read-only observability. Never used as permission to freeze.
+      - name: Report actual 2-10 minute site freeze blockers (read-only)
+        continue-on-error: true
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python3 scripts/boat_edge_v229_eligibility_diagnostic.py --summary-only | tee /tmp/v229-window-diagnostic.json
+          {
+            echo '### V229 site-only decision-window diagnostics (not an eligibility proof)'
+            echo '```json'
+            cat /tmp/v229-window-diagnostic.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Commit only new snapshot, byte-matched official odds, and atomic SHA provenance
         shell: bash
         run: |
