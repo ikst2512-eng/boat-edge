@@ -1,0 +1,40 @@
+/* V277: mobile race information hierarchy. Presentation only; no prediction logic. */
+@media (max-width: 760px) {
+  #raceView .race-head { min-width: 0; }
+  #raceView .race-shell { min-width: 0; }
+  #raceView .race-summary { min-width: 0; }
+  #raceView .summary-top { gap: 8px; align-items: flex-start; }
+  #raceView #raceTitle { overflow-wrap: anywhere; }
+  #raceView #raceSubtitle { overflow-wrap: anywhere; }
+  #raceView .deadline-big { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #raceView #raceTabs { display: flex; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; padding-bottom: 5px; }
+  #raceView #raceTabs > * { flex: 0 0 auto; white-space: nowrap; }
+  #tab-pred #decision,
+  #tab-pred #inputCompleteness,
+  #tab-pred #predictionDiff,
+  #tab-pred #buyBoard,
+  #tab-pred #worlds,
+  #tab-pred #boats { min-width: 0; max-width: 100%; }
+  #tab-pred .title,
+  #tab-before .title,
+  #tab-data .title { flex-wrap: wrap; gap: 4px 10px; }
+  #tab-pred .title > span,
+  #tab-before .title > span,
+  #tab-data .title > span { overflow-wrap: anywhere; }
+  #tab-before .tablewrap,
+  #tab-data .tablewrap,
+  #tab-card .tablewrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #tab-before .tablewrap table,
+  #tab-data .tablewrap table,
+  #tab-card .tablewrap table { width: max-content; min-width: 100%; }
+  #tab-before .tablewrap th,
+  #tab-before .tablewrap td,
+  #tab-data .tablewrap th,
+  #tab-data .tablewrap td,
+  #tab-card .tablewrap th,
+  #tab-card .tablewrap td { white-space: nowrap; }
+  #raceView .section { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #raceView #raceTabs { scroll-behavior: auto; }
+}
