@@ -329,7 +329,9 @@ jobs:
                   r,sp,racers=probe_cache[j]
                   try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
                   except:pass
-                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
+                  # Cached venue probe was fetched before bulk collection; use a
+                  # conservative start timestamp rather than falsely marking it newer.
+                  return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":iso}
               try:
                   r=fetch(url,attempts=2)
                   (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
