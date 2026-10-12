@@ -1,0 +1,55 @@
+{
+  "schema": "BOAT_EDGE_01_V343_REAL_WORKFLOW_CLASSIFICATION_REGRESSION_V1",
+  "observed_main_base_sha": "f80cda33d90b817b42964502fe5b6e1e368677a1",
+  "date_jst": "2026-10-13",
+  "evidence": "literal staging-path declarations in actual tracked .github/workflows; never executed",
+  "classification_is_only_candidate_not_verified_duplicate": true,
+  "verified_duplicate_writers": 0,
+  "run_overlap_or_concurrent_writes_proven": false,
+  "workflow_blob_shas_for_reference": {
+    "auto-update.yml": "381da64d13ebb1ec4f3ff4571c1303d94c26e032",
+    "site-odds.yml": "d6ab55bfdaaff27dfab3f2fe4440786e7874fd80",
+    "site-v125.yml": "c77433aeeb7e1dd1efbae30f2fc1ac710e17d94a",
+    "site-v133.yml": "05ea88c057c4a3777b24bb068a6d33c20997ef69",
+    "site-v134.yml": "69612c883d4698b2a45687dba49c14317325ae63"
+  },
+  "pinned_actual_workflow_cases": [
+    {
+      "left": "auto-update.yml",
+      "right": "site-odds.yml",
+      "expected_classification": "PARENT_CHILD_ONLY",
+      "expected_witness": {
+        "left": "data",
+        "right": "data/site_odds",
+        "relation": "LEFT_PARENT_OF_RIGHT"
+      }
+    },
+    {
+      "left": "site-v133.yml",
+      "right": "site-v134.yml",
+      "expected_classification": "EXACT_ONLY",
+      "expected_witness": {
+        "left": "data/site_current_state.json",
+        "right": "data/site_current_state.json",
+        "relation": "EXACT_PATH"
+      }
+    },
+    {
+      "left": "site-v125.yml",
+      "right": "site-v133.yml",
+      "expected_classification": "EXACT_ONLY",
+      "expected_witness": {
+        "left": "BOAT_EDGE_CURRENT_TODO.md",
+        "right": "BOAT_EDGE_CURRENT_TODO.md",
+        "relation": "EXACT_PATH"
+      }
+    }
+  ],
+  "scope_limits": [
+    "An identical git add path is not proof of the same changed bytes",
+    "Parent directory staging is conservative and may stage disjoint actual files",
+    "Shell variables or nonliteral git add arguments remain unresolved",
+    "Never disable active workflow owners from this classification",
+    "No race data, outcomes, Formal Fresh, forecast weights or UI modified"
+  ]
+}
