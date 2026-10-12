@@ -19,6 +19,11 @@ RAW_SOURCE = re.compile(
     r"^data/raw/(20\d{6})/(\d{2})_(\d{2})_(?:racelist|beforeinfo)\.html$"
 )
 FROZEN_PREFIX = "data/site_prediction_snapshots/"
+# The independently Git-frozen V232 cohort also pins an exact prediction
+# and its original race evidence. Never let an in-flight collector replace
+# those race/raw input bytes after the V232 freeze was committed.
+COHORT_PREFIX = "data/site_autopilot/v232_cohort/"
+SOURCE_LOCK_PREFIXES = (FROZEN_PREFIX, COHORT_PREFIX)
 FROZEN = re.compile(r"^data/site_prediction_snapshots/(20\d{6}-\d{2}-\d{2})\.json$")
 
 
@@ -72,13 +77,19 @@ def audit(root: Path) -> dict:
         raise GuardFailure("V277_MERGE_BASE_INVALID")
     changed = set(git(root, "diff", "--name-only", ancestor, "HEAD").splitlines())
     changes = {key for path in changed if (key := race_from_source(path))}
-    remote_frozen_paths = set(
-        git(root, "ls-tree", "-r", "--name-only", "origin/main", "--", FROZEN_PREFIX).splitlines()
-    )
+    remote_frozen_paths = {
+        prefix: set(
+            git(root, "ls-tree", "-r", "--name-only", "origin/main", "--", prefix).splitlines()
+        )
+        for prefix in SOURCE_LOCK_PREFIXES
+    }
     blocked = [
         key for key in sorted(changes)
-        if (FROZEN_PREFIX + key + ".json") in remote_frozen_paths
-        or (root / FROZEN_PREFIX / (key + ".json")).is_file()
+        if any(
+            (prefix + key + ".json") in remote_frozen_paths[prefix]
+            or (root / prefix / (key + ".json")).is_file()
+            for prefix in SOURCE_LOCK_PREFIXES
+        )
     ]
     if blocked:
         raise GuardFailure(
@@ -92,7 +103,10 @@ def audit(root: Path) -> dict:
     return {
         "status": "PASS",
         "changed_source_races": len(changes),
-        "remote_frozen_snapshots": sum(bool(FROZEN.fullmatch(p)) for p in remote_frozen_paths),
+        "remote_frozen_snapshots": sum(
+            bool(FROZEN.fullmatch(p)) for p in remote_frozen_paths[FROZEN_PREFIX]
+        ),
+        "remote_frozen_v232_cohorts": len(remote_frozen_paths[COHORT_PREFIX]),
         "formal_results_seen": False,
     }
 
