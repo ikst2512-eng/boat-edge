@@ -1,12 +1,10 @@
 name: BOAT EDGE V108 Performance Consolidation
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v108.yml"
+  # V298: Legacy UI installer is manual recovery ONLY.
+  # Periodic/push execution could overwrite newer iPhone UI and republish Pages.
+  # No auto rescheduling without current source-parity review.
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
