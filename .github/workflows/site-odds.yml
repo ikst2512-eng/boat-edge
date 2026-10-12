@@ -32,6 +32,16 @@ jobs:
       - name: 必要ライブラリ
         run: pip install requests beautifulsoup4 lxml
 
+      - name: V256 odds fail-closed and timestamp merge regressions
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v256_odds_guard.py' -v
+          python3 - <<'PYV256CODE'
+          import ast
+          from pathlib import Path
+          ast.parse(Path('scripts/boat_edge_v256_odds_guard.py').read_text(encoding='utf-8'))
+          print('V256_ODDS_GUARD_PARSE_PASS')
+          PYV256CODE
+
       - name: 公式3連単オッズ取得
         shell: bash
         run: |
@@ -42,6 +52,7 @@ jobs:
           from datetime import datetime, timedelta, timezone
           import requests
           from bs4 import BeautifulSoup
+          from scripts.boat_edge_v256_odds_guard import rejected_document
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -193,10 +204,25 @@ jobs:
                   )
                   updated+=1
               except Exception as e:
+                  # Never publish partial or formerly valid odds after a newer
+                  # official source failure. This marker contains NO price map.
+                  # 60 numerical combinations do NOT prove a racer scratch.
+                  rejected=rejected_document(
+                      key=key,url=url,deadline=item["deadline"],
+                      checked_at=datetime.now(JST).isoformat(timespec="seconds"),
+                      error=type(e).__name__+": "+str(e)
+                  )
+                  (OUT/f"{key}.json").write_text(
+                      json.dumps(rejected,ensure_ascii=False,indent=2),
+                      encoding="utf-8"
+                  )
                   errors.append({
                       "race_key":key,
                       "error":repr(e),
-                      "url":url
+                      "url":url,
+                      "odds_validation":"REJECTED_NO_BET",
+                      "observed_numeric_count":rejected["observed_numeric_count"],
+                      "scratch_status":"UNVERIFIED"
                   })
               time.sleep(0.35)
 
@@ -206,6 +232,7 @@ jobs:
               "date":now.strftime("%Y-%m-%d"),
               "checked":checked,
               "updated":updated,
+              "rejected_no_bet":len(errors),
               "errors":errors[:30],
               "window":"deadline -45min to +5min",
               "source":"official odds3t only",
@@ -237,6 +264,7 @@ jobs:
           import json, re, sys
           from datetime import datetime, timezone
           from pathlib import Path
+          from scripts.boat_edge_v256_odds_guard import is_safe_record, should_replace
 
           src=Path(sys.argv[1]);dst=Path('data/site_odds');dst.mkdir(parents=True,exist_ok=True)
           key_re=re.compile(r'20\d{6}-\d{2}-\d{2}\.json')
@@ -253,16 +281,13 @@ jobs:
           for p in sorted(src.glob('*.json')):
               if not key_re.fullmatch(p.name):continue
               x=obj(p)
-              if not isinstance(x,dict) or x.get('race_key')!=p.stem or x.get('schema_version')!='boat-edge-site-odds-v71':continue
-              if x.get('results_seen') is not False or x.get('scoring') is not False:continue
-              odds=x.get('trifecta_odds') or {}
-              if not isinstance(odds,dict) or len(odds)<80 or any(not combo_re.fullmatch(k) or len(set(k.split('-')))!=3 for k in odds):continue
-              t=stamp(x.get('fetched_at'))
-              if not t:continue
+              # Allow only fully sourced valid prices OR strict empty-price
+              # rejection markers. A newer rejection must supersede a previous
+              # good odds snapshot; stale failures never replace newer source.
+              if not is_safe_record(x,p.stem):continue
               target=dst/p.name
               prev=obj(target) if target.exists() else None
-              old=stamp(prev.get('fetched_at')) if isinstance(prev,dict) else None
-              if old and old>=t:
+              if not should_replace(prev,x,p.stem):
                   skipped+=1;continue
               target.write_bytes(p.read_bytes());copied+=1
           p=src/'index.json'
