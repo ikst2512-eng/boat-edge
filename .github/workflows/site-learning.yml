@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/site-learning.yml"
+      - "tests/test_boat_edge_v293_learning_publish.py"
   workflow_dispatch:
   schedule:
     # V267 publish-pressure relief: retrospective V70 ledger is non-live.
@@ -184,6 +185,13 @@ jobs:
               summary_path.write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
           print(json.dumps(summary,ensure_ascii=False))
           PY
+
+      - name: Offline V293 learning source, formal lock and Git conflict regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v293_learning_publish.py' -v
+          git diff --check
 
       - name: 変更保存
         shell: bash
