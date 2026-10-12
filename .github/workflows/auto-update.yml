@@ -173,8 +173,18 @@ jobs:
               return arr[:6]
 
           def parse_before(soup):
+              # V291: official exhibition values belong ONLY to the table
+              # whose own headers identify the exhibition-time field.
+              # A separate race-stat table can also begin rows with 1..6 and
+              # contain 6.x values, but those are not source-verified laps.
+              exhibition_tables=[
+                  table for table in soup.find_all("table")
+                  if any(txt(th.get_text(" ",strip=True)).replace(" ","")=="展示タイム"
+                         for th in table.find_all("th"))
+              ]
               racers=[]
-              for tr in soup.find_all("tr"):
+              # Zero or ambiguous exhibition tables => evidence missing.
+              for tr in (exhibition_tables[0].find_all("tr") if len(exhibition_tables)==1 else []):
                   cells=tr.find_all(["th","td"])
                   if not cells: continue
                   c0=txt(cells[0].get_text(" ",strip=True))
