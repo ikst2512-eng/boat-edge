@@ -233,6 +233,31 @@ def misses(rows):
     return result
 
 
+def compare_10point_modes(left, right, left_mode, right_mode):
+    """Head-to-head only on pre-validated identical-race/10-ticket pairs.
+
+    A paired gain means RIGHT hits and LEFT misses; paired loss the reverse.
+    Both models receive exactly one 10-ticket set per same race. Never promote.
+    """
+    if len(left) != len(right):
+        raise EvidenceError("PAIRED_MODE_RACE_COUNT_MISMATCH")
+    gain = sum((not a["outcomes"][left_mode]) and b["outcomes"][right_mode]
+               for a, b in zip(left, right))
+    loss = sum(a["outcomes"][left_mode] and (not b["outcomes"][right_mode])
+               for a, b in zip(left, right))
+    disagree = gain + loss
+    p = (min(1.0, 2 * sum(math.comb(disagree, i)
+                         for i in range(min(gain, loss) + 1)) / (2 ** disagree))
+         if disagree else None)
+    return {"races": len(left), "sample_days": len({x["day"] for x in left}),
+            "point_count_each": 10,
+            "left_hits": sum(x["outcomes"][left_mode] for x in left),
+            "right_hits": sum(x["outcomes"][right_mode] for x in right),
+            "right_only_hits": gain, "left_only_hits": loss,
+            "discordant_pairs": disagree, "exact_mcnemar_two_sided_p": p,
+            "improvement_proven": False, "model_promotion_authorized": False}
+
+
 def audit(root, attest=first_added):
     root = Path(root).resolve()
     formal_lock(root)
@@ -268,9 +293,20 @@ def audit(root, attest=first_added):
                 a, b = available[left][key], available[right][key]
                 if a["baseline"] != b["baseline"] or a["winning"] != b["winning"]:
                     raise EvidenceError("CROSS_STUDY_RACE_OR_BASELINE_CONFLICT_" + key)
+            left_rows = [available[left][k] for k in shared]
+            right_rows = [available[right][k] for k in shared]
+            # Every entry is the SAME race and 10 tickets per comparator.
+            # Exclude coverage15 entirely; it is deliberately unequal budget.
+            mode_pairs = {
+                l_mode + "_vs_" + r_mode: compare_10point_modes(
+                    left_rows, right_rows, l_mode, r_mode)
+                for l_mode in CONFIG[left][7] if l_mode != "coverage15"
+                for r_mode in CONFIG[right][7] if r_mode != "coverage15"
+            }
             between[left + "_vs_" + right] = {
                 "identical_race_baseline_matches": len(shared),
                 "sample_days": len({key[:8] for key in shared}),
+                "equal_ten_ticket_head_to_head_only": mode_pairs,
                 "separate_cohorts_must_not_be_pooled": True,
                 "cross_study_superiority_proven": False,
             }
