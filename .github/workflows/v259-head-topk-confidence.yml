@@ -1,0 +1,52 @@
+name: BOAT EDGE V259 - Distinct Head Top3 Top5 Top10 Confidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/boat_edge_v207_first_prediction.js'
+      - 'assets/boat_edge_v207_first_prediction.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v259_clarity.cjs'
+      - '.github/workflows/v259-head-topk-confidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v259-source-only-head-topk-clairty
+  cancel-in-progress: true
+
+jobs:
+  guard-display-and-frozen-picks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout read-only source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test iPhone Top1 head and Top3/5/10 source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v207_first_prediction.js
+          node --check assets/boat_edge_v204_prediction.js
+          node tests/test_boat_edge_v259_clarity.cjs
+          node tests/test_boat_edge_v255_ui.cjs
+          node tests/test_boat_edge_v257_ticket_mobile.cjs
+      - name: Prove formal Fresh is still locked without touching results
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_V259_FORMAL'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=s.get('guards') or {}
+          assert all(g.get(name) is False for name in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert (s.get('formalFirst100') or {}).get('races',0)==0
+          print('V259_FORMAL_UNTOUCHED_NO_RESULT_GATE_PASS')
+          PY_V259_FORMAL
