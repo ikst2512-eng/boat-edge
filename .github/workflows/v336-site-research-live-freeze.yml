@@ -1,0 +1,73 @@
+name: BOAT EDGE V336 - SITE Research Live Freeze (isolated)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v336-live-research
+  cancel-in-progress: false
+
+jobs:
+  prospective-research-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+      - name: Assert Formal Fresh remains locked (no result reads)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g = json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))['guards']
+          assert all(g.get(x) is False for x in ('results_seen', 'unlock', 'scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('FORMAL_GUARD_UNTOUCHED')
+          PY
+      - name: Prospective last-15m SITE capture and immutable research freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/boat_edge_v334_live_batch_runner.py --root . --capture --window-minutes 15 --max-races 12 > "$RUNNER_TEMP/v336_report.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          report=json.loads((Path(os.environ['RUNNER_TEMP'])/'v336_report.json').read_text())
+          print(json.dumps({
+            'selected':len(report['window']['candidates']),
+            'frozen':report['completed_count'],
+            'failures':report['failures'],
+            'formal_fresh_read':report['formal_fresh_read'],
+          },ensure_ascii=False))
+          PY
+      - name: Upload immutable prospective research artifacts and audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: v336-site-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            data/research_local_v332/
+            data/source_captures/
+            ${{ runner.temp }}/v336_report.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Confirm no tracked files or production code changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain --untracked-files=no)"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          PY
