@@ -94,9 +94,13 @@ def freeze_coverage(root,day,now):
     summary={'day_jst':day,'scope':'OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES',
              'observed_races':0,'matured_observed_races':0,
              'snapshot_present':0,'sha_consistent_predeadline_snapshots':0,
+             'predeadline_snapshot_with_matching_audit':0,
+             'source_changed_after_freeze':0,'source_missing_after_freeze':0,
+             'v229_attestation_record_matched':0,
              'v229_atomic_evidence_matched':0,'early_missing_later_snapshot_present':0,
              'not_found_after_deadline':0,'pending_before_deadline':0,
              'snapshot_or_audit_unverified':0,'observed_gaps_for_currently_missing':{},
+             'integrity_note':'An at-freeze attestation record does not imply current race-source SHA parity or independent Git predeadline provenance.',
              'status':'NO_PRE_RESULT_OBSERVATIONS'}
     path=root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json'
     history=load(path) or {}
@@ -134,31 +138,45 @@ def freeze_coverage(root,day,now):
         guards=snap.get('guards') or {}
         try:
             snap_sha=hashlib.sha256(snap_file.read_bytes()).hexdigest()
-            race_file=root/'data/races'/f'{key}.json'
-            race_sha=hashlib.sha256(race_file.read_bytes()).hexdigest()
         except OSError:
             summary['snapshot_or_audit_unverified']+=1;continue
-        consistent=(
+        # V285: first establish the exact saved predeadline snapshot/audit.
+        # A later race-file mutation must not erase its existence or claim
+        # that the original SHA-bound pre-result source is still intact.
+        metadata_ok=(
             snap.get('race_key')==key and snap.get('snapshot_window')=='FINAL_15M'
+            and isinstance(guards,dict)
             and all(guards.get(k) is False for k in ('results_seen','unlock','scoring'))
             and lead is not None and 120<=lead<=900
+            and re.fullmatch(r'[0-9a-f]{64}',str(snap.get('race_sha256'))) is not None
             and audit.get('race_key')==key and audit.get('pass') is True
-            and audit.get('latest_snapshot_sha256')==snap_sha
-            and snap.get('race_sha256')==race_sha)
-        if not consistent:
+            and audit.get('latest_snapshot_sha256')==snap_sha)
+        if not metadata_ok:
             summary['snapshot_or_audit_unverified']+=1;continue
-        summary['sha_consistent_predeadline_snapshots']+=1
+        summary['predeadline_snapshot_with_matching_audit']+=1
+        # The independent same-run V229 *record* is inspected separately
+        # from today's mutable race JSON; do not call it a present-source PASS.
         proof=load(root/'data/site_autopilot/v229_evidence'/f'{key}.json') or {}
         stamp=moment(proof.get('evidence_captured_at'))
-        if (proof.get('schema')=='BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1'
+        same_run_record=(
+            proof.get('schema')=='BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1'
             and proof.get('race_key')==key and proof.get('snapshot_sha256')==snap_sha
-            and proof.get('race_sha256')==race_sha
+            and proof.get('race_sha256')==snap.get('race_sha256')
             and proof.get('new_snapshot_created_this_run') is True
             and proof.get('results_seen') is False
             and proof.get('formal_fresh_unlock') is False
             and proof.get('scoring') is False
-            and stamp is not None and saved<=stamp<=deadline):
-            summary['v229_atomic_evidence_matched']+=1
+            and stamp is not None and saved<=stamp<=deadline)
+        if same_run_record:summary['v229_attestation_record_matched']+=1
+        race_file=root/'data/races'/f'{key}.json'
+        try:
+            race_sha=hashlib.sha256(race_file.read_bytes()).hexdigest()
+        except OSError:
+            summary['source_missing_after_freeze']+=1;continue
+        if snap.get('race_sha256')!=race_sha:
+            summary['source_changed_after_freeze']+=1;continue
+        summary['sha_consistent_predeadline_snapshots']+=1
+        if same_run_record:summary['v229_atomic_evidence_matched']+=1
     summary['status']='OBSERVED_WINDOW_COUNTS' if summary['observed_races'] else 'NO_PRE_RESULT_OBSERVATIONS'
     return summary
 
