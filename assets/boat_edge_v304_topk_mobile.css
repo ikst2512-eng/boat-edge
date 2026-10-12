@@ -37,3 +37,6 @@
 #be207Top .be305-evidence>small{display:block;font-size:10px;line-height:1.6;color:#647b90;margin-top:7px}
 @media(min-width:660px){#be207Top .be305-evidence-items{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:350px){#be207Top .be305-evidence-head{align-items:flex-start;flex-wrap:wrap}}
+
+/* V306: a new race key must not display the previous race's raw tickets. */
+html.be306-race-await #raceView #be108PredictionModes{display:none!important}
