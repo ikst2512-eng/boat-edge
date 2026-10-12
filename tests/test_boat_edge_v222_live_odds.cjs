@@ -28,6 +28,7 @@ const api=ctx.window.BoatEdgeV222Odds;
  await api.poll();assert.strictEqual(shown,4,'result-flag odds must be invalidated');
  assert.strictEqual(api.validate(res,race,now).quality,'invalid');
  res=structuredClone(doc);res.source_url='https://example.com/odds';assert.strictEqual(api.validate(res,race,now).quality,'invalid');
+ res=structuredClone(doc);res.source_url='https://www.boatrace.jp/owpc/pc/race/odds3t?hd=20261011&jcd=23&rno=2';assert.strictEqual(api.validate(res,race,now).quality,'invalid','wrong-race official URL must fail closed');
  res=structuredClone(doc);res.fetched_at='2026-10-11T08:40:00+09:00';assert.strictEqual(api.validate(res,race,now).quality,'invalid');
  res=structuredClone(doc);res.trifecta_odds['1-2-3']=0;assert.strictEqual(api.validate(res,race,now).quality,'invalid');
  res=null;await api.poll();assert.strictEqual(shown,5,'missing evidence must invalidate current status');
