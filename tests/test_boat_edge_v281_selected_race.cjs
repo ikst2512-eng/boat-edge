@@ -1,0 +1,32 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const doc={readyState:'loading',addEventListener(){}},window={};
+vm.runInNewContext(fs.readFileSync('assets/boat_edge_v204_prediction.js','utf8'),
+  {window,document:doc,console,Date,queueMicrotask(){},setInterval(){}});
+const f=window.BoatEdgeV204?.selectedRaceEvidence;
+assert.equal(typeof f,'function');
+const race={race_key:'20261013-14-01',meta:{venue:'鳴門',venue_code:'14',race_no:1,
+  date:'2026-10-13',deadline:'08:35',updated_at:'2026-10-13T01:14:17+09:00'}};
+const shown=f(race);
+assert.match(shown,/鳴門 1R/);
+assert.match(shown,/締切予定 08:35/);
+assert.match(shown,/保存済み出走表/);
+assert.match(f({...race,meta:{...race.meta,deadline:null}}),/未取得・未確認/);
+assert.match(f({...race,meta:{...race.meta,deadline:'25:01'}}),/未取得・未確認/);
+assert.match(f({...race,meta:{...race.meta,deadline:'08:99'}}),/未取得・未確認/);
+assert.match(f({...race,meta:{...race.meta,deadline:'soon'}}),/未取得・未確認/);
+assert.match(f({...race,meta:{...race.meta,venue:'',deadline:'08:35'}}),/会場名 未取得/);
+assert.match(f({...race,meta:{...race.meta,venue_code:'15'}}),/照合できません/);
+assert.match(f({...race,meta:{...race.meta,race_no:2}}),/照合できません/);
+assert.match(f({...race,meta:{...race.meta,date:'2026-10-12'}}),/一致しません/);
+assert.match(f(null),/照合できません/);
+const js=fs.readFileSync('assets/boat_edge_v204_prediction.js','utf8');
+const css=fs.readFileSync('assets/boat_edge_v204_prediction.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+assert(js.includes("set(one('.be204-selected-race',top),selectedLabel);"));
+assert(js.includes("race.race_key,selectedLabel,stage"));
+assert(js.includes("textContent"));
+assert(css.includes('#be204Overview .be204-selected-race'));
+assert(html.includes('boat_edge_v204_prediction.js?v=204&amp;rev=244&amp;patch=247&amp;patch2=248&amp;patch3=250&amp;selected=281'));
+assert(html.includes('boat_edge_v204_prediction.css?v=204&amp;rev=244&amp;patch=247&amp;patch2=248&amp;patch3=250&amp;a22=1&amp;selected=281'));
+console.log('V281_SELECTED_RACE_VERIFIED_METADATA_ONLY_PASS');
