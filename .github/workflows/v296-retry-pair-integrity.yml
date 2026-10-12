@@ -1,0 +1,43 @@
+name: BOAT EDGE V296 - Retry Source-Pair Integrity
+on:
+  push:
+    branches: [main, fix/v296-retry-ledger-source-pair-verification]
+    paths:
+      - 'scripts/boat_edge_v295_retry_trace.py'
+      - 'tests/test_boat_edge_v295_retry_trace.py'
+      - '.github/workflows/v296-retry-pair-integrity.yml'
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v295_retry_trace.py'
+      - 'tests/test_boat_edge_v295_retry_trace.py'
+      - '.github/workflows/v296-retry-pair-integrity.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v296-prospective-pair-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-pair-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Ensure both files tracked, retain unseen formal lock
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v295_retry_trace.py' -v
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          code=Path('scripts/boat_edge_v295_retry_trace.py').read_text()
+          assert 'BOTH_FILES_GIT_TRACKED_NOT_SHA_VALIDATED' in code
+          assert 'seen_candidate_snapshot_only' in code
+          assert 'seen_candidate_proof_only' in code
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V296_NO_SNAPSHOT_ONLY_AS_V229_PROOF_PASS')
+          PY
+          git diff --check

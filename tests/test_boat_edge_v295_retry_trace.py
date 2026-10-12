@@ -50,13 +50,46 @@ class RetryCase(unittest.TestCase):
                 self.assertEqual(second["seen_candidate_absent_unpublished"],1)
                 self.assertEqual(second["potentially_lost_keys"],[ONE])
                 self.assertEqual(second["new_this_attempt"],0)
-                def published(_repo,relative):
+                snapshot=root/"data/site_prediction_snapshots"/(ONE+".json")
+                snapshot.parent.mkdir(parents=True,exist_ok=True)
+                snapshot.write_text("TRACKED_SNAPSHOT",encoding="utf-8")
+                def snapshot_only(_repo,relative):
                     return relative=="data/site_prediction_snapshots/"+ONE+".json"
-                with patch.object(audit,"tracked",side_effect=published):
+                with patch.object(audit,"tracked",side_effect=snapshot_only):
                     third=audit.append_state(root,state,3,NOW)
-                self.assertEqual(third["seen_candidate_tracked"],1)
+                self.assertEqual(third["seen_candidate_snapshot_only"],1)
+                self.assertEqual(third["seen_candidate_tracked"],0)
                 self.assertEqual(third["seen_candidate_absent_unpublished"],0)
-                self.assertEqual(len(json.loads(state.read_text())["observations"]),3)
+                # Another Git publisher writes the V229 proof, in addition
+                # to the snapshot. Presence is still NOT source-SHA proof.
+                evidence(root,ONE)
+                def both_git_tracked(_repo,relative):
+                    return relative in (
+                        "data/site_prediction_snapshots/"+ONE+".json",
+                        "data/site_autopilot/v229_evidence/"+ONE+".json")
+                with patch.object(audit,"tracked",side_effect=both_git_tracked):
+                    fourth=audit.append_state(root,state,4,NOW)
+                self.assertEqual(fourth["seen_candidate_tracked"],1)
+                self.assertEqual(fourth["seen_candidate_snapshot_only"],0)
+                self.assertEqual(fourth["seen_candidate_absent_unpublished"],0)
+                self.assertEqual(fourth["tracked_means"],"BOTH_FILES_GIT_TRACKED_NOT_SHA_VALIDATED")
+                self.assertEqual(len(json.loads(state.read_text())["observations"]),4)
+            finally:
+                state.unlink(missing_ok=True)
+
+    def test_tracked_v229_proof_without_snapshot_is_not_complete(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);setup(root);state=root.parent/(root.name+"-retry.json")
+            try:
+                evidence(root,ONE)
+                with patch.object(audit,"tracked",return_value=False):
+                    audit.append_state(root,state,1,NOW)
+                def proof_only(_repo,relative):
+                    return relative=="data/site_autopilot/v229_evidence/"+ONE+".json"
+                with patch.object(audit,"tracked",side_effect=proof_only):
+                    row=audit.append_state(root,state,2,NOW)
+                self.assertEqual(row["seen_candidate_proof_only"],1)
+                self.assertEqual(row["seen_candidate_tracked"],0)
             finally:
                 state.unlink(missing_ok=True)
 
