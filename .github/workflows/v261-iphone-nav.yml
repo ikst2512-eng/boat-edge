@@ -1,0 +1,47 @@
+name: BOAT EDGE V261 - Mobile Race Result And AI Paper Navigation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/boat_edge_v261_nav.css'
+      - 'tests/test_boat_edge_v261_nav.cjs'
+      - '.github/workflows/v261-iphone-nav.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v261-safe-iphone-paper-nav
+  cancel-in-progress: true
+
+jobs:
+  safe-mobile-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Existing race selection and refresh retained, new AI paper shortcut proven
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/test_boat_edge_v261_nav.cjs
+          node tests/test_boat_edge_v259_clarity.cjs
+          node tests/test_boat_edge_v260_original_sources.cjs
+      - name: No formal results or wagers used
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=d.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('V261_FORMAL_LOCK_PASS')
+          PY
