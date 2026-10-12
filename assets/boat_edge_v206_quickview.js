@@ -191,15 +191,19 @@ function renderHead(box,r,mode,status){
  const sig=JSON.stringify([r?.race_key,mode,selected,status?.kind,marker,racer?.name,tickets]);
  if(headSig===sig&&el.hidden===false)return;
  headSig=sig;el.hidden=false;
- const title='<strong>'+selected+'号艇 '+esc(racer?.name||'選手未確認')+' の1着候補</strong>';
  const note='<small>表示中の予想スタイルの既存3連単から抽出。元順位を維持。独立した頭確率・新規予想・購入指示ではありません。</small>';
- const help='<span class="be206-head-source">'+esc(label)+'</span>';
  const lines=tickets===null?'<p>出走可否・予想保存状態・買い目形式を確認できないため表示しません。</p>':
    tickets.length===0?'<p>表示中の買い目に、この艇が1着の候補はありません。</p>':
    '<ol>'+tickets.map(x=>'<li><span>元順位 #'+x.rank+'</span><b>'+x.combo+'</b></li>').join('')+'</ol>';
- el.innerHTML='<div class="be206-head-top">'+title+help+
-   '<button type="button" data-be206-head-close aria-label="頭候補を閉じる">× 閉じる</button></div>'+
-   lines+note;
+ if(!$('.be206-head-top strong',el)||!$('.be206-head-source',el)||!$('.be206-head-lines',el)||!$('[data-be206-head-close]',el)){
+   el.innerHTML='<div class="be206-head-top"><strong></strong><span class="be206-head-source"></span>'+
+     '<button type="button" data-be206-head-close aria-label="頭候補を閉じる">× 閉じる</button></div>'+
+     '<div class="be206-head-lines"></div>'+note;
+ }
+ setText($('.be206-head-top strong',el),selected+'号艇 '+(racer?.name||'選手未確認')+' の1着候補');
+ setText($('.be206-head-source',el),label);
+ const content=$('.be206-head-lines',el);
+ if(content.innerHTML!==lines)content.innerHTML=lines;
 }
 function board(){
  const r=race(),p=$('#be108PredictionModes'),root=$('#tab-pred .section.stack');
