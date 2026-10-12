@@ -20,6 +20,7 @@ assert.match(odds(packet,race,now),/BOAT RACE公式/);
 assert.match(odds(packet,race,now),/10:55/);
 assert.match(odds(packet,race,now),/リアルタイムではない/);
 assert.match(odds({...packet,quality:'stale'},race,now),/古い保存値/);
+assert.match(odds({...packet,quality:'past_deadline'},race,now),/締切済み/);
 assert.match(odds({...packet,quality:'invalid'},race,now),/表示不可/);
 assert.match(odds({...packet,race_key:'other'},race,now),/未確認/);
 const controlJs=fs.readFileSync('assets/boat_edge_v166_refresh.js','utf8');
