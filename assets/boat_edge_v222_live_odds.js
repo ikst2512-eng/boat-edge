@@ -34,7 +34,18 @@ const validate=(d,r,now)=>{
 async function poll(){
  if(busy||document.visibilityState!=='visible'||!document.querySelector('#raceView.active'))return;
  const r=race(),key=String(r?.race_key||''),now=Date.now(),deadline=due(r);
- if(!KEY.test(key)||key.slice(0,8)!==DAY()||!Number.isFinite(deadline)||now>=deadline)return;
+ if(!KEY.test(key)||key.slice(0,8)!==DAY()||!Number.isFinite(deadline))return;
+ // V254: after the deadline clear any previously shown purchase-time price exactly once.
+ // Never fetch odds or results after cutoff; the core renderer independently fails closed.
+ if(now>=deadline){
+  const changed=currentKey!==key||quality!=='past_deadline';
+  currentKey=key;quality='past_deadline';signature='';
+  if(changed)try{
+   if(typeof window.BoatEdgeV166Invalidate==='function')window.BoatEdgeV166Invalidate(key);
+   if(typeof renderRace==='function')renderRace(race(),{silent:true});
+  }catch(_){/* No estimated replacement, no result access and no retry loop. */}
+  return;
+ }
  busy=true;
  try{
   let doc=null;
