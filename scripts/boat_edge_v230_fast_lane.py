@@ -58,8 +58,14 @@ def parse_regs(html):
 def parse_before(html):
     """Mirror original V18 parse_before fields, no extrapolated exhibition."""
     from bs4 import BeautifulSoup
-    soup=BeautifulSoup(html,'lxml'); racers=[]
-    for tr in soup.find_all('tr'):
+    soup=BeautifulSoup(html,'lxml')
+    # V291 parity: never confuse a 6.x racer/statistic row with the official
+    # exhibition-time table. Ambiguous or absent labelled tables fail closed.
+    exhibition_tables=[table for table in soup.find_all('table')
+        if any(txt(th.get_text(' ',strip=True)).replace(' ','')=='展示タイム'
+               for th in table.find_all('th'))]
+    racers=[]
+    for tr in (exhibition_tables[0].find_all('tr') if len(exhibition_tables)==1 else []):
         cells=tr.find_all(['th','td'])
         if not cells:continue
         c0=txt(cells[0].get_text(' ',strip=True))
@@ -74,14 +80,22 @@ def parse_before(html):
             try:tilt=float(tm.group(1))
             except ValueError:pass
         racers.append({'lane':lane,'exhibition_time':ex,'tilt':tilt,'raw_text':t})
-    starts=[];tag=soup.find(string=re.compile('スタート展示'))
-    if tag and tag.parent:
-        table=tag.parent.find_next('table')
-        if table:
-            for tr in table.find_all('tr'):
-                t=txt(tr.get_text(' ',strip=True))
-                mm=re.search(r'\b([1-6])\b.*?(F?\.\d{2})\b',t)
-                if mm:starts.append({'lane':int(mm.group(1)),'st':mm.group(2)})
+    # V289: official START exhibition is the *same containing table* as
+    # the header. It carries separately labelled boat-number and ST spans.
+    # Picking the next unrelated table can mistake partial/other data for ST.
+    starts=[]
+    tag=soup.find('th',string=re.compile(r'^\s*スタート展示\s*$'))
+    table=tag.find_parent('table') if tag else None
+    if table:
+        for div in table.select('div.table1_boatImage1'):
+            lane_tag=div.select_one('.table1_boatImage1Number')
+            st_tag=div.select_one('.table1_boatImage1Time')
+            if not lane_tag or not st_tag:continue
+            lane_str=txt(lane_tag.get_text(' ',strip=True))
+            st=txt(st_tag.get_text(' ',strip=True))
+            if not re.fullmatch(r'[1-6]',lane_str):continue
+            if not re.fullmatch(r'(?:F|[+-])?0?\.\d{1,2}',st):continue
+            starts.append({'lane':int(lane_str),'st':st})
     full=txt(soup.get_text(' ',strip=True));weather={}
     for k,p in {'air_temp_c':r'気温\s*([\d.]+)\s*℃',
                 'water_temp_c':r'水温\s*([\d.]+)\s*℃',
@@ -90,6 +104,26 @@ def parse_before(html):
         mm=re.search(p,full)
         weather[k]=float(mm.group(1)) if mm else None
     return {'racers':racers,'start_exhibition':starts,'weather':weather}
+
+def beforeinfo_coverage(parsed):
+    """Strict official 6/6 exhibition and 6/6 START ST; never infer missing rows."""
+    expect=set(range(1,7))
+    racers=parsed.get('racers',[]) if isinstance(parsed,dict) else []
+    start=parsed.get('start_exhibition',[]) if isinstance(parsed,dict) else []
+    ex={row.get('lane') for row in racers if isinstance(row,dict)
+        and type(row.get('lane')) is int and row['lane'] in expect
+        and type(row.get('exhibition_time')) in (int,float)
+        and 6.0<=row['exhibition_time']<=8.5}
+    st={row.get('lane') for row in start if isinstance(row,dict)
+        and type(row.get('lane')) is int and row['lane'] in expect
+        and isinstance(row.get('st'),str)
+        and re.fullmatch(r'(?:F|[+-])?0?\.\d{1,2}',row['st'])}
+    full_ex=len(racers)==6 and ex==expect
+    full_st=len(start)==6 and st==expect
+    return {'exhibition_lanes':len(ex),'start_exhibition_lanes':len(st),
+            'exhibition_complete':full_ex,'start_exhibition_complete':full_st,
+            'six_boat_complete':full_ex and full_st}
+
 
 def targets(root,now,max_target=12):
     today=now.strftime('%Y%m%d'); summary=load(root/'data/today.json') or {}
@@ -211,9 +245,8 @@ def update_one(root,key,data,now):
     # Require precisely the same six official registrations, no invented identity.
     if len(stored)!=6 or len(set(stored))!=6 or len(actual)!=6 or set(stored)!=set(actual):return 'six_registration_mismatch'
     parsed=parse_before(btext)
-    parsed_lanes=[x['lane'] for x in parsed['racers']]
-    valid_ex=sum(isinstance(x.get('exhibition_time'),float) for x in parsed['racers'])
-    ready=valid_ex>=3 and len(set(parsed_lanes))>=5
+    coverage=beforeinfo_coverage(parsed)
+    ready=coverage['six_boat_complete']
     reasons,lanes,flags=extract_blocked(race['racers'],rtext,btext,ready)
     # This is a verified official refresh, even if exhibition still unavailable.
     # Unavailable data remains 'published_wait' and cannot become a green snapshot.
@@ -224,7 +257,8 @@ def update_one(root,key,data,now):
                         'fetched_at':rt.isoformat(timespec='seconds'),'sha256':sha(rb),'error':None}
     audit['beforeinfo']={'status':'ok' if ready else 'published_wait',
                          'source':urlbase+'beforeinfo?'+param,'fetched_at':bt.isoformat(timespec='seconds'),
-                         'sha256':sha(bb),'error':None}
+                         'sha256':sha(bb),'error':None,
+                         'six_boat_coverage':coverage}
     race['beforeinfo']=parsed
     m['updated_at']=bt.isoformat(timespec='seconds')
     race['meta']=m
@@ -240,6 +274,7 @@ def update_one(root,key,data,now):
            'suspect_lanes':lanes,'official_raw_flags':flags,
            'race_card_source_status':'ok',
            'official_beforeinfo_source_status':audit['beforeinfo']['status'],
+           'official_beforeinfo_six_boat_complete':ready,
            'limitations':'No scratch signal detected is not certified 6-boat participation; raw collector freshness limits detection.'}
     write_json(root/'data/site_scratches_v182'/f'{key}.json',proof)
     if odds is not None:
