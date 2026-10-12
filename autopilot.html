@@ -31,6 +31,11 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
 </div>
 <div class="split"><section class="panel"><h2>直前データ・予想保存</h2><div class="facts"><div><small>当日予想ファイル</small><b id="frozen">―</b></div><div><small>V226保存ガード</small><b id="guard">―</b></div><div><small>最新オッズ監査</small><b id="odds">―</b></div></div><h3>直近の対象レース</h3><div class="records" id="races"><span class="muted">読み込み中</span></div><p class="explain">締切前の出走表・直前情報・欠場確認・120通りオッズ・予想SHA監査を別々に照合。未取得を推定値で埋めない。</p></section>
 <section class="panel"><h2>AI予想の自走検証</h2><div class="state bad" id="modelGate">精度改善は未証明</div><div class="facts" style="margin-top:15px"><div><small>V185検証数</small><b id="v185">―</b></div><div><small>V199検証数</small><b id="v199">―</b></div><div><small>10〜20倍帯対象</small><b id="midOdds">―</b></div></div><h3>V185候補と現行の比較</h3><table class="compare"><thead><tr><th>指標</th><th>候補</th><th>現行</th><th>差</th></tr></thead><tbody id="comparison"><tr><td colspan="4">確認中</td></tr></tbody></table><p class="explain">選手頭の精度、展開、Top3/5/10、10〜20倍帯を未見で比較。結果が不足している間は本番モデルを自動変更しない。</p></section></div>
+<section class="panel" aria-label="前日の予想固定とデータ整合状況">
+<h2>予想固定の監査（前日）</h2>
+<p id="freezeEvidenceV286" role="status" aria-live="polite" class="explain">前日データの保存時刻・SHAと固定後の変更を確認中。</p>
+<p class="explain">締切前に監視したレースだけの件数。途中の「未固定」は最終未固定と区別し、保存時の監査記録と今のデータ整合も別々に表示します。未見検証・実際の的中率・正式Freshの合格とは別です。</p>
+</section>
 <div class="split"><section class="panel"><h2>AI自走シミュレーション</h2><div class="facts"><div><small>当日使用額</small><b id="used">―</b></div><div><small>当日残額</small><b id="balance">―</b></div><div><small>仮想購入</small><b id="buys">―</b></div></div><p class="warning" id="simGate">校正・購入条件が未成立なら見送り。実際の購入は行わない。</p><p class="actions"><a href="./ai-simulation.html">5万円の仮想運用画面を見る →</a></p></section>
 <section class="panel"><h2>次に自動で確認する順序</h2><ol class="order"><li>公式の出走表・直前情報と欠場／取消を照合</li><li>最新オッズと締切前の予想を固定</li><li>A頭・Top3/Top5/Top10・10〜20倍帯を未見で比較</li><li>改善が証明されるまで本番モデルを維持</li><li>サイト表示とPages公開を検証</li></ol><p class="warning" id="formalGate">正式Freshの結果閲覧・採点・解除は、この機能からは行わない。</p></section></div>
 <section id="v252Evidence" class="v252-board" aria-label="締切前に固定された同一レースの予想方式を比較">
@@ -61,6 +66,7 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
 <p class="foot">BOAT EDGE V227 / 公開サイトの表示は保存済みの監査記録に基づきます。GitHub Actionsの実行成功はモデルの精度改善・回収率の保証ではありません。</p>
 </main>
 <script src="./assets/boat_edge_v278_next_watch.js?v=278"></script>
+<script src="./assets/boat_edge_v286_freeze_evidence.js?v=286"></script>
 <script>
 (function(){'use strict';
 const $=id=>document.getElementById(id);const fmt=v=>v==null||v===''?'未取得':Number.isFinite(+v)?Number(v).toLocaleString('ja-JP'):'未取得';
@@ -80,6 +86,9 @@ async function update(){
  if(a.schema!=='BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1')throw new Error('監査データ形式が異なります');
  const today=jstToday(),freshReport=a.day_jst===today;
  const freshOps=ops?.day_jst===today&&ops?.schema==='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'&&ops?.scope==='SITE_ONLY_PRE_RESULT_OPERATIONS_NOT_FORMAL_FRESH';
+ const freezeView=window.BoatEdgeV286Freeze?.summary(freshOps?ops:null,today);
+ put('freezeEvidenceV286',freezeView?.text||'予想固定の監査データは未確認。');
+
  const s=a.site||{}, v=a.prediction||{}, p=(paper&&paper.money)||a.paper||{},f=a.formal||{};
  const at=new Date(a.checked_at);put('stamp',`自走監査 ${isNaN(at.getTime())?'日時未取得':at.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}（日本時間） / 定期取得データ`);
  const siteStatus=freshReport?s.status:(freshOps?ops.status:'UNVERIFIED');
@@ -120,7 +129,7 @@ async function update(){
  put('be283Evidence',liveFormalClosed?
    'GitHub Actions PASS・Pages SUCCESSは処理・公開の成功であり、予想の的中率改善は未証明。正式Freshは保存済みの結果未見ロック確認済み（正式100Rの検証完了ではない）。':
    'GitHub Actions PASS・Pages SUCCESSは処理・公開の成功であり、予想の的中率改善は未証明。正式Freshのロックは未確認のため、解除・採点は行わない。');
- }catch(err){put('stamp','監査データの確認失敗: '+err.message+'。未検証を成功と表示しません。');put('siteState','未確認');put('be283Evidence','監査データ未確認。Actionsの成功を精度改善とみなさず、正式Freshの解除・採点もしません。');}
+ }catch(err){put('stamp','監査データの確認失敗: '+err.message+'。未検証を成功と表示しません。');put('freezeEvidenceV286','前日の予想固定監査は取得失敗。未確認の件数を実績表示しません。');put('siteState','未確認');put('be283Evidence','監査データ未確認。Actionsの成功を精度改善とみなさず、正式Freshの解除・採点もしません。');}
 }
 $('reload').addEventListener('click',update);update();setInterval(()=>{if(!document.hidden)update()},60000);
 })();
