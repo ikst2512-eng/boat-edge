@@ -104,6 +104,7 @@ async function refresh(){
    host.prepend(node);
   }
   if(lastKey!==key){node.open=false;lastKey=key;}
+  node.dataset.raceKey=key; // V250: prevent a previous race's source chip being reused for the selected race
   node.dataset.level=result.level;
   node.querySelector('.be223-state').textContent=result.summary;
   const flags=sourceFlags(result);
