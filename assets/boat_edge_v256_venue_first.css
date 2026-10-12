@@ -1,0 +1,45 @@
+/* V256: place active venues and their actual race buttons before old
+ * watchlist content. The old marketing hero stays accessible on desktop.
+ * Official data freshness and result-provenance panels are not hidden.
+ */
+html.be256-venue-first #homeView .venue-toolbar{box-sizing:border-box}
+html.be256-venue-first #homeView .venue-toolbar .venue-search{
+ font-size:14px;min-height:46px;background:#fff;border-color:#b6cde4}
+html.be256-venue-first #homeView .venue-toolbar .filter-chips{
+ padding:3px 0;min-width:0;scrollbar-width:thin}
+html.be256-venue-first #homeView .venue-toolbar .filter-chip{
+ min-height:44px;font-size:12px;font-weight:900;white-space:nowrap}
+html.be256-venue-first #homeView .venues .racechip{min-height:46px}
+html.be256-venue-first #homeView .venues .venue{box-shadow:0 2px 8px rgba(21,63,105,.06)}
+html.be256-venue-first #homeView #venues{scroll-margin-top:90px}
+html.be256-venue-first #homeView #deadlineBoard{scroll-margin-top:90px}
+@media(max-width:680px){
+ html.be256-venue-first #homeView .hero{padding:8px 10px 6px}
+ html.be256-venue-first #homeView .hero-grid{grid-template-columns:minmax(0,1fr);gap:0}
+ html.be256-venue-first #homeView .hero-main{display:none}
+ html.be256-venue-first #homeView .hero-side{padding:10px 12px;border-radius:12px;box-shadow:none}
+ html.be256-venue-first #homeView .hero-side .title{margin:0 0 7px!important}
+ html.be256-venue-first #homeView .hero-statgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ html.be256-venue-first #homeView .hero-stat{padding:7px 5px;border-radius:8px;min-width:0;text-align:center}
+ html.be256-venue-first #homeView .hero-stat .label{font-size:9px;white-space:normal;overflow-wrap:anywhere}
+ html.be256-venue-first #homeView .hero-stat .value{font-size:14px;overflow-wrap:anywhere}
+ html.be256-venue-first #homeView .section{padding:6px 10px 10px}
+ html.be256-venue-first #homeView .section .title h2{font-size:16px}
+ html.be256-venue-first #homeView .venue-toolbar{grid-template-columns:minmax(0,1fr);padding:8px;gap:6px}
+ html.be256-venue-first #homeView .venue-toolbar .filter-chip{font-size:12px;padding:8px 10px}
+ html.be256-venue-first #homeView .venues{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ html.be256-venue-first #homeView .venue{min-width:0;padding:10px}
+ html.be256-venue-first #homeView .vname{font-size:15px}
+ html.be256-venue-first #homeView .racechips{gap:4px}
+ html.be256-venue-first #homeView .racechip{min-width:49px;flex-shrink:0;padding:8px 4px;font-size:12px}
+ html.be256-venue-first #homeView .racechip small{font-size:10px}
+ html.be256-venue-first #homeView .venue-stats{margin:5px 0}
+ html.be256-venue-first #homeView .spotlight-grid{grid-template-columns:minmax(0,1fr);gap:7px}
+ html.be256-venue-first #homeView .spotlight-grid .spotlight-card{min-height:0}
+ html.be256-venue-first #homeView .spotlight-place{font-size:16px}
+ html.be256-venue-first #homeView .spotlight-deadline{font-size:21px}
+}
+@media(max-width:375px){
+ html.be256-venue-first #homeView .venues{grid-template-columns:minmax(0,1fr)}
+ html.be256-venue-first #homeView .hero-stat .value{font-size:12px}
+}
