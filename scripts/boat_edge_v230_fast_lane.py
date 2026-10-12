@@ -70,15 +70,13 @@ def parse_before(html):
         if not cells:continue
         c0=txt(cells[0].get_text(' ',strip=True))
         if not re.fullmatch(r'[1-6]',c0):continue
-        lane=int(c0); t=txt(tr.get_text(' ',strip=True));ex=None
-        for n in re.findall(r'(?<!\d)(\d+\.\d+)(?!\d)',t):
-            v=float(n)
-            if 6.0<=v<=8.5:ex=v;break
-        tilt=None
-        tm=re.search(r'(?<!\d)(-?0\.(?:0|5)|-?1\.(?:0|5)|2\.0|3\.0)(?!\d)',t)
-        if tm:
-            try:tilt=float(tm.group(1))
-            except ValueError:pass
+        lane=int(c0); t=txt(tr.get_text(' ',strip=True))
+        # V294: same official indexed cells as the V292 rolling collector.
+        # Other 6.x numbers in racer row are never exhibition time evidence.
+        ex_cell=txt(cells[4].get_text(' ',strip=True)) if len(cells)>4 else ''
+        ex=float(ex_cell) if re.fullmatch(r'\d{1,2}\.\d{1,2}',ex_cell) and 6.0<=float(ex_cell)<=8.5 else None
+        tilt_cell=txt(cells[5].get_text(' ',strip=True)) if len(cells)>5 else ''
+        tilt=float(tilt_cell) if re.fullmatch(r'-?(?:0\.(?:0|5)|1\.(?:0|5)|2\.0|3\.0)',tilt_cell) else None
         racers.append({'lane':lane,'exhibition_time':ex,'tilt':tilt,'raw_text':t})
     # V289: official START exhibition is the *same containing table* as
     # the header. It carries separately labelled boat-number and ST spans.

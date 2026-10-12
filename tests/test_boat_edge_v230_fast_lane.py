@@ -22,7 +22,7 @@ def htmlregs(scratch=False):
     return '<table>'+content+'</table>'+('欠場' if scratch else '')
 
 def htmlbefore():
-    racers='<table><tr><th>展示タイム</th></tr>'+''.join(f'<tr><td>{i}</td><td>6.{i:02d} 0.0</td></tr>' for i in range(1,7))+'</table>'
+    racers='<table><tr><th>展示タイム</th></tr>'+''.join(f'<tr><td>{i}</td><td>選手</td><td>体重</td><td>6.71 前走情報</td><td>6.{i:02d}</td><td>0.0</td></tr>' for i in range(1,7))+'</table>'
     # Mirror the classed spans in the actual official START-display table.
     starts='<table><tr><th>スタート展示</th></tr><tr><td>'+''.join(
        '<div class="table1_boatImage1"><span class="table1_boatImage1Number">'
@@ -56,6 +56,22 @@ class FastLaneTests(unittest.TestCase):
     def test_parse_exact_six_registrations(self):
         self.assertEqual(set(m.parse_regs(htmlregs())),{str(1000+i) for i in range(1,7)})
         self.assertEqual(len(m.parse_before(htmlbefore())['racers']),6)
+    def test_v294_no_fake_exhibition_from_other_racer_cells(self):
+        orig=htmlbefore()
+        missing=orig.replace('<td>6.03</td><td>0.0</td>', '<td>--</td><td>0.0</td>',1)
+        parsed=m.parse_before(missing)
+        self.assertIsNone(parsed['racers'][2]['exhibition_time'])
+        self.assertFalse(m.beforeinfo_coverage(parsed)['six_boat_complete'])
+        # 6.71 "previous race" text and similar tilt-like tokens are not
+        # permission to impute the actual exhibition time.
+        bad_all=orig.replace('<td>6.01</td><td>0.0</td>', '<td>未公開</td><td>0.0</td>',1)
+        self.assertIsNone(m.parse_before(bad_all)['racers'][0]['exhibition_time'])
+        badtilt=orig.replace('<td>6.01</td><td>0.0</td>', '<td>6.01</td><td>未公開</td>',1)
+        self.assertIsNone(m.parse_before(badtilt)['racers'][0]['tilt'])
+        verified=m.parse_before(orig)
+        self.assertEqual(verified['racers'][0]['exhibition_time'],6.01)
+        self.assertEqual(verified['racers'][0]['tilt'],0.0)
+
     def test_v289_does_not_mistake_six_stat_rows_for_exhibition(self):
         spoof='<table><tr><th>全国勝率</th></tr>'+''.join(
           f'<tr><td>{i}</td><td>6.79</td></tr>' for i in range(1,7))+'</table>'
@@ -98,7 +114,7 @@ class FastLaneTests(unittest.TestCase):
         for bad in (
             html.replace('class="table1_boatImage1Time">.12', 'class="table1_boatImage1Time">--',1),
             html.replace('class="table1_boatImage1Number">6', 'class="table1_boatImage1Number">5',1),
-            html.replace('<td>6</td><td>6.06 0.0', '<td>6</td><td>-- 0.0',1),
+            html.replace('<td>6</td><td>選手</td><td>体重</td><td>6.71 前走情報</td><td>6.06', '<td>6</td><td>-- 0.0',1),
             html.replace('class="table1_boatImage1Time">.12', 'class="table1_boatImage1Time">.12</span></div><div class="table1_boatImage1"><span class="table1_boatImage1Number">1</span><span class="table1_boatImage1Time">.12',1)
         ):
             with self.subTest(bad=bad[:60]):
