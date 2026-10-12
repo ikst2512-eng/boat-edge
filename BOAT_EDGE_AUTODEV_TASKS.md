@@ -30,3 +30,16 @@ The agent must change only one checkbox after implementing and checking that tas
 - [x] A20 | On the AI paper-simulation page, show only evidence-backed reason counts for skipped bets and a clearly separated status for pending/settled saved simulated bets. Keep daily 50,000-yen cap and no-real-money behavior unchanged.
 
 Do not append new tasks automatically. Stop once the queue is complete.
+## Next verified UI cycle (A21–A28)
+
+These remain UI-only work items. Every change must use already-saved source evidence, preserve the existing race selection, and pass the V240 isolation and regression gates. Do not invent odds, exhibition measurements, hits, or simulation returns.
+
+- [ ] A21 | On the selected race card, clarify whether the latest saved official odds are current, stale, or absent using only timestamp and verification state already provided; do not imply a browser refresh fetches new odds.
+- [ ] A22 | Improve the existing prediction-ticket list on iPhone so the frozen order, ticket amount, and source-verified payout estimate are legible; show 未確認 instead of deriving values from missing data.
+- [ ] A23 | Make a compact six-boat stat comparison easier to scan with race-relative emphasis only for numeric values already in the UI; do not alter classes, local statistics, motor scores, or prediction ranking.
+- [ ] A24 | On an existing prediction page, distinguish the predicted head racer, trifecta Top3/5/10 coverage, and separately recorded confidence values without recalibrating or fabricating probabilities.
+- [ ] A25 | Make the original-exhibition source state explicitly distinguish BOATERS, 競艇日和, official, and 未取得 in an existing evidence panel, but only when per-source provenance is already present; never equate official with third-party exhibition data.
+- [ ] A26 | Improve mobile access to verified results, race selection, and AI paper simulation through existing navigation; preserve the current chosen race and do not duplicate or replace refresh behavior.
+- [ ] A27 | Explain paper-only daily ¥50,000 budgeting, no-bet decisions, actual saved stake totals, and pending versus settled simulated bets without guessing missing balance or historical return.
+- [ ] A28 | Reduce visual clutter on existing iPhone race cards by improving grouping and contrast for scratches, verified results, deadlines, and source freshness; keep all six racer metrics accessible and retain frozen picks unchanged.
+
