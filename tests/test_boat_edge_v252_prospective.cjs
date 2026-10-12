@@ -15,9 +15,18 @@ assert.equal(b.n,v240.scored_total);
 assert.equal(a.rows.find(x=>x.key==='coverage15').points,15);
 assert.equal(b.rows.find(x=>x.key==='hit10').points,10);
 assert.equal(b.rows.find(x=>x.key==='pair_coverage10').points,10);
-assert.equal(b.rows.find(x=>x.key==='pair_coverage10').gain,1);
-assert.equal(b.rows.find(x=>x.key==='pair_coverage10').loss,1);
-assert.equal(b.rows.find(x=>x.key==='second_coverage10').hits,0);
+// The cohort grows automatically: only compare against frozen per-race outcomes,
+// not a prior run's hardcoded win/loss counts.
+for(const key of ['hit10','pair_coverage10','second_coverage10']){
+ const row=b.rows.find(x=>x.key===key);
+ assert(row,'Missing frozen comparator '+key);
+ const expectedHits=v240.examples.filter(r=>r.outcomes[key]===true).length;
+ const expectedGain=v240.examples.filter(r=>r.outcomes[key]===true&&r.outcomes.hit10===false).length;
+ const expectedLoss=v240.examples.filter(r=>r.outcomes[key]===false&&r.outcomes.hit10===true).length;
+ assert.equal(row.hits,expectedHits,key+' frozen hits');
+ assert.equal(row.gain,expectedGain,key+' prospective paired gain');
+ assert.equal(row.loss,expectedLoss,key+' prospective paired loss');
+}
 assert.equal(b.paired,true);
 assert.equal(a.paired,false);
 const mutate=(obj,fn)=>{const clone=JSON.parse(JSON.stringify(obj));fn(clone);return clone};
