@@ -220,7 +220,7 @@ class V257SourceTrigger(unittest.TestCase):
         p.parent.mkdir(parents=True,exist_ok=True)
         p.write_text(json.dumps({"guards":{
           "results_seen":False,"unlock":False,"scoring":False,"RESULT_UNLOCK_TOKEN":None
-        }}),encoding="utf-8")
+        },"formalFirst100":{"races":0}}),encoding="utf-8")
         return holder,root
 
     def test_empty_v232_source_does_not_invent_candidate(self):
