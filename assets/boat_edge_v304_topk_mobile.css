@@ -3,3 +3,18 @@
 #be207Top .be207-actions button{min-width:0;min-height:44px}
 #be207Top .be207-prob{white-space:normal;overflow-wrap:anywhere}
 @media(max-width:480px){#be207Top .be207-ticket{grid-template-columns:18px minmax(0,1fr) minmax(64px,auto)}}
+
+
+#be207Top .be207-actions button[aria-pressed="true"]{background:#dceefe;border-color:#3479bd;color:#134979}
+#be207Top .be207-actions button:focus-visible{outline:3px solid #357fbf;outline-offset:2px}
+#be207Top .be207-moneys,#be207Top .be207-budget,#be207Top .be207-odds{overflow-wrap:anywhere;line-height:1.6}
+#be207Top .be207-odds{border-top:1px solid #e3eaf2;padding-top:5px}
+@media(max-width:480px){
+ #be207Top .be207-rank{grid-column:1;grid-row:1 / span 2}
+ #be207Top .be207-combo{grid-column:2;grid-row:1}
+ #be207Top .be207-prob{grid-column:2;grid-row:2;text-align:left}
+ #be207Top .be207-multi{grid-column:3;grid-row:1 / span 2}
+ #be207Top .be207-moneys{grid-column:2 / -1}
+ #be251Outcome .be251-money{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #be251Outcome .be251-money>div:last-child{grid-column:1 / -1}
+}
