@@ -41,6 +41,8 @@ class V312Shadow(unittest.TestCase):
         self.assertFalse(value["source_bytes_independently_authenticated"])
         self.assertFalse(value["first_git_commit_before_deadline_attested"])
         self.assertFalse(value["scoring_authorized"])
+        self.assertFalse(value["scratch_and_cancellation_independently_verified"])
+        self.assertFalse(value["full_latest_prediction"])
         self.assertFalse(value["improvement_proven"])
         self.assertFalse(value["production_eligible"])
         self.assertEqual(value["entry_basis"], "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL")
@@ -52,6 +54,16 @@ class V312Shadow(unittest.TestCase):
             build_shadow(race)
         race = fixture()
         race["source_audit"]["race_card"]["status"] = "not_in_window"
+        with self.assertRaises(ValueError):
+            build_shadow(race)
+
+    def test_known_withdrawal_rejected(self):
+        race = fixture()
+        race["racers"][0]["raw_text"] = "出走取消"
+        with self.assertRaises(ValueError):
+            build_shadow(race)
+        race = fixture()
+        race["racers"][1]["withdrawn"] = True
         with self.assertRaises(ValueError):
             build_shadow(race)
 
