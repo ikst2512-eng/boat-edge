@@ -1,0 +1,41 @@
+name: BOAT EDGE V295 - Conflict Retry Prospective Source Evidence
+on:
+  push:
+    branches: [main, fix/v295-freeze-retry-loss-ledger]
+    paths:
+      - 'scripts/boat_edge_v295_retry_trace.py'
+      - 'tests/test_boat_edge_v295_retry_trace.py'
+      - '.github/workflows/V235.yml'
+      - '.github/workflows/v295-retry-evidence.yml'
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v295_retry_trace.py'
+      - 'tests/test_boat_edge_v295_retry_trace.py'
+      - '.github/workflows/V235.yml'
+      - '.github/workflows/v295-retry-evidence.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v295-prospective-retry-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify only pre-result proposal lifecycle without GitHub writes
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v295_retry_trace.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V295_FORMAL_FRESH_LOCK_UNTOUCHED')
+          PY
+          git diff --check
