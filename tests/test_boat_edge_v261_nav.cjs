@@ -1,0 +1,26 @@
+'use strict';
+/* A26: nav-only test; no synthetic race mutation, collector or live-result calls. */
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const html=fs.readFileSync('index.html','utf8');
+const css=fs.readFileSync('assets/boat_edge_v261_nav.css','utf8');
+const nav=html.match(/<nav class="bottomnav"[^>]*>([\s\S]*?)<\/nav>/);
+assert(nav,'main site must retain the existing bottom navigation');
+assert(nav[0].includes('aria-label="主要画面の切り替え"'));
+const buttons=[...nav[1].matchAll(/<button\b[^>]*data-view="([^"]+)"[^>]*>/g)].map(x=>x[1]);
+assert.deepEqual(buttons,['homeView','raceView','dataView'],'must preserve existing navigation actions and selected race handler');
+assert.equal((nav[1].match(/href="\.\/results\.html"/g)||[]).length,1);
+assert.equal((nav[1].match(/href="\.\/ai-simulation\.html"/g)||[]).length,1);
+assert(nav[1].includes('class="be261-nav-link"'));
+assert(nav[1].includes('AI仮想'));
+assert(!nav[1].includes('data-view="simulationView"'),'do not invent app-internal view');
+assert(!nav[1].includes('refreshTopBtn'),'must not duplicate refresh');
+assert(!nav[1].includes('onclick='));
+assert((html.match(/id="refreshTopBtn"/g)||[]).length===1,'existing refresh remains one');
+assert((html.match(/id="runCollectorBtn"/g)||[]).length===1,'collector button is not duplicated');
+assert(css.includes('grid-template-columns:repeat(5,minmax(0,1fr))'));
+assert(css.includes('env(safe-area-inset-bottom)'));
+assert(css.includes('focus-visible'));
+assert(html.includes('boat_edge_v261_nav.css?v=261'));
+const ai=fs.readFileSync('ai-simulation.html','utf8');
+assert(ai.includes('BOAT EDGE')&&/仮想|シミュレーション/.test(ai),'real destination must exist');
+console.log('V261_A26_MOBILE_NAV_PASS: home/race/data/results/AI paper, selected-race handler and refresh untouched');
