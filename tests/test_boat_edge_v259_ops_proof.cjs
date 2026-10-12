@@ -63,4 +63,4 @@ for(const forbidden of [
 assert(asset.includes("window.crypto.subtle.digest('SHA-256',buffer)"));
 assert(asset.includes("no-store"));
 assert(!asset.includes('snapshot.store('));
-console.log('V259_PRE_RESULT_PROVENANCE_MONITOR_PASS: verified, stale, invalid, no-bet, SHA, future selection, formal lock');
+console.log('V260_PROVENANCE_SOURCE_TIME_AND_TRIFECTA_GUARD_PASS: validated source capture times, ticket permutations, SHA, formal lock');
