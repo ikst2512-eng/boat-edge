@@ -40,11 +40,11 @@ def event_block(text: str) -> str:
     top-level key, not only permissions/jobs, so later YAML does not masquerade
     as additional triggers. This remains a read-only textual inventory.
     """
-    match = re.search(r"""^(?:on|'on'|"on"):[ \\t]*(?:\\#[^\\r\\n]*)?\\r?\\n""", text, re.M)
+    match = re.search(r"""^(?:on|'on'|"on"):[ \t]*(?:\#[^\r\n]*)?\r?\n""", text, re.M)
     if not match:
         return ""
     following = text[match.end():]
-    boundary = re.search(r"""^(?:[A-Za-z_][\\w-]*|'[^']+'|"[^"]+")[ \\t]*:""", following, re.M)
+    boundary = re.search(r"""^(?:[A-Za-z_][\w-]*|'[^']+'|"[^"]+")[ \t]*:""", following, re.M)
     return following[:boundary.start()] if boundary else following
 
 def audit(root: Path = WORKFLOWS) -> dict:
