@@ -11,7 +11,7 @@ const tests=[
  ['matrix-css',/boat_edge_v206_quickview\.css\?v=328/],
  ['topk-js',/boat_edge_v207_first_prediction\.js\?v=208&amp;a24=1&amp;ui=306/],
  ['topk-css',/boat_edge_v304_topk_mobile\.css\?v=328/],
- ['safari-nav',/boat_edge_v249_focus\.js\?v=297/]
+ ['safari-nav',/boat_edge_v249_focus\.js\?v=337/]
 ];
 for(const [name,rx] of tests){
  assert(rx.test(html),'missing main asset '+name);
