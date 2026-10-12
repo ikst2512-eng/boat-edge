@@ -70,4 +70,7 @@ if(typeof process!=='undefined'&&process?.versions?.node){
  assert(result.includes('V313_MAIN_BUNDLE_UI_READONLY_CONTRACT_PASS'),'V313 release smoke not proven');
  console.log(result.trim());
 }
+/* V317 regression: evidence-detail tap area is at least 44px on Safari. */
+assert(/#be207Top \.be305-evidence-head button\s*\{[^}]*min-height:44px[^}]*min-width:44px/.test(css),'V317 exhibition detail button 44px target');
+console.log('V317_SAFARI_EVIDENCE_TAP_TARGET_PASS');
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
