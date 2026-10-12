@@ -34,25 +34,36 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_ONLY_PRE_RESULT_RESEARCH_STAGED",workflow)
         self.assertIn("V254_ONLY_SITE_RESEARCH_SCORE_STAGED",workflow)
 
-    def test_v273_dispatch_after_durable_commit_before_any_result_scoring(self):
+    def test_v274_same_runner_future_freeze_before_any_result_scoring(self):
         v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
         source=v235.index('      - name: Immutable pre-result source prediction cohort')
-        dispatch=v235.index('      - name: V273 promptly launch V254')
+        inline=v235.index('      - name: V274 immediately freeze qualifying V254')
         post=v235.index('      - name: Only after pre-result commit - score already confirmed SITE results')
-        self.assertTrue(source < dispatch < post)
-        step=v235[dispatch:post]
-        self.assertIn("if: env.V235_TAKEOVER_VERIFIED == '1'",step)
-        self.assertIn('gh workflow run v254-third-tail-shadow.yml --ref main',step)
-        self.assertIn('V273_DISPATCH_UNAVAILABLE_RESEARCH_CRON_REMAINS_FAIL_CLOSED',step)
+        self.assertTrue(source < inline < post)
+        step=v235[inline:post]
+        self.assertIn('scripts/boat_edge_v254_third_tail.py freeze',step)
+        self.assertIn("test_boat_edge_v254_third_tail.py",step)
+        self.assertIn('git reset --hard origin/main',step)
+        self.assertIn('data/site_autopilot/v254_frozen',step)
+        self.assertIn('V274_FORBIDDEN_PRE_RESULT_STAGE_',step)
+        self.assertIn('V274_FUTURE_SHADOW_PRE_RESULT_PUBLISHED',step)
+        self.assertIn('V274_NO_ELIGIBLE_NEW_PRE_RESULT_COHORT_NO_BACKFILL',step)
+        self.assertIn('V274_NO_PUBLISHED_SHADOW_CONFLICT_SAFE_RETRY_NEXT_RUN',step)
+        self.assertIn('git diff --cached --check',step)
         self.assertNotIn('site_results/',step)
-        self.assertNotIn('git commit',step)
-        self.assertNotIn('git push',step)
-        # The immediately dispatched workflow is independently guarded.
+        self.assertNotIn('settle',step)
+        self.assertNotIn('git pull --rebase',step)
+        self.assertNotIn('gh workflow run',step)
+        # Standalone V254 still independently verifies the original first Git
+        # commit and race deadline, and remains the periodic/event fallback.
+        script=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
+        self.assertIn("SOURCE_GIT_PROVENANCE_UNVERIFIED",script)
+        self.assertIn("NOT_IN_FUTURE_FREEZE_WINDOW",script)
+        self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",script)
         research=WORKFLOW.read_text(encoding='utf-8')
         self.assertIn('workflow_dispatch:',research)
         self.assertIn("github.event.workflow_run.conclusion == 'success'",research)
         self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",research)
-        self.assertIn('git reset --hard origin/main',research)
 
     def test_v271_single_owner_scheduled_result_and_readiness(self):
         # Retired writers may be manually launched for recovery, but not
