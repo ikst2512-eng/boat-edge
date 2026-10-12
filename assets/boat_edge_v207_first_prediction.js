@@ -73,7 +73,7 @@ function skeleton(){
  let box=$('#be207Top');
  if(!box){
   box=document.createElement('section');box.id='be207Top';box.className='be207-top';box.setAttribute('aria-label','3連単予想・買い目');
-  box.innerHTML=`<div class="be207-topline"><div><span class="be207-eyebrow">BOAT EDGE</span><strong>3連単の予想</strong></div><span class="be207-version">画面 V208</span></div>
+  box.innerHTML=`<div class="be207-topline"><div><span class="be207-eyebrow">BOAT EDGE</span><strong>3連単の予想</strong></div><span class="be207-version">画面 V306</span></div>
    <div class="be207-condition" role="status"><strong></strong><span></span></div>
    <section class="be305-evidence" aria-label="選択レースの直前データ取得状況">
     <div class="be305-evidence-head"><strong>直前データの取得状況</strong><button type="button" data-be207="before">直前情報を詳しく見る →</button></div>
@@ -137,7 +137,7 @@ function listRow(row,i,fresh,settled){
  text($('.be207-prob',node),relative?(relative+'（未校正）'):'相対重み 未確認');
  text($('.be207-multi',node),verifiedPrice||'倍率未確認');
  text($('.be207-stake',node),stake===null?'配分未確認':(settled?'締切前の保存配分 ':'未購入の参考配分 ')+money(stake));
- text($('.be207-pay',node),!settled&&verifiedPrice&&payout!==null?'既存の想定払戻 '+money(payout):'想定払戻 未確認');
+ text($('.be207-pay',node),!settled&&stake!==null&&verifiedPrice&&payout!==null?'既存の想定払戻 '+money(payout):'想定払戻 未確認');
  return node;
 }
 
