@@ -1,0 +1,43 @@
+name: BOAT EDGE V284 - Five Verified Result States
+on:
+  push:
+    branches: [main, fix/v284-results-status-legend]
+    paths:
+      - 'results.html'
+      - 'assets/boat_edge_v241_results.css'
+      - 'tests/test_boat_edge_v284_result_states.cjs'
+      - '.github/workflows/v284-results-states.yml'
+  pull_request:
+    paths:
+      - 'results.html'
+      - 'assets/boat_edge_v241_results.css'
+      - 'tests/test_boat_edge_v284_result_states.cjs'
+      - '.github/workflows/v284-results-states.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v284-result-state-legend-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  safe-result-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify five labels only and existing result provenance constraints
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v241_results.js
+          node tests/test_boat_edge_v284_result_states.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v246_pages_cache.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V284_FORMAL_UNSEEN_PASS')
+          PY
+          git diff --check
