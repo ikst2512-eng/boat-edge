@@ -11,7 +11,7 @@ const tests=[
  ['matrix-css',/boat_edge_v206_quickview\.css\?v=328/],
  ['topk-js',/boat_edge_v207_first_prediction\.js\?v=208&amp;a24=1&amp;ui=306/],
  ['topk-css',/boat_edge_v304_topk_mobile\.css\?v=328/],
- ['safari-nav',/boat_edge_v249_focus\.js\?v=297/]
+ ['safari-nav',/boat_edge_v249_focus\.js\?v=337/]
 ];
 for(const [name,rx] of tests){
  assert(rx.test(html),'missing main asset '+name);
@@ -43,3 +43,8 @@ assert(sourcePanel.includes('prior.dataset.raceKey!==key)prior.hidden=true'),'V3
 assert(sourcePanel.includes('node.hidden=false;'),'V332 refreshed evidence must become visible');
 assert(sourcePanel.includes('if(node.parentElement!==host)host.prepend(node)'),'V332 source evidence must reparent after rerender');
 console.log('V332_PUBLISHED_SOURCE_SCRIPT_ORDER_AND_RACE_GUARD_PASS');
+
+// Track 03 V337: run the selected-race evidence fixture in the existing UI regression gate.
+if(fs.existsSync('tests/test_boat_edge_v337_race_scoped_quickview.cjs')){
+ require('./test_boat_edge_v337_race_scoped_quickview.cjs');
+}

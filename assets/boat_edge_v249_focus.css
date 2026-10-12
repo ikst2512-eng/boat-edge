@@ -68,3 +68,8 @@
   scroll-margin-top:210px;
  }
 }
+
+/* V337: no stale/unknown status is styled as a verified receipt. */
+#be249Focus .be249-evidence span[data-kind="verified"]{background:#e8f8ed;color:#0d714e}
+#be249Focus .be249-evidence span[data-kind="stale"]{background:#fff4e6;color:#805817}
+#be249Focus .be249-evidence span[data-kind="stop"]{background:#ffedf1;color:#9a2443}

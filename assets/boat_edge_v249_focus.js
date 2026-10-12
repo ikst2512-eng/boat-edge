@@ -48,33 +48,63 @@ function build(){
  }
  return node;
 }
-function sourceStatus(root){
+/* V337: Only the active race's V223 audit receipt may supply quick-view
+   source badges. Never fall back to a previous race or infer a missing value. */
+function selectedKey(){
+ try{
+  var k=String(typeof state==='undefined'?'':state?.race?.race_key||'');
+  return /^20\d{6}-\d{2}-\d{2}$/.test(k)?k:'';
+ }catch(_){return ''}
+}
+function receiptFor(key){
+ var node=el('#be223Source');
+ return key&&node&&!node.hidden&&node.dataset?.raceKey===key?node:null;
+}
+function statusKind(x){
+ return x==='ok'?'verified':x==='stop'?'stop':x==='stale'?'stale':'unknown';
+}
+function receiptChip(receipt,selector,label){
+ var chip=receipt&&el(selector,receipt);
+ if(!chip)return [label+'：未取得・未確認','unknown'];
+ var value=(chip.textContent||'').trim();
+ if(!value)return [label+'：未取得・未確認','unknown'];
+ var detail=value.startsWith(label+'：')?value:label+'：'+value;
+ return [detail.slice(0,85),statusKind(chip.dataset?.quality)];
+}
+function sourceStatus(root,receipt){
+ if(!receipt)return ['予想固定：選択レースの照合待ち','unknown'];
  var banner=el('.be181-freeze-banner',root),type=banner&&banner.dataset.be181Source;
- if(type==='final')return ['締切前FINAL固定','fixed'];
+ if(type==='final')return ['締切前FINAL固定（履歴要確認）','fixed'];
  if(type==='first')return ['FIRST固定（最終とは別）','fixed'];
  if(type==='latest')return ['LATEST：変動する参考予想','changed'];
  if(type==='unavailable')return ['締切前の保存買い目なし','unknown'];
  return ['予想固定の照合待ち','unknown'];
 }
-function auditStatus(){
- var scratch=el('.be205-scratch strong')||el('#be182ScratchStop');
- var x=scratch?(scratch.textContent||'').trim():'';
- if(!x)return '欠場・取消：状態未確認';
- return '欠場・取消：'+x.slice(0,50);
-}
 function refresh(){
  var node=build();if(!node)return;
- var source=sourceStatus(el('#raceView'));
+ var key=selectedKey(),receipt=receiptFor(key);
  var evidence=el('.be249-evidence',node);
  if(!evidence)return;
- var labels=[[source[0],source[1]],[auditStatus(),'unknown'],['オッズは元の取得時刻表示を確認','unknown']];
- var sig=JSON.stringify(labels);
+ var labels=[
+  sourceStatus(el('#raceView'),receipt),
+  receiptChip(receipt,'[data-be223-flag="scratch"]','欠場・取消'),
+  receiptChip(receipt,'[data-be223-ex="time"]','展示タイム'),
+  receiptChip(receipt,'[data-be223-flag="odds"]','3連単オッズ'),
+  receiptChip(receipt,'[data-be223-ex="boaters"]','BOATERS'),
+  receiptChip(receipt,'[data-be223-ex="biyori"]','競艇日和')
+ ];
+ var sig=JSON.stringify([key,labels]);
  if(evidence.dataset.signature===sig)return;
  evidence.dataset.signature=sig;
  evidence.replaceChildren();
- labels.forEach(function(pair){var span=document.createElement('span');span.textContent=pair[0];span.dataset.kind=pair[1];evidence.appendChild(span)});
+ labels.forEach(function(pair){
+  var span=document.createElement('span');
+  span.textContent=pair[0];
+  span.dataset.kind=pair[1];
+  evidence.appendChild(span);
+ });
 }
 function start(){refresh();window.setInterval(function(){if(!document.hidden)refresh()},3500);document.addEventListener('visibilitychange',function(){if(!document.hidden)refresh()})}
-window.BoatEdgeV249={refresh:refresh,navigate:navigate,version:'V297-DISPLAY-NAV-ONLY'};
+window.BoatEdgeV249={refresh:refresh,navigate:navigate,version:'V337-RACE-SCOPED-EVIDENCE-ONLY'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
