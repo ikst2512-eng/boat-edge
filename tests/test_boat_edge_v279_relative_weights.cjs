@@ -10,6 +10,8 @@ assert(src.includes('締切前の保存買い目は結果後に変更しませ�
 assert(src.includes('data-be257-view="${postResult?\'frozen\':\'reference\'}"'));
 assert(html.includes('boat_edge_v108.js?v=258&amp;conf255=1&amp;weights=279'));
 assert(queue.includes('- [x] A29 |'));
-assert(queue.includes('- [ ] A30 |'));
+// The independent UI runner may have completed A30 or later since A29.
+ // It must remain a declared task, but completing it must not break V279.
+assert(/^- \[[ x]\] A30 \|/m.test(queue));
 assert(!queue.includes('- [ ] A29 |'));
 console.log('V279_RELATIVE_WEIGHTS_LABEL_ONLY_PASS');
