@@ -8,7 +8,7 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 - Latest model/formal freeze is NOT certified by this TODO.
 - Official V185 prospective freeze requires pre-deadline immutable Git evidence.
 - Browser display and model accuracy are separate certification gates.
-- Site snapshot count: 241; SHA-verified audits: 241; settled reference histories: 229.
+- Site snapshot count: 245; SHA-verified audits: 245; settled reference histories: 239.
 - 🎯 indicator strings present in JS: true; Safari confirmation: false.
 - Formal state recorded as of: 2026-10-08 (may be stale).
 - Formal guards (recorded): results_seen=False, unlock=False, scoring=False.
@@ -31,7 +31,7 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 - Do not promote V180/V185 or any hypothesis before multi-day independent Fresh improvement.
 
 ## RECENT DONE
-- [x] サイト参考FINAL_15M予想：SHA照合した監査 241R。
+- [x] サイト参考FINAL_15M予想：SHA照合した監査 245R。
 - [x] 4モード件数、V133固定のブラウザ・サーバーParity検査。
 
 ## TODO EVIDENCE
@@ -55,19 +55,11 @@ Read-only history, not additional current-model certification.
 - V109 payout parser supports ¥ / ￥ / 円.
 - V109 backfills historical confirmed payout gaps from 2026-10-07.
 - V109 keeps result/trifecta data factual; missing payout is never fabricated.
-
 - V126 executes the actual V122 browser functions and extracted V123 server functions against real stored races.
-
 - V126 requires identical top10/mode ordering and probability parity within 1e-9.
-
 - V126 fixtures cover actual-course swap, missing exhibition time, wide exhibition-ST gap and complete original-exhibition data.
-
 - V126 automatically reruns when V122 runtime, V123 workflow or venue course stats change.
-
 - V126 does not modify V122 UI or V123/V125 production pipelines.
-
 - V126 compares current V122/V131/V132 browser functions with CURRENT V133 server functions against stored races.
-
 - V126 automatically reruns when runtime JS, CURRENT V133 server, or venue course stats change.
-
 - V126 is a read-only comparison that does not modify the production prediction engine.
