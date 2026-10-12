@@ -1,0 +1,89 @@
+name: BOAT EDGE V256 - Per Race Frozen Bet Detail Navigation Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - assets/boat_edge_v241_results.js
+      - assets/boat_edge_v241_results.css
+      - results-detail.html
+      - .github/workflows/v256-ticket-drilldown-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v256-readonly-ticket-mode-deeplink
+  cancel-in-progress: true
+
+jobs:
+  mode-preserving-detail-link:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test per-race and mode links, script syntax, and freeze evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v241_results.js
+          node - <<'NODE_V256'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const source=fs.readFileSync('assets/boat_edge_v241_results.js','utf8');
+          const page=fs.readFileSync('results-detail.html','utf8');
+          const styles=fs.readFileSync('assets/boat_edge_v241_results.css','utf8');
+          assert(source.includes('ticketLink=/^20'));
+          assert(source.includes('encodeURIComponent(r.race_key)'));
+          assert(source.includes('encodeURIComponent(mode)'));
+          assert(source.includes('class="be241-ticket-detail"'));
+          assert(source.includes('be241-footer-links'));
+          assert(page.includes("var requestedMode=query.get('mode')"));
+          assert(page.includes("Object.prototype.hasOwnProperty.call(modes,requestedMode)"));
+          assert(page.includes("var requested=query.get('race')"));
+          assert(page.includes("crypto.subtle.digest('SHA-256',bytes)"));
+          assert(page.includes("v232_cohort"));
+          assert(styles.includes('.be241-item-footer a.be241-ticket-detail'));
+          const m=[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          assert.equal(m.length,1);
+          new Function(m[0][1]);
+          for(const mode of ['hit','balance','hole','narrow']){
+            const key='20261012-01-08';
+            const url='./results-detail.html?race='+encodeURIComponent(key)+'&mode='+encodeURIComponent(mode);
+            const parsed=new URL(url,'https://example.com/boat-edge/');
+            assert.equal(parsed.searchParams.get('race'),key);
+            assert.equal(parsed.searchParams.get('mode'),mode);
+          }
+          console.log('V256_RACE_AND_MODE_NAVIGATION_SAFETY_PASS');
+          NODE_V256
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v241_results.py' -q
+          python3 - <<'PY_V256'
+          import json,hashlib
+          from pathlib import Path
+          o=json.loads(Path('data/site_autopilot/v241_results_current.json').read_text(encoding='utf8'))
+          assert o['scope']=='VERIFIED_POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH'
+          assert o['formal_result_access'] is False
+          assert o['production_model_changed'] is False
+          assert len(o['rows'])==o['settled_verified_races']
+          count=0
+          for r in o['rows']:
+              key=r['race_key']
+              raw=(Path('data/site_autopilot/v232_cohort')/(key+'.json')).read_bytes()
+              assert hashlib.sha256(raw).hexdigest()==r['precommitted_sha256']
+              saved=json.loads(raw)
+              assert saved['scope']=='SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH'
+              for mode in ('hit','balance','hole','narrow'):
+                  tickets=saved['frozen_mode_tickets'][mode]
+                  out=r['mode_outcomes'][mode]
+                  assert sum(x['stake_yen'] for x in tickets)==10000
+                  stake=sum(x['stake_yen'] for x in tickets if x['combo']==r['winning_combo'])
+                  assert stake==out['winning_ticket_stake_yen']
+                  assert stake*r['official_payout_per_100_yen']//100==out['hypothetical_return_yen']
+              count+=1
+          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf8'))
+          g=f['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert f['formalFirst100']['races']==0
+          print('V256_FROZEN_TICKETS_ALL_FOUR_MODES_PASS',count)
+          PY_V256
