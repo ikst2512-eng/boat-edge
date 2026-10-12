@@ -27,6 +27,7 @@ from boat_edge_v315_source_capture import (
     MAX_HTML_BYTES, capture_one, check_target, real_fetch,
 )
 from boat_edge_v318_shadow_freeze import JST, canonical, parse_time
+from boat_edge_v333_source_urls import suggested_source_urls
 
 
 MODEL = "BOAT_EDGE_V332_LIVE_LOCAL_SHA_RESEARCH_ONLY"
@@ -50,6 +51,9 @@ def _local_capture(root, key, provider, deadline, now, expected_url=None):
             or receipt_path.parent.is_symlink() or
             receipt_path.parent.parent.is_symlink()):
         raise ValueError("SOURCE_SYMLINK_FORBIDDEN:" + provider)
+    if (not receipt_path.resolve().is_relative_to(root) or
+            not raw_path.resolve().is_relative_to(root)):
+        raise ValueError("SOURCE_OUTSIDE_REPOSITORY:" + provider)
     if not receipt_path.is_file() or not raw_path.is_file():
         raise ValueError("SOURCE_RECEIPT_OR_RAW_MISSING:" + provider)
     try:
@@ -124,6 +128,11 @@ def _eligible_race(root, key, now):
             raise ValueError("INVALID_SOURCE_FETCH_TIME:" + provider) from exc
         if fetched.tzinfo is None or fetched >= deadline or fetched > now:
             raise ValueError("SOURCE_NOT_ASOF_PREDEADLINE:" + provider)
+        # The official race-card URL itself must identify this exact race.
+        try:
+            check_target("official", source["source"], key)
+        except (ValueError, KeyError, TypeError) as exc:
+            raise ValueError("SOURCE_RACE_URL_MISMATCH:" + provider) from exc
     candidate = build_shadow(race)
     candidate["race_source_sha256"] = hashlib.sha256(raw).hexdigest()
     return candidate, deadline, race
@@ -149,18 +158,13 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
     for provider, url in source_urls.items():
         check_target(provider, url, race_key)
     if capture:
+        # Opt-in live capture: derive documented public race-page URL candidates
+        # for *all* three providers. User-supplied URLs take precedence; the
+        # result is still only self-reported local evidence, never source auth.
+        for provider, url in suggested_source_urls(race_key).items():
+            source_urls.setdefault(provider, url)
         missing = [provider for provider in PROVIDERS
                    if not _receipt_location(root, race_key, provider)[0].is_file()]
-        # Fail before any network call if a missing source has no explicit URL.
-        for provider in missing:
-            if provider not in source_urls:
-                if provider == "official":
-                    official = (race["source_audit"]["beforeinfo"] or {}).get("source")
-                    if isinstance(official, str):
-                        check_target("official", official, race_key)
-                        source_urls["official"] = official
-                if provider not in source_urls:
-                    raise ValueError("SOURCE_URL_REQUIRED:" + provider)
         for provider in missing:
             capture_one(root, race_key, deadline.isoformat(), provider,
                         source_urls[provider], fetcher=fetcher, clock=clock)
@@ -173,8 +177,8 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
     # A final live deadline guard prevents a slow validation or capture from
     # being mistaken for a frozen prospective prediction.
     now = _now(clock)
-    if now >= deadline:
-        raise ValueError("LIVE_WINDOW_CLOSED_BEFORE_FREEZE")
+    if (deadline - now).total_seconds() < 5:
+        raise ValueError("INSUFFICIENT_PREDEADLINE_WRITE_MARGIN")
     if (candidate.get("production_eligible") is not False
             or candidate.get("scoring_authorized") is not False
             or candidate.get("calibrated") is not False
