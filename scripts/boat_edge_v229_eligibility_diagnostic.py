@@ -26,9 +26,9 @@ def fresh(item, now, minutes):
 def inspect(root, now):
     day=now.astimezone(JST).strftime("%Y%m%d")
     out=[]
-    for p in sorted((root/"data/site_races").glob(f"{day}-??-??.json")):
+    for p in sorted((root/"data/races").glob(f"{day}-??-??.json")):
         race=load(p); key=p.stem; reasons=[]
-        meta=race.get("race") or race.get("meta") or {}
+        meta=race.get("meta") or {}
         deadline=str(meta.get("deadline") or "")
         try:
             dl=datetime.fromisoformat(f"{day[:4]}-{day[4:6]}-{day[6:]}T{deadline}:00+09:00")
