@@ -46,4 +46,18 @@ if(fs.existsSync('index.html')){
  assert(html.includes('boat_edge_v304_topk_mobile.css?v=306'));
  assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306'));
 }
+/* V306: the existing readonly V307 runner invokes this file; execute related
+ * presentation-only fixtures on native Node too, without editing workflows. */
+if(typeof process!=='undefined'&&process?.versions?.node){
+ const {execFileSync}=require('node:child_process');
+ for(const [file,signature] of [
+  ['tests/test_boat_edge_v305_evidence.cjs','V305_RACE_SCOPED_EXHIBITION_PROVENANCE_FAIL_CLOSED_PASS'],
+  ['tests/test_boat_edge_v306_race_switch.cjs','V306_RACE_SWITCH_STALE_TICKETS_SUPPRESSED_PASS']
+ ]){
+  assert(fs.existsSync(file),'required UI regression missing: '+file);
+  const output=execFileSync(process.execPath,[file],{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']});
+  assert(output.includes(signature),'related UI regression not proven: '+file);
+  console.log(output.trim());
+ }
+}
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
