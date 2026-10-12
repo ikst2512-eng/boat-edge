@@ -14,7 +14,7 @@ class V182RetirementGate(unittest.TestCase):
             self.assertNotIn(trigger, header)
         self.assertIn("  fix-ui-and-audit:", text)
         self.assertIn("boat-edge-v182-urgent-scratch-safety", text)
-        self.assertIn("if github.ref == 'refs/heads/main'", text)
+        self.assertIn("if: github.ref == 'refs/heads/main'", text)
     def test_current_v235_automatic_owner_preserved(self):
         v235 = (ROOT / ".github/workflows/V235.yml").read_text(encoding="utf-8")
         header = v235.split("\npermissions:", 1)[0]
