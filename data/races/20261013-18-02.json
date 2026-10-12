@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 2,
     "deadline": "09:13",
-    "updated_at": "2026-10-13T06:40:10+09:00",
+    "updated_at": "2026-10-13T06:56:29+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=18&rno=2",
-      "fetched_at": "2026-10-13T06:42:03+09:00",
-      "sha256": "9ed2fed95a6d217512127fad32b51426ca4bf6d135db61b77d5b2a583ea02527",
+      "fetched_at": "2026-10-13T06:57:45+09:00",
+      "sha256": "316d11ff83294dfc7720087e6402eb4384ec975927ab8f728b5b450a1f5c29c6",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=18&rno=2",
+      "fetched_at": "2026-10-13T06:57:05+09:00",
+      "sha256": "6ca749dae7c2c725abfa323fd5384a7aea2e23dca31c436f93b3496310fc7562",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -284,7 +290,53 @@
       "raw_text": "6 5451 / B2 知念 伶奈 佐賀/沖縄 21歳/46.5kg F1 L0 - 1.24 2.17 2.17 0.00 0.00 0.00 63 27.52 40.37 62 37.50 55.36 4 11 1 9 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 高倉 孝太 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 林 祐介 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 芝田 浩治 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 宇田川 信一 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 上條 嘉嗣 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 知念 伶奈 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
