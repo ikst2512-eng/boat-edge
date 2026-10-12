@@ -1,12 +1,9 @@
 name: BOAT EDGE V132 Balance10 Wave18
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v132.yml"
+  # V304: superseded history/UI installer; explicit manual recovery only.
+  # V133 remains scheduled; V134 remains owner of downstream TODO reconciliation.
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
