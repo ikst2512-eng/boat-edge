@@ -6,6 +6,7 @@ function load(path,query){
  const doc={readyState:'loading',hidden:false,visibilityState:'visible',
   addEventListener(){},querySelector(s){return query?.(s)||null},
   querySelectorAll(){return []},
+  createElement(){return {style:{},dataset:{},setAttribute(){},textContent:''}},
   getElementById(id){if(!elements.has(id))elements.set(id,{
     textContent:'',innerHTML:'',addEventListener(){},classList:{toggle(){}},
     value:'hit'
