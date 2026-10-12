@@ -45,6 +45,7 @@ const tabs={
 const field=(r,path)=>path.split('.').reduce((x,k)=>x?.[k],r);
 let metric='base',layout='lanes',selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
 let lastTicketList=null,awaitingTicketList=false;
+let lastStructure='';
 /* A visually outstanding number is never inferred from 4/6 known boats. */
 function best(rows,path,margin,low){
  if(!Array.isArray(rows)||rows.length!==6||new Set(rows.map(r=>r?.lane)).size!==6||path==='course')return null;
@@ -58,25 +59,44 @@ function best(rows,path,margin,low){
 function color(row,path,x,b){
  return b!==null&&nr(x)!==null&&Math.abs(Number(x)-b)<1e-8&&!(path==='st'&&(row.f||Number(x)<0))?' best':'';
 }
-function cell(row,path,d,b){
+function cellData(row,path,d,b){
  const raw=field(row,path),n=nr(raw);
  let v=val(raw,d);
  if(path==='st'&&n!==null&&(row.f||n<0))v='F'+Math.abs(n).toFixed(2);
  if(path==='st'&&n!==null&&n>=0&&!row.f)v=n.toFixed(2);
  if(path==='course'&&n!==null)v=Number.isInteger(n)&&n>=1&&n<=6?n+'コース':'－';
- return `<td class="be206-val${color(row,path,raw,b)}${path==='st'&&(row.f||n!==null&&n<0)?' foul':''}">${esc(v)}</td>`;
+ return {text:v,className:`be206-val${color(row,path,raw,b)}${path==='st'&&(row.f||n!==null&&n<0)?' foul':''}`};
+}
+function cell(row,path,d,b){
+ const value=cellData(row,path,d,b);
+ return `<td class="${value.className}">${esc(value.text)}</td>`;
+}
+/* Retain racer buttons while only numeric cells change during same-race updates. */
+function updateComparisonValues(table,rows,orientation,metricName){
+ const specs=tabs[metricName]?.cols;
+ if(!specs||!['lanes','rows'].includes(orientation)||!Array.isArray(rows)||rows.length!==6||!table?.querySelectorAll)return false;
+ const cells=[...table.querySelectorAll('tbody td')];
+ if(cells.length!==6*specs.length)return false;
+ const leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
+ const values=orientation==='lanes'?specs.flatMap((c,i)=>rows.map(r=>cellData(r,c[1],c[2],leaders[i]))):
+   rows.flatMap(r=>specs.map((c,i)=>cellData(r,c[1],c[2],leaders[i])));
+ cells.forEach((node,i)=>{
+   setText(node,values[i].text);
+   if(node.className!==values[i].className)node.className=values[i].className;
+ });
+ return true;
 }
 function format(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
  return `<thead><tr><th scope="col">選手</th>${specs.map(x=>`<th scope="col">${esc(x[0])}</th>`).join('')}</tr></thead><tbody>`+
- rows.map(r=>`<tr><th scope="row"><span class="be206-racer"><span class="be206-lane be206-l${r.lane}">${r.lane}</span><button type="button" class="be206-racername be206-headpick-trigger" data-be206-head="${r.lane}" aria-label="${r.lane}号艇 ${esc(r.name)}を1着とする既存買い目" aria-pressed="false">${esc(r.name)}<small>${esc(r.grade)}</small></button></span></th>${specs.map((c,i)=>cell(r,c[1],c[2],leaders[i])).join('')}</tr>`).join('')+'</tbody>';
+ rows.map(r=>`<tr><th scope="row"><span class="be206-racer"><span class="be206-lane be206-l${r.lane}">${r.lane}</span><button type="button" class="be206-racername be206-headpick-trigger" data-be206-head="${r.lane}" aria-controls="be206HeadPanel" aria-expanded="false" aria-label="${r.lane}号艇 ${esc(r.name)}を1着とする既存買い目" aria-pressed="false">${esc(r.name)}<small>${esc(r.grade)}</small></button></span></th>${specs.map((c,i)=>cell(r,c[1],c[2],leaders[i])).join('')}</tr>`).join('')+'</tbody>';
 }
 /* Six colour-coded racer columns with a sticky metric label, like a data sheet.
    All values come from getRows() — no provider copy, network request or model call. */
 function matrix(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
  return '<thead><tr><th scope="col">比較項目</th>'+rows.map(r=>
-  '<th scope="col" data-be206-lane="'+r.lane+'"><span class="be206-lane be206-l'+r.lane+'">'+r.lane+'</span><button type="button" class="be206-headpick-trigger" data-be206-head="'+r.lane+'" aria-label="'+r.lane+'号艇 '+esc(r.name)+'を1着とする既存買い目" aria-pressed="false"><b>'+esc(r.name)+'</b><small>'+esc(r.grade)+'</small></button></th>'
+  '<th scope="col" data-be206-lane="'+r.lane+'"><span class="be206-lane be206-l'+r.lane+'">'+r.lane+'</span><button type="button" class="be206-headpick-trigger" data-be206-head="'+r.lane+'" aria-controls="be206HeadPanel" aria-expanded="false" aria-label="'+r.lane+'号艇 '+esc(r.name)+'を1着とする既存買い目" aria-pressed="false"><b>'+esc(r.name)+'</b><small>'+esc(r.grade)+'</small></button></th>'
  ).join('')+'</tr></thead><tbody>'+specs.map((c,i)=>
   '<tr><th scope="row">'+esc(c[0])+'</th>'+rows.map(r=>cell(r,c[1],c[2],leaders[i])).join('')+'</tr>'
  ).join('')+'</tbody>';
@@ -122,7 +142,7 @@ function create(root,p){
  <div id="be206MatrixViewport" class="be206-matrix-scroll" role="region" tabindex="0" aria-label="6艇横並び比較表。左右にスクロールできます"><table class="be206-matrix"></table></div>
  <div class="be206-scroll-controls" role="group" aria-label="6艇比較表の横移動" hidden><button type="button" data-be206-scroll="previous" aria-controls="be206MatrixViewport">← 前の艇</button><span class="be206-scroll-position"></span><button type="button" data-be206-scroll="next" aria-controls="be206MatrixViewport">次の艇 →</button></div>
  <div class="be206-table-help"></div>
- <section class="be206-headpanel" role="status" aria-live="polite" tabindex="-1" hidden></section>
+ <section id="be206HeadPanel" class="be206-headpanel" role="status" aria-live="polite" tabindex="-1" hidden></section>
  <div class="be206-foot"><span class="be206-source"></span><button type="button" data-be206-before>直前情報を見る →</button></div>`;
  $('.be206-matrix-scroll',box).addEventListener('scroll',()=>updateComparisonScroll(box),{passive:true});
  root.insertBefore(box,p);return box;
@@ -152,6 +172,7 @@ function renderHead(box,r,mode,status){
  $$('.be206-headpick-trigger',box).forEach(btn=>{
   const on=selected===Number(btn.dataset.be206Head);
   btn.setAttribute('aria-pressed',String(on));
+  btn.setAttribute('aria-expanded',String(on));
  });
  if(selected===null){
   if(!el.hidden)el.hidden=true;
@@ -170,15 +191,19 @@ function renderHead(box,r,mode,status){
  const sig=JSON.stringify([r?.race_key,mode,selected,status?.kind,marker,racer?.name,tickets]);
  if(headSig===sig&&el.hidden===false)return;
  headSig=sig;el.hidden=false;
- const title='<strong>'+selected+'号艇 '+esc(racer?.name||'選手未確認')+' の1着候補</strong>';
  const note='<small>表示中の予想スタイルの既存3連単から抽出。元順位を維持。独立した頭確率・新規予想・購入指示ではありません。</small>';
- const help='<span class="be206-head-source">'+esc(label)+'</span>';
  const lines=tickets===null?'<p>出走可否・予想保存状態・買い目形式を確認できないため表示しません。</p>':
    tickets.length===0?'<p>表示中の買い目に、この艇が1着の候補はありません。</p>':
    '<ol>'+tickets.map(x=>'<li><span>元順位 #'+x.rank+'</span><b>'+x.combo+'</b></li>').join('')+'</ol>';
- el.innerHTML='<div class="be206-head-top">'+title+help+
-   '<button type="button" data-be206-head-close aria-label="頭候補を閉じる">× 閉じる</button></div>'+
-   lines+note;
+ if(!$('.be206-head-top strong',el)||!$('.be206-head-source',el)||!$('.be206-head-lines',el)||!$('[data-be206-head-close]',el)){
+   el.innerHTML='<div class="be206-head-top"><strong></strong><span class="be206-head-source"></span>'+
+     '<button type="button" data-be206-head-close aria-label="頭候補を閉じる">× 閉じる</button></div>'+
+     '<div class="be206-head-lines"></div>'+note;
+ }
+ setText($('.be206-head-top strong',el),selected+'号艇 '+(racer?.name||'選手未確認')+' の1着候補');
+ setText($('.be206-head-source',el),label);
+ const content=$('.be206-head-lines',el);
+ if(content.innerHTML!==lines)content.innerHTML=lines;
 }
 function board(){
  const r=race(),p=$('#be108PredictionModes'),root=$('#tab-pred .section.stack');
@@ -190,9 +215,11 @@ function board(){
  const mode=$('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||'';
  const next=r.race_key+'|'+mode;
  const list=$('.be108-ticket-list',p),oldRace=ctx.split('|')[0];
+ const raceChanged=oldRace!==r.race_key;
   if(ctx!==next){
    if(oldRace&&oldRace!==r.race_key)awaitingTicketList=!list||list===lastTicketList;
-   ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';
+   ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';
+   if(raceChanged)layout='lanes';
   }
   if(awaitingTicketList&&list&&list!==lastTicketList)awaitingTicketList=false;
   if(!awaitingTicketList&&list)lastTicketList=list;
@@ -210,11 +237,13 @@ function board(){
  box.querySelectorAll('.be206-layout-switch button').forEach(b=>{const on=b.dataset.be206Layout===layout;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  const compactTable=$('.be206-table-scroll',box),matrixTable=$('.be206-matrix-scroll',box);
  compactTable.hidden=layout!=='rows';matrixTable.hidden=layout!=='lanes';
+ if(raceChanged)matrixTable.scrollLeft=0;
  const data=JSON.stringify([r.race_key,metric,layout,rows.map(row=>[row.lane,row.name,row.grade,row.f,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
+ const structure=JSON.stringify([r.race_key,metric,layout,rows.map(row=>[row.lane,row.name,row.grade])]);
  if(lastTable!==data||(layout==='lanes'?!$('.be206-matrix tbody',box):!$('.be206-table tbody',box))){
-   if(layout==='lanes')$('.be206-matrix',box).innerHTML=matrix(rows);
-   else $('.be206-table',box).innerHTML=format(rows);
-   lastTable=data;
+   const table=layout==='lanes'?$('.be206-matrix',box):$('.be206-table',box);
+   if(lastStructure!==structure||!updateComparisonValues(table,rows,layout,metric))table.innerHTML=layout==='lanes'?matrix(rows):format(rows);
+   lastTable=data;lastStructure=structure;
  }
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
@@ -237,6 +266,19 @@ function tickets(){
 /* Only an explicit tap may reveal and focus the selected-racer panel. Never jump during timers/race updates. */
 function canRevealHead(expected,actual,lane,current,panel){
  return keyOK(expected)&&expected===actual&&lane===current&&!!panel&&panel.isConnected===true&&!panel.hidden;
+}
+/* V342: restore keyboard/VoiceOver location only after an explicit close. */
+function restoreHeadFocus(expected,actual,lane,box){
+ if(!keyOK(expected)||expected!==actual||!Number.isInteger(lane)||lane<1||lane>6||!box||box.isConnected!==true)return false;
+ const target=$$('.be206-headpick-trigger',box).find(button=>
+   Number(button.dataset.be206Head)===lane&&button.isConnected===true&&!button.disabled&&button.getClientRects?.().length>0);
+ if(!target)return false;
+ target.focus({preventScroll:true});return true;
+}
+function closeHead(){
+ const lane=selectedLane,key=race()?.race_key;
+ selectedLane=null;headSig='';schedule();
+ queueMicrotask(()=>{if(selectedLane===null)restoreHeadFocus(key,race()?.race_key,lane,$('#be206Quick'));});
 }
 function sync(){if(busy)return;busy=true;try{board();tickets();}catch(err){console.warn('[BOAT EDGE V206 display]',err);}finally{busy=false;}}
 function schedule(){if(busy||queued)return;queued=true;queueMicrotask(()=>{queued=false;sync();});}
@@ -265,17 +307,22 @@ function init(){if(started)return;started=true;
      return;
    }
    if(e.target.closest?.('#be206Quick [data-be206-head-close]')){
-     selectedLane=null;headSig='';schedule();return;
+     closeHead();return;
    }
    if(e.target.closest?.('#be206Quick [data-be206-before]')){$('#raceTabs [data-tab="before"]')?.click();return;}
    if(e.target.closest?.('#be206MoreTickets')){showAll=!showAll;sync();}
+ });
+ document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&selectedLane!==null&&e.target.closest?.('#be206Quick .be206-headpanel')){
+     e.preventDefault();closeHead();
+   }
  });
  const pred=$('#tab-pred');if(pred&&typeof MutationObserver!=='undefined')new MutationObserver(schedule).observe(pred,{childList:true,subtree:true});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  window.addEventListener('resize',schedule,{passive:true});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,comparisonScrollState,updateComparisonScroll,scrollComparison,version:'V299-UI-ONLY',displayRevision:'V341',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,updateComparisonValues,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
