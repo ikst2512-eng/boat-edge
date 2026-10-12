@@ -44,6 +44,7 @@ const tabs={
 };
 const field=(r,path)=>path.split('.').reduce((x,k)=>x?.[k],r);
 let metric='base',layout='lanes',selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
+let lastTicketList=null,awaitingTicketList=false;
 /* A visually outstanding number is never inferred from 4/6 known boats. */
 function best(rows,path,margin,low){
  if(!Array.isArray(rows)||rows.length!==6||new Set(rows.map(r=>r?.lane)).size!==6||path==='course')return null;
@@ -130,7 +131,7 @@ function renderHead(box,r,mode,status){
  const locked=['first','final','latest'].includes(marker);
  const pre=keyOK(r?.race_key)&&r?.meta?.phase==='PRE_RESULT'&&
    r.meta.results_seen===false&&r.meta.unlock===false&&r.meta.scoring===false;
- const safe=pre&&status?.kind==='partial'&&locked; // Only recently checked cancellation signals; never assert confirmed starters.
+ const safe=pre&&status?.kind==='partial'&&locked&&!awaitingTicketList; // Only recently checked cancellation signals; never assert confirmed starters.
  const tickets=safe?headTickets($$('#be108PredictionModes .be108-ticket-list > .be108-ticket'),selected):null;
  const racer=(window.BoatEdgeV203?.getRows?.(r)||[]).find(x=>x.lane===selected);
  const label=marker==='final'?'締切前FINAL保存の表示':marker==='first'?'FIRST保存の表示':
@@ -157,15 +158,22 @@ function board(){
  if(rows.length!==6||new Set(rows.map(x=>x.lane)).size!==6){document.documentElement.classList.remove('be206-active');$('#be206Quick')?.remove();return;}
  const mode=$('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||'';
  const next=r.race_key+'|'+mode;
- if(ctx!==next){ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';}
+ const list=$('.be108-ticket-list',p),oldRace=ctx.split('|')[0];
+  if(ctx!==next){
+   if(oldRace&&oldRace!==r.race_key)awaitingTicketList=!list||list===lastTicketList;
+   ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';
+  }
+  if(awaitingTicketList&&list&&list!==lastTicketList)awaitingTicketList=false;
+  if(!awaitingTicketList&&list)lastTicketList=list;
+  document.documentElement.classList.toggle('be328-await-ticket-list',awaitingTicketList);
  const box=create(root,p);if(box.nextElementSibling!==p)root.insertBefore(box,p);
  const st=window.BoatEdgeV205.sourceStatus();
- const safety=st.title+'|'+st.detail+'|'+st.kind;
+ const safety=st.title+'|'+st.detail+'|'+st.kind+'|'+awaitingTicketList;
  if(safety!==lastStatus||!$('.be206-safety strong',box)?.textContent){
    lastStatus=safety;
-   const e=$('.be206-safety',box);e.dataset.kind=st.kind;
-   $('.be206-safety strong',box).textContent=st.title;
-   $('.be206-safety span',box).textContent=st.detail||'出走可否の照合状態は未確定';
+   const e=$('.be206-safety',box);e.dataset.kind=awaitingTicketList?'pending':st.kind;
+   $('.be206-safety strong',box).textContent=awaitingTicketList?'新レースの予想を照合中':st.title;
+   $('.be206-safety span',box).textContent=awaitingTicketList?'前レースの買い目は表示しません':(st.detail||'出走可否の照合状態は未確定');
  }
  box.querySelectorAll('.be206-switch button').forEach(b=>{const on=b.dataset.be206Metric===metric;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  box.querySelectorAll('.be206-layout-switch button').forEach(b=>{const on=b.dataset.be206Layout===layout;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
@@ -184,7 +192,7 @@ function board(){
  const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV298';
 }
 function tickets(){
- if(!document.documentElement.classList.contains('be206-active'))return;
+ if(!document.documentElement.classList.contains('be206-active')||awaitingTicketList)return;
  const p=$('#be108PredictionModes');if(!p)return;
  const list=$('.be108-ticket-list',p),card=$('.be108-mode-card',p);if(!list||!card)return;
  const rows=$$('.be108-ticket',list);rows.forEach((x,i)=>x.classList.toggle('be206-hide-ticket',!showAll&&i>=5));

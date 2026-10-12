@@ -7,10 +7,10 @@ const src=fs.readFileSync('assets/boat_edge_v207_first_prediction.js','utf8');
 const matrix=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
 const css=fs.readFileSync('assets/boat_edge_v304_topk_mobile.css','utf8');
 const tests=[
- ['matrix-js',/boat_edge_v206_quickview\.js\?v=299/],
- ['matrix-css',/boat_edge_v206_quickview\.css\?v=299/],
+ ['matrix-js',/boat_edge_v206_quickview\.js\?v=328/],
+ ['matrix-css',/boat_edge_v206_quickview\.css\?v=328/],
  ['topk-js',/boat_edge_v207_first_prediction\.js\?v=208&amp;a24=1&amp;ui=306/],
- ['topk-css',/boat_edge_v304_topk_mobile\.css\?v=306/],
+ ['topk-css',/boat_edge_v304_topk_mobile\.css\?v=328/],
  ['safari-nav',/boat_edge_v249_focus\.js\?v=297/]
 ];
 for(const [name,rx] of tests){
