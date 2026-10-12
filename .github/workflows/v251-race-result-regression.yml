@@ -89,13 +89,19 @@ jobs:
           }
           assert.equal(v.modeAllowed('unknown'),false);
           assert.equal(v.modeAllowed('__proto__'),false);
+          assert.equal(v.syncedMode('balance','hit','narrow'),'balance');
+          assert.equal(v.syncedMode('balance','balance','narrow'),'narrow');
+          assert.equal(v.syncedMode('__proto__','hit','hit'),'hit');
+          assert.equal(v.syncedMode(null,'hit','hole'),'hole');
+          assert(js.includes("activePredictionMode=find('#be207Top .be207-modes button.on')"));
+          assert(js.includes("selectedResultMode=syncedMode(activePredictionMode,lastPredictionMode,selectedResultMode)"));
           assert(labels.every(x=>Object.values(v.MODES).includes(x)));
           assert(js.includes('selectedResultMode')&&js.includes('button.dataset.resultMode=keyMode'));
           assert(js.includes("aria-pressed',String(selectedResultMode===keyMode)"));
           assert(js.includes("'&mode='+encodeURIComponent(selectedResultMode)"));
           assert(page.includes("query.get('mode')"));
           assert(page.includes("Object.prototype.hasOwnProperty.call(modes,requestedMode)"));
-          assert(index.includes('./assets/boat_edge_v251_race_result.js?v=255'));
+          assert(index.includes('./assets/boat_edge_v251_race_result.js?v=257'));
           assert(index.includes('./assets/boat_edge_v251_race_result.css?v=255'));
           console.log('V255_ALL_FOUR_VERIFIED_MODES_AND_DEEPLINK_PASS',report.rows.length);
           console.log('V251_RESULT_DEEPLINK_AND_DATA_GUARDS_PASS',report.rows.length);
