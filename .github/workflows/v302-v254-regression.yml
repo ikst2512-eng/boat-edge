@@ -1,0 +1,36 @@
+name: BOAT EDGE V302 - Formal Empty Fixture Regression
+on:
+  pull_request:
+    paths:
+      - 'tests/test_boat_edge_v257_event_trigger.py'
+      - 'tests/test_boat_edge_v254_third_tail.py'
+      - 'scripts/boat_edge_v254_third_tail.py'
+      - '.github/workflows/v302-v254-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tests/test_boat_edge_v257_event_trigger.py'
+      - 'tests/test_boat_edge_v254_third_tail.py'
+      - 'scripts/boat_edge_v254_third_tail.py'
+      - '.github/workflows/v302-v254-regression.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v302-fixture-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  fixture-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run V254 and V257 pre-result safety fixtures without outcome endpoints
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v254_third_tail.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v257_event_trigger.py' -v
+          echo V302_FORMAL_FIXTURE_REGRESSIONS_PASS
