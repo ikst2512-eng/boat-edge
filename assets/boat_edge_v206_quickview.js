@@ -43,7 +43,7 @@ const tabs={
  original:{label:'オリ展',hint:'1周・まわり足・直線。オリ展CSVとBOATERS・競艇日和の独立照合は別。',cols:[['1周','lap',2,.08,true],['まわり足','turn',2,.04,true],['直線','straight',2,.04,true]]}
 };
 const field=(r,path)=>path.split('.').reduce((x,k)=>x?.[k],r);
-let metric='base',layout='lanes',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
+let metric='base',layout='lanes',selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
 /* A visually outstanding number is never inferred from 4/6 known boats. */
 function best(rows,path,margin,low){
  if(!Array.isArray(rows)||rows.length!==6||new Set(rows.map(r=>r?.lane)).size!==6||path==='course')return null;
@@ -68,14 +68,14 @@ function cell(row,path,d,b){
 function format(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
  return `<thead><tr><th scope="col">選手</th>${specs.map(x=>`<th scope="col">${esc(x[0])}</th>`).join('')}</tr></thead><tbody>`+
- rows.map(r=>`<tr><th scope="row"><span class="be206-racer"><span class="be206-lane be206-l${r.lane}">${r.lane}</span><span class="be206-racername">${esc(r.name)}<small>${esc(r.grade)}</small></span></span></th>${specs.map((c,i)=>cell(r,c[1],c[2],leaders[i])).join('')}</tr>`).join('')+'</tbody>';
+ rows.map(r=>`<tr><th scope="row"><span class="be206-racer"><span class="be206-lane be206-l${r.lane}">${r.lane}</span><button type="button" class="be206-racername be206-headpick-trigger" data-be206-head="${r.lane}" aria-label="${r.lane}号艇 ${esc(r.name)}を1着とする既存買い目" aria-pressed="false">${esc(r.name)}<small>${esc(r.grade)}</small></button></span></th>${specs.map((c,i)=>cell(r,c[1],c[2],leaders[i])).join('')}</tr>`).join('')+'</tbody>';
 }
 /* Six colour-coded racer columns with a sticky metric label, like a data sheet.
    All values come from getRows() — no provider copy, network request or model call. */
 function matrix(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
  return '<thead><tr><th scope="col">比較項目</th>'+rows.map(r=>
-  '<th scope="col" data-be206-lane="'+r.lane+'"><span class="be206-lane be206-l'+r.lane+'">'+r.lane+'</span><b>'+esc(r.name)+'</b><small>'+esc(r.grade)+'</small></th>'
+  '<th scope="col" data-be206-lane="'+r.lane+'"><span class="be206-lane be206-l'+r.lane+'">'+r.lane+'</span><button type="button" class="be206-headpick-trigger" data-be206-head="'+r.lane+'" aria-label="'+r.lane+'号艇 '+esc(r.name)+'を1着とする既存買い目" aria-pressed="false"><b>'+esc(r.name)+'</b><small>'+esc(r.grade)+'</small></button></th>'
  ).join('')+'</tr></thead><tbody>'+specs.map((c,i)=>
   '<tr><th scope="row">'+esc(c[0])+'</th>'+rows.map(r=>cell(r,c[1],c[2],leaders[i])).join('')+'</tr>'
  ).join('')+'</tbody>';
@@ -91,8 +91,60 @@ function create(root,p){
  <div class="be206-table-scroll"><table class="be206-table"></table></div>
  <div class="be206-matrix-scroll" tabindex="0" aria-label="6艇横並び比較表。左右にスクロールできます"><table class="be206-matrix"></table></div>
  <div class="be206-table-help"></div>
+ <section class="be206-headpanel" role="status" aria-live="polite" hidden></section>
  <div class="be206-foot"><span class="be206-source"></span><button type="button" data-be206-before>直前情報を見る →</button></div>`;
  root.insertBefore(box,p);return box;
+}
+
+/* V299: head selection reads the already-rendered active-mode tickets only.
+   It cannot create a new forecast, infer unrendered tickets, or reprioritise bets. */
+function headTickets(ticketRows,lane){
+ const num=Number(lane);
+ if(!Number.isInteger(num)||num<1||num>6||!Array.isArray(ticketRows)||
+    ticketRows.length<1||ticketRows.length>120)return null;
+ const found=[],seen=new Set();
+ for(let i=0;i<ticketRows.length;i++){
+   const text=ticketRows[i]?.querySelector?.('b')?.textContent?.trim()||'';
+   const m=text.match(/(?:^|[^0-9])([1-6]-[1-6]-[1-6])(?:$|[^0-9])/);
+   if(!m)return null;
+   const combo=m[1],parts=combo.split('-');
+   if(new Set(parts).size!==3||seen.has(combo))return null;
+   seen.add(combo);
+   if(Number(parts[0])===num)found.push({rank:i+1,combo});
+ }
+ return found.slice(0,5);
+}
+function renderHead(box,r,mode,status){
+ const el=$('.be206-headpanel',box),selected=selectedLane;
+ if(!el)return;
+ $$('.be206-headpick-trigger',box).forEach(btn=>{
+  const on=selected===Number(btn.dataset.be206Head);
+  btn.setAttribute('aria-pressed',String(on));
+ });
+ if(selected===null){
+  el.hidden=true;el.replaceChildren();headSig='';return;
+ }
+ const marker=$('#be108PredictionModes .be181-freeze-banner')?.dataset?.be181Source||'';
+ const locked=['first','final','latest'].includes(marker);
+ const pre=keyOK(r?.race_key)&&r?.meta?.phase==='PRE_RESULT'&&
+   r.meta.results_seen===false&&r.meta.unlock===false&&r.meta.scoring===false;
+ const safe=pre&&status?.kind!=='stop'&&locked;
+ const tickets=safe?headTickets($$('#be108PredictionModes .be108-ticket-list > .be108-ticket'),selected):null;
+ const racer=(window.BoatEdgeV203?.getRows?.(r)||[]).find(x=>x.lane===selected);
+ const label=marker==='final'?'締切前FINAL保存の表示':marker==='first'?'FIRST保存の表示':
+   marker==='latest'?'変動する参考表示':'保存・表示状態未確認';
+ const sig=JSON.stringify([r?.race_key,mode,selected,status?.kind,marker,racer?.name,tickets]);
+ if(headSig===sig&&el.hidden===false)return;
+ headSig=sig;el.hidden=false;
+ const title='<strong>'+selected+'号艇 '+esc(racer?.name||'選手未確認')+' の1着候補</strong>';
+ const note='<small>表示中の予想スタイルの既存3連単から抽出。元順位を維持。独立した頭確率・新規予想・購入指示ではありません。</small>';
+ const help='<span class="be206-head-source">'+esc(label)+'</span>';
+ const lines=tickets===null?'<p>出走可否・予想保存状態・買い目形式を確認できないため表示しません。</p>':
+   tickets.length===0?'<p>表示中の買い目に、この艇が1着の候補はありません。</p>':
+   '<ol>'+tickets.map(x=>'<li><span>元順位 #'+x.rank+'</span><b>'+x.combo+'</b></li>').join('')+'</ol>';
+ el.innerHTML='<div class="be206-head-top">'+title+help+
+   '<button type="button" data-be206-head-close aria-label="頭候補を閉じる">× 閉じる</button></div>'+
+   lines+note;
 }
 function board(){
  const r=race(),p=$('#be108PredictionModes'),root=$('#tab-pred .section.stack');
@@ -103,7 +155,7 @@ function board(){
  if(rows.length!==6||new Set(rows.map(x=>x.lane)).size!==6){document.documentElement.classList.remove('be206-active');$('#be206Quick')?.remove();return;}
  const mode=$('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||'';
  const next=r.race_key+'|'+mode;
- if(ctx!==next){ctx=next;showAll=false;lastTable='';lastStatus='';layout='lanes';}
+ if(ctx!==next){ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';}
  const box=create(root,p);if(box.nextElementSibling!==p)root.insertBefore(box,p);
  const st=window.BoatEdgeV205.sourceStatus();
  const safety=st.title+'|'+st.detail+'|'+st.kind;
@@ -125,6 +177,7 @@ function board(){
  }
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
+ renderHead(box,r,mode,st);
  document.documentElement.classList.add('be206-active');
  const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV298';
 }
@@ -147,6 +200,15 @@ function init(){if(started)return;started=true;
    if(metricBtn){const next=metricBtn.dataset.be206Metric;if(tabs[next]){metric=next;lastTable='';schedule();}return;}
    const layoutBtn=e.target.closest?.('#be206Quick [data-be206-layout]');
    if(layoutBtn){const next=layoutBtn.dataset.be206Layout;if(next==='lanes'||next==='rows'){layout=next;lastTable='';schedule();}return;}
+   const headBtn=e.target.closest?.('#be206Quick [data-be206-head]');
+   if(headBtn){
+     const lane=Number(headBtn.dataset.be206Head);
+     if(Number.isInteger(lane)&&lane>=1&&lane<=6){selectedLane=lane;headSig='';schedule();}
+     return;
+   }
+   if(e.target.closest?.('#be206Quick [data-be206-head-close]')){
+     selectedLane=null;headSig='';schedule();return;
+   }
    if(e.target.closest?.('#be206Quick [data-be206-before]')){$('#raceTabs [data-tab="before"]')?.click();return;}
    if(e.target.closest?.('#be206MoreTickets')){showAll=!showAll;sync();}
  });
@@ -154,6 +216,6 @@ function init(){if(started)return;started=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,version:'V298-UI-ONLY',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,version:'V299-UI-ONLY',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
