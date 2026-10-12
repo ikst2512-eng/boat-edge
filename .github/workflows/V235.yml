@@ -48,7 +48,7 @@ jobs:
           for spec in \
             'scripts/boat_edge_v230_fast_lane.py:2d2ca54b12b0c6c3930ac28c8c9a7d8fc62f56a8' \
             'scripts/boat_edge_v232_pre_result_cohort.py:06b08bf3f18163a744e50f4ccaff66d9480f66e6' \
-            'scripts/boat_edge_v215_readiness.py:01da1001eeb628b6733af4d62fb089b002a370c1' \
+            'scripts/boat_edge_v215_readiness.py:f74705858e9bffbe28b4ce444d29aa8565ed6497' \
             'scripts/boat_edge_v214_shadow.py:2fafe6932383c0ace68d82d3cc2591591b6affdb' \
             'scripts/boat_edge_v229_atomic_freeze.py:3112e04bee01477c70f952d44aaccb77a836d862'; do
             path="${spec%:*}"; sha="${spec##*:}"
@@ -58,6 +58,8 @@ jobs:
           PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v232_pre_result_cohort.py' -v
           PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v234_settle.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v234_settle.py
+          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v265_readiness_sources.py
+          echo V235_V265_STRICT_PRE_RESULT_ODDS_AND_SCRATCH_PROOF_REGRESSIONS_PASS
           echo V234_THIRTY_FIVE_PROSPECTIVE_AND_SETTLEMENT_REGRESSIONS_PASS
       - name: Immutable pre-result source prediction cohort with conflict re-execution
         shell: bash
