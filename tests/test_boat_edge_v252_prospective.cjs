@@ -1,0 +1,61 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const listeners={};let requests=0;
+const document={readyState:'loading',addEventListener(type,fn){listeners[type]=fn},getElementById(){return null}};
+const context={window:{},document,fetch:()=>{requests++;throw Error('No network while verifying')},Date,Number,Math,Set,console};
+vm.runInNewContext(fs.readFileSync('assets/boat_edge_v252_prospective.js','utf8'),context,{filename:'v252'});
+const api=context.window.BoatEdgeV252;
+assert(api&&typeof api.check236==='function'&&typeof api.check240==='function');
+const v236=JSON.parse(fs.readFileSync('data/site_autopilot/v236_score_current.json','utf8'));
+const v240=JSON.parse(fs.readFileSync('data/site_autopilot/v240_score_current.json','utf8'));
+const a=api.check236(v236),b=api.check240(v240);
+assert(a&&b,'Expected to verify frozen source-only experiment summaries');
+assert.equal(a.n,v236.scored_total);
+assert.equal(b.n,v240.scored_total);
+assert.equal(a.rows.find(x=>x.key==='coverage15').points,15);
+assert.equal(b.rows.find(x=>x.key==='hit10').points,10);
+assert.equal(b.rows.find(x=>x.key==='pair_coverage10').points,10);
+assert.equal(b.rows.find(x=>x.key==='pair_coverage10').gain,1);
+assert.equal(b.rows.find(x=>x.key==='pair_coverage10').loss,1);
+assert.equal(b.rows.find(x=>x.key==='second_coverage10').hits,0);
+assert.equal(b.paired,true);
+assert.equal(a.paired,false);
+const mutate=(obj,fn)=>{const clone=JSON.parse(JSON.stringify(obj));fn(clone);return clone};
+assert.equal(api.check240(mutate(v240,d=>d.accuracy_improvement_proven=true)),null);
+assert.equal(api.check240(mutate(v240,d=>d.production_model_changed=true)),null);
+assert.equal(api.check240(mutate(v240,d=>d.promotion_authorized=true)),null);
+assert.equal(api.check240(mutate(v240,d=>d.scope='FORMAL_FRESH')),null);
+assert.equal(api.check240(mutate(v240,d=>d.comparisons.hit10.hits++)),null);
+assert.equal(api.check240(mutate(v240,d=>d.comparisons.hit10.hit_rate_percent=99)),null);
+assert.equal(api.check240(mutate(v240,d=>d.comparisons.pair_coverage10.points=15)),null);
+assert.equal(api.check240(mutate(v240,d=>d.comparisons.pair_coverage10.paired_gain=9)),null);
+assert.equal(api.check240(mutate(v240,d=>d.examples[1].outcomes.pair_coverage10=!d.examples[1].outcomes.pair_coverage10)),null);
+assert.equal(api.check240(mutate(v240,d=>d.examples[1].race_key=d.examples[0].race_key)),null);
+assert.equal(api.check240(mutate(v240,d=>d.examples[0].outcomes.hit10='true')),null);
+assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.hit++)),null);
+assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.avg_points=10)),null);
+assert.equal(api.check236(mutate(v236,d=>d.scope='FORMAL_FRESH')),null);
+// Additional chronologically independent date must remain explicitly represented.
+const day2=mutate(v240,d=>{
+ const newRace=JSON.parse(JSON.stringify(d.examples[0]));
+ newRace.race_key='20261013-14-01';d.examples.push(newRace);
+ d.scored_total++;for(const [k,x] of Object.entries(d.comparisons)){
+  x.races++;if(newRace.outcomes[k])x.hits++;
+  x.hit_rate_percent=+(100*x.hits/x.races).toFixed(2);
+  if(k==='hit10')x.changed_races=0;
+  else x.changed_races++;
+  if(k!=='hit10'){
+   if(newRace.outcomes[k]&&!newRace.outcomes.hit10)x.paired_gain++;
+   if(!newRace.outcomes[k]&&newRace.outcomes.hit10)x.paired_loss++;
+  }
+ }
+});
+const crossDay=api.check240(day2);
+assert(crossDay&&crossDay.day==='20261012〜20261013');
+const html=fs.readFileSync('autopilot.html','utf8');
+assert(html.includes('id="v252Evidence"'));
+assert(html.includes('id="v252Equal"'));
+assert(html.includes('id="v252Wide"'));
+assert(html.includes('boat_edge_v252_prospective.js?v=252'));
+assert.equal(requests,0);
+console.log('V252_EQUAL_POINT_FORWARD_RESEARCH_GATES_PASS');
