@@ -80,7 +80,9 @@ def main():
             return None
         if not isinstance(x, dict):
             raise ValueError("INVALID_COURSE_MAP")
-        if set(x) != {str(i) for i in COURSES}:\n            raise ValueError("SIX_ACTUAL_COURSES_REQUIRED")\n        return {int(k): v for k, v in x.items()}
+        if set(x) != {str(i) for i in COURSES}:
+            raise ValueError("SIX_ACTUAL_COURSES_REQUIRED")
+        return {int(k): v for k, v in x.items()}
     print(json.dumps(research_report(convert(data["strengths"]),
                                      convert(data.get("second_log")),
                                      convert(data.get("third_log"))),
