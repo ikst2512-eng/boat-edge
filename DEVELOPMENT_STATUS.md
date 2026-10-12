@@ -52,3 +52,18 @@ UI work are preserved. This change does not replace a prediction model.
 
 Accuracy improvement, a complete BOATERS-like interface, and formal Fresh
 completion remain unproven. Never report these as delivered by V271.
+
+## V278 official source identity hardening
+
+- V230 validates the exact official PRE_RESULT path, date, venue and race before
+  network access and binds the response to that identity. Duplicate or missing
+  query fields, invalid dates, nonofficial origins and fragments fail closed.
+- Redirects are rejected before following them, so a redirect cannot visit a
+  result endpoint or silently substitute another race. Sources that require a
+  redirect remain unavailable; no substitute odds or exhibition are fabricated.
+- V234/V235 dependency pins change atomically with the shared source.
+- Synthetic URL/redirect fixtures extend the existing development CI. No model
+  weights, frozen evidence or formal results are changed.
+- Corrected V234's stale V215 readiness dependency pin after verifying that
+  current source adds scratch freshness and exact 120-odds provenance guards;
+  V235 already pins this strengthened source. No safety checks were removed.

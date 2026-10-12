@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 import re
 import unicodedata
-from urllib.parse import urlencode,urlsplit
+from urllib.parse import urlencode,urlsplit,parse_qs
 
 JST=timezone(timedelta(hours=9))
 UTC=timezone.utc
@@ -112,14 +112,33 @@ def targets(root,now,max_target=12):
             selected.append((due,key))
     return [key for _,key in sorted(selected)[:max_target]]
 
+def source_identity(url):
+    """Accept only one explicit official PRE_RESULT race, before any request."""
+    u=urlsplit(url)
+    if (u.scheme!='https' or u.netloc!='www.boatrace.jp' or u.fragment
+            or u.path not in ('/owpc/pc/race/racelist',
+                             '/owpc/pc/race/beforeinfo','/owpc/pc/race/odds3t')):
+        raise ValueError('V278_NON_PRE_RESULT_SOURCE')
+    q=parse_qs(u.query,keep_blank_values=True,strict_parsing=True)
+    if set(q)!={'hd','jcd','rno'} or any(len(v)!=1 for v in q.values()):
+        raise ValueError('V278_AMBIGUOUS_RACE_QUERY')
+    day,venue,race=(q[k][0] for k in ('hd','jcd','rno'))
+    if (not re.fullmatch(r'20[0-9]{6}',day)
+            or not re.fullmatch(r'[0-9]{2}',venue) or not 1<=int(venue)<=24
+            or not re.fullmatch(r'[0-9]{1,2}',race) or not 1<=int(race)<=12):
+        raise ValueError('V278_INVALID_RACE_IDENTITY')
+    datetime.strptime(day,'%Y%m%d')
+    return u.path,day,venue,int(race)
+
 def fetch(session,url):
-    r=session.get(url,timeout=(4,13),allow_redirects=True)
+    requested=source_identity(url)
+    # Never visit an unchecked redirect, including results/combined endpoints.
+    r=session.get(url,timeout=(4,13),allow_redirects=False)
+    if 300<=r.status_code<400:
+        raise RuntimeError('V278_REDIRECT_BLOCKED_BEFORE_FOLLOW')
     r.raise_for_status()
-    requested=urlsplit(url); final=urlsplit(r.url)
-    if (final.scheme!='https' or final.hostname!='www.boatrace.jp'
-            or final.path!=requested.path or final.path not in (
-               '/owpc/pc/race/racelist','/owpc/pc/race/beforeinfo','/owpc/pc/race/odds3t')):
-        raise RuntimeError('V230_UNEXPECTED_REDIRECT_OR_NON_PRE_RESULT_PATH')
+    if source_identity(r.url)!=requested:
+        raise RuntimeError('V278_RESPONSE_RACE_IDENTITY_MISMATCH')
     r.encoding=r.apparent_encoding or r.encoding or 'utf-8'
     return r.content,r.text,datetime.now(JST)
 

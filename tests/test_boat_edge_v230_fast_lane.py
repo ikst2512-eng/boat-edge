@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import boat_edge_v230_fast_lane as m
 
@@ -103,3 +103,42 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.sha(raw),r['source_audit']['race_card']['sha256'])
 
 if __name__=='__main__':unittest.main()
+
+
+class SourceIdentityTests(unittest.TestCase):
+    url='https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=06&rno=8'
+
+    def session(self,url=None,status=200):
+        response=Mock(status_code=status,url=url or self.url,content=b'fixture',
+                      text='fixture',apparent_encoding='utf-8')
+        session=Mock();session.get.return_value=response
+        return session,response
+
+    def test_exact_race_accepts_query_reordering(self):
+        session,_=self.session(self.url.split('?')[0]+'?rno=08&jcd=06&hd=20261013')
+        self.assertEqual(m.fetch(session,self.url)[:2],(b'fixture','fixture'))
+        session.get.assert_called_once_with(self.url,timeout=(4,13),allow_redirects=False)
+
+    def test_redirect_never_followed_or_decoded(self):
+        for status in (301,302,303,307,308):
+            session,r=self.session(status=status)
+            with self.subTest(status=status),self.assertRaisesRegex(RuntimeError,'REDIRECT_BLOCKED'):
+                m.fetch(session,self.url)
+            session.get.assert_called_once_with(self.url,timeout=(4,13),allow_redirects=False)
+            r.raise_for_status.assert_not_called()
+
+    def test_wrong_response_identity_rejected(self):
+        for old,new in [('20261013','20261012'),('jcd=06','jcd=07'),('rno=8','rno=9'),('beforeinfo','odds3t')]:
+            session,_=self.session(self.url.replace(old,new))
+            with self.subTest(new=new),self.assertRaises(RuntimeError):m.fetch(session,self.url)
+
+    def test_invalid_request_is_rejected_before_network(self):
+        urls=[self.url+'&rno=9',self.url+'&x=1',self.url.replace('rno=8','rno='),
+              self.url.replace('rno=8','rno=13'),self.url.replace('jcd=06','jcd=00'),
+              self.url.replace('20261013','20260230'),self.url+'#fragment',
+              self.url.replace('www.boatrace.jp','www.boatrace.jp.evil.example'),
+              self.url.replace('https:','http:'),self.url.replace('beforeinfo','raceresult')]
+        for url in urls:
+            session,_=self.session()
+            with self.subTest(url=url),self.assertRaises(ValueError):m.fetch(session,url)
+            session.get.assert_not_called()
