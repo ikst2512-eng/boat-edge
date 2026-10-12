@@ -47,7 +47,14 @@ class SourceMerge(unittest.TestCase):
         put(self.writer,'data/formal_status.json',self.lock)
         put(self.writer,'data/races/20261012-19-09.json','BASE_RACE\n')
         put(self.writer,'data/raw/20261012/19_09_beforeinfo.html','BASE_BEFORE\n')
-        git(self.writer,'add','data')
+        # The production collector now calls V277 before each Git push.
+        # Clone the REAL guard script into both offline writers; a missing
+        # fixture must never masquerade as correct rebase rejection.
+        guard=ROOT/'scripts/boat_edge_v277_snapshot_push_guard.py'
+        self.assertTrue(guard.is_file())
+        put(self.writer,'scripts/boat_edge_v277_snapshot_push_guard.py',
+            guard.read_text(encoding='utf-8'))
+        git(self.writer,'add','data','scripts')
         git(self.writer,'commit','-m','base PRE_RESULT only')
         git(self.writer,'push','-u','origin','main')
         run(['git','clone',str(self.remote),str(self.collector)])
