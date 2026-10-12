@@ -55,3 +55,13 @@ Read-only history, not additional current-model certification.
 - V109 payout parser supports ¥ / ￥ / 円.
 - V109 backfills historical confirmed payout gaps from 2026-10-07.
 - V109 keeps result/trifecta data factual; missing payout is never fabricated.
+
+- V126 executes the actual V122 browser functions and extracted V123 server functions against real stored races.
+
+- V126 requires identical top10/mode ordering and probability parity within 1e-9.
+
+- V126 fixtures cover actual-course swap, missing exhibition time, wide exhibition-ST gap and complete original-exhibition data.
+
+- V126 automatically reruns when V122 runtime, V123 workflow or venue course stats change.
+
+- V126 does not modify V122 UI or V123/V125 production pipelines.
