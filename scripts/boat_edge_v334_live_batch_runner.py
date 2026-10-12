@@ -39,11 +39,19 @@ def live_window(root, now, window_minutes=15, max_races=12):
     date = now.strftime("%Y%m%d")
     races = root / "data/races"
     eligible, skipped = [], []
+    observed = {
+        "current_day_race_card_files": 0,
+        "closed_before_scan": 0,
+        "outside_final_window": 0,
+        "less_than_two_minutes": 0,
+        "already_frozen_in_this_checkout": 0,
+    }
     if races.is_dir():
         for path in sorted(races.glob(date + "-??-??.json")):
             if not KEY.fullmatch(path.stem):
                 continue
             key = path.stem
+            observed["current_day_race_card_files"] += 1
             if path.is_symlink():
                 skipped.append({"race_key": key, "reason": "RACE_SYMLINK_FORBIDDEN"})
                 continue
@@ -66,14 +74,18 @@ def live_window(root, now, window_minutes=15, max_races=12):
                 deadline = parse_time(meta["date"] + "T" + meta["deadline"] + ":00+09:00")
                 minutes_left = (deadline - now).total_seconds() / 60
                 if minutes_left <= 0:
+                    observed["closed_before_scan"] += 1
                     continue  # Never process or backfill closed races.
                 if minutes_left > window_minutes:
+                    observed["outside_final_window"] += 1
                     continue  # Only deadline-near races, not future card crawling.
                 if minutes_left < 2:
+                    observed["less_than_two_minutes"] += 1
                     skipped.append({"race_key": key, "reason": "LESS_THAN_TWO_MINUTES"})
                     continue
                 target = root / "data/research_local_v332" / date / (key + ".json")
                 if target.is_file() or target.is_symlink():
+                    observed["already_frozen_in_this_checkout"] += 1
                     skipped.append({"race_key": key, "reason": "RESEARCH_FREEZE_EXISTS"})
                     continue
                 eligible.append((deadline, key, round(minutes_left, 2)))
@@ -89,6 +101,16 @@ def live_window(root, now, window_minutes=15, max_races=12):
                        for _, key, minutes in selected],
         "deferred_due_to_cap": [key for _, key, _ in eligible[max_races:]],
         "skipped": skipped,
+        "coverage": {
+            **observed,
+            "invalid_or_guarded_race_cards": sum(
+                s["reason"] != "LESS_THAN_TWO_MINUTES"
+                and s["reason"] != "RESEARCH_FREEZE_EXISTS" for s in skipped
+            ),
+            "eligible_before_cap": len(eligible),
+            "selected": len(selected),
+            "deferred_due_to_cap": max(0, len(eligible) - len(selected)),
+        },
     }
 
 
@@ -111,8 +133,24 @@ def run(root, capture=False, window_minutes=15, max_races=12,
                 })
             except (OSError, ValueError, KeyError, TypeError) as exc:
                 failures.append({"race_key": key, "reason": str(exc)})
+    coverage = selected["coverage"]
+    if coverage["current_day_race_card_files"] == 0:
+        readiness = "NO_CURRENT_DAY_RACE_CARDS"
+    elif not selected["candidates"]:
+        readiness = "NO_ELIGIBLE_RACES_IN_CURRENT_FINAL_WINDOW"
+    elif not capture:
+        readiness = "ELIGIBLE_RACES_DRY_RUN_ONLY"
+    elif not completed:
+        readiness = "ELIGIBLE_BUT_NO_FREEZE_COMPLETED"
+    elif failures:
+        readiness = "PARTIAL_RESEARCH_CAPTURE"
+    else:
+        readiness = "SELECTED_RACES_FROZEN_LOCALLY"
     return {
         "model_id": "BOAT_EDGE_V334_SITE_RESEARCH_BATCH_ONLY",
+        "run_diagnostic": readiness,
+        "diagnostic_is_not_an_accuracy_or_formal_readiness_claim": True,
+        "immutable_across_independent_actions_runs_verified": False,
         "window": selected,
         "capture_requested": capture is True,
         "completed": completed, "failures": failures,

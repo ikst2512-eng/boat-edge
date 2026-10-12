@@ -67,9 +67,14 @@ class V334LiveBatch(unittest.TestCase):
             self.assertEqual([x["race_key"] for x in dry["window"]["candidates"]],
                              ["20261013-22-12"])
             self.assertFalse(dry["capture_requested"])
+            self.assertEqual(dry["run_diagnostic"], "ELIGIBLE_RACES_DRY_RUN_ONLY")
+            self.assertEqual(dry["window"]["coverage"]["current_day_race_card_files"], 1)
+            self.assertEqual(dry["window"]["coverage"]["eligible_before_cap"], 1)
             self.assertFalse((root / "data/source_captures").exists())
             actual = run(root, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
             self.assertEqual(actual["completed_count"], 1)
+            self.assertEqual(actual["run_diagnostic"], "SELECTED_RACES_FROZEN_LOCALLY")
+            self.assertFalse(actual["immutable_across_independent_actions_runs_verified"])
             self.assertEqual(actual["failures"], [])
             self.assertEqual(actual["completed"][0]["modes"], [
                 "national_motor", "national_motor_st", "national_only"])
@@ -84,6 +89,8 @@ class V334LiveBatch(unittest.TestCase):
             # A second invocation never mutates or overwrites a frozen prediction.
             repeat = run(root, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
             self.assertEqual(repeat["completed_count"], 0)
+            self.assertEqual(repeat["run_diagnostic"], "NO_ELIGIBLE_RACES_IN_CURRENT_FINAL_WINDOW")
+            self.assertEqual(repeat["window"]["coverage"]["already_frozen_in_this_checkout"], 1)
             self.assertIn("RESEARCH_FREEZE_EXISTS",
                           [x["reason"] for x in repeat["window"]["skipped"]])
 
@@ -100,6 +107,11 @@ class V334LiveBatch(unittest.TestCase):
                              ["20261013-22-12"])
             self.assertIn("LESS_THAN_TWO_MINUTES",
                           [x["reason"] for x in selected["skipped"]])
+            self.assertEqual(selected["coverage"]["current_day_race_card_files"], 4)
+            self.assertEqual(selected["coverage"]["closed_before_scan"], 1)
+            self.assertEqual(selected["coverage"]["outside_final_window"], 1)
+            self.assertEqual(selected["coverage"]["less_than_two_minutes"], 1)
+            self.assertEqual(selected["coverage"]["eligible_before_cap"], 1)
 
     def test_reject_locked_race_and_no_synthetic_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -116,6 +128,7 @@ class V334LiveBatch(unittest.TestCase):
             report = run(root, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
             self.assertEqual(report["completed_count"], 0)
             self.assertEqual(len(report["failures"]), 1)
+            self.assertEqual(report["run_diagnostic"], "ELIGIBLE_BUT_NO_FREEZE_COMPLETED")
             self.assertFalse((root / "data/source_captures").exists())
 
     def test_stale_beforeinfo_rejected_without_source_fetch(self):
@@ -172,6 +185,30 @@ class V334LiveBatch(unittest.TestCase):
             self.assertEqual(actual["completed_count"], 1)
             self.assertEqual(actual["failures"], [])
             self.assertEqual(len(actual["window"]["skipped"]), 4)
+
+    def test_empty_day_never_claims_freeze_or_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            report = run(root, capture=True, clock=lambda: NOW,
+                         fetcher=lambda url: self.fail("NETWORK_FORBIDDEN"))
+            self.assertEqual(report["run_diagnostic"], "NO_CURRENT_DAY_RACE_CARDS")
+            self.assertEqual(report["window"]["coverage"]["current_day_race_card_files"], 0)
+            self.assertEqual(report["window"]["coverage"]["selected"], 0)
+            self.assertEqual(report["completed_count"], 0)
+            self.assertFalse(report["accuracy_improvement_proven"])
+            self.assertFalse(report["formal_fresh_read"])
+            self.assertFalse(report["immutable_across_independent_actions_runs_verified"])
+            self.assertFalse((root / "data").exists())
+
+    def test_invalid_cards_count_without_misreporting_research_freeze(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            prepare(root, lock=True)
+            report = run(root, capture=True, clock=lambda: NOW,
+                         fetcher=lambda url: self.fail("NETWORK_FORBIDDEN"))
+            self.assertEqual(report["window"]["coverage"]["invalid_or_guarded_race_cards"], 1)
+            self.assertEqual(report["run_diagnostic"], "NO_ELIGIBLE_RACES_IN_CURRENT_FINAL_WINDOW")
+            self.assertEqual(report["completed_count"], 0)
 
     def test_invalid_limits_and_naive_clock_fail_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
