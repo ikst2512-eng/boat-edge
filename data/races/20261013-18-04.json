@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 4,
     "deadline": "10:05",
-    "updated_at": "2026-10-13T07:34:26+09:00",
+    "updated_at": "2026-10-13T07:53:08+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=18&rno=4",
-      "fetched_at": "2026-10-13T07:36:22+09:00",
-      "sha256": "cbbb22ad7a85d274ec8214e8aded646df4c8ad33a1e6b673e6a4b02c4d213b49",
+      "fetched_at": "2026-10-13T07:54:14+09:00",
+      "sha256": "eb0b142130d9de67954d2306de961b4ea763097eb7785f8cea79b9f74036a0b0",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=18&rno=4",
+      "fetched_at": "2026-10-13T07:53:47+09:00",
+      "sha256": "f645984a4f4fa61523e7d067fc54e8bc1df976231fe8ca0bf19cfe12fb0cae9e",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
@@ -309,7 +315,53 @@
       "raw_text": "6 4592 / B1 小林 孝弘 山口/山口 45歳/52.0kg F0 L0 0.15 4.42 20.22 41.57 4.84 27.16 48.15 56 37.93 60.34 23 29.78 53.78 5 1 10 7 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 尾嶋 一広 54.1kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 郷原 章平 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 鈴木 峻佑 53.7kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 西尾 亮輔 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 山室 展弘 52.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 小林 孝弘 52.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
