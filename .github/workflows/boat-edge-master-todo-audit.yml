@@ -1,0 +1,53 @@
+name: BOAT EDGE Master TODO Safety Audit (Read Only)
+
+on:
+  push:
+    branches:
+      - main
+      - audit/boat-edge-master-todo-20261012
+    paths:
+      - 'BOAT_EDGE_MASTER_TODO.md'
+      - 'scripts/boat_edge_master_todo_audit.py'
+      - 'tests/test_boat_edge_master_todo_audit.py'
+      - '.github/workflows/boat-edge-master-todo-audit.yml'
+  pull_request:
+    paths:
+      - 'BOAT_EDGE_MASTER_TODO.md'
+      - 'scripts/boat_edge_master_todo_audit.py'
+      - 'tests/test_boat_edge_master_todo_audit.py'
+      - '.github/workflows/boat-edge-master-todo-audit.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '12 23 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-master-todo-read-only-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Offline synthetic fail-closed regressions
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_master_todo_audit.py' -v
+      - name: Audit current status (no results, payouts or network)
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_master_todo_audit.py
+      - name: Ensure master TODO stays honest and separate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('BOAT_EDGE_MASTER_TODO.md').read_text(encoding='utf-8')
+          assert 'T06' in s and 'T18' in s
+          assert 'BOAT_EDGE_CURRENT_TODO.md' in s
+          assert '正式Fresh' in s
+          print('MASTER_TODO_SCOPE_AND_FORMAL_SEPARATION_PASS')
+          PY
