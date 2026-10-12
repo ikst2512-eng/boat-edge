@@ -5,8 +5,8 @@ on:
     paths:
       - '.github/workflows/BOAT_EDGE_V215_DEADLINE_READINESS.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'
+  # V271: V216 verified successor owns regular pre-deadline readiness.
+  # Retain dispatch as an explicit fallback, not a competing scheduled writer.
 permissions:
   contents: write
   actions: write
