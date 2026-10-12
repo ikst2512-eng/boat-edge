@@ -3,6 +3,7 @@
 from pathlib import Path
 from datetime import datetime,timezone
 import json
+from site_formal_preflight_v274 import check as check_approved_overlay
 
 ROOT=Path('.')
 PAGE=ROOT/'index.html'
@@ -85,7 +86,8 @@ def audit(root=ROOT):
     parent_same=(model.get('formal_parent_sha256')==status.get('formalParentSha'))
     formal_frozen=bool(formal.get('races')==100 and formal.get('freezeManifestSha') and formal.get('coreSha'))
     pre_cohort_ok=bool(pre_guard and same_target and parent_same and core.get('core7_100_ready') is True)
-    complete=bool(pre_cohort_ok and formal_frozen and status.get('connected') is True and status.get('predictions_ready') is True and approved_count>=100)
+    content_check=check_approved_overlay(root,status) if approved_count>=100 else (False,0,'FILES_BELOW_100')
+    complete=bool(pre_cohort_ok and formal_frozen and status.get('connected') is True and status.get('predictions_ready') is True and approved_count>=100 and content_check[0])
     blockers=[]
     if not pre_guard:blockers.append('FORMAL_PRE_RESULT_GUARD_NOT_VERIFIED')
     if not same_target:blockers.append('MODEL_AND_FORMAL_TARGET_DATE_MISMATCH')
@@ -95,6 +97,7 @@ def audit(root=ROOT):
     if status.get('connected') is not True or status.get('predictions_ready') is not True:blockers.append('APPROVED_FORMAL_MODEL_NOT_CONNECTED')
     if approved_count==0:blockers.append('NO_PER_RACE_APPROVED_PREDICTION_FILES')
     elif approved_count<100:blockers.append('FORMAL_APPROVED_PREDICTIONS_BELOW_100')
+    elif not content_check[0]:blockers.append('FORMAL_PREDICTION_CONTENT_PRECHECK_FAILED')
     if not bridge:blockers.append('V177_BRIDGE_CONTRACT_UNAVAILABLE')
     return {
       'schema_version':'boat-edge-v179-formal-readiness-display-audit-v1',
@@ -107,6 +110,9 @@ def audit(root=ROOT):
       'formal_first100_races':formal.get('races',0),
       'formal_freeze_ready':formal_frozen,
       'formal_approved_prediction_files':approved_count,
+      'formal_prediction_content_verified_files':content_check[1],
+      'formal_prediction_content_preflight_passed':content_check[0],
+      'formal_prediction_content_preflight_reason':content_check[2],
       'raw_official_racelist_files':sum(x.endswith('_racelist.html') for x in raw_names),
       'raw_official_beforeinfo_files':sum(x.endswith('_beforeinfo.html') for x in raw_names),
       'model_target_matches_formal':same_target,
