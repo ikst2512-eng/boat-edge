@@ -90,6 +90,24 @@
       `<div class="be203-source">${badges.map(([label,yes,key])=>`<span class="${yes?'present':'absent'}">${esc(label)}：${esc(yes?when(r,key):'未取得')}</span>`).join('')}</div>`+
       `<div class="be203-water">${water.map(([k,v])=>`<span>${esc(k)} <b>${esc(v)}</b></span>`).join('')}<small>オリ展CSVはBOATERS・競艇日和の二重照合とは別</small></div>`;
   }
+  /* A23: an at-a-glance six-boat strip from ALREADY DISPLAYED metrics.
+     Numeric missing values remain missing; clear winners only when six
+     independent values exist. No model, odds, stake or result reads. */
+  function be258QuickSix(rows,bestLocal,bestMotor){
+    if(!Array.isArray(rows)||rows.length!==6||
+       new Set(rows.map(x=>x?.lane)).size!==6||
+       rows.some(x=>!Number.isInteger(x?.lane)||x.lane<1||x.lane>6))return '';
+    return `<section class="be258-quick" aria-label="6艇の全国・当地・モーター成績を一覧比較">
+      <div class="be258-quick-title"><strong>6艇 主要成績早見</strong><small>下の個別カードは全項目表示</small></div>
+      <div class="be258-quick-grid">${rows.map(x=>`<div class="be258-quick-boat" data-be258-lane="${x.lane}">
+        <b class="be258-quick-lane be203-l${x.lane}">${x.lane}号艇</b>
+        <span>全国勝率 <strong>${val(x.national?.win_rate)}</strong></span>
+        <span>当地勝率 <strong class="${red(x.local?.win_rate,bestLocal)}">${val(x.local?.win_rate)}</strong></span>
+        <span>モーター2連 <strong class="${red(x.motor?.quinella_rate,bestMotor)}">${val(x.motor?.quinella_rate,1)}%</strong></span>
+      </div>`).join('')}</div>
+      <small class="be258-quick-note">全6艇で確認できる数値だけ差を強調。未取得は「－」。この比較は予想順位を変更しません。</small>
+    </section>`;
+  }
   function cards(r){
     const rows=getRows(r),lap=distinctBest(rows,'lap',.08),turn=distinctBest(rows,'turn',.04),straight=distinctBest(rows,'straight',.04),st=distinctBest(rows,'st',.03);
     const localWin=strongest(rows,x=>x.local.win_rate,.3);
@@ -97,6 +115,7 @@
     const gaps=exhibitionGaps(r,rows);
     const delta=(lane,k)=>Number.isFinite(gaps?.[k]?.[lane])?'最速差 +'+gaps[k][lane].toFixed(2)+'秒':'差 未確認';
     return `<div class="be203-heading"><strong>直前の6艇比較</strong><small>選手ごとに見やすく整理</small></div>`+
+      be258QuickSix(rows,localWin,motor2)+
       `<div class="be203-cards">${rows.map(x=>`<article class="be203-card">
         <div class="be203-name"><span class="be203-lane be203-l${x.lane}">${x.lane}</span><b>${esc(x.name)}</b><small>${esc(x.grade)} / 展示進入 ${x.course??'－'}コース</small></div>
         <div class="be203-metrics">
@@ -158,6 +177,6 @@
     setInterval(()=>{if(!document.hidden)tick();},4000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){tick();if(safeKey(race()?.race_key))fetchScratch(race());}});
   }
-  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest,exhibitionGaps};
+  window.BoatEdgeV203={getRows,scratchHint,when,sync,strongest,exhibitionGaps,quickSix:be258QuickSix};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
