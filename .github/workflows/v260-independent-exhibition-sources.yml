@@ -1,0 +1,48 @@
+name: BOAT EDGE V260 - Independent Original Exhibition Evidence UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/boat_edge_v203_readable.js'
+      - 'assets/boat_edge_v203_readable.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v260_original_sources.cjs'
+      - '.github/workflows/v260-independent-exhibition-sources.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v260-original-exhibition-source-view
+  cancel-in-progress: true
+
+jobs:
+  source-provenance-isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Separate BOATERS, 競艇日和, official, and CSV states
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v203_readable.js
+          node tests/test_boat_edge_v260_original_sources.cjs
+          node tests/test_boat_edge_v258_quicksix.cjs
+          node tests/test_boat_edge_v250_ui.cjs
+      - name: Ensure formal result-free state is unchanged
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=s.get('guards') or {}
+          assert all(g.get(key) is False for key in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('V260_FORMAL_LOCK_UNTOUCHED_PASS')
+          PY
