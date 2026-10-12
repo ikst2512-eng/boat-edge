@@ -48,6 +48,29 @@ function validated(v){
  }
  return result;
 }
+/* V266: same-race, same-10-ticket paired audit. No cross-cohort or 15pt comparison.
+   McNemar two-sided exact sign test on discordant outcomes; descriptive only.
+   Never select or promote a production model from this research display. */
+function paired(lane,mode){
+ const base=lane?.races,allowed=['v236','v240'];
+ if(!Array.isArray(base)||!Object.prototype.hasOwnProperty.call(modes.v236,mode)&&
+    !Object.prototype.hasOwnProperty.call(modes.v240,mode))return null;
+ let gain=0,loss=0,both=0,neither=0;
+ for(const row of base){
+  const x=row?.categories?.hit10==='hit',y=row?.categories?.[mode]==='hit';
+  if(x&&y)both++;else if(!x&&y)gain++;else if(x&&!y)loss++;else neither++;
+ }
+ const discordant=gain+loss;
+ let p=1;
+ if(discordant){
+  // Exact binomial two-sided P(X <= min(gain,loss)); stable up to 200 races.
+  const k=Math.min(gain,loss);
+  let term=Math.pow(0.5,discordant),tail=term;
+  for(let i=1;i<=k;i++){term*=((discordant-i+1)/i);tail+=term;}
+  p=Math.min(1,2*tail);
+ }
+ return {races:base.length,gain,loss,both,neither,discordant,p_value:p};
+}
 function element(tag,cls,txt){
  const x=document.createElement(tag);if(cls)x.className=cls;
  if(txt!==undefined)x.textContent=txt;return x;
@@ -78,6 +101,20 @@ function render(v){
    body.append(row);
   }
   table.append(body);section.append(table);
+  if(lane==='v240'){
+   const p=element('div','v253-paired');
+   p.append(element('strong','', '同じレース・同じ10点の直接比較'));
+   for(const name of ['pair_coverage10','second_coverage10']){
+    const z=paired(x,name);
+    if(!z)continue;
+    p.append(element('p','',modes.v240[name]+'：現行10点だけ外れ・候補だけ的中 '+z.gain+
+      'R／現行10点だけ的中・候補だけ外れ '+z.loss+
+      'R。両方的中 '+z.both+'R、両方外れ '+z.neither+
+      'R。差が出た '+z.discordant+'R、両側正確検定 p='+z.p_value.toFixed(3)+
+      '（小標本・研究表示。的中率改善の証明や本番採用ではありません）'));
+   }
+   section.append(p);
+  }
   const recent=x.races.filter(r=>r.categories.hit10!=='hit').slice(-5);
   if(recent.length){
    section.append(element('p','v253-misses-heading','現行10点の直近の取りこぼし（研究対象のみ）'));
@@ -107,6 +144,6 @@ function start(){
  update();
  setInterval(()=>{if(!document.hidden)update()},120000);
 }
-window.BoatEdgeV253={validated,render,update};
+window.BoatEdgeV253={validated,paired,render,update};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
