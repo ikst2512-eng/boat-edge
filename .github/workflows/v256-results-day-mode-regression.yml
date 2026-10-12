@@ -27,6 +27,7 @@ jobs:
           set -euo pipefail
           node - <<'NODE_V256'
           'use strict';
+          (async()=>{
           const assert=require('node:assert/strict'), fs=require('node:fs'), vm=require('node:vm');
           const html=fs.readFileSync('results-detail.html','utf8');
           const raw=html.match(/<script>([\s\S]*?)<\/script>/g)||[];
@@ -97,6 +98,7 @@ jobs:
           assert.equal(c.e.mode.value,'narrow','race-deeplink retains selected mode');
           assert.equal(c.e.count.textContent,'1R','focused race count, not all-date count');
           console.log('V256_REAL_INLINE_DAY_MODE_RACE_FILTER_PASS',report.rows.length,'races');
+          })().catch(e=>{console.error(e);process.exitCode=1});
           NODE_V256
       - name: Verify no result mutation, source provenance bypass or formal unlock
         shell: bash
