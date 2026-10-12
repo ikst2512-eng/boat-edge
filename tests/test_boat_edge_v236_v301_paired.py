@@ -72,6 +72,12 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
                   "results_seen_at_freeze": False,
                   names[8]: parent_sha, names[9]: "a" * 40}
         if study == "v236":
+            # Mirror the REAL legacy V236 schema, rather than masking differences
+            # with synthetic V240/V254 fields that do not exist in Git evidence.
+            frozen.pop("model_promotion_authorized")
+            frozen.pop("results_seen_at_freeze")
+            frozen["result_seen_at_freeze"] = False
+            frozen["proven_improvement"] = False
             frozen["actual_or_paper_purchase"] = False
         else:
             frozen["formal_result_access"] = False
@@ -84,6 +90,7 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
                   "production_model_changed": False,
                   "model_promotion_authorized": False}
         if study == "v236":
+            scored.pop("production_model_changed")
             scored.update({"ticket_counts": {k: len(v) for k, v in candidates.items()},
                            "production_accuracy_improvement_proven": False,
                            "real_or_paper_purchase": False})
@@ -124,6 +131,33 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
                          ["equal_ten_point_modes"])
         self.assertFalse(report["accuracy_improvement_proven"])
         self.assertFalse(report["promotion_authorized"])
+
+    def test_v236_legacy_guard_keys_match_real_saved_records(self):
+        path = self.add("v236")
+        frozen_path = self.root / m.BASE / "v236_frozen" / path.name
+        scored = m.read(path)
+        frozen = m.read(frozen_path)
+        self.assertNotIn("production_model_changed", scored)
+        self.assertNotIn("model_promotion_authorized", frozen)
+        self.assertNotIn("results_seen_at_freeze", frozen)
+        self.assertFalse(frozen["result_seen_at_freeze"])
+        self.assertFalse(frozen["proven_improvement"])
+        self.assertEqual(m.checked_row(self.root, "v236", path, self.proof)["key"], KEY1)
+        for corrupted in (("result_seen_at_freeze", True),
+                          ("result_seen_at_freeze", None),
+                          ("proven_improvement", True),
+                          ("proven_improvement", None)):
+            field, value = corrupted
+            modified = dict(frozen)
+            if value is None:
+                modified.pop(field)
+            else:
+                modified[field] = value
+            write(frozen_path, modified)
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(m.EvidenceError, "PRODUCTION_OR_FREEZE_GUARD"):
+                    m.checked_row(self.root, "v236", path, self.proof)
+        write(frozen_path, frozen)
 
     def test_nonoverlapping_cohorts_never_pooled_or_compared(self):
         self.add("v236", KEY1)
