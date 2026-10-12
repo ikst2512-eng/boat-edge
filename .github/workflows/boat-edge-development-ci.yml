@@ -41,6 +41,10 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v23*.py' -q
       - name: Ensure obsolete UI installers cannot race current owners
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v298*.py' -q
+      - name: Verify strict V256 official 120-price source provenance (fail closed)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v256_odds_guard.py' -v
       - name: Test JST rollover and virtual balance display
         run: node --test tests/test_boat_edge_v271_health.cjs
       - name: Check live odds invalidation without fetching results
