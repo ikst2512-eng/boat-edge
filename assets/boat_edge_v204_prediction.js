@@ -70,7 +70,7 @@ function topKExplanation(rows){
  const cover=n=>verified&&tickets.length>=n?('上位'+n+'点 '+tickets.slice(0,n).join(' / ')):'保存済み順位の確認待ち';
  return {head:verified?tickets[0][0]+'号艇（Top1買い目の1着）':'未確認（頭予想と別）',
   top3:cover(3),top5:cover(5),top10:cover(10),
-  caution:'頭の的中確率：未校正 ／ 3連単の的中確率：未校正。Top3/5/10は買い目順位で、的中率や配当の保証ではありません。'};
+  caution:'頭の的中確率：未校正 ／ 3連単の的中確率：未校正。Top3/5/10は買い目順位で、的中率や配当の保証ではありません。保存済みp_raw_percentは上位10点内の配分用相対重みであり、120通りに対する的中確率ではありません。'};
 }
 /* V250 A17: only the selected race's V223 pre-deadline inspector may certify odds. */
 function oddsProof(r){
