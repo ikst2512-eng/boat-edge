@@ -1,17 +1,30 @@
 {
-  "active_window_races": 5,
-  "current_windows": [],
+  "active_window_races": 7,
+  "current_windows": [
+    {
+      "deadline_jst": "08:35",
+      "key": "20261013-14-01",
+      "missing_evidence": [
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "scratch_unverified_or_blocked"
+      ],
+      "venue": "鳴門"
+    }
+  ],
   "data_sources": {
     "collector_freshness": "CURRENT",
     "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 0,
+    "predeadline_observations": 1,
     "site_autovalidation": "EVIDENCE_REVIEW_REQUIRED"
   },
   "day_jst": "20261013",
-  "decision_window_races": 0,
+  "decision_window_races": 1,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
-  "issues": [],
+  "issues": [
+    "predeadline_incomplete"
+  ],
   "next_race": {
     "deadline_jst": "08:35",
     "race_key": "20261013-14-01",
@@ -20,7 +33,7 @@
   },
   "official_beforeinfo_urgent_15m": {
     "error": 0,
-    "health_updated_at": "2026-10-13T07:53:08+09:00",
+    "health_updated_at": "2026-10-13T08:08:52+09:00",
     "ok": 0,
     "partial_six_boat_source": 0,
     "published_wait": 0,
@@ -28,7 +41,9 @@
     "targets": 0
   },
   "paper_wager_authorized_by_this_runner": false,
-  "recovery_dispatch_candidates": [],
+  "recovery_dispatch_candidates": [
+    "auto-update.yml"
+  ],
   "research_model_production_promotion": false,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
@@ -81,8 +96,8 @@
       "not_found_without_gaps_inside_2_to_10m_window": 0,
       "not_found_without_observed_gaps": 0,
       "observed_gaps_for_currently_missing": {},
-      "observed_races": 0,
-      "pending_before_deadline": 0,
+      "observed_races": 1,
+      "pending_before_deadline": 1,
       "predeadline_snapshot_with_matching_audit": 0,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
       "sha_consistent_predeadline_snapshots": 0,
@@ -90,10 +105,10 @@
       "snapshot_present": 0,
       "source_changed_after_freeze": 0,
       "source_missing_after_freeze": 0,
-      "status": "NO_PRE_RESULT_OBSERVATIONS",
+      "status": "OBSERVED_WINDOW_COUNTS",
       "v229_atomic_evidence_matched": 0,
       "v229_attestation_record_matched": 0
     }
   },
-  "status": "WAITING_FOR_PREDEADLINE"
+  "status": "NEEDS_ATTENTION"
 }
