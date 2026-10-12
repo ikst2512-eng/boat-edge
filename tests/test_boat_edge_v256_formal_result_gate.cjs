@@ -1,0 +1,32 @@
+'use strict';
+/* V256 offline-only unit test. Never accesses actual result, payout or combined endpoints. */
+const assert=require('assert'),fs=require('fs'),vm=require('vm');
+const js=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+const first=js.indexOf('async function resultFor(key){');
+const last=js.indexOf('\nasync function courseStatsFor(',first);
+assert(first>0&&last>first,'resultFor must remain an isolated guarded reader');
+let active={race_key:'20261012-03-03',meta:{phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false}};
+const state={formal:{target_date:'2026-10-12',guards:{results_seen:false,unlock:false,scoring:false}}};
+const calls=[];
+const context={state,raceOf:()=>active,J:async path=>{calls.push(path);return {status:'confirmed'}}};
+vm.runInNewContext(js.slice(first,last)+'\nthis.resultFor=resultFor;',context);
+(async()=>{
+  const read=context.resultFor;
+  assert.strictEqual(await read(active.race_key),null);
+  assert.deepStrictEqual(calls,[],'untouched PRE_RESULT must not read a result file');
+  active={race_key:'20261012-03-03',meta:{phase:'PRE_RESULT',results_seen:true,unlock:true,scoring:true}};
+  assert.strictEqual(await read(active.race_key),null,'formal target still locked');
+  assert.deepStrictEqual(calls,[]);
+  active={race_key:'20261011-03-03',meta:{phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false}};
+  assert.strictEqual(await read('20261012-03-03'),null,'unselected formal target still locked');
+  assert.deepStrictEqual(calls,[]);
+  assert.strictEqual((await read('20261011-03-02')).status,'confirmed','other historical site cohort remains readable');
+  assert.strictEqual(calls.length,1);
+  state.formal.guards={results_seen:true,unlock:true,scoring:true};
+  assert.strictEqual((await read('20261012-03-03')).status,'confirmed','unlocked formal target may use existing site history');
+  assert.strictEqual(calls.length,2);
+  active={race_key:'20261012-03-03',meta:{phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false}};
+  assert.strictEqual(await read(active.race_key),null,'race PRE_RESULT lock dominates formal status');
+  assert.strictEqual(calls.length,2);
+  console.log('V256_FORMAL_RESULT_UNSEEN_GUARD_PASS');
+})().catch(e=>{console.error(e);process.exitCode=1});
