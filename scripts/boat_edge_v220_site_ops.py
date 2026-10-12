@@ -4,6 +4,7 @@ Only documents actual saved source evidence. Safe recovery *intent* is separate 
 """
 from __future__ import annotations
 import argparse
+import hashlib
 from datetime import datetime, timezone, timedelta
 import json
 from pathlib import Path
@@ -83,6 +84,85 @@ def source_status(root,key,now):
         issues.append('frozen_prediction_missing_or_invalid')
     return sorted(set(issues))
 
+def freeze_coverage(root,day,now):
+    """Site-only, observed-window coverage; never query a race result.
+
+    An early 'snapshot_missing' observation is NOT a final missed freeze:
+    later immutable evidence can appear in the saved prediction window.
+    SHA consistency and V229 same-run provenance are kept separate.
+    """
+    summary={'day_jst':day,'scope':'OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES',
+             'observed_races':0,'matured_observed_races':0,
+             'snapshot_present':0,'sha_consistent_predeadline_snapshots':0,
+             'v229_atomic_evidence_matched':0,'early_missing_later_snapshot_present':0,
+             'not_found_after_deadline':0,'pending_before_deadline':0,
+             'snapshot_or_audit_unverified':0,'observed_gaps_for_currently_missing':{},
+             'status':'NO_PRE_RESULT_OBSERVATIONS'}
+    path=root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json'
+    history=load(path) or {}
+    if history.get('schema')!='BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1' or history.get('day_jst')!=day:
+        return summary
+    observations=history.get('observations')
+    if not isinstance(observations,dict):return summary
+    for key,record in sorted(observations.items()):
+        if not isinstance(record,dict) or not KEY.fullmatch(str(key)) or not key.startswith(day+'-'):
+            continue
+        deadline=expected_deadline(key,record.get('deadline'))
+        if deadline is None:continue
+        summary['observed_races']+=1
+        matured=now>=deadline
+        if matured:summary['matured_observed_races']+=1
+        snap_file=root/'data/site_prediction_snapshots'/f'{key}.json'
+        if not snap_file.is_file():
+            field='not_found_after_deadline' if matured else 'pending_before_deadline'
+            summary[field]+=1
+            if matured:
+                gaps=record.get('source_gaps_seen') or []
+                for gap in set(x for x in gaps if isinstance(x,str) and len(x)<=80):
+                    counts=summary['observed_gaps_for_currently_missing']
+                    counts[gap]=counts.get(gap,0)+1
+            continue
+        summary['snapshot_present']+=1
+        if 'snapshot_missing' in (record.get('reasons_seen') or []):
+            summary['early_missing_later_snapshot_present']+=1
+        snap=load(snap_file) or {}
+        audit=load(root/'data/site_prediction_audit'/f'{key}.json') or {}
+        if not isinstance(snap,dict) or not isinstance(audit,dict):
+            summary['snapshot_or_audit_unverified']+=1;continue
+        saved=moment(snap.get('saved_at'))
+        lead=(deadline-saved).total_seconds() if saved else None
+        guards=snap.get('guards') or {}
+        try:
+            snap_sha=hashlib.sha256(snap_file.read_bytes()).hexdigest()
+            race_file=root/'data/races'/f'{key}.json'
+            race_sha=hashlib.sha256(race_file.read_bytes()).hexdigest()
+        except OSError:
+            summary['snapshot_or_audit_unverified']+=1;continue
+        consistent=(
+            snap.get('race_key')==key and snap.get('snapshot_window')=='FINAL_15M'
+            and all(guards.get(k) is False for k in ('results_seen','unlock','scoring'))
+            and lead is not None and 120<=lead<=900
+            and audit.get('race_key')==key and audit.get('pass') is True
+            and audit.get('latest_snapshot_sha256')==snap_sha
+            and snap.get('race_sha256')==race_sha)
+        if not consistent:
+            summary['snapshot_or_audit_unverified']+=1;continue
+        summary['sha_consistent_predeadline_snapshots']+=1
+        proof=load(root/'data/site_autopilot/v229_evidence'/f'{key}.json') or {}
+        stamp=moment(proof.get('evidence_captured_at'))
+        if (proof.get('schema')=='BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1'
+            and proof.get('race_key')==key and proof.get('snapshot_sha256')==snap_sha
+            and proof.get('race_sha256')==race_sha
+            and proof.get('new_snapshot_created_this_run') is True
+            and proof.get('results_seen') is False
+            and proof.get('formal_fresh_unlock') is False
+            and proof.get('scoring') is False
+            and stamp is not None and saved<=stamp<=deadline):
+            summary['v229_atomic_evidence_matched']+=1
+    summary['status']='OBSERVED_WINDOW_COUNTS' if summary['observed_races'] else 'NO_PRE_RESULT_OBSERVATIONS'
+    return summary
+
+
 def compute(root,now):
     now=now.astimezone(timezone.utc)
     day=now.astimezone(JST).strftime('%Y%m%d')
@@ -93,6 +173,9 @@ def compute(root,now):
     paper=load(root/'data/site_paper_sim/current.json') or {}
     formal=load(root/'data/formal_status.json') or {}
     collector_health=load(root/'data/health.json') or {}
+    previous_day=(now.astimezone(JST).date()-timedelta(days=1)).strftime('%Y%m%d')
+    freeze_funnel={'today':freeze_coverage(root,day,now),
+                   'previous_day':freeze_coverage(root,previous_day,now)}
     urgent_names=('beforeinfo_urgent_15m_targets','beforeinfo_urgent_15m_ok',
                   'beforeinfo_urgent_15m_published_wait','beforeinfo_urgent_15m_error')
     urgent_counts=[collector_health.get(name) for name in urgent_names]
@@ -171,6 +254,7 @@ def compute(root,now):
         'published_wait':urgent_counts[2] if urgent_telemetry_ok else None,
         'error':urgent_counts[3] if urgent_telemetry_ok else None,
         'health_updated_at':collector_health.get('updated_at') if urgent_telemetry_ok else None},
+      'site_prediction_freeze_observation':freeze_funnel,
       'research_model_production_promotion':False,'paper_wager_authorized_by_this_runner':False,
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover}
