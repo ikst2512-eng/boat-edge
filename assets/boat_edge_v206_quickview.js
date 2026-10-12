@@ -69,14 +69,14 @@ function cell(row,path,d,b){
 function format(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
  return `<thead><tr><th scope="col">選手</th>${specs.map(x=>`<th scope="col">${esc(x[0])}</th>`).join('')}</tr></thead><tbody>`+
- rows.map(r=>`<tr><th scope="row"><span class="be206-racer"><span class="be206-lane be206-l${r.lane}">${r.lane}</span><button type="button" class="be206-racername be206-headpick-trigger" data-be206-head="${r.lane}" aria-label="${r.lane}号艇 ${esc(r.name)}を1着とする既存買い目" aria-pressed="false">${esc(r.name)}<small>${esc(r.grade)}</small></button></span></th>${specs.map((c,i)=>cell(r,c[1],c[2],leaders[i])).join('')}</tr>`).join('')+'</tbody>';
+ rows.map(r=>`<tr><th scope="row"><span class="be206-racer"><span class="be206-lane be206-l${r.lane}">${r.lane}</span><button type="button" class="be206-racername be206-headpick-trigger" data-be206-head="${r.lane}" aria-controls="be206HeadPanel" aria-expanded="false" aria-label="${r.lane}号艇 ${esc(r.name)}を1着とする既存買い目" aria-pressed="false">${esc(r.name)}<small>${esc(r.grade)}</small></button></span></th>${specs.map((c,i)=>cell(r,c[1],c[2],leaders[i])).join('')}</tr>`).join('')+'</tbody>';
 }
 /* Six colour-coded racer columns with a sticky metric label, like a data sheet.
    All values come from getRows() — no provider copy, network request or model call. */
 function matrix(rows){
  const specs=tabs[metric].cols,leaders=specs.map(c=>best(rows,c[1],c[3],c[4]));
  return '<thead><tr><th scope="col">比較項目</th>'+rows.map(r=>
-  '<th scope="col" data-be206-lane="'+r.lane+'"><span class="be206-lane be206-l'+r.lane+'">'+r.lane+'</span><button type="button" class="be206-headpick-trigger" data-be206-head="'+r.lane+'" aria-label="'+r.lane+'号艇 '+esc(r.name)+'を1着とする既存買い目" aria-pressed="false"><b>'+esc(r.name)+'</b><small>'+esc(r.grade)+'</small></button></th>'
+  '<th scope="col" data-be206-lane="'+r.lane+'"><span class="be206-lane be206-l'+r.lane+'">'+r.lane+'</span><button type="button" class="be206-headpick-trigger" data-be206-head="'+r.lane+'" aria-controls="be206HeadPanel" aria-expanded="false" aria-label="'+r.lane+'号艇 '+esc(r.name)+'を1着とする既存買い目" aria-pressed="false"><b>'+esc(r.name)+'</b><small>'+esc(r.grade)+'</small></button></th>'
  ).join('')+'</tr></thead><tbody>'+specs.map((c,i)=>
   '<tr><th scope="row">'+esc(c[0])+'</th>'+rows.map(r=>cell(r,c[1],c[2],leaders[i])).join('')+'</tr>'
  ).join('')+'</tbody>';
@@ -122,7 +122,7 @@ function create(root,p){
  <div id="be206MatrixViewport" class="be206-matrix-scroll" role="region" tabindex="0" aria-label="6艇横並び比較表。左右にスクロールできます"><table class="be206-matrix"></table></div>
  <div class="be206-scroll-controls" role="group" aria-label="6艇比較表の横移動" hidden><button type="button" data-be206-scroll="previous" aria-controls="be206MatrixViewport">← 前の艇</button><span class="be206-scroll-position"></span><button type="button" data-be206-scroll="next" aria-controls="be206MatrixViewport">次の艇 →</button></div>
  <div class="be206-table-help"></div>
- <section class="be206-headpanel" role="status" aria-live="polite" tabindex="-1" hidden></section>
+ <section id="be206HeadPanel" class="be206-headpanel" role="status" aria-live="polite" tabindex="-1" hidden></section>
  <div class="be206-foot"><span class="be206-source"></span><button type="button" data-be206-before>直前情報を見る →</button></div>`;
  $('.be206-matrix-scroll',box).addEventListener('scroll',()=>updateComparisonScroll(box),{passive:true});
  root.insertBefore(box,p);return box;
@@ -152,6 +152,7 @@ function renderHead(box,r,mode,status){
  $$('.be206-headpick-trigger',box).forEach(btn=>{
   const on=selected===Number(btn.dataset.be206Head);
   btn.setAttribute('aria-pressed',String(on));
+  btn.setAttribute('aria-expanded',String(on));
  });
  if(selected===null){
   if(!el.hidden)el.hidden=true;
@@ -238,6 +239,19 @@ function tickets(){
 function canRevealHead(expected,actual,lane,current,panel){
  return keyOK(expected)&&expected===actual&&lane===current&&!!panel&&panel.isConnected===true&&!panel.hidden;
 }
+/* V342: restore keyboard/VoiceOver location only after an explicit close. */
+function restoreHeadFocus(expected,actual,lane,box){
+ if(!keyOK(expected)||expected!==actual||!Number.isInteger(lane)||lane<1||lane>6||!box||box.isConnected!==true)return false;
+ const target=$$('.be206-headpick-trigger',box).find(button=>
+   Number(button.dataset.be206Head)===lane&&button.isConnected===true&&!button.disabled&&button.getClientRects?.().length>0);
+ if(!target)return false;
+ target.focus({preventScroll:true});return true;
+}
+function closeHead(){
+ const lane=selectedLane,key=race()?.race_key;
+ selectedLane=null;headSig='';schedule();
+ queueMicrotask(()=>{if(selectedLane===null)restoreHeadFocus(key,race()?.race_key,lane,$('#be206Quick'));});
+}
 function sync(){if(busy)return;busy=true;try{board();tickets();}catch(err){console.warn('[BOAT EDGE V206 display]',err);}finally{busy=false;}}
 function schedule(){if(busy||queued)return;queued=true;queueMicrotask(()=>{queued=false;sync();});}
 function init(){if(started)return;started=true;
@@ -265,17 +279,22 @@ function init(){if(started)return;started=true;
      return;
    }
    if(e.target.closest?.('#be206Quick [data-be206-head-close]')){
-     selectedLane=null;headSig='';schedule();return;
+     closeHead();return;
    }
    if(e.target.closest?.('#be206Quick [data-be206-before]')){$('#raceTabs [data-tab="before"]')?.click();return;}
    if(e.target.closest?.('#be206MoreTickets')){showAll=!showAll;sync();}
+ });
+ document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&selectedLane!==null&&e.target.closest?.('#be206Quick .be206-headpanel')){
+     e.preventDefault();closeHead();
+   }
  });
  const pred=$('#tab-pred');if(pred&&typeof MutationObserver!=='undefined')new MutationObserver(schedule).observe(pred,{childList:true,subtree:true});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  window.addEventListener('resize',schedule,{passive:true});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,comparisonScrollState,updateComparisonScroll,scrollComparison,version:'V299-UI-ONLY',displayRevision:'V341',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
