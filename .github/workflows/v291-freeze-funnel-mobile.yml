@@ -1,0 +1,32 @@
+name: BOAT EDGE V291 - Verified Missing Freeze Funnel Mobile View
+on:
+  push:
+    branches: [main, fix/v291-show-unfrozen-race-cause-on-mobile]
+    paths:
+      - 'assets/boat_edge_v286_freeze_evidence.js'
+      - 'tests/test_boat_edge_v286_freeze_evidence.cjs'
+      - '.github/workflows/v291-freeze-funnel-mobile.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v286_freeze_evidence.js'
+      - 'tests/test_boat_edge_v286_freeze_evidence.cjs'
+      - '.github/workflows/v291-freeze-funnel-mobile.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v291-mobile-readonly-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test source-based non-fabricated freeze evidence on mobile
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v286_freeze_evidence.js
+          node tests/test_boat_edge_v286_freeze_evidence.cjs
+          git diff --check
