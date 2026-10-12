@@ -16,6 +16,7 @@ from pathlib import Path
 
 from boat_edge_v307_pl120_research import rank_120
 from boat_edge_v311_existing_source_audit import audit_race
+from boat_edge_v317_ticket_mapper import map_course_mass_to_boat_tickets
 
 MODEL = "BOAT_EDGE_V312_UNCALIBRATED_EXHIBITION_ENTRY_ABLATION"
 
@@ -77,8 +78,14 @@ def build_shadow(race):
                 weight *= 1.0 / (0.1 + avg_st)
             weights[courses[boat]] = weight
         ranked = rank_120(weights)
+        boat_mapping = map_course_mass_to_boat_tickets(
+            ranked, courses, "START_EXHIBITION_PROVISIONAL")
         modes[name] = {
             "top10": [combo for combo, _ in ranked[:10]],
+            "top10_label_basis": "COURSE_NOT_BOAT_TICKET",
+            "top10_boat_research_only": boat_mapping["top10_boat"],
+            "head_mass_boat_research_only": boat_mapping["head_mass_boat"],
+            "boat_ticket_label_basis": "EXHIBITION_COURSE_PROVISIONAL",
             "ranked_120_count": len(ranked),
             "head_mass": {
                 str(course): sum(p for combo, p in ranked if combo.startswith(str(course) + "-"))
@@ -90,6 +97,8 @@ def build_shadow(race):
         "race_key": audit["race_key"],
         "deadline_jst": audit["deadline_jst"],
         "entry_basis": "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL",
+        "course_by_boat_exhibition": {str(k): v for k, v in courses.items()},
+        "ticket_numbers_are_boat_numbers_only_in_research_field": True,
         "source_metadata_before_deadline": True,
         "source_bytes_independently_authenticated": False,
         "first_git_commit_before_deadline_attested": False,
