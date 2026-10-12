@@ -139,6 +139,40 @@ class V334LiveBatch(unittest.TestCase):
                           report["failures"][0]["reason"])
             self.assertEqual(calls, [])
 
+    def test_v335_malformed_cards_do_not_abort_healthy_races(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            prepare(root, "20261013-22-12", "16:40")
+            races = root / "data/races"
+            malformed = {
+                "20261013-22-01": "[]",
+                "20261013-22-02": json.dumps({
+                    "race_key": "20261013-22-02",
+                    "meta": {"date": 20261013},
+                }),
+                "20261013-22-03": "{invalid json",
+                "20261013-22-04": json.dumps({
+                    "race_key": "20261013-22-04", "meta": [],
+                }),
+            }
+            for key, payload in malformed.items():
+                (races / (key + ".json")).write_text(payload, encoding="utf-8")
+            dry = run(root, clock=lambda: NOW)
+            self.assertEqual(
+                [race["race_key"] for race in dry["window"]["candidates"]],
+                ["20261013-22-12"],
+            )
+            reasons = {entry["race_key"]: entry["reason"]
+                       for entry in dry["window"]["skipped"]}
+            self.assertEqual(set(reasons), set(malformed))
+            self.assertIn("RACE_DOCUMENT_NOT_OBJECT", reasons["20261013-22-01"])
+            self.assertIn("RACE_METADATA_MISMATCH", reasons["20261013-22-02"])
+            self.assertIn("RACE_WINDOW_INVALID", reasons["20261013-22-03"])
+            actual = run(root, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
+            self.assertEqual(actual["completed_count"], 1)
+            self.assertEqual(actual["failures"], [])
+            self.assertEqual(len(actual["window"]["skipped"]), 4)
+
     def test_invalid_limits_and_naive_clock_fail_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
