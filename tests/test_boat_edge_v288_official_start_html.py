@@ -35,6 +35,22 @@ for path in ('data/raw/20261012/14_01_beforeinfo.html',
     assert [x['lane'] for x in parsed['start_exhibition']]==list(range(1,7))
     assert all(6<=float(x['exhibition_time'])<=8.5 for x in parsed['racers'])
 
+# V291: do not confuse a six-row racer/stat table's 6.x values with
+# official exhibition times. Only one explicitly labeled exhibition table
+# can authorize a six-boat exhibition audit.
+stat_spoof=BeautifulSoup('''<table><tr><th>全国勝率</th></tr>'''+
+    ''.join('<tr><td>'+str(i)+'</td><td>6.79</td></tr>' for i in range(1,7))+
+    '</table>','lxml')
+assert parse(stat_spoof)['racers']==[], 'Unlabeled 6.x stats must not look like exhibition'
+official_html=Path('data/raw/20261012/14_01_beforeinfo.html').read_text()
+extra_spoof='<table><tr><th>全国勝率</th></tr>'+''.join(
+    '<tr><td>'+str(i)+'</td><td>6.11</td></tr>' for i in range(1,7))+'</table>'
+official_with_spoof=parse(BeautifulSoup(extra_spoof+official_html,'lxml'))
+assert official_with_spoof['racers']==parse(BeautifulSoup(official_html,'lxml'))['racers']
+ambiguous=BeautifulSoup('''<table><thead><tr><th>展示<br>タイム</th></tr></thead>
+<tbody><tr><td>1</td><td>6.79</td></tr></tbody></table>'''+official_html,'lxml')
+assert parse(ambiguous)['racers']==[], 'Duplicate exhibition table must fail closed'
+
 # The actual archived official 14-01 page encodes ST as classed spans.
 p=parse(BeautifulSoup(Path('data/raw/20261012/14_01_beforeinfo.html').read_text(),'lxml'))
 assert [x['st'] for x in p['start_exhibition']]==['.06','.09','.02','F.02','F.09','.01']
