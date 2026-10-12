@@ -32,3 +32,14 @@ assert(css.includes('be306-race-await'));
 assert(css.includes('min-height:44px'));
 assert(!/(?:fetch\(|XMLHttpRequest|RESULT_UNLOCK_TOKEN)/.test(src));
 console.log('V313_MAIN_BUNDLE_UI_READONLY_CONTRACT_PASS');
+
+/* V332: published entrypoint must load the race-scoped source panel and preserve render order. */
+const sourcePanel=fs.readFileSync('assets/boat_edge_v223_source_visibility.js','utf8');
+const sourceAsset='boat_edge_v223_source_visibility.js?v=223&amp;rev=244&amp;patch=250&amp;source=282&amp;fix=329';
+assert.equal(html.split(sourceAsset).length-1,1,'V332 source evidence asset must be included exactly once');
+assert(html.indexOf('boat_edge_v108.js')<html.indexOf('boat_edge_v206_quickview.js'),'V332 prediction renderer must load before six-boat quickview');
+assert(html.indexOf('boat_edge_v206_quickview.js')<html.indexOf('boat_edge_v223_source_visibility.js'),'V332 source evidence panel must load after quickview');
+assert(sourcePanel.includes('prior.dataset.raceKey!==key)prior.hidden=true'),'V332 previous race evidence must hide before async fetch');
+assert(sourcePanel.includes('node.hidden=false;'),'V332 refreshed evidence must become visible');
+assert(sourcePanel.includes('if(node.parentElement!==host)host.prepend(node)'),'V332 source evidence must reparent after rerender');
+console.log('V332_PUBLISHED_SOURCE_SCRIPT_ORDER_AND_RACE_GUARD_PASS');
