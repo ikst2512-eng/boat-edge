@@ -73,13 +73,14 @@ if(typeof process!=='undefined'&&process?.versions?.node){
 /* V317 regression: evidence-detail tap area is at least 44px on Safari. */
 assert(/#be207Top \.be305-evidence-head button\s*\{[^}]*min-height:44px[^}]*min-width:44px/.test(css),'V317 exhibition detail button 44px target');
 console.log('V317_SAFARI_EVIDENCE_TAP_TARGET_PASS');
-/* V320: six-boat comparison tab updates must iterate all matching buttons. */
-const sixBoatJS=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
-assert(sixBoatJS.includes("$$('.be206-switch button',box).forEach"),'V320 all metric buttons update');
-assert(sixBoatJS.includes("$$('.be206-layout-switch button',box).forEach"),'V320 all layout buttons update');
-assert(!/(^|[^$])\$\('\.be206-switch button',box\)\.forEach/m.test(sixBoatJS),'V320 no single-node iteration');
-assert(!/(^|[^$])\$\('\.be206-layout-switch button',box\)\.forEach/m.test(sixBoatJS),'V320 no single-node layout iteration');
-console.log('V320_SIX_BOAT_TAB_RENDER_ITERATION_PASS');
+/* V327: require the native NodeList selector for both comparison controls. */
+const sixBoatRuntime=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
+for(const name of ['switch','layout-switch']) {
+ const selector='.be206-'+name+' button';
+ assert(sixBoatRuntime.includes('box.querySelectorAll(\''+selector+'\').forEach'),'V327 must iterate NodeList: '+selector);
+ assert(!sixBoatRuntime.includes('$(\''+selector+'\',box).forEach'),'V327 single-node crash: '+selector);
+}
+console.log('V327_SIX_BOAT_RUNTIME_NODELIST_PASS');
 /* V322 source receipts must follow the active race summary, never leak from the old race. */
 if(typeof process!=='undefined'&&process?.versions?.node){
  const {execFileSync}=require('node:child_process');
