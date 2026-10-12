@@ -4,6 +4,13 @@ on:
     branches: [main]
     paths: ['.github/workflows/V235.yml']
   workflow_dispatch:
+  # V288: the official PRE_RESULT collector is the dependable upstream source.
+  # GitHub cron delivery is best-effort; run once on a successful collector
+  # completion as well, without opening results or relaxing formal locks.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE 自動更新'
+    types: [completed]
   schedule:
     - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
 permissions:
@@ -14,7 +21,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   freeze-then-score-site-only:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
