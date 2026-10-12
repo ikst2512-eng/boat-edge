@@ -36,7 +36,7 @@ These remain UI-only work items. Every change must use already-saved source evid
 
 - [x] A21 | On the selected race card, clarify whether the latest saved official odds are current, stale, or absent using only timestamp and verification state already provided; do not imply a browser refresh fetches new odds.
 - [x] A22 | Improve the existing prediction-ticket list on iPhone so the frozen order, ticket amount, and source-verified payout estimate are legible; show 未確認 instead of deriving values from missing data.
-- [ ] A23 | Make a compact six-boat stat comparison easier to scan with race-relative emphasis only for numeric values already in the UI; do not alter classes, local statistics, motor scores, or prediction ranking.
+- [x] A23 | Make a compact six-boat stat comparison easier to scan with race-relative emphasis only for numeric values already in the UI; do not alter classes, local statistics, motor scores, or prediction ranking.
 - [ ] A24 | On an existing prediction page, distinguish the predicted head racer, trifecta Top3/5/10 coverage, and separately recorded confidence values without recalibrating or fabricating probabilities.
 - [ ] A25 | Make the original-exhibition source state explicitly distinguish BOATERS, 競艇日和, official, and 未取得 in an existing evidence panel, but only when per-source provenance is already present; never equate official with third-party exhibition data.
 - [ ] A26 | Improve mobile access to verified results, race selection, and AI paper simulation through existing navigation; preserve the current chosen race and do not duplicate or replace refresh behavior.
