@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#ffffff"/>
 <title>AI自走シミュレーション | BOAT EDGE</title>
 <link rel="stylesheet" href="./assets/boat_edge_v211_paper.css?v=211&amp;patch=250"/>
-<script defer src="./assets/boat_edge_v211_paper.js?v=211&amp;rev=245&amp;patch=248&amp;patch2=250"></script>
+<link rel="stylesheet" href="./assets/boat_edge_v262_budget.css?v=262"/>
+<script defer src="./assets/boat_edge_v211_paper.js?v=211&amp;rev=245&amp;patch=248&amp;patch2=250&amp;a27=1"></script>
 <link rel="stylesheet" href="./assets/boat_edge_v213_shadow.css?v=213">
 <script defer src="./assets/boat_edge_v213_shadow.js?v=213"></script>
 <link rel="stylesheet" href="./assets/boat_edge_v214_health.css?v=214">
@@ -25,6 +26,7 @@
    <div class="sim-fund-primary"><small>本日使える資金</small><strong id="simBalance">―</strong><p>毎日 <b>50,000円</b> の予算。残額は翌日に持ち越さない。</p></div>
    <div class="sim-fund-side"><div><small>本日の使用額</small><strong id="simSpent">―</strong></div><div><small>本日の購入</small><strong id="simTodayBuys">―</strong></div></div>
  </section>
+ <div id="simAuditBudget" class="sim-budget-audit" role="status" aria-live="polite">本日の仮想予算・見送り・結果待ちを保存台帳から照合中。購入実績ではありません。</div>
  <section class="stat-row" aria-label="通算の仮想運用成績">
   <div><small>通算確定損益</small><strong id="simProfit">―</strong></div>
   <div><small>通算回収率</small><strong id="simRoi">―</strong></div>
