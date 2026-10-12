@@ -77,4 +77,6 @@ const python=execFileSync('python3',['tests/test_boat_edge_v265_readiness_source
 assert.strictEqual(python,'');
 const priority=execFileSync('python3',['tests/test_boat_edge_v268_beforeinfo_priority.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
 assert(priority.includes('V268_BEFOREINFO_DEADLINE_PRIORITY_PASS'));
+const urgentTelemetry=execFileSync('python3',['tests/test_boat_edge_v269_urgent_telemetry.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert(urgentTelemetry.includes('V269_URGENT_PRE_RESULT_BEFOREINFO_TELEMETRY_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
