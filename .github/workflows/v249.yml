@@ -1,0 +1,95 @@
+name: BOAT EDGE V249 - Mobile Race Navigation and Six Boat Readability
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/v249.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '37 0,3,6,9,12 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v249-mobile-race-focus
+  cancel-in-progress: false
+
+jobs:
+  mobile-readable-site-only:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main including history for source integrity
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Install verified display-only resources and run 16 regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/v249_install.py" <<'PY_V249_INSTALL'
+          from pathlib import Path
+          import base64,hashlib,gzip,json
+          resources=json.loads(r'''{"assets/boat_edge_v249_focus.css":{"sha256":"4fa200b0c862765f76f34a30694d77c408a2c2ba2edeacf70469991f9f343b0a","gz":"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"},"assets/boat_edge_v249_focus.js":{"sha256":"48051fca0fe341a7e45074ce37bd4c3c2c8f86cd744313bb3048bb34ca001e81","gz":"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"},"scripts/boat_edge_v249_patch.py":{"sha256":"0880d05da46f4b062fc82d3d914db444417523ec47eecedd7a1cb0789bf6b1f4","gz":"H4sIAAAAAAAC/41VXXPiNhR9969Q2AfhWTCTNA/bNE6HgtOlZQljm0wzbUcj8DUoaySPJNjw73vlDyCzm0n9kuh+nKt77rniw8VgZ/RgKeQA5J6UB7tR8iev0+k8Xl3/THiWCSv2QBYTwo0Ba4iSxSEgYwWGSGWJhm9aWCDwIowVck3+4HuerLQobY+oLDM9UmrIxMoKJTFbk3sNZhNgBS/XaksYy3d2p4ExIral0pZwicC8iq9DSm43hVi2/jkevTZWr0uuDbTnZ6Nk+78Gz0vSp2lEQkJvCyG/oqkIO8YeCrwCgO2QjYY87ASDurnBUnHLIFsD22P7LFernQlWxvy6D6+uP3XuqJeM4sk8rRBN1SXJIAdNjF69h/N8hLkd1LmI92UY/xnFCQJ26e2WC0lEFnY0X8GjgG8d2qPtOeVL054tX/YdrefnJeRKw7nFrEByLdS5bcX1MWsJV9eXn9UWYjC7wlboGbe8v8fS55fwPQ+7JFuVifzQNTfEWO2T/p37e+MR/LA02XL9FZnAFpqmapf7RN56nWYwwpx87tNcGCCPvNhBpLXSXerkxxaz6K95NEqjMUsmacSSNF6M0kUcMfqxxvO9Bh7HpHbSIomDDfDsjvrkIiSXTnBnrqXKDq3rdIP3q48fRosv0Sxl0Ww8mf2e0LruBzJSRSEMShVlYKESOcLZDXZqN1wStQftFsRtBsfenQNNVYbKMQbqvQqOLEq+hR6uU4lokDmu/u7St3RJe5XA/d4bIc8uolKs/++rabgq1RzwVtmRobaqfxFe/q8BVVMZJkmUsji6Z+N4cp/ibBz6cTL1Cn4/dxOaQENZoMpOU6v7+Uj/kUfL5Qmp3r13oeopN43XWI3p8ju91Pxhv+dKaSh7xcIbDIwX8+lkNDynIYqj2ShqJKIBHze8bLNBuOBdvwYtw/bxCoZ6vduCtHN30l3/lzLAl5fxxtyl/b5WytIeYnDc1JAGDTyGmLAMKhgXbzDZhYbukew6Q+COdbDSYi0kL8Kusw2okBm8BBu7LaiP/PGMWXhBFcgVLrpch3Rn8/6nppLEJ6F5AFqcI5nouwhb64myH5Wpfi3qOpjV+3Gtih4tXOcVycPxmD3Mpk8sHo4iNhs+svnit+kk+RyNmwwoDNy8SpnG0XD8xIZznA9u8OyBjaYPMzcWD2/MmNMoY2FIGXNTYYzeNOPx/gPHqSQDFQcAAA=="},"tests/test_boat_edge_v249_focus.py":{"sha256":"7364a04429a4c388389af643391a4a6717c756b4727857ecc16a0efd092a0423","gz":"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"}}''')
+          for name,item in resources.items():
+              data=gzip.decompress(base64.b64decode(item['gz']))
+              if hashlib.sha256(data).hexdigest()!=item['sha256']:
+                  raise SystemExit('V249_PACKAGED_SHA_MISMATCH_'+name)
+              path=Path(name)
+              if path.exists():
+                  if path.read_bytes()!=data:
+                      raise SystemExit('V249_VERIFIED_UI_RESOURCE_DRIFT_'+name)
+              else:
+                  path.parent.mkdir(parents=True,exist_ok=True)
+                  path.write_bytes(data)
+          print('V249_EXACT_PACKAGED_ASSETS_VERIFIED',len(resources))
+          PY_V249_INSTALL
+          python3 "$RUNNER_TEMP/v249_install.py"
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v249_focus.py' -q
+          node --check assets/boat_edge_v249_focus.js
+          python3 -m py_compile scripts/boat_edge_v249_patch.py
+          echo V249_SIXTEEN_UI_SAFETY_TESTS_PASS
+      - name: Safely add race-focus assets without changing forecasts or result data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          success=false
+          for attempt in 1 2 3; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 "$RUNNER_TEMP/v249_install.py"
+            PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v249_focus.py' -q
+            node --check assets/boat_edge_v249_focus.js
+            python3 - <<'PY_V249_FORMAL'
+          import json
+          from pathlib import Path
+          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=f.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring')), 'V249_FORMAL_RESULT_LOCK_OPEN'
+          assert g.get('RESULT_UNLOCK_TOKEN') is None, 'V249_FORMAL_UNLOCK_TOKEN_PRESENT'
+          assert (f.get('formalFirst100') or {}).get('races') == 0, 'V249_FORMAL_FIRST100_NOT_ZERO'
+          print('V249_FORMAL_RESULT_LOCK_READ_ONLY_PASS')
+          PY_V249_FORMAL
+            python3 scripts/boat_edge_v249_patch.py
+            git add -- index.html assets/boat_edge_v249_focus.css assets/boat_edge_v249_focus.js scripts/boat_edge_v249_patch.py tests/test_boat_edge_v249_focus.py
+            python3 - <<'PY_V249_STAGE'
+          import subprocess
+          expected={'index.html','assets/boat_edge_v249_focus.css',
+                    'assets/boat_edge_v249_focus.js','scripts/boat_edge_v249_patch.py',
+                    'tests/test_boat_edge_v249_focus.py'}
+          staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert staged.issubset(expected), 'V249_PRODUCTION_OR_FORMAL_STAGE_REJECTED_'+str(staged-expected)
+          print('V249_STAGED_DISPLAY_ONLY_FILES',len(staged))
+          PY_V249_STAGE
+            git diff --cached --check
+            if git diff --cached --quiet; then echo V249_ALREADY_DEPLOYED; success=true; break; fi
+            git commit -m 'V249 site-only mobile quick race navigation and readable six-boat comparison'
+            if git push origin HEAD:main; then echo V249_DISPLAY_ONLY_MAIN_PUBLISHED; success=true; break; fi
+            echo "V249_CONCURRENT_PUSH_RETRY_${attempt}"
+          done
+          if test "$success" != true; then echo V249_FAIL_CLOSED_NO_PUBLISH; exit 1; fi
