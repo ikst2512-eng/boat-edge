@@ -3,12 +3,24 @@
 if(window.BoatEdgeV254)return;
 const schemaPre='BOAT_EDGE_V254_FUTURE_THIRD_TAIL_PRE_SUMMARY_V1';
 const schemaScore='BOAT_EDGE_V254_FUTURE_THIRD_TAIL_SCORE_SUMMARY_V1';
+const coverageFields=['source_cohorts_today','future_window_cohorts_seen','unfrozen_future_window_at_start','new_frozen_this_run'];
+function validCoverage(x){
+ const present=coverageFields.map(k=>Object.prototype.hasOwnProperty.call(x||{},k));
+ if(present.every(x=>!x))return true; // Older V254 summaries did not record window counts.
+ if(!present.every(Boolean))return false;
+ const [all,window,unfrozen,created]=coverageFields.map(k=>x[k]);
+ return [all,window,unfrozen,created].every(z=>Number.isSafeInteger(z)&&z>=0)&&
+ all>=x.frozen_today&&all>=window&&window>=unfrozen&&unfrozen>=created&&
+ x.rejected_current_run&&typeof x.rejected_current_run==='object'&&
+ !Array.isArray(x.rejected_current_run)&&
+ Object.values(x.rejected_current_run).every(z=>Number.isSafeInteger(z)&&z>=0);
+}
 const validPre=x=>x?.schema===schemaPre&&x?.scope==='PRE_RESULT_FUTURE_SITE_RESEARCH_NOT_FORMAL_FRESH'&&
  x.result_access===false&&x.production_model_changed===false&&
  x.accuracy_improvement_proven===false&&x.model_promotion_authorized===false&&
  /^20\d{6}$/.test(x.day_jst||'')&&
  [x.frozen_today,x.third_tail_novel_races_today,x.third_tail_novel_tickets_today].every(n=>Number.isSafeInteger(n)&&n>=0)&&
- x.third_tail_novel_races_today<=x.frozen_today&&x.third_tail_novel_tickets_today<=3*x.frozen_today;
+ x.third_tail_novel_races_today<=x.frozen_today&&x.third_tail_novel_tickets_today<=3*x.frozen_today&&validCoverage(x);
 const validScore=x=>{
  if(x?.schema!==schemaScore||x?.scope!=='POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH'||
  x.formal_result_access!==false||x.production_model_changed!==false||
@@ -34,7 +46,13 @@ async function update(){
  const proofPre=validPre(pre),proofScore=validScore(score);
  if(!proofPre&&!proofScore){box.textContent='締切前保存と確定後の比較結果を確認中。未取得は0件扱いせず、本番モデルも変更しません。';return}
  let s='';
- if(proofPre)s+='締切前に固定 '+pre.frozen_today+'R（'+pre.day_jst+'）／ 3着入替候補があったレース '+pre.third_tail_novel_races_today+'R。';
+ if(proofPre){
+  s+='締切前に固定 '+pre.frozen_today+'R（'+pre.day_jst+'）／ 3着入替候補があったレース '+pre.third_tail_novel_races_today+'R。';
+  if(Number.isSafeInteger(pre.source_cohorts_today)){
+   s+=' 元の未見予想保存 '+pre.source_cohorts_today+'R／今回の固定可能時間帯 '+pre.future_window_cohorts_seen+
+   'R／今回新たに固定 '+pre.new_frozen_this_run+'R。';
+  }
+ }
  else s+='締切前の保存記録：未確認。';
  if(proofScore){
   const n=score.scored_total,a=score.comparisons.hit10,b=score.comparisons.third_tail10;
