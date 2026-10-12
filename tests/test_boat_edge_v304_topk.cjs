@@ -7,7 +7,7 @@ const css=fs.readFileSync('assets/boat_edge_v304_topk_mobile.css','utf8');
 const window={},document={readyState:'loading',addEventListener(){}};
 vm.runInNewContext(js,{window,document,Number,Date,Math,Set,Map,JSON,Intl},{filename:'v304.js'});
 const api=window.BoatEdgeV207;
-assert.equal(api.version,'V304-DISPLAY-ONLY');
+assert.equal(api.version,'V305-DISPLAY-ONLY');
 const list=Array.from({length:10},(_,i)=>[1,2,3,4,5,6].flatMap(a=>[1,2,3,4,5,6]
   .filter(b=>b!==a).map(b=>[a,b,[1,2,3,4,5,6].find(c=>c!==a&&c!==b)].join('-')))[i]);
 const row=(combo,view,raw)=>({
@@ -41,7 +41,7 @@ assert(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
 assert(css.includes('#be251Outcome .be251-money'));
 if(fs.existsSync('index.html')){
  const html=fs.readFileSync('index.html','utf8');
- assert(html.includes('boat_edge_v304_topk_mobile.css?v=304'));
- assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=304'));
+ assert(html.includes('boat_edge_v304_topk_mobile.css?v=305'));
+ assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=305'));
 }
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
