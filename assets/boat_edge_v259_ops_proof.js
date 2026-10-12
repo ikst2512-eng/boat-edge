@@ -95,7 +95,13 @@ async function proof(r){
   json('./data/site_prediction_audit/'+r.key+'.json'),
   json('./data/site_autopilot/v229_evidence/'+r.key+'.json')
  ]);
- return assess(r.key,r.deadline,snapshot,audit,evidence,sha);
+ const original=assess(r.key,r.deadline,snapshot,audit,evidence,sha);
+ if(original.state!=='verified')return original;
+ const official=window.BoatEdgeV263OddsProof;
+ if(typeof official?.verify!=='function')return {state:'unverified',label:'保存オッズ照合モジュール未取得'};
+ const full=await official.verify(r.key,snapshot,evidence);
+ return full.state==='verified'?
+   {state:'verified',label:'締切前保存・SHA・公式120通りと買い目倍率一致'}:full;
 }
 function mount(){
  const host=$('#be220Ops');if(!host)return null;
@@ -132,7 +138,7 @@ async function refresh(){
    if(p.state==='invalid'||(p.state==='missing'&&r.left<=10))line.style.color='#9b481e';
    rows.appendChild(line);
   });
-  summary.textContent=eligible?verified+'/'+eligible+'R SHA照合済み（直前対象）':'保存時刻待ち';
+  summary.textContent=eligible?verified+'/'+eligible+'R オッズ120通り・SHA照合済み':'保存時刻待ち';
  }catch(_){const el=$('#be259OpsMessage');if(el)el.textContent='照合データ未取得・合格扱いにしません'}
  finally{inflight=false}
 }
