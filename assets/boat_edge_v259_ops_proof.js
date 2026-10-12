@@ -66,7 +66,44 @@ function assess(key,deadline,snapshot,audit,evidence,sha){
    return {state:'invalid',label:'締切前の出典時刻が未検証'};
  return {state:'verified',label:'締切前の保存データ・SHA整合'};
 }
-if(typeof module!=='undefined'&&module.exports)module.exports={due,upcoming,assess};
+/* V264: explain source-only blockers, without loading results or rewriting missed freezes.
+ * A race can have a valid freeze committed AFTER an older V220 snapshot was generated.
+ * These are observations only, never authorizations to bet or to unlock Formal Fresh.
+ */
+const ageOK=(stamp,now,maxMs)=>{
+ const t=Date.parse(String(stamp||''));
+ return Number.isFinite(t)&&t<=now&&now-t<=maxMs;
+};
+function missingReasons(key,deadline,race,scratch,odds,now=Date.now()){
+ if(!KEY.test(String(key||'')))return ['レース指定不正'];
+ const rem=(due(key,deadline)-now)/60000;
+ if(!Number.isFinite(rem)||rem<0)return ['締切済み・未保存を後から復元しません'];
+ if(rem>10)return ['締切10分前の固定時間帯待ち'];
+ const reasons=[],meta=race?.meta||{},au=race?.source_audit||{};
+ if(!race || race.race_key && race.race_key!==key ||
+    meta.phase!=='PRE_RESULT'||['results_seen','unlock','scoring'].some(k=>meta[k]!==false)||
+    !Array.isArray(race.racers)||race.racers.length!==6)
+  reasons.push('6艇出走・結果未見データの確認待ち');
+ const card=au.race_card||{};
+ if(card.status!=='ok'||!ageOK(card.fetched_at,now,16*60000))
+  reasons.push('出走表の再確認待ち');
+ const before=au.beforeinfo||{};
+ if(before.status!=='ok'||!ageOK(before.fetched_at,now,15*60000))
+  reasons.push('公式直前情報の取得待ち');
+ if(!scratch||scratch.race_key!==key||scratch.blocked!==false||
+    scratch.race_card_source_status!=='ok'||scratch.official_beforeinfo_source_status!=='ok'||
+    !ageOK(scratch.checked_at,now,15*60000))
+  reasons.push('欠場・取消の安全確認待ち');
+ const rows=odds?.trifecta_odds||{};
+ if(odds?.race_key!==key||odds.phase!=='PRE_RESULT_PURCHASE_ONLY'||
+    odds.results_seen!==false||odds.scoring!==false||
+    odds.verified_official_dom_v167!==true||odds.available_count!==120||
+    Object.keys(rows).length!==120||!ageOK(odds.fetched_at,now,15*60000))
+  reasons.push('公式3連単120通りの確認待ち');
+ if(!reasons.length)return [rem<2?'固定期限内の保存証跡なし（後付け禁止）':'入力は取得済み・固定予想の保存証跡待ち'];
+ return reasons;
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={due,upcoming,assess,missingReasons};
 if(typeof document==='undefined'||typeof window==='undefined')return;
 if(window.BoatEdgeV259Ops)return;
 let inflight=false,epoch=0;
@@ -81,9 +118,18 @@ async function proof(r){
   return {state:'unverified',label:'通信失敗・保存状況は未確認'};
  }
  if(!res)return {state:'unverified',label:'公開サーバーの応答なし・未確認'};
- if(!res.ok)return res.status===404?
-    assess(r.key,r.deadline,null,null,null,null):
-    {state:'unverified',label:'公開サーバー取得エラー・未確認'};
+ if(!res.ok){
+  if(res.status!==404)return {state:'unverified',label:'公開サーバー取得エラー・未確認'};
+  // Read CURRENT pre-result sources for explanatory status only. Never fabricate
+  // an immutable ticket that was absent at the original deadline.
+  const [race,scratch,odds]=await Promise.all([
+   json('./data/races/'+r.key+'.json'),
+   json('./data/site_scratches_v182/'+r.key+'.json'),
+   json('./data/site_odds/'+r.key+'.json')
+  ]);
+  const reasons=missingReasons(r.key,r.deadline,race,scratch,odds,Date.now());
+  return {state:'missing',label:reasons.slice(0,2).join('・')};
+ }
  let buffer,snapshot=null;
  try{buffer=await res.arrayBuffer();snapshot=JSON.parse(new TextDecoder().decode(buffer))}catch(_){return {state:'invalid',label:'保存JSONの読込不正'}}
  if(!window.crypto?.subtle)return assess(r.key,r.deadline,snapshot,null,null,null);
