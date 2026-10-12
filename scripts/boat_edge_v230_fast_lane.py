@@ -58,8 +58,14 @@ def parse_regs(html):
 def parse_before(html):
     """Mirror original V18 parse_before fields, no extrapolated exhibition."""
     from bs4 import BeautifulSoup
-    soup=BeautifulSoup(html,'lxml'); racers=[]
-    for tr in soup.find_all('tr'):
+    soup=BeautifulSoup(html,'lxml')
+    # V291 parity: never confuse a 6.x racer/statistic row with the official
+    # exhibition-time table. Ambiguous or absent labelled tables fail closed.
+    exhibition_tables=[table for table in soup.find_all('table')
+        if any(txt(th.get_text(' ',strip=True)).replace(' ','')=='展示タイム'
+               for th in table.find_all('th'))]
+    racers=[]
+    for tr in (exhibition_tables[0].find_all('tr') if len(exhibition_tables)==1 else []):
         cells=tr.find_all(['th','td'])
         if not cells:continue
         c0=txt(cells[0].get_text(' ',strip=True))
@@ -88,7 +94,7 @@ def parse_before(html):
             lane_str=txt(lane_tag.get_text(' ',strip=True))
             st=txt(st_tag.get_text(' ',strip=True))
             if not re.fullmatch(r'[1-6]',lane_str):continue
-            if not re.fullmatch(r'F?\.\d{2}',st):continue
+            if not re.fullmatch(r'(?:F|[+-])?0?\.\d{1,2}',st):continue
             starts.append({'lane':int(lane_str),'st':st})
     full=txt(soup.get_text(' ',strip=True));weather={}
     for k,p in {'air_temp_c':r'気温\s*([\d.]+)\s*℃',
@@ -111,7 +117,7 @@ def beforeinfo_coverage(parsed):
     st={row.get('lane') for row in start if isinstance(row,dict)
         and type(row.get('lane')) is int and row['lane'] in expect
         and isinstance(row.get('st'),str)
-        and re.fullmatch(r'F?\.\d{2}',row['st'])}
+        and re.fullmatch(r'(?:F|[+-])?0?\.\d{1,2}',row['st'])}
     full_ex=len(racers)==6 and ex==expect
     full_st=len(start)==6 and st==expect
     return {'exhibition_lanes':len(ex),'start_exhibition_lanes':len(st),
