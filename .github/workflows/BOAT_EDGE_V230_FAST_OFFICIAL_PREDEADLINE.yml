@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V230_FAST_OFFICIAL_PREDEADLINE.yml']
+  # V276: V235 executes the same pinned V230 source lane on this cadence.
+  # Keep manual dispatch for targeted recovery, not duplicate scheduled writes.
   workflow_dispatch:
-  schedule:
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
 
 permissions:
   contents: write
