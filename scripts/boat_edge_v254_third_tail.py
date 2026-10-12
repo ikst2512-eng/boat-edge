@@ -137,7 +137,16 @@ def freeze(root,now):
     day=now.astimezone(JST).strftime('%Y%m%d')
     folder=root/BASE/'v232_cohort';dest=root/BASE/'v254_frozen'
     fresh=0;rejected={}
-    for path in sorted(folder.glob(day+'-??-??.json')):
+    source_paths=sorted(folder.glob(day+'-??-??.json'))
+    window_paths=[];unfrozen_window=0
+    for path in source_paths:
+        # Counts are only observed PRE_RESULT cohort metadata, not a guess about
+        # official results or the number of races that could have been predicted.
+        prior=get(path) or {}
+        due=stamp(prior.get('deadline_jst'))
+        if due and 90 <= (due-now).total_seconds() <= 900:
+            window_paths.append(path.name)
+            if not (dest/path.name).exists():unfrozen_window+=1
         if (dest/path.name).exists():continue
         row,error=make_pre(root,path,now)
         if row:
@@ -147,13 +156,20 @@ def freeze(root,now):
     history=[x for x in history if x and x.get('schema')==FROZEN_SCHEMA]
     obj={'schema':'BOAT_EDGE_V254_FUTURE_THIRD_TAIL_PRE_SUMMARY_V1',
        'day_jst':day,'frozen_today':len(history),
+       'source_cohorts_today':len(source_paths),
+       'future_window_cohorts_seen':len(window_paths),
+       'unfrozen_future_window_at_start':unfrozen_window,
+       'new_frozen_this_run':fresh,
+       'rejected_current_run':dict(sorted(rejected.items())),
        'third_tail_novel_races_today':sum(x['third_tail_new_ticket_count']>0 for x in history),
        'third_tail_novel_tickets_today':sum(x['third_tail_new_ticket_count'] for x in history),
        'scope':'PRE_RESULT_FUTURE_SITE_RESEARCH_NOT_FORMAL_FRESH',
        'result_access':False,'production_model_changed':False,
        'accuracy_improvement_proven':False,'model_promotion_authorized':False}
     write_changed(root/BASE/'v254_pre_current.json',obj)
-    print('V254_FUTURE_ONLY_FREEZE',json.dumps({'new':fresh,'frozen':len(history),'skipped':rejected},sort_keys=True))
+    print('V254_FUTURE_ONLY_FREEZE',json.dumps({'new':fresh,'frozen':len(history),'source_today':len(source_paths),
+      'source_in_future_window':len(window_paths),'unfrozen_at_start':unfrozen_window,
+      'skipped':rejected},sort_keys=True))
     return obj
 
 def verified_site(root):

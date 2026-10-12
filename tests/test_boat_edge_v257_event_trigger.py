@@ -1,0 +1,97 @@
+"""V257: V232-success event is a hint, never authorization to read results.
+
+The V254 prefreeze script independently checks Git-committed PRE_RESULT source
+and <=15min future deadline. These tests exercise event gates and missing
+source provenance without any result endpoint or model/prediction change.
+"""
+import datetime as dt
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from scripts.boat_edge_v254_third_tail import freeze, stamp
+
+ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = ROOT / ".github/workflows/v254-third-tail-shadow.yml"
+
+class V257SourceTrigger(unittest.TestCase):
+    def test_exact_v232_source_completion_trigger_with_conclusion_branch_guard(self):
+        workflow=WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("workflow_run:",workflow)
+        self.assertIn("workflows: ['BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort']",workflow)
+        self.assertIn("types: [completed]",workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'",workflow)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'",workflow)
+        self.assertIn("concurrency:",workflow)
+        self.assertIn("cancel-in-progress: false",workflow)
+        self.assertIn("git reset --hard origin/main",workflow)
+        self.assertIn("data/site_autopilot/v254_frozen/",workflow)
+        self.assertIn("V254_ONLY_PRE_RESULT_RESEARCH_STAGED",workflow)
+        self.assertIn("V254_ONLY_SITE_RESEARCH_SCORE_STAGED",workflow)
+
+    def temp_root(self):
+        holder=tempfile.TemporaryDirectory()
+        root=Path(holder.name)
+        p=root/"data/formal_status.json"
+        p.parent.mkdir(parents=True,exist_ok=True)
+        p.write_text(json.dumps({"guards":{
+          "results_seen":False,"unlock":False,"scoring":False,"RESULT_UNLOCK_TOKEN":None
+        }}),encoding="utf-8")
+        return holder,root
+
+    def test_empty_v232_source_does_not_invent_candidate(self):
+        tmp,root=self.temp_root()
+        try:
+            out=freeze(root,stamp("2026-10-12T04:28:00+00:00"))
+            self.assertEqual(out["frozen_today"],0)
+            self.assertEqual(out["source_cohorts_today"],0)
+            self.assertEqual(out["future_window_cohorts_seen"],0)
+            self.assertEqual(out["unfrozen_future_window_at_start"],0)
+            self.assertEqual(out["new_frozen_this_run"],0)
+            self.assertEqual(out["rejected_current_run"],{})
+            self.assertFalse(out["result_access"])
+            self.assertFalse(out["model_promotion_authorized"])
+            self.assertFalse(out["production_model_changed"])
+            self.assertFalse((root/"data/site_autopilot/v254_frozen").exists())
+        finally:tmp.cleanup()
+
+    def test_missing_original_git_proof_is_counted_not_frozen(self):
+        tmp,root=self.temp_root()
+        try:
+            folder=root/"data/site_autopilot/v232_cohort"
+            folder.mkdir(parents=True)
+            original={
+                "race_key":"20261012-14-11",
+                "deadline_jst":"2026-10-12T13:34:00+09:00",
+                "snapshot_saved_at":"2026-10-12T04:24:00+00:00",
+                "evidence_committed_at":"2026-10-12T04:24:01+00:00",
+            }
+            (folder/"20261012-14-11.json").write_text(json.dumps(original),encoding="utf-8")
+            out=freeze(root,stamp("2026-10-12T04:28:00+00:00"))
+            self.assertEqual(out["source_cohorts_today"],1)
+            self.assertEqual(out["future_window_cohorts_seen"],1)
+            self.assertEqual(out["unfrozen_future_window_at_start"],1)
+            self.assertEqual(out["new_frozen_this_run"],0)
+            self.assertEqual(out["frozen_today"],0)
+            self.assertEqual(out["rejected_current_run"].get("SOURCE_GIT_PROVENANCE_UNVERIFIED"),1)
+            self.assertFalse((root/"data/site_autopilot/v254_frozen").exists())
+            # Deadline has passed: source is not eligible for after-the-fact freeze.
+            late=freeze(root,stamp("2026-10-12T04:36:00+00:00"))
+            self.assertEqual(late["future_window_cohorts_seen"],0)
+            self.assertEqual(late["frozen_today"],0)
+        finally:tmp.cleanup()
+
+    def test_formal_unlock_always_prevents_freeze(self):
+        tmp,root=self.temp_root()
+        try:
+            path=root/"data/formal_status.json"
+            d=json.loads(path.read_text(encoding="utf-8"))
+            d["guards"]["results_seen"]=True
+            path.write_text(json.dumps(d),encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError,"V254_FORMAL_GATE_MUST_STAY_CLOSED"):
+                freeze(root,stamp("2026-10-12T04:28:00+00:00"))
+        finally:tmp.cleanup()
+
+if __name__=="__main__":
+    unittest.main()

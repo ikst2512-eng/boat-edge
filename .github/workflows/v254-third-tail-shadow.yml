@@ -5,14 +5,22 @@ on:
     branches:
       - main
       - feat/v254-prospective-third-tail-shadow-20261012
+      - feat/v257-event-driven-v254-coverage-20261012
     paths:
       - '.github/workflows/v254-third-tail-shadow.yml'
       - 'scripts/boat_edge_v254_third_tail.py'
       - 'tests/test_boat_edge_v254_third_tail.py'
       - 'assets/boat_edge_v254_tail_status.js'
       - 'tests/test_boat_edge_v254_tail_status.cjs'
+      - 'tests/test_boat_edge_v257_event_trigger.py'
       - 'autopilot.html'
   workflow_dispatch:
+  # Launch as soon as the *pre-result* source workflow succeeds, instead of
+  # waiting for the next scheduled poll. The script still requires verified
+  # Git-committed source, a future deadline and no prior results.
+  workflow_run:
+    workflows: ['BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort']
+    types: [completed]
   schedule:
     - cron: '3,8,13,18,23,28,33,38,43,48,53,58 0-14,23 * * *'
 
@@ -25,6 +33,7 @@ concurrency:
 
 jobs:
   verify-future-gates:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 9
     steps:
@@ -37,6 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v254_third_tail.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v257_event_trigger.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v253_miss_audit.py' -q
           python3 - <<'PY'
           import ast,json

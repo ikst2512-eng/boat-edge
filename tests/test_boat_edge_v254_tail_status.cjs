@@ -36,5 +36,17 @@ assert.equal(api.validScore(alter(score,x=>x.production_model_changed=true)),fal
 assert.equal(api.validScore(alter(score,x=>x.comparisons.third_tail10.points=15)),false);
 assert.equal(api.validScore(alter(score,x=>x.comparisons.third_tail10.hits=6)),false);
 assert.equal(api.validScore(alter(score,x=>x.affected_races=2)),false);
-assert(fs.readFileSync('autopilot.html','utf8').includes('boat_edge_v254_tail_status.js?v=254'));
+// The new fields audit prospective source throughput, not hypothetical hits.
+const proofPre={...pre,
+ source_cohorts_today:10,future_window_cohorts_seen:3,
+ unfrozen_future_window_at_start:2,new_frozen_this_run:1,
+ rejected_current_run:{SOURCE_GIT_PROVENANCE_UNVERIFIED:1}};
+assert.equal(api.validPre(proofPre),true);
+assert.equal(api.validPre(alter(proofPre,x=>x.source_cohorts_today=7)),false);
+assert.equal(api.validPre(alter(proofPre,x=>x.future_window_cohorts_seen=11)),false);
+assert.equal(api.validPre(alter(proofPre,x=>x.unfrozen_future_window_at_start=4)),false);
+assert.equal(api.validPre(alter(proofPre,x=>x.new_frozen_this_run=3)),false);
+assert.equal(api.validPre(alter(proofPre,x=>x.rejected_current_run.FAILURE=-1)),false);
+assert.equal(api.validPre(alter(proofPre,x=>{delete x.source_cohorts_today})),false);
+assert(fs.readFileSync('autopilot.html','utf8').includes('boat_edge_v254_tail_status.js?v=257'));
 console.log('V254_FUTURE_ONLY_RESEARCH_STATUS_FAIL_CLOSED_PASS');
