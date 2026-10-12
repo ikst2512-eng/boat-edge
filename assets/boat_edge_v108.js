@@ -366,8 +366,12 @@ async function oddsFor(key){
   const entries=odds&&typeof odds==='object'?Object.entries(odds):[];
   const validKey=s=>{const a=s.split('-').map(Number);return /^([1-6]-){2}[1-6]$/.test(s)&&new Set(a).size===3};
   const fetchedAt=Date.parse(doc.fetched_at||'');
+  const sourceUrl=/^https:\/\/www\.boatrace\.jp\/owpc\/pc\/race\/odds3t\?/.test(String(doc.source_url||''))?doc.source_url:null;
+  const activeRace=raceOf();
+  const matchedDeadline=activeRace?.race_key!==key || String(activeRace.meta?.deadline||'')===String(doc.deadline||'');
   const good=doc.race_key===key && doc.schema_version==='boat-edge-site-odds-v71' &&
     doc.results_seen===false && doc.scoring===false && doc.phase==='PRE_RESULT_PURCHASE_ONLY' &&
+    Boolean(sourceUrl) && matchedDeadline &&
     Number.isFinite(fetchedAt) && entries.length>=80 && entries.length<=120 &&
     entries.every(([combo,v])=>validKey(combo)&&be166OddsPrice(v)!==null) &&
     Number(doc.available_count)===entries.length;
@@ -375,11 +379,10 @@ async function oddsFor(key){
   const now=Date.now(), ageMins=(now-fetchedAt)/60000;
   const datePart=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
   const deadline=Date.parse(datePart+'T'+String(doc.deadline||'')+':00+09:00');
-  const pastDeadline=Number.isFinite(deadline)&&fetchedAt>deadline+30000;
+  const pastDeadline=Number.isFinite(deadline)&&(now>=deadline||fetchedAt>deadline);
   const future=ageMins<-.5;
   const stale=ageMins>9;
   const status=!Number.isFinite(deadline)||future?'invalid':pastDeadline?'past_deadline':stale?'stale':'fresh';
-  const sourceUrl=/^https:\/\/www\.boatrace\.jp\/owpc\/pc\/race\/odds3t\?/.test(String(doc.source_url||''))?doc.source_url:null;
   be166OddsMeta.set(key,{status,fetchedAt:doc.fetched_at,sourceUrl,ageMins});
   return status==='fresh'?odds:{};
 }
