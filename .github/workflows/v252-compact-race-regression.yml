@@ -1,0 +1,127 @@
+name: BOAT EDGE V252 - Compact Mobile Race and Six-Boat Navigation Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/boat_edge_v252_compact.js
+      - assets/boat_edge_v252_compact.css
+      - .github/workflows/v252-compact-race-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v252-readonly-layout-audit
+  cancel-in-progress: true
+
+jobs:
+  compact-race-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout current site without writing
+        uses: actions/checkout@v4
+      - name: Check mobile race navigation and output guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v252_compact.js
+          node - <<'NODE_V252'
+          'use strict';
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          const js=fs.readFileSync('assets/boat_edge_v252_compact.js','utf8');
+          const css=fs.readFileSync('assets/boat_edge_v252_compact.css','utf8');
+          const html=fs.readFileSync('index.html','utf8');
+          const v=require('./assets/boat_edge_v252_compact.js');
+          assert(v.validKey('20261012-01-12'));
+          assert(!v.validKey('../data/formal_status.json'));
+          const cmd={querySelectorAll:()=>[
+            {querySelector:s=>({textContent:s==='.cv'?'イン逃げ中心':'未確認'})},
+            {querySelector:s=>({textContent:s==='.cv'?'B':'未確認'})},
+            {querySelector:s=>({textContent:s==='.cv'?'4/6':'未確認'})},
+          ]};
+          const strip={querySelectorAll:()=>[
+            {querySelector:s=>({textContent:s==='.label'?'風 / 波':'3m/s / 2cm'})}
+          ]};
+          const data=v.summaryOf(cmd,strip);
+          assert.equal(data.decision,'イン逃げ中心');
+          assert.equal(data.grade,'B');
+          assert.equal(data.sources,'4/6');
+          assert.equal(data.weather,'3m/s / 2cm');
+          assert.equal(v.summaryOf(null,null).weather,'未取得');
+          assert.equal((html.match(/boat_edge_v252_compact.js/g)||[]).length,1);
+          assert.equal((html.match(/boat_edge_v252_compact.css/g)||[]).length,1);
+          assert(html.includes('boat_edge_v249_focus.js'));
+          assert(html.includes('boat_edge_v251_race_result.js'));
+          assert(html.includes('results-detail.html'));
+          assert(css.includes('html.be252-compact.be252-ready #raceView #raceTabs'));
+          assert(css.includes('be252-kpis'));
+          assert(css.includes('#tab-card table th:first-child'));
+          assert(js.includes("showRacers()"));
+          assert(js.includes("['#be206Quick','#be203Layout'"));
+          assert(!/\bfetch\s*\(/.test(js),'No external/result requests in nav-only JS');
+          assert(!/localStorage|sessionStorage|Math\.random/.test(js),'No historical prediction/local-state modifications');
+          // Execute actual capture listener with a simulated V249 navigation button.
+          const events=[];
+          let clicked=0,scrolled=0,stopped=0;
+          const racer={setAttribute(){}};
+          const observed={
+           '#raceTabs [data-tab="pred"]':{click(){clicked++}},
+           '#be206Quick':{getClientRects(){return [{}]},getBoundingClientRect(){return {height:160}},scrollIntoView(){scrolled++}},
+           '#be249Focus [data-nav]':racer
+          };
+          global.document={
+           addEventListener(type,fn,capture){events.push({type,fn,capture})},
+           readyState:'loading',
+           querySelector(s){return observed[s]||null},
+           querySelectorAll(){return [racer]},
+          };
+          global.window={
+           setTimeout(fn){fn()},
+           BoatEdgeV252:null,
+          };
+          delete require.cache[require.resolve('./assets/boat_edge_v252_compact.js')];
+          require('./assets/boat_edge_v252_compact.js');
+          const catcher=events.find(x=>x.type==='click'&&x.capture===true);
+          assert(catcher,'Capture listener must override V249 hidden racer cards');
+          catcher.fn({target:{closest(s){return s==='#be249Focus [data-nav="racers"]'?racer:null}},
+           preventDefault(){},stopPropagation(){stopped++}});
+          assert.equal(clicked,1,'Selected prediction tab must open');
+          assert.equal(scrolled,1,'Visible six-boat table must become focused');
+          assert.equal(stopped,1,'Prevent legacy hidden-card scroll');
+          console.log('V252_COMPACT_RACE_NAVIGATION_16_CONTRACTS_PASS');
+          NODE_V252
+      - name: Check original official data, visibility and formal lock remain unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_V252'
+          import json
+          from pathlib import Path
+          js=Path('assets/boat_edge_v252_compact.js').read_text()
+          css=Path('assets/boat_edge_v252_compact.css').read_text()
+          index=Path('index.html').read_text()
+          assert index.count('</head>')==1 and index.count('</body>')==1
+          assert all(x in index for x in ['id="raceView"','id="raceTabs"','id="tab-pred"',
+                 'id="tab-card"','id="tab-before"','id="tab-scenario"'])
+          assert all(x in js for x in ['data-be252','be252-ready','showRacers','be252-compact'])
+          # No scratch, verified odds, urgency, frozen bet, or full racer contents hidden.
+          for forbidden in ['#be182ScratchStop','#be205Scratch','.be166-odds-status',
+                            '#urgencyRibbon{display:none','#freshnessStrip{display:none',
+                            '#be207Top{display:none','#be206Quick{display:none',
+                            '#be251Outcome{display:none','#be181-freeze-banner{display:none']:
+              assert forbidden not in css, 'V252_HIDDEN_CRITICAL_DATA_'+forbidden
+          for forbidden in ["fetch(", "official_payout_per_100_yen", "hypothetical_return_yen",
+                            "score(", "rank(", "result_url", "boatrace.jp"]:
+              assert forbidden not in js,'V252_SOURCE_READONLY_VIOLATION_'+forbidden
+          formal=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=formal['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert formal['formalFirst100']['races']==0
+          print('V252_FORMAL_FRESH_LOCK_AND_SOURCE_READONLY_PASS')
+          PY_V252
