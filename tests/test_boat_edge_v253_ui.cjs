@@ -26,5 +26,5 @@ assert.equal(alter(x=>x.lanes.v236.races[0].categories.hit10='fabricated'),null)
 assert.equal(alter(x=>x.lanes.v240.races[0].race_key=x.lanes.v240.races[1].race_key),null);
 const html=fs.readFileSync('autopilot.html','utf8');
 assert(html.includes('id="v253Misses"'));
-assert(html.includes('boat_edge_v253_misses.js?v=253'));
+assert(html.includes('boat_edge_v253_misses.js?v=266'));
 console.log('V253_MOBILE_EVIDENCE_TAXONOMY_VALIDATION_PASS');
