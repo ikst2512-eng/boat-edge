@@ -43,6 +43,11 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
  <p class="v253-intro">締切前にGitHubへ保存済みの候補と、サイト限定の検証済み確定結果を照合。1着・2着・3着の抜けを別々に集計。条件が一致したレースだけを対象にします。</p>
  <div id="v253Misses" role="region" aria-label="買い目の取りこぼし原因"><p>保存済み監査データを確認中</p></div>
 </section>
+<section class="v253-board" id="v254Research" aria-label="同じ10点の3着重点予想の未見検証状況">
+ <div class="v253-header"><h2>次の検証：3着重点10点</h2><button type="button" id="v254Reload">↻ 更新</button></div>
+ <p class="v253-intro">今後のレースだけを対象に、現行の上位7点を固定し、残り3点で同じ1・2着の3着違いを優先。候補が不足すれば元の保存買い目を維持。双方10点で締切前に保存し、結果確定後に比較する研究専用。</p>
+ <p class="v253-scope" id="v254State" role="status" aria-live="polite">締切前の新しい研究対象を確認中。精度未証明・本番採用なし。</p>
+</section>
 <p class="foot">BOAT EDGE V227 / 公開サイトの表示は保存済みの監査記録に基づきます。GitHub Actionsの実行成功はモデルの精度改善・回収率の保証ではありません。</p>
 </main>
 <script>
@@ -90,4 +95,5 @@ $('reload').addEventListener('click',update);update();setInterval(()=>{if(!docum
 </script>
 <script defer src="./assets/boat_edge_v252_prospective.js?v=252"></script>
 <script defer src="./assets/boat_edge_v253_misses.js?v=253"></script>
+<script defer src="./assets/boat_edge_v254_tail_status.js?v=254"></script>
 </body></html>

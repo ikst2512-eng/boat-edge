@@ -1,0 +1,131 @@
+name: BOAT EDGE V254 - Future Only Third Tail Ten-Ticket Research
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v254-prospective-third-tail-shadow-20261012
+    paths:
+      - '.github/workflows/v254-third-tail-shadow.yml'
+      - 'scripts/boat_edge_v254_third_tail.py'
+      - 'tests/test_boat_edge_v254_third_tail.py'
+      - 'assets/boat_edge_v254_tail_status.js'
+      - 'tests/test_boat_edge_v254_tail_status.cjs'
+      - 'autopilot.html'
+  workflow_dispatch:
+  schedule:
+    - cron: '3,8,13,18,23,28,33,38,43,48,53,58 0-14,23 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v254-exact-third-tail-forward-shadow
+  cancel-in-progress: false
+
+jobs:
+  verify-future-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check frozen-only candidate and no-formal safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v254_third_tail.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v253_miss_audit.py' -q
+          python3 - <<'PY'
+          import ast,json
+          from pathlib import Path
+          ast.parse(Path('scripts/boat_edge_v254_third_tail.py').read_text())
+          guard=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(guard.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert guard.get('RESULT_UNLOCK_TOKEN') is None
+          print('V254_FORMAL_FRESH_STAYS_LOCKED')
+          PY
+          node --check assets/boat_edge_v254_tail_status.js
+          node tests/test_boat_edge_v254_tail_status.cjs
+          git diff --check
+          echo V254_FUTURE_ONLY_PREDECLARED_TAIL_CANDIDATE_TEST_PASS
+
+  freeze-forward-candidates:
+    if: github.ref == 'refs/heads/main'
+    needs: verify-future-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Commit only genuinely future and immutable candidate rows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          success=false
+          for attempt in 1 2 3 4; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_autopilot/v254_frozen data/site_autopilot/v254_pre_current.json
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v254_third_tail.py freeze
+            if test -f data/site_autopilot/v254_pre_current.json; then git add -- data/site_autopilot/v254_pre_current.json; fi
+            if test -d data/site_autopilot/v254_frozen; then git add -A -- data/site_autopilot/v254_frozen; fi
+            python3 - <<'PY_STAGE_V254_PRE'
+          import re,subprocess
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          for p in staged:
+              if p=='data/site_autopilot/v254_pre_current.json' or re.fullmatch(r'data/site_autopilot/v254_frozen/20\d{6}-\d{2}-\d{2}\.json',p):continue
+              raise SystemExit('V254_FORBIDDEN_PRE_RESULT_STAGE_'+p)
+          print('V254_ONLY_PRE_RESULT_RESEARCH_STAGED',len(staged))
+          PY_STAGE_V254_PRE
+            git diff --cached --check
+            if git diff --cached --quiet; then echo V254_NO_NEW_UNSEEN_COHORT;success=true;break;fi
+            git commit -m 'V254 untouched new future third-tail 10-ticket shadow freeze'
+            if git push origin HEAD:main; then echo V254_PRE_RESULT_IMMUTABLY_FROZEN;success=true;break;fi
+          done
+          if test "$success" != true; then echo V254_PRE_RESULT_PUBLISH_CONFLICT;exit 1;fi
+
+  score-only-prior-frozen-after-deadline:
+    if: github.ref == 'refs/heads/main'
+    needs: freeze-forward-candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Score only previously Git-frozen candidates after verified site result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          success=false
+          for attempt in 1 2 3 4; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_autopilot/v254_scored data/site_autopilot/v254_score_current.json
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v254_third_tail.py score
+            if test -f data/site_autopilot/v254_score_current.json; then git add -- data/site_autopilot/v254_score_current.json; fi
+            if test -d data/site_autopilot/v254_scored; then git add -A -- data/site_autopilot/v254_scored; fi
+            python3 - <<'PY_STAGE_V254_POST'
+          import re,subprocess
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          for p in staged:
+              if p=='data/site_autopilot/v254_score_current.json' or re.fullmatch(r'data/site_autopilot/v254_scored/20\d{6}-\d{2}-\d{2}\.json',p):continue
+              raise SystemExit('V254_FORBIDDEN_POST_RESULT_STAGE_'+p)
+          print('V254_ONLY_SITE_RESEARCH_SCORE_STAGED',len(staged))
+          PY_STAGE_V254_POST
+            git diff --cached --check
+            if git diff --cached --quiet; then echo V254_NO_NEW_CONFIRMED_SITE_RESULT;success=true;break;fi
+            git commit -m 'V254 scored previously frozen future site-only tail shadow'
+            if git push origin HEAD:main; then echo V254_POST_RESULT_DESCRIPTIVE_SCORE_PUBLISHED;success=true;break;fi
+          done
+          if test "$success" != true; then echo V254_SCORE_PUBLISH_CONFLICT;exit 1;fi
