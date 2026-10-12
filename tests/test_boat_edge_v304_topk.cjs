@@ -41,7 +41,7 @@ assert(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
 assert(css.includes('#be251Outcome .be251-money'));
 if(fs.existsSync('index.html')){
  const html=fs.readFileSync('index.html','utf8');
- assert(html.includes('boat_edge_v304_topk_mobile.css?v=305'));
- assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=305'));
+ assert(html.includes('boat_edge_v304_topk_mobile.css?v=306'));
+ assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306'));
 }
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
