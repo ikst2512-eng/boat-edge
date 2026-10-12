@@ -1,0 +1,31 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+
+const js = fs.readFileSync('assets/boat_edge_v177_latest_bridge.js', 'utf8');
+const window = {};
+const document = {readyState:'loading', addEventListener(){}};
+vm.runInNewContext(js,{window,document,console});
+const api=window.BoatEdgeV177;
+assert.equal(typeof api.freshness,'function');
+const now=Date.parse('2026-10-13T01:20:00+09:00');
+const hist={as_of:'2026-10-08',formal_current:{connected:true,predictions_ready:true}};
+const formal={asOf:'2026-10-13T01:16:00+09:00',connected:false,predictions_ready:false,
+  guards:{results_seen:false,unlock:false,scoring:false,RESULT_UNLOCK_TOKEN:null}};
+const ready=api.freshness(formal,hist,now);
+assert.equal(ready.current,true);
+assert.equal(ready.siteLabel,'過去の設定記録');
+assert.equal(ready.siteDate,'2026-10-08');
+assert.equal(api.contractStatus(formal),false);
+const old=api.freshness({...formal,asOf:'2026-10-12T12:00:00+09:00'},hist,now);
+assert.equal(old.current,false);
+assert.equal(old.formalLabel,'古い・未確認');
+assert.equal(api.freshness(null,hist,now).formalLabel,'取得時刻未確認');
+assert.equal(api.freshness({...formal,asOf:'garbage'},hist,now).current,false);
+assert.equal(api.freshness({...formal,asOf:'2026-10-13T02:20:00+09:00'},hist,now).current,false);
+const html=fs.readFileSync('index.html','utf8');
+assert.match(html,/boat_edge_v177_latest_bridge\.js\?v=177&amp;state=276/);
+assert.ok(html.includes('BoatEdgeV177?.acceptRaw?.(raw,raceKey,state.formal)'));
+assert.ok(html.includes('BoatEdgeV177?.acceptNormalized?.(d,state.formal)'));
+assert.equal((html.match(/boat_edge_v177_latest_bridge\.js\?v=177/g)||[]).length,1);
+console.log('V276_SITE_FORMAL_DATE_SOURCE_SAFETY_PASS');

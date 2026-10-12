@@ -1,0 +1,48 @@
+name: BOAT EDGE V276 - Fresh Formal Gate And Historical Site State
+
+on:
+  push:
+    branches: [main, fix/v276-visible-freshness-and-autodev]
+    paths:
+      - 'assets/boat_edge_v177_latest_bridge.js'
+      - 'index.html'
+      - 'tests/test_boat_edge_v276_freshness.cjs'
+      - '.github/workflows/v276-site-state-safety.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v177_latest_bridge.js'
+      - 'index.html'
+      - 'tests/test_boat_edge_v276_freshness.cjs'
+      - '.github/workflows/v276-site-state-safety.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v276-site-date-safety-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  read-only-ui-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preserve V177 approval gates and fix stale display
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v177_latest_bridge.js
+          node tests/test_v177_latest_bridge.cjs
+          node tests/test_boat_edge_v276_freshness.cjs
+          git diff --check
+      - name: Do not touch formal result gate
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("data/formal_status.json")
+          g=json.loads(p.read_text())['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print("V276_FORMAL_RESULT_UNSEEN_PASS")
+          PY
