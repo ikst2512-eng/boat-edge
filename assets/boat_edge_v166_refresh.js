@@ -35,6 +35,7 @@
     if(!doc||doc.race_key!==r?.race_key)return '公式3連単オッズ：取得元・時刻未確認';
     const proof=window.BoatEdgeV222Odds?.validate?.(doc,r,now);
     const q=proof?.quality;
+    if(q==='past_deadline')return '公式3連単オッズ：締切済み・購入前の現在オッズとして表示不可';
     if(q!=='fresh'&&q!=='stale')return '公式3連単オッズ：証跡不一致・表示不可';
     const at=new Date(doc.fetched_at);
     if(!Number.isFinite(at.getTime()))return '公式3連単オッズ：取得時刻不正';
