@@ -48,6 +48,17 @@ with tempfile.TemporaryDirectory() as temp:
     freeze.write_bytes(b"{invalid but immutable}")
     assert protected_site_snapshot(data,key) is True, "Malformed freeze must still protect source"
     assert freeze.read_bytes()==b"{invalid but immutable}"
+    # A V232 prospectively frozen row without a site snapshot is a separate
+    # source lock; never rewrite race JSON or raw beforeinfo after that proof.
+    freeze.unlink()
+    assert protected_site_snapshot(data,key) is False
+    cohort=data/"site_autopilot"/"v232_cohort"/(key+".json")
+    cohort.parent.mkdir(parents=True)
+    cohort.write_bytes(b"{malformed but still a first-frozen V232 asset}")
+    assert protected_site_snapshot(data,key) is True
+    assert cohort.read_bytes()==b"{malformed but still a first-frozen V232 asset}"
+    cohort.unlink()
+    assert protected_site_snapshot(data,key) is False
     for name in ("20261013-19-08/../../x","bad","20261013-19-08.json"):
         try:protected_site_snapshot(data,name)
         except ValueError:pass
