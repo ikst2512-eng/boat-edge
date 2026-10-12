@@ -416,7 +416,19 @@ async function oddsFor(key){
   return status==='fresh'?odds:{};
 }
 
-async function resultFor(key){return await J(`./data/site_results/${key}.json`,30000)}
+/* V256: never read a result file for untouched PRE_RESULT or locked formal targets. */
+async function resultFor(key){
+  const active=raceOf();
+  if(active?.race_key===key && active.meta?.phase==='PRE_RESULT' &&
+    active.meta?.results_seen===false && active.meta?.unlock===false &&
+    active.meta?.scoring===false)return null;
+  const formal=(typeof state!=='undefined' ? state?.formal : null)||{};
+  const guard=formal.guards||{};
+  const target=String(formal.target_date||'').replaceAll('-','');
+  if(target===String(key).slice(0,8) && guard.results_seen===false &&
+    guard.unlock===false && guard.scoring===false)return null;
+  return await J(`./data/site_results/${key}.json`,30000);
+}
 async function courseStatsFor(jcd){
   const code=String(jcd||"").padStart(2,"0");
   if(!/^[0-9]{2}$/.test(code)||code==="00")return null;
