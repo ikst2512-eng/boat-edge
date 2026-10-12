@@ -1,0 +1,40 @@
+name: BOAT EDGE V283 - Self-Drive Claim And Formal Lock UI
+on:
+  push:
+    branches: [main, fix/v283-autopilot-claim-safety]
+    paths:
+      - 'autopilot.html'
+      - 'tests/test_boat_edge_v283_claim_safety.cjs'
+      - '.github/workflows/v283-claim-safety.yml'
+  pull_request:
+    paths:
+      - 'autopilot.html'
+      - 'tests/test_boat_edge_v283_claim_safety.cjs'
+      - '.github/workflows/v283-claim-safety.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v283-autopilot-claims-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  guarded-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify DOM labels and current formal status lock without results
+        run: |
+          set -euo pipefail
+          node tests/test_boat_edge_v283_claim_safety.cjs
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          f=json.loads(Path('data/formal_status.json').read_text())
+          g=f['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V283_FORMAL_RESULT_UNSEEN_PASS')
+          PY
+          git diff --check
