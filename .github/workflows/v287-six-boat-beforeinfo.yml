@@ -42,7 +42,8 @@ jobs:
           assert 'ready=coverage["six_boat_complete"]' in s
           assert '"six_boat_coverage":bf.get("six_boat_coverage")' in s
           assert '"beforeinfo_urgent_15m_partial"' in s
-          assert 'if not protected_site_snapshot(DATA,key)' in s
+          assert 'if not source_write_allowed(DATA,key,clock,datetime.now(JST))' in s
+          assert 'from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed' in s
           g=json.loads(Path('data/formal_status.json').read_text())['guards']
           assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
           assert g['RESULT_UNLOCK_TOKEN'] is None

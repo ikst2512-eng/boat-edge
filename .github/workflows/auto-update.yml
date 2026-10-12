@@ -42,6 +42,7 @@ jobs:
           import requests
           from bs4 import BeautifulSoup
           from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
+          from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -289,11 +290,11 @@ jobs:
                       hh,mm=map(int,ds[rno-1].split(":"))
                       dl=now.replace(hour=hh,minute=mm,second=0,microsecond=0)
                       delta=(dl-now).total_seconds()/60
-                      if -30<=delta<=150:targets.append((j,rno,delta))
+                      if 0<=delta<=150:targets.append((j,rno,delta))
                   except: pass
 
           # V268: urgent 0-15m beforeinfo must not queue behind races 2h away.
-          # Finished races (-30..0m) are lowest priority; never use results.
+          # All targets remain before deadline; never read finished-race results.
           # Preserve the full original collection target set and source guards.
           targets.sort(key=lambda row:(0 if 0<=row[2]<=15 else
                                        1 if 15<row[2]<=45 else
@@ -334,6 +335,10 @@ jobs:
                       "six_boat_complete":full_ex and full_st}
           def before_task(j,rno):
               key=f"{ymd}-{j}-{rno:02d}"
+              ds=venue_meta.get(j,{}).get("deadlines") or []
+              clock=ds[rno-1] if len(ds)>=rno else None
+              if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                  return key,{"ok":False,"status":"source_locked","parsed":{},"error":"deadline_elapsed_or_frozen"}
               url=f"{BASE}/owpc/pc/race/beforeinfo?hd={ymd}&jcd={j}&rno={rno}"
               try:
                   r=fetch(url,attempts=2)
@@ -349,8 +354,9 @@ jobs:
                       coverage=beforeinfo_coverage(parsed)
                   ready=coverage["six_boat_complete"]
                   # Store only the last source response and its actual digest.
-                  if not protected_site_snapshot(DATA,key):
-                      (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      return key,{"ok":False,"status":"source_locked","parsed":{},"error":"deadline_elapsed_during_fetch"}
+                  (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
                   return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried,"six_boat_coverage":coverage,"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
                   return key,{"ok":False,"status":"error","parsed":{},"url":url,"error":repr(e)}
@@ -366,19 +372,26 @@ jobs:
           # race cards
           def race_task(j,rno):
               key=f"{ymd}-{j}-{rno:02d}"
+              ds=venue_meta.get(j,{}).get("deadlines") or []
+              clock=ds[rno-1] if len(ds)>=rno else None
+              if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                  return key,{"ok":False,"preserved":True,"racers":[],"error":"deadline_elapsed_or_frozen"}
               url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno={rno}"
               if rno==1 and j in probe_cache:
                   r,sp,racers=probe_cache[j]
-                  if not protected_site_snapshot(DATA,key):
-                      try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
-                      except:pass
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      return key,{"ok":False,"preserved":True,"racers":[],"error":"deadline_elapsed_during_probe"}
+                  try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  except Exception as e:
+                      return key,{"ok":False,"racers":[],"error":repr(e)}
                   # Cached venue probe was fetched before bulk collection; use a
                   # conservative start timestamp rather than falsely marking it newer.
                   return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":iso}
               try:
                   r=fetch(url,attempts=2)
-                  if not protected_site_snapshot(DATA,key):
-                      (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      return key,{"ok":False,"preserved":True,"racers":[],"error":"deadline_elapsed_during_fetch"}
+                  (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
                   racers=parse_racers(BeautifulSoup(r.text,"lxml"))
                   return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
@@ -398,6 +411,7 @@ jobs:
                    "venues":[]}
 
           snapshot_protected=0
+          deadline_locked=0
           for j in sorted(active):
               meta=venue_meta.get(j,{})
               ds=meta.get("deadlines",[])
@@ -409,8 +423,10 @@ jobs:
                   # V275: a previously published immutable prediction pins the
                   # exact race JSON and HTML that existed at freeze time.
                   # Never rewrite them even if the frozen snapshot is malformed.
-                  if protected_site_snapshot(DATA,key):
-                      snapshot_protected+=1
+                  clock=ds[rno-1] if len(ds)>=rno else None
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      if protected_site_snapshot(DATA,key):snapshot_protected+=1
+                      else:deadline_locked+=1
                       try:
                           preserved=json.loads((RACES/f"{key}.json").read_text(encoding="utf-8"))
                       except (OSError,ValueError,UnicodeError):
@@ -495,6 +511,8 @@ jobs:
             "beforeinfo_urgent_15m_error":urgent_error,
             "beforeinfo_urgent_15m_retried":sum(bool(before.get(key,{}).get("urgent_retried")) for key in urgent_keys),
             "site_snapshot_immutable_races":snapshot_protected,
+            "site_deadline_or_unknown_locked_races":deadline_locked,
+            "race_cards_held_unchanged":sum(bool(x.get("preserved")) for x in race_results.values()),
             "error_count":len(errors)
           }
           (DATA/"health.json").write_text(json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
@@ -511,6 +529,7 @@ jobs:
           from datetime import datetime, timedelta, timezone
           import requests
           from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
+          from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -617,21 +636,19 @@ jobs:
               path=RACES/f"{ymd}-{venue}-{rno:02d}.json"
               if not path.exists():
                   continue
-              # V275: the frozen prediction refers to SHA256 of this exact
-              # source file. Neither CSV enrichment nor later official updates
-              # may change its bytes after the first site-only snapshot.
-              if protected_site_snapshot(DATA,f"{ymd}-{venue}-{rno:02d}"):
-                  protected_count+=1
-                  try:
-                      preserved=json.loads(path.read_text(encoding="utf-8"))
-                  except (OSError,ValueError,UnicodeError):
-                      continue
-                  if (preserved.get("current_model_input") or {}).get("core7_ready") is True:
-                      eligible.append(code)
-                  continue
+              # V288: even without a frozen prediction, post-deadline CSV
+              # enrichment must not retroactively change pre-result input SHA.
               try:
                   doc=json.loads(path.read_text(encoding="utf-8"))
-              except Exception:
+              except (OSError,ValueError,UnicodeError):
+                  continue
+              if not isinstance(doc,dict):continue
+              race_key=f"{ymd}-{venue}-{rno:02d}"
+              clock=(doc.get("meta") or {}).get("deadline")
+              if not source_write_allowed(DATA,race_key,clock,datetime.now(JST)):
+                  protected_count+=1
+                  if (doc.get("current_model_input") or {}).get("core7_ready") is True:
+                      eligible.append(code)
                   continue
 
               audit=doc.setdefault("source_audit",{})

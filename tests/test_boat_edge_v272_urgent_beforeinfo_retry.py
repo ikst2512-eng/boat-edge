@@ -38,7 +38,7 @@ class Raw:
     def __truediv__(self,name):
         if name not in self.files: self.files[name]=File()
         return self.files[name]
-def scenario(targets,responses,protected=False):
+def scenario(targets,responses,protected=False,crosses_deadline=False):
     calls=[]; sleeps=[]; raw=Raw()
     def fetch(url,attempts):
         calls.append(url)
@@ -48,6 +48,8 @@ def scenario(targets,responses,protected=False):
          "sha":lambda b:"sha:"+b.decode(),
          "time":type("Time",(),{"sleep":lambda _,sec:sleeps.append(sec)})(),
          "protected_site_snapshot":lambda data,key:protected,"DATA":object(),
+         "venue_meta":{"19":{"deadlines":["08:35"]*12}},
+         "source_write_allowed":lambda data,key,clock,now: not protected and not (crosses_deadline and len(calls)>0),
          "datetime":dt.datetime,"JST":dt.timezone(dt.timedelta(hours=9)),
          "re":__import__("re")}
     exec(compile(code,"<V272_OFFLINE>","exec"),env,env)
@@ -69,13 +71,16 @@ assert len(calls)==1 and not sleeps
 task,calls,sleeps,raw=scenario([("19",8,8)],[b"ready"])
 _,doc=task("19",8)
 assert doc["status"]=="ok" and doc["urgent_retried"] is False and len(calls)==1
-# A frozen immutable source may be observed to decide readiness, but
-# PRE_RESULT collection must not rewrite the original beforeinfo HTML.
+# V288: a frozen race or a request that crosses the deadline must not
+# present a fresh 6-boat source as saved evidence. No retrospective fetch.
 task,calls,sleeps,raw=scenario([("19",8,8)],[b"wait",b"ready"],protected=True)
 key,doc=task("19",8)
-assert key=="20261012-19-08" and doc["status"]=="ok"
-assert doc["urgent_retried"] is True and len(calls)==2 and sleeps==[2.0]
-assert not raw.files, "Frozen source HTML must remain byte-identical"
+assert key=="20261012-19-08" and doc["status"]=="source_locked"
+assert not calls and not sleeps and not raw.files
+task,calls,sleeps,raw=scenario([("19",8,8)],[b"ready"],crosses_deadline=True)
+key,doc=task("19",8)
+assert key=="20261012-19-08" and doc["status"]=="source_locked"
+assert len(calls)==1 and not raw.files, "Deadline-crossed source HTML cannot be saved"
 assert '"beforeinfo_urgent_15m_retried"' in s
 assert '"results_seen":False,"unlock":False,"scoring":False' in s
 assert "race/result" not in code and "odds3t" not in code
