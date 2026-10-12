@@ -40,6 +40,6 @@ assert(source.includes('3連単Top10信頼度'));
 assert(source.includes('過去実績（このレース固有の確率ではない）'));
 assert(source.includes('内部評価値（未校正・確率ではない）'));
 assert(css.includes('BOAT_EDGE_A24_V259_CONFIDENCE_SEPARATION'));
-assert(html.includes('boat_edge_v207_first_prediction.js?v=207&amp;a24=1'));
+assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1'));
 assert(html.includes('boat_edge_v207_first_prediction.css?v=207&amp;a24=1'));
 console.log('A24_V259_HEAD_TOPK_CONFIDENCE_SEPARATION_PASS');
