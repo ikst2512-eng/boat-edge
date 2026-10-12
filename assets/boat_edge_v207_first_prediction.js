@@ -64,6 +64,9 @@ function evidenceFor(key){
 }
 
 let showFive=false,showTen=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
+/* Reset at a race change only when the ranked list is actually new. */
+const holdPreviousRace=(previousKey,currentKey,previousList,nextList)=>
+ Boolean(previousKey)&&previousKey!==currentKey&&(!nextList||nextList===previousList);
 let lastListNode=null,awaitingRaceList=false;
 function skeleton(){
  const host=$('#raceView .race-summary');if(!host)return null;
@@ -149,7 +152,7 @@ function render(){
  // The V108 view can lag a race switch: its original ranked rows have no race
  // attribute. Never label the old list as a new race while it is still mounted.
  if(key!==activeKey){
-  awaitingRaceList=Boolean(activeKey)&&(!sourceList||sourceList===lastListNode);
+  awaitingRaceList=holdPreviousRace(activeKey,key,lastListNode,sourceList);
   activeKey=key;showFive=false;showTen=false;showAll=false;
   document.documentElement.classList.remove('be208-details-on');lastSig='';
  }
@@ -251,6 +254,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor};
+window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
