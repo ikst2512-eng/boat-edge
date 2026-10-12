@@ -1,0 +1,81 @@
+name: BOAT EDGE V255 - Official Odds Provenance Fail Closed Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/boat_edge_v255_odds_proof.js
+      - assets/boat_edge_v255_odds_proof.css
+      - .github/workflows/v255-odds-proof-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v255-readonly-source-proof
+  cancel-in-progress: true
+
+jobs:
+  odds-proof-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate saved official source status without implying current numeric parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v255_odds_proof.js
+          node - <<'NODE_V255'
+          const assert=require('node:assert/strict'), fs=require('node:fs');
+          const v=require('./assets/boat_edge_v255_odds_proof.js');
+          const key='20261012-01-08';
+          const detail={dataset:{quality:'ok'},textContent:'11:42取得（数値一致は別確認）'};
+          const row={querySelector:s=>s==='span:first-child'?{textContent:'3連単オッズ'}:
+                                s==='span:last-child'?detail:null};
+          const audit={dataset:{raceKey:key},querySelectorAll:s=>s==='.be223-row'?[row]:[]};
+          let out=v.deriveEvidence(audit,key);
+          assert.equal(out.quality,'logged');
+          assert(out.label.includes('11:42'));
+          assert(out.label.includes('数値一致や現時点の最新値は別確認'));
+          assert.equal(v.deriveEvidence(audit,'20261012-01-09').quality,'unknown',
+                       'Never show an old race source stamp on the selected race');
+          assert.equal(v.deriveEvidence(null,key).quality,'unknown');
+          assert.equal(v.deriveEvidence(audit,'../data/formal_status.json').quality,'unknown');
+          detail.dataset.quality='stale';detail.textContent='以前の照合 10:02（現在値ではない）';
+          out=v.deriveEvidence(audit,key);
+          assert.equal(out.quality,'stale');assert(out.label.includes('現在値'));
+          detail.dataset.quality='unknown';
+          assert.equal(v.deriveEvidence(audit,key).quality,'unknown');
+          detail.dataset.quality='ok';detail.textContent='予想10:10';
+          assert.equal(v.deriveEvidence(audit,key).quality,'unknown',
+                       'Fresh status needs verified time signature');
+          const code=fs.readFileSync('assets/boat_edge_v255_odds_proof.js','utf8');
+          const style=fs.readFileSync('assets/boat_edge_v255_odds_proof.css','utf8');
+          const index=fs.readFileSync('index.html','utf8');
+          assert.equal((index.match(/boat_edge_v255_odds_proof.js/g)||[]).length,1);
+          assert.equal((index.match(/boat_edge_v255_odds_proof.css/g)||[]).length,1);
+          assert(index.includes('boat_edge_v223_source_visibility.js'));
+          assert(index.includes('boat_edge_v252_compact.js'));
+          assert(code.includes("audit.dataset?.raceKey!==key"));
+          assert(code.includes("querySelectorAll('.be223-row')"));
+          assert(!/\bfetch\s*\(|XMLHttpRequest|localStorage/.test(code),
+                 'No browser source retrieval or stored-history mutation');
+          assert(style.includes('be207Top.be255-odds-mounted'));
+          console.log('V255_ODDS_RACE_KEY_AND_FRESHNESS_FAIL_CLOSED_PASS');
+          NODE_V255
+          python3 - <<'PY_V255'
+          import json
+          from pathlib import Path
+          source=Path('assets/boat_edge_v255_odds_proof.js').read_text(encoding='utf-8')
+          for forbidden in ('odds_at_freeze','official_payout_per_100_yen','hypothetical_return_yen','score(','boatrace.jp'):
+              assert forbidden not in source,'V255_PREDICTION_RESULT_ISOLATION_'+forbidden
+          formal=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=formal['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert formal['formalFirst100']['races']==0
+          print('V255_FORMAL_FRESH_RESULT_UNSEEN_LOCK_PASS')
+          PY_V255
