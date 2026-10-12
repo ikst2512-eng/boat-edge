@@ -11,7 +11,19 @@ const esc=x=>String(x??'－').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>'
 const setText=(el,value)=>{if(el&&el.textContent!==value)el.textContent=value;};
 const race=()=>{try{return typeof state==='undefined'?null:state?.race||null;}catch(_){return null;}};
 const stamp=s=>{const d=s?new Date(s):null;return d&&Number.isFinite(d.getTime())?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):null;};
-const source=(r,k)=>{const x=r?.source_audit?.[k];return x?.status==='ok'&&x?.fetched_at&&x?.sha256&&Number.isFinite(Date.parse(x.fetched_at))?stamp(x.fetched_at):null;};
+const source=(r,k)=>{
+ const x=r?.source_audit?.[k];
+ if(x?.status!=='ok'||!x.fetched_at||!/^[a-f0-9]{64}$/i.test(String(x.sha256||'')))return '未取得・未確認';
+ const t=Date.parse(x.fetched_at),now=Date.now(),key=String(r?.race_key||''),deadline=String(r?.meta?.deadline||'');
+ if(!Number.isFinite(t)||t>now+30000)return '取得時刻未確認';
+ if(!/^20\d{6}-\d{2}-\d{2}$/.test(key)||!/^\d{1,2}:\d{2}$/.test(deadline))return '締切時刻未確認';
+ const date=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+ const due=Date.parse(date+'T'+deadline.padStart(5,'0')+':00+09:00');
+ if(!Number.isFinite(due)||t>due)return '締切後取得・未確認';
+ if(now>=due)return '締切済（直前値）';
+ if(now-t>25*60000)return '古い情報 '+stamp(x.fetched_at);
+ return stamp(x.fetched_at)+'取得';
+};
 const tabs={base:{label:'基本',hint:'実力の比較。赤は6艇の中で差が明確な1位だけ。',cols:[['全国','national.win_rate',2,.4,false],['当地','local.win_rate',2,.4,false],['M2連','motor.quinella_rate',1,3,false]]},
  exhibit:{label:'展示',hint:'STは展示スタート。Fは展示フライング。実コース・本番STではありません。',cols:[['展示ST','st',2,.03,true],['1周','lap',2,.08,true],['回り足','turn',2,.04,true],['直線','straight',2,.04,true]]},
  combo:{label:'連対・機力',hint:'全国・当地の2連対率とモーター2連対率。数値はパーセント。',cols:[['全国2連','national.quinella_rate',1,3,false],['当地2連','local.quinella_rate',1,3,false],['全国3連','national.trio_rate',1,3,false],['M2連','motor.quinella_rate',1,3,false]]}};
