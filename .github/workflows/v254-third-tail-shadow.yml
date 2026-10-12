@@ -17,16 +17,14 @@ on:
       - '.github/workflows/V234.yml'
       - 'autopilot.html'
   workflow_dispatch:
-  # Launch as soon as the *pre-result* source workflow succeeds, instead of
-  # waiting for the next scheduled poll. The script still requires verified
-  # Git-committed source, a future deadline and no prior results.
+  # V286: V235 already performs a same-run, future-only research freeze
+  # immediately after immutable source commit. Do NOT enqueue a redundant
+  # full V254 workflow after every successful V235 run (often 0 new races).
+  # Keep the old V232 success event if separately reenabled, plus a staggered
+  # 5-minute fallback and manual recovery. All pre-result gates stay unchanged.
   workflow_run:
-    # V271: the live V235 pipeline also freezes source-proven V232 cohorts.
-    # Keep V232 fallback; V254 always independently verifies Git SHA, commit
-    # timestamp, future deadline and the formal result-unseen lock.
     workflows:
       - 'BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort'
-      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
     types: [completed]
   schedule:
     - cron: '3,8,13,18,23,28,33,38,43,48,53,58 0-14,23 * * *'
