@@ -1079,6 +1079,7 @@ body{background:
 <link rel="stylesheet" href="./assets/boat_edge_v253_home.css?v=253">
 <link rel="stylesheet" href="./assets/boat_edge_v255_odds_proof.css?v=255">
 <link rel="stylesheet" href="./assets/boat_edge_v256_venue_first.css?v=256">
+<link rel="stylesheet" href="./assets/boat_edge_v261_nav.css?v=261">
 </head>
 <body>
 <div class="app">
@@ -1377,11 +1378,12 @@ body{background:
     </section>
   </main>
 
-  <nav class="bottomnav">
-    <button class="on" data-view="homeView"><span class="navicon">⌂</span>ホーム</button>
-    <button data-view="raceView"><span class="navicon">≋</span>レース</button>
-    <button data-view="dataView"><span class="navicon">▣</span>データ状況</button>
-    <a href="./results.html" class="be241-nav-link"><span class="navicon">✓</span>結果</a>
+  <nav class="bottomnav" aria-label="主要画面の切り替え">
+    <button class="on" data-view="homeView" type="button"><span class="navicon">⌂</span>ホーム</button>
+    <button data-view="raceView" type="button"><span class="navicon">≋</span>レース</button>
+    <button data-view="dataView" type="button"><span class="navicon">▣</span>データ状況</button>
+    <a href="./results.html" class="be241-nav-link" aria-label="検証済み結果・払戻を見る"><span class="navicon">✓</span>結果</a>
+    <a href="./ai-simulation.html" class="be261-nav-link" aria-label="AI自走シミュレーション・1日5万円の仮想運用"><span class="navicon">◎</span>AI仮想</a>
   </nav>
 </div>
 
