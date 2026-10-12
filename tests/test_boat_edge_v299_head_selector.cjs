@@ -7,8 +7,14 @@ const window={},document={readyState:'loading',addEventListener(){}};
 vm.runInNewContext(js,{window,document,console:{warn(){}},Date,Number,Math,Map,Set,JSON,
  queueMicrotask(){},setInterval(){throw Error('no timers in unit boot')}},{filename:'v299.js'});
 const api=window.BoatEdgeV206;
-assert.equal(api.version,'V299-UI-ONLY');
+assert.equal(api.version,'V321-UI-ONLY');
 assert.equal(typeof api.headTickets,'function');
+assert.equal(api.holdPreviousRace('20261013-01-01','20261013-02-01',{},null),true);
+const previousList={};
+assert.equal(api.holdPreviousRace('20261013-01-01','20261013-02-01',previousList,previousList),true);
+assert.equal(api.holdPreviousRace('20261013-01-01','20261013-02-01',previousList,{}),false);
+assert.equal(api.holdPreviousRace('20261013-01-01','20261013-01-01',previousList,previousList),false);
+assert(css.includes('html.be321-race-await'),'V321 stale tickets must be hidden during race change');
 const node=combo=>({querySelector(k){return k==='b'?{textContent:combo}:null}});
 const original=['1-2-3','2-1-3','1-3-2','3-1-2','1-2-4','1-4-2','4-2-1','1-5-2'].map(node);
 const take=api.headTickets(original,1);
@@ -40,7 +46,7 @@ if(fs.existsSync('index.html')){
  const home=html.indexOf('<main id="homeView"'),shortcuts=html.indexOf('class="be241-home-shortcuts"');
  const race=html.indexOf('<main id="raceView"');
  assert(home>0&&shortcuts>home&&race>shortcuts,'home shortcuts belong only inside home view');
- assert(html.includes('boat_edge_v206_quickview.css?v=320'));
- assert(html.includes('boat_edge_v206_quickview.js?v=320'));
+ assert(html.includes('boat_edge_v206_quickview.css?v=321'));
+ assert(html.includes('boat_edge_v206_quickview.js?v=321'));
 }
 console.log('V299_HEAD_SELECTION_SOURCE_ONLY_HOME_SCOPED_PASS');
