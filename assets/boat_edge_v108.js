@@ -367,11 +367,17 @@ async function oddsFor(key){
   const validKey=s=>{const a=s.split('-').map(Number);return /^([1-6]-){2}[1-6]$/.test(s)&&new Set(a).size===3};
   const fetchedAt=Date.parse(doc.fetched_at||'');
   const sourceUrl=/^https:\/\/www\.boatrace\.jp\/owpc\/pc\/race\/odds3t\?/.test(String(doc.source_url||''))?doc.source_url:null;
+  const params=String(sourceUrl||'').split('?')[1]?.split('&')||[];
+  const param=name=>params.filter(part=>part.startsWith(name+'=')).map(part=>part.slice(name.length+1));
+  const hd=param('hd'),jcd=param('jcd'),rno=param('rno');
+  const sourceRaceMatches=hd.length===1&&hd[0]===key.slice(0,8)&&
+    jcd.length===1&&/^\d{1,2}$/.test(jcd[0])&&Number(jcd[0])===Number(key.slice(9,11))&&
+    rno.length===1&&/^\d{1,2}$/.test(rno[0])&&Number(rno[0])===Number(key.slice(12,14));
   const activeRace=raceOf();
   const matchedDeadline=activeRace?.race_key!==key || String(activeRace.meta?.deadline||'')===String(doc.deadline||'');
   const good=doc.race_key===key && doc.schema_version==='boat-edge-site-odds-v71' &&
     doc.results_seen===false && doc.scoring===false && doc.phase==='PRE_RESULT_PURCHASE_ONLY' &&
-    Boolean(sourceUrl) && matchedDeadline &&
+    Boolean(sourceUrl) && sourceRaceMatches && matchedDeadline &&
     Number.isFinite(fetchedAt) && entries.length>=80 && entries.length<=120 &&
     entries.every(([combo,v])=>validKey(combo)&&be166OddsPrice(v)!==null) &&
     Number(doc.available_count)===entries.length;
