@@ -100,6 +100,23 @@ with tempfile.TemporaryDirectory() as td:
     commit(owner, "a still unfrozen next race")
     assert audit(owner)["changed_source_races"] == 1
 
+    # The site-only V232 first Git cohort is another immutable pre-result
+    # proof, independent of the V235 snapshot path. Late collection must
+    # not silently replace either race JSON or original beforeinfo HTML.
+    cmd(other, "pull", "--ff-only", "origin", "main")
+    cohort = f"data/site_autopilot/v232_cohort/{NEXT}.json"
+    put(other, cohort, '{"saved-before-deadline":true}\\n')
+    commit(other, "separate V232 immutable PRE_RESULT cohort")
+    cmd(other, "push", "origin", "main")
+    cmd(owner, "fetch", "--no-tags", "origin", "main")
+    check_reject(owner, "V277_FROZEN_RACE_SOURCE_MUTATION_BLOCKED")
+
+    cmd(owner, "reset", "--hard", "origin/main")
+    raw_next = "data/raw/20261013/19_09_beforeinfo.html"
+    put(owner, raw_next, "<html>late cohort beforeinfo rewrite</html>\\n")
+    commit(owner, "race HTML mutation after V232 immutable freeze")
+    check_reject(owner, "V277_FROZEN_RACE_SOURCE_MUTATION_BLOCKED")
+
     # Raw HTML from a frozen race is also immutable, not just the parsed JSON.
     cmd(owner, "reset", "--hard", "origin/main")
     put(owner, RAW, "<html>late mutation</html>\n")
