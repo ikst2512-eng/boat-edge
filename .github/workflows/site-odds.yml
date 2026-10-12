@@ -50,7 +50,7 @@ jobs:
         run: |
           python - <<'PY'
           from __future__ import annotations
-          import json, re, time, random
+          import hashlib, json, re, time, random
           from pathlib import Path
           from datetime import datetime, timedelta, timezone
           import requests
@@ -166,8 +166,9 @@ jobs:
               # V167: fail closed unless all 120 DOM labels match their odds.
               from scripts.site_odds_v167_dom_verifier import verify_official_dom_price_mapping
               verify_official_dom_price_mapping(html)
-              # Do not publish a suspicious partial scrape.
-              if len(odds) < 80:
+              # Purchase evidence is fail-closed: partial official prices cannot
+              # prove a safe 120-combination market or a racer scratch.
+              if len(odds) != 120 or unavailable:
                   raise ValueError(f"valid_odds_too_few={len(odds)}")
               return odds, unavailable
 
@@ -199,7 +200,11 @@ jobs:
                       "trifecta_odds":odds,
                       "available_count":len(odds),
                       "unavailable_count":len(unavailable),
-                      "unavailable_combinations":unavailable
+                      "unavailable_combinations":unavailable,
+                      "odds_validation":"VERIFIED",
+                      "no_bet":False,
+                      "verified_official_dom_v167":True,
+                      "raw_official_html_sha256":hashlib.sha256(res.content).hexdigest()
                   }
                   (OUT/f"{key}.json").write_text(
                       json.dumps(doc,ensure_ascii=False,indent=2),
