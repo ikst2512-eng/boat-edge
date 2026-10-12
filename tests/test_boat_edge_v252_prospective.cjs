@@ -45,9 +45,13 @@ assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.hit++)),null);
 assert.equal(api.check236(mutate(v236,d=>d.comparisons.coverage15.avg_points=10)),null);
 assert.equal(api.check236(mutate(v236,d=>d.scope='FORMAL_FRESH')),null);
 // Additional chronologically independent date must remain explicitly represented.
+const allDays=[...new Set(v240.examples.map(x=>x.race_key.slice(0,8)))].sort();
+const newest=allDays[allDays.length-1];
+const nextDay=new Date(Date.UTC(Number(newest.slice(0,4)),Number(newest.slice(4,6))-1,Number(newest.slice(6,8))+1))
+ .toISOString().slice(0,10).replace(/-/g,'');
 const day2=mutate(v240,d=>{
  const newRace=JSON.parse(JSON.stringify(d.examples[0]));
- newRace.race_key='20261013-14-01';d.examples.push(newRace);
+ newRace.race_key=nextDay+'-14-01';d.examples.push(newRace);
  d.scored_total++;for(const [k,x] of Object.entries(d.comparisons)){
   x.races++;if(newRace.outcomes[k])x.hits++;
   x.hit_rate_percent=+(100*x.hits/x.races).toFixed(2);
@@ -60,7 +64,7 @@ const day2=mutate(v240,d=>{
  }
 });
 const crossDay=api.check240(day2);
-assert(crossDay&&crossDay.day==='20261012〜20261013');
+assert(crossDay&&crossDay.day===allDays[0]+'〜'+nextDay);
 const html=fs.readFileSync('autopilot.html','utf8');
 assert(html.includes('id="v252Evidence"'));
 assert(html.includes('id="v252Equal"'));
