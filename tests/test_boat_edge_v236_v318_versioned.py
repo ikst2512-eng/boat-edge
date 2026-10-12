@@ -95,7 +95,7 @@ class V318Versions(unittest.TestCase):
             self.assertNotEqual(legacy["relative_path"], newer["relative_path"])
             self.assertTrue((root / legacy["relative_path"]).exists())
             self.assertTrue((root / newer["relative_path"]).exists())
-            with self.assertRaises(FileExistsError):
+            with self.assertRaises(ValueError):
                 capture(root, "official", 20, repeatable=True)
             for provider in ("boaters", "kyoteibiyori"):
                 capture(root, provider, 20)
