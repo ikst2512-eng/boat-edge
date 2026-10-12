@@ -58,6 +58,27 @@ function paperStates(data,proof){
      '（最近の記録のみ。総件数・確定利益ではありません）';
  return {kind:noBet?'no-bet':pending?'pending':settled?'settled':'unknown',label};
 }
+/* A27: summarize only the verified SAME-DAY paper ledger.
+   50,000 yen is a fixed daily budget, not a credit-funded balance or a wager.
+   Pending/settled stake totals and skipped reasons are original saved evidence. */
+function budgetAuditSummary(d,proof,states,skips){
+ if(!proof?.verified)return '仮想予算の保存台帳が未確認です。残額・購入額・回収を推定しません。';
+ if(!proof.current)return '保存日 '+proof.day+' の記録です。本日の資金・仮想購入・収益とは別です。';
+ if(states?.kind==='unknown')return '仮想購入履歴の照合待ち。保存額があっても決済・回収実績として表示しません。';
+ const m=d?.money||{};
+ const valid=n=>Number.isSafeInteger(n)&&n>=0;
+ if(![m.pending_yen,m.settled_stake_yen].every(valid))
+  return '結果待ち・確定分の保存金額が未確認です。';
+ const reasons=skips?.verified?
+   (skips.rows.length?'見送り理由：'+skips.rows.map(([k,v])=>k+' '+v+'R').join('／'):'見送り理由の個別件数は未記録'):
+   '見送り理由の取得日時は未確認';
+ return '紙上運用のみ（実購入0件）｜本日の予算 '+yen(proof.budget)+
+  '｜保存済み使用 '+yen(proof.spent)+'｜残額 '+yen(proof.remaining)+
+  '｜仮想購入 '+proof.count+'R｜結果待ち投下 '+yen(m.pending_yen)+
+  '｜結果確定投下 '+yen(m.settled_stake_yen)+'｜'+
+  (proof.count===0?'購入条件未達のため本日は見送り｜':'')+reasons+
+  '。結果待ち分を利益に加算せず、翌日に残額を繰り越しません。';
+}
 /* V250 A20: reject stale, wrong-day and uncounted skip reasons, never fill gaps. */
 function skipEvidence(scan,proof,now=Date.now()){
   const t=Date.parse(scan?.as_of||'');
@@ -100,6 +121,8 @@ async function refresh(){
   if(!proof.verified)throw Error('unverified paper ledger');
   const m=d.money,actualDay=m.day;
   const evidenceStates=paperStates(d,proof);showPaperStates(evidenceStates);
+  const skipSummary=skipEvidence(d.scan||{},proof);
+  text('#simAuditBudget',budgetAuditSummary(d,proof,evidenceStates,skipSummary));
   const spent=m.today_spent_yen,remaining=m.today_remaining_yen;
   text('#simDay',dayLabel(actualDay));
   text('#simMode',proof.current?'実際の購入なし':'過去の保存台帳（本日未確認）');
@@ -128,7 +151,7 @@ async function refresh(){
    const c=el('td');c.append(el('span','tag'+(a.decision==='candidate'?' ok':''),a.decision==='candidate'?'候補':'見送り'));tr.append(c,el('td','',a.reason||'要確認'));rows.append(tr);
   }
   const reasonBox=q('#simReasons');reasonBox.replaceChildren();
-  const skips=skipEvidence(scan,proof);
+  const skips=skipSummary;
   reasonBox.append(el('strong','be250-reason-head',skips.message));
   for(const [reason,count] of skips.rows)reasonBox.append(el('span','',reason+' '+count+'R'));
   const hist=q('#simHistory');hist.replaceChildren();
@@ -145,6 +168,7 @@ async function refresh(){
  }catch(e){
   showPaperStates({kind:'unknown',label:'仮想結果：保存台帳の検証待ち。金額を補完しません。'});
   showEvidence({verified:false,message:'仮想運用の保存台帳を確認できません。予算・購入額・利益を補完しません。'});
+  text('#simAuditBudget','仮想予算・投入額・結果待ち・見送り理由は未確認。推定額を表示しません。');
   for(const id of ['#simBalance','#simSpent','#simTodayBuys','#simProfit','#simRoi','#simPending'])text(id,'―');
   text('#simMode','データ未確認');text('#simUpdated','最終更新未確認');
   text('#simState','未確認');text('#simGate','自走データを確認できません。未確認の購入・回収率は表示しません。');
@@ -153,5 +177,5 @@ async function refresh(){
 for(const b of qa('.sim-tabs [data-tab]'))b.addEventListener('click',()=>showTab(b.dataset.tab));
 q('#simRefresh')?.addEventListener('click',refresh);showTab('decision');refresh();
 setInterval(()=>{if(!document.hidden)refresh()},60000);
-window.BoatEdgeV211PaperEvidence={paperEvidence,paperStates,verifiedBet,skipEvidence};
+window.BoatEdgeV211PaperEvidence={paperEvidence,paperStates,verifiedBet,skipEvidence,budgetAuditSummary};
 })();
