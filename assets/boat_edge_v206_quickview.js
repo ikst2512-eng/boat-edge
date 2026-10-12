@@ -12,6 +12,7 @@ const setText=(el,value)=>{if(el&&el.textContent!==value)el.textContent=value;};
 const race=()=>{try{return typeof state==='undefined'?null:state?.race||null;}catch(_){return null;}};
 const stamp=s=>{const d=s?new Date(s):null;return d&&Number.isFinite(d.getTime())?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):null;};
 const source=(r,k)=>{
+ if(r?.meta?.phase!=='PRE_RESULT'||r?.meta?.results_seen!==false||r?.meta?.unlock!==false||r?.meta?.scoring!==false)return '結果未見条件を確認できず';
  const x=r?.source_audit?.[k];
  if(x?.status!=='ok'||!x.fetched_at||!/^[a-f0-9]{64}$/i.test(String(x.sha256||'')))return '未取得・未確認';
  const t=Date.parse(x.fetched_at),now=Date.now(),key=String(r?.race_key||''),deadline=String(r?.meta?.deadline||'');
