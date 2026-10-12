@@ -36,6 +36,8 @@ const read=async()=>Object.keys(await ctx.unit.oddsFor(key)).length;
  ctx.packet={...structuredClone(packet),source_url:'https://www.boatrace.jp.evil.test/owpc/pc/race/odds3t?bad=1'};
  assert.equal(await read(),0,'nonofficial domain must never display prices');
  assert.equal(ctx.unit.meta.get(key).status,'invalid');
+ ctx.packet={...structuredClone(packet),source_url:'https://www.boatrace.jp/owpc/pc/race/odds3t?hd=20261012&jcd=03&rno=4'};
+ assert.equal(await read(),0,'official URL for a different race must never display');
  ctx.packet={...structuredClone(packet),deadline:'12:09'};
  assert.equal(await read(),0,'race-clock mismatch must fail closed');
  ctx.packet={...structuredClone(packet),results_seen:true};
