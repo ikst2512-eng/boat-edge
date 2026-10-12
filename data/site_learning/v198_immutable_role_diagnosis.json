@@ -20,21 +20,22 @@
     },
     "20261012": {
       "classes": {
-        "SECOND_ABSENT_WITH_CORRECT_HEAD": 1
+        "SECOND_ABSENT_WITH_CORRECT_HEAD": 1,
+        "TOP10_HIT": 1
       },
-      "verified_settled": 1
+      "verified_settled": 2
     }
   },
   "formal_guard_modified": false,
   "formal_results_accessed": false,
-  "independent_verified_settled": 84,
+  "independent_verified_settled": 85,
   "inference": "DIAGNOSTIC_NOT_PROOF_OF_IMPROVED_ACCURACY",
   "invalid_frozen_or_results": [],
   "model_id": "V198_SITE_ONLY_ROLE_MISS_AUDIT_V1",
   "no_current_model_change": true,
   "no_production_promote": true,
   "outcomes_from": "data/site_results confirmed only; no endpoint or combined API",
-  "pending_settlement": 1,
+  "pending_settlement": 0,
   "races": [
     {
       "actual_head": "3",
@@ -2278,6 +2279,33 @@
       "winning_combo": "1-2-3"
     },
     {
+      "actual_head": "1",
+      "actual_head_is_1": true,
+      "actual_second": "3",
+      "actual_third": "4",
+      "baseline_top10_hit": true,
+      "baseline_top3_hit": true,
+      "baseline_top5_hit": true,
+      "classification_v185_top10": "TOP10_HIT",
+      "payout_band": "UNDER_10X",
+      "race_key": "20261012-14-03",
+      "source_first_git_commit": "31895eb8a4c91240f2f75f1ee77842f3d88d1bba",
+      "source_first_git_commit_time_utc": "2026-10-12T00:17:51+00:00",
+      "v180_top10_hit": true,
+      "v180_top3_hit": true,
+      "v180_top5_hit": true,
+      "v185_actual_head_relative_mass_pct_NOT_CALIBRATED": 74.1146,
+      "v185_actual_second_rank_given_head": 1,
+      "v185_actual_third_rank_given_head_second": 1,
+      "v185_all120_rank": 1,
+      "v185_rank_within_actual_head": 1,
+      "v185_top10_hit": true,
+      "v185_top10_new_combos_vs_v180": 0,
+      "v185_top3_hit": true,
+      "v185_top5_hit": true,
+      "winning_combo": "1-3-4"
+    },
+    {
       "actual_head": "3",
       "actual_head_is_1": false,
       "actual_second": "2",
@@ -2313,6 +2341,6 @@
     "HEAD_ABSENT": 14,
     "SECOND_ABSENT_WITH_CORRECT_HEAD": 24,
     "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 17,
-    "TOP10_HIT": 29
+    "TOP10_HIT": 30
   }
 }
