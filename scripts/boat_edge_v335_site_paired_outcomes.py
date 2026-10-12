@@ -55,6 +55,14 @@ def _validate_frozen(shadow):
         raise ValueError("FROZEN_CANDIDATE_SHA_MISMATCH")
     if hashlib.sha256(canonical(receipts)).hexdigest() != shadow.get("source_bundle_sha256"):
         raise ValueError("FROZEN_SOURCE_RECEIPT_SHA_MISMATCH")
+    # Canonical hashes prove internal consistency, not that the complete,
+    # predeclared V312 ablation contract was retained after observation.
+    if candidate.get("model_id") != "BOAT_EDGE_V312_UNCALIBRATED_EXHIBITION_ENTRY_ABLATION":
+        raise ValueError("UNEXPECTED_CANDIDATE_MODEL")
+    if candidate.get("deadline_jst") != deadline.isoformat():
+        raise ValueError("CANDIDATE_DEADLINE_MISMATCH")
+    if shadow.get("entry_basis") != "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL":
+        raise ValueError("FROZEN_ENTRY_BASIS_MISMATCH")
     if (candidate.get("race_key") != key or
             candidate.get("race_source_sha256") != shadow.get("race_source_sha256") or
             candidate.get("entry_basis") != "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL"):
@@ -66,8 +74,10 @@ def _validate_frozen(shadow):
     if not isinstance(shadow.get("race_source_sha256"), str) or SHA.fullmatch(shadow["race_source_sha256"]) is None:
         raise ValueError("RACE_SOURCE_DIGEST_INVALID")
     modes = candidate.get("modes")
-    if not isinstance(modes, dict) or not modes:
-        raise ValueError("RESEARCH_MODES_REQUIRED")
+    if not isinstance(modes, dict) or set(modes) != {
+            "national_only", "national_motor", "national_motor_st",
+    }:
+        raise ValueError("THREE_PREDECLARED_RESEARCH_MODES_REQUIRED")
     for name, row in modes.items():
         if not isinstance(name, str) or not isinstance(row, dict):
             raise ValueError("INVALID_RESEARCH_MODE")

@@ -30,7 +30,8 @@ def inputs():
     heads_a = {"1": .50, "2": .20, "3": .10, "4": .10, "5": .05, "6": .05}
     heads_b = {"1": .20, "2": .50, "3": .10, "4": .10, "5": .05, "6": .05}
     candidate = {
-        "race_key": KEY,
+        "model_id": "BOAT_EDGE_V312_UNCALIBRATED_EXHIBITION_ENTRY_ABLATION",
+        "race_key": KEY, "deadline_jst": DEADLINE,
         "entry_basis": "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL",
         "race_source_sha256": "a" * 64,
         "scoring_authorized": False, "improvement_proven": False,
@@ -44,6 +45,10 @@ def inputs():
                 "top10_boat_research_only": list(BASELINE),
                 "head_mass_boat_research_only": heads_b,
             },
+            "national_motor": {
+                "top10_boat_research_only": list(BASELINE),
+                "head_mass_boat_research_only": heads_b,
+            },
         },
     }
     receipts = {provider: {"sha256": (code * 64)}
@@ -52,6 +57,7 @@ def inputs():
     freeze = {
         "model_id": "BOAT_EDGE_V332_LIVE_LOCAL_SHA_RESEARCH_ONLY",
         "race_key": KEY, "deadline_jst": DEADLINE,
+        "entry_basis": "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL",
         "frozen_at_jst": "2026-10-13T16:20:00+09:00",
         "evidence_level": "LOCAL_RECEIPT_RAW_SHA_ONLY",
         "race_source_sha256": "a" * 64,
@@ -153,6 +159,31 @@ class V335SiteOnlyScores(unittest.TestCase):
             manifest["date"] = "20261001"
             with self.assertRaisesRegex(ValueError, "INVALID_OR_FORMAL_DATE"):
                 evaluate(root, manifest)
+
+    def test_self_consistent_rewritten_hash_does_not_allow_cherry_picked_modes(self):
+        edits = [
+            (lambda f: f["candidate"].update(model_id="REPLAYED_MODEL"),
+             "UNEXPECTED_CANDIDATE_MODEL"),
+            (lambda f: f["candidate"].update(deadline_jst="2026-10-13T17:40:00+09:00"),
+             "CANDIDATE_DEADLINE_MISMATCH"),
+            (lambda f: f["candidate"]["modes"].pop("national_motor"),
+             "THREE_PREDECLARED_RESEARCH_MODES_REQUIRED"),
+            (lambda f: f["candidate"]["modes"].update(cherry_pick={
+                "top10_boat_research_only": list(CANDIDATE),
+                "head_mass_boat_research_only": f["candidate"]["modes"]["national_only"]["head_mass_boat_research_only"],
+            }), "THREE_PREDECLARED_RESEARCH_MODES_REQUIRED"),
+        ]
+        for edit, message in edits:
+            with self.subTest(reason=message):
+                freeze, baseline, outcome = inputs()
+                edit(freeze)
+                freeze["candidate_sha256"] = hashlib.sha256(canonical(freeze["candidate"])).hexdigest()
+                with self.assertRaisesRegex(ValueError, message):
+                    score_one(freeze, baseline, outcome)
+        freeze, baseline, outcome = inputs()
+        freeze["entry_basis"] = "ACTUAL_COURSE_UNVERIFIED"
+        with self.assertRaisesRegex(ValueError, "FROZEN_ENTRY_BASIS_MISMATCH"):
+            score_one(freeze, baseline, outcome)
 
     def test_two_sided_sign_pvalue(self):
         self.assertIsNone(_two_sided_sign_pvalue(0, 0))
