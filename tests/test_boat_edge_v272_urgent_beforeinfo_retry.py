@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """V272: offline pre-result urgent retry; no HTTP, result or payout access."""
 import ast
+import datetime as dt
 from pathlib import Path
 s=Path(".github/workflows/auto-update.yml").read_text(encoding="utf-8")
 a=s.index("          urgent_beforeinfo={(j,rno)")
@@ -29,7 +30,9 @@ def scenario(targets,responses):
     env={"targets":targets,"ymd":"20261012","BASE":"https://www.boatrace.jp",
          "fetch":fetch,"RAW":raw,"BeautifulSoup":FakeSoup,"parse_before":parse_before,
          "sha":lambda b:"sha:"+b.decode(),
-         "time":type("Time",(),{"sleep":lambda _,sec:sleeps.append(sec)})()}
+         "time":type("Time",(),{"sleep":lambda _,sec:sleeps.append(sec)})(),
+         "protected_site_snapshot":lambda data,key:False,"DATA":object(),
+         "datetime":dt.datetime,"JST":dt.timezone(dt.timedelta(hours=9))}
     exec(compile(code,"<V272_OFFLINE>","exec"),env,env)
     return env["before_task"],calls,sleeps,raw
 task,calls,sleeps,raw=scenario([("19",8,8)],[b"wait",b"ready"])
