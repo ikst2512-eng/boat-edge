@@ -83,7 +83,7 @@ def real_fetch(source_url):
 
 
 def capture_one(root, race_key, deadline_jst, provider, source_url,
-                fetcher=real_fetch, clock=None):
+                fetcher=real_fetch, clock=None, repeatable=False):
     if not isinstance(race_key, str) or KEY.fullmatch(race_key) is None:
         raise ValueError("INVALID_RACE_KEY")
     deadline = parse_jst(deadline_jst)
@@ -100,10 +100,12 @@ def capture_one(root, race_key, deadline_jst, provider, source_url,
     relative = (Path("data") / "source_captures" / race_key[:8] / race_key
                 / (provider + ".html"))
     root = root.resolve()
-    path = root / relative
-    receipt_path = path.with_suffix(".receipt.json")
-    if path.is_symlink() or path.exists() or receipt_path.exists() or receipt_path.is_symlink():
-        raise ValueError("IMMUTABLE_SOURCE_CAPTURE_ALREADY_EXISTS")
+    # Legacy single-capture mode forbids a second fetch before doing network IO.
+    if not repeatable:
+        legacy = root / relative
+        if (legacy.is_symlink() or legacy.exists() or legacy.with_suffix(".receipt.json").exists()
+                or legacy.with_suffix(".receipt.json").is_symlink()):
+            raise ValueError("IMMUTABLE_SOURCE_CAPTURE_ALREADY_EXISTS")
     raw, content_type, final_url = fetcher(source_url)
     captured = now()  # Timestamp AFTER all bytes have been received.
     if captured >= deadline:
@@ -114,6 +116,13 @@ def capture_one(root, race_key, deadline_jst, provider, source_url,
         raise ValueError("HTML_CONTENT_TYPE_REQUIRED")
     if type(raw) is not bytes or not (64 <= len(raw) <= MAX_HTML_BYTES):
         raise ValueError("EMPTY_OVERSIZE_OR_INVALID_HTML")
+    if repeatable:
+        relative = (Path("data") / "source_captures" / race_key[:8] / race_key
+                    / "versions" / (provider + "-" + captured.strftime("%Y%m%dT%H%M%S") + ".html"))
+    path = root / relative
+    receipt_path = path.with_suffix(".receipt.json")
+    if path.is_symlink() or path.exists() or receipt_path.exists() or receipt_path.is_symlink():
+        raise ValueError("IMMUTABLE_SOURCE_CAPTURE_ALREADY_EXISTS")
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.parent.resolve().is_relative_to(root):
         raise ValueError("UNSAFE_CAPTURE_DIRECTORY")
@@ -145,9 +154,11 @@ def main():
     parser.add_argument("--deadline-jst", required=True)
     parser.add_argument("--provider", choices=sorted(PROVIDERS), required=True)
     parser.add_argument("--source-url", required=True)
+    parser.add_argument("--repeatable", action="store_true",
+                        help="Append an immutable timestamped snapshot instead of overwriting")
     args = parser.parse_args()
     record = capture_one(args.root, args.race_key, args.deadline_jst,
-                         args.provider, args.source_url)
+                         args.provider, args.source_url, repeatable=args.repeatable)
     print(json.dumps(record, sort_keys=True, ensure_ascii=False, indent=2))
 
 
