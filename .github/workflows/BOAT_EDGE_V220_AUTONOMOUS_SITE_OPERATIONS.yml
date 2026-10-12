@@ -7,6 +7,8 @@ on:
       - '.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml'
       - 'scripts/boat_edge_v220_site_ops.py'
       - 'tests/test_boat_edge_v220_site_ops.py'
+      - 'scripts/boat_edge_v227_autopilot.py'
+      - 'tests/test_boat_edge_v227_autopilot.py'
   workflow_dispatch:
   schedule:
     - cron: '8,23,38,53 * * * *'
@@ -39,6 +41,8 @@ jobs:
           # The GitHub main branch is the sole source of executable code.
           PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v220_site_ops.py tests/test_boat_edge_v220_site_ops.py
           PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v227_autopilot.py' -q
+          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v227_autopilot.py
           node --check assets/boat_edge_v220_site_ops.js
           test -f assets/boat_edge_v220_site_ops.css
           test -f index.html
@@ -55,9 +59,38 @@ jobs:
             git reset --hard origin/main
             PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py
-            git add -- data/site_ops_v220/current.json
+            # V281: coalesce the stale V227 UI status with the existing
+            # 15-minute V220 publish, not a second duplicate Pages writer.
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v227_autopilot.py
+            python3 - <<'PY_V281_FRESH_SAFE'
+          import datetime as dt,json
+          from pathlib import Path
+          root=Path('.')
+          formal=json.loads((root/'data/formal_status.json').read_text(encoding='utf-8'))
+          guard=formal.get('guards') or {}
+          if not all(guard.get(k) is False for k in ('results_seen','unlock','scoring')) or guard.get('RESULT_UNLOCK_TOKEN') is not None:
+              raise SystemExit('V281_FORMAL_FRESH_LOCK_UNVERIFIED')
+          if (formal.get('formalFirst100') or {}).get('races',0)!=0:
+              raise SystemExit('V281_FORMAL_FIRST100_LOCK_UNVERIFIED')
+          state=json.loads((root/'data/site_autopilot/v227_current.json').read_text(encoding='utf-8'))
+          day=dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime('%Y%m%d')
+          if state.get('schema')!='BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1' or state.get('day_jst')!=day:
+              raise SystemExit('V281_CURRENT_DAY_UI_STATE_MISMATCH')
+          if state.get('formal',{}).get('guard_closed') is not True or state.get('formal',{}).get('results_read_by_v227') is not False or state.get('prediction',{}).get('model_auto_promotion') is not False:
+              raise SystemExit('V281_UI_STATUS_FALSE_CLAIM_BLOCKED')
+          print('V281_DATE_BOUND_UI_STATUS_AND_FORMAL_LOCK_PASS',day)
+          PY_V281_FRESH_SAFE
+            git add -- data/site_ops_v220/current.json data/site_autopilot/v227_current.json
+            python3 - <<'PY_V281_STAGED'
+          import subprocess
+          staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          allowed={'data/site_ops_v220/current.json','data/site_autopilot/v227_current.json'}
+          if not staged.issubset(allowed):raise SystemExit('V281_FORBIDDEN_MONITOR_STAGE_'+str(staged-allowed))
+          print('V281_ONLY_SITE_MONITOR_FILES_STAGED',len(staged))
+          PY_V281_STAGED
+            git diff --cached --check
             if git diff --cached --quiet; then echo 'V220_OPERATIONS_UNCHANGED'; saved=1; break; fi
-            git commit -m 'V220 record observed site-only pre-result operating status'
+            git commit -m 'V281 refresh source-dated V220+V227 site-only autopilot status'
             if git push origin HEAD:main; then echo 'V220_OPERATIONS_RECORDED'; saved=1; break; fi
             if [ "$try_no" -eq 6 ]; then echo 'V220_REPORT_RETRY_EXHAUSTED'; exit 1; fi
           done
