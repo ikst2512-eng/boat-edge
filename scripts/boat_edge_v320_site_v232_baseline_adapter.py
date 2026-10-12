@@ -29,7 +29,7 @@ def baseline_from_v232(record):
         raise ValueError("NOT_SITE_REFERENCE_PRE_RESULT")
     if record.get("formal_results_seen") is not False or record.get("formal_gate_unlocked") is not False:
         raise ValueError("FORMAL_LOCK_NOT_VERIFIED")
-    if record.get("production_accuracy_claim") is not False or record.get("real_purchases_authorized") is not False:
+    if record.get("production_accuracy_claim") != "NOT_PROVEN" or record.get("real_purchases_authorized") is not False:
         raise ValueError("PRODUCTION_OR_WAGER_CLAIM")
     deadline = parse_time(record.get("deadline_jst"))
     raw_time = record.get("evidence_committed_at")
