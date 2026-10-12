@@ -20,6 +20,8 @@ COMBO = re.compile(r"[1-6]-[1-6]-[1-6]\Z")
 SCHEMA = "boat-edge-site-odds-v71"
 REJECTED = "REJECTED_NO_BET"
 OFFICIAL_SOURCE = "https://www.boatrace.jp/owpc/pc/race/odds3t"
+OFFICIAL_LABEL = "BOAT RACE オフィシャルウェブサイト 3連単オッズ"
+HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def official_url_matches(key: str, source_url: str) -> bool:
@@ -62,7 +64,7 @@ def rejected_document(*, key: str, url: str, deadline: str,
         raise ValueError("invalid checked_at")
     observed = re.search(r"valid_odds_too_few=(\d+)", str(error))
     count = int(observed.group(1)) if observed else None
-    if count is not None and not 0 <= count < 80:
+    if count is not None and not 0 <= count < 120:
         count = None
     return {
         "schema_version": SCHEMA,
@@ -104,9 +106,14 @@ def is_safe_record(obj: object, key: str) -> bool:
                 and aware_instant(obj.get("checked_at")) is not None)
     if obj.get("no_bet") is True:
         return False
-    if obj.get("odds_validation") not in (None, "VERIFIED"):
+    if (obj.get("odds_validation") != "VERIFIED"
+            or obj.get("source") != OFFICIAL_LABEL
+            or obj.get("verified_official_dom_v167") is not True
+            or not HEX64.fullmatch(str(obj.get("raw_official_html_sha256", "")))):
         return False
-    if not (80 <= len(odds) <= 120 and obj.get("available_count") == len(odds)
+    if not (len(odds) == 120 and obj.get("available_count") == 120
+            and obj.get("unavailable_count") == 0
+            and obj.get("unavailable_combinations") == []
             and aware_instant(obj.get("fetched_at")) is not None):
         return False
     for combo, price in odds.items():
