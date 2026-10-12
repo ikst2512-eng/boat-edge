@@ -49,4 +49,22 @@ class V179Tests(unittest.TestCase):
             self.assertIn('NO_PER_RACE_APPROVED_PREDICTION_FILES',report['blockers'])
             self.assertFalse(report['formal_current_gate_executed'])
             self.assertFalse(report['formal_current_scoring'])
+    def test_partial_formal_predictions_cannot_pass_readiness(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'data/formal_predictions').mkdir(parents=True)
+            formal={'target_date':'2026-10-13','formalParentSha':'c'*64,
+                    'formalFirst100':{'races':100,'freezeManifestSha':'d'*64,'coreSha':'e'*64},
+                    'guards':{'results_seen':False,'unlock':False,'scoring':False,'RESULT_UNLOCK_TOKEN':None},
+                    'connected':True,'predictions_ready':True}
+            model={'target_date':'2026-10-13','formal_parent_sha256':'c'*64,
+                   'core7':{'eligible_count':144,'core7_100_ready':True}}
+            (root/'data/formal_status.json').write_text(json.dumps(formal))
+            (root/'data/model_status.json').write_text(json.dumps(model))
+            (root/'data/site_latest_bridge_contract.json').write_text('{}')
+            for i in range(99):
+                (root/'data/formal_predictions'/f'{i:03}.json').write_text('{}')
+            report=audit(root)
+            self.assertEqual(report['formal_approved_prediction_files'],99)
+            self.assertFalse(report['site_consumer_ready_to_display_actual_formal_predictions'])
+            self.assertIn('FORMAL_APPROVED_PREDICTIONS_BELOW_100',report['blockers'])
 if __name__=='__main__':unittest.main()

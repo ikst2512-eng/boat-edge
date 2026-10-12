@@ -85,7 +85,7 @@ def audit(root=ROOT):
     parent_same=(model.get('formal_parent_sha256')==status.get('formalParentSha'))
     formal_frozen=bool(formal.get('races')==100 and formal.get('freezeManifestSha') and formal.get('coreSha'))
     pre_cohort_ok=bool(pre_guard and same_target and parent_same and core.get('core7_100_ready') is True)
-    complete=bool(pre_cohort_ok and formal_frozen and status.get('connected') is True and status.get('predictions_ready') is True and approved_count>0)
+    complete=bool(pre_cohort_ok and formal_frozen and status.get('connected') is True and status.get('predictions_ready') is True and approved_count>=100)
     blockers=[]
     if not pre_guard:blockers.append('FORMAL_PRE_RESULT_GUARD_NOT_VERIFIED')
     if not same_target:blockers.append('MODEL_AND_FORMAL_TARGET_DATE_MISMATCH')
@@ -94,6 +94,7 @@ def audit(root=ROOT):
     if not formal_frozen:blockers.append('FORMAL_FRESH100_FREEZE_MISSING')
     if status.get('connected') is not True or status.get('predictions_ready') is not True:blockers.append('APPROVED_FORMAL_MODEL_NOT_CONNECTED')
     if approved_count==0:blockers.append('NO_PER_RACE_APPROVED_PREDICTION_FILES')
+    elif approved_count<100:blockers.append('FORMAL_APPROVED_PREDICTIONS_BELOW_100')
     if not bridge:blockers.append('V177_BRIDGE_CONTRACT_UNAVAILABLE')
     return {
       'schema_version':'boat-edge-v179-formal-readiness-display-audit-v1',
