@@ -1,23 +1,74 @@
 {
-  "candidate_files_today": 0,
+  "candidate_files_today": 2,
   "criteria": "Only first-committed pre-deadline future shadows verified by V185 independent Git+SHA+determinism guard",
-  "currently_eligible_but_not_frozen": [
-    "20261012-18-01"
-  ],
+  "currently_eligible_but_not_frozen": [],
   "date_jst": "2026-10-12",
-  "features_seen_counts": {},
+  "features_seen_counts": {
+    "exhibition_time": 2,
+    "quinella_local": 2,
+    "quinella_national": 2,
+    "trio_boat": 2,
+    "trio_local": 2,
+    "trio_motor": 2,
+    "trio_national": 2
+  },
   "formal_results_accessed": false,
-  "independently_verified_shadows_today": 0,
+  "independently_verified_shadows_today": 2,
   "invalid_frozen_shadows_today": [],
   "model_weights_changed": false,
   "no_historical_backfill": true,
   "payouts_accessed": false,
-  "per_race": [],
+  "per_race": [
+    {
+      "commit_sha": "31895eb8a4c91240f2f75f1ee77842f3d88d1bba",
+      "feature_names": [
+        "trio_national",
+        "trio_local",
+        "trio_motor",
+        "trio_boat",
+        "exhibition_time",
+        "quinella_national",
+        "quinella_local"
+      ],
+      "head_mass_preserved": true,
+      "race_key": "20261012-14-03",
+      "top10_changed": true,
+      "top10_new_combos": 0,
+      "top3_changed": false,
+      "top5_changed": false
+    },
+    {
+      "commit_sha": "74b31f5b07ea8ed1888e8e2e1cbe4c8386073589",
+      "feature_names": [
+        "trio_national",
+        "trio_local",
+        "trio_motor",
+        "trio_boat",
+        "exhibition_time",
+        "quinella_national",
+        "quinella_local"
+      ],
+      "head_mass_preserved": true,
+      "race_key": "20261012-23-02",
+      "top10_changed": true,
+      "top10_new_combos": 0,
+      "top3_changed": false,
+      "top5_changed": true
+    }
+  ],
   "production_predictor_changed": false,
-  "rank_change_counts": {},
+  "rank_change_counts": {
+    "top10_new_combos_vs_v180_total": 0,
+    "top10_reordered_from_v180": 2,
+    "top1_head_changed_vs_v180": 0,
+    "top3_new_combos_vs_v180_total": 0,
+    "top3_reordered_from_v180": 0,
+    "top5_new_combos_vs_v180_total": 0,
+    "top5_reordered_from_v180": 1
+  },
   "schema_version": "boat-edge-v197-pre-result-fresh-coverage-and-head-mass-audit-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
   "site_results_accessed": false,
-  "snapshot_count_today": 2,
-  "status": "ELIGIBLE_LIVE_INPUT_AWAITING_FREEZE"
+  "snapshot_count_today": 5,
+  "status": "IMMUTABLE_FUTURE_RESEARCH_QUALITY_PASS_NOT_ACCURACY_PROOF"
 }
