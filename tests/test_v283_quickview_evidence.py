@@ -45,9 +45,14 @@ class QuickviewEvidenceV283(unittest.TestCase):
         self.assertIn("source(r,'original_exhibition')", section)
         self.assertNotIn("audit[k]?.status==='ok'?'証跡あり'", section)
 
+    def test_rebuilds_six_boat_table_after_dom_replacement(self):
+        source = (ROOT / "assets/boat_edge_v206_quickview.js").read_text(encoding="utf-8")
+        self.assertIn("lastTable!==data||!$('.be206-table tbody',box)", source)
+        self.assertIn("innerHTML=format(rows)", source)
+
     def test_cache_bust_link(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=286"), 1)
+        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=287"), 1)
 
 if __name__ == "__main__":
     unittest.main()
