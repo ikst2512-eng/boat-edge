@@ -8,6 +8,13 @@ const api=context.window.BoatEdgeV252;
 assert(api&&typeof api.check236==='function'&&typeof api.check240==='function');
 const v236=JSON.parse(fs.readFileSync('data/site_autopilot/v236_score_current.json','utf8'));
 const v240=JSON.parse(fs.readFileSync('data/site_autopilot/v240_score_current.json','utf8'));
+// V259 regression: do not silently truncate scored race evidence to a 20/25 sample.
+assert.equal(v236.examples.length,v236.scored_total,'V236 must publish all scored frozen race examples');
+assert.equal(v240.examples.length,v240.scored_total,'V240 must publish all scored frozen race examples');
+const generator236=fs.readFileSync('scripts/boat_edge_v236_hit_rate.py','utf8');
+const generator240=fs.readFileSync('scripts/boat_edge_v240_coverage.py','utf8');
+assert(!generator236.includes('for x in settled[-25:]'),'V236 generator must not cap parity evidence');
+assert(!generator240.includes('for x in rows[-20:]'),'V240 generator must not cap parity evidence');
 const a=api.check236(v236),b=api.check240(v240);
 assert(a&&b,'Expected to verify frozen source-only experiment summaries');
 assert.equal(a.n,v236.scored_total);
