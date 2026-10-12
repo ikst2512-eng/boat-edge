@@ -22,6 +22,7 @@ assert.equal(node.hidden,true,'old race receipt hidden before fetch completes');
 pending.then(()=>{
  assert.equal(moved,1,'evidence panel reattached into active summary');
  assert.equal(node.dataset.raceKey,key,'evidence now scoped to selected race');
+ assert.match(field('.be223-state').textContent,/締切/,'new race receipt has selected-race inspection summary');
  assert.equal(node.hidden,false,'only the refreshed panel is revealed');
  assert.equal(node.open,false,'race change resets details expansion');
  console.log('V322_RACE_EVIDENCE_REPARENT_FAIL_CLOSED_PASS');
