@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boat-edge-v278-ui-task-audit-${{ github.ref }}
+  group: boat-edge-v278-ui-task-audit-\${{ github.ref }}
   cancel-in-progress: false
 jobs:
   offline-task-and-safety-audit:
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Verify only owner-requested safe UI backlog
+      - name: Verify owner-requested monotonic UI task completion
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
@@ -38,25 +38,16 @@ jobs:
           from pathlib import Path
           import re,json
           s=Path('BOAT_EDGE_AUTODEV_TASKS.md').read_text(encoding='utf-8')
-          items=re.findall(r'^- \[([ x])\] (A\d{2}) \| (.+)
-          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
-          g=f['guards']
-          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
-          assert g['RESULT_UNLOCK_TOKEN'] is None
-          print('V280_OWNER_REQUESTED_UI_TASKS_MONOTONIC_NO_FORMAL_CHANGE',flags)
-          PY
-          git diff --check
-,s,re.M)
+          items=re.findall(r'^- \[([ x])\] (A\d{2}) \| (.+)$',s,re.M)
           batch=[x for x in items if x[1] in ('A29','A30','A31','A32','A33')]
           assert [x[1] for x in batch]==['A29','A30','A31','A32','A33']
           flags=''.join(x[0] for x in batch)
           assert flags=='x'*flags.count('x')+' '*flags.count(' '), 'V280_COMPLETION_MUST_BE_MONOTONIC'
           assert all(len(x[2])<450 for x in batch)
           assert all(x[0]=='x' for x in items if int(x[1][1:])<=28), 'V280_OLD_TASK_REGRESSION'
-          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
-          g=f['guards']
+          g=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))['guards']
           assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
           assert g['RESULT_UNLOCK_TOKEN'] is None
-          print('V278_OWNER_REQUESTED_FIVE_UI_TASKS_PENDING_NO_FORMAL_CHANGE')
+          print('V280_UI_QUEUE_PROGRESS_PASS',flags)
           PY
           git diff --check
