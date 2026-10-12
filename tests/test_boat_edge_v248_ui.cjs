@@ -98,4 +98,6 @@ const deadlineSourceLock=execFileSync('python3',['tests/test_boat_edge_v288_dead
 assert(deadlineSourceLock.includes('V288_FINISHED_RACE_SOURCE_LOCK_NO_BACKFILL_PASS'));
 const relayProof=execFileSync('python3',['tests/test_boat_edge_v295_manual_v231_relay.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
 assert(relayProof.includes('V295_MANUAL_V231_RELAY_SINGLE_SCHEDULE_OWNER_AND_FORMAL_LOCK_PASS'));
+const retiredManual=execFileSync('python3',['tests/test_boat_edge_v296_no_legacy_fastlane_reinstall.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert(retiredManual.includes('V296_LEGACY_V230_V233_NO_REINSTALL_MANUAL_V235_ONLY_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
