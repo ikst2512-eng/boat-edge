@@ -73,11 +73,11 @@ function board(){
  if(rows.length!==6||new Set(rows.map(x=>x.lane)).size!==6){document.documentElement.classList.remove('be206-active');$('#be206Quick')?.remove();return;}
  const mode=$('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||'';
  const next=r.race_key+'|'+mode;
- if(ctx!==next){ctx=next;showAll=false;lastTable='';}
+ if(ctx!==next){ctx=next;showAll=false;lastTable='';lastStatus='';}
  const box=create(root,p);if(box.nextElementSibling!==p)root.insertBefore(box,p);
  const st=window.BoatEdgeV205.sourceStatus();
  const safety=st.title+'|'+st.detail+'|'+st.kind;
- if(safety!==lastStatus){
+ if(safety!==lastStatus||!$('.be206-safety strong',box)?.textContent){
    lastStatus=safety;
    const e=$('.be206-safety',box);e.dataset.kind=st.kind;
    $('.be206-safety strong',box).textContent=st.title;
@@ -87,7 +87,7 @@ function board(){
  const data=JSON.stringify([r.race_key,metric,rows.map(row=>[row.lane,row.name,row.grade,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
  if(lastTable!==data){$('.be206-table',box).innerHTML=format(rows);lastTable=data;}
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。');
- setText($('.be206-source',box),`公式展示 ${source(r,'beforeinfo')||'未取得'} ／ オリ展 ${source(r,'original_exhibition')||'未取得'}（取得時刻・予想利用は別）`);
+ setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
  document.documentElement.classList.add('be206-active');
  const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV206';
 }

@@ -17,9 +17,18 @@ class QuickviewEvidenceV283(unittest.TestCase):
         self.assertIn("締切後取得・未確認", section)
         self.assertIn("古い情報", section)
 
+    def test_race_switch_resets_safety_and_source_labels(self):
+        source = (ROOT / "assets/boat_edge_v206_quickview.js").read_text(encoding="utf-8")
+        self.assertIn("lastTable='';lastStatus='';", source)
+        self.assertIn("!$('.be206-safety strong',box)?.textContent", source)
+        self.assertIn("直前データ証跡", source)
+        self.assertIn("オリ展証跡", source)
+        self.assertIn("6艇分の値・外部照合・予想利用は別途確認", source)
+        self.assertNotIn("公式展示 ${source(", source)
+
     def test_cache_bust_link(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=283"), 1)
+        self.assertEqual(html.count("boat_edge_v206_quickview.js?v=284"), 1)
 
 if __name__ == "__main__":
     unittest.main()
