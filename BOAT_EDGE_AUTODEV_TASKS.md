@@ -41,5 +41,5 @@ These remain UI-only work items. Every change must use already-saved source evid
 - [x] A25 | Make the original-exhibition source state explicitly distinguish BOATERS, 競艇日和, official, and 未取得 in an existing evidence panel, but only when per-source provenance is already present; never equate official with third-party exhibition data.
 - [x] A26 | Improve mobile access to verified results, race selection, and AI paper simulation through existing navigation; preserve the current chosen race and do not duplicate or replace refresh behavior.
 - [x] A27 | Explain paper-only daily ¥50,000 budgeting, no-bet decisions, actual saved stake totals, and pending versus settled simulated bets without guessing missing balance or historical return.
-- [ ] A28 | Reduce visual clutter on existing iPhone race cards by improving grouping and contrast for scratches, verified results, deadlines, and source freshness; keep all six racer metrics accessible and retain frozen picks unchanged.
+- [x] A28 | Reduce visual clutter on existing iPhone race cards by improving grouping and contrast for scratches, verified results, deadlines, and source freshness; keep all six racer metrics accessible and retain frozen picks unchanged.
 
