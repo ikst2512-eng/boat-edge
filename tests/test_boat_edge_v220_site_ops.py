@@ -94,6 +94,26 @@ def test_v271_urgent_health():
         ok=mod.compute(root,now)['official_beforeinfo_urgent_15m']
         assert ok['status']=='OBSERVED' and ok['targets']==4 and ok['ok']==2
         assert ok['published_wait']==1 and ok['error']==1
+        # Older collector data does not imply zero partial source rows.
+        assert ok['partial_six_boat_source'] is None
+        put(root,'data/health.json',{
+            'updated_at':now.isoformat(),'results_seen':False,'unlock':False,'scoring':False,
+            'beforeinfo_urgent_15m_targets':4,'beforeinfo_urgent_15m_ok':2,
+            'beforeinfo_urgent_15m_published_wait':1,'beforeinfo_urgent_15m_error':1,
+            'beforeinfo_urgent_15m_partial':1})
+        partial=mod.compute(root,now)['official_beforeinfo_urgent_15m']
+        assert partial['status']=='OBSERVED' and partial['partial_six_boat_source']==1
+        # A partial count is NOT additional verified success or a fifth category.
+        assert partial['targets']==4 and partial['ok']==2 and partial['published_wait']==1
+        put(root,'data/health.json',{
+            'updated_at':now.isoformat(),'results_seen':False,'unlock':False,'scoring':False,
+            'beforeinfo_urgent_15m_targets':4,'beforeinfo_urgent_15m_ok':2,
+            'beforeinfo_urgent_15m_published_wait':1,'beforeinfo_urgent_15m_error':1,
+            'beforeinfo_urgent_15m_partial':2})
+        contradict=mod.compute(root,now)['official_beforeinfo_urgent_15m']
+        assert contradict['status']=='UNVERIFIED_OR_STALE'
+        assert contradict['partial_six_boat_source'] is None
+        assert contradict['ok'] is None
         put(root,'data/health.json',{
             'updated_at':now.isoformat(),'results_seen':False,'unlock':False,'scoring':False,
             'beforeinfo_urgent_15m_targets':4,'beforeinfo_urgent_15m_ok':2,
