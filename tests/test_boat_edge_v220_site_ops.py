@@ -115,7 +115,72 @@ def test_v272_source_change_trigger():
     assert 'Verify current versioned site-operations code' in workflow
     print('V272_SOURCE_CHANGE_TRIGGER_PASS')
 
+def test_v284_freeze_coverage_not_early_false_miss():
+    """Only already-saved PRE_RESULT evidence may correct an early missing observation."""
+    import hashlib
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp);sample(root)
+        hist={'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1','day_jst':DAY,
+              'observations':{KEY:{
+                  'race_key':KEY,'deadline':'08:35','venue':'唐津',
+                  'first_seen_at':'2026-10-10T23:24:00+00:00',
+                  'last_seen_at':'2026-10-10T23:24:00+00:00',
+                  'reason':'snapshot_missing','reasons_seen':['snapshot_missing'],
+                  'source_gaps_seen':['beforeinfo_not_ok']}}}
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',hist)
+        pre=mod.freeze_coverage(root,DAY,NOW+timedelta(minutes=20))
+        assert pre['observed_races']==1
+        assert pre['pending_before_deadline']==1 and pre['not_found_after_deadline']==0
+        after=NOW+timedelta(minutes=35)
+        missed=mod.freeze_coverage(root,DAY,after)
+        assert missed['not_found_after_deadline']==1
+        assert missed['observed_gaps_for_currently_missing']=={'beforeinfo_not_ok':1}
+        # A subsequent valid freeze must correct the initial 'snapshot_missing' state.
+        race_file=root/f'data/races/{KEY}.json'
+        race_file.parent.mkdir(parents=True,exist_ok=True)
+        race_file.write_bytes(b'PRE_RESULT_RACER_SOURCE')
+        race_sha=hashlib.sha256(race_file.read_bytes()).hexdigest()
+        frozen={'race_key':KEY,'snapshot_window':'FINAL_15M',
+                'saved_at':'2026-10-11T08:27:00+09:00','deadline':'08:35',
+                'race_sha256':race_sha,
+                'guards':{'results_seen':False,'unlock':False,'scoring':False}}
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',frozen)
+        snap_file=root/f'data/site_prediction_snapshots/{KEY}.json'
+        digest=hashlib.sha256(snap_file.read_bytes()).hexdigest()
+        put(root,f'data/site_prediction_audit/{KEY}.json',{
+            'race_key':KEY,'pass':True,'latest_snapshot_sha256':digest})
+        recovered=mod.freeze_coverage(root,DAY,after)
+        assert recovered['snapshot_present']==1
+        assert recovered['sha_consistent_predeadline_snapshots']==1
+        assert recovered['early_missing_later_snapshot_present']==1
+        assert recovered['not_found_after_deadline']==0
+        assert recovered['v229_atomic_evidence_matched']==0
+        put(root,f'data/site_autopilot/v229_evidence/{KEY}.json',{
+            'schema':'BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1',
+            'race_key':KEY,'snapshot_sha256':digest,'race_sha256':race_sha,
+            'evidence_captured_at':'2026-10-11T08:27:05+09:00',
+            'new_snapshot_created_this_run':True,
+            'results_seen':False,'formal_fresh_unlock':False,'scoring':False})
+        atomic=mod.freeze_coverage(root,DAY,after)
+        assert atomic['v229_atomic_evidence_matched']==1
+        # Existing outcome files must never affect this read-only metric.
+        put(root,f'data/site_results/{KEY}.json',{'outcome':'FORBIDDEN_TO_READ'})
+        assert mod.freeze_coverage(root,DAY,after)==atomic
+        race_file.write_bytes(b'BAD_POST_FREEZE_MUTATION')
+        changed=mod.freeze_coverage(root,DAY,after)
+        assert changed['snapshot_or_audit_unverified']==1
+        assert changed['sha_consistent_predeadline_snapshots']==0
+        race_file.write_bytes(b'PRE_RESULT_RACER_SOURCE')
+        frozen['guards']['results_seen']=True
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',frozen)
+        assert mod.freeze_coverage(root,DAY,after)['snapshot_or_audit_unverified']==1
+        summary=mod.compute(root,after)
+        assert summary['site_prediction_freeze_observation']['today']['snapshot_present']==1
+        assert summary['site_prediction_freeze_observation']['previous_day']['status']=='NO_PRE_RESULT_OBSERVATIONS'
+    print('V284_NO_EARLY_MISSING_AS_FINAL_FROZEN_SHA_AUDIT_PASS')
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
     test_v272_source_change_trigger()
+    test_v284_freeze_coverage_not_early_false_miss()
