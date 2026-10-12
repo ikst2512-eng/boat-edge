@@ -21,7 +21,7 @@ SCHEMA = "boat-edge-site-odds-v71"
 REJECTED = "REJECTED_NO_BET"
 OFFICIAL_SOURCE = "https://www.boatrace.jp/owpc/pc/race/odds3t"
 OFFICIAL_LABEL = "BOAT RACE オフィシャルウェブサイト 3連単オッズ"
-HEX64 = re.compile(r"[0-9a-f]{64}\\Z")
+HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def official_url_matches(key: str, source_url: str) -> bool:
