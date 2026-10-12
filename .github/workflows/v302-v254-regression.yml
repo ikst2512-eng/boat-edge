@@ -25,6 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0 # Git-first provenance tests require complete commit history
           persist-credentials: false
       - name: Run V254 and V257 pre-result safety fixtures without outcome endpoints
         env:
