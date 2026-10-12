@@ -33,6 +33,16 @@ class V330BatchReadiness(unittest.TestCase):
             self.assertFalse(report["writes_performed"])
             self.assertFalse((root / "data/research_shadow_v318").exists())
 
+    def test_repository_real_race_sample_exposes_late_source(self):
+        root = pathlib.Path(__file__).resolve().parents[1]
+        path = root / "data/races/20261012-02-09.json"
+        if not path.exists():
+            self.skipTest("Real site race sample not available")
+        report = scan(root, "20261012", datetime(2026, 10, 12, 23, 59, tzinfo=JST))
+        sample = next(row for row in report["rows"] if row["race_key"] == "20261012-02-09")
+        self.assertFalse(sample["ready_for_live_freeze"])
+        self.assertIn("CLOSED_RACE_NO_BACKFILL", sample["blockers"])
+
     def test_empty_date_reports_zero(self):
         with tempfile.TemporaryDirectory() as d:
             report = scan(pathlib.Path(d), "20261013")
