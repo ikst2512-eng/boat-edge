@@ -1,0 +1,51 @@
+name: BOAT EDGE V257 - iPhone Frozen Ticket And Payout Readability
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/boat_edge_v108.js'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v257_ticket_mobile.cjs'
+      - '.github/workflows/v257-ticket-mobile-readability.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v257-ticket-mobile-readonly
+  cancel-in-progress: true
+
+jobs:
+  ticket-presentation-safe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate JS syntax, frozen versus reference stakes, and source-bound payout UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v108.js
+          node tests/test_boat_edge_v257_ticket_mobile.cjs
+          node tests/test_boat_edge_v254_odds_cutoff.cjs
+          node tests/test_boat_edge_v256_odds_rejection.cjs
+      - name: Assert untouched formal Fresh gate and no collection or betting writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_GUARD'
+          import json
+          from pathlib import Path
+          status=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=status.get('guards') or {}
+          assert all(guards.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert guards.get('RESULT_UNLOCK_TOKEN') is None
+          assert (status.get('formalFirst100') or {}).get('races',0)==0
+          assert Path('tests/test_boat_edge_v257_ticket_mobile.cjs').is_file()
+          print('V257_PRESENTATION_ONLY_FORMAL_GATE_PASS')
+          PY_GUARD
