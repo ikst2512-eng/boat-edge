@@ -36,7 +36,30 @@ def parse_date(value):
         return None
 
 
-def report(runs, latest_ui_commits, now=None):
+def same_ui_lineage(latest_ui_commits, deployed_ui_commits):
+    """Every tracked UI path must have the same latest modifying commit in both trees.
+
+    Commit timestamps alone cannot prove the deployed build includes the current
+    UI; this checks the content lineage of the deployment's actual head SHA.
+    """
+    if not isinstance(latest_ui_commits, list) or not isinstance(deployed_ui_commits, list):
+        return False
+    if not latest_ui_commits or len(latest_ui_commits) != len(deployed_ui_commits):
+        return False
+    for current, deployed in zip(latest_ui_commits, deployed_ui_commits):
+        if not isinstance(current, dict) or not isinstance(deployed, dict):
+            return False
+        c, d = current.get("sha"), deployed.get("sha")
+        if (not isinstance(c, str) or not isinstance(d, str) or
+                len(c) != 40 or len(d) != 40 or
+                any(x not in "0123456789abcdef" for x in c.lower()) or
+                any(x not in "0123456789abcdef" for x in d.lower()) or
+                c.lower() != d.lower()):
+            return False
+    return True
+
+
+def report(runs, latest_ui_commits, now=None, deployed_ui_commits=None):
     now = now or datetime.now(timezone.utc)
     pages = sorted(
         (r for r in runs if isinstance(r, dict) and
@@ -65,7 +88,8 @@ def report(runs, latest_ui_commits, now=None):
     recent = [r for r in pages if (t:=parse_date(r.get("created_at"))) is not None
               and 0 <= (now - t).total_seconds() <= 3600]
     recent_cancelled = sum(r.get("conclusion") == "cancelled" for r in recent)
-    if last_ok_start is not None and last_ok_start >= newest_ui:
+    lineage_verified = bool(last_ok) and same_ui_lineage(latest_ui_commits, deployed_ui_commits)
+    if lineage_verified:
         status = "LATEST_UI_COVERED_BY_SUCCESSFUL_ACTIONS"
     elif active:
         status = "UI_PUBLISH_PENDING_ACTIVE_BUILD"
@@ -73,10 +97,14 @@ def report(runs, latest_ui_commits, now=None):
         status = "CLOCK_SKEW_UNVERIFIED"
     elif (now - newest_ui).total_seconds() <= MAX_LAG_SECONDS:
         status = "UI_RECENTLY_CHANGED_WAIT_FOR_PUBLISH"
+    elif last_ok and deployed_ui_commits is None:
+        status = "PAGES_UI_LINEAGE_UNVERIFIED"
     else:
         status = "UI_PUBLISH_OVERDUE_NEEDS_ATTENTION"
     return {
         "status": status,
+        "ui_lineage_verified": lineage_verified,
+        "ui_lineage_paths_checked": len(latest_ui_commits) if deployed_ui_commits is not None else 0,
         "last_pages_success_sha": (last_ok or {}).get("head_sha"),
         "last_pages_success_started_utc": last_ok_start.isoformat() if last_ok_start else None,
         "last_pages_success_finished_utc": last_ok_end.isoformat() if last_ok_end else None,
@@ -118,8 +146,31 @@ def main():
                 print("V277_UI_PATH_UNVERIFIED", path)
                 return 2
             commits.append(rows[0])
-        data = report(runs, commits)
-        data["schema"] = "BOAT_EDGE_V277_PAGES_READ_ONLY_V1"
+        # Resolve each tracked UI path again at the actual successful Pages
+        # deployment SHA. Identical last-touch commits prove deployed tree
+        # includes the latest UI paths despite unrelated high-frequency data pushes.
+        successful = next((run for run in sorted(
+            (x for x in runs if x.get("name") == "pages build and deployment"
+             or x.get("path") == "dynamic/pages/pages-build-deployment"),
+            key=lambda x: parse_date(x.get("created_at"))
+            or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+            if run.get("conclusion") == "success" and run.get("status") == "completed"), None)
+        deployed = None
+        if successful:
+            from urllib.parse import quote
+            head = successful.get("head_sha")
+            if (not isinstance(head, str) or len(head) != 40 or
+                    any(ch not in "0123456789abcdef" for ch in head.lower())):
+                raise ValueError("V285_PAGES_DEPLOYED_HEAD_UNVERIFIED")
+            deployed = []
+            for path in UI_PATHS:
+                suffix = "/commits?sha=" + head + "&path=" + quote(path, safe="") + "&per_page=1"
+                rows = api(repo, suffix, token)
+                if not isinstance(rows, list) or len(rows) != 1:
+                    raise ValueError("V285_DEPLOYED_UI_LINEAGE_UNVERIFIED")
+                deployed.append(rows[0])
+        data = report(runs, commits, deployed_ui_commits=deployed)
+        data["schema"] = "BOAT_EDGE_V285_PAGES_UI_LINEAGE_PROOF_V1"
         data["run_purpose"] = "MONITOR_ONLY_NO_REDEPLOY_NO_GIT_WRITE_NO_RESULT_ACCESS"
         print(json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True))
         with open(os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a", encoding="utf-8") as out:
@@ -127,6 +178,7 @@ def main():
             out.write("- Status: " + data["status"] + "\n")
             out.write("- Latest UI commit: " + str(data.get("newest_ui_commit_sha")) + "\n")
             out.write("- Last deployed run: " + str(data.get("last_pages_success_sha")) + "\n")
+            out.write("- Tracked UI lineage SHA match: " + str(data.get("ui_lineage_verified")) + "\n")
             out.write("- Cancelled runs last hour: " + str(data.get("pages_cancelled_recent")) + "\n")
         return 0 if data["status"] in (
             "LATEST_UI_COVERED_BY_SUCCESSFUL_ACTIONS",

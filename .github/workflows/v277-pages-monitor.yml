@@ -2,10 +2,11 @@ name: BOAT EDGE V277 - Pages Latest UI SHA Publication Audit
 
 on:
   push:
-    branches: [main, fix/v277-pages-evidence-monitor]
+    branches: [main, fix/v277-pages-evidence-monitor, fix/v285-pages-ui-lineage-verification]
     paths:
       - 'scripts/boat_edge_v277_pages_monitor.py'
       - 'tests/test_boat_edge_v277_pages_monitor.py'
+      - 'tests/test_boat_edge_v285_pages_lineage.py'
       - 'autopilot.html'
       - 'assets/boat_edge_v278_next_watch.js'
       - 'tests/test_boat_edge_v278_next_watch.cjs'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'scripts/boat_edge_v277_pages_monitor.py'
       - 'tests/test_boat_edge_v277_pages_monitor.py'
+      - 'tests/test_boat_edge_v285_pages_lineage.py'
       - 'autopilot.html'
       - 'assets/boat_edge_v278_next_watch.js'
       - 'tests/test_boat_edge_v278_next_watch.cjs'
@@ -39,6 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v277_pages_monitor.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v285_pages_lineage.py' -v
           node --check assets/boat_edge_v278_next_watch.js
           node tests/test_boat_edge_v278_next_watch.cjs
           python3 - <<'PY'
