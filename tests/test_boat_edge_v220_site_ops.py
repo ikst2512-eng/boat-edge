@@ -152,6 +152,8 @@ def test_v284_freeze_coverage_not_early_false_miss():
         recovered=mod.freeze_coverage(root,DAY,after)
         assert recovered['snapshot_present']==1
         assert recovered['sha_consistent_predeadline_snapshots']==1
+        assert recovered['predeadline_snapshot_with_matching_audit']==1
+        assert recovered['source_changed_after_freeze']==0
         assert recovered['early_missing_later_snapshot_present']==1
         assert recovered['not_found_after_deadline']==0
         assert recovered['v229_atomic_evidence_matched']==0
@@ -163,21 +165,37 @@ def test_v284_freeze_coverage_not_early_false_miss():
             'results_seen':False,'formal_fresh_unlock':False,'scoring':False})
         atomic=mod.freeze_coverage(root,DAY,after)
         assert atomic['v229_atomic_evidence_matched']==1
+        assert atomic['v229_attestation_record_matched']==1
         # Existing outcome files must never affect this read-only metric.
         put(root,f'data/site_results/{KEY}.json',{'outcome':'FORBIDDEN_TO_READ'})
         assert mod.freeze_coverage(root,DAY,after)==atomic
         race_file.write_bytes(b'BAD_POST_FREEZE_MUTATION')
         changed=mod.freeze_coverage(root,DAY,after)
-        assert changed['snapshot_or_audit_unverified']==1
+        assert changed['snapshot_or_audit_unverified']==0
+        assert changed['source_changed_after_freeze']==1
+        assert changed['predeadline_snapshot_with_matching_audit']==1
+        assert changed['v229_attestation_record_matched']==1
+        assert changed['v229_atomic_evidence_matched']==0
         assert changed['sha_consistent_predeadline_snapshots']==0
+        # A recorded V229 at-freeze attestation remains a historical record;
+        # it must never be misrepresented as proof current source bytes survived.
+        race_file.unlink()
+        missing=mod.freeze_coverage(root,DAY,after)
+        assert missing['source_missing_after_freeze']==1
+        assert missing['v229_attestation_record_matched']==1
+        assert missing['v229_atomic_evidence_matched']==0
         race_file.write_bytes(b'PRE_RESULT_RACER_SOURCE')
         frozen['guards']['results_seen']=True
         put(root,f'data/site_prediction_snapshots/{KEY}.json',frozen)
-        assert mod.freeze_coverage(root,DAY,after)['snapshot_or_audit_unverified']==1
+        unsafe=mod.freeze_coverage(root,DAY,after)
+        assert unsafe['snapshot_or_audit_unverified']==1
+        assert unsafe['predeadline_snapshot_with_matching_audit']==0
+        assert unsafe['v229_attestation_record_matched']==0
         summary=mod.compute(root,after)
         assert summary['site_prediction_freeze_observation']['today']['snapshot_present']==1
         assert summary['site_prediction_freeze_observation']['previous_day']['status']=='NO_PRE_RESULT_OBSERVATIONS'
     print('V284_NO_EARLY_MISSING_AS_FINAL_FROZEN_SHA_AUDIT_PASS')
+    print('V285_SNAPSHOT_METADATA_SOURCE_DRIFT_AND_V229_RECORD_SEPARATED_PASS')
 
 if __name__=='__main__':
     test_all()
