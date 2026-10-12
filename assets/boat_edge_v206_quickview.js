@@ -95,7 +95,7 @@ function board(){
  }
  $$('.be206-switch button',box).forEach(b=>{const on=b.dataset.be206Metric===metric;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  const data=JSON.stringify([r.race_key,metric,rows.map(row=>[row.lane,row.name,row.grade,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
- if(lastTable!==data){$('.be206-table',box).innerHTML=format(rows);lastTable=data;}
+ if(lastTable!==data||!$('.be206-table tbody',box)){$('.be206-table',box).innerHTML=format(rows);lastTable=data;}
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
  document.documentElement.classList.add('be206-active');
