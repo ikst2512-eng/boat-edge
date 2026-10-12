@@ -2,8 +2,8 @@ name: BOAT EDGE サイト結果更新
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
+  # V271: scheduled collector retired after verified V109 payout source takeover.
+  # Manual fallback remains available; no duplicate 5-minute result writer.
 
 permissions:
   contents: write
