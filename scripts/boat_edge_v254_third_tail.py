@@ -110,6 +110,7 @@ def make_pre(root,path,now):
     if (source.get('race_key')!=key or
         source.get('schema')!='BOAT_EDGE_V232_SITE_PROSPECTIVE_ACCURACY_COHORT_V1' or
         source.get('scope')!='SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH' or
+        source.get('model_id')!='SITE_REFERENCE_V122' or
         source.get('formal_results_seen') is not False or
         source.get('formal_gate_unlocked') is not False or
         source.get('paper_purchases_authorized') is not False or
