@@ -60,4 +60,14 @@ if(typeof process!=='undefined'&&process?.versions?.node){
   console.log(output.trim());
  }
 }
+/* V313 is a read-only release bundle smoke check, invoked from the already
+ * approved V307 candidate test entry point without workflow changes. */
+if(typeof process!=='undefined'&&process?.versions?.node){
+ const {execFileSync}=require('node:child_process');
+ const smoke='tests/test_boat_edge_v313_release_smoke.cjs';
+ assert(fs.existsSync(smoke),'V313 release smoke fixture missing');
+ const result=execFileSync(process.execPath,[smoke],{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']});
+ assert(result.includes('V313_MAIN_BUNDLE_UI_READONLY_CONTRACT_PASS'),'V313 release smoke not proven');
+ console.log(result.trim());
+}
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
