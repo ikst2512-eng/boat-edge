@@ -41,6 +41,7 @@ jobs:
           from concurrent.futures import ThreadPoolExecutor,as_completed
           import requests
           from bs4 import BeautifulSoup
+          from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -308,7 +309,8 @@ jobs:
                       parsed=parse_before(BeautifulSoup(r.text,"lxml"))
                       ready=any(x.get("exhibition_time") for x in parsed["racers"]) or bool(parsed["start_exhibition"])
                   # Store only the last source response and its actual digest.
-                  (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
+                  if not protected_site_snapshot(DATA,key):
+                      (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
                   return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried,"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
                   return key,{"ok":False,"status":"error","parsed":{},"url":url,"error":repr(e)}
@@ -327,14 +329,16 @@ jobs:
               url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno={rno}"
               if rno==1 and j in probe_cache:
                   r,sp,racers=probe_cache[j]
-                  try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
-                  except:pass
+                  if not protected_site_snapshot(DATA,key):
+                      try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                      except:pass
                   # Cached venue probe was fetched before bulk collection; use a
                   # conservative start timestamp rather than falsely marking it newer.
                   return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":iso}
               try:
                   r=fetch(url,attempts=2)
-                  (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  if not protected_site_snapshot(DATA,key):
+                      (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
                   racers=parse_racers(BeautifulSoup(r.text,"lxml"))
                   return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
@@ -353,6 +357,7 @@ jobs:
                                 "active_venues":len(active),"errors":errors[:20]},
                    "venues":[]}
 
+          snapshot_protected=0
           for j in sorted(active):
               meta=venue_meta.get(j,{})
               ds=meta.get("deadlines",[])
@@ -361,6 +366,25 @@ jobs:
                   key=f"{ymd}-{j}-{rno:02d}"
                   rr=race_results.get(key,{"ok":False,"racers":[],"error":"not returned"})
                   bf=before.get(key)
+                  # V275: a previously published immutable prediction pins the
+                  # exact race JSON and HTML that existed at freeze time.
+                  # Never rewrite them even if the frozen snapshot is malformed.
+                  if protected_site_snapshot(DATA,key):
+                      snapshot_protected+=1
+                      try:
+                          preserved=json.loads((RACES/f"{key}.json").read_text(encoding="utf-8"))
+                      except (OSError,ValueError,UnicodeError):
+                          preserved={}
+                      if not isinstance(preserved,dict) or preserved.get("race_key")!=key:
+                          preserved={}
+                      old_before=(preserved.get("source_audit") or {}).get("beforeinfo") or {}
+                      venue["races"].append({
+                        "race_key":key,"race_no":rno,
+                        "deadline":ds[rno-1] if len(ds)>=rno else None,
+                        "file":f"data/races/{key}.json",
+                        "racers_ready":len(preserved.get("racers") or [])==6,
+                        "beforeinfo_status":old_before.get("status","protected_source_unavailable")})
+                      continue
                   doc={
                     "schema_version":"boat-edge-race-v5","race_key":key,
                     "meta":{"date":now.strftime("%Y-%m-%d"),"venue_code":j,"venue":VENUES[j],
@@ -424,6 +448,7 @@ jobs:
             "beforeinfo_urgent_15m_published_wait":urgent_wait,
             "beforeinfo_urgent_15m_error":urgent_error,
             "beforeinfo_urgent_15m_retried":sum(bool(before.get(key,{}).get("urgent_retried")) for key in urgent_keys),
+            "site_snapshot_immutable_races":snapshot_protected,
             "error_count":len(errors)
           }
           (DATA/"health.json").write_text(json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
@@ -439,6 +464,7 @@ jobs:
           from pathlib import Path
           from datetime import datetime, timedelta, timezone
           import requests
+          from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -531,6 +557,7 @@ jobs:
 
           eligible=[]
           merged_count=0
+          protected_count=0
           all_codes=sorted(set(I["race_cards"]))
           for code in all_codes:
               if not code.startswith(ymd) or len(code)!=12:continue
@@ -543,6 +570,18 @@ jobs:
               venue=code[8:10]; rno=int(code[10:12])
               path=RACES/f"{ymd}-{venue}-{rno:02d}.json"
               if not path.exists():
+                  continue
+              # V275: the frozen prediction refers to SHA256 of this exact
+              # source file. Neither CSV enrichment nor later official updates
+              # may change its bytes after the first site-only snapshot.
+              if protected_site_snapshot(DATA,f"{ymd}-{venue}-{rno:02d}"):
+                  protected_count+=1
+                  try:
+                      preserved=json.loads(path.read_text(encoding="utf-8"))
+                  except (OSError,ValueError,UnicodeError):
+                      continue
+                  if (preserved.get("current_model_input") or {}).get("core7_ready") is True:
+                      eligible.append(code)
                   continue
               try:
                   doc=json.loads(path.read_text(encoding="utf-8"))
@@ -659,6 +698,7 @@ jobs:
                      "first":eligible[0] if eligible else None,
                      "last":eligible[-1] if eligible else None},
             "site_races_merged":merged_count,
+            "site_snapshot_immutable_races":protected_count,
             "guards":{"results_seen":False,"unlock":False,"scoring":False,
                       "RESULT_UNLOCK_TOKEN":None,
                       "results_endpoint_accessed":False,
