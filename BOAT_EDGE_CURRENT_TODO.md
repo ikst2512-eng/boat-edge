@@ -63,3 +63,15 @@ Read-only history, not additional current-model certification.
 - V126 compares current V122/V131/V132 browser functions with CURRENT V133 server functions against stored races.
 - V126 automatically reruns when runtime JS, CURRENT V133 server, or venue course stats change.
 - V126 is a read-only comparison that does not modify the production prediction engine.
+
+- V125 replaces V124 audit and disables the obsolete V124 scheduler.
+
+- V125 validates snapshot-time facts intrinsically and no longer falsely fails when live race/odds files change later.
+
+- V125 records every distinct V123 snapshot revision during FINAL_15M, including saved time, input hashes, used inputs and hit-mode top10.
+
+- V125 runs after V123 workflow completion plus a schedule fallback.
+
+- V125 treats current-vs-snapshot hash divergence as informational evidence, not a historical integrity failure.
+
+- V125 does not modify V122 UI or V123 prediction generation.
