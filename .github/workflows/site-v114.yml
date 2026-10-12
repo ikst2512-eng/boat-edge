@@ -1,12 +1,9 @@
 name: BOAT EDGE V114 Server Final History
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v114.yml"
+  # V303: superseded scheduled source/UI/audit writer; manual emergency recovery only.
+  # Keep implementation and historical files unchanged; successor workflows remain active.
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
