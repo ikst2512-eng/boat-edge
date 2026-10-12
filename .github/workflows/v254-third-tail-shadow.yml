@@ -10,6 +10,7 @@ on:
       - 'scripts/boat_edge_v254_third_tail.py'
       - 'tests/test_boat_edge_v254_third_tail.py'
       - 'assets/boat_edge_v254_tail_status.js'
+      - 'tests/test_boat_edge_v254_tail_status.cjs'
       - 'autopilot.html'
   workflow_dispatch:
   schedule:
@@ -46,7 +47,8 @@ jobs:
           assert guard.get('RESULT_UNLOCK_TOKEN') is None
           print('V254_FORMAL_FRESH_STAYS_LOCKED')
           PY
-          if test -f assets/boat_edge_v254_tail_status.js; then node --check assets/boat_edge_v254_tail_status.js; fi
+          node --check assets/boat_edge_v254_tail_status.js
+          node tests/test_boat_edge_v254_tail_status.cjs
           git diff --check
           echo V254_FUTURE_ONLY_PREDECLARED_TAIL_CANDIDATE_TEST_PASS
 
