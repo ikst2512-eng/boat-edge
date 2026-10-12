@@ -28,9 +28,9 @@ const raceB={race_key:'20261012-18-05'};
   // Test B: two overlapping requests for the same race use latest-wins semantics.
   {
     const older=pending(),newer=pending(),onScenario=pending();
-    let calls=0,adjustCalls=0,firstShown=0;
+    let active=raceA,calls=0,adjustCalls=0,firstShown=0;
     const context={
-      raceOf:()=>raceA,$:()=>({}),
+      raceOf:()=>active,$:()=>({}),
       oddsFor:()=>++calls===1?older.promise:newer.promise,
       resultFor:async()=>null,
       loadServerHistoryIndex:async()=>{},
@@ -43,12 +43,11 @@ const raceB={race_key:'20261012-18-05'};
     older.resolve({});await old;
     assert.equal(adjustCalls,0,'superseded same-race request must stop');
     newer.resolve({});
-    // Allow pending scenario calculation to start.
-    await Promise.resolve();await Promise.resolve();await Promise.resolve();
-    onScenario.resolve({});await fresh;
-    // A fully current request would progress beyond the scenario stage.
-    // No speculative freeze should be needed in this harness.
+    await new Promise(resolve=>setImmediate(resolve));
     assert.equal(adjustCalls,1,'only newest same-race request computes scenario');
+    active=raceB;
+    onScenario.resolve({});await fresh;
+    assert.equal(firstShown,0,'race switch while scenario pending may not freeze a stale ticket');
   }
   // Test C: the parent afterRace pipeline must stop after async scenario fetch when selection moves.
   {
@@ -70,6 +69,6 @@ const raceB={race_key:'20261012-18-05'};
   }
   // Test D: fail closed if async direct-mode or odds augmentation is invoked after a switch.
   assert(src.includes("if(raceOf()?.race_key!==key)return;\n  const rows=$$(\"#buyBoard .buy-ticket\")"));
-  assert(src.includes("if(raceOf()?.race_key!==key)return;\n  const stack=$(\\"#tab-scenario .section.stack\\")".replace(/\\\\/g,'')));
+  assert(src.includes('if(raceOf()?.race_key!==key)return;\\n  const stack=$("#tab-scenario .section.stack")'.replace('\\\\n','\\n')));
   console.log('V258_STALE_RACE_RENDER_PASS: race switch, same-race supersession, async pipeline, payout guard');
 })().catch(e=>{console.error(e);process.exitCode=1});
