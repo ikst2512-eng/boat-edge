@@ -2,7 +2,7 @@
 
 Date: 2026-10-13 JST. Integration owner: Track 01.
 Source: actual `.github/workflows` files on base main `711da090e20d4d52703f7c8e35f1841abf74f7b2`.
-Evidence manifest: `docs/BOAT_EDGE_01_V343_REAL_WORKFLOW_CLASSIFICATION.json`.
+Evidence manifest: `tests/fixtures/BOAT_EDGE_01_V343_REAL_WORKFLOW_CLASSIFICATION.json`.
 
 ## Scope and interpretation
 
