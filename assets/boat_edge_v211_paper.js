@@ -71,7 +71,7 @@ function skipEvidence(scan,proof,now=Date.now()){
     return {verified:false,message:'見送り理由の内訳：記録値を確認できません',rows:[]};
   const rows=entries.filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
   return {verified:true,rows,message:rows.length?'保存済み見送り理由（'+day+'・'+fmt(scan.as_of)+'取得）':
-    '見送り理由の個別件数は記録されていません（0Rとは断定しません）'};
+    '見送り理由の個別件数は未記録（0Rとは断定しません）'};
 }
 function showPaperStates(status){
  let e=q('#be248PaperStates');
