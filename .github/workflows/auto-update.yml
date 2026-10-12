@@ -817,6 +817,11 @@ jobs:
           # In that case, preserve the REMOTE version of any overlapping raw/race
           # PRE_RESULT evidence; publish only the still-disjoint collected files.
           for n in 1 2 3 4 5 6; do
+            # V277: a V235 freeze may arrive after V275 checked source paths.
+            # Always fetch and inspect origin/main before a collector publication;
+            # Git rejects a concurrent non-fast-forward after this proof.
+            git fetch --no-tags origin main
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v277_snapshot_push_guard.py
             if git push origin HEAD:main; then
               echo "V270_PRE_RESULT_SAFE_PUSH_PASS"
               exit 0
