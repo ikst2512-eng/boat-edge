@@ -12,7 +12,10 @@ from pathlib import Path
 import re
 import shlex
 
-from boat_edge_v299_workflow_inventory import WORKFLOWS, audit as workflow_audit
+try:
+    from scripts.boat_edge_v299_workflow_inventory import WORKFLOWS, audit as workflow_audit
+except ModuleNotFoundError:
+    from boat_edge_v299_workflow_inventory import WORKFLOWS, audit as workflow_audit
 
 ADD = re.compile(r"(?<![\w-])git[ \t]+add[ \t]+([^\n\r]+)")
 BREAK = {"||", "&&", ";", "|", "fi", "then", "done"}
@@ -37,8 +40,11 @@ def _arguments(line: str) -> tuple[list[str], bool]:
             if word.startswith("-") or word.startswith("$") or any(c in word for c in "*?{}"):
                 dynamic = True
                 continue
-            path = word.lstrip("./").rstrip("/")
-            if not path or path == "." or path.startswith("../"):
+            if word.startswith(("../", "/", "~/")) or "/../" in word or word.endswith("/.."):
+                dynamic = True
+                continue
+            path = word.removeprefix("./").rstrip("/")
+            if not path or path == ".":
                 dynamic = True
                 continue
             if re.fullmatch(r"[A-Za-z0-9_.\-/]+", path):
