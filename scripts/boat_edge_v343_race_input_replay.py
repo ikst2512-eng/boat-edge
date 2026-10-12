@@ -16,6 +16,7 @@ from pathlib import Path
 from boat_edge_v318_shadow_freeze import canonical, parse_time
 from boat_edge_v332_live_local_freeze import MODEL as FREEZE_MODEL, candidate_from_raw
 from boat_edge_v339_cross_run_research_audit import _check_report
+from boat_edge_v345_research_ranked120 import verify_saved_120
 
 MODEL = "BOAT_EDGE_V343_SITE_EXACT_RACE_INPUT_REPLAY"
 FALSE_FLAGS = (
@@ -57,16 +58,18 @@ def replay_one(frozen_raw, input_raw, key, expected_freeze_sha):
     # Reconstruct from archived input at the frozen instant. No writes or live
     # current-day source reads; old captures without a snapshot fail closed.
     when = parse_time(frozen.get("frozen_at_jst"))
-    candidate, deadline, _ = candidate_from_raw(input_raw, key, when)
+    candidate, deadline, race = candidate_from_raw(input_raw, key, when)
     if deadline.isoformat() != frozen.get("deadline_jst"):
         raise ValueError("REPLAY_DEADLINE_MISMATCH")
     encoded = canonical(candidate)
     if (canonical(frozen.get("candidate")) != encoded
             or hashlib.sha256(encoded).hexdigest() != frozen.get("candidate_sha256")):
         raise ValueError("CANDIDATE_INPUT_REPLAY_MISMATCH")
+    full_120 = verify_saved_120(frozen, race, candidate)
     return {"race_key": key, "race_input_sha256": digest,
             "candidate_sha256": frozen["candidate_sha256"],
-            "exact_candidate_reproduced": True}
+            "exact_candidate_reproduced": True,
+            "saved_full_120_top10_and_head_parity_verified": full_120}
 
 
 def verify(root, report):
@@ -83,6 +86,10 @@ def verify(root, report):
     return {
         "model_id": MODEL, "supplied_completed_freezes": len(rows),
         "candidate_replay_verified_within_supplied_report": bool(rows),
+        "saved_full_120_verified_count": sum(
+            r["saved_full_120_top10_and_head_parity_verified"] for r in rows),
+        "all_supplied_full_120_verified": bool(rows) and all(
+            r["saved_full_120_top10_and_head_parity_verified"] for r in rows),
         "rows": rows,
         "source_html_integrity_verified": False,
         "input_fields_independently_authenticated": False,
