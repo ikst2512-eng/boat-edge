@@ -1,0 +1,46 @@
+name: BOAT EDGE V281 - Selected Race Source Evidence UI
+on:
+  push:
+    branches: [main, fix/v281-selected-race-source-label]
+    paths:
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v281_selected_race.cjs'
+      - '.github/workflows/v281-selected-race.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'index.html'
+      - 'tests/test_boat_edge_v281_selected_race.cjs'
+      - '.github/workflows/v281-selected-race.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v281-selected-race-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  site-ui-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify race identity, timestamp not fabricated, existing prediction unchanged
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v204_prediction.js
+          node tests/test_boat_edge_v248_ui.cjs
+          node tests/test_boat_edge_v281_selected_race.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v246_pages_cache.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V281_FORMAL_RESULT_UNSEEN_LOCK_PASS')
+          PY
+          git diff --check
