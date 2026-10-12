@@ -44,6 +44,10 @@ const tabs={
 };
 const field=(r,path)=>path.split('.').reduce((x,k)=>x?.[k],r);
 let metric='base',layout='lanes',selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
+/* V321: do not trust previous race's still-mounted source tickets. */
+const holdPreviousRace=(previousKey,currentKey,previousList,nextList)=>
+ Boolean(previousKey)&&previousKey!==currentKey&&(!nextList||nextList===previousList);
+let lastListNode=null,awaitingRaceList=false;
 /* A visually outstanding number is never inferred from 4/6 known boats. */
 function best(rows,path,margin,low){
  if(!Array.isArray(rows)||rows.length!==6||new Set(rows.map(r=>r?.lane)).size!==6||path==='course')return null;
@@ -130,7 +134,7 @@ function renderHead(box,r,mode,status){
  const locked=['first','final','latest'].includes(marker);
  const pre=keyOK(r?.race_key)&&r?.meta?.phase==='PRE_RESULT'&&
    r.meta.results_seen===false&&r.meta.unlock===false&&r.meta.scoring===false;
- const safe=pre&&status?.kind==='partial'&&locked; // Only recently checked cancellation signals; never assert confirmed starters.
+ const safe=pre&&status?.kind==='partial'&&locked&&!awaitingRaceList; // Only recently checked cancellation signals; never assert confirmed starters.
  const tickets=safe?headTickets($$('#be108PredictionModes .be108-ticket-list > .be108-ticket'),selected):null;
  const racer=(window.BoatEdgeV203?.getRows?.(r)||[]).find(x=>x.lane===selected);
  const label=marker==='final'?'締切前FINAL保存の表示':marker==='first'?'FIRST保存の表示':
@@ -151,21 +155,29 @@ function renderHead(box,r,mode,status){
 function board(){
  const r=race(),p=$('#be108PredictionModes'),root=$('#tab-pred .section.stack');
  if(!keyOK(r?.race_key)||!root||!p||!window.BoatEdgeV203?.getRows||!window.BoatEdgeV205?.sourceStatus||!$('#be203Layout')||!$('#be204Overview')){
-   document.documentElement.classList.remove('be206-active');$('#be206Quick')?.remove();return;
+   document.documentElement.classList.remove('be206-active','be321-race-await');$('#be206Quick')?.remove();return;
  }
  const rows=window.BoatEdgeV203.getRows(r);
  if(rows.length!==6||new Set(rows.map(x=>x.lane)).size!==6){document.documentElement.classList.remove('be206-active');$('#be206Quick')?.remove();return;}
  const mode=$('#be108PredictionModes .be108-mode-tabs .on')?.dataset?.be108Mode||'';
  const next=r.race_key+'|'+mode;
- if(ctx!==next){ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';}
+ const listNode=$('.be108-ticket-list',p);
+ const oldKey=ctx.split('|')[0];
+ if(ctx!==next){
+  if(oldKey!==r.race_key)awaitingRaceList=holdPreviousRace(oldKey,r.race_key,lastListNode,listNode);
+  ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';layout='lanes';
+ }
+ if(awaitingRaceList&&listNode&&listNode!==lastListNode)awaitingRaceList=false;
+ if(!awaitingRaceList&&listNode)lastListNode=listNode;
+ document.documentElement.classList.toggle('be321-race-await',awaitingRaceList);
  const box=create(root,p);if(box.nextElementSibling!==p)root.insertBefore(box,p);
  const st=window.BoatEdgeV205.sourceStatus();
- const safety=st.title+'|'+st.detail+'|'+st.kind;
+ const safety=st.title+'|'+st.detail+'|'+st.kind+'|'+awaitingRaceList;
  if(safety!==lastStatus||!$('.be206-safety strong',box)?.textContent){
    lastStatus=safety;
-   const e=$('.be206-safety',box);e.dataset.kind=st.kind;
-   $('.be206-safety strong',box).textContent=st.title;
-   $('.be206-safety span',box).textContent=st.detail||'出走可否の照合状態は未確定';
+   const e=$('.be206-safety',box);e.dataset.kind=awaitingRaceList?'pending':st.kind;
+   $('.be206-safety strong',box).textContent=awaitingRaceList?'新レースの買い目を照合中':st.title;
+   $('.be206-safety span',box).textContent=awaitingRaceList?'前レースの買い目・頭候補は表示しません':(st.detail||'出走可否の照合状態は未確定');
  }
  $$('.be206-switch button',box).forEach(b=>{const on=b.dataset.be206Metric===metric;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  $$('.be206-layout-switch button',box).forEach(b=>{const on=b.dataset.be206Layout===layout;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
@@ -218,6 +230,6 @@ function init(){if(started)return;started=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,version:'V299-UI-ONLY',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,headTickets,holdPreviousRace,version:'V321-UI-ONLY',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
