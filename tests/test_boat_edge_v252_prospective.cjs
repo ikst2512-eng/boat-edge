@@ -15,9 +15,19 @@ assert.equal(b.n,v240.scored_total);
 assert.equal(a.rows.find(x=>x.key==='coverage15').points,15);
 assert.equal(b.rows.find(x=>x.key==='hit10').points,10);
 assert.equal(b.rows.find(x=>x.key==='pair_coverage10').points,10);
-assert.equal(b.rows.find(x=>x.key==='pair_coverage10').gain,1);
-assert.equal(b.rows.find(x=>x.key==='pair_coverage10').loss,1);
-assert.equal(b.rows.find(x=>x.key==='second_coverage10').hits,0);
+// Do not assume a frozen number of newly scored races: verify each paired
+// gain/loss from currently stored independent per-race evidence.
+const paired=(name)=>({
+ gain:v240.examples.filter(x=>x.outcomes[name]&&!x.outcomes.hit10).length,
+ loss:v240.examples.filter(x=>!x.outcomes[name]&&x.outcomes.hit10).length,
+ hits:v240.examples.filter(x=>x.outcomes[name]).length
+});
+for(const mode of ['hit10','pair_coverage10','second_coverage10']){
+ const row=b.rows.find(x=>x.key===mode);
+ assert.equal(row.gain,paired(mode).gain);
+ assert.equal(row.loss,paired(mode).loss);
+ assert.equal(row.hits,paired(mode).hits);
+}
 assert.equal(b.paired,true);
 assert.equal(a.paired,false);
 const mutate=(obj,fn)=>{const clone=JSON.parse(JSON.stringify(obj));fn(clone);return clone};
