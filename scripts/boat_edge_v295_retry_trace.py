@@ -33,7 +33,7 @@ def candidates(repo: Path) -> set[str]:
     if not directory.is_dir():
         return set()
     out=set()
-    for path in directory.glob("20????????-??-??.json"):
+    for path in directory.glob("20??????-??-??.json"):
         key=path.stem
         rel=f"data/site_autopilot/v229_evidence/{key}.json"
         if RACE.fullmatch(key) and path.is_file() and not path.is_symlink() and not tracked(repo,rel):
