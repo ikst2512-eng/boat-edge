@@ -8,7 +8,7 @@ const window={},document={readyState:'loading',addEventListener(){}};
 vm.runInNewContext(js,{window,document,Date,Number,Math,Map,Set,JSON,queueMicrotask(){},setInterval(){},
  console:{warn(){}}},{filename:'boat_edge_v206_quickview.js'});
 const api=window.BoatEdgeV206;
-assert.equal(api.version,'V298-UI-ONLY');
+assert.equal(api.version,'V299-UI-ONLY');
 assert.equal(api.displayOnly,true);
 for(const label of ['基本','連対・機力','直前・展示','オリ展','展示タイム','展示進入','1周','まわり足','直線']){
  assert(js.includes(label),'missing sourced comparison field: '+label);
@@ -47,7 +47,7 @@ assert(js.includes('data-be206-layout="rows"'));
 assert(!/(?:fetch\(|XMLHttpRequest|RESULT_UNLOCK_TOKEN|rankPredictions\(|loadRace\(|winning_combo|official_payout)/.test(js));
 if(fs.existsSync('index.html')){
  const index=fs.readFileSync('index.html','utf8');
- assert(index.includes('boat_edge_v206_quickview.js?v=298'));
- assert(index.includes('boat_edge_v206_quickview.css?v=298'));
+ assert(index.includes('boat_edge_v206_quickview.js?v=299'));
+ assert(index.includes('boat_edge_v206_quickview.css?v=299'));
 }
 console.log('V298_SIX_LANE_MATRIX_STRICT_HIGHLIGHT_SYNTHETIC_PASS');
