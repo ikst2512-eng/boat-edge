@@ -1,0 +1,46 @@
+name: BOAT EDGE V288 - Official Start Exhibition HTML Parser Audit
+on:
+  push:
+    branches: [main, fix/v288-parse-official-start-exhibition-html]
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - '.github/workflows/v288-official-start-html.yml'
+      - 'tests/test_boat_edge_v288_official_start_html.py'
+      - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
+  pull_request:
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - '.github/workflows/v288-official-start-html.yml'
+      - 'tests/test_boat_edge_v288_official_start_html.py'
+      - 'tests/test_boat_edge_v272_urgent_beforeinfo_retry.py'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v288-official-html-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  archival-html-parser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: HTML parser dependencies for offline archived source fixtures
+        run: python3 -m pip install --disable-pip-version-check beautifulsoup4 lxml
+      - name: Strict original official HTML and negative checks
+        run: |
+          set -euo pipefail
+          python3 tests/test_boat_edge_v288_official_start_html.py
+          python3 tests/test_boat_edge_v268_beforeinfo_priority.py
+          python3 tests/test_boat_edge_v269_urgent_telemetry.py
+          python3 tests/test_boat_edge_v272_urgent_beforeinfo_retry.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V288_FORMAL_RESULTS_UNSEEN_LOCK_PASS')
+          PY
+          git diff --check
