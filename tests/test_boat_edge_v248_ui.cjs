@@ -72,4 +72,6 @@ for(const [file,args,expected] of [
  const output=execFileSync(process.execPath,[file,...args],{encoding:'utf8',timeout:20000});
  assert(output.includes(expected),'Missing isolated odds/lock test PASS: '+file);
 }
+const python=execFileSync('python3',['tests/test_boat_edge_v265_readiness_sources.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
+assert.strictEqual(python,'');
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
