@@ -93,3 +93,14 @@ console.log('V327_SIX_BOAT_RUNTIME_NODELIST_PASS');
  assert(result.includes('V322_RACE_EVIDENCE_REPARENT_FAIL_CLOSED_PASS'),'V330 evidence DOM handoff failed');
  console.log(result.trim());
 }
+
+/* V331: V328's stale-ticket guard depends on V108 replacing the ticket-list DOM node on render. */
+{
+ const renderer=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+ assert(/panel\.innerHTML\s*=\s*`/.test(renderer),'V331 renderer must replace panel children');
+ assert(renderer.includes('class="be108-ticket-list"'),'V331 renderer must mount fresh ticket-list inside panel');
+ const guard=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
+ assert(guard.includes('list!==lastTicketList'),'V331 stale-ticket guard must detect newly mounted list');
+ assert(guard.includes('be328-await-ticket-list'),'V331 pending state must hide previous-race tickets');
+ console.log('V331_TICKET_LIST_RENDER_IDENTITY_CONTRACT_PASS');
+}
