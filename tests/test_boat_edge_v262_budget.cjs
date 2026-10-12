@@ -1,7 +1,7 @@
 'use strict';
 /* A27: no result/payout/formal endpoint, paper ledger evidence only. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const w={},doc={hidden:false,querySelector(){return null},querySelectorAll(){return []},createElement(){return {setAttribute(){},append(){}}}};
+const w={},doc={hidden:false,querySelector(){return null},querySelectorAll(){return []},createElement(){return {style:{},dataset:{},classList:{toggle(){}},setAttribute(){},append(){},textContent:''}}};
 let fetched=0;
 vm.runInNewContext(fs.readFileSync('assets/boat_edge_v211_paper.js','utf8'),{
  window:w,document:doc,Number,Date,Math,Set,Map,JSON,
