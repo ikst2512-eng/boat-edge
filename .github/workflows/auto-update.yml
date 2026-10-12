@@ -342,8 +342,9 @@ jobs:
                       coverage=beforeinfo_coverage(parsed)
                   ready=coverage["six_boat_complete"]
                   # Store only the last source response and its actual digest.
-                  if source_write_allowed(DATA,key,clock,datetime.now(JST)):
-                      (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      return key,{"ok":False,"status":"source_locked","parsed":{},"error":"deadline_elapsed_during_fetch"}
+                  (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
                   return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried,"six_boat_coverage":coverage,"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
                   return key,{"ok":False,"status":"error","parsed":{},"url":url,"error":repr(e)}
@@ -366,16 +367,19 @@ jobs:
               url=f"{BASE}/owpc/pc/race/racelist?hd={ymd}&jcd={j}&rno={rno}"
               if rno==1 and j in probe_cache:
                   r,sp,racers=probe_cache[j]
-                  if source_write_allowed(DATA,key,clock,datetime.now(JST)):
-                      try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
-                      except:pass
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      return key,{"ok":False,"preserved":True,"racers":[],"error":"deadline_elapsed_during_probe"}
+                  try:(RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  except Exception as e:
+                      return key,{"ok":False,"racers":[],"error":repr(e)}
                   # Cached venue probe was fetched before bulk collection; use a
                   # conservative start timestamp rather than falsely marking it newer.
                   return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":iso}
               try:
                   r=fetch(url,attempts=2)
-                  if source_write_allowed(DATA,key,clock,datetime.now(JST)):
-                      (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
+                  if not source_write_allowed(DATA,key,clock,datetime.now(JST)):
+                      return key,{"ok":False,"preserved":True,"racers":[],"error":"deadline_elapsed_during_fetch"}
+                  (RAW/f"{j}_{rno:02d}_racelist.html").write_bytes(r.content)
                   racers=parse_racers(BeautifulSoup(r.text,"lxml"))
                   return key,{"ok":True,"racers":racers,"url":url,"sha256":sha(r.content),"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
