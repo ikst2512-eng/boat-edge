@@ -5,8 +5,12 @@ const html=fs.readFileSync('index.html','utf8');
 const js=fs.readFileSync('assets/boat_edge_v203_readable.js','utf8');
 const pred=fs.readFileSync('assets/boat_edge_v207_first_prediction.js','utf8');
 const css=fs.readFileSync('assets/boat_edge_v263_race_readability.css','utf8');
-assert(html.includes('boat_edge_v263_race_readability.css?v=263'));
+assert(html.includes('boat_edge_v263_race_readability.css?v=266'));
 assert(css.includes('BOAT EDGE V263 A28'));
+assert(css.includes('V266 A29'), 'iPhone first-screen layout must be versioned');
+for(const selector of ['#be251Outcome','#be207Top','#be206Quick','#be249Focus','#be252Tools']) {
+  assert(css.includes(selector), selector+' compact cockpit must remain visible');
+}
 for(const selector of [
  '#raceView #raceTitle','#raceView #deadlineBig',
  '#be207Top .be207-condition','#be207Top[data-status="stop"] .be207-condition',
