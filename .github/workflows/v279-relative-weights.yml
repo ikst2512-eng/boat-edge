@@ -1,0 +1,44 @@
+name: BOAT EDGE V279 - Relative Weight UI Regression
+on:
+  push:
+    branches: [main, fix/v279-pick-weight-label]
+    paths:
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'index.html'
+      - 'tests/test_boat_edge_v279_weights.cjs'
+      - '.github/workflows/v279-relative-weights.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'index.html'
+      - 'tests/test_boat_edge_v279_weights.cjs'
+      - '.github/workflows/v279-relative-weights.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v279-pick-weight-ui-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  read-only-ui-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify UI model unchanged and formal guard closed
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v204_prediction.js
+          node tests/test_boat_edge_v248_ui.cjs
+          node tests/test_boat_edge_v279_weights.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v246_pages_cache.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V279_FORMAL_UNSEEN_PASS')
+          PY
+          git diff --check
