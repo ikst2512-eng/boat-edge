@@ -1,0 +1,44 @@
+name: BOAT EDGE V278 - Review New Guarded UI Task Queue
+
+on:
+  push:
+    branches: [main, fix/v278-guarded-ui-next-queue]
+    paths:
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+      - '.github/workflows/v278-guarded-ui-queue.yml'
+  pull_request:
+    paths:
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+      - '.github/workflows/v278-guarded-ui-queue.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v278-ui-task-audit-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-task-and-safety-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify only owner-requested safe UI backlog
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v240_guard.py --pending
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,json
+          s=Path('BOAT_EDGE_AUTODEV_TASKS.md').read_text(encoding='utf-8')
+          active=re.findall(r'^- \[ \] (A\d{2}) \| (.+)$',s,re.M)
+          assert [x[0] for x in active]==['A29','A30','A31','A32','A33']
+          assert all(len(x[1])<450 for x in active)
+          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=f['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V278_OWNER_REQUESTED_FIVE_UI_TASKS_PENDING_NO_FORMAL_CHANGE')
+          PY
+          git diff --check
