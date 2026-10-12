@@ -85,6 +85,10 @@ def check(root, status):
         return False, 0, "APPROVED_RACE_FILE_SET_MISMATCH"
     if not isinstance(model, str) or len(model) < 6 or not isinstance(freeze, str) or not SHA.fullmatch(freeze):
         return False, 0, "MODEL_OR_FREEZE_DIGEST_INVALID"
+    # An overlay cannot borrow the approval map of an unfrozen or different cohort.
+    # This is a site-consumer consistency check, NOT provenance certification.
+    if formal.get("races") != 100 or not isinstance(formal.get("coreSha"), str) or not SHA.fullmatch(formal["coreSha"]):
+        return False, 0, "FORMAL_COHORT_NOT_FROZEN_100"
     if not isinstance(status.get("formalParentSha"), str) or not SHA.fullmatch(status["formalParentSha"]):
         return False, 0, "PARENT_DIGEST_INVALID"
     verified = 0
@@ -109,7 +113,7 @@ def check(root, status):
             meta.get("scope") != "FORMAL_FRESH_APPROVED_PRE_RESULT" or
             meta.get("model_approved") is not True or meta.get("formal_gate_pass") is not True or
             meta.get("parent_sha256") != status["formalParentSha"] or
-            not isinstance(meta.get("freeze_sha256"), str) or not SHA.fullmatch(meta["freeze_sha256"]) or
+            meta.get("freeze_sha256") != freeze or
             not _guard(meta.get("guards"))):
             return False, verified, "PREDICTION_METADATA_INVALID"
         if meta.get("prediction_sha256") != trusted[key]:

@@ -53,6 +53,29 @@ class FormalPreflightV274(unittest.TestCase):
             self.assertTrue(report["formal_prediction_content_preflight_passed"])
             self.assertEqual(report["formal_prediction_content_verified_files"], 100)
 
+    def test_wrong_freeze_manifest_rejected_even_with_valid_sha_shape(self):
+        with tempfile.TemporaryDirectory() as d:
+            status, base = self.create(Path(d))
+            path = sorted(base.glob("*.json"))[0]
+            v = json.loads(path.read_text())
+            v["formal_meta"]["freeze_sha256"] = "c" * 64
+            path.write_text(json.dumps(v))
+            self.assertEqual(check(d, status)[2], "PREDICTION_METADATA_INVALID")
+            report = audit(Path(d))
+            self.assertFalse(report["site_consumer_ready_to_display_actual_formal_predictions"])
+
+    def test_unfrozen_status_rejected_even_with_100_approved_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            status, _ = self.create(Path(d))
+            status["formalFirst100"]["races"] = 0
+            self.assertEqual(check(d, status)[2], "FORMAL_COHORT_NOT_FROZEN_100")
+
+    def test_missing_core_sha_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            status, _ = self.create(Path(d))
+            status["formalFirst100"]["coreSha"] = None
+            self.assertEqual(check(d, status)[2], "FORMAL_COHORT_NOT_FROZEN_100")
+
     def test_digest_map_missing_fails_closed(self):
         with tempfile.TemporaryDirectory() as d:
             status, _ = self.create(Path(d))
