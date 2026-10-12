@@ -20,7 +20,7 @@ function selectedRaceEvidence(r){
  if(m.date&&m.date!==date)return '選択レースの日付が一致しません';
  const venue=typeof m.venue==='string'&&m.venue.trim()?m.venue.trim():'会場名 未取得';
  const raceNo=Number(key.slice(12,14));
- const due=/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(String(m.deadline||''))?
+ const due=/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(String(m.deadline||''))?
    '締切予定 '+m.deadline+'（保存済み出走表）':'締切時刻 未取得・未確認';
  return venue+' '+raceNo+'R ｜ '+due;
 }
