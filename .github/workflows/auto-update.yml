@@ -294,24 +294,52 @@ jobs:
           # page is published but still lacks exhibition values in 0..15m.
           # This cannot create unpublished data and never reads race results.
           urgent_beforeinfo={(j,rno) for j,rno,delta in targets if 0<=delta<=15}
+          # V287: "ok" means all SIX lanes have exhibition times AND start
+          # exhibition ST evidence. One published row, or a single ST, is
+          # partial evidence, NOT a complete six-boat predeadline source.
+          def beforeinfo_coverage(parsed):
+              expect=set(range(1,7))
+              exhibition=set()
+              starts=set()
+              for row in parsed.get("racers",[]):
+                  if not isinstance(row,dict):continue
+                  lane=row.get("lane")
+                  value=row.get("exhibition_time")
+                  if (type(lane) is int and lane in expect and
+                          type(value) in (int,float) and 6.0<=value<=8.5):
+                      exhibition.add(lane)
+              for row in parsed.get("start_exhibition",[]):
+                  if not isinstance(row,dict):continue
+                  lane=row.get("lane")
+                  st=row.get("st")
+                  if (type(lane) is int and lane in expect and
+                          isinstance(st,str) and re.fullmatch(r"F?\.\d{2}",st)):
+                      starts.add(lane)
+              return {"exhibition_lanes":len(exhibition),
+                      "start_exhibition_lanes":len(starts),
+                      "exhibition_complete":exhibition==expect,
+                      "start_exhibition_complete":starts==expect,
+                      "six_boat_complete":exhibition==expect and starts==expect}
           def before_task(j,rno):
               key=f"{ymd}-{j}-{rno:02d}"
               url=f"{BASE}/owpc/pc/race/beforeinfo?hd={ymd}&jcd={j}&rno={rno}"
               try:
                   r=fetch(url,attempts=2)
                   parsed=parse_before(BeautifulSoup(r.text,"lxml"))
-                  ready=any(x.get("exhibition_time") for x in parsed["racers"]) or bool(parsed["start_exhibition"])
+                  coverage=beforeinfo_coverage(parsed)
+                  ready=coverage["six_boat_complete"]
                   retried=False
                   if not ready and (j,rno) in urgent_beforeinfo:
                       retried=True
                       time.sleep(2.0)
                       r=fetch(url,attempts=2)
                       parsed=parse_before(BeautifulSoup(r.text,"lxml"))
-                      ready=any(x.get("exhibition_time") for x in parsed["racers"]) or bool(parsed["start_exhibition"])
+                      coverage=beforeinfo_coverage(parsed)
+                  ready=coverage["six_boat_complete"]
                   # Store only the last source response and its actual digest.
                   if not protected_site_snapshot(DATA,key):
                       (RAW/f"{j}_{rno:02d}_beforeinfo.html").write_bytes(r.content)
-                  return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried,"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
+                  return key,{"ok":True,"status":"ok" if ready else "published_wait","parsed":parsed,"url":url,"sha256":sha(r.content),"urgent_retried":retried,"six_boat_coverage":coverage,"fetched_at":datetime.now(JST).isoformat(timespec="seconds")}
               except Exception as e:
                   return key,{"ok":False,"status":"error","parsed":{},"url":url,"error":repr(e)}
 
@@ -400,7 +428,8 @@ jobs:
                                     "source":bf.get("url") if bf else None,
                                     "fetched_at":bf.get("fetched_at") if bf and bf.get("ok") else None,
                                     "sha256":bf.get("sha256") if bf else None,
-                                    "error":bf.get("error") if bf else None}},
+                                    "error":bf.get("error") if bf else None,
+                                    "six_boat_coverage":bf.get("six_boat_coverage") if bf else None}},
                     "racers":rr.get("racers",[]),
                     "beforeinfo":bf.get("parsed",{}) if bf else {},
                     "validation":{"result_unlock_token":None,"result":None}
@@ -446,6 +475,11 @@ jobs:
             "beforeinfo_urgent_15m_targets":len(urgent_keys),
             "beforeinfo_urgent_15m_ok":urgent_ok,
             "beforeinfo_urgent_15m_published_wait":urgent_wait,
+            "beforeinfo_urgent_15m_partial":sum(
+                bool((before.get(key,{}) or {}).get("six_boat_coverage",{}).get("exhibition_lanes",0) or
+                     (before.get(key,{}) or {}).get("six_boat_coverage",{}).get("start_exhibition_lanes",0))
+                and before.get(key,{}).get("status")=="published_wait"
+                for key in urgent_keys),
             "beforeinfo_urgent_15m_error":urgent_error,
             "beforeinfo_urgent_15m_retried":sum(bool(before.get(key,{}).get("urgent_retried")) for key in urgent_keys),
             "site_snapshot_immutable_races":snapshot_protected,

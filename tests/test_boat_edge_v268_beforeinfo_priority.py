@@ -16,6 +16,7 @@ assert [(j,r) for j,r,_ in env['targets']]==[
     (19,12),(1,12),(19,8),(19,7),(19,9),(19,10),(19,11),(2,4)]
 assert len(env['targets'])==8
 assert 'futs=[ex.submit(before_task,j,r) for j,r,_delta in targets]' in source
-assert 'ready=any(x.get("exhibition_time")' in source
+assert 'ready=coverage["six_boat_complete"]' in source
+assert 'beforeinfo_coverage(parsed)' in source
 assert '"published_wait"' in source
 print('V268_BEFOREINFO_DEADLINE_PRIORITY_PASS')
