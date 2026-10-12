@@ -150,6 +150,22 @@ jobs:
             echo "V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS_AND_RECHECK_NOW_$attempt"
           done
           if test "$source_success" != true; then echo V234_PRE_RESULT_SOURCE_PUBLISH_UNCONFIRMED; exit 1; fi
+      - name: V273 promptly launch V254 only after a newly committed unseen cohort
+        if: env.V235_TAKEOVER_VERIFIED == '1'
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Dispatched research will re-check source Git commit, immutable SHA,
+          # future deadline and result-unseen formal guards. No results are
+          # opened by this step. The 5-minute V254 cron remains the fallback.
+          if gh workflow run v254-third-tail-shadow.yml --ref main; then
+            echo V273_V254_FUTURE_RESEARCH_DISPATCH_REQUEST_ACCEPTED_NOT_FROZEN
+          else
+            echo V273_DISPATCH_UNAVAILABLE_RESEARCH_CRON_REMAINS_FAIL_CLOSED
+          fi
       - name: Only after pre-result commit - score already confirmed SITE results
         shell: bash
         run: |
