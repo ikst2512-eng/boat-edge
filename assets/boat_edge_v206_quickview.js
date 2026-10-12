@@ -122,7 +122,9 @@ function renderHead(box,r,mode,status){
   btn.setAttribute('aria-pressed',String(on));
  });
  if(selected===null){
-  el.hidden=true;el.replaceChildren();headSig='';return;
+  if(!el.hidden)el.hidden=true;
+  if(el.childNodes.length)el.replaceChildren();
+  headSig='';return;
  }
  const marker=$('#be108PredictionModes .be181-freeze-banner')?.dataset?.be181Source||'';
  const locked=['first','final','latest'].includes(marker);
