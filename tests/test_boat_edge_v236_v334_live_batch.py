@@ -118,6 +118,27 @@ class V334LiveBatch(unittest.TestCase):
             self.assertEqual(len(report["failures"]), 1)
             self.assertFalse((root / "data/source_captures").exists())
 
+    def test_stale_beforeinfo_rejected_without_source_fetch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            prepare(root)
+            race_path = root / "data/races/20261013-22-12.json"
+            race = json.loads(race_path.read_text())
+            race["source_audit"]["beforeinfo"]["fetched_at"] = (
+                "2026-10-13T16:00:00+09:00"
+            )
+            race_path.write_text(json.dumps(race))
+            calls = []
+            def no_fetch(url):
+                calls.append(url)
+                raise AssertionError("MUST_NOT_FETCH")
+            report = run(root, capture=True, clock=lambda: NOW, fetcher=no_fetch)
+            self.assertEqual(report["completed_count"], 0)
+            self.assertEqual(len(report["failures"]), 1)
+            self.assertIn("SOURCE_TOO_STALE_FOR_FINAL_WINDOW:beforeinfo",
+                          report["failures"][0]["reason"])
+            self.assertEqual(calls, [])
+
     def test_invalid_limits_and_naive_clock_fail_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
