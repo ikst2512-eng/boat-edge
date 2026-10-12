@@ -33,9 +33,7 @@ const completeness=r=>{
  const before=r?.beforeinfo||{},orig=r?.original_exhibition||{};
  const official=sixBoatCount(before.racers,x=>numericPresent(x?.exhibition_time));
  const original=sixBoatCount(orig.boats,x=>Array.isArray(x?.values)&&x.values.some(numericPresent));
- const audit=r?.source_audit||{};
- const status=k=>audit[k]?.status==='ok'?'証跡あり':'証跡未確認';
- return '展示タイム '+official+'/6艇（'+status('beforeinfo')+'） ／ オリ展 '+original+'/6艇（'+status('original_exhibition')+'）';
+ return '展示タイム '+official+'/6艇（'+source(r,'beforeinfo')+'） ／ オリ展 '+original+'/6艇（'+source(r,'original_exhibition')+'）';
 };
 const tabs={base:{label:'基本',hint:'実力の比較。赤は6艇の中で差が明確な1位だけ。',cols:[['全国','national.win_rate',2,.4,false],['当地','local.win_rate',2,.4,false],['M2連','motor.quinella_rate',1,3,false]]},
  exhibit:{label:'展示',hint:'STは展示スタート。Fは展示フライング。実コース・本番STではありません。',cols:[['展示ST','st',2,.03,true],['1周','lap',2,.08,true],['回り足','turn',2,.04,true],['直線','straight',2,.04,true]]},
