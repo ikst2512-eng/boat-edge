@@ -1,0 +1,48 @@
+name: BOAT EDGE V263 - Mobile Scratch Result Deadline Source Readability
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/boat_edge_v263_race_readability.css'
+      - 'tests/test_boat_edge_v263_race_focus.cjs'
+      - '.github/workflows/v263-mobile-race-readability.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v263-race-focus-readonly
+  cancel-in-progress: true
+
+jobs:
+  safe-iphone-race-readability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm no race, official source or six-boat field hidden
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/test_boat_edge_v263_race_focus.cjs
+          node tests/test_boat_edge_v258_quicksix.cjs
+          node tests/test_boat_edge_v259_clarity.cjs
+          node tests/test_boat_edge_v260_original_sources.cjs
+          node tests/test_boat_edge_v261_nav.cjs
+      - name: Formal Fresh remains locked
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          state=json.loads(Path('data/formal_status.json').read_text())
+          g=state.get('guards') or {}
+          assert all(g.get(key) is False for key in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('V263_FORMAL_LOCK_PASS')
+          PY
