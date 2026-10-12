@@ -63,7 +63,11 @@ def build_freeze(bundle_report, candidate, now):
         if not isinstance(mode, dict):
             raise ValueError("INVALID_MODE")
         tickets = mode.get("top10_boat_research_only")
-        if not isinstance(tickets, list) or len(tickets) != 10 or len(set(tickets)) != 10:
+        if not isinstance(tickets, list) or len(tickets) != 10:
+            raise ValueError("TEN_DISTINCT_BOAT_TICKETS_REQUIRED")
+        if any(not isinstance(ticket, str) for ticket in tickets):
+            raise ValueError("INVALID_TICKET")
+        if len(set(tickets)) != 10:
             raise ValueError("TEN_DISTINCT_BOAT_TICKETS_REQUIRED")
         for ticket in tickets:
             if not isinstance(ticket, str):
