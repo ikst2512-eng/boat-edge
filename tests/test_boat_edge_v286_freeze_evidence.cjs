@@ -27,6 +27,30 @@ assert.strictEqual(ok.verified,true);
 for(const token of ['前日10/12','104R','63R','61R','41R','54R','固定後','SHA'])
  assert(ok.text.includes(token),token);
 assert(!/的中率.?向上|合格済み|未見PASS/.test(ok.text));
+const details={
+ not_found_with_observed_gaps:23,
+ not_found_without_observed_gaps:18,
+ not_found_last_seen_inside_2_to_10m_window:22,
+ not_found_last_seen_outside_2_to_10m_window:19,
+ not_found_last_seen_unverified:0,
+ not_found_without_gaps_inside_2_to_10m_window:9
+};
+const v290={...ops,site_prediction_freeze_observation:{previous_day:{...c,...details}}};
+const newText=freeze.summary(v290,'20261013');
+assert.strictEqual(newText.verified,true);
+for(const token of ['不足の観測あり 23R','不足の観測なし 18R',
+                    '凍結2～10分内 22R','うちソース不足の観測なし 9R',
+                    '成功は未証明','V229の実行証拠ではありません'])
+ assert(newText.text.includes(token),token);
+const broken=(patch)=>freeze.summary({...ops,site_prediction_freeze_observation:{
+ previous_day:{...c,...details,...patch}}},'20261013');
+assert.strictEqual(broken({not_found_with_observed_gaps:24}).verified,false);
+assert.strictEqual(broken({not_found_last_seen_unverified:1}).verified,false);
+assert.strictEqual(broken({not_found_without_gaps_inside_2_to_10m_window:30}).verified,false);
+assert.strictEqual(broken({not_found_without_observed_gaps:-1}).verified,false);
+assert.strictEqual(freeze.summary({...ops,site_prediction_freeze_observation:{
+ previous_day:{...c,not_found_with_observed_gaps:23}}},'20261013').verified,false);
+
 assert.strictEqual(freeze.summary({...ops,day_jst:'20261012'},'20261013').verified,false);
 assert.strictEqual(freeze.summary(null,'20261013').verified,false);
 assert.strictEqual(freeze.summary({...ops,site_prediction_freeze_observation:{previous_day:{...c,source_changed_after_freeze:62}}},'20261013').verified,false);
