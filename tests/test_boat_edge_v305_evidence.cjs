@@ -19,7 +19,7 @@ const document={readyState:'loading',addEventListener(){},
 const window={};
 vm.runInNewContext(src,{window,document,Number,Date,Math,Set,Map,JSON,Intl},{filename:'v305-exhibition.js'});
 const a=window.BoatEdgeV207;
-assert.equal(a.version,'V305-DISPLAY-ONLY');
+assert.equal(a.version,'V306-DISPLAY-ONLY');
 const matched=a.evidenceFor(key);
 assert.equal(matched.ready,true);
 assert.equal(matched.items.length,4);
