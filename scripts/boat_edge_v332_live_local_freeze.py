@@ -28,6 +28,7 @@ from boat_edge_v315_source_capture import (
 )
 from boat_edge_v318_shadow_freeze import JST, canonical, parse_time
 from boat_edge_v333_source_urls import suggested_source_urls
+from boat_edge_v345_research_ranked120 import MODEL as RANKED120_MODEL, derive_120
 
 
 MODEL = "BOAT_EDGE_V332_LIVE_LOCAL_SHA_RESEARCH_ONLY"
@@ -219,6 +220,10 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
     receipts = {provider: _local_capture(root, race_key, provider, deadline, now,
                                          source_urls.get(provider))
                 for provider in PROVIDERS}
+    # V345: reconstruct all three 120-way lists from the exact V312 candidate
+    # input, fail closed unless stored Top10 and both head-mass labels match.
+    # This runs only on the existing live predeadline path; no backfill CLI.
+    research_ranked120 = derive_120(race, candidate)
     # V343: the existing V336 source_captures artifact glob includes this exact
     # input snapshot. Hash-only provenance cannot reproduce the candidate.
     _save_race_input(root, race_key, race_raw)
@@ -246,6 +251,8 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
         "source_bundle_sha256": hashlib.sha256(canonical(receipts)).hexdigest(),
         "candidate_sha256": hashlib.sha256(canonical(candidate)).hexdigest(),
         "candidate": candidate,
+        "research_ranked_120_schema": RANKED120_MODEL,
+        "research_ranked_120_by_mode": research_ranked120,
         "git_first_seen_before_deadline_verified": False,
         "independent_capture_time_authenticated": False,
         "source_race_identity_extracted_from_raw": False,
