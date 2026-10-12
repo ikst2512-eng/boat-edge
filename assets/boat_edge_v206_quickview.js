@@ -179,8 +179,8 @@ function board(){
    $('.be206-safety strong',box).textContent=awaitingRaceList?'新レースの買い目を照合中':st.title;
    $('.be206-safety span',box).textContent=awaitingRaceList?'前レースの買い目・頭候補は表示しません':(st.detail||'出走可否の照合状態は未確定');
  }
- $$('.be206-switch button',box).forEach(b=>{const on=b.dataset.be206Metric===metric;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
- $$('.be206-layout-switch button',box).forEach(b=>{const on=b.dataset.be206Layout===layout;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+ box.querySelectorAll('.be206-switch button').forEach(b=>{const on=b.dataset.be206Metric===metric;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+ box.querySelectorAll('.be206-layout-switch button').forEach(b=>{const on=b.dataset.be206Layout===layout;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  const compactTable=$('.be206-table-scroll',box),matrixTable=$('.be206-matrix-scroll',box);
  compactTable.hidden=layout!=='rows';matrixTable.hidden=layout!=='lanes';
  const data=JSON.stringify([r.race_key,metric,layout,rows.map(row=>[row.lane,row.name,row.grade,row.f,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
