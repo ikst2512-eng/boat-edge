@@ -35,6 +35,9 @@ jobs:
       - name: V256 odds fail-closed and timestamp merge regressions
         run: |
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v256_odds_guard.py' -v
+          node --check assets/boat_edge_v108.js
+          node tests/test_boat_edge_v256_odds_rejection.cjs
+          node tests/test_boat_edge_v254_odds_cutoff.cjs
           python3 - <<'PYV256CODE'
           import ast
           from pathlib import Path
