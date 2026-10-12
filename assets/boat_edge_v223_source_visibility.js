@@ -99,6 +99,9 @@ async function json(path){try{const r=await fetch(path+'?v223='+Date.now(),{cach
 async function refresh(){
  if(working||document.visibilityState==='hidden'||!document.querySelector('#raceView.active'))return;
  const r=race(),key=String(r?.race_key||'');if(!KEY.test(key)||key.slice(0,8)!==nowDay())return;
+ // V322: never show previous-race provenance while new evidence is loading.
+ const oldNode=document.querySelector('#be223Source');
+ if(oldNode?.dataset?.raceKey&&oldNode.dataset.raceKey!==key)oldNode.hidden=true;
  working=true;
  try{
   const [latest,scratch,odds]=await Promise.all([
