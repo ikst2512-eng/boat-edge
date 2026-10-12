@@ -1,0 +1,47 @@
+name: BOAT EDGE V277 - Pages Latest UI SHA Publication Audit
+
+on:
+  push:
+    branches: [main, fix/v277-pages-evidence-monitor]
+    paths:
+      - 'scripts/boat_edge_v277_pages_monitor.py'
+      - 'tests/test_boat_edge_v277_pages_monitor.py'
+      - '.github/workflows/v277-pages-monitor.yml'
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v277_pages_monitor.py'
+      - 'tests/test_boat_edge_v277_pages_monitor.py'
+      - '.github/workflows/v277-pages-monitor.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17,47 * * * *'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: boat-edge-v277-publish-readonly-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-only-pages-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Eight offline negative and positive regressions
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v277_pages_monitor.py' -v
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          ast.parse(Path('scripts/boat_edge_v277_pages_monitor.py').read_text())
+          print('V277_SYNTAX_PASS')
+          PY
+          git diff --check
+      - name: Verify GitHub Pages publication against latest UI commit on main
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v277_pages_monitor.py
