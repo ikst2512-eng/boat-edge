@@ -12,7 +12,7 @@ class V289ExhibitionEvidence(unittest.TestCase):
 
     def test_browser_cache_invalidation(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn("boat_edge_v223_source_visibility.js?v=223&amp;rev=244&amp;patch=250&amp;source=282&amp;fix=289", html)
+        self.assertIn("boat_edge_v223_source_visibility.js?v=223&amp;rev=244&amp;patch=250&amp;source=282&amp;fix=329", html)
 
 if __name__ == "__main__":
     unittest.main()
