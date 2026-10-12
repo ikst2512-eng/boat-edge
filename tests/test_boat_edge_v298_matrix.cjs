@@ -69,3 +69,7 @@ console.log('V298_SIX_LANE_MATRIX_STRICT_HIGHLIGHT_SYNTHETIC_PASS');
 assert(js.includes('awaitingTicketList'),'V328 race transition must track pending list');
 assert(js.includes("list!==lastTicketList"),'V328 must require a fresh list node');
 assert(js.includes("!awaitingTicketList"),'V328 must block stale head picks');
+
+// Keep the new display regression in the existing V307 UI gate; no workflow edits.
+require('./test_boat_edge_v341_comparison_scroll.cjs');
+
