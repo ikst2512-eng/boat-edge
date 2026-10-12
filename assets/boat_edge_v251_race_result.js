@@ -9,6 +9,8 @@ const SCOPE='VERIFIED_POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH';
 const KEY=/^20\d{6}-\d{2}-\d{2}$/;
 const TRIPLE=/^[1-6]-[1-6]-[1-6]$/;
 const PREFIX='./results-detail.html?race=';
+const MODES=Object.freeze({hit:'的中重視',balance:'バランス',hole:'波乱展開',narrow:'激絞り'});
+const modeAllowed=m=>Object.prototype.hasOwnProperty.call(MODES,m);
 const yen=n=>(typeof n==='number'&&Number.isSafeInteger(n)&&n>=0)?'¥'+n.toLocaleString('ja-JP'):'未確認';
 const validKey=k=>typeof k==='string'&&KEY.test(k);
 const validCombo=x=>typeof x==='string'&&TRIPLE.test(x)&&new Set(x.split('-')).size===3;
@@ -42,11 +44,11 @@ function resultFor(report,key){
  return matching.length===1&&verifiedRow(matching[0])?matching[0]:null;
 }
 if(typeof module!=='undefined'&&module.exports){
- module.exports={validKey,validCombo,verifiedReport,verifiedRow,resultFor,yen};
+ module.exports={validKey,validCombo,verifiedReport,verifiedRow,resultFor,yen,modeAllowed,MODES};
 }
 if(typeof document==='undefined'||typeof window==='undefined')return;
 if(window.BoatEdgeV251)return;
-let report=null, status='loading', loadedAt=0, inflight=false, currentKey='',signature='';
+let report=null, status='loading', loadedAt=0, inflight=false, currentKey='',signature='',selectedResultMode='hit';
 const find=(s,parent=document)=>parent.querySelector(s);
 const text=(target,s)=>{if(target)target.textContent=String(s)};
 const el=(tag,cls,contents)=>{
@@ -86,7 +88,7 @@ function createChips(combo){
 }
 function link(label,key){
  const a=el('a','be251-link',label);
- a.href=validKey(key)?PREFIX+encodeURIComponent(key):'./results.html';
+ a.href=validKey(key)?PREFIX+encodeURIComponent(key)+'&mode='+encodeURIComponent(selectedResultMode):'./results.html';
  return a;
 }
 function render(){
@@ -94,7 +96,7 @@ function render(){
  const race=selectedRace(),key=race?.race_key||'';
  if(!validKey(key)){find('#be251Outcome')?.remove();currentKey='';signature='';return}
  const row=resultFor(report,key);
- const newSignature=JSON.stringify([key,status,report?.settled_verified_races||0,row?.precommitted_sha256||'',row?.mode_outcomes?.hit?.hit,row?.official_payout_per_100_yen]);
+ const newSignature=JSON.stringify([key,status,report?.settled_verified_races||0,row?.precommitted_sha256||'',selectedResultMode,row?.mode_outcomes?.[selectedResultMode]?.hit,row?.mode_outcomes?.[selectedResultMode]?.hypothetical_return_yen,row?.official_payout_per_100_yen]);
  if(newSignature===signature&&find('#be251Outcome'))return;
  signature=newSignature;currentKey=key;
  const box=place();
@@ -111,8 +113,16 @@ function render(){
   const actions=el('div','be251-actions');actions.append(link('結果・払戻の一覧',null));body.append(actions);
   return;
  }
- const mode=row.mode_outcomes.hit;
- const badge=el('div',mode.hit?'be251-badge good':'be251-badge miss',mode.hit?'🎯 3連単的中':'3連単不的中');
+ const choice=el('div','be251-result-modes');choice.setAttribute('role','group');choice.setAttribute('aria-label','検証済み買い目モードの切替');
+ for(const [keyMode,label] of Object.entries(MODES)){
+  const button=el('button','be251-result-mode',label);
+  button.type='button';button.dataset.resultMode=keyMode;
+  button.setAttribute('aria-pressed',String(selectedResultMode===keyMode));
+  if(selectedResultMode===keyMode)button.classList.add('on');
+  choice.appendChild(button);
+ }
+ const mode=row.mode_outcomes[selectedResultMode];
+ const badge=el('div',mode.hit?'be251-badge good':'be251-badge miss',mode.hit?'🎯 '+MODES[selectedResultMode]+'的中':MODES[selectedResultMode]+' 不的中');
  const line=el('div','be251-race-result');line.append(badge,createChips(row.winning_combo));
  const pay=el('div','be251-money');
  const p=el('div');p.append(el('small','','公式100円払戻'),el('b','',yen(row.official_payout_per_100_yen)));
@@ -120,10 +130,10 @@ function render(){
  const u=el('div');u.className=mode.hypothetical_profit_yen>=0?'gain':'loss';
  u.append(el('small','','仮想損益'),el('b','',(mode.hypothetical_profit_yen>=0?'+':'−')+yen(Math.abs(mode.hypothetical_profit_yen))));
  pay.append(p,q,u);
- const note=el('p','be251-muted','1着予想 '+String(row.head_prediction)+'号艇：'+(row.head_hit?'頭的中':'頭外れ')+' ／ 締切前固定・サイト限定研究・実購入なし');
+ const note=el('p','be251-muted','1着予想 '+String(row.head_prediction)+'号艇：'+(row.head_hit?'頭的中':'頭外れ')+' ／ '+mode.tickets+'点・締切前固定／サイト参考予想・実購入なし');
  const actions=el('div','be251-actions');
  actions.append(link('このRの買い目・配分を見る ›',key),link('結果一覧',null));
- body.append(line,pay,note,actions);
+ body.append(choice,line,pay,note,actions);
 }
 async function load(){
  if(inflight)return;
@@ -143,10 +153,16 @@ function tick(){
  if(!inflight&&Date.now()-loadedAt>90000)load();
 }
 function start(){
+ document.addEventListener('click',e=>{
+  const button=e.target?.closest?.('#be251Outcome [data-result-mode]');
+  const mode=button?.dataset?.resultMode;
+  if(!modeAllowed(mode)||mode===selectedResultMode)return;
+  selectedResultMode=mode;signature='';render();
+ });
  tick();load();
  window.setInterval(()=>{if(!document.hidden)tick()},2500);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
 }
-window.BoatEdgeV251={refresh:load,version:'V251-READONLY-SITE-RESULT'};
+window.BoatEdgeV251={refresh:load,version:'V255-FOUR-MODE-SITE-RESULT'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })(typeof window!=='undefined'?window:{});
