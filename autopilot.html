@@ -12,6 +12,7 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
 @media(max-width:700px){main{padding:16px 12px}.grid{grid-template-columns:1fr 1fr;gap:9px}.card{padding:13px}.card:first-child{grid-column:span 2}.stat{font-size:22px}.split{grid-template-columns:1fr}.facts{gap:6px}.facts b{font-size:17px}.top{padding:10px 12px}.brand{font-size:15px}.links{gap:7px;font-size:10px}.links a:nth-child(2){display:none}.links button{padding:6px 8px}h1{font-size:23px}.panel{padding:14px}.record .issue{max-width:60%}}
 </style>
 <link rel="stylesheet" href="./assets/boat_edge_v252_prospective.css?v=252">
+<link rel="stylesheet" href="./assets/boat_edge_v253_misses.css?v=253">
 </head>
 <body>
 <header><div class="top"><a class="brand" href="./">BOAT EDGE <small>AUTOPILOT</small></a><nav class="links"><a href="./">レース</a><a href="./ai-simulation.html">AI自走シミュレーション</a><a href="./cohort.html">未見予想の検証</a><button id="reload" type="button">↻ 更新</button></nav></div></header>
@@ -36,6 +37,11 @@ main{max-width:1040px;margin:auto;padding:22px 16px}h1{font-size:26px;line-heigh
     <div class="v252-sub"><h3>広げた15点：取りこぼしと点数の差</h3><div id="v252Wide"><p>点数の異なる監査結果を照合中</p></div></div>
   </div>
   <p class="v252-footer">「拾えた／失った」は同じ固定レースでの的中差。10〜20倍を狙って後から組み替えたり、精度未証明の候補を本番昇格させたりしない。10点と15点の的中率は点数が違うため、改善を直接比較できません。</p>
+</section>
+<section class="v253-board" aria-label="未見予想の外れた着順を特定">
+ <div class="v253-header"><h2>未見予想はどこで外れた？</h2><button id="v253Reload" type="button">↻ 診断更新</button></div>
+ <p class="v253-intro">締切前にGitHubへ保存済みの候補と、サイト限定の検証済み確定結果を照合。1着・2着・3着の抜けを別々に集計。条件が一致したレースだけを対象にします。</p>
+ <div id="v253Misses" role="region" aria-label="買い目の取りこぼし原因"><p>保存済み監査データを確認中</p></div>
 </section>
 <p class="foot">BOAT EDGE V227 / 公開サイトの表示は保存済みの監査記録に基づきます。GitHub Actionsの実行成功はモデルの精度改善・回収率の保証ではありません。</p>
 </main>
@@ -83,4 +89,5 @@ $('reload').addEventListener('click',update);update();setInterval(()=>{if(!docum
 })();
 </script>
 <script defer src="./assets/boat_edge_v252_prospective.js?v=252"></script>
+<script defer src="./assets/boat_edge_v253_misses.js?v=253"></script>
 </body></html>
