@@ -80,4 +80,13 @@ assert(sixBoatJS.includes("$$('.be206-layout-switch button',box).forEach"),'V320
 assert(!/(^|[^$])\$\('\.be206-switch button',box\)\.forEach/m.test(sixBoatJS),'V320 no single-node iteration');
 assert(!/(^|[^$])\$\('\.be206-layout-switch button',box\)\.forEach/m.test(sixBoatJS),'V320 no single-node layout iteration');
 console.log('V320_SIX_BOAT_TAB_RENDER_ITERATION_PASS');
+/* V322 source receipts must follow the active race summary, never leak from the old race. */
+if(typeof process!=='undefined'&&process?.versions?.node){
+ const {execFileSync}=require('node:child_process');
+ const fixture='tests/test_boat_edge_v322_race_host.cjs';
+ assert(fs.existsSync(fixture),'required V322 source-host regression missing');
+ const result=execFileSync(process.execPath,[fixture],{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']});
+ assert(result.includes('V322_RACE_EVIDENCE_REPARENT_FAIL_CLOSED_PASS'),'V322 source host check not proven');
+ console.log(result.trim());
+}
 console.log('V304_TOPK_STAKES_ODDS_GUARD_MOBILE_SYNTHETIC_PASS');
