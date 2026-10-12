@@ -25,6 +25,18 @@ const source=(r,k)=>{
  if(now-t>25*60000)return '古い情報 '+stamp(x.fetched_at);
  return stamp(x.fetched_at)+'取得';
 };
+/* Counts represent present numeric fields only, not source verification or approval. */
+const numericPresent=x=>typeof x==='number'&&Number.isFinite(x)&&x>0;
+const sixBoatCount=(items,valid)=>Array.isArray(items)&&items.length===6?
+ items.filter(valid).length:0;
+const completeness=r=>{
+ const before=r?.beforeinfo||{},orig=r?.original_exhibition||{};
+ const official=sixBoatCount(before.racers,x=>numericPresent(x?.exhibition_time));
+ const original=sixBoatCount(orig.boats,x=>Array.isArray(x?.values)&&x.values.some(numericPresent));
+ const audit=r?.source_audit||{};
+ const status=k=>audit[k]?.status==='ok'?'証跡あり':'証跡未確認';
+ return '展示タイム '+official+'/6艇（'+status('beforeinfo')+'） ／ オリ展 '+original+'/6艇（'+status('original_exhibition')+'）';
+};
 const tabs={base:{label:'基本',hint:'実力の比較。赤は6艇の中で差が明確な1位だけ。',cols:[['全国','national.win_rate',2,.4,false],['当地','local.win_rate',2,.4,false],['M2連','motor.quinella_rate',1,3,false]]},
  exhibit:{label:'展示',hint:'STは展示スタート。Fは展示フライング。実コース・本番STではありません。',cols:[['展示ST','st',2,.03,true],['1周','lap',2,.08,true],['回り足','turn',2,.04,true],['直線','straight',2,.04,true]]},
  combo:{label:'連対・機力',hint:'全国・当地の2連対率とモーター2連対率。数値はパーセント。',cols:[['全国2連','national.quinella_rate',1,3,false],['当地2連','local.quinella_rate',1,3,false],['全国3連','national.trio_rate',1,3,false],['M2連','motor.quinella_rate',1,3,false]]}};
@@ -86,7 +98,7 @@ function board(){
  $$('.be206-switch button',box).forEach(b=>{const on=b.dataset.be206Metric===metric;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
  const data=JSON.stringify([r.race_key,metric,rows.map(row=>[row.lane,row.name,row.grade,...tabs[metric].cols.map(c=>field(row,c[1]))]),r.source_audit?.beforeinfo?.fetched_at,r.source_audit?.original_exhibition?.fetched_at]);
  if(lastTable!==data){$('.be206-table',box).innerHTML=format(rows);lastTable=data;}
- setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。');
+ setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
  setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
  document.documentElement.classList.add('be206-active');
  const compact=$('.brandtext small');if(compact&&/^(?:サイトV205|v\d+)$/i.test(compact.textContent.trim()))compact.textContent='サイトV206';
