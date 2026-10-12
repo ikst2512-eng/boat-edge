@@ -1,0 +1,88 @@
+name: BOAT EDGE V255 - Calibrated Claims Evidence Guard
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v255-confidence-calibration-guard-20261012
+    paths:
+      - '.github/workflows/v255-calibration-evidence.yml'
+      - 'scripts/boat_edge_v255_confidence_audit.py'
+      - 'tests/test_boat_edge_v255_confidence.py'
+      - 'tests/test_boat_edge_v255_ui.cjs'
+      - 'assets/boat_edge_v255_confidence.js'
+      - 'assets/boat_edge_v108.js'
+      - 'assets/boat_edge_v108.css'
+      - 'index.html'
+      - 'autopilot.html'
+  workflow_dispatch:
+  schedule:
+    - cron: '9,29,49 0-14,23 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v255-site-only-calibration
+  cancel-in-progress: false
+
+jobs:
+  verify-source-and-honest-percentage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Recompute source-attested prospective reference calibration with no result API
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v255_confidence.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v255_confidence_audit.py
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v255_confidence_audit.py --check
+          node --check assets/boat_edge_v255_confidence.js
+          node --check assets/boat_edge_v108.js
+          node tests/test_boat_edge_v255_ui.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v253_miss_audit.py' -q
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v254_third_tail.py' -q
+          git diff --check
+          echo V255_UNCALIBRATED_CONFIDENCE_SOURCE_AUDIT_PASS
+
+  publish-only-proof-report:
+    needs: verify-source-and-honest-percentage
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Update only validated site-only confidence audit, never prediction and formal data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          success=false
+          for attempt in 1 2 3 4; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_autopilot/v255_confidence_current.json
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v255_confidence_audit.py
+            git add -- data/site_autopilot/v255_confidence_current.json
+            python3 - <<'PY_V255_STAGED'
+          import subprocess
+          names=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert not names or names==['data/site_autopilot/v255_confidence_current.json'],names
+          print('V255_PROOF_ONLY_WHITELIST_PASS',len(names))
+          PY_V255_STAGED
+            git diff --cached --check
+            if git diff --cached --quiet; then echo V255_NO_NEW_SITE_SCORE; success=true; break; fi
+            git commit -m 'V255 verified site-only prospective confidence normalization and empirical rates'
+            if git push origin HEAD:main; then echo V255_EMPIRICAL_CONFIDENCE_AUDIT_PUBLISHED; success=true; break; fi
+            echo "V255_RECHECK_LATEST_COHORT_ATTEMPT_${attempt}"
+          done
+          if test "$success" != true; then echo V255_SAFE_PUBLISH_CONFLICT; exit 1; fi
