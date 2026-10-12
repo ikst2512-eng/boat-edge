@@ -6,7 +6,9 @@ on:
       - ".github/workflows/site-learning.yml"
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    # V267 publish-pressure relief: retrospective V70 ledger is non-live.
+    # Live official odds, PRE_RESULT collection and predeadline freezes remain unchanged.
+    - cron: "23,53 * * * *"
 
 permissions:
   contents: write
