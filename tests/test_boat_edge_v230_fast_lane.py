@@ -22,7 +22,7 @@ def htmlregs(scratch=False):
     return '<table>'+content+'</table>'+('欠場' if scratch else '')
 
 def htmlbefore():
-    racers='<table>'+''.join(f'<tr><td>{i}</td><td>6.{i:02d} 0.0</td></tr>' for i in range(1,7))+'</table>'
+    racers='<table><tr><th>展示タイム</th></tr>'+''.join(f'<tr><td>{i}</td><td>6.{i:02d} 0.0</td></tr>' for i in range(1,7))+'</table>'
     # Mirror the classed spans in the actual official START-display table.
     starts='<table><tr><th>スタート展示</th></tr><tr><td>'+''.join(
        '<div class="table1_boatImage1"><span class="table1_boatImage1Number">'
@@ -56,6 +56,18 @@ class FastLaneTests(unittest.TestCase):
     def test_parse_exact_six_registrations(self):
         self.assertEqual(set(m.parse_regs(htmlregs())),{str(1000+i) for i in range(1,7)})
         self.assertEqual(len(m.parse_before(htmlbefore())['racers']),6)
+    def test_v289_does_not_mistake_six_stat_rows_for_exhibition(self):
+        spoof='<table><tr><th>全国勝率</th></tr>'+''.join(
+          f'<tr><td>{i}</td><td>6.79</td></tr>' for i in range(1,7))+'</table>'
+        self.assertFalse(m.beforeinfo_coverage(m.parse_before(spoof))['six_boat_complete'])
+        # A preceding unrelated 6.x table cannot manufacture six boats.
+        p=m.parse_before(spoof+htmlbefore())
+        self.assertEqual(len(p['racers']),6)
+        self.assertTrue(m.beforeinfo_coverage(p)['six_boat_complete'])
+        # Duplicate official exhibition tables are ambiguous even with 12 racers.
+        self.assertEqual(m.parse_before(htmlbefore()+htmlbefore())['racers'],[])
+        self.assertFalse(m.beforeinfo_coverage(m.parse_before(htmlbefore()+htmlbefore()))['six_boat_complete'])
+
     def test_v289_requires_exact_six_st_and_six_exhibition_lanes(self):
         html=htmlbefore()
         parsed=m.parse_before(html)
