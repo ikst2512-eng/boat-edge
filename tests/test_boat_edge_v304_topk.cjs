@@ -75,8 +75,8 @@ assert(/#be207Top \.be305-evidence-head button\s*\{[^}]*min-height:44px[^}]*min-
 console.log('V317_SAFARI_EVIDENCE_TAP_TARGET_PASS');
 /* V320: six-boat comparison tab updates must iterate all matching buttons. */
 const sixBoatJS=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
-assert(sixBoatJS.includes("$('.be206-switch button',box).forEach"),'V320 all metric buttons update');
-assert(sixBoatJS.includes("$('.be206-layout-switch button',box).forEach"),'V320 all layout buttons update');
+assert(sixBoatJS.includes("$$('.be206-switch button',box).forEach"),'V320 all metric buttons update');
+assert(sixBoatJS.includes("$$('.be206-layout-switch button',box).forEach"),'V320 all layout buttons update');
 assert(!/(^|[^$])\$\('\.be206-switch button',box\)\.forEach/m.test(sixBoatJS),'V320 no single-node iteration');
 assert(!/(^|[^$])\$\('\.be206-layout-switch button',box\)\.forEach/m.test(sixBoatJS),'V320 no single-node layout iteration');
 console.log('V320_SIX_BOAT_TAB_RENDER_ITERATION_PASS');
