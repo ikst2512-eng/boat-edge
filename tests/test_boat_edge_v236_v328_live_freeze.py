@@ -1,5 +1,6 @@
 """V328 live-only integration runner blocks late or result-bearing races."""
 import json
+import hashlib
 import pathlib
 import sys
 import tempfile
@@ -32,6 +33,13 @@ def write_race(root, **overrides):
 
 
 class V328LiveOnly(unittest.TestCase):
+    def test_immutable_candidate_digest_includes_race_source_sha(self):
+        from boat_edge_v318_shadow_freeze import canonical
+        candidate = {"race_key": KEY, "modes": {}, "race_source_sha256": "a" * 64}
+        first = hashlib.sha256(canonical(candidate)).hexdigest()
+        candidate["race_source_sha256"] = "b" * 64
+        self.assertNotEqual(first, hashlib.sha256(canonical(candidate)).hexdigest())
+
     def test_late_clock_rejected_without_write(self):
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)
