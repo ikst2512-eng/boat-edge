@@ -152,8 +152,8 @@ async function load(){
   $('clearFocus').hidden=!focusRace;
   var select=$('day');select.innerHTML='<option value="all">全日付</option>';
   Array.from(new Set(d.rows.map(function(r){return r.date_jst;}))).sort().reverse().forEach(function(day){if(/^20\d{6}$/.test(day)){var item=document.createElement('option');item.value=day;item.textContent=day.slice(0,4)+'/'+day.slice(4,6)+'/'+day.slice(6,8);select.appendChild(item);}});
-  if([...select.options].some(function(o){return o.value===previousDay;}))select.value=previousDay;
-  else if(/^20\d{6}$/.test(requestedDay||'')&&[...select.options].some(function(o){return o.value===requestedDay;}))select.value=requestedDay;
+  if(/^20\d{6}$/.test(requestedDay||'')&&[...select.options].some(function(o){return o.value===requestedDay;}))select.value=requestedDay;
+  else if([...select.options].some(function(o){return o.value===previousDay;}))select.value=previousDay;
   render();
   if(focusRace){var selected=document.querySelector('.race[data-key="'+focusRace+'"] .detailtoggle');if(selected)showTickets(focusRace,selected);}
   $('source').textContent='正式Freshとは別管理';
