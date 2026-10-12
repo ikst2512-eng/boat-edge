@@ -106,6 +106,16 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         report = m.audit(self.root, attest=self.proof)
         self.assertEqual(report["same_race_cross_study"]["v240_vs_v254"]
                          ["identical_race_baseline_matches"], 1)
+        cross = report["same_race_cross_study"]["v236_vs_v240"]["equal_ten_ticket_head_to_head_only"]
+        # V236 baseline misses the synthetic winning combo; V240 second10 catches it.
+        self.assertEqual(cross["hit10_vs_second_coverage10"]["right_only_hits"], 1)
+        self.assertEqual(cross["hit10_vs_second_coverage10"]["left_hits"], 0)
+        self.assertEqual(cross["hit10_vs_second_coverage10"]["right_hits"], 1)
+        # V236 scenario catches it; V240 pair candidate misses, still 10 vs 10.
+        self.assertEqual(cross["scenario7plus3_vs_pair_coverage10"]["left_only_hits"], 1)
+        self.assertEqual(cross["scenario7plus3_vs_pair_coverage10"]["exact_mcnemar_two_sided_p"], 1.0)
+        self.assertFalse(any("coverage15" in name for name in cross))
+        self.assertFalse(any(v["improvement_proven"] for v in cross.values()))
         self.assertEqual(report["within_study"]["v240"]
                          ["equal_ten_point_modes"]["second_coverage10"]["paired_gain"], 1)
         self.assertEqual(report["within_study"]["v236"]
@@ -127,6 +137,10 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.assertEqual(report["within_study"]["v240"]["sample_races"], 1)
         self.assertFalse(report["same_race_cross_study"]["v240_vs_v254"]
                          ["cross_study_superiority_proven"])
+        cross = report["same_race_cross_study"]["v240_vs_v254"]["equal_ten_ticket_head_to_head_only"]
+        self.assertTrue(cross)
+        self.assertTrue(all(r["races"] == 0 and r["exact_mcnemar_two_sided_p"] is None
+                            for r in cross.values()))
 
     def test_corrupted_score_cannot_silently_shrink_sample(self):
         path = self.add("v254")
