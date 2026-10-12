@@ -111,12 +111,25 @@ class V332LiveE2E(unittest.TestCase):
                 live_local_freeze(root, KEY, clock=lambda: PRE)
             self.assertFalse((root / "data/research_local_v332").exists())
 
-    def test_missing_url_rejected_before_any_network_or_capture(self):
+    def test_auto_url_capture_all_three_without_manual_urls(self):
+        from boat_edge_v333_source_urls import suggested_source_urls
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)
             prepare(root)
-            with self.assertRaisesRegex(ValueError, "SOURCE_URL_REQUIRED:kyoteibiyori"):
-                live_local_freeze(root, KEY, {"boaters": URLS["boaters"]},
+            result = live_local_freeze(root, KEY, capture=True,
+                                       fetcher=mock_page, clock=lambda: PRE)
+            expected = suggested_source_urls(KEY)
+            for provider, receipt in result["record"]["source_receipts"].items():
+                self.assertEqual(receipt["source_url"], expected[provider])
+            self.assertEqual(len(result["record"]["candidate"]["modes"]), 3)
+
+    def test_disallowed_manual_url_fails_before_capture(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            prepare(root)
+            with self.assertRaisesRegex(ValueError, "RESULT_ODDS_OR_PAYOUT_ENDPOINT_PROHIBITED"):
+                live_local_freeze(root, KEY,
+                                  {"boaters": "https://boaters-boatrace.com/race/results"},
                                   capture=True, fetcher=mock_page, clock=lambda: PRE)
             self.assertFalse((root / "data/source_captures").exists())
 
@@ -148,6 +161,20 @@ class V332LiveE2E(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
                 live_local_freeze(pathlib.Path(d), "20261001-22-12", clock=lambda: PRE)
+
+    def test_official_source_url_wrong_race_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            prepare(root)
+            path = root / "data/races" / (KEY + ".json")
+            race = json.loads(path.read_text())
+            race["source_audit"]["beforeinfo"]["source"] = (
+                "https://www.boatrace.jp/owpc/pc/race/beforeinfo"
+                "?hd=20261013&jcd=22&rno=11"
+            )
+            path.write_text(json.dumps(race))
+            with self.assertRaisesRegex(ValueError, "SOURCE_RACE_URL_MISMATCH"):
+                live_local_freeze(root, KEY, clock=lambda: PRE)
 
     def test_result_bearing_race_file_rejected(self):
         with tempfile.TemporaryDirectory() as d:
