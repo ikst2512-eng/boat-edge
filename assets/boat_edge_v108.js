@@ -930,10 +930,14 @@ function renderTicketRows(rows,win,postResult=false,officialPayout100=null){
         details=`締切前の保存配分 ${money(stake)} / ${verifiedPayout===null?'公式払戻未取得':'公式結果と照合済み'}`;
       }
     }else{
-      const estimate=hasOdds&&stake?`的中時想定払戻 ${money(Math.round(stake*odd))}`:'払戻概算：オッズ未取得';
+      // Latest/current: a 10,000 yen reference allocation, never a purchase
+      // and never a source-verified frozen stake.
+      const estimate=hasOdds&&stake?`的中時想定払戻 ${money(Math.round(stake*odd))}`:'想定払戻：未確認（公式オッズ不足）';
       details=`現在の参考配分 ${money(stake)} / ${estimate}`;
     }
-    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}"><span>${i+1}</span><b>${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em title="未校正の相対順位指標。的中確率ではありません。">相対 ${pct(x.p)}</em><small>${postResult?(hasOdds?'確定 '+odd.toFixed(1)+'倍':'確定倍率－'):(hasOdds?odd.toFixed(1)+'倍':'オッズ－')}</small><span class="be140-ticket-money">${details}</span></div>`;
+    // A22: surface ticket ordering and distinct reference/frozen states on iPhone.
+    // Preserve exact combo, amounts and pre-result evidence; markup only.
+    return `<div class="be108-ticket ${postResult&&win===x.combo?'hit':''}" data-be257-view="${postResult?'frozen':'reference'}"><span class="be257-ticket-rank" aria-label="買い目順位 ${i+1}">${i+1}</span><b class="be257-ticket-combo">${postResult&&win===x.combo?'🎯 ':''}${esc(x.combo)}</b><em title="未校正の相対順位指標。的中確率ではありません。">相対 ${pct(x.p)}</em><small class="be257-ticket-odds">${postResult?(hasOdds?'確定 '+odd.toFixed(1)+'倍':'確定倍率 未確認'):(hasOdds?odd.toFixed(1)+'倍':'オッズ 未確認')}</small><span class="be140-ticket-money" aria-label="${postResult?'締切前保存配分と照合結果':'購入していない参考配分と想定払戻'}">${details}</span></div>`;
   }).join('');
 }
 /* BOAT_EDGE_V181_FIRST_VIEW_IMMUTABLE_AND_FINAL_ONLY */
