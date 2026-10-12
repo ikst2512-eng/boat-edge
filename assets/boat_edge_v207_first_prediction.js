@@ -11,6 +11,23 @@ const text=(el,v)=>{if(el&&el.textContent!==String(v))el.textContent=String(v);}
 const digit=(s)=>{const x=Number(String(s||'').replace(/,/g,''));return Number.isSafeInteger(x)&&x>=0?x:null;};
 const money=x=>x===null?'未確認':Number(x).toLocaleString('ja-JP')+'円';
 const lanes=combo=>{const parts=String(combo||'').match(/^([1-6])-([1-6])-([1-6])$/);return parts?parts.slice(1):null;};
+/* A24: rank-prefix ticket coverage is NOT the probability of head or trifecta.
+ * Accept only the original already-rendered list. No odds/results/API reads. */
+const extractCombo=v=>{
+ const m=String(v||'').match(/(?:^|[^0-9])([1-6]-[1-6]-[1-6])(?:$|[^0-9])/);
+ return m&&lanes(m[1])&&new Set(lanes(m[1])).size===3?m[1]:null;
+};
+function ticketClarity(combos,displayAllowed=true){
+ const unknown={head:'未確認',top3:'未確認',top5:'未確認',top10:'未確認',
+  confidenceHead:'未校正・個別の1着確率は未提供',
+  confidenceTrifecta:'未校正・3連単の的中確率は未提供'};
+ if(!displayAllowed||!Array.isArray(combos)||!combos.length)return unknown;
+ const parsed=combos.map(extractCombo);
+ if(parsed.some(v=>!v)||new Set(parsed).size!==parsed.length)return unknown;
+ const top=n=>parsed.length>=n?('上位'+n+'点／'+parsed.slice(0,n).join(' · ')):'上位'+n+'点の保存順位は未確認';
+ return {...unknown,head:parsed[0][0]+'号艇（Top1券の1着）',
+  top3:top(3),top5:top(5),top10:top(10)};
+}
 let showFive=false,showAll=false,activeKey='',acting=false,queued=false,rendering=false,once=false,lastSig='';
 function skeleton(){
  const host=$('#raceView .race-summary');if(!host)return null;
@@ -23,6 +40,13 @@ function skeleton(){
    <div class="be207-modes" role="group" aria-label="予想スタイル"></div>
    <div class="be207-explain"><strong>展開</strong><span></span><button type="button" data-be207="scenario">詳しく →</button></div>
    <div class="be207-freeze"></div>
+   <section class="be259-head-coverage" role="group" aria-label="頭候補・3連単買い目範囲・未校正信頼度">
+     <div class="be259-head-row"><small>Top1買い目の頭（独立の頭確率ではない）</small><strong data-be259="head"></strong></div>
+     <div class="be259-top-grid"><span data-be259="top3"></span><span data-be259="top5"></span><span data-be259="top10"></span></div>
+     <div class="be259-confidence"><span><b>頭の1着信頼度</b><small data-be259="confidenceHead"></small></span><span><b>3連単Top10信頼度</b><small data-be259="confidenceTrifecta"></small></span></div>
+     <small class="be259-metric" data-be259="metric"></small>
+     <small class="be259-disclaimer">Top3/5/10は買い目の順位別範囲。独立した頭予想の1着確率でも、買い目の的中率でもありません。</small>
+   </section>
    <div class="be207-listhead"><strong>上位買い目</strong><span>確率順・オッズで順位を変更しません</span></div>
    <div class="be207-bets"></div>
    <div class="be207-actions"><button type="button" data-be207="five">上位5点</button><button type="button" data-be207="all">全買い目を表示</button></div><div class="be208-detail-actions"><button type="button" data-be207="detail">詳しいデータ・監査を開く</button></div>
@@ -98,6 +122,16 @@ function render(){
   modeButtons(p,$('.be207-modes',box));
   text($('.be207-explain span',box),stage);
   text($('.be207-freeze',box),'買い目：'+freeze+(settled?'／結果確定後の保存表示':''));
+  const clarity=ticketClarity(rows.map(row=>str('b',row)),!stop);
+  for(const field of ['head','top3','top5','top10','confidenceHead','confidenceTrifecta'])
+    text($('[data-be259="'+field+'"]',box),clarity[field]);
+  // V174 may replace this panel with measured *past* site-only hit rate.
+  // Do not mix that historical rate with a current-race confidence claim.
+  const evidenceTitle=str('.be108-mode-top small',p);
+  const evidenceValue=str('.be108-mode-top strong',p);
+  const evidenceLabel=/過去的中率/.test(evidenceTitle)?'過去実績（このレース固有の確率ではない）':
+    /内部スコア/.test(evidenceTitle)?'内部評価値（未校正・確率ではない）':'既存参考指標（校正状態不明）';
+  text($('[data-be259="metric"]',box),evidenceValue?evidenceLabel+'：'+evidenceValue:'信頼度の独立した検証値は未取得');
   const list=$('.be207-bets',box);list.replaceChildren();
   const count=showAll?rows.length:showFive?5:3;
   if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=rows.length?'出走可否の確認が必要なため、買い目の表示を停止中です。':'買い目を表示できません。直前データ・欠場情報を確認してください。';list.append(w);}
@@ -140,6 +174,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V208-UI'};
+window.BoatEdgeV207={render,displayOnly:true,version:'V259-A24-UI',ticketClarity,extractCombo};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
