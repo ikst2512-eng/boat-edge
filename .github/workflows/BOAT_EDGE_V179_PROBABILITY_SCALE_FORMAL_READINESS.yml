@@ -93,6 +93,10 @@ jobs:
               blob=gzip.decompress(base64.b64decode(encoded))
               assert hashlib.sha256(blob).hexdigest()==sha,'V179_ASSET_SHA_MISMATCH '+rel
               p=Path(rel)
+              if p.exists() and p.read_bytes()!=blob:
+                  # Archived V179 payload must never overwrite newer verified site fixes.
+                  print('V179_ARCHIVED_BUNDLE_DIFFERENT_KEEP_MAIN',rel)
+                  continue
               p.parent.mkdir(parents=True,exist_ok=True)
               p.write_bytes(blob)
               print('V179_SOURCE_SHA_PASS',rel,sha,len(blob))
