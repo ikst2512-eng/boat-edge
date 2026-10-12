@@ -52,11 +52,12 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_site_odds_v167*.py' -v
           python3 -m py_compile scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py
+          python3 -c 'from scripts.site_odds_v167_dom_verifier import verify_official_dom_price_mapping; print("V167_IMPORT_ROOT_PASS")'
       - name: Compare two LIVE official pages before patching any collector
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/site_odds_v167_live_audit.py
+          PYTHONPATH="${GITHUB_WORKSPACE}" python3 scripts/site_odds_v167_live_audit.py
           git diff --check
       - name: Commit audit safely; auto-enable collector guard only after 2x120 PASS
         shell: bash
