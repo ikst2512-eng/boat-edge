@@ -45,9 +45,28 @@ def test_all():
         assert 'beforeinfo_unavailable' in incomplete['current_windows'][0]['missing_evidence']
         card={'status':'ok','fetched_at':'2026-10-11T08:23:00+09:00'}
         put(root,f'data/races/{KEY}.json',{'race_key':KEY,'meta':{'phase':'PRE_RESULT','results_seen':False,'unlock':False,'scoring':False},'racers':[{}]*6,'source_audit':{'race_card':card,'beforeinfo':card}})
-        put(root,f'data/site_scratches_v182/{KEY}.json',{'race_key':KEY,'blocked':False,'checked_at':card['fetched_at'],'race_card_source_status':'ok'})
-        put(root,f'data/site_odds/{KEY}.json',{'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':card['fetched_at']})
+        scratch={'race_key':KEY,'blocked':False,'checked_at':card['fetched_at'],
+                 'race_card_source_status':'ok','official_beforeinfo_source_status':'ok'}
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        combos={f'{a}-{b}-{c}':12.3 for a in range(1,7) for b in range(1,7)
+                for c in range(1,7) if len({a,b,c})==3}
+        odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':card['fetched_at'],
+              'results_seen':False,'scoring':False,'available_count':120,
+              'verified_official_dom_v167':True,'trifecta_odds':combos}
+        put(root,f'data/site_odds/{KEY}.json',odds)
         put(root,f'data/site_prediction_snapshots/{KEY}.json',{'race_key':KEY,'snapshot_window':'FINAL_15M','odds_sha256':'x'*64})
+        # V267: 120 complete is not the same as official DOM proof, and scratch
+        # clearance requires independent official beforeinfo provenance.
+        put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'official_beforeinfo_source_status':'published_wait'})
+        assert 'scratch_stale' in mod.compute(root,middle)['current_windows'][0]['missing_evidence']
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        put(root,f'data/site_odds/{KEY}.json',{**odds,'verified_official_dom_v167':False})
+        assert 'odds_official_dom_unverified' in mod.compute(root,middle)['current_windows'][0]['missing_evidence']
+        put(root,f'data/site_odds/{KEY}.json',{**odds,'available_count':60})
+        assert 'odds_120_incomplete' in mod.compute(root,middle)['current_windows'][0]['missing_evidence']
+        put(root,f'data/site_odds/{KEY}.json',{**odds,'trifecta_odds':{**combos,'1-2-3':0}})
+        assert 'odds_120_incomplete' in mod.compute(root,middle)['current_windows'][0]['missing_evidence']
+        put(root,f'data/site_odds/{KEY}.json',odds)
         complete=mod.compute(root,middle)
         assert complete['status']=='MONITORING_PREDEADLINE' and complete['issues']==[]
         assert complete['recovery_dispatch_candidates']==[]

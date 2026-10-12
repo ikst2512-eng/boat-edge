@@ -56,11 +56,29 @@ def source_status(root,key,now):
     elif age_minutes(before.get('fetched_at'),now)>15:issues.append('beforeinfo_stale')
     if scratch.get('race_key')!=key or scratch.get('blocked') is not False:
         issues.append('scratch_unverified_or_blocked')
-    elif scratch.get('race_card_source_status')!='ok' or age_minutes(scratch.get('checked_at'),now) is None or age_minutes(scratch.get('checked_at'),now)>15:
+    elif (scratch.get('race_card_source_status')!='ok' or
+          scratch.get('official_beforeinfo_source_status')!='ok' or
+          age_minutes(scratch.get('checked_at'),now) is None or
+          age_minutes(scratch.get('checked_at'),now)>15):
         issues.append('scratch_stale')
-    if odds.get('race_key')!=key or odds.get('phase')!='PRE_RESULT_PURCHASE_ONLY' or age_minutes(odds.get('fetched_at'),now) is None:
+    if (odds.get('race_key')!=key or odds.get('phase')!='PRE_RESULT_PURCHASE_ONLY' or
+        odds.get('results_seen') is not False or odds.get('scoring') is not False or
+        age_minutes(odds.get('fetched_at'),now) is None):
         issues.append('odds_evidence_missing')
-    elif age_minutes(odds.get('fetched_at'),now)>15:issues.append('odds_evidence_stale')
+    elif age_minutes(odds.get('fetched_at'),now)>15:
+        issues.append('odds_evidence_stale')
+    else:
+        rows=odds.get('trifecta_odds')
+        valid=(isinstance(rows,dict) and len(rows)==120 and
+               odds.get('available_count')==120 and
+               all(f'{a}-{b}-{c}' in rows and
+                   type(rows[f'{a}-{b}-{c}']) in (int,float) and
+                   0<rows[f'{a}-{b}-{c}']<float('inf')
+                   for a in range(1,7) for b in range(1,7) for c in range(1,7)
+                   if len({a,b,c})==3))
+        if not valid:issues.append('odds_120_incomplete')
+        if odds.get('verified_official_dom_v167') is not True:
+            issues.append('odds_official_dom_unverified')
     if snap.get('race_key')!=key or snap.get('snapshot_window')!='FINAL_15M' or not snap.get('odds_sha256'):
         issues.append('frozen_prediction_missing_or_invalid')
     return sorted(set(issues))
@@ -119,7 +137,7 @@ def compute(root,now):
         recover.append('auto-update.yml')
     if any(r['minutes_left']<=25 for r in soon) and 'odds_index_stale' in reasons:
         recover.append('site-odds.yml')
-    if any(r['minutes_left']<=12 and any(i.startswith('odds_evidence_') for i in r['missing_evidence']) for r in urgent):
+    if any(r['minutes_left']<=12 and any(i.startswith('odds_evidence_') or i in ('odds_120_incomplete','odds_official_dom_unverified') for i in r['missing_evidence']) for r in urgent):
         recover.append('site-odds.yml')
     recover=sorted(set(recover)&RECOVER_ALLOW)
     if reasons:status='NEEDS_ATTENTION'
