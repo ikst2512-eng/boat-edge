@@ -36,6 +36,8 @@ assert(js.includes("const pendingScratch=!settled&&st.kind!=='partial'"));
 assert(js.includes('relative+\'（未校正）\''));
 assert(!js.includes("prob+' 予測'"));
 assert(js.includes('元画面の参考配分合計'));
+assert(js.includes('stake!==null&&verifiedPrice&&payout!==null'));
+assert(js.includes('画面 V306'));
 assert(css.includes('min-height:44px'));
 assert(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
 assert(css.includes('#be251Outcome .be251-money'));
