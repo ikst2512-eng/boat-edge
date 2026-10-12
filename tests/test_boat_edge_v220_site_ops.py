@@ -107,6 +107,15 @@ def test_v271_urgent_health():
         assert mod.compute(root,now)['official_beforeinfo_urgent_15m']['status']=='UNVERIFIED_OR_STALE'
     print('V271_URGENT_TELEMETRY_FAIL_CLOSED_PASS')
 
+def test_v272_source_change_trigger():
+    workflow=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
+    assert "'scripts/boat_edge_v220_site_ops.py'" in workflow
+    assert "'tests/test_boat_edge_v220_site_ops.py'" in workflow
+    assert 'PY_V220_INSTALL' not in workflow
+    assert 'Verify current versioned site-operations code' in workflow
+    print('V272_SOURCE_CHANGE_TRIGGER_PASS')
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
+    test_v272_source_change_trigger()

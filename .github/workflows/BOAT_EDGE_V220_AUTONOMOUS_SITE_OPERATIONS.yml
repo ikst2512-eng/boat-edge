@@ -3,7 +3,10 @@ name: BOAT EDGE V220 - Autonomous Site Operations And Guarded Recovery
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml']
+    paths:
+      - '.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml'
+      - 'scripts/boat_edge_v220_site_ops.py'
+      - 'tests/test_boat_edge_v220_site_ops.py'
   workflow_dispatch:
   schedule:
     - cron: '8,23,38,53 * * * *'
