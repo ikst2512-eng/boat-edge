@@ -33,3 +33,7 @@ const panelSource=fs.readFileSync('assets/boat_edge_v223_source_visibility.js','
 assert.match(panelSource,/if\(node\.parentElement!==host\)host\.prepend\(node\)/,'V321 reattaches source evidence to active race summary');
 console.log('V321_SOURCE_PANEL_REATTACH_PASS');
 console.log('V241_SOURCE_STATUS_CHIPS_AND_V223_WINDOW_TESTS_PASS: early publication wait, scratch age, block, future, deadline, formal flags');
+
+assert.match(panelSource,/prior\.dataset\.raceKey!==key\)prior\.hidden=true/,'V329 must hide old race source before fetch');
+assert.match(panelSource,/node\.hidden=false;[\s\S]*node\.dataset\.raceKey=key/,'V329 reveals source only after selected race fetch');
+console.log('V329_RACE_SCOPED_SOURCE_FAIL_CLOSED_PASS');
