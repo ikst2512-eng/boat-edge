@@ -1067,7 +1067,7 @@ body{background:
 <link rel="stylesheet" href="./assets/boat_edge_v203_readable.css?v=203&amp;rev=244&amp;patch=247&amp;patch2=250&amp;a23=1&amp;a25=1">
 <link rel="stylesheet" href="./assets/boat_edge_v204_prediction.css?v=204&amp;rev=244&amp;patch=247&amp;patch2=248&amp;patch3=250&amp;a22=1&amp;selected=281">
 <link rel="stylesheet" href="./assets/boat_edge_v205_clean.css?v=205">
-<link rel="stylesheet" href="./assets/boat_edge_v206_quickview.css?v=298">
+<link rel="stylesheet" href="./assets/boat_edge_v206_quickview.css?v=299">
 <link rel="stylesheet" href="./assets/boat_edge_v207_first_prediction.css?v=207&amp;a24=1">
 <link rel="stylesheet" href="./assets/boat_edge_v208_latest_clean.css?v=208">
 <link rel="stylesheet" href="./assets/boat_edge_v211_paper.css?v=211">
@@ -1108,18 +1108,20 @@ body{background:
   </div>
 
 
-  <section class="be241-home-shortcuts" aria-label="よく使う画面">
-  <nav class="be241-shortcuts" aria-label="主要メニュー">
-    <a href="./index.html"><span>⌂</span>レース</a>
-    <a href="./results.html" class="b241-result-shortcut"><span>✓</span>結果・払戻</a>
-    <a href="./ai-simulation.html"><span>◎</span>AI自走</a>
-    <a href="./second-coverage.html"><span>≋</span>精度検証</a>
-  </nav>
-  <div class="be241-home-results"><div class="be241-home-result-title">検証済みの的中結果 <a href="./results-detail.html">買い目明細を見る ›</a></div>
-  <div class="be241-home-result-list" id="be241HomeResults"><span class="be241-home-results-status">結果照合中…</span></div>
-  <div class="be241-home-results-status" id="be241HomeResultsStatus">締切前固定の予想だけを表示します。</div></div>
-</section>
   <main id="homeView" class="view active">
+    <!-- V299: home-only navigation and verified-result preview; never cover a race page. -->
+    <section class="be241-home-shortcuts" aria-label="よく使う画面">
+    <nav class="be241-shortcuts" aria-label="主要メニュー">
+      <a href="./index.html"><span>⌂</span>レース</a>
+      <a href="./results.html" class="b241-result-shortcut"><span>✓</span>結果・払戻</a>
+      <a href="./ai-simulation.html"><span>◎</span>AI自走</a>
+      <a href="./second-coverage.html"><span>≋</span>精度検証</a>
+    </nav>
+    <div class="be241-home-results"><div class="be241-home-result-title">検証済みの的中結果 <a href="./results-detail.html">買い目明細を見る ›</a></div>
+    <div class="be241-home-result-list" id="be241HomeResults"><span class="be241-home-results-status">結果照合中…</span></div>
+    <div class="be241-home-results-status" id="be241HomeResultsStatus">締切前固定の予想だけを表示します。</div></div>
+  </section>
+
     <section class="hero">
       <div class="hero-grid">
         <div class="card hero-main">
@@ -3255,7 +3257,7 @@ startPassiveRefresh();
 <script src="./assets/boat_edge_v203_readable.js?v=203&amp;rev=244&amp;patch=247&amp;patch2=250&amp;a25=1"></script>
 <script src="./assets/boat_edge_v204_prediction.js?v=204&amp;rev=244&amp;patch=247&amp;patch2=248&amp;patch3=250&amp;selected=281"></script>
 <script src="./assets/boat_edge_v205_clean.js?v=205"></script>
-<script src="./assets/boat_edge_v206_quickview.js?v=298"></script>
+<script src="./assets/boat_edge_v206_quickview.js?v=299"></script>
 <script src="./assets/boat_edge_v207_first_prediction.js?v=208&amp;a24=1"></script>
 <script defer src="./assets/boat_edge_v222_live_odds.js?v=256"></script>
 <link rel="stylesheet" href="./assets/boat_edge_v223_source_visibility.css?v=223&amp;rev=244&amp;source=282">
