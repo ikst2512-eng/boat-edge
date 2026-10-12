@@ -260,7 +260,7 @@ def score(root,now):
          'scored_total':n,'new_scored_this_run':new,'comparisons':summary,'pending':rejected,
          'production_model_changed':False,'promotion_authorized':False,'accuracy_improvement_proven':False,
          'status':'DESCRIPTIVE_ONLY_WAIT_INDEPENDENT_MULTIDAY_FRESH',
-         'examples':[{'race_key':x['race_key'],'outcomes':x['outcomes']} for x in rows[-20:]]}
+         'examples':[{'race_key':x['race_key'],'outcomes':x['outcomes']} for x in rows]}
     write_if_changed(root/PATH/'v240_score_current.json',obj,['scored_total','comparisons','pending'])
     print('V240_PAIRED_SITE_ONLY_SCORE',json.dumps({'new':new,'total':n,'comparisons':summary,'pending':rejected},sort_keys=True))
     return obj
