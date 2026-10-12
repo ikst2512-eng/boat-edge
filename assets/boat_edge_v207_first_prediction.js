@@ -161,7 +161,7 @@ function render(){
   const count=showAll?rows.length:showTen?10:showFive?5:3;
   if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent='買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';list.append(w);}
   else rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh,settled)));
-  const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<=3||showAll;
+  const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<5||showAll;
   text(five,showFive?'Top3に戻す':'Top5を表示');
   five.setAttribute('aria-pressed',String(showFive));
   const ten=$('[data-be207="ten"]',box);ten.hidden=stop||rows.length<10||showAll;
