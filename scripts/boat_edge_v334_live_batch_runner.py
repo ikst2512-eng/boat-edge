@@ -49,9 +49,15 @@ def live_window(root, now, window_minutes=15, max_races=12):
                 continue
             try:
                 obj = json.loads(path.read_text(encoding="utf-8"))
+                # Treat malformed race documents as per-race skips; a single
+                # broken card must not interrupt the rest of today's batch.
+                if not isinstance(obj, dict):
+                    raise ValueError("RACE_DOCUMENT_NOT_OBJECT")
                 meta = obj.get("meta")
+                race_date = meta.get("date") if isinstance(meta, dict) else None
                 if (not isinstance(meta, dict) or obj.get("race_key") != key or
-                        meta.get("date", "").replace("-", "") != date):
+                        not isinstance(race_date, str) or
+                        race_date.replace("-", "") != date):
                     raise ValueError("RACE_METADATA_MISMATCH")
                 if meta.get("phase") != "PRE_RESULT" or any(
                     meta.get(x) is not False for x in ("results_seen", "unlock", "scoring")
