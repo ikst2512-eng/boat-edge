@@ -1,0 +1,62 @@
+name: BOAT EDGE V274 - Formal Overlay Site Preflight Tests
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/site_formal_preflight_v274.py'
+      - 'scripts/site_v179_patch.py'
+      - 'tests/test_site_formal_preflight_v274.py'
+      - 'tests/test_v179_probability.py'
+      - '.github/workflows/BOAT_EDGE_V274_SITE_PREFLIGHT_TEST.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/site_formal_preflight_v274.py'
+      - 'scripts/site_v179_patch.py'
+      - 'tests/test_site_formal_preflight_v274.py'
+      - '.github/workflows/BOAT_EDGE_V274_SITE_PREFLIGHT_TEST.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v274-formal-site-preflight
+  cancel-in-progress: false
+
+jobs:
+  verify-site-only-formal-overlay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Syntax and strict preflight unit tests
+        run: |
+          set -euo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          python3 -m py_compile scripts/site_formal_preflight_v274.py scripts/site_v179_patch.py tests/test_site_formal_preflight_v274.py
+          python3 -m unittest discover -s tests -p 'test_site_formal_preflight_v274.py' -v
+          python3 -m unittest discover -s tests -p 'test_v179_probability.py' -v
+      - name: Current collector is never promoted by this check
+        run: |
+          set -euo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'scripts')
+          from site_v179_patch import audit
+          status=json.loads(Path('data/formal_status.json').read_text())
+          pre=status['guards']
+          assert pre['results_seen'] is False and pre['unlock'] is False and pre['scoring'] is False
+          assert pre['RESULT_UNLOCK_TOKEN'] is None
+          report=audit(Path('.'))
+          assert report['formal_current_scoring'] is False
+          assert report['formal_current_gate_executed'] is False
+          print('V274_SITE_PREFLIGHT', report['formal_prediction_content_preflight_reason'])
+          print('V274_FORMAL_FREEZE_UNCHANGED', report['formal_first100_races'])
+          PY
