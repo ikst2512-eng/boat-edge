@@ -67,7 +67,10 @@ jobs:
           assert(index.includes('results-detail.html'));
           assert.equal((index.match(/boat_edge_v251_race_result.js/g)||[]).length,1);
           assert.equal((index.match(/boat_edge_v251_race_result.css/g)||[]).length,1);
-          assert(page.includes("new URLSearchParams(window.location.search).get('race')"));
+          // Preserve the deep-link contract even when URLSearchParams is
+          // stored in a local variable before reading its race/mode keys.
+          assert(page.includes("new URLSearchParams(window.location.search)")&&
+                 page.includes("query.get('race')")&&page.includes("query.get('mode')"));
           assert(page.includes('(!focusRace||r.race_key===focusRace)'));
           assert(page.includes('id="clearFocus"')&&page.includes("showTickets(focusRace,selected)"));
           assert(page.includes("crypto.subtle.digest('SHA-256',bytes)"));
