@@ -1,0 +1,59 @@
+name: BOAT EDGE V250 - Verified Site Evidence UI
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v250-a17-a20-evidence-display-20261012
+    paths:
+      - 'assets/boat_edge_v204_prediction.js'
+      - 'assets/boat_edge_v204_prediction.css'
+      - 'assets/boat_edge_v203_readable.js'
+      - 'assets/boat_edge_v203_readable.css'
+      - 'assets/boat_edge_v223_source_visibility.js'
+      - 'assets/boat_edge_v241_results.js'
+      - 'assets/boat_edge_v241_results.css'
+      - 'assets/boat_edge_v211_paper.js'
+      - 'assets/boat_edge_v211_paper.css'
+      - 'index.html'
+      - 'results.html'
+      - 'ai-simulation.html'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+      - 'tests/test_boat_edge_v250_ui.cjs'
+      - '.github/workflows/v250-site-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-only-site-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run A17-A20 and regression verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          for p in assets/boat_edge_v204_prediction.js assets/boat_edge_v203_readable.js assets/boat_edge_v223_source_visibility.js assets/boat_edge_v241_results.js assets/boat_edge_v211_paper.js; do node --check "$p"; done
+          node tests/test_boat_edge_v250_ui.cjs
+          node tests/test_boat_edge_v248_ui.cjs
+          node tests/test_boat_edge_v247_ui.cjs
+          node tests/test_boat_edge_v244_site.cjs
+          node tests/test_boat_edge_v223_source.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v246_pages_cache.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v243_mobile.py' -v
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          d=json.loads(Path('data/formal_status.json').read_text())
+          g=d['guards']
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('V250_FORMAL_FRESH_RESULT_UNSEEN_LOCK_PASS')
+          PY
+          git diff --check
+          echo V250_VERIFIED_UI_ALL_GUARDS_PASS
