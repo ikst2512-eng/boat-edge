@@ -103,7 +103,7 @@
         <b class="be258-quick-lane be203-l${x.lane}">${x.lane}号艇</b>
         <span>全国勝率 <strong>${val(x.national?.win_rate)}</strong></span>
         <span>当地勝率 <strong class="${red(x.local?.win_rate,bestLocal)}">${val(x.local?.win_rate)}</strong></span>
-        <span>モーター2連 <strong class="${red(x.motor?.quinella_rate,bestMotor)}">${val(x.motor?.quinella_rate,1)}%</strong></span>
+        <span>モーター2連 <strong class="${red(x.motor?.quinella_rate,bestMotor)}">${n(x.motor?.quinella_rate)===null?'－':val(x.motor?.quinella_rate,1)+'%'}</strong></span>
       </div>`).join('')}</div>
       <small class="be258-quick-note">全6艇で確認できる数値だけ差を強調。未取得は「－」。この比較は予想順位を変更しません。</small>
     </section>`;
