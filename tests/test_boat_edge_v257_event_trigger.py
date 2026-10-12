@@ -93,6 +93,41 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",
             (ROOT/'scripts/boat_edge_v254_third_tail.py').read_text())
 
+    def test_v287_only_primary_and_staggered_safe_fallback_have_live_cron(self):
+        import re
+        folder=ROOT/'.github/workflows'
+        old=(folder/'V233.yml').read_text(encoding='utf-8')
+        fallback=(folder/'V234.yml').read_text(encoding='utf-8')
+        primary=(folder/'V235.yml').read_text(encoding='utf-8')
+        shadow=WORKFLOW.read_text(encoding='utf-8')
+        # V233 still supports explicit manual recovery, but its
+        # unguarded legacy Git rebase is never launched on a schedule.
+        self.assertIn('workflow_dispatch:',old)
+        self.assertNotIn('  schedule:',old)
+        self.assertIn('  schedule:',fallback)
+        self.assertIn('  schedule:',primary)
+        self.assertIn('  schedule:',shadow)
+        def minute_slot(src):
+            cron=re.search(r"cron: '(\\d+(?:,\\d+)*) 0-14,23 \\* \\* \\*'",src)
+            self.assertIsNotNone(cron,'Preserve JST 08:00 and day racing window')
+            return set(map(int,cron.group(1).split(',')))
+        primary_slots=minute_slot(primary)
+        tail_slots=minute_slot(shadow)
+        backup_slots=minute_slot(fallback)
+        self.assertEqual(primary_slots,set(range(2,60,5)))
+        self.assertEqual(tail_slots,set(range(3,60,5)))
+        self.assertEqual(backup_slots,set(range(4,60,5)))
+        self.assertFalse(primary_slots & backup_slots)
+        self.assertFalse(tail_slots & backup_slots)
+        # Both active source owners still prohibit retrospective
+        # enrichment and freeze independently before any result score.
+        self.assertIn('V274 immediately freeze qualifying V254',primary)
+        self.assertIn('V275 immediately freeze qualifying V254',fallback)
+        self.assertIn('V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS',fallback)
+        self.assertIn('V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS',primary)
+        self.assertNotIn('git pull --rebase origin main',fallback)
+        self.assertNotIn('git pull --rebase origin main',primary)
+
     def test_v286_first_race_835_jst_has_prospective_owner_and_shadow_slots(self):
         """Guard the UTC-23h schedules covering Japan's first saved 08:35 race.
 
