@@ -1,0 +1,30 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const window={},document={readyState:'loading',addEventListener(){}};
+vm.runInNewContext(fs.readFileSync('assets/boat_edge_v255_confidence.js','utf8'),{
+ window,document,Date,Number,console,setInterval(){}
+},{filename:'v255-confidence'});
+const x=window.BoatEdgeV255;
+const data=JSON.parse(fs.readFileSync('data/site_autopilot/v255_confidence_current.json','utf8'));
+assert(x.validate(data));
+assert.equal(data.head.hits,data.rows.filter(r=>r.head_hit).length);
+assert.equal(data.top10.hits,data.rows.filter(r=>r.top10_hit).length);
+const mutate=fn=>{const clone=JSON.parse(JSON.stringify(data));fn(clone);return x.validate(clone)};
+assert.equal(mutate(d=>d.scope='FORMAL_FRESH'),null);
+assert.equal(mutate(d=>d.formal_result_access=true),null);
+assert.equal(mutate(d=>d.model_promotion_authorized=true),null);
+assert.equal(mutate(d=>d.top10.hits++),null);
+assert.equal(mutate(d=>d.head.hits++),null);
+assert.equal(mutate(d=>d.hit10_frozen_relative_weight.normalized_to_100_in_races++),null);
+assert.equal(mutate(d=>d.hit10_frozen_relative_weight.interpretation='CALIBRATED_100_PERCENT'),null);
+assert.equal(mutate(d=>d.rows[0].head_hit=!d.rows[0].head_hit),null);
+assert.equal(mutate(d=>d.rows[0].race_key=d.rows[1]?.race_key||''),null);
+assert.equal(mutate(d=>d.prospective_source_verified_races++),null);
+const src=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+assert(src.includes('内部スコア（未校正）'));
+assert(!src.includes('<small>内部信頼度</small><strong>${conf}%</strong>'));
+assert(src.includes('相対順位 ${pct(top.p)}（未校正）'));
+const html=fs.readFileSync('autopilot.html','utf8');
+assert(html.includes('id="v255Confidence"'));
+assert(html.includes('boat_edge_v255_confidence.js?v=255'));
+console.log('V255_UNCALIBRATED_EVIDENCE_AND_UI_GUARDS_PASS');
