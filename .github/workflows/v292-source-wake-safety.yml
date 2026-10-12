@@ -1,0 +1,32 @@
+name: BOAT EDGE V292 - Safe Atomic Freeze Source Wake Tests
+on:
+  push:
+    branches: [main, fix/v292-v229-source-event-wakeup]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
+      - 'tests/test_boat_edge_v292_source_wake.py'
+      - '.github/workflows/v292-source-wake-safety.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
+      - 'tests/test_boat_edge_v292_source_wake.py'
+      - '.github/workflows/v292-source-wake-safety.yml'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v292-source-wake-sourceonly-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Only trusted main collectors may wake immutable source freeze
+        run: |
+          set -euo pipefail
+          python3 tests/test_boat_edge_v292_source_wake.py
+          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v229_atomic_freeze.py' -v
+          git diff --check
