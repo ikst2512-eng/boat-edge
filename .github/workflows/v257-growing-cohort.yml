@@ -1,0 +1,45 @@
+name: BOAT EDGE V257 - Growing Forward Cohort Regression
+
+on:
+  push:
+    branches:
+      - main
+      - fix/v257-forward-cohort-main-rebase-20261012
+    paths:
+      - 'assets/boat_edge_v252_prospective.js'
+      - 'tests/test_boat_edge_v252_prospective.cjs'
+      - 'tests/test_boat_edge_v257_forward.cjs'
+      - '.github/workflows/v257-growing-cohort.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-full-forward-denominators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compare every source-verified candidate on equal-size prospective cohorts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v252_prospective.js
+          node tests/test_boat_edge_v252_prospective.cjs
+          node tests/test_boat_edge_v253_ui.cjs
+          node tests/test_boat_edge_v254_tail_status.cjs
+          node tests/test_boat_edge_v255_ui.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v253_miss_audit.py' -q
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert g.get('results_seen') is False and g.get('unlock') is False and g.get('scoring') is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          print('V257_RESULT_UNSEEN_FORMAL_LOCK_PASS')
+          PY
+          git diff --check
+          echo V257_COMPLETE_SOURCE_BOUND_PAIRED_TESTS_PASS

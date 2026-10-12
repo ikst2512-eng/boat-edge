@@ -65,6 +65,39 @@ const day2=mutate(v240,d=>{
 });
 const crossDay=api.check240(day2);
 assert(crossDay&&crossDay.day===allDays[0]+'〜'+nextDay);
+// Full SHA-attested source V253 stays verifiable when V236/V240 aggregate
+// summaries clip examples to their latest 25/20 rows.
+const fullSource=JSON.parse(fs.readFileSync('data/site_autopilot/v253_miss_diagnostics_current.json','utf8'));
+const full=api.fromFullMissProof(fullSource);
+assert(full?.a&&full?.b,'Need complete V253 provenance-backed cohort');
+assert.equal(full.a.n,fullSource.lanes.v236.races_verified);
+assert.equal(full.b.n,fullSource.lanes.v240.races_verified);
+for(const [lane,block] of [['v236',full.a],['v240',full.b]]){
+ const source=fullSource.lanes[lane];
+ for(const row of block.rows){
+  assert.equal(row.hits,source.races.filter(r=>r.categories[row.key]==='hit').length);
+  assert.equal(row.gain,source.races.filter(r=>r.categories[row.key]==='hit'&&r.categories.hit10!=='hit').length);
+  assert.equal(row.loss,source.races.filter(r=>r.categories[row.key]!=='hit'&&r.categories.hit10==='hit').length);
+ }
+}
+assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.formal_result_access=true)),null);
+assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.production_model_changed=true)),null);
+assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.lanes.v236.miss_categories.hit10.hit++)),null);
+assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.lanes.v240.races[0].categories.hit10='invented')),null);
+assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.lanes.v240.races[0].race_key=d.lanes.v240.races[1].race_key)),null);
+const multiday=mutate(fullSource,d=>{
+ const lane=d.lanes.v240;
+ const extra=JSON.parse(JSON.stringify(lane.races[0]));
+ extra.race_key='20261013-14-01';extra.date_jst='20261013';
+ lane.races.push(extra);lane.races_verified++;
+ for(const key of Object.keys(extra.categories))lane.miss_categories[key][extra.categories[key]]++;
+ d.site_verified_reference_races++;
+});
+const m=api.fromFullMissProof(multiday);
+assert(m&&m.b.day.includes('20261013'),'Latest unseen day should be shown');
+const truncated=mutate(v240,d=>{d.scored_total+=20;d.comparisons.hit10.races+=20;});
+assert.equal(api.check240(truncated),null,'Never claim incomplete examples verify 100% of aggregate');
+
 const html=fs.readFileSync('autopilot.html','utf8');
 assert(html.includes('id="v252Evidence"'));
 assert(html.includes('id="v252Equal"'));
