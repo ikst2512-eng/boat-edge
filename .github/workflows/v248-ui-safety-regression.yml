@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/auto-update.yml'
       - 'tests/test_boat_edge_v274_urgent_first.py'
+      - 'scripts/boat_edge_v275_frozen_protection.py'
+      - 'tests/test_boat_edge_v275_frozen_protection.py'
       - 'tests/test_boat_edge_v248_ui.cjs'
       - '.github/workflows/v248-ui-safety-regression.yml'
   push:
@@ -21,6 +23,8 @@ on:
       - 'tests/test_boat_edge_v248_ui.cjs'
       - 'tests/test_boat_edge_v269_urgent_telemetry.py'
       - 'tests/test_boat_edge_v274_urgent_first.py'
+      - 'scripts/boat_edge_v275_frozen_protection.py'
+      - 'tests/test_boat_edge_v275_frozen_protection.py'
       - '.github/workflows/auto-update.yml'
       - '.github/workflows/v248-ui-safety-regression.yml'
   workflow_dispatch:
