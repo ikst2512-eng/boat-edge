@@ -145,7 +145,7 @@ function render(){
  if(rendering)return;
  const r=race(),p=$('#be108PredictionModes'),v=$('#raceView');
  if(!valid(r?.race_key)||!p||!v||!window.BoatEdgeV204?.summarize){
-  $('#be207Top')?.remove();document.documentElement.classList.remove('be207-ready');return;
+  $('#be207Top')?.remove();document.documentElement.classList.remove('be207-ready','be306-race-await');return;
  }
  const key=r.race_key,st=safety(r),sum=window.BoatEdgeV204.summarize(p),settled=sum.settled;
  const sourceList=$('.be108-ticket-list',p);
@@ -169,6 +169,7 @@ function render(){
  const rowOK=validTickets(rows);
  const pendingScratch=!settled&&st.kind!=='partial';
  const ticketViewSynced=Boolean(sourceList&&!awaitingRaceList);
+ document.documentElement.classList.toggle('be306-race-await',!ticketViewSynced);
  const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,ticketViewSynced,evidence,
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
