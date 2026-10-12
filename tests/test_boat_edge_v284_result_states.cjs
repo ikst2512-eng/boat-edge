@@ -4,7 +4,7 @@ const html=fs.readFileSync('results.html','utf8');
 const css=fs.readFileSync('assets/boat_edge_v241_results.css','utf8');
 const js=fs.readFileSync('assets/boat_edge_v241_results.js','utf8');
 const labels=['締切前固定','🎯 検証済み的中','検証済み不的中','結果待ち','検証対象外'];
-const text=(html.match(/<aside class="be247-status-guide"[\s\S]*?<\/aside>/)||[])[0];
+const text=(html.match(/<aside class="be247-status-guide"[^>]*>([\s\S]*?)<\/aside>/)||[])[1];
 assert(text);
 for(const label of labels)assert(text.includes(label),label);
 for(let i=1;i<labels.length;i++)assert(text.indexOf(labels[i-1])<text.indexOf(labels[i]),labels[i]);
