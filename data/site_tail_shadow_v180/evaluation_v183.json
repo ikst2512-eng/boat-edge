@@ -38,12 +38,12 @@
     },
     "all": {
       "baseline_hits": {
-        "10": 22,
+        "10": 23,
         "3": 9,
         "5": 15
       },
       "candidate_hits": {
-        "10": 22,
+        "10": 23,
         "3": 7,
         "5": 16
       },
@@ -52,16 +52,16 @@
         "3": -2,
         "5": 1
       },
-      "races": 68
+      "races": 69
     },
     "over50": {
       "baseline_hits": {
-        "10": 2,
+        "10": 3,
         "3": 1,
         "5": 1
       },
       "candidate_hits": {
-        "10": 2,
+        "10": 3,
         "3": 0,
         "5": 1
       },
@@ -70,7 +70,7 @@
         "3": -1,
         "5": 0
       },
-      "races": 27
+      "races": 28
     },
     "payout_unknown": {
       "baseline_hits": {
@@ -116,7 +116,7 @@
   "invalid_shadows": [],
   "no_odds_used_for_prediction": true,
   "note": "Realized-payout bands are post-settlement diagnostics, never odds-based ticket selection. First-commit time must precede deadline.",
-  "pending_results": 1,
+  "pending_results": 0,
   "pre_result_commit_provenance_required": true,
   "prediction_weights_changed": false,
   "races": [
@@ -1646,6 +1646,31 @@
       "winning_combo": "1-2-4"
     },
     {
+      "added_at": "2026-10-12T09:21:28Z",
+      "added_commit": "564e7c4cb768dc068fee8f581307b256b41763a8",
+      "baseline_head_top10": true,
+      "baseline_hits": {
+        "10": true,
+        "3": false,
+        "5": false
+      },
+      "baseline_miss_class": null,
+      "candidate_head_top10": true,
+      "candidate_hits": {
+        "10": true,
+        "3": false,
+        "5": false
+      },
+      "candidate_miss_class": null,
+      "payout_band": "over50",
+      "payout_yen_per_100": 10360,
+      "race_key": "20261012-12-08",
+      "result_status": "confirmed",
+      "source_saved_at": "2026-10-12T09:20:08.538595+00:00",
+      "source_sha256": "f94157e04c854b82e2c6a5b7661434ddc71e74706ccb6f126d67cab0a5f3106b",
+      "winning_combo": "4-6-1"
+    },
+    {
       "added_at": "2026-10-12T00:17:51Z",
       "added_commit": "31895eb8a4c91240f2f75f1ee77842f3d88d1bba",
       "baseline_head_top10": true,
@@ -1823,6 +1848,6 @@
   ],
   "schema_version": "boat-edge-v183-independent-shadow-score-v1",
   "scope": "POST_SETTLEMENT_FUTURE_SITE_REFERENCE_ONLY_NOT_FORMAL_FRESH",
-  "settled_races": 68,
+  "settled_races": 69,
   "status": "RESEARCH_ONLY_NO_ADOPTION"
 }
