@@ -33,7 +33,8 @@ def rank_120(strengths, second_log=None, third_log=None):
     scale = max(strengths.values())
     weights = {c: strengths[c] / scale for c in COURSES}
     raw = []
-    # Iterate all ordered podiums; each course is an actual entry position.\n    for a, b, c in itertools.permutations(COURSES, 3):
+    # Iterate all ordered podiums; each course is an actual entry position.
+    for a, b, c in itertools.permutations(COURSES, 3):
         rest = sum(weights.values()) - weights[a]
         rest2 = rest - weights[b]
         p = (weights[a] / sum(weights.values())) * (weights[b] / rest) * (weights[c] / rest2)
