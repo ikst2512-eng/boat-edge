@@ -63,3 +63,15 @@ html.be306-race-await #raceView #be108PredictionModes{display:none!important}
  #raceView #be207Top .be305-evidence-items{grid-template-columns:minmax(0,1fr)}
  #raceView #be207Top .be207-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+/* V338: prioritize safety, scenario and verified tickets without hiding evidence. */
+#raceView #be207Top .be207-condition{overflow-wrap:anywhere}
+#raceView #be207Top .be207-explain{min-width:0;overflow-wrap:anywhere}
+#raceView #be207Top .be207-explain button{min-height:44px;min-width:44px;touch-action:manipulation}
+#raceView #be207Top .be207-freeze{overflow-wrap:anywhere}
+#raceView #be207Top .be207-listhead{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:5px}
+#raceView #be207Top .be207-listhead span{overflow-wrap:anywhere}
+@media(max-width:360px){
+ #raceView #be207Top .be207-listhead{display:block}
+ #raceView #be207Top .be207-listhead span{display:block;margin-top:4px}
+}
