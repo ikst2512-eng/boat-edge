@@ -324,7 +324,7 @@ jobs:
                   lane=row.get("lane")
                   st=row.get("st")
                   if (type(lane) is int and lane in expect and
-                          isinstance(st,str) and re.fullmatch(r"F?\.\d{2}",st)):
+                          isinstance(st,str) and re.fullmatch(r"(?:F|[+-])?0?\.\d{1,2}",st)):
                       starts.add(lane)
               full_ex=exhibition==expect and len(parsed.get("racers",[]))==6
               full_st=starts==expect and len(parsed.get("start_exhibition",[]))==6
