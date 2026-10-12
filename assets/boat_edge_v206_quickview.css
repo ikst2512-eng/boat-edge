@@ -55,3 +55,26 @@ html.be206-active #be108PredictionModes .be108-ticket.be206-hide-ticket{display:
  #be206Quick .be206-layout-switch button{font-size:11px}
  #be206Quick .be206-matrix th,#be206Quick .be206-matrix td{padding:9px 4px}
 }
+
+/* V299: tap a racer in either 6-boat view; source-backed first-place tickets only. */
+#be206Quick .be206-headpick-trigger{font:inherit;line-height:1.4;border:1px solid transparent;background:transparent;display:block;width:100%;min-width:0;min-height:44px;padding:7px 2px;border-radius:7px;color:#21496c;text-align:left;cursor:pointer}
+#be206Quick .be206-headpick-trigger:hover{background:#eef6ff}
+#be206Quick .be206-headpick-trigger[aria-pressed="true"]{background:#e5f1ff;border-color:#4f8dc7;box-shadow:inset 0 0 0 1px #b7d7f3}
+#be206Quick .be206-headpick-trigger:focus-visible,#be206Quick .be206-headpanel button:focus-visible{outline:3px solid #286ec2;outline-offset:2px}
+#be206Quick .be206-racername.be206-headpick-trigger{font-size:11px;font-weight:900;text-overflow:ellipsis;overflow:hidden;white-space:normal}
+#be206Quick .be206-racername.be206-headpick-trigger small{font-size:9px}
+#be206Quick .be206-matrix thead .be206-headpick-trigger{text-align:center;white-space:normal}
+#be206Quick .be206-matrix thead .be206-headpick-trigger b{max-width:none}
+#be206Quick .be206-headpanel{border:1px solid #b7d6f3;background:#f1f8ff;border-radius:10px;margin:12px 0;padding:11px;scroll-margin-top:190px}
+#be206Quick .be206-headpanel[hidden]{display:none!important}
+#be206Quick .be206-head-top{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+#be206Quick .be206-head-top strong{font-size:14px;color:#154d80}
+#be206Quick .be206-head-source{font-size:10px;border-radius:6px;background:#e5eef8;color:#29577e;padding:4px 6px}
+#be206Quick .be206-head-top button{margin-left:auto;min-height:40px;border:1px solid #b7cbe3;border-radius:7px;padding:7px 9px;background:#fff;color:#24527e;font-weight:800}
+#be206Quick .be206-headpanel ol{padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:11px 0}
+#be206Quick .be206-headpanel li{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:9px;background:#fff;border:1px solid #d8e6f4;border-radius:7px}
+#be206Quick .be206-headpanel li span{font-size:10px;color:#506e8d}
+#be206Quick .be206-headpanel li b{font-size:14px;font-variant-numeric:tabular-nums;color:#153f6a}
+#be206Quick .be206-headpanel p{font-size:12px;line-height:1.6}
+#be206Quick .be206-headpanel>small{font-size:10px;line-height:1.6;color:#526b83;display:block}
+@media(max-width:380px){#be206Quick .be206-headpanel ol{grid-template-columns:1fr}}
