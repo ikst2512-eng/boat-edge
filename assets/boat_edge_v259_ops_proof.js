@@ -95,11 +95,17 @@ function missingReasons(key,deadline,race,scratch,odds,now=Date.now()){
     !ageOK(scratch.checked_at,now,15*60000))
   reasons.push('欠場・取消の安全確認待ち');
  const rows=odds?.trifecta_odds||{};
- if(odds?.race_key!==key||odds.phase!=='PRE_RESULT_PURCHASE_ONLY'||
-    odds.results_seen!==false||odds.scoring!==false||
-    odds.verified_official_dom_v167!==true||odds.available_count!==120||
-    Object.keys(rows).length!==120||!ageOK(odds.fetched_at,now,15*60000))
-  reasons.push('公式3連単120通りの確認待ち');
+ const allCombinations=[];
+ for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)for(let c=1;c<=6;c++){
+  if(a!==b&&a!==c&&b!==c)allCombinations.push(a+'-'+b+'-'+c);
+ }
+ const rowsReady=odds?.race_key===key&&odds.phase==='PRE_RESULT_PURCHASE_ONLY'&&
+    odds.results_seen===false&&odds.scoring===false&&odds.available_count===120&&
+    Object.keys(rows).length===120&&ageOK(odds.fetched_at,now,15*60000)&&
+    allCombinations.every(combo=>typeof rows[combo]==='number'&&Number.isFinite(rows[combo])&&rows[combo]>0);
+ if(!rowsReady)reasons.push('3連単120通り・保存時刻の確認待ち');
+ else if(odds.verified_official_dom_v167!==true)
+  reasons.push('公式DOM照合の記録待ち');
  if(!reasons.length)return [rem<2?'固定期限内の保存証跡なし（後付け禁止）':'入力は取得済み・固定予想の保存証跡待ち'];
  return reasons;
 }
