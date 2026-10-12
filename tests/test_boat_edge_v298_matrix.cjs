@@ -43,11 +43,13 @@ assert(css.includes('overflow-x:auto'));
 assert(css.includes('position:sticky'));
 assert(css.includes('[hidden]'));
 assert(js.includes("layout='lanes'"));
+assert(js.includes("$('.be206-switch button',box).forEach"),'V320 metric selector must return a collection');
+assert(js.includes("$('.be206-layout-switch button',box).forEach"),'V320 layout selector must return a collection');
 assert(js.includes('data-be206-layout="rows"'));
 assert(!/(?:fetch\(|XMLHttpRequest|RESULT_UNLOCK_TOKEN|rankPredictions\(|loadRace\(|winning_combo|official_payout)/.test(js));
 if(fs.existsSync('index.html')){
  const index=fs.readFileSync('index.html','utf8');
- assert(index.includes('boat_edge_v206_quickview.js?v=299'));
- assert(index.includes('boat_edge_v206_quickview.css?v=299'));
+ assert(index.includes('boat_edge_v206_quickview.js?v=320'));
+ assert(index.includes('boat_edge_v206_quickview.css?v=320'));
 }
 console.log('V298_SIX_LANE_MATRIX_STRICT_HIGHLIGHT_SYNTHETIC_PASS');
