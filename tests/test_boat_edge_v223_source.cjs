@@ -23,7 +23,7 @@ const genuineOdds={race_key:r.race_key,fetched_at:'2026-10-11T08:23:00+09:00'};
 chips=flags(inspect(r,sc,genuineOdds,now));
 assert.equal(chips[0].quality,'limited');assert.match(chips[0].text,/出走確定ではない/);
 assert.equal(chips[1].quality,'ok');assert.match(chips[1].text,/リアルタイムではない/);
-const full={...r,source_audit:{...r.source_audit,beforeinfo:{status:'ok',fetched_at:'2026-10-11T08:21:00+09:00'},original_exhibition:{status:'ok',fetched_at:'2026-10-11T08:30:00+09:00'}},beforeinfo:{start_exhibition:Array.from({length:6},(_,i)=>({lane:i+1}))},original_exhibition:{labels:['一周'],boats:Array.from({length:6},(_,i)=>({lane:i+1,values:[36+i/10]}))}};
+const full={...r,source_audit:{...r.source_audit,beforeinfo:{status:'ok',fetched_at:'2026-10-11T08:21:00+09:00'},original_exhibition:{status:'ok',fetched_at:'2026-10-11T08:30:00+09:00'}},beforeinfo:{racers:Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.8+i/100})),start_exhibition:Array.from({length:6},(_,i)=>({lane:i+1}))},original_exhibition:{labels:['一周'],boats:Array.from({length:6},(_,i)=>({lane:i+1,values:[36+i/10]}))}};
 x=inspect(full,sc,null,now);assert.equal(x.rows[0][1],'ok');assert.equal(x.rows[3][1],'unknown');
 x=inspect(r,null,null,Date.parse('2026-10-11T08:36:00+09:00'));assert.equal(x.phase,'AFTER_DEADLINE');assert.equal(x.rows.length,0);
 const future={...r,source_audit:{...r.source_audit,beforeinfo:{status:'ok',fetched_at:'2026-10-11T08:40:00+09:00'}}};
