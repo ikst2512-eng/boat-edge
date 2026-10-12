@@ -1,0 +1,45 @@
+name: BOAT EDGE V286 - No Legacy Source Installer Rollback
+
+on:
+  push:
+    branches: [main, fix/v286-retire-v216-pinned-installer]
+    paths:
+      - '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
+      - '.github/workflows/v286-retire-legacy-bootstrap.yml'
+      - 'tests/test_boat_edge_v286_no_rollback.py'
+  pull_request:
+    paths:
+      - '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
+      - '.github/workflows/v286-retire-legacy-bootstrap.yml'
+      - 'tests/test_boat_edge_v286_no_rollback.py'
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v286-no-downgrade-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  no-retroactive-reinstall:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm old installer removed and frozen workflow order unchanged
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v286_no_rollback.py' -v
+          PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts python3 tests/test_boat_edge_v265_readiness_sources.py
+          node --check assets/boat_edge_v215_readiness.js
+          python3 - <<'PY'
+          import subprocess,json
+          from pathlib import Path
+          s=Path('scripts/boat_edge_v215_readiness.py')
+          observed=subprocess.check_output(['git','hash-object',str(s)],text=True).strip()
+          assert observed=='f74705858e9bffbe28b4ce444d29aa8565ed6497'
+          g=json.loads(Path('data/formal_status.json').read_text())['guards']
+          assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
+          assert g['RESULT_UNLOCK_TOKEN'] is None
+          print('V286_CURRENT_PIN_AND_UNSEEN_GATE_VERIFIED')
+          PY
+          git diff --check
