@@ -58,3 +58,23 @@ html.be203-active #be202Essential>.be202-source-note{display:none}
 /* V250 A19: per-boat original-exhibition gap in seconds; not an inferred score. */
 .be203-metrics .be250-ex-gap{display:block;margin-top:3px;font-size:10px;line-height:1.35;color:#56718d;overflow-wrap:anywhere;white-space:normal}
 @media(max-width:520px){.be203-metrics .be250-ex-gap{font-size:11px}}
+
+/* BOAT_EDGE_A23_SIX_RACER_COMPARE_20261012 — existing input values only. */
+.be258-quick{margin:10px 0 13px;border:1px solid #dbe7f2;border-radius:12px;background:#f8fbff;padding:10px;min-width:0}
+.be258-quick-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.be258-quick-title strong{font-size:13px;color:#173d62}
+.be258-quick-title small{font-size:10px;color:#56718b}
+.be258-quick-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.be258-quick-boat{min-width:0;border:1px solid #dfe8f0;border-radius:9px;background:#fff;padding:8px}
+.be258-quick-lane{display:inline-flex;align-items:center;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:900}
+.be258-quick-boat span{display:block;margin-top:6px;color:#677d92;font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.be258-quick-boat span strong{display:block;margin-top:2px;color:#1a3a57;font-size:14px;line-height:1.3;font-variant-numeric:tabular-nums}
+.be258-quick-boat strong.be203-red{display:inline-block;color:#b02623;background:#fff0ed;border:1px solid #f6d2cd;border-radius:5px;padding:1px 3px;font-weight:950}
+.be258-quick-note{display:block;margin-top:9px;color:#657a90;font-size:10px;line-height:1.5}
+@media(max-width:640px){
+  .be258-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .be258-quick-boat{padding:8px 7px}
+  .be258-quick-boat span{font-size:10px}
+  .be258-quick-boat span strong{font-size:14px}
+}
+@media(max-width:360px){.be258-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
