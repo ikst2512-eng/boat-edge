@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-10-11T06:02:28.345745+00:00",
-  "day_jst": "20261011",
+  "checked_at": "2026-10-12T16:36:49.407892+00:00",
+  "day_jst": "20261013",
   "follow_up_order": [
     "直前公式データと欠場照合",
     "締切前スナップショットの保存とSHA監査",
@@ -29,65 +29,65 @@
     "evidence_claim": "NOT_PROVEN",
     "model_auto_promotion": false,
     "production_improvement_proven": false,
-    "site_v185_10_20x_settled_races": 10,
+    "site_v185_10_20x_settled_races": 23,
     "site_v185_candidate_top": {
       "top10": {
-        "candidate_hits": 15,
-        "candidate_rate_percent": 31.25,
-        "control_hits": 15,
-        "control_rate_percent": 31.25,
+        "candidate_hits": 38,
+        "candidate_rate_percent": 34.86,
+        "control_hits": 38,
+        "control_rate_percent": 34.86,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
-        "candidate_hits": 6,
-        "candidate_rate_percent": 12.5,
-        "control_hits": 7,
-        "control_rate_percent": 14.58,
-        "difference": -1,
+        "candidate_hits": 13,
+        "candidate_rate_percent": 11.93,
+        "control_hits": 17,
+        "control_rate_percent": 15.6,
+        "difference": -4,
         "paired_gains": 2,
-        "paired_losses": 3
+        "paired_losses": 6
       },
       "top5": {
-        "candidate_hits": 11,
-        "candidate_rate_percent": 22.92,
-        "control_hits": 10,
-        "control_rate_percent": 20.83,
-        "difference": 1,
+        "candidate_hits": 25,
+        "candidate_rate_percent": 22.94,
+        "control_hits": 25,
+        "control_rate_percent": 22.94,
+        "difference": 0,
         "paired_gains": 1,
-        "paired_losses": 0
+        "paired_losses": 1
       }
     },
-    "site_v185_evaluated_races": 48,
-    "site_v199_10_20x_settled_races": 4,
-    "site_v199_evaluated_races": 27,
+    "site_v185_evaluated_races": 109,
+    "site_v199_10_20x_settled_races": 14,
+    "site_v199_evaluated_races": 75,
     "site_v199_head_top": {
       "top10": {
-        "candidate_hits": 10,
-        "candidate_rate_percent": 37.04,
-        "control_hits": 10,
-        "control_rate_percent": 37.04,
+        "candidate_hits": 30,
+        "candidate_rate_percent": 40.0,
+        "control_hits": 30,
+        "control_rate_percent": 40.0,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
-        "candidate_hits": 4,
-        "candidate_rate_percent": 14.81,
-        "control_hits": 4,
-        "control_rate_percent": 14.81,
-        "difference": 0,
-        "paired_gains": 0,
+        "candidate_hits": 12,
+        "candidate_rate_percent": 16.0,
+        "control_hits": 10,
+        "control_rate_percent": 13.33,
+        "difference": 2,
+        "paired_gains": 2,
         "paired_losses": 0
       },
       "top5": {
-        "candidate_hits": 7,
-        "candidate_rate_percent": 25.93,
-        "control_hits": 7,
-        "control_rate_percent": 25.93,
-        "difference": 0,
-        "paired_gains": 0,
+        "candidate_hits": 22,
+        "candidate_rate_percent": 29.33,
+        "control_hits": 20,
+        "control_rate_percent": 26.67,
+        "difference": 2,
+        "paired_gains": 2,
         "paired_losses": 0
       }
     },
@@ -96,71 +96,15 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [
-      "predeadline_incomplete"
-    ],
-    "current_window": [
-      {
-        "deadline_jst": "15:06",
-        "issues": [
-          "予想SHA監査未一致"
-        ],
-        "minutes_left": 3.5,
-        "race_key": "20261011-16-09",
-        "venue": "児島"
-      },
-      {
-        "deadline_jst": "15:07",
-        "issues": [
-          "予想SHA監査未一致"
-        ],
-        "minutes_left": 4.5,
-        "race_key": "20261011-09-10",
-        "venue": "津"
-      },
-      {
-        "deadline_jst": "15:11",
-        "issues": [
-          "予想SHA監査未一致"
-        ],
-        "minutes_left": 8.5,
-        "race_key": "20261011-06-09",
-        "venue": "浜名湖"
-      },
-      {
-        "deadline_jst": "15:15",
-        "issues": [
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 12.5,
-        "race_key": "20261011-08-11",
-        "venue": "常滑"
-      },
-      {
-        "deadline_jst": "15:17",
-        "issues": [
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 14.5,
-        "race_key": "20261011-12-01",
-        "venue": "住之江"
-      }
-    ],
+    "collector_health_issues": [],
+    "current_window": [],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 62,
-    "readiness_reasons": {
-      "scratch_source_stale": 1,
-      "snapshot_audit_sha_failed": 4,
-      "snapshot_missing": 57
-    },
+    "readiness_observed_races": 0,
+    "readiness_reasons": {},
     "readiness_shadow_verified_races": 0,
     "schedule_today": true,
-    "snapshot_files_today": 19,
-    "status": "NEEDS_ATTENTION",
+    "snapshot_files_today": 0,
+    "status": "WAITING_FOR_PREDEADLINE",
     "v226_source_guard_active": true
   }
 }
