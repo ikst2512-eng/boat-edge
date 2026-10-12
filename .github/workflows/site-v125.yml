@@ -185,6 +185,14 @@ jobs:
                       "payout":settlement.get("payout")
                   }
               }
+              # V269: last_audited_at tracks a material audit change, not every
+              # five-minute read. Preserve the existing timestamp when every
+              # source hash, revision, settlement and safety flag is identical.
+              # This never relaxes intrinsic validation or changes a bet.
+              earlier=dict(old); earlier.pop("last_audited_at",None)
+              current=dict(doc); current.pop("last_audited_at",None)
+              if earlier==current and old.get("last_audited_at"):
+                  doc["last_audited_at"]=old["last_audited_at"]
               if write_if_changed(audit_path,doc):changed+=1
 
               audited[key]={
