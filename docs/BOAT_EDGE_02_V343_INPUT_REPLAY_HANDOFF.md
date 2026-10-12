@@ -50,7 +50,7 @@ python3 scripts/boat_edge_v343_race_input_replay.py \
 
 ## Synthetic validation and next step
 
-Local checks: 251 Python regressions (249 passed, 2 skipped), seven V271
+Local checks including the V344 extension: 264 Python regressions (262 passed, 2 skipped), seven V271
 JavaScript checks passed, all five workflow source pins matched, diff whitespace
 clean. The V343 cases are included in the Python total. No workflow edits.
 
@@ -66,3 +66,27 @@ include the snapshot automatically. Inspect its actual artifact before claiming
 live completeness. Combine V339 cross-run collision checks, V340 source-byte
 integrity and V343 candidate replay before any separately authorized research
 comparison; this PR does not authorize outcome access or Formal Fresh scoring.
+
+## V344 extension — one command for the three local evidence checks
+
+The same PR also includes `scripts/boat_edge_v344_site_research_evidence_gate.py`
+and 13 additional synthetic regression cases. It validates every explicitly
+supplied run report before artifact access, requires each selected race to have
+a completion or declared failure, and combines V339 collisions, V340 frozen
+JSON/HTML/receipt integrity and V343 exact candidate replay. A missing report
+entry cannot silently remove a difficult race from the batch denominator.
+
+```sh
+python3 scripts/boat_edge_v344_site_research_evidence_gate.py \
+  --bundle /explicit/bundle-one /explicit/report-one.json \
+  --bundle /explicit/bundle-two /explicit/report-two.json
+```
+
+CLI exit 0 means only `LOCAL_EVIDENCE_CHECKS_PASSED_NOT_FORMAL` for the supplied
+bundles. Empty captures, repeated races (even identical hashes), divergent
+freezes, capture failures, missing inputs or byte/replay failures exit 2 with
+explicit diagnostics. Invalid scope/report contracts fail before artifact reads.
+No gate result attests complete Actions history, true source fields, independent
+timestamps, actual entry or prospective accuracy; scoring and promotion remain
+unauthorized. No network, output mutation, workflow integration or result read
+is added. This is a verifier ID, not a production prediction model version.
