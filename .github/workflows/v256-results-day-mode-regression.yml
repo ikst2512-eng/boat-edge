@@ -1,0 +1,120 @@
+name: BOAT EDGE V256 - Result Day and Mode Truthful Summary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - results-detail.html
+      - .github/workflows/v256-results-day-mode-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-v256-readonly-result-filters
+  cancel-in-progress: true
+
+jobs:
+  truthfully-filtered-results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute actual results-detail inline script with synthetic date mode and race links
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE_V256'
+          'use strict';
+          const assert=require('node:assert/strict'), fs=require('node:fs'), vm=require('node:vm');
+          const html=fs.readFileSync('results-detail.html','utf8');
+          const raw=html.match(/<script>([\s\S]*?)<\/script>/g)||[];
+          assert.equal(raw.length,1,'exact one inline script');
+          const code=raw[0].replace(/^<script>|<\/script>$/g,'');
+          new Function(code);
+          const report=JSON.parse(fs.readFileSync('data/site_autopilot/v241_results_current.json','utf8'));
+          const days=[...new Set(report.rows.map(x=>x.date_jst))].sort().reverse();
+          assert(days.length>=2,'need 2 known settled dates for day regression');
+          function fake(id){
+            const e={value:id==='mode'?'hit':'all',options:[{value:'all'}],listeners:{},
+              hidden:false,textContent:'',_html:'',
+              addEventListener(name,fn){this.listeners[name]=fn;},
+              appendChild(item){this.options.push(item);},
+              set innerHTML(v){this._html=v;if(id==='day'){this.options=[{value:'all'}];this.value='all';}},
+              get innerHTML(){return this._html;},
+              setAttribute(){},
+            };
+            return e;
+          }
+          async function boot(search){
+            const elements=Object.fromEntries(
+              ['mode','day','kind','races','refresh','count','wins','heads','scope',
+               'source','rate','hitLabel','clearFocus'].map(id=>[id,fake(id)]));
+            const url='https://example.test/boat-edge/results-detail.html'+search;
+            const loc={href:url,search};
+            const win={location:loc,history:{replaceState(_a,_b,next){loc.href=String(next);loc.search=next.search;}}};
+            const doc={getElementById(id){return elements[id]||null;},
+              createElement(tag){return {value:'',textContent:'',tagName:tag};},
+              querySelector(){return null;}};
+            const ctx={window:win,document:doc,URL,URLSearchParams,Date,Number,Set,
+              TextDecoder,fetch:async()=>({ok:true,json:async()=>report}),crypto:{subtle:{}},
+              console};
+            vm.runInNewContext(code,ctx,{filename:'results-detail.html'});
+            await new Promise(resolve=>setTimeout(resolve,25));
+            return {e:elements,loc};
+          }
+          const first=days[0],second=days[1];
+          const a=await boot('?day='+first+'&mode=hole');
+          assert.equal(a.e.day.value,first,'deep linked date selected');
+          assert.equal(a.e.mode.value,'hole','deep linked verified mode selected');
+          function compare(e,day,mode,kind='all'){
+            const base=report.rows.filter(r=>day==='all'||r.date_jst===day);
+            const hits=base.filter(r=>r.mode_outcomes[mode].hit).length;
+            const heads=base.filter(r=>r.head_hit).length;
+            const displayed=base.filter(r=>kind==='all'||kind==='hit'&&r.mode_outcomes[mode].hit
+              ||kind==='miss'&&!r.mode_outcomes[mode].hit||kind==='head'&&r.head_hit).length;
+            assert.equal(e.count.textContent,base.length+'R','date-aware denominator');
+            assert.equal(e.wins.textContent,hits+'R','date and mode-aware hit count');
+            assert.equal(e.heads.textContent,heads+'R','date-aware head hit count');
+            assert(e.scope.textContent.startsWith(displayed+'R表示'),'correct matching displayed scope');
+            assert.equal(e.rate.textContent,base.length?(100*hits/base.length).toFixed(1)+'% / '+base.length+'R':'まだ未算定');
+          }
+          compare(a.e,first,'hole');
+          a.e.mode.value='balance';a.e.mode.listeners.change();
+          compare(a.e,first,'balance');
+          assert(a.loc.search.includes('mode=balance'),'shareable selected mode');
+          a.e.day.value=second;a.e.day.listeners.change();
+          compare(a.e,second,'balance');
+          assert(a.loc.search.includes('day='+second),'shareable selected date');
+          a.e.kind.value='hit';a.e.kind.listeners.change();
+          compare(a.e,second,'balance','hit');
+          const b=await boot('?day=19990101&mode=__proto__');
+          assert.equal(b.e.day.value,'all','invalid day rejected');
+          assert.equal(b.e.mode.value,'hit','unsafe/unknown mode rejected');
+          compare(b.e,'all','hit');
+          const c=await boot('?race='+report.rows[0].race_key+'&mode=narrow');
+          assert.equal(c.e.mode.value,'narrow','race-deeplink retains selected mode');
+          assert.equal(c.e.count.textContent,'1R','focused race count, not all-date count');
+          console.log('V256_REAL_INLINE_DAY_MODE_RACE_FILTER_PASS',report.rows.length,'races');
+          NODE_V256
+      - name: Verify no result mutation, source provenance bypass or formal unlock
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_V256'
+          import json
+          from pathlib import Path
+          s=Path('results-detail.html').read_text(encoding='utf8')
+          assert "crypto.subtle.digest('SHA-256',bytes)" in s
+          assert "Object.prototype.hasOwnProperty.call(modes,requestedMode)" in s
+          assert "var baseRows=report.rows.filter(" in s
+          assert "var rows=baseRows.filter(" in s
+          assert "d.formal_result_access!==false" in s
+          f=json.loads(Path('data/formal_status.json').read_text(encoding='utf8'))
+          g=f['guards']
+          assert g['results_seen'] is False and g['unlock'] is False and g['scoring'] is False
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert f['formalFirst100']['races']==0
+          print('V256_MODE_DATE_FILTER_AND_FORMAL_LOCK_GUARDS_PASS')
+          PY_V256
