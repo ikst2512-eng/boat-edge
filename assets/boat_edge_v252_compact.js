@@ -75,6 +75,15 @@ function panel(){
  nav.insertAdjacentElement('afterend',section);
  return section;
 }
+function syncFullDetail(open){
+ const rootNode=document.documentElement;
+ rootNode.classList.toggle('be208-details-on',open);
+ const api=window.BoatEdgeV205;
+ if(api&&typeof api.change==='function'&&rootNode.classList.contains('be205-expanded')!==open)api.change();
+ rootNode.classList.toggle('be202-expanded',open);
+ const original=find('#be207Top [data-be207="detail"]');
+ if(original){original.textContent=open?'詳しいデータ・監査を閉じる':'詳しいデータ・監査を開く';original.setAttribute('aria-expanded',String(open));}
+}
 function update(){
  const key=selected()?.race_key||'';
  const host=find('#raceView');
@@ -84,7 +93,7 @@ function update(){
  }
  if(!find('#be207Top')||!find('#be249Focus'))return;
  const section=panel();if(!section)return;
- if(key!==lastKey){lastKey=key;compact=true;signature='';}
+ if(key!==lastKey){if(lastKey)syncFullDetail(false);lastKey=key;compact=true;signature='';}
  document.documentElement.classList.add('be252-ready');
  document.documentElement.classList.toggle('be252-compact',compact);
  const toggle=section.querySelector('[data-be252="toggle"]');
@@ -122,13 +131,19 @@ document.addEventListener('click',event=>{
  }
 },true);
 document.addEventListener('click',event=>{
+ const legacy=event.target?.closest?.('#be207Top [data-be207="detail"]');
+ if(!legacy)return;
+ event.preventDefault();event.stopPropagation();
+ compact=!compact;signature='';syncFullDetail(!compact);update();
+},true);
+document.addEventListener('click',event=>{
  const button=event.target?.closest?.('#be252Tools [data-be252]');
  if(!button)return;
  const what=button.dataset.be252;
  if(what==='card'){goTab('card',['#tab-card .tablewrap','#tab-card']);return}
  if(what==='toggle'||what==='other'){
   compact=!compact;signature='';
-  update();
+  syncFullDetail(!compact);update();
   if(what==='other'&&!compact){
    const menu=find('#raceTabs');
    if(menu)window.setTimeout(()=>menu.scrollIntoView({behavior:'smooth',block:'start'}),75);
