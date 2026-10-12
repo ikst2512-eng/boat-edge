@@ -21,9 +21,15 @@ def valid_document(time=TIME, count=120):
     odds=dict(list(odds.items())[:count])
     return dict(schema_version="boat-edge-site-odds-v71",
                 race_key=KEY, source_url=URL,
+                source="BOAT RACE オフィシャルウェブサイト 3連単オッズ",
                 phase="PRE_RESULT_PURCHASE_ONLY",
                 results_seen=False, scoring=False,
                 fetched_at=time, available_count=len(odds),
+                unavailable_count=120-len(odds),
+                unavailable_combinations=[] if count == 120 else ["6-5-4"],
+                odds_validation="VERIFIED", no_bet=False,
+                verified_official_dom_v167=True,
+                raw_official_html_sha256="a"*64,
                 trifecta_odds=odds)
 
 
@@ -39,11 +45,19 @@ class V256OfficialOddsSafety(unittest.TestCase):
         ):
             self.assertFalse(official_url_matches(KEY,bad))
 
-    def test_verified_120_and_no_unsigned_60(self):
+    def test_only_complete_source_proven_120_is_safe(self):
         self.assertTrue(is_safe_record(valid_document(),KEY))
+        self.assertFalse(is_safe_record(valid_document(count=119),KEY))
         self.assertFalse(is_safe_record(valid_document(count=60),KEY))
         altered=valid_document()
         altered["trifecta_odds"]["1-2-3"]=0
+        self.assertFalse(is_safe_record(altered,KEY))
+        for field in ("verified_official_dom_v167","raw_official_html_sha256"):
+            altered=valid_document()
+            altered.pop(field)
+            self.assertFalse(is_safe_record(altered,KEY))
+        altered=valid_document()
+        altered["source"]="unverified"
         self.assertFalse(is_safe_record(altered,KEY))
 
     def test_rejection_always_blanks_prices_and_never_inferrs_scratch(self):
