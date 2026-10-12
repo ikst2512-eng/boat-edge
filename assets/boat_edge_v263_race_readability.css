@@ -32,3 +32,47 @@
   #raceView #deadlineBig{font-size:21px}
   #be207Top .be207-condition{font-size:11px}
 }
+
+/* V266 A29: iPhone race cockpit. Reflow only; never hide betting evidence,
+   six-racer facts, cancellation status, source stamps or settled outcomes. */
+@media(max-width:640px){
+  html.be252-ready #raceView .race-head{margin-bottom:4px}
+  html.be252-ready #raceView .race-summary{padding:10px 11px;border-radius:12px}
+  html.be252-ready #raceView #raceTitle{margin:0;font-size:19px;line-height:1.28}
+  html.be252-ready #raceView .race-subtitle{margin-top:3px;line-height:1.35}
+  html.be252-ready #raceView #deadlineBig{font-size:23px;font-weight:950}
+  html.be252-ready #be249Focus{padding:8px 9px;margin:7px 0 6px}
+  html.be252-ready #be249Focus .be249-anchors{gap:5px}
+  html.be252-ready #be249Focus .be249-anchors button{min-height:44px;padding:7px 3px;font-size:12px}
+  html.be252-ready #be252Tools{padding:9px 10px;margin-bottom:6px}
+  html.be252-ready #be252Tools .be252-kpi{padding:7px 8px}
+  html.be252-ready #be252Tools .be252-kpi strong{margin-top:2px;font-size:13px}
+  html.be252-ready #be252Tools .be252-options{margin-top:7px}
+  html.be252-ready #be252Tools .be252-note{margin-top:5px}
+  html.be252-ready #be251Outcome{padding:9px 10px;margin:6px 0;border-radius:10px}
+  html.be252-ready #be251Outcome .be251-title{padding-bottom:5px}
+  html.be252-ready #be251Outcome .be251-race-result{margin:7px 0}
+  html.be252-ready #be251Outcome .be251-result-modes{margin-top:7px}
+  html.be252-ready #be251Outcome .be251-money>div{padding:7px 6px}
+  html.be252-ready #be251Outcome .be251-actions{margin-top:7px}
+  html.be252-ready #be207Top{margin:5px 0 7px}
+  html.be252-ready #be207Top .be207-listhead{margin-top:6px;padding-top:7px}
+  html.be252-ready #be206Quick{margin:6px 0 9px;padding:10px 9px;border-radius:10px}
+  html.be252-ready #be206Quick .be206-title{margin-bottom:8px}
+  html.be252-ready #be206Quick .be206-title h2{font-size:16px}
+  html.be252-ready #be206Quick .be206-switch{margin:7px 0;gap:5px}
+  html.be252-ready #be206Quick .be206-switch button{min-height:44px}
+  html.be252-ready #be206Quick .be206-table th,
+  html.be252-ready #be206Quick .be206-table td{padding-top:8px;padding-bottom:8px}
+  html.be252-ready #be206Quick .be206-racername{font-size:12px}
+  html.be252-ready #be206Quick .be206-foot{margin-top:4px}
+  html.be252-ready #be206Quick .be206-source{line-height:1.55}
+  html.be252-ready #be207Top,
+  html.be252-ready #be251Outcome,
+  html.be252-ready #be206Quick{scroll-margin-top:72px}
+}
+@media(max-width:365px){
+  html.be252-ready #be249Focus .be249-anchors button{font-size:11px}
+  html.be252-ready #be206Quick .be206-table th,
+  html.be252-ready #be206Quick .be206-table td{padding-left:1px;padding-right:1px}
+}
