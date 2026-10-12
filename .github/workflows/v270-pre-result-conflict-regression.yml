@@ -1,0 +1,37 @@
+name: BOAT EDGE V270 - Safe PRE_RESULT Git Conflict Recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/auto-update.yml'
+      - 'tests/test_boat_edge_v270_pre_result_merge.py'
+      - '.github/workflows/v270-pre-result-conflict-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boat-edge-v270-source-merge-test
+  cancel-in-progress: false
+jobs:
+  source-merge-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test real collector publish shell against competing local Git writers
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v270_pre_result_merge.py' -v
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=s.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert (s.get('formalFirst100') or {}).get('races',0)==0
+          print('V270_FORMAL_LOCK_GUARD_PASS')
+          PY
+          git diff --check
