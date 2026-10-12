@@ -1,0 +1,34 @@
+/* BOAT EDGE V263 A28: no hidden racer facts or bet mutations.
+   Visual grouping of scratch, result, deadline, source freshness on iPhone. */
+@media(max-width:640px){
+  #raceView .race-summary{border:1px solid #cddfec;border-radius:13px;padding:11px 12px;box-shadow:none}
+  #raceView .summary-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+  #raceView .summary-top>div{min-width:0}
+  #raceView #raceTitle{font-size:19px;line-height:1.35}
+  #raceView #deadlineBig{font-size:23px;line-height:1.2;font-weight:950;font-variant-numeric:tabular-nums;color:#174c80}
+  #raceView .deadline-cap{font-size:11px;font-weight:850;color:#54738f}
+  #be207Top{padding:11px 10px}
+  #be207Top .be207-condition{margin:5px 0 9px;border-left:4px solid #ba8732;line-height:1.5}
+  #be207Top[data-status="stop"] .be207-condition{border-left-color:#b93432}
+  #be207Top .be207-freeze{background:#f1f6fb;color:#3a5e7d;border-radius:7px;padding:8px 9px;line-height:1.5;font-size:11px}
+  #be207Top .be207-listhead{border-top:1px solid #dfe7ef;margin-top:8px;padding-top:11px}
+  #be207Top .be207-listhead strong{font-size:15px}
+  #be207Top .be207-odds{background:#fff7e7;border-radius:7px;padding:7px 9px;line-height:1.55}
+  #be108PredictionModes .be118-resultbar{border:1px solid #cedfec;border-left:4px solid #5686af;border-radius:9px;padding:9px 10px}
+  #be108PredictionModes .be118-resultbar.hit{border-left-color:#1a9254}
+  #be108PredictionModes .be118-resultbar.miss{border-left-color:#ae5260}
+  #be203Layout .be203-health{border-left:4px solid #b08b3f;padding:9px 10px}
+  #be203Layout .be203-health.be203-stop{border-left-color:#b73435}
+  #be203Layout .be203-source{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0 10px}
+  #be203Layout .be203-source span{min-width:0;padding:7px;border:1px solid #dce7f0;border-radius:7px;background:#f8fbfe;font-size:10px;line-height:1.5}
+  #be203Layout .be203-source .present{border-color:#c6e3d6;background:#f1faf5;color:#275d48}
+  #be203Layout .be203-source .absent{border-color:#e8d8b8;background:#fff9ec;color:#755e36}
+  #be203Layout .be203-metrics>div{border-bottom:1px solid #ecf1f6;padding-bottom:5px}
+  #be203Layout .be203-card{border-radius:11px;padding:10px 11px}
+  #be203Layout .be203-heading{margin-top:7px}
+}
+@media(max-width:365px){
+  #be203Layout .be203-source{grid-template-columns:1fr}
+  #raceView #deadlineBig{font-size:21px}
+  #be207Top .be207-condition{font-size:11px}
+}
