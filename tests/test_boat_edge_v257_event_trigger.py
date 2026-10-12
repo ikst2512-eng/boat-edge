@@ -65,6 +65,31 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("github.event.workflow_run.conclusion == 'success'",research)
         self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",research)
 
+    def test_v275_v234_source_producer_also_freezes_pre_result_tail(self):
+        v234=(ROOT/'.github/workflows/V234.yml').read_text(encoding='utf-8')
+        source=v234.index('      - name: Immutable pre-result source prediction cohort')
+        freeze=v234.index('      - name: V275 immediately freeze qualifying V254')
+        results=v234.index('      - name: Only after pre-result commit - score already confirmed SITE results')
+        self.assertLess(source,freeze)
+        self.assertLess(freeze,results)
+        stage=v234[freeze:results]
+        for marker in (
+            'scripts/boat_edge_v254_third_tail.py freeze',
+            "test_boat_edge_v254_third_tail.py",
+            'git reset --hard origin/main',
+            'data/site_autopilot/v254_frozen',
+            'V275_FORBIDDEN_PRE_RESULT_STAGE_',
+            'V275_FUTURE_SHADOW_PRE_RESULT_PUBLISHED',
+            'V275_NO_ELIGIBLE_NEW_PRE_RESULT_COHORT_NO_BACKFILL',
+            'V275_NO_PUBLISHED_SHADOW_CONFLICT_SAFE_RETRY_NEXT_RUN',
+            'git diff --cached --check'):
+            self.assertIn(marker,stage)
+        for forbidden in ('site_results/', 'settle', 'git pull --rebase',
+                          'git push --force', 'gh workflow run'):
+            self.assertNotIn(forbidden,stage)
+        self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",
+            (ROOT/'scripts/boat_edge_v254_third_tail.py').read_text())
+
     def test_v271_single_owner_scheduled_result_and_readiness(self):
         # Retired writers may be manually launched for recovery, but not
         # on the same 5-minute cron as their verified successors.
