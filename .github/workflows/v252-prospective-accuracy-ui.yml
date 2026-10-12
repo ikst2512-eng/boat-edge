@@ -1,0 +1,47 @@
+name: BOAT EDGE V252 - Independent Prospective Accuracy Comparison
+
+on:
+  push:
+    branches:
+      - main
+      - feat/v252-equal-stake-prospective-audit-20261012
+    paths:
+      - 'autopilot.html'
+      - 'assets/boat_edge_v252_prospective.js'
+      - 'assets/boat_edge_v252_prospective.css'
+      - 'tests/test_boat_edge_v252_prospective.cjs'
+      - '.github/workflows/v252-prospective-accuracy-ui.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research-ui-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify fixed future-only site cohort comparison, null guards and existing UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/boat_edge_v252_prospective.js
+          node tests/test_boat_edge_v252_prospective.cjs
+          node tests/test_boat_edge_v250_ui.cjs
+          node tests/test_boat_edge_v248_ui.cjs
+          node tests/test_boat_edge_v247_ui.cjs
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v251_pages_recovery.py' -q
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          guard=json.loads(Path('data/formal_status.json').read_text())['guards']
+          for k in ('results_seen','unlock','scoring'):
+              assert guard.get(k) is False, (k,guard.get(k))
+          assert guard.get('RESULT_UNLOCK_TOKEN') is None
+          print('V252_RESULT_UNSEEN_FORMAL_LOCK_PASS')
+          PY
+          git diff --check
+          echo V252_FORWARD_RESEARCH_NO_PROMOTION_PASS
