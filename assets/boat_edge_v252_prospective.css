@@ -1,0 +1,20 @@
+/* V252 site-only prospective scoreboard: percentages are descriptive, not calibrated probabilities. */
+.v252-board{background:#fff;border:1px solid #dbe7f5;border-radius:15px;padding:17px;margin-top:14px;box-shadow:0 8px 24px #134c9a0a}
+.v252-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.v252-heading h2{margin:0;font-size:17px}
+.v252-heading button{border:1px solid #bcd3ed;background:#f4f8ff;color:#1b5fa6;border-radius:8px;padding:8px 12px;font-weight:900;min-height:44px}
+.v252-heading button:focus-visible{outline:3px solid #2769c5;outline-offset:2px}
+.v252-intro,.v252-scope,.v252-status{font-size:12px;line-height:1.65;color:#5a7590}
+.v252-intro{margin:8px 0 12px}
+.v252-status{font-weight:800;color:#315880}
+.v252-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px;margin-top:10px}
+.v252-sub{padding:11px;border:1px solid #e1eaf5;border-radius:11px;background:#f8fbff;min-width:0}
+.v252-sub h3{margin:0 0 7px;font-size:13px;color:#214d80}
+.v252-table{width:100%;border-collapse:collapse;font-size:11px}
+.v252-table th,.v252-table td{padding:8px 4px;border-bottom:1px solid #e0e9f3;text-align:left;line-height:1.45;overflow-wrap:anywhere}
+.v252-table th{font-size:10px;color:#627d99}
+.v252-table td:not(:first-child),.v252-table th:not(:first-child){text-align:right}
+.v252-table .v252-control{background:#e8f2fc;font-weight:900}
+.v252-warning{background:#fff4ed;border:1px solid #eccdb9;padding:10px;border-radius:8px;color:#965c38;font-size:12px}
+.v252-footer{margin:12px 0 0;padding:10px;background:#fff8ec;border:1px solid #efddbb;color:#805d28;border-radius:8px;font-size:11px;line-height:1.7}
+@media(max-width:700px){.v252-board{padding:13px}.v252-pair{grid-template-columns:1fr}.v252-sub{padding:10px}.v252-table td,.v252-table th{font-size:11px;padding:8px 3px}.v252-heading h2{font-size:16px}}
