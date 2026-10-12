@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f9fc"><meta name="description" content="BOAT EDGE 締切前固定の3連単買い目と確定結果・払戻の照合">
+<title>買い目・結果の詳細 | BOAT EDGE</title>
+<style>
+:root{--ink:#152c48;--muted:#61748d;--line:#dce6f1;--blue:#135ec7;--paper:#fff;--bg:#f3f6fa;--green:#0e8154;--red:#bd3d43}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+body{padding-bottom:74px}button,select{font:inherit}button{cursor:pointer}a{color:var(--blue)}.wrap{max-width:950px;margin:auto;padding:0 13px}
+header{position:sticky;top:0;z-index:20;background:#ffffffed;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:59px}
+.brand{font-weight:950;font-size:20px;color:#174787;text-decoration:none;letter-spacing:-.04em}.head-actions{display:flex;gap:9px;align-items:center}
+.head-actions a{font-size:12px;font-weight:800;text-decoration:none}.head-actions button{font-size:12px;background:#eaf2fc;border:1px solid #bfcee2;color:#144e92;border-radius:9px;padding:9px 12px;min-height:38px;font-weight:800}
+.intro{padding:21px 0 12px}.eyebrow{font-size:10px;font-weight:950;letter-spacing:.12em;color:#4773a5}.intro h1{font-size:27px;letter-spacing:-.04em;margin:6px 0}.intro p{color:var(--muted);font-size:12px;line-height:1.7;margin:6px 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:6px 0 14px}
+.stat,.panel,.race{border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 3px 12px #173b7010}
+.stat{padding:13px 11px;min-width:0}.stat small{display:block;color:var(--muted);font-size:11px}.stat strong{display:block;font-size:23px;line-height:1.3;font-variant-numeric:tabular-nums;white-space:nowrap}.stat span{font-size:10px;color:var(--muted)}
+.panel{padding:12px;margin-bottom:13px}.filtergrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}.field label{font-size:11px;font-weight:800;color:#58718d}.field select{width:100%;min-width:0;background:#fafcff;border:1px solid #cbd9e9;border-radius:9px;padding:10px 7px;min-height:42px;color:var(--ink);font-size:13px}
+.scope{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);margin:12px 2px 9px}.race{padding:14px;margin:0 0 10px;overflow:hidden}
+.race.hit{border-color:#96ceb7;background:#fdfefd}.rowtop{display:flex;align-items:start;justify-content:space-between;gap:8px}.venue{font-size:16px;font-weight:950}.when{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.resulttag{font-size:12px;border:1px solid #d6e1ed;border-radius:999px;padding:6px 10px;color:#5b718b;white-space:nowrap;font-weight:900;background:#f3f6fa}.hit .resulttag{background:#e3f8ee;border-color:#b9e5cc;color:#0f7c51}
+.lanestrip{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}.lanes{display:flex;gap:4px;align-items:center}.boat{display:inline-flex;align-items:center;justify-content:center;width:34px;height:39px;border-radius:7px;font-size:21px;font-weight:950;border:1px solid transparent}
+.boat[data-n="1"]{background:#fff;color:#111;border-color:#b3c0cb}.boat[data-n="2"]{background:#242b32;color:#fff}.boat[data-n="3"]{background:#e34749;color:#fff}.boat[data-n="4"]{background:#2470c8;color:#fff}.boat[data-n="5"]{background:#f2cc31;color:#242a30}.boat[data-n="6"]{background:#279668;color:#fff}
+.payout{text-align:right}.payout small{font-size:10px;color:var(--muted);display:block}.payout strong{font-size:17px;font-weight:950}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;border-top:1px solid #edf0f6;padding-top:11px}.meta div{min-width:0}.meta small{display:block;color:var(--muted);font-size:10px}.meta strong{font-size:13px;font-weight:900;overflow-wrap:anywhere}
+.positive{color:var(--green)}.negative{color:var(--red)}
+.detailtoggle{display:block;width:100%;margin-top:12px;min-height:40px;border-radius:9px;border:1px solid #c2d7ef;background:#edf5ff;font-weight:950;color:#14558f;font-size:12px;text-align:left;padding:10px 12px}
+.details{margin-top:11px}.detail-note{font-size:11px;color:var(--muted);line-height:1.65;margin:7px 0}
+.ticket{display:grid;grid-template-columns:22px minmax(98px,1fr) 1fr 1fr;align-items:center;gap:8px;border-bottom:1px solid #e8edf3;padding:8px 2px;font-size:12px}
+.ticket:last-child{border-bottom:0}.ticket .n{font-size:10px;color:#71869b;text-align:center}.ticket .combo{font-weight:950;font-size:14px;white-space:nowrap}
+.ticket .stake,.ticket .odds{text-align:right;font-variant-numeric:tabular-nums}.ticket .odds{color:#667b90}.ticket.winner{background:#e8faef;border-radius:7px;padding:8px 4px}
+.ticket-head{display:grid;grid-template-columns:22px minmax(98px,1fr) 1fr 1fr;gap:8px;font-size:10px;color:var(--muted);padding:8px 2px;border-bottom:1px solid #cbdced}
+.verify{border-left:3px solid #b7d9c8;padding:8px 11px;background:#f5faf8;border-radius:5px;color:#47665b;font-size:10px;line-height:1.6}
+.footer-note{font-size:11px;color:var(--muted);line-height:1.75;padding:8px 0 18px}.empty{padding:28px 12px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:12px;color:#6a7d91;font-size:13px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;padding:9px 12px env(safe-area-inset-bottom)}.bottom nav{display:flex;max-width:800px;width:100%;justify-content:space-around;gap:7px}.bottom a{flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:850;color:#2e6497;padding:8px;border-radius:8px}.bottom a.on{background:#e7f3ff;color:#124f94}
+@media(max-width:520px){.wrap{padding:0 10px}.intro h1{font-size:22px}.brand{font-size:17px}.head-actions{gap:6px}.head-actions a{font-size:11px}.head-actions button{padding:8px;font-size:11px}.stat{padding:10px 8px}.stat strong{font-size:19px}.stat small{font-size:10px}.panel{padding:9px}.filtergrid{gap:5px}.field select{padding:8px 3px;font-size:11px}.race{padding:12px}.boat{width:30px;height:36px;font-size:19px}.payout strong{font-size:15px}.meta strong{font-size:12px}.ticket{grid-template-columns:18px minmax(90px,1fr) 1fr 1fr;gap:5px;font-size:11px}}
+@media(max-width:370px){.boat{width:27px;height:34px}.meta{gap:4px}.meta strong{font-size:11px}.ticket{grid-template-columns:15px minmax(80px,1fr) 1fr 1fr}}
+</style></head><body>
+<header><div class="wrap head"><a class="brand" href="./index.html">≋ BOAT EDGE</a><div class="head-actions"><a href="./results.html">結果一覧</a><button id="refresh" type="button">↻ 更新</button></div></div></header>
+<main class="wrap">
+<div class="intro"><div class="eyebrow">AUDITED BETSLIP / POST-RESULT</div><h1>3連単の買い目・的中詳細</h1><p>締切前に固定した買い目と、公式確定着順をレース単位で並べて照合。予想時オッズと確定配当は別表示。</p></div>
+<section class="stats" aria-label="検証済み集計"><div class="stat"><small>検証済み</small><strong id="count">—</strong><span>サイト参考予想</span></div><div class="stat"><small id="hitLabel">的中重視の的中</small><strong id="wins">—</strong><span id="rate">集計中</span></div><div class="stat"><small>1着予想的中</small><strong id="heads">—</strong><span>3連単とは別判定</span></div></section>
+<section class="panel"><div class="filtergrid"><div class="field"><label for="mode">買い目モード</label><select id="mode"><option value="hit">的中重視</option><option value="balance">バランス</option><option value="hole">波乱展開</option><option value="narrow">激絞り</option></select></div><div class="field"><label for="day">日付</label><select id="day"><option value="all">全日付</option></select></div><div class="field"><label for="kind">表示</label><select id="kind"><option value="all">全結果</option><option value="hit">🎯的中のみ</option><option value="miss">不的中のみ</option><option value="head">頭的中のみ</option></select></div></div></section>
+<div class="scope"><span id="scope">保存済み証拠を読み込み中</span><span id="source">サイト参考予想専用</span></div>
+<div id="races" aria-live="polite"><div class="empty">検証済み結果を照合中…</div></div>
+<p class="footer-note">🎯は締切前に固定され、結果照合済みの当該モードの買い目のみ。買い目の詳細はGitHub保存済みの元ファイルをSHA-256で再照合できた場合にだけ表示します。オッズは予想時、公式払戻は確定後で別の数字。1万円配分・損益は仮想計算で実購入ではありません。正式Freshは結果未見ロック維持。</p>
+</main>
+<div class="bottom"><nav><a href="./index.html">⌂ ホーム</a><a href="./index.html">≋ 予想</a><a href="./results.html">✓ 結果</a><a class="on" href="./results-detail.html">◎ 買い目明細</a></nav></div>
+<script>
+(function(){
+'use strict';
+var API='./data/site_autopilot/v241_results_current.json';
+var SCHEMA='BOAT_EDGE_V241_VERIFIED_SITE_RESULTS_V1';
+var SCOPE='VERIFIED_POST_RESULT_SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH';
+var FROZEN_SCOPE='SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH';
+var modes={hit:'的中重視',balance:'バランス',hole:'波乱展開',narrow:'激絞り'};
+var report=null;
+var $=function(id){return document.getElementById(id);};
+var fmt=function(n){return Number(n).toLocaleString('ja-JP');};
+var yen=function(n){return Number.isFinite(Number(n))?'¥'+fmt(n):'未取得';};
+var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;'}[c]||'&#39;';});};
+function validKey(x){return /^20\d{6}-\d{2}-\d{2}$/.test(String(x||''));}
+function validCombo(x){return /^[1-6]-[1-6]-[1-6]$/.test(String(x||''))&&new Set(x.split('-')).size===3;}
+function chips(x){return validCombo(x)?x.split('-').map(function(n){return '<span class="boat" data-n="'+n+'">'+n+'</span>';}).join(''):esc(x);}
+function verified(r){
+ if(!r||!validKey(r.race_key)||!validCombo(r.winning_combo)||r.post_result_verified!==true||typeof r.precommitted_sha256!=='string'||!/^[a-f0-9]{64}$/i.test(r.precommitted_sha256))return false;
+ if(!r.mode_outcomes||!r.mode_outcomes.hit||r.top10_hit!==r.mode_outcomes.hit.hit||!Number.isSafeInteger(r.official_payout_per_100_yen)||r.official_payout_per_100_yen<=0)return false;
+ if(!Object.keys(modes).every(function(m){var x=r.mode_outcomes[m];return x&&typeof x.hit==='boolean'&&x.stake_yen===10000&&Number.isSafeInteger(x.hypothetical_return_yen)&&x.hypothetical_profit_yen===x.hypothetical_return_yen-10000;}))return false;
+ return r.head_hit===(String(r.head_prediction)===r.winning_combo[0]);
+}
+function render(){
+ if(!report)return;
+ var mode=$('mode').value,day=$('day').value,kind=$('kind').value;
+ var total=report.rows.length;
+ var hitCount=report.rows.filter(function(r){return r.mode_outcomes[mode].hit;}).length;
+ $('count').textContent=fmt(total)+'R';$('wins').textContent=fmt(hitCount)+'R';
+ $('rate').textContent=total? (100*hitCount/total).toFixed(1)+'% / '+fmt(total)+'R':'まだ未算定';
+ $('hitLabel').textContent=modes[mode]+'の的中';$('heads').textContent=fmt(report.rows.filter(function(r){return r.head_hit;}).length)+'R';
+ var rows=report.rows.filter(function(r){var x=r.mode_outcomes[mode];return (day==='all'||day===r.date_jst)&&(kind==='all'||kind==='hit'&&x.hit||kind==='miss'&&!x.hit||kind==='head'&&r.head_hit);});
+ $('scope').textContent=rows.length+'R表示 / '+total+'R照合済み';
+ if(!rows.length){$('races').innerHTML='<div class="empty">この条件の確定結果はありません。未確定は不的中扱いしません。</div>';return;}
+ var markup=rows.map(function(r){
+ var out=r.mode_outcomes[mode];
+ return '<article class="race '+(out.hit?'hit':'')+'" data-key="'+esc(r.race_key)+'"><div class="rowtop"><div><div class="venue">'+esc(r.venue)+'　'+esc(r.round)+'R</div><span class="when">'+esc(r.date_jst.slice(0,4)+'/'+r.date_jst.slice(4,6)+'/'+r.date_jst.slice(6,8))+' ・ '+esc(r.model_id)+' ・確定結果</span></div><span class="resulttag">'+(out.hit?'🎯 的中':'不的中')+'</span></div>'+
+ '<div class="lanestrip"><div class="lanes">'+chips(r.winning_combo)+'</div><div class="payout"><small>公式100円払戻</small><strong>'+yen(r.official_payout_per_100_yen)+'</strong></div></div>'+
+ '<div class="meta"><div><small>AIの1着予想</small><strong>'+esc(r.head_prediction)+'号艇 '+(r.head_hit?'✓頭的中':'頭外れ')+'</strong></div><div><small>1万円仮想払戻</small><strong>'+yen(out.hypothetical_return_yen)+'</strong></div><div><small>仮想損益</small><strong class="'+(out.hypothetical_profit_yen>=0?'positive':'negative')+'">'+(out.hypothetical_profit_yen>=0?'+':'−')+yen(Math.abs(out.hypothetical_profit_yen))+'</strong></div></div>'+
+ '<button type="button" class="detailtoggle" data-open="'+esc(r.race_key)+'" aria-expanded="false">＋ 締切前の'+esc(out.tickets)+'点と配分を見る</button><div class="details" hidden></div></article>';
+ }).join('');
+ $('races').innerHTML=markup;
+}
+async function showTickets(key,button){
+ if(!report||!validKey(key))return;
+ var card=button.closest('.race');if(!card||card.dataset.key!==key)return;
+ var dest=card.querySelector('.details');
+ if(!dest.hidden){dest.hidden=true;button.setAttribute('aria-expanded','false');button.textContent='＋ 締切前の買い目と配分を見る';return;}
+ var row=report.rows.find(function(r){return r.race_key===key;});
+ if(!row||!verified(row))return;
+ dest.hidden=false;button.setAttribute('aria-expanded','true');button.textContent='− 買い目を閉じる';
+ dest.textContent='締切前の固定データを再照合中…';
+ try{
+  if(!crypto.subtle)throw new Error('SHA-256照合不可');
+  var res=await fetch('./data/site_autopilot/v232_cohort/'+key+'.json?t='+Date.now(),{cache:'no-store'});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  var bytes=await res.arrayBuffer();
+  var hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  if(hash!==row.precommitted_sha256.toLowerCase())throw new Error('SHA-256不一致');
+  var freeze=JSON.parse(new TextDecoder().decode(bytes));
+  if(freeze.schema!=='BOAT_EDGE_V232_SITE_PROSPECTIVE_ACCURACY_COHORT_V1'||freeze.scope!==FROZEN_SCOPE||freeze.race_key!==key||freeze.model_id!==row.model_id||String(freeze.head_top1)!==String(row.head_prediction)||freeze.formal_results_seen!==false||freeze.formal_gate_unlocked!==false||freeze.paper_purchases_authorized!==false||freeze.real_purchases_authorized!==false||freeze.deadline_jst!==row.deadline_jst)throw new Error('締切前証跡が不一致');
+  var mode=$('mode').value,bets=freeze.frozen_mode_tickets&&freeze.frozen_mode_tickets[mode];
+  if(!Array.isArray(bets)||!bets.length||bets.length!==row.mode_outcomes[mode].tickets)throw new Error('買い目記録不足');
+  var seen=new Set(),sum=0,winningStake=0;
+  for(var i=0;i<bets.length;i++){
+   var bet=bets[i];if(!validCombo(bet.combo)||seen.has(bet.combo)||!Number.isSafeInteger(bet.stake_yen)||bet.stake_yen<0||bet.stake_yen%100!==0)throw new Error('固定買い目が不正');
+   seen.add(bet.combo);sum+=bet.stake_yen;
+   if(bet.combo===row.winning_combo)winningStake=bet.stake_yen;
+  }
+  var o=row.mode_outcomes[mode],returnYen=winningStake*row.official_payout_per_100_yen/100;
+  if(sum!==10000||winningStake!==o.winning_ticket_stake_yen||returnYen!==o.hypothetical_return_yen||Boolean(winningStake)!==o.hit)throw new Error('配分・払戻の照合失敗');
+  if(button.getAttribute('aria-expanded')!=='true'||$('mode').value!==mode)return;
+  var html='<div class="verify">SHA-256照合済み・締切前にGitHubで保存された買い目を表示。確定結果をもとに後から生成した買い目ではありません。</div>'+
+  '<div class="detail-note">締切前オッズは当時の保存値。確定後の100円払戻 '+yen(row.official_payout_per_100_yen)+'とは別です。</div>'+
+  '<div class="ticket-head"><span>順</span><span>3連単</span><span style="text-align:right">配分</span><span style="text-align:right">保存時オッズ</span></div>';
+  html+=bets.map(function(b,i){
+   var chosen=b.combo===row.winning_combo;
+   var odd=typeof b.odds_at_freeze==='number'&&Number.isFinite(b.odds_at_freeze)&&b.odds_at_freeze>0?b.odds_at_freeze.toFixed(1)+'倍':'未取得';
+   return '<div class="ticket '+(chosen?'winner':'')+'"><span class="n">'+(i+1)+'</span><span class="combo">'+(chosen?'🎯 ':'')+esc(b.combo)+'</span><span class="stake">'+yen(b.stake_yen)+'</span><span class="odds">'+esc(odd)+'</span></div>';
+  }).join('');
+  if(winningStake)html+='<div class="detail-note positive">🎯 '+esc(row.winning_combo)+'　配分'+yen(winningStake)+' × 確定100円払戻'+yen(row.official_payout_per_100_yen)+' = 仮想払戻 '+yen(returnYen)+'</div>';
+  else html+='<div class="detail-note">このモードの固定買い目に確定3連単は含まれていません。</div>';
+  dest.innerHTML=html;
+ }catch(err){dest.innerHTML='<div class="empty">固定買い目を照合できませんでした。未確認の配分・的中表示は行いません。</div>';}
+}
+async function load(){
+ $('scope').textContent='検証済み結果を再取得中…';
+ try{
+  var response=await fetch(API+'?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('データ取得不可');
+  var d=await response.json();
+  if(d.schema!==SCHEMA||d.scope!==SCOPE||d.formal_result_access!==false||d.production_model_changed!==false||d.real_or_paper_wagers_placed!==0||!Array.isArray(d.rows)||d.rows.length!==d.settled_verified_races||!d.rows.every(verified))throw new Error('検証対象外データ');
+  report=d;
+  var select=$('day');select.innerHTML='<option value="all">全日付</option>';
+  Array.from(new Set(d.rows.map(function(r){return r.date_jst;}))).sort().reverse().forEach(function(day){if(/^20\d{6}$/.test(day)){var item=document.createElement('option');item.value=day;item.textContent=day.slice(0,4)+'/'+day.slice(4,6)+'/'+day.slice(6,8);select.appendChild(item);}});
+  render();
+  $('source').textContent='正式Freshとは別管理';
+ }catch(e){report=null;$('races').innerHTML='<div class="empty">検証済みデータを読み込めません。未確認の的中や払戻は表示せず、更新で再試行できます。</div>';$('scope').textContent='検証待ち';$('source').textContent='未取得';}
+}
+$('refresh').addEventListener('click',load);
+['mode','day','kind'].forEach(function(x){$(x).addEventListener('change',render);});
+$('races').addEventListener('click',function(event){var b=event.target.closest('[data-open]');if(b)showTickets(b.dataset.open,b);});
+load();
+})();
+</script></body></html>
