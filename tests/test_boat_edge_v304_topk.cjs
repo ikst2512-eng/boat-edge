@@ -83,3 +83,13 @@ for(const name of ['switch','layout-switch']) {
  assert(!sixBoatRuntime.includes('$(\''+selector+'\',box).forEach'),'V327 single-node crash: '+selector);
 }
 console.log('V327_SIX_BOAT_RUNTIME_NODELIST_PASS');
+
+/* V330: run the race-evidence DOM handoff regression, not only source regex checks. */
+{
+ const {execFileSync}=require('node:child_process');
+ const fixture='tests/test_boat_edge_v322_race_host.cjs';
+ assert(fs.existsSync(fixture),'V330 race evidence fixture missing');
+ const result=execFileSync(process.execPath,[fixture],{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']});
+ assert(result.includes('V322_RACE_EVIDENCE_REPARENT_FAIL_CLOSED_PASS'),'V330 evidence DOM handoff failed');
+ console.log(result.trim());
+}
