@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const src=fs.readFileSync('assets/boat_edge_v108.js','utf8');
+const html=fs.readFileSync('index.html','utf8');
+const queue=fs.readFileSync('BOAT_EDGE_AUTODEV_TASKS.md','utf8');
+assert(src.includes('>相対配分 ${pct(x.p)}'));
+assert(src.includes('120通りの確率分布・1着確率・3連単的中確率ではありません'));
+assert(src.includes('締切前の保存買い目は結果後に変更しません'));
+assert(src.includes('data-be257-view="${postResult?\'frozen\':\'reference\'}"'));
+assert(html.includes('boat_edge_v108.js?v=258&amp;conf255=1&amp;weights=279'));
+assert(queue.includes('- [x] A29 |'));
+assert(queue.includes('- [ ] A30 |'));
+assert(!queue.includes('- [ ] A29 |'));
+console.log('V279_RELATIVE_WEIGHTS_LABEL_ONLY_PASS');
