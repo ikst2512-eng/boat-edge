@@ -28,6 +28,20 @@ class V136PublishContract(unittest.TestCase):
         self.assertNotIn("git pull --rebase", publisher)
         self.assertNotIn("git push --force", publisher)
 
+    def test_only_one_git_provenance_scoring_pass_without_push_conflict(self):
+        # A normal scheduled cycle must not scan the same 511+ snapshots twice.
+        # The retry loop itself still recomputes on EVERY rejected main push.
+        workflow = (ROOT / ".github/workflows/site-v136.yml").read_text()
+        score = workflow.split("  score:", 1)[1]
+        self.assertEqual(score.count("python3 scripts/site_accuracy_v136.py"), 1)
+        self.assertNotIn(
+            "      - name: Score audited prospective site-reference snapshots", score
+        )
+        self.assertIn("for attempt in 1 2 3 4; do", score)
+        self.assertLess(score.index("git fetch --no-tags origin main"),
+                        score.index("python3 scripts/site_accuracy_v136.py"))
+        self.assertIn("V136_MAIN_REFRESH_SCORE_PROOF_PASS", score)
+
     def test_formal_and_model_gates_remain_closed(self):
         workflow = (ROOT / ".github/workflows/site-v136.yml").read_text()
         publisher = workflow.split(
