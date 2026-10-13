@@ -9,9 +9,31 @@ const script = fs.readFileSync(path.join(root, 'assets/boat_edge_v202_display.js
 const context = { window: {}, document: { readyState: 'loading', addEventListener() {} }, console };
 vm.runInNewContext(script, context, { filename: 'boat_edge_v202_display.js' });
 const api = context.window.BoatEdgeV202;
-function race(id) {
-  return JSON.parse(fs.readFileSync(path.join(root, 'data/races', id + '.json'), 'utf8'));
-}
+// Source-pinned projections of saved PRE_RESULT races, not fabricated positive measurements.
+// Production CI sparse-checkout excludes data/races; keep this regression self-contained.
+const saved = {
+  '20261013-06-01': {
+    race_key: '20261013-06-01',
+    source_audit: { original_exhibition: {
+      status: 'ok', fetched_at: '2026-10-13T10:54:55+09:00',
+      sha256: '6c818e28816901ee305904668937c24198928c2779c71ea3eedbc41c23bcb672'
+    }},
+    racers: Array.from({length: 6}, (_, i) => ({lane: i + 1, name: ['伊達 正利','渡邊 伸太郎','佐竹 友樹','鈴木 結平太','萬 正嗣','岸本 雄貴'][i]})),
+    original_exhibition: {
+      labels: ['一周','まわり足','直線'],
+      boats: [[37.23,5.33,8.2],[37.11,5.24,8.1],[36.95,5.12,8.16],[37.16,5.38,8.07],[37.95,5.57,8.11],[38.06,5.75,7.91]].map((values, i) => ({lane:i+1, values}))
+    }
+  },
+  '20261013-04-01': {
+    race_key: '20261013-04-01',
+    source_audit: { original_exhibition: {
+      status: 'missing', fetched_at: null,
+      sha256: 'e3382de5fe8f043fd0dcb1b008d4b33a072b3cd6c48d3f2159b4cebc62b9520f'
+    }},
+    racers: Array.from({length: 6}, (_, i) => ({lane:i+1}))
+  }
+};
+function race(id) { return structuredClone(saved[id]); }
 test('浜名湖1R: independently audited original exhibition maps to six visible row values', () => {
   const data = race('20261013-06-01');
   assert.equal(api.sourceOK(data, 'original_exhibition'), true);
