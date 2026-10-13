@@ -24,6 +24,7 @@ from boat_edge_02_joint_entry_permutation_research import (
 )
 from boat_edge_02_exhibition_to_actual_entry_research import (
     estimate_exhibition_conditioned_entry, ID as PAIRED_ENTRY_ID,
+    EXACT_ID as EXACT_ENTRY_ID, POOLED_MODE, EXACT_MODE,
 )
 from boat_edge_v307_pl120_research import rank_120
 from boat_edge_v317_ticket_mapper import map_course_mass_to_boat_tickets
@@ -32,6 +33,8 @@ MODEL = "BOAT_EDGE_02_ENTRY_MARGINALIZED_TOPK_ABLATION_V1"
 NO_FACTOR = "BOAT_EDGE_02_V307_EXHIBITION_NO_COURSE_FACTOR_CONTROL_V1"
 BASELINE = "BOAT_EDGE_02_V307_EXHIBITION_SINGLE_ENTRY_BASELINE_V1"
 CANDIDATE = "BOAT_EDGE_02_V307_JOINT_ENTRY_MARGINAL_RESEARCH_V1"
+PAIRED_CANDIDATE = "BOAT_EDGE_02_V307_POOLED_EXHIBITION_TRANSITIONS_RESEARCH_V2"
+EXACT_CANDIDATE = "BOAT_EDGE_02_V307_EXACT_EXHIBITION_PATTERN_RESEARCH_V3"
 BOATS = frozenset(range(1, 7))
 COMBOS = frozenset("-".join(map(str, k)) for k in itertools.permutations(range(1, 7), 3))
 REQUIRED = {
@@ -77,7 +80,8 @@ def _ranked(masses):
 
 def prepare_entry_topk_ablation(
         race_key, scope, cfg, entry_evidence=None,
-        paired_history_evidence=None, paired_history_rows=None):
+        paired_history_evidence=None, paired_history_rows=None,
+        paired_history_mode=POOLED_MODE):
     """Deterministic pure A/B candidate generation, NEVER live model promotion."""
     _check_scope(scope, race_key)
     if not isinstance(cfg, dict) or set(cfg) != REQUIRED:
@@ -109,7 +113,11 @@ def prepare_entry_topk_ablation(
     factors = _validate_values(cfg["course_factor_by_course"], BOATS, "COURSE_FACTOR")
     if cfg["course_factor_manifest_sha256"] != digest(factors):
         raise ValueError("COURSE_FACTOR_CONTENT_SHA_MISMATCH")
+    if paired_history_mode not in (POOLED_MODE, EXACT_MODE):
+        raise ValueError("ENTRY_CONDITIONING_MODE_INVALID")
     if paired_history_evidence is None and paired_history_rows is None:
+        if paired_history_mode != POOLED_MODE:
+            raise ValueError("EXACT_ENTRY_MODE_REQUIRES_PAIRED_HISTORY")
         # Original course-frame marginal prior, already implemented in 02.
         if entry_evidence is None:
             raise ValueError("ENTRY_SOURCE_EVIDENCE_REQUIRED")
@@ -121,6 +129,7 @@ def prepare_entry_topk_ablation(
             raise ValueError("JOINT_ENTRY_RESEARCH_ONLY_INVARIANTS")
         entry_count_sha = entry["source_count_sha256"]
         entry_kind = "UNCONDITIONAL_FRAME_TO_COURSE_PRIOR"
+        candidate_model_id = CANDIDATE
         exhibition_history_paired = False
     else:
         # NEW: historical same-race start exhibition -> verified final entry.
@@ -129,8 +138,10 @@ def prepare_entry_topk_ablation(
         if entry_evidence is not None or paired_history_evidence is None or paired_history_rows is None:
             raise ValueError("EXACT_ONE_ENTRY_EVIDENCE_MODE_REQUIRED")
         entry = estimate_exhibition_conditioned_entry(
-            race_key, scope, paired_history_evidence, paired_history_rows)
-        if (entry["model_id"] != PAIRED_ENTRY_ID
+            race_key, scope, paired_history_evidence, paired_history_rows,
+            conditioning_mode=paired_history_mode)
+        expected_model = EXACT_ENTRY_ID if paired_history_mode == EXACT_MODE else PAIRED_ENTRY_ID
+        if (entry["model_id"] != expected_model
                 or entry["race_key"] != race_key
                 or entry["target_exhibition_mapping_sha256"] != cfg["entry_mapping_sha256"]
                 or entry["training_source_manifest_sha256"] != scope["source_manifest_sha256"]
@@ -142,7 +153,11 @@ def prepare_entry_topk_ablation(
                 or entry["target_outcome_read"] is not False):
             raise ValueError("PAIRED_ENTRY_RESEARCH_ONLY_INVARIANTS")
         entry_count_sha = entry["observed_paired_counts_sha256"]
-        entry_kind = "PAIRED_EXHIBITION_TO_FINAL_RELATIVE_TRANSITION"
+        entry_kind = ("PAIRED_EXACT_EXHIBITION_PATTERN_TO_FINAL_RELATIVE_TRANSITION"
+                      if paired_history_mode == EXACT_MODE
+                      else "PAIRED_EXHIBITION_TO_FINAL_RELATIVE_TRANSITION")
+        candidate_model_id = (EXACT_CANDIDATE if paired_history_mode == EXACT_MODE
+                              else PAIRED_CANDIDATE)
         exhibition_history_paired = True
     # In BOTH branches, source rights and timestamps remain caller assertions.
     if (len(entry["ranked_720"]) != 720 or
@@ -221,7 +236,7 @@ def prepare_entry_topk_ablation(
         "race_key": race_key,
         "no_factor_control_ranking_document": _doc(NO_FACTOR, race_key, cfg, no_factor),
         "baseline_ranking_document": _doc(BASELINE, race_key, cfg, baseline),
-        "candidate_ranking_document": _doc(CANDIDATE, race_key, cfg, candidate),
+        "candidate_ranking_document": _doc(candidate_model_id, race_key, cfg, candidate),
         "no_factor_control_top3": no_factor_top[:3],
         "no_factor_control_top5": no_factor_top[:5],
         "no_factor_control_top10": no_factor_top,
@@ -235,13 +250,25 @@ def prepare_entry_topk_ablation(
         "entry_permutations_nonzero_weight": present,
         "entry_count_sha256": entry_count_sha,
         "entry_research_source_kind": entry_kind,
+        "exact_exhibition_pattern_conditioning_requested": paired_history_mode == EXACT_MODE,
+        "historical_exact_exhibition_pattern_national_n": (
+            entry["historical_exact_exhibition_pattern_national_n"]
+            if exhibition_history_paired else None),
+        "historical_exact_exhibition_pattern_venue_n": (
+            entry["historical_exact_exhibition_pattern_venue_n"]
+            if exhibition_history_paired else None),
         "historic_start_exhibition_to_actual_entry_pairs_used": exhibition_history_paired,
         "factor_manifest_sha256": cfg["course_factor_manifest_sha256"],
         "entry_weight_semantics": (
-            "POOLED_HISTORICAL_EXHIBITION_TO_FINAL_TRANSITIONS_NOT_EXACT_EXHIBITION_POSTERIOR"
+            ("EXACT_EXHIBITION_PATTERN_TRAINING_ONLY_UNCALIBRATED"
+             if paired_history_mode == EXACT_MODE else
+             "POOLED_HISTORICAL_EXHIBITION_TO_FINAL_TRANSITIONS_NOT_EXACT_EXHIBITION_POSTERIOR")
             if exhibition_history_paired else
             "VENUE_FRAME_ACTUAL_COURSE_MARGINAL_PRIOR_NOT_P_OF_FINAL_ENTRY_GIVEN_TODAY_EXHIBITION"),
         "live_exhibition_conditioned_entry_transition_learned": False,
+        "historic_transition_counts_conditioned_on_exact_exhibition_pattern": (
+            entry["historic_transition_counts_conditioned_on_exact_exhibition_pattern"]
+            if exhibition_history_paired else False),
         "entry_720_relative_weights_are_not_calibrated_posterior": True,
         "factor_only_mass_l1_not_hit_improvement": factor_only_distance,
         "topk_membership_a_to_b_not_hit_rates": topk_delta(no_factor_top, base_top),
