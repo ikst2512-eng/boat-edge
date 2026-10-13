@@ -159,6 +159,26 @@ class V366SourceOnlyProof(unittest.TestCase):
                 _source_url(KEY, "result")
             self.assertFalse((root / "data/research_source_only_v366").exists())
 
+    def test_explicit_withdrawal_even_with_six_rows_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            setup_case(root)
+            reg, bef = source_pages()
+            reg = reg.replace(b"</body>", "欠場".encode() + b"</body>")
+            with self.assertRaisesRegex(ValueError, "WITHDRAWAL_OR_ABSENCE_SIGNAL"):
+                capture_source_only(root, KEY, clock=lambda: NOW,
+                                    fetcher=fetcher_for((reg, bef)))
+            self.assertFalse((root / "data/research_source_only_v366").exists())
+
+    def test_formal_target_rejected_before_local_inputs_or_network(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
+                capture_source_only(root, "20261001-22-12",
+                                    clock=lambda: self.fail("NO_FORMAL_CLOCK_READ"),
+                                    fetcher=lambda _: self.fail("NO_FORMAL_FETCH"))
+            self.assertFalse((root / "data/research_source_only_v366").exists())
+
     def test_close_during_network_does_not_persist_late_html(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -212,7 +232,7 @@ class V366SourceOnlyProof(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             setup_case(root)
-            with self.assertRaisesRegex(ValueError, "NOT_CURRENTLY_ELIGIBLE"):
+            with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
                 capture_source_only(root, "20261001-22-12", clock=lambda: NOW,
                                     fetcher=lambda _: self.fail("NO_NETWORK"))
 
