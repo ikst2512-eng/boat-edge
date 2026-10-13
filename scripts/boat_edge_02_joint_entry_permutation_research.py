@@ -57,7 +57,13 @@ def joint_entry_distribution(race_key, scope, evidence):
         raise ValueError("ENTRY_RIGHTS_OR_PRE_RESULT_SEMANTICS_INVALID")
     uri = evidence["source_url"]
     if (not isinstance(uri, str) or (p := urlparse(uri)).scheme != "https" or
-            not p.hostname or p.username or p.password or p.fragment):
+            not p.hostname or p.username or p.password or p.fragment or
+            p.hostname.lower() not in {
+                "www.boatrace.jp", "boatrace.jp",
+                "www.boatrace-biwako.jp", "boatrace-biwako.jp",
+            }):
+        # Strict allowlist for this research hypothesis, NOT permission to fetch
+        # those hosts. Other venue domains require a reviewed new contract.
         raise ValueError("OFFICIAL_SOURCE_URL_REQUIRED")
     if (evidence["source_manifest_sha256"] != scope["source_manifest_sha256"]
             or evidence["permission_evidence_sha256"] != scope["reviewed_permission_evidence_sha256"]):
