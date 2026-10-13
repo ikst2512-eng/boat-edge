@@ -108,7 +108,7 @@ function predictionWindowNotice(r,now=Date.now()){
     Number(r?.meta?.race_no)!==Number(key.slice(12,14)))
   return '出走表と締切予定を照合できません。未確認の買い目は表示しません。';
  const day=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
- if(r?.meta?.date&&r.meta.date!==day)
+ if(r?.meta?.date&&r.meta.date!==day&&r.meta.date!==day.slice(0,4)+'-'+day.slice(4,6)+'-'+day.slice(6,8))
   return 'レース日付が一致しません。未確認の買い目は表示しません。';
  const due=Date.parse(day+'T'+time+':00+09:00');
  if(!Number.isFinite(due))return '締切予定時刻を確認できません。買い目は表示しません。';
