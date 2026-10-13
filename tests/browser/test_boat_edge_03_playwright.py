@@ -114,6 +114,13 @@ class MobilePredictionBrowser(unittest.TestCase):
           };
         }""")
         page.add_script_tag(path=str(SCRIPT))
+        # Injected scripts may observe a document whose DOMContentLoaded event
+        # happened before injection. Trigger the listener if pending, then render
+        # the source-only panel explicitly (the real code guards duplicate init).
+        page.evaluate("""() => {
+          document.dispatchEvent(new Event('DOMContentLoaded'));
+          window.BoatEdgeV207.render();
+        }""")
         page.locator("#be207Top.ready").wait_for()
         return context, page
 
@@ -236,6 +243,10 @@ class MobilePredictionBrowser(unittest.TestCase):
                     }""")
                     page.add_style_tag(path=str(ROOT / "assets/boat_edge_v206_quickview.css"))
                     page.add_script_tag(path=str(ROOT / "assets/boat_edge_v206_quickview.js"))
+                    page.evaluate("""() => {
+                      document.dispatchEvent(new Event('DOMContentLoaded'));
+                      window.BoatEdgeV206.sync();
+                    }""")
                     page.locator("#be206Quick").wait_for()
                     self.assertEqual(
                         page.locator('#be206Quick .be206-matrix th[data-be206-lane]').count(),
