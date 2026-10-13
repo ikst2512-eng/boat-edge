@@ -15,6 +15,13 @@ on:
       - 'index.html'
       - 'assets/**'
   workflow_dispatch:
+  # PRE_RESULT live TopK is not testable at the overnight UI push: revisit
+  # public Pages while actual racing is underway (UTC -> JST +9).
+  # 05:43 UTC = 14:43 JST; 09:13 UTC = 18:13 JST.
+  # Schedule is owned by 03; 01 collection/freeze workflows remain untouched.
+  schedule:
+    - cron: '43 5 * * *'
+    - cron: '13 9 * * *'
 
 permissions:
   contents: read
@@ -74,7 +81,8 @@ jobs:
             --site-url https://ikst2512-eng.github.io/boat-edge/index.html
 
       - name: Upload actual screenshots (including failures)
-        if: always()
+        # No recurring artifact-storage buildup from twice-daily read-only probes.
+        if: ${{ always() && github.event_name != 'schedule' }}
         uses: actions/upload-artifact@v4
         with:
           name: boat-edge-03-real-browser-screenshots
