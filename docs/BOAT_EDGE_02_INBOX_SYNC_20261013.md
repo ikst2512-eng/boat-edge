@@ -48,3 +48,14 @@
 - Site CURRENT policy/TODO cannot be updated to DONE by this research note; continued parallel research does not imply current-site integration.
 
 **Formal status re-read from `data/formal_status.json` at repository snapshot 2026-10-13 23:35:58+09:00:** core7_eligible_count 13/100; formalFirst100.races 0; results_seen/unlock/scoring false, token null. This is the timestamp on the source JSON, not the clock when this document was written. No result endpoints/files opened.
+
+
+## P1 R08/R09 code delta (after latest inbox reconciliation)
+
+Research-only `scripts/boat_edge_02_st_distribution_research.py` + `tests/test_boat_edge_v236_02_st_distribution_research.py` isolate the **NEW** part, not an overlap with V185/V199 average/exhibition ST scores. Six racer/boat labelled, independently permission-reviewed *historical sufficient moments* allow (a) past actual ST mean/dispersion, (b) top-start count with explicit shrinkage prior and its own historical sample N, and (c) paired pre-target exhibition-to-actual covariance with finite-sample shrinkage. Paired N<20 yields **no** estimated correction; no observed current exhibition ST also yields **no** correction. Negative actual ST/false start observations are not assumed to be regular positive ST training records; operator must publish exclusion provenance and counts.
+
+This does not assert the externally published 0.026 median reported in R09 is real for this dataset, does not treat each individual top-start rate as a six-boat normalized winner distribution, and does not inject actual target ST. No automatic training/fitness conclusions or claim of improving hit rate. All source-rights booleans, reported timestamps and source hashes are declarative; Git audit or independent licensing verification has not happened. New synthetic-test CI must PASS separately before marking this component technically test-passed.
+
+## Source-rights and site UI handoff
+
+The updated provider-by-provider ledger and acquisition-manifest template reside at `docs/BOAT_EDGE_02_RIGHTS_FEATURE_SOURCE_MATRIX_20261013.md`. R01–R16 must be **idempotently** synchronized from the exact verified INBOX blob; never overwrite `BOAT_EDGE_02_RESEARCH_INBOX.md` or the separate master/current TODO from Track 02. Existing Track 01/03 PRs are not modified. After independent future evidence, 01 may create a version-pinned model integration and 03 may expose verified head/Top3/Top5/Top10 probabilities; until then `production_eligible=false`.
