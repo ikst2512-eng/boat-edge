@@ -35,7 +35,7 @@
       for(const row of arr){
         const lane=String(row?.lane??''),course=num(row?.course);
         if(!/^[1-6]$/.test(lane))continue;
-        out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:num(row?.st)!==null&&Math.abs(num(row.st))<=1?num(row.st):null,f:row?.exhibition_f===true};
+        out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:num(row?.st),f:row?.exhibition_f===true};
       }
     }
     return out;
@@ -97,7 +97,7 @@
   function sourceReport(race,oe,bfRows,starts){
     const card=actualCheck(race),audit=race?.source_audit||{};
     const originalGood=Boolean(oe&&['一周','まわり足','直線'].every(label=>(oe.labels||[]).includes(label))&&new Set((oe.boats||[]).filter(b=>{const lane=Number(b?.lane);return lane>=1&&lane<=6&&['一周','まわり足','直線'].every(label=>num(b?.values?.[(oe.labels||[]).indexOf(label)])!==null);}).map(b=>Number(b.lane))).size===6);
-    const startGood=sourceOK(race,'beforeinfo')&&new Set(starts.filter(b=>num(b?.st)!==null&&Math.abs(num(b.st))<=1).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
+    const startGood=sourceOK(race,'beforeinfo')&&new Set(starts.filter(b=>num(b?.st)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
     const bfGood=sourceOK(race,'beforeinfo')&&new Set(bfRows.filter(b=>num(b?.exhibition_time)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
     const cached=!bfGood&&((race?.beforeinfo?.racers||[]).length>=4||(race?.actual_entry||[]).length>=4);
     return `<div class="be202-chips">${sourceChip(race,'race_card','出走表',card)}${sourceChip(race,'beforeinfo','公式展示',bfGood)}${sourceChip(race,'beforeinfo','展示ST',startGood)}${sourceChip(race,'original_exhibition','オリ展',originalGood)}</div><div class="be202-source-note">公式直前 ${bfGood?`${stamp(audit.beforeinfo?.fetched_at)}／${esc(snapshotPhase(audit.beforeinfo?.fetched_at,race))}`:cached?'保存値はあり・現在の取得時刻は未照合':'未取得'} ・ オリ展 ${originalGood?`${stamp(audit.original_exhibition?.fetched_at)}／${esc(snapshotPhase(audit.original_exhibition?.fetched_at,race))}`:'未取得'}</div>`;
