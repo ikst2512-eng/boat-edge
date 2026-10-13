@@ -1,0 +1,66 @@
+name: V302 V236 clock diagnostic (metadata only)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/v302-v236-clock-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Compare frozen clock and first-added Git metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          git rev-parse HEAD > diagnostics/checkout_sha.txt
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import subprocess
+          from pathlib import Path
+          folder=Path('data/site_autopilot/v236_frozen')
+          scored=Path('data/site_autopilot/v236_scored')
+          rows=[]
+          for p in sorted(folder.glob('*.json')):
+              if (scored/p.name).exists():
+                  continue
+              data=json.loads(p.read_text())
+              commits=subprocess.check_output(['git','log','--diff-filter=A','--reverse','--format=%H','--',str(p)],text=True).splitlines()
+              first=commits[0] if commits else None
+              commit_at=subprocess.check_output(['git','show','-s','--format=%cI',first],text=True).strip() if first else None
+              delta=None
+              if commit_at and isinstance(data.get('frozen_at'),str):
+                  try:
+                      a=dt.datetime.fromisoformat(data['frozen_at'].replace('Z','+00:00'))
+                      b=dt.datetime.fromisoformat(commit_at.replace('Z','+00:00'))
+                      delta=round((a-b).total_seconds(),6)
+                  except ValueError:
+                      pass
+              rows.append({'race_key':p.stem,'first_commit':first,'git_committer_at':commit_at,
+                           'frozen_at':data.get('frozen_at'),'deadline_jst':data.get('deadline_jst'),
+                           'delta_seconds':delta})
+          valid=[x['delta_seconds'] for x in rows if x['delta_seconds'] is not None]
+          summary={'unscored':len(rows),'valid_deltas':len(valid),
+                   'positive_subsecond':sum(0<x<1 for x in valid),
+                   'positive_one_second_or_more':sum(x>=1 for x in valid),
+                   'nonpositive':sum(x<=0 for x in valid),
+                   'minimum_delta':min(valid) if valid else None,
+                   'maximum_delta':max(valid) if valid else None}
+          Path('diagnostics/summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+          Path('diagnostics/rows.json').write_text(json.dumps(rows,indent=2)+'\n')
+          print('V302_METADATA_ONLY',json.dumps(summary,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v302-v236-clock-diagnostic
+          path: diagnostics/
+          retention-days: 30
