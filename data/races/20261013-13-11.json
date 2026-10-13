@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 11,
     "deadline": "15:35",
-    "updated_at": "2026-10-13T12:55:39+09:00",
+    "updated_at": "2026-10-13T13:15:40+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=13&rno=11",
-      "fetched_at": "2026-10-13T12:57:41+09:00",
-      "sha256": "f6e18af9528bf67f14cd6e73d8f9673218dbb284ccce4a3ea5edf62ac6efc5e0",
+      "fetched_at": "2026-10-13T13:16:58+09:00",
+      "sha256": "5a7b421e98e41e74bff86729d684fa06d67cc6373d2981445f0dfcae998ae9aa",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=13&rno=11",
+      "fetched_at": "2026-10-13T13:16:46+09:00",
+      "sha256": "f58073e49167f958e759dd8bfccae06759f9a303b4eaafd58a4d19b3c7ce008e",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "f236a7b3e2cf14a02b74f3c99ef6edd0ff032bd91d42bd0e24276e2d3949419b"
+      "sha256": "099fb3723fde2088ed622f452633559ff18015c6f04f0bc3ed23a5ece62a48b9"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "0a4c14c21d8d75936909b0396a3c4622b13d5d6458110ee939b82e1bc00d1f1d"
+      "sha256": "5d8e134df623a48e0db515324d680dbe83ecf70ac7e19483993151c801d7a1a1"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "beffe868781cbfc69b4225cbf48b8ac94a530da44a269069b450f71a9c5cdd62"
+      "sha256": "1810a274bc2a9b1db782410310f7bce7315d67a38f996593cc383530a4e34fca"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "1769e0c062715353db7f56564fa71ab36eb9bf177f2c44c40a3983e81c7dcb40"
+      "sha256": "7547f45a775f2114295380c32d8974c8dea935702f92b9a554f149ab10cfe279"
     }
   },
   "racers": [
@@ -284,7 +290,53 @@
       "raw_text": "6 4363 / A2 大野 芳顕 福岡/福岡 41歳/53.8kg F0 L0 0.17 5.49 33.33 57.14 5.05 26.32 36.84 26 34.81 52.59 73 42.64 51.94 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 片橋 幸貴 52.1kg R 2"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 永井 源 53.0kg R 4"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 多羅尾 達之 51.0kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 石原 翼 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 向井 美鈴 44.5kg R 5"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 大野 芳顕 53.8kg R 3"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 6.0,
+      "wave_cm": 4.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
