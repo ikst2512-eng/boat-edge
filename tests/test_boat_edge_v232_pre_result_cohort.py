@@ -66,6 +66,17 @@ class Cohort(unittest.TestCase):
         saved=self.root/'data/site_autopilot/v232_cohort'/f'{KEY}.json'
         buf=saved.read_bytes();collect(self.root,NOW+dt.timedelta(seconds=4))
         self.assertEqual(buf,saved.read_bytes())
+    def test_window_diagnostic_counts_without_backfilling(self):
+        import datetime as dt
+        report=collect(self.root,NOW)
+        self.assertEqual(report['snapshot_window_diagnostic'],
+                         {'total':1,'missing_deadline':0,'before_window':0,'after_window':0})
+        later=collect(self.root,NOW+dt.timedelta(minutes=16))
+        self.assertEqual(later['snapshot_window_diagnostic']['after_window'],1)
+        self.assertEqual(later['new_research_races_this_run'],0)
+        self.assertEqual(later['frozen_research_races_today'],1)
+        self.assertFalse(later['accuracy_improvement_proven'])
+
     def test_formal_gate_not_closed_aborts_without_write(self):
         f=self.root/'data/formal_status.json';d=json.loads(f.read_text());d['guards']['unlock']=True;write(f,d)
         with self.assertRaisesRegex(RuntimeError,'FORMAL_GUARD'):collect(self.root,NOW)
