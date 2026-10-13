@@ -71,6 +71,6 @@ PYTHONPATH=scripts python3 scripts/boat_edge_v406_offline_history_packager.py \
 python3 -m unittest discover -s tests -p 'test_boat_edge_v406_offline_history_packager.py' -v
 ```
 
-合成データの複数日統合・時刻・source SHA・日付・24場内訳・不正な保護期間・未レビュー権利・パス抜け・V404/V405との一致を回帰検査する。実5年分の処理時間・メモリ、実績的中率は**未検証**。特に出力CSVの全行を一時メモリに持つため、実利用前には権利確認済みの小規模サンプルによる負荷テストが必要。
+合成データの複数日統合・時刻・source SHA・日付・24場内訳・不正な保護期間・未レビュー権利・パス抜け・V404/V405との一致を回帰検査する。実5年分の処理時間・メモリ、実績的中率は**未検証**。V406は艇別dictの全件蓄積を避け、日別のCSV文字列で統合するよう改善済み。ただしステージファイルの一括読込と出力CSVバイト列はメモリを使うため、実利用前には権利確認済みの小規模サンプルによる負荷テストが必要。
 
 公式使用範囲の質問原案・未送信の窓口は `docs/BOAT_EDGE_HISTORY_RIGHTS_INQUIRY_20261014.md`。問い合わせの回答・書面で認められた許諾がない間に一括スクレイピングへ進んではいけない。
