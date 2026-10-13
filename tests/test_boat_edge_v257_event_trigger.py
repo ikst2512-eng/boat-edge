@@ -133,17 +133,23 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn('  schedule:',fallback)
         self.assertIn('  schedule:',primary)
         self.assertIn('  schedule:',shadow)
-        def minute_slot(src):
+        def minute_slot(src, *, allow_0820_prewarm=False):
             slots=[line.split("cron: '",1)[1].split("'",1)[0]
                    for line in src.splitlines() if "cron: '" in line]
-            self.assertEqual(len(slots),1,
-                'Each active owner must have one verified 5-minute schedule')
+            # The primary V235 source owner has ONE additional 08:20 JST
+            # source-prewarm trigger; it is not a second 5-minute writer.
+            self.assertEqual(len(slots),2 if allow_0820_prewarm else 1,
+                'Only V235 may have one separately verified early prewarm slot')
+            if allow_0820_prewarm:
+                self.assertEqual(slots.count('20 23 * * *'),1,
+                    'Only the exactly scheduled 08:20 JST prewarm is allowed')
+                slots.remove('20 23 * * *')
             minute,hour,dom,month,weekday=slots[0].split()
             self.assertEqual((hour,dom,month,weekday),
                 ('0-14,23','*','*','*'),
                 '23 UTC must cover Japanese 08:00-08:59')
             return set(map(int,minute.split(',')))
-        primary_slots=minute_slot(primary)
+        primary_slots=minute_slot(primary,allow_0820_prewarm=True)
         tail_slots=minute_slot(shadow)
         backup_slots=minute_slot(fallback)
         self.assertEqual(primary_slots,set(range(2,60,5)))
@@ -169,13 +175,19 @@ class V257SourceTrigger(unittest.TestCase):
         import re
         primary=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
         research=WORKFLOW.read_text(encoding='utf-8')
-        def cron_slots(workflow):
-            match=re.search(r"cron: '(\d+(?:,\d+)*) ([^ ]+) \* \* \*'",workflow)
-            self.assertIsNotNone(match,'Expected real scheduled UTC slots')
-            self.assertEqual(match.group(2),'0-14,23',
+        def cron_slots(workflow, *, allow_0820_prewarm=False):
+            slots=re.findall(r"^\s+- cron: '([^']+)'$",workflow,re.MULTILINE)
+            self.assertEqual(len(slots),2 if allow_0820_prewarm else 1,
+                'Exactly one periodic schedule and optional V235-only prewarm')
+            if allow_0820_prewarm:
+                self.assertEqual(slots.count('20 23 * * *'),1,
+                    '08:20 JST source prewarm must be unique and exact')
+                slots.remove('20 23 * * *')
+            minute,hour,dom,month,weekday=slots[0].split()
+            self.assertEqual((hour,dom,month,weekday),('0-14,23','*','*','*'),
                 '23 UTC must cover Japanese 08:00-08:59')
-            return set(map(int,match.group(1).split(',')))
-        parent=cron_slots(primary)
+            return set(map(int,minute.split(',')))
+        parent=cron_slots(primary,allow_0820_prewarm=True)
         tail=cron_slots(research)
         self.assertEqual(parent,set(range(2,60,5)))
         self.assertEqual(tail,set(range(3,60,5)))
