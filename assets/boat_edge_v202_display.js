@@ -193,6 +193,6 @@
     if(mode){observer=new MutationObserver(()=>{if(latestRace)draw(latestRace,latestPred);});observer.observe(mode,{childList:true});}
     try{if(typeof window.state!=='undefined'&&window.state?.race)afterRace(window.state.race);}catch(_){}
   }
-  window.BoatEdgeV202={makeRows,entryMap,sourceOK,deadlineAt,snapshotPhase,leaderMetric,refresh:()=>{try{if(window.state?.race)afterRace(window.state.race);}catch(_){}}};
+  window.BoatEdgeV202={makeRows,entryMap,sourceOK,deadlineAt,snapshotPhase,leaderMetric,html,refresh:()=>{try{if(window.state?.race)afterRace(window.state.race);}catch(_){}}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
