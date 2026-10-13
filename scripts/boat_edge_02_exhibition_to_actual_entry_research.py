@@ -18,6 +18,9 @@ from boat_edge_02_hierarchical_conditional_research import _check_scope, _date, 
 from boat_edge_02_joint_entry_permutation_research import digest
 
 ID = "BOAT_EDGE_02_PAIRED_EXHIBITION_TO_ACTUAL_ENTRY_RESEARCH_V1"
+EXACT_ID = "BOAT_EDGE_02_EXACT_EXHIBITION_PATTERN_TRANSITIONS_RESEARCH_V2"
+POOLED_MODE = "POOLED"
+EXACT_MODE = "EXACT_EXHIBITION_PATTERN"
 BOATS = frozenset(range(1, 7))
 TRANSITIONS = tuple(itertools.permutations(range(1, 7)))
 JST = timedelta(hours=9)
@@ -112,7 +115,8 @@ def _validate(race_key, scope, evidence):
     return venue, freeze, set(blocked) | RESEARCH_PROTECTED_DATES
 
 
-def estimate_exhibition_conditioned_entry(race_key, scope, evidence, historic_rows):
+def estimate_exhibition_conditioned_entry(
+        race_key, scope, evidence, historic_rows, conditioning_mode=POOLED_MODE):
     """720 hypothetical BOAT->final COURSE assignments conditioned on exhibition.
 
     Venue transition counts are shrunk toward directly *observed* national
@@ -120,11 +124,16 @@ def estimate_exhibition_conditioned_entry(race_key, scope, evidence, historic_ro
     not synthetic pseudoevents. Training pairs must cover same-event full-six
     exhibition AND actual official courses before cutoff and freeze.
     """
+    if conditioning_mode not in (POOLED_MODE, EXACT_MODE):
+        raise ValueError("UNDECLARED_EXHIBITION_CONDITIONING_MODE")
     venue, freeze, blocked = _validate(race_key, scope, evidence)
     if not isinstance(historic_rows, list) or not historic_rows:
         raise ValueError("PAIRED_ENTRY_HISTORY_NOT_SUPPLIED")
     national = {t: 0 for t in TRANSITIONS}
     local = {t: 0 for t in TRANSITIONS}
+    exact_national = {t: 0 for t in TRANSITIONS}
+    exact_local = {t: 0 for t in TRANSITIONS}
+    target_exhibition = evidence["target_exhibition_course_by_boat"]
     previous = None
     for row in historic_rows:
         if not isinstance(row, dict) or set(row) != ROW_KEYS:
@@ -163,15 +172,38 @@ def estimate_exhibition_conditioned_entry(race_key, scope, evidence, historic_ro
         national[transition] += 1
         if race_venue == venue:
             local[transition] += 1
+        if a == target_exhibition:
+            exact_national[transition] += 1
+            if race_venue == venue:
+                exact_local[transition] += 1
     n_nat, n_loc = sum(national.values()), sum(local.values())
     if n_nat < MIN_NATIONAL or n_loc < MIN_VENUE:
         raise ValueError("PAIRED_ENTRY_COHORT_TOO_SPARSE")
-    exhib = evidence["target_exhibition_course_by_boat"]
+    n_nat_exact = sum(exact_national.values())
+    n_loc_exact = sum(exact_local.values())
+    if conditioning_mode == EXACT_MODE and (
+            n_nat_exact < MIN_NATIONAL or n_loc_exact < MIN_VENUE):
+        # Missing exact-pattern history is a hard evidence gap. Do not
+        # silently fall back to a different population and label it exact.
+        raise ValueError("EXACT_EXHIBITION_PATTERN_SUPPORT_TOO_SPARSE")
+    exhib = target_exhibition
     ranked = []
     for t in TRANSITIONS:
-        # No fabricated "identity prior": shrink ONLY toward observed national
-        # joint exhibition→actual transitions, not uniform 1/720.
-        prob = (local[t] + SHRINKAGE_N * national[t] / n_nat) / (n_loc + SHRINKAGE_N)
+        # National pooled → venue pooled always uses observed historic pairs.
+        pooled = (local[t] + SHRINKAGE_N * national[t] / n_nat) / (n_loc + SHRINKAGE_N)
+        if conditioning_mode == EXACT_MODE:
+            # The exact frame→exhibition permutation itself (not merely the
+            # pattern in exhibition-course coordinates) defines the subgroup.
+            # Two explicit fixed-strength shrinkage steps use observed
+            # exact-national and exact-venue counts. Never invent an
+            # observation for unobserved transitions.
+            national_cond = (
+                exact_national[t] + SHRINKAGE_N * pooled
+            ) / (n_nat_exact + SHRINKAGE_N)
+            prob = (exact_local[t] + SHRINKAGE_N * national_cond) / (
+                n_loc_exact + SHRINKAGE_N)
+        else:
+            prob = pooled
         final_by_boat = tuple(t[exhib[boat]-1] for boat in range(1, 7))
         ranked.append((final_by_boat, prob))
     ranked.sort(key=lambda x: (-x[1], x[0]))
@@ -197,8 +229,15 @@ def estimate_exhibition_conditioned_entry(race_key, scope, evidence, historic_ro
         "target_exhibition_sha256": evidence["target_exhibition_mapping_sha256"],
         "history_cutoff": scope["train_end"],
     }
+    if conditioning_mode == EXACT_MODE:
+        histogram["exact_national"] = {
+            "-".join(map(str, k)): v for k, v in exact_national.items() if v}
+        histogram["exact_venue"] = {
+            "-".join(map(str, k)): v for k, v in exact_local.items() if v}
+        histogram["exact_national_n"] = n_nat_exact
+        histogram["exact_venue_n"] = n_loc_exact
     return {
-        "model_id": ID, "race_key": race_key,
+        "model_id": EXACT_ID if conditioning_mode == EXACT_MODE else ID, "race_key": race_key,
         "scope": "RESEARCH_ONLY_CONDITIONAL_EXHIBITION_TO_ACTUAL_NOT_CALIBRATED",
         "training_end": scope["train_end"],
         "historical_national_paired_events_n": n_nat,
@@ -210,7 +249,10 @@ def estimate_exhibition_conditioned_entry(race_key, scope, evidence, historic_ro
         "training_source_manifest_sha256": evidence["training_source_manifest_sha256"],
         "permission_evidence_sha256": evidence["permission_evidence_sha256"],
         "target_exhibition_permutation_used_in_mapping": True,
-        "historic_transition_counts_conditioned_on_exact_exhibition_pattern": False,
+        "historical_exact_exhibition_pattern_national_n": n_nat_exact,
+        "historical_exact_exhibition_pattern_venue_n": n_loc_exact,
+        "conditioning_mode": conditioning_mode,
+        "historic_transition_counts_conditioned_on_exact_exhibition_pattern": conditioning_mode == EXACT_MODE,
         "full_conditional_entry_posterior_calibrated": False,
         "same_race_actual_entry_known": False,
         "entry_distribution_prospectively_calibrated": False,
