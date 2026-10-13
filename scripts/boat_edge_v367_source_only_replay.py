@@ -145,6 +145,7 @@ def replay_one(root, key, expected_manifest_sha256=None):
     if reasons or lanes or flags:
         raise ValueError("V367_EXPLICIT_WITHDRAWAL_OR_ABSENCE_FOUND")
     if (registrations != doc.get("registered_racers_matched") or
+            doc.get("official_racelist_active_race_deadline_matched") is not True or
             coverage != doc.get("official_exhibition_coverage") or
             proof != doc.get("official_start_course_proof")):
         raise ValueError("V367_ORIGINAL_OFFICIAL_PARSER_PROOF_DRIFT")
