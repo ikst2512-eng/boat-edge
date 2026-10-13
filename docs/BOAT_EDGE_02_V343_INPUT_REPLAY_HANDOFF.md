@@ -416,3 +416,60 @@ After an independently checked Track 01 main integration, monitor a
 genuinely *new* eligible V336 live run and confirm completed_count > 0;
 validate its original input and HTML SHA and replay its complete 3x120
 through V343/V344. A V365 test PASS alone does not do any live updating.
+
+
+### V366: isolated immutable source-only official capture proof
+
+Added `scripts/boat_edge_v366_isolated_source_only_capture.py` with explicit
+opt-in `--capture --race-key YYYYMMDD-VV-RR`. Without `--capture`, the
+command only prints V365's read-only selection report. **No shared production
+site or V235/V336 workflow is modified.** This proof is a distinct research
+artifact in `data/research_source_only_v366/<date>/<key>/`.
+
+For a selected 2–19-minute current-day PRE_RESULT race with exact index-card
+race ID/date/deadline and all false results/unlock/scoring locks:
+
+1. Refuse the untouched formal 2026-10-01 Fresh date before any local
+   input, clock or network read. Refuse an existing same-race V366 proof
+   before HTTP, and reject source/index/prediction symlinks and result-bearing
+   indexes or race documents.
+2. Fetch **only** exact same-race official HTTPS `racelist` and
+   `beforeinfo` pages. Existing V315 official URL allowlist applies.
+   Require exact returned URL (no redirects), text/html, bounded bytes,
+   and selection/deadline rechecks after every response.
+3. Verify **all six unique official registration numbers** against the
+   current immutable input race card. Reuse V230's labelled exhibition
+   table parser to require six valid exhibition times and six ST rows.
+   Reuse V362 to check active official page date/venue/R/deadline and six
+   labelled start-course boat image/ST rows. An explicit withdrawal
+   or absent-participant signal fails closed, even if six rows remain.
+4. Re-read and byte-compare the input race document before writing.
+   Keep original source bytes, their SHA256, URLs, receipt times,
+   provisional exhibition course proof and input race digest in a
+   bundled manifest. Reject any close-of-window or modified input.
+5. Build a new uniquely named, immutable directory from a separate
+   temporary directory; never overwrite any existing V366 proof.
+   A retry is rejected **before network fetch**.
+6. Never open or modify the first SITE prediction, `data/races`,
+   `data/raw`, `data/source_captures`, V332 freezes, odds,
+   results, formal state, model weights or published site. Capture
+   timestamps are process-local receipt times, not authenticated
+   official server provenance.
+
+Verification: `tests/test_boat_edge_v236_v366_isolated_source_only_capture.py`
+uses fake HTML/network, locked and formal scenarios, wrong race or
+deadline, fake redirects, different registered racers, bad boat icons,
+explicit withdrawals, a deadline crossed during HTTP, changed race
+bytes mid-request, repeat capture and byte-for-byte preservation of
+existing SITE first predictions and race cards. All source-only
+assertions remain independent of accuracy/scoring. Code CI
+`38399051944` passed 317 tests (315 success, 2 skipped), commit
+`db6030b14ff2b91e6627e0ad4146a9684bb46382`.
+
+**Integration boundary:** V366 does NOT feed refreshed fields into the
+live site's `data/races`, and does NOT yet make a V336 freeze succeed.
+Actual official network source availability, scheduling, conflict-safe
+Git publication, V235's pinned V230, and integration with site prediction
+provenance belong to Track 01. Track 02's subsequent V343/V344 replay
+must verify complete 3 × 120 rows from newly and genuinely frozen
+predeadline research inputs; simulated V366 proof cannot establish that.
