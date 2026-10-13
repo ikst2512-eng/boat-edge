@@ -64,7 +64,7 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
                    key=lambda i: (parsed_targets[i][1], parsed_targets[i][0]))
     active = {w: set() for w in WINDOWS}
     expiry = {w: [] for w in WINDOWS}  # heap of (race-date ordinal, event id)
-    day_totals = {w: Counter() for w in WINDOWS}
+    day_totals = Counter()  # only largest window needs date extrema
     counters = defaultdict(lambda: [0, 0, 0, 0])
     pointer = 0
     source_sha = hashlib.sha256(raw).hexdigest()
@@ -75,12 +75,14 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
         day = rows[0][1].toordinal()
         if delta > 0:
             active[w].add(idx)
-            day_totals[w][day] += 1
+            if w == max(WINDOWS):
+                day_totals[day] += 1
         else:
             active[w].remove(idx)
-            day_totals[w][day] -= 1
-            if not day_totals[w][day]:
-                del day_totals[w][day]
+            if w == max(WINDOWS):
+                day_totals[day] -= 1
+                if not day_totals[day]:
+                    del day_totals[day]
         for entry in rows:
             finish = entry[6]
             for group in _event_groups(entry):
@@ -133,7 +135,7 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
                     modify(w, own_idx, -1)
                     owns.append(w)
         try:
-            day_index = day_totals[max(WINDOWS)]
+            day_index = day_totals
             eligible = len(active[max(WINDOWS)])
             late = len(events) - pointer
             if own_idx is not None and own_idx >= pointer:
