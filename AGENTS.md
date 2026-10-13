@@ -25,14 +25,58 @@ repository and Pages site. Do not create a replacement website.
 - The simulator is virtual only, with a 50,000-yen daily cap. Never place real bets,
   add funds, or turn a diagnostic calculation into an authorized purchase.
 
+## BOAT EDGE 01 site-first product acceptance (owner directive 2026-10-14)
+
+BOAT EDGE 01 is responsible for integration, delivery, Actions/Pages reliability,
+data collection/publishing, and the actual development loop. BOAT EDGE 02 owns the
+forecast model, accuracy experiments and promotion decisions. BOAT EDGE 03 owns
+screen implementation and visual QA. 01 must not independently change 02 model
+logic or 03 UI implementation; share exact failure evidence with those owners.
+
+The first deliverable is a usable **existing** public BOAT EDGE site:
+a visitor can choose venue and race, then view verified, pre-deadline saved
+Top3/Top5/Top10 for that exact race when eligible. End-to-end acceptance requires:
+
+1. Current official race ID, deadline, source freshness, absence/scratch and
+   beforeinfo/odds readiness are evaluated without guessing missing fields.
+2. The prediction is actually generated and immutably committed before deadline;
+   audit the first Git-add commit time, race/model ID and byte SHA. Never treat
+   an Actions success or a generated preview as a valid frozen final prediction.
+3. Published Pages contain the exact saved prediction bytes, and Chromium plus
+   iPhone-sized WebKit actually render the right race's Top3/Top5/Top10 after
+   selecting its venue and race. Real-device Safari is an independent check.
+4. If prerequisites are missing, show an explicit, accurate stopped/waiting state
+   rather than fake recommended tickets. Early racelist-only previews must stay
+   clearly labelled uncalibrated, non-final and non-betting.
+5. Confirm Actions and Pages health by specific commit SHA and deployment run;
+   a cancelled outdated Pages run is not itself a live outage when a newer
+   deployment succeeds. Avoid disabling writers without path/owner evidence.
+
+Prioritize real breakage in collection -> immutable save -> public Pages ->
+actual display, then Actions/Pages reliability and bounded automation. Inspect
+existing TODOs, PRs, tests and workflow owners *before* any change; don't re-add
+work already implemented by 02, 03 or completed V240 tasks. Never use added
+version numbers, file counts, tests or audit code as success metrics for the
+product. Work each new issue through source fix, synthetic/regression tests,
+isolated PR, CI, conflict-safe main integration and published-site verification.
+Do not conflate a scheduled recurring Actions job with proof that autonomous
+AI code editing occurred. The V240 Codex lane may require paid API credentials;
+do not provision or require paid credentials as a workaround.
+
+Report three separate outcomes: (a) actually working user functions,
+(b) specifically resolved defects supported by tests/commits/deployments,
+(c) remaining defects or missing live evidence. Do not mark the site complete
+until real live TopK end-to-end is verified.
+
 ## Development cycle
 
 1. Inspect current main and relevant Actions state; distinguish data-update
    schedules from an AI development task. Scheduled Actions do not modify their
    own implementation intelligently.
-2. Take one evidence-backed improvement from `DEVELOPMENT_STATUS.md`, and finish
-   it through implementation and relevant regression tests. Preserve unrelated
-   changes and concurrent collector commits.
+2. Prioritize a source-backed **live product usability** defect from the
+   latest Actions, Pages, and browser evidence. Cross-check the master TODO and
+   existing PRs first, then finish the smallest scoped fix and relevant regressions.
+   Preserve unrelated changes and concurrent collector commits.
 3. V236/V237 workflow source pins must match the tracked files. After changing
    one of their sources, update its SHA-256 map in that workflow in the same
    atomic commit. The workflows verify tracked code; no upload/bootstrap ZIP is
