@@ -2,28 +2,29 @@
   "active_window_races": 8,
   "current_windows": [
     {
-      "deadline_jst": "18:02",
-      "key": "20261013-15-07",
+      "deadline_jst": "18:17",
+      "key": "20261013-20-07",
       "missing_evidence": [
         "frozen_prediction_missing_or_invalid"
       ],
-      "venue": "丸亀"
+      "venue": "若松"
     },
     {
-      "deadline_jst": "18:08",
-      "key": "20261013-19-02",
+      "deadline_jst": "18:25",
+      "key": "20261013-12-08",
       "missing_evidence": [
         "beforeinfo_unavailable",
         "frozen_prediction_missing_or_invalid",
+        "race_card_stale",
         "scratch_stale"
       ],
-      "venue": "下関"
+      "venue": "住之江"
     }
   ],
   "data_sources": {
     "collector_freshness": "CURRENT",
     "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 96,
+    "predeadline_observations": 97,
     "site_autovalidation": "EVIDENCE_REVIEW_REQUIRED"
   },
   "day_jst": "20261013",
@@ -34,10 +35,10 @@
     "predeadline_incomplete"
   ],
   "next_race": {
-    "deadline_jst": "18:02",
-    "race_key": "20261013-15-07",
-    "venue": "丸亀",
-    "watch_from_jst": "17:47"
+    "deadline_jst": "18:17",
+    "race_key": "20261013-20-07",
+    "venue": "若松",
+    "watch_from_jst": "18:02"
   },
   "official_beforeinfo_urgent_15m": {
     "error": 0,
@@ -49,9 +50,7 @@
     "targets": 2
   },
   "paper_wager_authorized_by_this_runner": false,
-  "recovery_dispatch_candidates": [
-    "auto-update.yml"
-  ],
+  "recovery_dispatch_candidates": [],
   "research_model_production_promotion": false,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
@@ -93,9 +92,9 @@
     },
     "today": {
       "day_jst": "20261013",
-      "early_missing_later_snapshot_present": 46,
+      "early_missing_later_snapshot_present": 48,
       "integrity_note": "A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.",
-      "matured_observed_races": 94,
+      "matured_observed_races": 96,
       "not_found_after_deadline": 21,
       "not_found_last_seen_inside_2_to_10m_window": 8,
       "not_found_last_seen_outside_2_to_10m_window": 13,
@@ -111,18 +110,18 @@
         "scratch_missing_or_blocked": 9,
         "scratch_stale": 4
       },
-      "observed_races": 96,
-      "pending_before_deadline": 2,
-      "predeadline_snapshot_with_matching_audit": 70,
+      "observed_races": 97,
+      "pending_before_deadline": 1,
+      "predeadline_snapshot_with_matching_audit": 72,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
-      "sha_consistent_predeadline_snapshots": 68,
+      "sha_consistent_predeadline_snapshots": 70,
       "snapshot_or_audit_unverified": 3,
-      "snapshot_present": 73,
+      "snapshot_present": 75,
       "source_changed_after_freeze": 2,
       "source_missing_after_freeze": 0,
       "status": "OBSERVED_WINDOW_COUNTS",
-      "v229_atomic_evidence_matched": 65,
-      "v229_attestation_record_matched": 67
+      "v229_atomic_evidence_matched": 66,
+      "v229_attestation_record_matched": 68
     }
   },
   "status": "NEEDS_ATTENTION"
