@@ -89,9 +89,9 @@ function skeleton(){
      <div class="be259-top-grid"><span data-be259="top3"></span><span data-be259="top5"></span><span data-be259="top10"></span></div>
      <div class="be259-confidence"><span><b>頭の1着信頼度</b><small data-be259="confidenceHead"></small></span><span><b>3連単Top10信頼度</b><small data-be259="confidenceTrifecta"></small></span></div>
      <small class="be259-metric" data-be259="metric"></small>
-     <small class="be259-disclaimer">Top3/5/10は買い目の順位別範囲。独立した頭予想の1着確率でも、買い目の的中率でもありません。</small>
+     <small class="be259-disclaimer">Top3/5/10は買い目の順位別範囲。頭の1着確率・3連単的中率とは別。結果の🎯・不的中は検証済み結果欄だけで判定します。</small>
    </section>
-   <div class="be207-listhead"><strong>上位買い目</strong><span>元の予想順位を維持・オッズで並べ替えません</span></div>
+   <div class="be207-listhead"><strong>上位買い目</strong><span>元の予想順位を維持・オッズで並べ替えません。結果判定とは別</span></div>
    <div class="be207-bets"></div>
    <div class="be207-actions" role="group" aria-label="表示する3連単買い目の件数"><button type="button" data-be207="five">Top5</button><button type="button" data-be207="ten">Top10</button><button type="button" data-be207="all">全買い目</button></div><div class="be208-detail-actions"><button type="button" data-be207="detail">詳しいデータ・監査を開く</button></div>
    <div class="be207-bottom"><div class="be207-budget"></div><div class="be207-odds"></div></div>`;
@@ -134,7 +134,7 @@ function listRow(row,i,fresh,settled){
  if(nums){for(const n of nums){const chip=document.createElement('span');chip.className='be207-lane be207-l'+n;chip.textContent=n;comboNode.append(chip);}}
  else text(comboNode,'買い目未確認');
  // The source "em" contains uncalibrated relative weight, not a calibrated probability.
- text($('.be207-prob',node),relative?(relative+'（未校正）'):'相対重み 未確認');
+ text($('.be207-prob',node),relative?('配分相対重み '+relative+'（未校正）'+'／勝率ではない'):'配分相対重み 未確認（勝率ではない）');
  text($('.be207-multi',node),verifiedPrice||'倍率未確認');
  text($('.be207-stake',node),stake===null?'配分未確認':(settled?'締切前の保存配分 ':'未購入の参考配分 ')+money(stake));
  text($('.be207-pay',node),!settled&&stake!==null&&verifiedPrice&&payout!==null?'既存の想定払戻 '+money(payout):'想定払戻 未確認');
