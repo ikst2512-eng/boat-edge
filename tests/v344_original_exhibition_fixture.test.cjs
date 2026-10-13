@@ -239,3 +239,30 @@ test('V353 conflicting duplicated course positions are not presented as verified
   assert.equal(rows[2].course, 3);
   assert.equal(rows[0].st, 0.12);
 });
+
+test('V355 whitespace official exhibition time stays missing, not acquired', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:i===4?'  ':6.5})),
+    start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:0.12}))
+  };
+  assert.equal(api.makeRows(data).rows[4].displayTime, null);
+  assert.match(api.html(data,null,null), /公式展示 未取得/);
+  assert.match(api.html(data,null,null), /展示ST 取得済/);
+});
+
+test('V355 whitespace original exhibition value stays missing, not acquired', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats[2].values[1] = ' \t ';
+  assert.equal(api.makeRows(data).rows[2].turn, null);
+  assert.match(api.html(data,null,null), /オリ展 未取得/);
+});
+
+test('V355 real numeric zero remains visible for calm wind and exhibition ST', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {weather:{wind_speed_ms:0},start_exhibition:[{lane:1,course:1,st:0}]};
+  assert.equal(api.makeRows(data).rows[0].st, 0);
+  assert.match(api.html(data,null,null), /風速 <b>0m\/s<\/b>/);
+});
