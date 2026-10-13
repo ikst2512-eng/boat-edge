@@ -4,11 +4,24 @@
 Never reads formal Fresh, raw outcomes, or unscored race data. Does not promote.
 """
 import argparse
+from collections import Counter
+import hashlib
 import json
 from pathlib import Path
 
 MODES = ("hit10", "balance10", "scenario7plus3")
 TOPK = (3, 5, 10)
+
+
+def cause(tickets, winner):
+    if winner in tickets:
+        return "hit"
+    head, second, _ = winner.split("-")
+    if not any(x.split("-")[0] == head for x in tickets):
+        return "head_absent"
+    if not any(x.startswith(head + "-" + second + "-") for x in tickets):
+        return "second_absent_given_head"
+    return "third_absent_given_head_second"
 
 def evaluate(root: Path):
     base = root / "data/site_autopilot"
@@ -17,6 +30,10 @@ def evaluate(root: Path):
     totals = {m: {str(k): {"hits": 0, "gain": 0, "loss": 0} for k in TOPK} for m in MODES}
     exclusions = {}
     included = 0
+    baseline_rank_buckets = Counter()
+    baseline_failure_by_k = {str(k): Counter() for k in TOPK}
+    prefix_identical = {m: {str(k): True for k in TOPK} for m in MODES if m != "hit10"}
+    per_day = {}
     for p in sorted(scores.glob("20??????-??-??.json")):
         try:
             s = json.loads(p.read_text(encoding="utf-8"))
@@ -35,10 +52,27 @@ def evaluate(root: Path):
                 raise ValueError("tickets_invalid")
             if any(bool(s["outcomes"][m]) != (winner in tickets[m]) for m in MODES):
                 raise ValueError("score_parity")
+            if s.get("frozen_candidate_sha256") != hashlib.sha256((frozen / p.name).read_bytes()).hexdigest():
+                raise ValueError("frozen_digest_mismatch")
             included += 1
+            rank = (tickets["hit10"].index(winner) + 1
+                    if winner in tickets["hit10"] else None)
+            bucket = ("rank1_3" if rank is not None and rank <= 3 else
+                      "rank4_5" if rank is not None and rank <= 5 else
+                      "rank6_10" if rank is not None else "outside_top10")
+            baseline_rank_buckets[bucket] += 1
+            day = p.stem[:8]
+            if day not in per_day:
+                per_day[day] = {m: {str(k): 0 for k in TOPK} for m in MODES}
+                per_day[day]["races"] = 0
+            per_day[day]["races"] += 1
             for k in TOPK:
                 reference = winner in tickets["hit10"][:k]
+                baseline_failure_by_k[str(k)][cause(tickets["hit10"][:k], winner)] += 1
                 for m in MODES:
+                    if m != "hit10" and tickets[m][:k] != tickets["hit10"][:k]:
+                        prefix_identical[m][str(k)] = False
+                    per_day[day][m][str(k)] += int(winner in tickets[m][:k])
                     hit = winner in tickets[m][:k]
                     row = totals[m][str(k)]
                     row["hits"] += int(hit)
@@ -56,6 +90,12 @@ def evaluate(root: Path):
     return {"scope": "POST_RESULT_SITE_ONLY_NOT_FORMAL_FRESH",
             "source": "v236_scored_plus_original_v236_frozen",
             "races": included, "excluded": exclusions, "topk": totals,
+            "diagnostics": {
+                "baseline_rank_buckets": dict(sorted(baseline_rank_buckets.items())),
+                "baseline_failure_by_k": {k: dict(sorted(v.items())) for k, v in baseline_failure_by_k.items()},
+                "identical_frozen_prefix_vs_baseline": prefix_identical,
+                "per_day": dict(sorted(per_day.items())),
+            },
             "promotion_authorized": False, "production_model_changed": False,
             "note": "Descriptive paired comparison; no statistical promotion or formal Fresh claim."}
 
