@@ -168,9 +168,13 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
                 parse_proven_course_rows(
                     raw.replace(b"<td class='is-activeColor1'>16:40",
                                 b"<td class='is-activeColor1'>16:39"), race)
-            with self.assertRaisesRegex(ValueError, "TWELVE_RACES_REQUIRED"):
+            with self.assertRaisesRegex(ValueError, "NUMBER_INVALID"):
                 parse_proven_course_rows(
                     raw.replace(b"rno=11", b"rno=10", 1), race)
+            with self.assertRaisesRegex(ValueError, "TWELVE_RACES_REQUIRED"):
+                parse_proven_course_rows(
+                    raw.replace(b"rno=11", b"rno=10", 1).replace(
+                        b">11R</a>", b">10R</a>", 1), race)
 
     def test_existing_explicit_course_conflict_and_closed_deadline_rejected(self):
         with tempfile.TemporaryDirectory() as d:
