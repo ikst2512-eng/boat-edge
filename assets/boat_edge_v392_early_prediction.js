@@ -56,7 +56,9 @@ function previewSafety(r,p,now=Date.now()){
  const produced=Date.parse(p.produced_at),fetched=Date.parse(p.source_card_fetched_at);
  if(!Number.isFinite(produced)||!Number.isFinite(fetched)||produced>now+60000||
     produced>=c.due||fetched>produced+60000||!shaOK(p.source_card_sha256)||
-    !shaOK(p.card_fingerprint_sha256))
+    !shaOK(p.card_fingerprint_sha256)||
+    p.source_card_sha256!==r.source_audit.race_card.sha256||
+    p.source_card_fetched_at!==r.source_audit.race_card.fetched_at)
   return {ok:false,reason:'予想の生成時刻・公式出走表SHAが未確認'};
  if(JSON.stringify(p.racer_inputs_by_lane)!==JSON.stringify(inputs(r)))
   return {ok:false,reason:'出走表が更新済み：暫定予想を再計算中'};
