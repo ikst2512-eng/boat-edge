@@ -31,7 +31,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+      - name: Preserve installed V136 source of truth
+        run: |
+          test -f scripts/site_accuracy_v136.py
+          test -f scripts/site_v136_historical_proof.py
       - name: Install V136 files and audit panel
+        if: false # retired bootstrap; never overwrite reviewed scorer on main
         shell: bash
         run: |
           python - <<'PY'
