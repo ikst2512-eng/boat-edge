@@ -22,6 +22,9 @@ UI_PATHS = (
     "assets/boat_edge_v177_latest_bridge.js",
     "assets/boat_edge_v204_prediction.js",
     "assets/boat_edge_v241_results.js",
+    # T01: V241 homepage 🎯 banner is a distinct public asset; checking index.html
+    # alone cannot prove that newer standalone JavaScript reached Pages.
+    "assets/boat_edge_v241_home.js",
     # V360: compact race comparison and six-racer cards are independently
     # changed UI assets; a successful older Pages run must not prove them fresh.
     "assets/boat_edge_v202_display.js",

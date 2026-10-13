@@ -50,6 +50,30 @@ class V287AutopilotPagesAssets(unittest.TestCase):
             one,two=fixtures(UI_PATHS,asset)
             self.assertFalse(same_ui_lineage(one,two),asset)
 
+    def test_t01_all_sha_monitored_site_ui_paths_also_trigger_audit(self):
+        # V277 already resolves last-touch SHA for each UI_PATHS member, but
+        # path-filter omissions meant those updates did not launch monitoring.
+        workflow=(ROOT/".github/workflows/v277-pages-monitor.yml").read_text(encoding="utf8")
+        self.assertIn("  pull_request:",workflow)
+        self.assertIn("  push:",workflow)
+        self.assertEqual(len(UI_PATHS),len(set(UI_PATHS)))
+        for path in UI_PATHS:
+            self.assertTrue((ROOT/path).is_file(),path)
+            self.assertGreaterEqual(workflow.count("'"+path+"'"),2,"MISSING_PR_OR_PUSH_TRIGGER: "+path)
+        # A green Pages job for an older SHA is not proof the homepage hit
+        # banner JavaScript from today's deployment has been published.
+        homepage="assets/boat_edge_v241_home.js"
+        self.assertIn(homepage,UI_PATHS)
+        current,deployed=fixtures(UI_PATHS,homepage)
+        run={"name":"pages build and deployment","head_sha":"a"*40,
+             "created_at":(NOW-timedelta(minutes=5)).isoformat(),
+             "updated_at":(NOW-timedelta(minutes=4)).isoformat(),
+             "status":"completed","conclusion":"success"}
+        result=report([run],current,NOW,deployed_ui_commits=deployed)
+        self.assertFalse(result["ui_lineage_verified"])
+        self.assertEqual(result["status"],"UI_PUBLISH_OVERDUE_NEEDS_ATTENTION")
+        self.assertFalse(result["ui_checked_in_safari"])
+
     def test_every_active_autopilot_script_is_in_pages_lineage(self):
         html=(ROOT/"autopilot.html").read_text(encoding="utf8")
         paths=set(re.findall(r'<script\b[^>]*\bsrc=["\']\./(assets/[^"\'?]+\.js)(?:\?[^"\']*)?["\']',html))
