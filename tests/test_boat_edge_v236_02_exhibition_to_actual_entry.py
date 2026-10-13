@@ -48,6 +48,7 @@ def rows():
             exhibition_course_by_boat=exhibit,
             actual_course_by_boat=final,
             exhibition_first_seen_jst=f"{iso}T10:00:00+09:00",
+            race_deadline_jst=f"{iso}T11:00:00+09:00",
             final_actual_course_first_seen_jst=f"{iso}T13:00:00+09:00",
             exhibition_source_sha256="c"*64,
             final_course_source_sha256="d"*64,
@@ -125,6 +126,25 @@ class PairedExhibitionFinalEntry(unittest.TestCase):
         x=rows();x[-1]["final_actual_course_first_seen_jst"]="2026-10-14T10:09:00+09:00"
         with self.assertRaisesRegex(ValueError,"HISTORIC_ASOF_NOT_PROVED"):
             trial(x)
+    def test_historic_exhibition_predeadline_not_same_day_result_proxy(self):
+        x=rows()
+        x[0]["exhibition_first_seen_jst"]="2026-08-01T11:01:00+09:00"
+        with self.assertRaisesRegex(ValueError,"HISTORIC_ASOF_NOT_PROVED"):
+            trial(x)
+        x=rows()
+        x[0]["final_actual_course_first_seen_jst"]="2026-08-01T10:59:00+09:00"
+        with self.assertRaisesRegex(ValueError,"HISTORIC_ASOF_NOT_PROVED"):
+            trial(x)
+    def test_training_history_publication_must_be_before_training_cutoff_date(self):
+        x=rows()
+        x[0]["final_actual_course_first_seen_jst"]="2026-10-14T00:02:00+09:00"
+        with self.assertRaisesRegex(ValueError,"HISTORIC_ASOF_NOT_PROVED"):
+            trial(x)
+    def test_deadline_is_required_and_not_inferred(self):
+        x=rows();del x[0]["race_deadline_jst"]
+        with self.assertRaisesRegex(ValueError,"PAIRED_ENTRY_HISTORIC_ROW_SCHEMA"):
+            trial(x)
+
     def test_bad_jst_offsets_rejected_not_coerced(self):
         x=rows();x[0]["exhibition_first_seen_jst"]="2026-08-01T01:00:00+00:00"
         with self.assertRaisesRegex(ValueError,"PAIRED_ENTRY_JST_OFFSET_REQUIRED"):
