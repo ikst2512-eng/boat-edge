@@ -161,11 +161,21 @@ def reconcile(k_csv, k_manifest, k_audit, b_original, b_staged, b_manifest, as_o
     if not k_keys:
         raise ValueError("NO_B_K_RECONCILED_RACES")
     stamp = _jst_instant(b_manifest["retrieved_at_jst"])
+    venue_codes = sorted({key[8:10] for key in entries_by_key})
+    by_venue = {
+        venue: {
+            "b_program_races": sum(key[8:10] == venue for key in entries_by_key),
+            "k_complete_races": sum(key[8:10] == venue for key in k_keys),
+            "excluded_races": sum(key[8:10] == venue for key in excluded),
+        }
+        for venue in venue_codes
+    }
     return {
         "schema": MODEL, "source_day": day.isoformat(),
         "k_normalized_sha256": sha(k_csv), "b_original_sha256": sha(b_original),
         "b_staged_sha256": sha(b_staged),
         "b_program_races_supplied": len(entries_by_key),
+        "by_venue": by_venue,
         "reconciled_six_boat_races": len(k_keys),
         "excluded_with_explicit_reason": len(excluded),
         "b_k_staged_race_universe_reconciled": True,
