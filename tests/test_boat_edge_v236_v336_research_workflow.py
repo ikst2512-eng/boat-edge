@@ -25,6 +25,19 @@ class V336WorkflowSafety(unittest.TestCase):
         self.assertIn("'global_uniqueness_verified':False", s)
         self.assertIn("'research_only':True", s)
 
+    def test_v357_parser_dependencies_installed_before_capture(self):
+        # PR #161 introduced BeautifulSoup/lxml parsers; V336 failed on absent bs4.
+        # Keep dependency installation BEFORE the isolated research runner in CI.
+        s = WORKFLOW.read_text(encoding="utf-8")
+        install = s.find("python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml")
+        smoke = s.find("python3 -c 'from bs4 import BeautifulSoup; import lxml, requests'")
+        run = s.find("python3 scripts/boat_edge_v334_live_batch_runner.py")
+        self.assertGreaterEqual(install, 0, "V336_HTML_PARSER_INSTALL_MISSING")
+        self.assertGreater(smoke, install, "V336_DEPENDENCY_IMPORT_SMOKE_MISSING")
+        self.assertGreater(run, smoke, "V336_DEPENDENCIES_MUST_PRECEDE_LIVE_CAPTURE")
+        self.assertIn("contents: read", s)
+        self.assertIn("persist-credentials: false", s)
+
     def test_no_repo_write_or_formal_unlock(self):
         s = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("contents: read", s)
