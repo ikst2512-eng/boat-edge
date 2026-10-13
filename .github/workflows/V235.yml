@@ -61,7 +61,7 @@ jobs:
           print('V234_SOURCE_HTML_AND_TEST_BYTES_PASS',len(resources))
           PY_V234_INSTALL
           for spec in \
-            'scripts/boat_edge_v230_fast_lane.py:caab39ee5ef8c16ca8405c4e840469718e5fa774' \
+            'scripts/boat_edge_v230_fast_lane.py:1fce6f12d47c9f1b84f99350e7a8520ff5da8704' \
             'scripts/boat_edge_v232_pre_result_cohort.py:99c69c924de451fe6635961253e9ea61d314366b' \
             'scripts/boat_edge_v215_readiness.py:f74705858e9bffbe28b4ce444d29aa8565ed6497' \
             'scripts/boat_edge_v214_shadow.py:2fafe6932383c0ace68d82d3cc2591591b6affdb' \
@@ -98,7 +98,7 @@ jobs:
             # V295: keep the upstream V230 max worker cap (8), reducing the
             # second network batch for 7-8 imminent races without changing
             # source identity, six-boat exhibition or odds verification.
-            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent
             # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
             # so Git reset/clean and repeated main conflicts cannot rewrite
             # an earlier attestation or backfill a race after deadline.

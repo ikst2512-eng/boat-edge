@@ -12,6 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import time
 import unicodedata
 from urllib.parse import urlencode,urlsplit,parse_qs
 
@@ -345,10 +346,47 @@ def update_one(root,key,data,now):
     if reasons:return 'source_blocked'
     return 'fresh_verified' if odds is not None else 'odds_incomplete'
 
-def run(root,now=None,worker=6,priority_key=None):
+def imminent_retry_targets(root, keys, outcomes, now):
+    """Retry only incomplete live sources, never an explicit scratch or a frozen race.
+
+    This is a second *actual* official source request in the 2-10 minute decision
+    window, not permission to infer exhibition, odds or a post-deadline forecast.
+    """
+    current=set(targets(root,now))
+    eligible=[]
+    for key in keys:
+        if key not in current:
+            continue
+        race=load(root/'data/races'/f'{key}.json') or {}
+        due=due_for(key,(race.get('meta') or {}).get('deadline'))
+        if due is None or not 2 <= (due-now).total_seconds()/60 <= 10:
+            continue
+        if (root/'data/site_prediction_snapshots'/f'{key}.json').is_file():
+            continue
+        outcome=outcomes.get(key)
+        if outcome=='odds_incomplete':
+            eligible.append(key)
+        elif outcome=='source_blocked':
+            scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
+            # Only an unpublished exhibition is retryable. Known scratches and
+            # cancellation signals remain blocked and are never reclassified.
+            if (scratch.get('race_key')==key
+                    and scratch.get('official_beforeinfo_six_boat_complete') is False
+                    and scratch.get('suspect_lanes')==[]
+                    and scratch.get('official_raw_flags')==[]
+                    and scratch.get('reason')=='公式直前情報の展示データを検証できない'):
+                eligible.append(key)
+    return eligible
+
+
+def local_now():
+    return datetime.now(JST)
+
+
+def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     from boat_edge_v228_freeze_only import check_formal_closed
     from boat_edge_v229_atomic_freeze import run as atomic_freeze
-    root=Path(root).resolve();now=now or datetime.now(JST)
+    root=Path(root).resolve();now=now or local_now()
     now=now.astimezone(JST)
     check_formal_closed(root)
     selected=targets(root,now)
@@ -379,6 +417,40 @@ def run(root,now=None,worker=6,priority_key=None):
     # Existing V229 is the only authority allowed to create the immutable first snapshot.
     # It reads neither historical results nor formal prediction data.
     count=atomic_freeze(root)
+    # V230: one bounded in-run second chance for an official exhibition/odds
+    # page that was incomplete at the first fetch. No extra workflow, no new
+    # prediction engine and no relaxation of V229's immutable freeze contract.
+    status['imminent_retry_targets']=[]
+    status['imminent_retry_snapshots']=0
+    # Publish any first successfully frozen prediction immediately; a retry
+    # must never delay its first Git commit until after the cutoff.
+    if retry_imminent and selected and count==0:
+        retry_keys=imminent_retry_targets(root,selected,status['outcomes'],local_now())
+        if retry_keys:
+            time.sleep(20)
+            # Recheck the *actual* deadline and source/scratch safety after
+            # sleeping; a race leaving the window is never backfilled.
+            retry_keys=imminent_retry_targets(root,retry_keys,status['outcomes'],local_now())
+            status['imminent_retry_targets']=retry_keys
+            if retry_keys:
+                with ThreadPoolExecutor(max_workers=worker) as pool:
+                    futures=[pool.submit(fetch_one,root,key) for key in retry_keys]
+                    for task in as_completed(futures):
+                        key,data,err=task.result()
+                        if err:
+                            status['outcomes'][key]='fetch_failed:'+err
+                            continue
+                        state=update_one(root,key,data,local_now())
+                        status['outcomes'][key]=state
+                second=atomic_freeze(root)
+                count+=second
+                status['imminent_retry_snapshots']=second
+    # Count *final* outcomes, not attempts, so retries cannot imply a source
+    # is fresh when its last official request actually failed.
+    status['source_refreshed']=sum(v=='fresh_verified' for v in status['outcomes'].values())
+    status['source_blocked']=sum(v=='source_blocked' for v in status['outcomes'].values())
+    status['odds_incomplete']=sum(v=='odds_incomplete' for v in status['outcomes'].values())
+    status['network_error']=sum(v.startswith('fetch_failed:') for v in status['outcomes'].values())
     status['new_snapshots_atomic_audited']=count
     # Observability only. A race marked source_blocked remains ineligible.
     output=root/'data/site_autopilot/v230_fast_current.json'
@@ -389,4 +461,5 @@ def run(root,now=None,worker=6,priority_key=None):
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--root',default='.');p.add_argument('--workers',type=int,default=6)
     p.add_argument('--priority-race-key',default=None)
-    args=p.parse_args();run(args.root,worker=min(8,max(1,args.workers)),priority_key=args.priority_race_key)
+    p.add_argument('--retry-imminent',action='store_true',help='one bounded official refresh retry only within the 2-10 minute final window')
+    args=p.parse_args();run(args.root,worker=min(8,max(1,args.workers)),priority_key=args.priority_race_key,retry_imminent=args.retry_imminent)
