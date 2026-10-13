@@ -19,6 +19,7 @@ from boat_edge_v405_batch_asof_history_features import build_batch
 from boat_edge_v406_offline_history_packager import package_days
 from boat_edge_v407_local_performance_bridge import (
     B_SCHEMA, PUB_SCHEMA, STAGING_SCHEMA, parse_local_txt, stage_local_entries,
+    parse_local_k_files, load_local_txt_sources,
 )
 
 DAY = date(2026, 9, 30)
@@ -247,6 +248,43 @@ class V407OfflineNativeBridgeTests(unittest.TestCase):
                                       "boatrace_lzh.performance": None}):
             with self.assertRaisesRegex(RuntimeError, "OPTIONAL_LOCAL_BOATRACE_LZH_PARSER_NOT_INSTALLED"):
                 parse_local_txt(b"synthetic local text")
+
+    def test_multi_venue_K_directory_parser_with_exact_B_rosters(self):
+        try:
+            import importlib.metadata
+            importlib.metadata.version("boatrace-lzh")
+        except importlib.metadata.PackageNotFoundError:
+            self.skipTest("optional parser not installed")
+        def synthetic_K(code,name):
+            lines=[
+                "STARTK", f"{code}KBGN",
+                f"{name}［成績］     9/30     架空開催　第 1日",
+                "第 1日       2026/ 9/30      ボートレース",
+                "1R      一般      H1800m   晴れ  風 南 2m 波 2cm",
+                "着 艇 登番 選手名 ﾓｰﾀｰ ﾎﾞｰﾄ 展示 進入 ST ﾚｰｽﾀｲﾑ",
+            ]
+            lines.extend(
+                f"   {i:02d}  {i} {4500+i} 架　空　選　手 53   59 6.71 {i} 0.07 2.03.6"
+                for i in range(1,7)
+            )
+            return ("\n".join(lines)+"\n"+" "*200).encode("cp932")
+        sources={
+            "kiryu.txt":synthetic_K("01","桐　生"),
+            "toda.TXT":synthetic_K("02","戸　田"),
+        }
+        with tempfile.TemporaryDirectory() as root:
+            root=Path(root)
+            for name,raw in sources.items():
+                (root/name).write_bytes(raw)
+            loaded=load_local_txt_sources(local_dir=root)
+            self.assertEqual(sorted(loaded),["kiryu.txt","toda.TXT"])
+            entries=parse_local_k_files(loaded)
+            self.assertEqual(len(entries),12)
+            b=b_stage(KEY,"202609300201")
+            k=stage_local_entries(entries,b,pub(KEY,"202609300201"))
+            self.assertEqual([r["race_key"] for r in k["races"]],
+                             ["202609300101","202609300201"])
+            self.assertEqual(len(k["races"]),2)
 
     def test_actual_optional_performance_parser_on_invented_cp932_k_text(self):
         # This is invented local K-style text, NOT an official race or a
