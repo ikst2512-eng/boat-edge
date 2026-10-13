@@ -57,6 +57,13 @@ class MatchedTenPreResult(unittest.TestCase):
         self.assertEqual(one,two)
         self.assertEqual(len(one["parent_top10"]), 10)
         self.assertEqual(len(one["candidate_top10"]), 10)
+        for name, ranked in (("parent", parent), ("candidate", candidate)):
+            original = [r["boat_combo"] for r in ranked["ranked_120"]]
+            self.assertEqual(one[name + "_top3"], original[:3])
+            self.assertEqual(one[name + "_top5"], original[:5])
+            self.assertEqual(one[name + "_top10"], original[:10])
+            self.assertEqual(one[name + "_top3"], one[name + "_top5"][:3])
+            self.assertEqual(one[name + "_top5"], one[name + "_top10"][:5])
         self.assertNotEqual(one["parent_top10"], one["candidate_top10"])
         self.assertEqual(one["per_model_virtual_budget_yen"], 10000)
         self.assertFalse(one["scoring_authorized"])
@@ -113,9 +120,14 @@ class MatchedTenPreResult(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"TRAINING_LEAKS"):
             prepare_matched_ten(d,p,c,NOW)
     def test_formal_race_never_admitted(self):
-        p,c=documents();d=copy.deepcopy(CONTEXT);d["race_key"]="20261001-12-01"
-        with self.assertRaisesRegex(ValueError,"FORMAL_TARGET_EXCLUDED"):
-            prepare_matched_ten(d,p,c,NOW)
+        p,c=documents()
+        # Conservative fixed denial is intentionally earlier than clock and
+        # document validation; no protected target can pass this pure contract.
+        for day in ("20261001", "20261005", "20261013"):
+            with self.subTest(day=day):
+                d=copy.deepcopy(CONTEXT);d["race_key"]=day+"-12-01"
+                with self.assertRaisesRegex(ValueError,"FORMAL_TARGET_EXCLUDED"):
+                    prepare_matched_ten(d,p,c,NOW)
     def test_no_permission_no_pre_result_no_model_parity(self):
         p,c=documents()
         d=copy.deepcopy(CONTEXT);d["source_permission_evidence_sha256"]=""
