@@ -189,6 +189,16 @@ class V405IndexedBatchTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"RAW_HISTORY_SHA256_MISMATCH"):
             build_batch(self.raw,bad,self.targets)
 
+    def test_impossible_published_before_own_race_rejected(self):
+        # A fake K record claiming availability the day before its own race
+        # must never enter the as-of sweep even if a target is later.
+        bad = fake_race(date(2026, 9, 29), 1, 1)
+        for row in bad:
+            row["published_at"] = "2026-09-28T21:00:00+09:00"
+        src, man = csv_data(bad)
+        with self.assertRaisesRegex(ValueError, "HISTORICAL_PUBLISHED_AT_LEAK"):
+            build_batch(src, man, [b_target(date(2026, 9, 30), 2, 2)])
+
     def test_protected_history_rejected(self):
         src,man=csv_data(fake_race(date(2026,10,1),1,1))
         with self.assertRaisesRegex(ValueError,"RACE_OUTSIDE_ALLOWED_RANGE"):
