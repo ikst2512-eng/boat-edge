@@ -26,6 +26,7 @@ from boat_edge_v314_three_source_evidence import (
 )
 from boat_edge_v315_source_capture import (
     MAX_HTML_BYTES, capture_one, check_target, real_fetch,
+    assert_source_network_allowed,
 )
 from boat_edge_v318_shadow_freeze import JST, canonical, parse_time
 from boat_edge_v333_source_urls import suggested_source_urls
@@ -260,6 +261,12 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
         raise ValueError("UNKNOWN_SOURCE_PROVIDER")
     for provider, url in source_urls.items():
         check_target(provider, url, race_key)
+    if capture and fetcher is real_fetch:
+        # Fail BEFORE the first official/third-party network call. Mocked
+        # offline fixtures keep testing parsing, never source rights.
+        candidates = suggested_source_urls(race_key)
+        for provider in ('boaters', 'kyoteibiyori'):
+            assert_source_network_allowed(source_urls.get(provider, candidates[provider]))
     if capture:
         # Opt-in live capture: derive documented public race-page URL candidates
         # for *all* three providers. User-supplied URLs take precedence; the

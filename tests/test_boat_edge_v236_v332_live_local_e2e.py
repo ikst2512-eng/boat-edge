@@ -72,6 +72,15 @@ def prepare(root, meta_overrides=None, source_overrides=None, result_marker=Fals
 
 
 class V332LiveE2E(unittest.TestCase):
+    def test_issue_204_live_default_capture_fails_before_official_or_provider_network(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=pathlib.Path(d)
+            prepare(root)
+            with self.assertRaisesRegex(ValueError,"THIRD_PARTY_NETWORK_CAPTURE_PAUSED_NO_VERIFIED_GRANT"):
+                live_local_freeze(root, KEY, capture=True, clock=lambda: PRE)
+            self.assertFalse((root/"data/source_captures").exists())
+            self.assertFalse((root/"data/research_local_v332").exists())
+
     def test_mock_public_sources_freeze_without_any_git_commit(self):
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)

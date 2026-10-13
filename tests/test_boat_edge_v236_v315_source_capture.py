@@ -7,9 +7,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_v315_source_capture import capture_one, check_target
+from boat_edge_v315_source_capture import capture_one, check_target, real_fetch, assert_source_network_allowed
 from boat_edge_v314_three_source_evidence import SCHEMA, audit_bundle
 
 KEY = "20261013-22-12"
@@ -31,6 +32,23 @@ def fake_fetch(url):
 
 
 class V315SourceCapture(unittest.TestCase):
+    def test_issue_204_real_http_denies_third_party_before_any_opener(self):
+        for provider in ("boaters","kyoteibiyori"):
+            url=URLS[provider]
+            with self.subTest(provider=provider):
+                with patch("boat_edge_v315_source_capture.build_opener",
+                           side_effect=AssertionError("NETWORK_MUST_NOT_START")) as opener:
+                    with self.assertRaisesRegex(ValueError,"THIRD_PARTY_NETWORK_CAPTURE_PAUSED_NO_VERIFIED_GRANT"):
+                        real_fetch(url)
+                    opener.assert_not_called()
+                    with tempfile.TemporaryDirectory() as directory:
+                        with self.assertRaisesRegex(ValueError,"THIRD_PARTY_NETWORK_CAPTURE_PAUSED_NO_VERIFIED_GRANT"):
+                            capture_one(pathlib.Path(directory), KEY, DEADLINE, provider,
+                                        url, clock=clock())
+                        self.assertFalse((pathlib.Path(directory)/"data/source_captures").exists())
+                    opener.assert_not_called()
+        self.assertEqual(assert_source_network_allowed(URLS["official"]),URLS["official"])
+
     def test_one_page_is_immutable_and_fields_not_inferred(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
