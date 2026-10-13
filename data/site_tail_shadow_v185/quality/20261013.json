@@ -1,5 +1,5 @@
 {
-  "candidate_files_today": 36,
+  "candidate_files_today": 37,
   "criteria": "Only first-committed pre-deadline future shadows verified by V185 independent Git+SHA+determinism guard",
   "currently_eligible_but_not_frozen": [],
   "date_jst": "2026-10-13",
@@ -15,7 +15,12 @@
   },
   "formal_results_accessed": false,
   "independently_verified_shadows_today": 36,
-  "invalid_frozen_shadows_today": [],
+  "invalid_frozen_shadows_today": [
+    {
+      "race_key": "20261013-12-07",
+      "reason": "COMMIT_NOT_PROVEN_PRE_DEADLINE"
+    }
+  ],
   "model_weights_changed": false,
   "no_historical_backfill": true,
   "payouts_accessed": false,
@@ -713,6 +718,6 @@
   "schema_version": "boat-edge-v197-pre-result-fresh-coverage-and-head-mass-audit-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
   "site_results_accessed": false,
-  "snapshot_count_today": 74,
-  "status": "IMMUTABLE_FUTURE_RESEARCH_QUALITY_PASS_NOT_ACCURACY_PROOF"
+  "snapshot_count_today": 76,
+  "status": "INVALID_FROZEN_CANDIDATE_FAIL_CLOSED_RESEARCH_ONLY"
 }
