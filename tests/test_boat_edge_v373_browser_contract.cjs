@@ -19,6 +19,8 @@ assert.equal(api.ticketClarity(combos).top3.includes('上位3点'),true);
 assert.equal(api.ticketClarity(combos).top5.includes('上位5点'),true);
 assert.equal(api.ticketClarity(combos).top10.includes('上位10点'),true);
 assert.equal(api.holdPreviousRace('20261014-06-01','20261014-06-02',{},null),true);
+assert(js.includes("const rows=$('.be108-ticket-list > .be108-ticket',p);"),'TopK must use all ticket nodes');
+assert(!js.includes("const rows=$('.be108-ticket-list > .be108-ticket',p);"),'single-node selector crashed Chromium and WebKit');
 assert(js.includes("stop?'配分：買い目を停止・未確認のため非表示'"),'stopped predictions must hide budget');
 assert(js.includes("stop?'公式オッズ・想定払戻：買い目停止・未確認のため非表示'"),'stopped predictions must hide odds');
 assert(js.includes("!ticketViewSynced?'配分：新レースの値を照合中"),'retain race transition guard');
