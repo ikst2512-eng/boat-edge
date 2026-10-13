@@ -18,6 +18,7 @@ from boat_edge_v314_three_source_evidence import KEY
 from boat_edge_v315_source_capture import real_fetch
 from boat_edge_v318_shadow_freeze import JST, parse_time
 from boat_edge_v332_live_local_freeze import live_local_freeze
+from boat_edge_v346_source_readiness import scan_preflight
 
 
 def _now(clock):
@@ -56,7 +57,8 @@ def live_window(root, now, window_minutes=15, max_races=12):
                 skipped.append({"race_key": key, "reason": "RACE_SYMLINK_FORBIDDEN"})
                 continue
             try:
-                obj = json.loads(path.read_text(encoding="utf-8"))
+                scan_raw = path.read_bytes()
+                obj = json.loads(scan_raw)
                 # Treat malformed race documents as per-race skips; a single
                 # broken card must not interrupt the rest of today's batch.
                 if not isinstance(obj, dict):
@@ -88,7 +90,8 @@ def live_window(root, now, window_minutes=15, max_races=12):
                     observed["already_frozen_in_this_checkout"] += 1
                     skipped.append({"race_key": key, "reason": "RESEARCH_FREEZE_EXISTS"})
                     continue
-                eligible.append((deadline, key, round(minutes_left, 2)))
+                selection_scan = scan_preflight(obj, scan_raw, now)
+                eligible.append((deadline, key, round(minutes_left, 2), selection_scan))
             except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
                 skipped.append({"race_key": key, "reason": "RACE_WINDOW_INVALID:" + str(exc)})
     eligible.sort(key=lambda t: (t[0], t[1]))
@@ -97,9 +100,10 @@ def live_window(root, now, window_minutes=15, max_races=12):
         "date": date,
         "window_minutes": window_minutes,
         "max_races": max_races,
-        "candidates": [{"race_key": key, "minutes_left": minutes}
-                       for _, key, minutes in selected],
-        "deferred_due_to_cap": [key for _, key, _ in eligible[max_races:]],
+        "candidates": [{"race_key": key, "minutes_left": minutes,
+                        "selection_scan": scan}
+                       for _, key, minutes, scan in selected],
+        "deferred_due_to_cap": [key for _, key, _, _ in eligible[max_races:]],
         "skipped": skipped,
         "coverage": {
             **observed,
@@ -132,7 +136,8 @@ def run(root, capture=False, window_minutes=15, max_races=12,
                     "modes": sorted(frozen["record"]["candidate"]["modes"]),
                 })
             except (OSError, ValueError, KeyError, TypeError) as exc:
-                failures.append({"race_key": key, "reason": str(exc)})
+                failures.append({"race_key": key, "reason": str(exc),
+                                 "selection_scan": race["selection_scan"]})
     coverage = selected["coverage"]
     if coverage["current_day_race_card_files"] == 0:
         readiness = "NO_CURRENT_DAY_RACE_CARDS"
