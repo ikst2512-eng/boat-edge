@@ -70,3 +70,15 @@ test('source status alone is insufficient without fetched timestamp', () => {
   assert.equal(api.sourceOK(data, 'original_exhibition'), false);
   assert.equal(api.makeRows(data).rows[0].lap, null);
 });
+
+test('V202 markup renders audited 1周/まわり足/直線 values, not only internal rows', () => {
+  const markup = api.html(race('20261013-06-01'), null, null);
+  assert.match(markup, /<th>1周<\/th><th>まわり足<\/th><th>直線<\/th>/);
+  assert.match(markup, /37\.23<\/span><\/td><td><span class="be202-val [^"]*">5\.33<\/span><\/td><td><span class="be202-val [^"]*">8\.20<\/span>/);
+  assert.match(markup, /オリ展 取得済/);
+});
+test('V202 markup keeps missing original exhibition blank and labels it uncollected', () => {
+  const markup = api.html(race('20261013-04-01'), null, null);
+  assert.match(markup, /オリ展 未取得/);
+  assert.doesNotMatch(markup, /37\.23|5\.33|8\.20/);
+});
