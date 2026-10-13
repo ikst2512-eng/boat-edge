@@ -224,3 +224,18 @@ test('V352 whitespace ST is missing both in rows and acquisition badge', () => {
   assert.equal(api.makeRows(data).rows[0].st, 0.12);
   assert.match(api.html(data,null,null), /展示ST 未取得/);
 });
+
+test('V353 conflicting duplicated course positions are not presented as verified', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {start_exhibition:[
+    {lane:1,course:2,st:0.12},
+    {lane:2,course:2,st:0.11},
+    {lane:3,course:3,st:0.10}
+  ]};
+  const rows = api.makeRows(data).rows;
+  assert.equal(rows[0].course, null);
+  assert.equal(rows[1].course, null);
+  assert.equal(rows[2].course, 3);
+  assert.equal(rows[0].st, 0.12);
+});
