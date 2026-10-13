@@ -53,3 +53,7 @@ assert(nav.includes('window.BoatEdgeV166Refresh={refresh}'));
 console.log('V247_FLOW_SIX_RACERS_VERIFIED_RESULTS_NAV_TESTS_PASS');
 // V357: ensure five new fail-closed racer-card fixtures run in the existing V307 UI CI step.
 require('./test_boat_edge_v357_card_source_integrity.cjs');
+// V360: run verified-home-indicator regressions in the existing read-only UI CI.
+require('./test_boat_edge_v360_home_result_safety.cjs');
+// V361: enforce list-side result proof and official-link safety in V307 UI CI.
+require('./test_boat_edge_v361_results_list_integrity.cjs');
