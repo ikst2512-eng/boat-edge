@@ -10,7 +10,7 @@ const safe=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'
 function tiles(combo){const values=String(combo||'').split('-');return values.length===3&&values.every(n=>/^[1-6]$/.test(n))?values.map(n=>`<span class="be241-boat" data-n="${n}">${n}</span>`).join(''):safe(combo)}
 function dateLabel(yyyymmdd){return /^20\d{6}$/.test(yyyymmdd)?`${yyyymmdd.slice(0,4)}年${Number(yyyymmdd.slice(4,6))}月${Number(yyyymmdd.slice(6))}日`:'日付不明'}
 // V361: match the selected-race verified site-only result gate (V251).
-const KEY=/^20\\d{6}-\\d{2}-\\d{2}$/;
+const KEY=/^20\d{6}-\d{2}-\d{2}$/;
 const COMBO=/^[1-6]-[1-6]-[1-6]$/;
 const isCombo=x=>typeof x==='string'&&COMBO.test(x)&&new Set(x.split('-')).size===3;
 function verifiedRow(r){
