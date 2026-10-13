@@ -122,13 +122,13 @@ class MobilePredictionBrowser(unittest.TestCase):
                 try:
                     tickets = page.locator("#be207Top .be207-bets > .be207-ticket")
                     self.assertEqual(tickets.count(), 3)
-                    self.assertEqual(tickets.first.locator(".be207-combo").inner_text(), "123")
+                    self.assertEqual("".join(tickets.first.locator(".be207-lane").all_text_contents()), "123")
                     page.locator('#be207Top [data-be207="five"]').click()
                     self.assertEqual(tickets.count(), 5)
                     page.locator('#be207Top [data-be207="ten"]').click()
                     self.assertEqual(tickets.count(), 10)
                     self.assertEqual(
-                        tickets.nth(9).locator(".be207-combo").inner_text(), "612"
+                        "".join(tickets.nth(9).locator(".be207-lane").all_text_contents()), "612"
                     )
                     self.assertIn("参考配分", tickets.first.inner_text())
                     self.assertIn("10,000円", page.locator("#be207Top .be207-budget").inner_text())
@@ -176,8 +176,8 @@ class MobilePredictionBrowser(unittest.TestCase):
                     }""")
                     self.assertEqual(page.locator("#be207Top .be207-ticket").count(), 3)
                     self.assertEqual(
-                        page.locator("#be207Top .be207-ticket").first
-                        .locator(".be207-combo").inner_text(), "654"
+                        "".join(page.locator("#be207Top .be207-ticket").first
+                        .locator(".be207-lane").all_text_contents()), "654"
                     )
                     self.assertNotIn("123", page.locator("#be207Top .be207-bets").inner_text())
                 finally:
