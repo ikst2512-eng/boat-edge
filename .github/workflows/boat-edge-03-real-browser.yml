@@ -1,0 +1,83 @@
+name: BOAT EDGE 03 - Real Race Browser E2E (Read Only)
+
+on:
+  pull_request:
+    paths:
+      - 'tests/browser/test_boat_edge_03_real_site.py'
+      - '.github/workflows/boat-edge-03-real-browser.yml'
+      - 'index.html'
+      - 'assets/**'
+  push:
+    branches: [main]
+    paths:
+      - 'tests/browser/test_boat_edge_03_real_site.py'
+      - '.github/workflows/boat-edge-03-real-browser.yml'
+      - 'index.html'
+      - 'assets/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boat-edge-03-real-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  selected-race-to-prediction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install real Chromium and WebKit browsers
+        run: |
+          python -m pip install --disable-pip-version-check "playwright==1.58.0"
+          python -m playwright install --with-deps chromium webkit
+
+      - name: Verify result-unseen formal gate (do not access outcomes)
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          g=x.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert x.get('formalFirst100',{}).get('races') == 0
+          print('BOAT_EDGE_03_FORMAL_FRESH_UNTOUCHED_PASS')
+          PY
+
+      - name: Real checkout - Chromium venue to race to prediction
+        run: python tests/browser/test_boat_edge_03_real_site.py --engine chromium
+
+      - name: Real checkout - WebKit iPhone-sized venue to prediction
+        run: python tests/browser/test_boat_edge_03_real_site.py --engine webkit
+
+      - name: Published Pages - Chromium live navigation
+        run: |
+          python tests/browser/test_boat_edge_03_real_site.py \
+            --engine chromium \
+            --site-url https://ikst2512-eng.github.io/boat-edge/index.html
+
+      - name: Published Pages - WebKit iPhone-sized live navigation
+        run: |
+          python tests/browser/test_boat_edge_03_real_site.py \
+            --engine webkit \
+            --site-url https://ikst2512-eng.github.io/boat-edge/index.html
+
+      - name: Upload actual screenshots (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boat-edge-03-real-browser-screenshots
+          path: artifacts/boat-edge-03-browser/*.png
+          if-no-files-found: warn
+          retention-days: 7
