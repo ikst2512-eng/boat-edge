@@ -19,6 +19,12 @@ class V306Tests(unittest.TestCase):
     def test_rank_gap(self):
         x=fixture();x["research_ranked_120_by_mode"]["national_motor"][1]["rank"]=3
         self.assertEqual(inspect(x),"INVALID_RANK")
+    def test_nan_mass_rejected(self):
+        x=fixture();x['research_ranked_120_by_mode']['national_only'][0]['relative_model_mass']=float('nan')
+        self.assertEqual(inspect(x),'INVALID_MASS')
+    def test_infinite_mass_rejected(self):
+        x=fixture();x['research_ranked_120_by_mode']['national_only'][0]['relative_model_mass']=float('inf')
+        self.assertEqual(inspect(x),'INVALID_MASS')
     def test_no_ranking(self):
         self.assertEqual(inspect({}),"NO_V360_RANKING")
 
