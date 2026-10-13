@@ -4,6 +4,8 @@
  * real WebKit/iPhone run. */
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
+const {execFileSync}=require('node:child_process');
+execFileSync('python3',['-c',"import ast,pathlib; ast.parse(pathlib.Path('tests/browser/test_boat_edge_03_playwright.py').read_text(encoding='utf-8'))"],{encoding:'utf8',timeout:10000});
 const js=fs.readFileSync('assets/boat_edge_v207_first_prediction.js','utf8');
 const css=fs.readFileSync('assets/boat_edge_v304_topk_mobile.css','utf8');
 const py=fs.readFileSync('tests/browser/test_boat_edge_03_playwright.py','utf8');
