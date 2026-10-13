@@ -28,6 +28,8 @@ BOATS = set(range(1, 7))
 RACE_KEY = re.compile(r"[0-9]{12}\Z")
 RACER_ID = re.compile(r"[0-9]{4}\Z")
 METRICS = ("entries", "first", "second", "third")
+# A W-day calendar window includes age 0 .. W-1 (exactly W dates).
+# With age 0, only independently time-stamped earlier same-day K results qualify.
 
 
 def _target(target):
@@ -118,7 +120,7 @@ def snapshot(raw: bytes, manifest: dict, target: dict):
             seen_late += 1
             continue
         age = (deadline.date() - history_day).days
-        if age < 0 or age > max(WINDOWS):
+        if age < 0 or age >= max(WINDOWS):
             continue
         seen_before += 1
         first_history = min(first_history, history_day) if first_history else history_day
@@ -126,7 +128,7 @@ def snapshot(raw: bytes, manifest: dict, target: dict):
         for row in rows:
             _, _, _, _, racer, course, finish, _ = row
             for w in WINDOWS:
-                if age <= w:
+                if age < w:
                     for store, group in (
                         (all_counts, "all"),
                         (venue_counts, history_venue),
