@@ -96,7 +96,7 @@
   }
   function sourceReport(race,oe,bfRows,starts){
     const card=actualCheck(race),audit=race?.source_audit||{};
-    const originalGood=Boolean(oe&&new Set((oe.boats||[]).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6);
+    const originalGood=Boolean(oe&&['一周','まわり足','直線'].every(label=>(oe.labels||[]).includes(label))&&new Set((oe.boats||[]).filter(b=>{const lane=Number(b?.lane);return lane>=1&&lane<=6&&['一周','まわり足','直線'].every(label=>num(b?.values?.[(oe.labels||[]).indexOf(label)])!==null);}).map(b=>Number(b.lane))).size===6);
     const startGood=sourceOK(race,'beforeinfo')&&new Set(starts.map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
     const bfGood=sourceOK(race,'beforeinfo')&&new Set(bfRows.map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
     const cached=!bfGood&&((race?.beforeinfo?.racers||[]).length>=4||(race?.actual_entry||[]).length>=4);
