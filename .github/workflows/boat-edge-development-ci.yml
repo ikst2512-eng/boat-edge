@@ -34,6 +34,10 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
       - name: Validate tracked source pins
         run: python3 scripts/verify_workflow_source_pins.py
+      - name: Prove V235 08:20 window and source-bound Git first-add SHA (no result access)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
       - name: Test guards, exact odds mapping, immutable prediction evidence and daily budgets
         env:
           PYTHONPATH: scripts
