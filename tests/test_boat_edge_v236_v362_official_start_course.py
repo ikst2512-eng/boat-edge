@@ -154,6 +154,20 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "ARCHIVED_OFFICIAL_START_SOURCE_SHA_MISMATCH"):
                 verify(root, report(digest=frozen["sha256"]))
 
+    def test_auxiliary_source_symlink_denied_without_network_or_freeze(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            raw, path, html_file = fixture(root)
+            html_file.unlink()
+            other = root / "local.html"
+            other.write_bytes(raw)
+            html_file.symlink_to(other)
+            with self.assertRaisesRegex(ValueError, "START_SOURCE_RAW_SYMLINK_FORBIDDEN"):
+                live_local_freeze(root, KEY, capture=True,
+                                  fetcher=lambda _: self.fail("NO_NETWORK_FOR_SYMLINK"),
+                                  clock=lambda: PRE)
+            self.assertFalse((root / "data/research_local_v332").exists())
+
     def test_invalid_non_pre_result_and_formal_dates_never_use_archived_parser(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
@@ -161,7 +175,7 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
             race = json.loads(path.read_bytes())
             race["meta"]["results_seen"] = True
             path.write_text(json.dumps(race))
-            with self.assertRaisesRegex(ValueError, "RESULT_OR_UNLOCK_FLAG_FORBIDDEN"):
+            with self.assertRaisesRegex(ValueError, "START_SOURCE_PRE_RESULT_ONLY"):
                 live_local_freeze(root, KEY, clock=lambda: PRE)
             with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
                 live_local_freeze(root, "20261001-22-12", clock=lambda: PRE)
