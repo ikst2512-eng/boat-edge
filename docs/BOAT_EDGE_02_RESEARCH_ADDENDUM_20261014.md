@@ -57,3 +57,8 @@ Source for D17–D26 below: ボートレース日和 feature changelog https://k
 
 ### Production acceptance boundary
 `data/formal_status.json` on current main read before research was 2026-10-13 23:59 JST, First100=0, results_seen/unlock/scoring=false. No change to this lock, outcome access, payout, production ranking, confidence or actual wagers. Any additional research item must be checked against newer PRs before implementation.
+
+
+## P0 actual scheduled capture path and permission risk
+
+Track 01 has received https://github.com/ikst2512-eng/boat-edge/issues/204. Repo-source confirmation: `.github/workflows/v336-site-research-live-freeze.yml` runs the V334 batch with `--capture` on a five-minute schedule. V334→V332→V315 derives BOATERS/競艇日和 race-page URLs from V333 and calls bounded HTML HTTPS fetch, besides official. **This is a scheduled code path, not proof live third-party access succeeded.** Do not invoke to test availability; do not treat `public data`, a manual opt-in wrapper or research-only mode as provider permission. Ask 01 to isolate third-party capture pending appropriate explicit consent; 02 continues *researching documented feature types*, using independently licensed or authorized sources for any future numerical training. No new in-repo licensed provider dataset is asserted.
