@@ -106,8 +106,12 @@ async def check(engine, shot_dir=None):
             assert await page.locator("#homeView .hero").is_hidden(), "old duplicate hero is visible"
             assert await page.locator("#homeView>.section").is_hidden(), "old duplicate sections are visible"
             assert await page.locator("#homeView #be108Hub").is_visible(), "venue selection vanished"
+            venues = page.locator("#homeView #be108Hub .be108-venue")
+            assert await venues.count() == 6, "six venue selection buttons missing"
+            assert await venues.first.is_visible(), "venue selection hidden"
             assert await page.locator("#raceView #be207Top .be207-condition").is_visible(), "scratch stop hidden"
             assert await page.locator("#raceView #be207Top .be207-budget").is_visible(), "allocation hidden"
+            assert await page.locator("#raceView #be207Top .be207-odds").is_visible(), "odds verification state hidden"
             assert await page.locator("#raceView #be206Quick .be206-table").is_visible(), "six boats hidden"
             assert await page.locator("#raceView #be207Top .be305-evidence-items").is_hidden(), "audit clutter not collapsed"
             details = page.get_by_role("button", name="詳しいデータ・監査を開く")
