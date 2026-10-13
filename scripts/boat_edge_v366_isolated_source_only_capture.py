@@ -126,6 +126,7 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
         "model_id": MODEL,
         "race_key": key,
         "input_race_sha256": hashlib.sha256(original).hexdigest(),
+        "input_race_relative_path": (OUTPUT_ROOT / key[:8] / key / "race_input.json").as_posix(),
         "candidate_selected_at_jst": now.isoformat(),
     }
     capture = {}
@@ -207,7 +208,16 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
         stage = Path(staged)
         for name, data in capture.items():
             (stage / (name + ".html")).write_bytes(data["raw"])
+        (stage / "race_input.json").write_bytes(original)
         (stage / "manifest.json").write_bytes(canonical(manifest) + b"\n")
+        # Recheck true live time and the original selected card right before
+        # publication, including the time consumed by staging writes.
+        before_rename = _clock(clock)
+        if (before_rename - final).total_seconds() < 0 or key not in [
+                x["race_key"] for x in select_source_refresh(root, before_rename)["candidates"]]:
+            raise ValueError("V366_WINDOW_CLOSED_DURING_SOURCE_STAGING")
+        if (root / "data/races" / (key + ".json")).read_bytes() != original:
+            raise ValueError("V366_RACE_CHANGED_DURING_SOURCE_STAGING")
         if out.exists() or out.is_symlink():
             raise ValueError("V366_IMMUTABLE_SOURCE_PROOF_ALREADY_EXISTS")
         stage.rename(out)
