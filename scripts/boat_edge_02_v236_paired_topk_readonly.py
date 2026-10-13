@@ -24,7 +24,7 @@ def evaluate(root: Path):
             if (s.get("schema") != "BOAT_EDGE_V236_HITRATE_SCORE_V1"
                     or s.get("scope") != "POST_RESULT_SITE_ONLY_NOT_FORMAL_FRESH"
                     or f.get("schema") != "BOAT_EDGE_V236_HITRATE_FORWARD_SHADOW_V1"
-                    or s.get("race_key") != f.get("race_key") != p.stem):
+                    or not (s.get("race_key") == f.get("race_key") == p.stem)):
                 raise ValueError("schema_or_identity")
             winner = s["official_result"]
             tickets = f["comparators"]
