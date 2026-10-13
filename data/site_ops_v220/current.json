@@ -2,30 +2,44 @@
   "active_window_races": 8,
   "current_windows": [
     {
-      "deadline_jst": "15:46",
-      "key": "20261013-15-02",
-      "missing_evidence": [],
-      "venue": "丸亀"
-    },
-    {
-      "deadline_jst": "15:47",
-      "key": "20261013-12-02",
-      "missing_evidence": [],
+      "deadline_jst": "16:09",
+      "key": "20261013-12-03",
+      "missing_evidence": [
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "scratch_unverified_or_blocked"
+      ],
       "venue": "住之江"
     },
     {
-      "deadline_jst": "15:51",
-      "key": "20261013-06-11",
+      "deadline_jst": "16:15",
+      "key": "20261013-15-03",
       "missing_evidence": [
-        "frozen_prediction_missing_or_invalid"
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "odds_evidence_stale",
+        "race_card_stale",
+        "scratch_unverified_or_blocked"
       ],
-      "venue": "浜名湖"
+      "venue": "丸亀"
+    },
+    {
+      "deadline_jst": "16:20",
+      "key": "20261013-04-12",
+      "missing_evidence": [
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "odds_evidence_missing",
+        "race_card_stale",
+        "scratch_unverified_or_blocked"
+      ],
+      "venue": "平和島"
     }
   ],
   "data_sources": {
-    "collector_freshness": "CURRENT",
-    "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 76,
+    "collector_freshness": "STALE_OR_UNVERIFIED",
+    "odds_index_freshness": "STALE_OR_UNVERIFIED",
+    "predeadline_observations": 80,
     "site_autovalidation": "EVIDENCE_REVIEW_REQUIRED"
   },
   "day_jst": "20261013",
@@ -33,25 +47,30 @@
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
   "issues": [
+    "collector_index_stale",
+    "odds_index_stale",
     "predeadline_incomplete"
   ],
   "next_race": {
-    "deadline_jst": "15:40",
-    "race_key": "20261013-04-11",
-    "venue": "平和島",
-    "watch_from_jst": "15:25"
+    "deadline_jst": "16:09",
+    "race_key": "20261013-12-03",
+    "venue": "住之江",
+    "watch_from_jst": "15:54"
   },
   "official_beforeinfo_urgent_15m": {
-    "error": 1,
-    "health_updated_at": "2026-10-13T15:34:08+09:00",
-    "ok": 4,
-    "partial_six_boat_source": 0,
-    "published_wait": 0,
-    "status": "OBSERVED",
-    "targets": 5
+    "error": null,
+    "health_updated_at": null,
+    "ok": null,
+    "partial_six_boat_source": null,
+    "published_wait": null,
+    "status": "UNVERIFIED_OR_STALE",
+    "targets": null
   },
   "paper_wager_authorized_by_this_runner": false,
-  "recovery_dispatch_candidates": [],
+  "recovery_dispatch_candidates": [
+    "auto-update.yml",
+    "site-odds.yml"
+  ],
   "research_model_production_promotion": false,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
@@ -93,16 +112,16 @@
     },
     "today": {
       "day_jst": "20261013",
-      "early_missing_later_snapshot_present": 39,
+      "early_missing_later_snapshot_present": 40,
       "integrity_note": "A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.",
-      "matured_observed_races": 72,
-      "not_found_after_deadline": 16,
+      "matured_observed_races": 79,
+      "not_found_after_deadline": 17,
       "not_found_last_seen_inside_2_to_10m_window": 7,
-      "not_found_last_seen_outside_2_to_10m_window": 9,
+      "not_found_last_seen_outside_2_to_10m_window": 10,
       "not_found_last_seen_unverified": 0,
       "not_found_with_observed_gaps": 8,
       "not_found_without_gaps_inside_2_to_10m_window": 2,
-      "not_found_without_observed_gaps": 8,
+      "not_found_without_observed_gaps": 9,
       "observed_gaps_for_currently_missing": {
         "beforeinfo_not_ok": 8,
         "official_dom_proof_missing": 1,
@@ -111,18 +130,18 @@
         "scratch_missing_or_blocked": 6,
         "scratch_stale": 3
       },
-      "observed_races": 76,
+      "observed_races": 80,
       "pending_before_deadline": 1,
-      "predeadline_snapshot_with_matching_audit": 57,
+      "predeadline_snapshot_with_matching_audit": 59,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
-      "sha_consistent_predeadline_snapshots": 55,
-      "snapshot_or_audit_unverified": 2,
-      "snapshot_present": 59,
+      "sha_consistent_predeadline_snapshots": 57,
+      "snapshot_or_audit_unverified": 3,
+      "snapshot_present": 62,
       "source_changed_after_freeze": 2,
       "source_missing_after_freeze": 0,
       "status": "OBSERVED_WINDOW_COUNTS",
-      "v229_atomic_evidence_matched": 53,
-      "v229_attestation_record_matched": 55
+      "v229_atomic_evidence_matched": 55,
+      "v229_attestation_record_matched": 57
     }
   },
   "status": "NEEDS_ATTENTION"

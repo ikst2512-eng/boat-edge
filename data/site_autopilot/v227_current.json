@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-13T06:38:20.415993+00:00",
+  "checked_at": "2026-10-13T07:06:47.169633+00:00",
   "day_jst": "20261013",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -32,9 +32,9 @@
     "site_v185_10_20x_settled_races": 30,
     "site_v185_candidate_top": {
       "top10": {
-        "candidate_hits": 43,
+        "candidate_hits": 44,
         "candidate_rate_percent": 33.08,
-        "control_hits": 43,
+        "control_hits": 44,
         "control_rate_percent": 33.08,
         "difference": 0,
         "paired_gains": 0,
@@ -42,50 +42,50 @@
       },
       "top3": {
         "candidate_hits": 15,
-        "candidate_rate_percent": 11.54,
-        "control_hits": 18,
-        "control_rate_percent": 13.85,
-        "difference": -3,
+        "candidate_rate_percent": 11.28,
+        "control_hits": 19,
+        "control_rate_percent": 14.29,
+        "difference": -4,
         "paired_gains": 3,
-        "paired_losses": 6
+        "paired_losses": 7
       },
       "top5": {
-        "candidate_hits": 28,
-        "candidate_rate_percent": 21.54,
-        "control_hits": 28,
-        "control_rate_percent": 21.54,
+        "candidate_hits": 29,
+        "candidate_rate_percent": 21.8,
+        "control_hits": 29,
+        "control_rate_percent": 21.8,
         "difference": 0,
         "paired_gains": 1,
         "paired_losses": 1
       }
     },
-    "site_v185_evaluated_races": 130,
+    "site_v185_evaluated_races": 133,
     "site_v199_10_20x_settled_races": 18,
-    "site_v199_evaluated_races": 89,
+    "site_v199_evaluated_races": 90,
     "site_v199_head_top": {
       "top10": {
         "candidate_hits": 33,
-        "candidate_rate_percent": 37.08,
+        "candidate_rate_percent": 36.67,
         "control_hits": 33,
-        "control_rate_percent": 37.08,
+        "control_rate_percent": 36.67,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
         "candidate_hits": 12,
-        "candidate_rate_percent": 13.48,
+        "candidate_rate_percent": 13.33,
         "control_hits": 11,
-        "control_rate_percent": 12.36,
+        "control_rate_percent": 12.22,
         "difference": 1,
         "paired_gains": 2,
         "paired_losses": 1
       },
       "top5": {
         "candidate_hits": 25,
-        "candidate_rate_percent": 28.09,
+        "candidate_rate_percent": 27.78,
         "control_hits": 23,
-        "control_rate_percent": 25.84,
+        "control_rate_percent": 25.56,
         "difference": 2,
         "paired_gains": 2,
         "paired_losses": 0
@@ -97,50 +97,59 @@
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
     "collector_health_issues": [
+      "collector_index_stale",
+      "odds_index_stale",
       "predeadline_incomplete"
     ],
     "current_window": [
       {
-        "deadline_jst": "15:40",
-        "issues": [],
-        "minutes_left": 1.7,
-        "race_key": "20261013-04-11",
-        "venue": "平和島"
-      },
-      {
-        "deadline_jst": "15:46",
-        "issues": [],
-        "minutes_left": 7.7,
-        "race_key": "20261013-15-02",
-        "venue": "丸亀"
-      },
-      {
-        "deadline_jst": "15:47",
-        "issues": [],
-        "minutes_left": 8.7,
-        "race_key": "20261013-12-02",
+        "deadline_jst": "16:09",
+        "issues": [
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 2.2,
+        "race_key": "20261013-12-03",
         "venue": "住之江"
       },
       {
-        "deadline_jst": "15:51",
+        "deadline_jst": "16:15",
         "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "最新オッズ120通り未確認",
           "締切前予想未保存"
         ],
-        "minutes_left": 12.7,
-        "race_key": "20261013-06-11",
-        "venue": "浜名湖"
+        "minutes_left": 8.2,
+        "race_key": "20261013-15-03",
+        "venue": "丸亀"
+      },
+      {
+        "deadline_jst": "16:20",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "最新オッズ120通り未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 13.2,
+        "race_key": "20261013-04-12",
+        "venue": "平和島"
       }
     ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 76,
+    "readiness_observed_races": 80,
     "readiness_reasons": {
       "no_raw_ev_candidate_8_25x": 1,
-      "snapshot_missing": 30,
-      "verified_shadow_ready": 45
+      "snapshot_missing": 32,
+      "verified_shadow_ready": 47
     },
-    "readiness_shadow_verified_races": 45,
+    "readiness_shadow_verified_races": 47,
     "schedule_today": true,
-    "snapshot_files_today": 60,
+    "snapshot_files_today": 64,
     "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
