@@ -172,6 +172,29 @@ class EntryMarginalizationAblation(unittest.TestCase):
         e=evidence();e["rights_reviewed_for_training"]=False
         with self.assertRaisesRegex(ValueError,"ENTRY_RIGHTS_OR_PRE_RESULT"):
             trial(ev=e)
+    def test_three_arm_controls_separate_factor_effect_from_entry_effect(self):
+        out=trial()
+        self.assertEqual(out["three_arm_predeclared_ablation"],
+                         "A_no_factor__B_fixed_exhibition_with_course_factor__C_joint_entry_with_same_factor")
+        for name in ("no_factor_control", "baseline", "candidate"):
+            self.assertEqual(len(out[name+"_ranking_document"]["ranked_120"]),120)
+            self.assertEqual(out[name+"_top3"],out[name+"_top10"][:3])
+            self.assertEqual(out[name+"_top5"],out[name+"_top10"][:5])
+        self.assertGreater(out["factor_only_mass_l1_not_hit_improvement"],1e-8)
+        self.assertGreaterEqual(out["mass_l1_research_distance_not_hit_improvement"],0)
+        self.assertFalse(out["head_top3_top5_top10_improvement_proven"])
+    def test_all_course_factors_one_makes_no_factor_and_baseline_identical(self):
+        c=cfg(); c["course_factor_by_course"]={i:1.0 for i in range(1,7)}
+        c["course_factor_manifest_sha256"]=digest(c["course_factor_by_course"])
+        out=trial(c)
+        self.assertLess(out["factor_only_mass_l1_not_hit_improvement"],1e-12)
+        self.assertEqual(out["no_factor_control_top10"],out["baseline_top10"])
+    def test_central_known_formal_days_closed_even_if_caller_claims_safe(self):
+        for key in ("20261001-12-01","20261005-12-01","20261013-12-01"):
+            with self.subTest(key=key):
+                with self.assertRaisesRegex(ValueError,"FORMAL_FRESH_EXCLUDED"):
+                    prepare_entry_topk_ablation(key,SCOPE,cfg(),evidence())
+
     def test_no_unverified_beneficial_hit_rate_from_mass_distance(self):
         out=trial()
         self.assertGreaterEqual(out["mass_l1_research_distance_not_hit_improvement"],0)
