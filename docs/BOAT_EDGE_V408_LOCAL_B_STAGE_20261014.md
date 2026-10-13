@@ -25,3 +25,7 @@ V407でローカル成績Kの解析からV401用JSONへの変換を自動化し�
 - V408でBテキストの現物を変換できることは、当時その名簿が締切前に存在した証拠にはならない。
 
 検証コマンド: `python3 -m unittest discover -s tests -p 'test_boat_edge_v408_local_b_program_bridge.py' -v`
+
+## 日別の複数会場ファイル（新対応）
+
+会場別のB TXTが複数ある場合は、ダウンロードをせず `--local-b-dir /private/authorized_B_decompressed_20260930` を単一 `--local-b-txt` の代わりに使用できる。直下の .txt/.TXT のみを読み、シンボリックリンク、空ファイル、48個超、1個16MiB超は拒否する。出力監査には各入力TXTのSHA-256を記録するが、元LZHアーカイブのSHAではないため、V402に渡す公式元アーカイブSHAと混同しない。架空の桐生・戸田2会場のBテキストを使いScheduleParserの一括解析をCI検証する。B出走表の締切前存在証明は別途必要。
