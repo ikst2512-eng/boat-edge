@@ -105,7 +105,7 @@ class PairedExhibitionFinalEntry(unittest.TestCase):
         self.assertEqual(a["observed_paired_counts_sha256"]==b["observed_paired_counts_sha256"],False)
         self.assertEqual(a["historical_national_paired_events_n"],b["historical_national_paired_events_n"])
     def test_no_proof_of_two_distinct_historic_six_boat_orders(self):
-        x=rows();x[0]["actual_course_by_boat"][2]=1
+        x=rows();x[0]["actual_course_by_boat"][2]=2
         with self.assertRaisesRegex(ValueError,"SIX_ACTUAL_VS_EXHIBITION_PERMUTATION_REQUIRED"):
             trial(x)
         x=rows();x[0]["exhibition_course_by_boat"][6]=None
@@ -137,9 +137,8 @@ class PairedExhibitionFinalEntry(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"PROTECTED_FORMAL_HISTORIC_RACE"):
                 trial(x)
         e=deepcopy(EVIDENCE)
-        e["current_locked_formal_dates"].append("20260901")
+        e["current_locked_formal_dates"].append("20260801")
         x=rows()
-        x[-1]["race_key"]="20260901-12-01";x[-1]["venue"]=12
         with self.assertRaisesRegex(ValueError,"PROTECTED_FORMAL_HISTORIC_RACE"):
             trial(x,e)
     def test_target_day_result_not_admitted_in_historic_rows(self):
