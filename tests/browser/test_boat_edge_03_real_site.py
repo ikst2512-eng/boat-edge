@@ -42,17 +42,22 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
     """
     now = datetime.now(JST)
     choices = []
+    readiness = {"not_ready": 0, "beforeinfo_missing": 0,
+                 "invalid_race": 0, "deadline_invalid_or_too_close": 0}
     for venue in catalog.get("venues", []):
         for race in venue.get("races", []):
-            if race.get("racers_ready") is not True or race.get("beforeinfo_status") != "ok":
+            if race.get("racers_ready") is not True:
+                readiness["not_ready"] += 1
+                continue
+            if race.get("beforeinfo_status") != "ok":
+                readiness["beforeinfo_missing"] += 1
                 continue
             path = str(race.get("file") or "")
             key = str(race.get("race_key") or "")
-            if not re.fullmatch(r"data/races/\d{8}-\d{2}-\d{2}\.json", path):
-                continue
-            if not re.fullmatch(r"20\d{6}-\d{2}-\d{2}", key):
-                continue
-            if not key.startswith(now.strftime("%Y%m%d")):
+            if (not re.fullmatch(r"data/races/\d{8}-\d{2}-\d{2}\.json", path)
+                    or not re.fullmatch(r"20\d{6}-\d{2}-\d{2}", key)
+                    or not key.startswith(now.strftime("%Y%m%d"))):
+                readiness["invalid_race"] += 1
                 continue
             try:
                 due = datetime.strptime(
@@ -60,14 +65,17 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                     "%Y-%m-%d %H:%M"
                 ).replace(tzinfo=JST)
             except (KeyError, TypeError, ValueError):
+                readiness["deadline_invalid_or_too_close"] += 1
                 continue
             # Never certify a past-deadline race or a race already closing.
             if due <= now + timedelta(minutes=3):
+                readiness["deadline_invalid_or_too_close"] += 1
                 continue
             choices.append((due, venue, race))
     choices.sort(key=lambda item: item[0])
     if not choices:
-        return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE", "eligible_count": 0}
+        return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE",
+                "eligible_count": 0, "readiness": readiness}
     stopped_reasons = []
     for _, venue, race in choices[:5]:
         path = race["file"]
@@ -151,7 +159,8 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             live.close()
     return {
         "status": "NOT_CERTIFIED_ALL_ELIGIBLE_SOURCE_STOPPED",
-        "eligible_count": len(choices), "checked": stopped_reasons
+        "eligible_count": len(choices), "checked": stopped_reasons,
+        "readiness": readiness
     }
 
 
