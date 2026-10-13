@@ -88,8 +88,28 @@ class AsOfResearchFixtureTests(unittest.TestCase):
         r = self.build()
         course = r["national_actual_course_counts"]["1"]
         self.assertEqual(course["90"]["entries"], 2)
-        self.assertEqual(course["365"]["entries"], 3)
+        self.assertEqual(course["365"]["entries"], 2)
         self.assertEqual(course["1826"]["entries"], 4)
+
+
+    def test_exact_90_365_1095_day_boundaries_including_earlier_today(self):
+        from datetime import date, timedelta
+        end = date(2026, 9, 30)
+        # Oldest synthetic record is 2021-10-01, within the formal-safe window.
+        ages = [0, 89, 90, 364, 365, 1094, 1095, 1825]
+        rows = []
+        for age in ages:
+            d = end - timedelta(days=age)
+            published = d.isoformat() + ("T07:00:00+09:00" if age == 0
+                                         else "T21:00:00+09:00")
+            rows += one_race(d.strftime("%Y%m%d") + "0101", published)
+        rows.sort(key=lambda r: (r["race_key"], int(r["boat"])))
+        raw, man = history(rows)
+        result = self.build(raw=raw, manifest=man)
+        counts = result["national_actual_course_counts"]["1"]
+        self.assertEqual([counts[str(w)]["entries"] for w in (90,365,1095,1826)],
+                         [2,4,6,8])
+        self.assertEqual(result["historical_races_eligible_before_target"], 8)
 
     def test_recency_censored_on_target(self):
         r = self.build()
