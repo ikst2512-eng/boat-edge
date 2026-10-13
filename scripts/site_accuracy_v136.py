@@ -7,7 +7,7 @@ from site_v136_historical_proof import check_historical_proof
 BASE=Path(".")
 HISTORY=BASE/"data/site_prediction_history"
 RESULTS=BASE/"data/site_results"
- OUT=BASE/"data/site_learning/mode_accuracy_v136.json"
+OUT=BASE/"data/site_learning/mode_accuracy_v136.json"
 DETAIL=BASE/"data/site_learning/site_mode_evaluations_v136"
 MODES=("hit","balance","hole","narrow")
 POLICY="BALANCE10_WAVE12_15_18_V133_FIXED"
