@@ -2,6 +2,7 @@
 """PRE_RESULT-only TopK readiness check. Never read result or payout files."""
 import argparse
 import json
+import re
 from pathlib import Path
 
 def inspect(row):
@@ -10,11 +11,13 @@ def inspect(row):
     if row.get("formal_results_seen") is not False or row.get("formal_gate_unlocked") is not False:
         return "FORMAL_GATE_UNVERIFIED"
     top = row.get("top10")
-    if not isinstance(top, list) or len(top) != 10 or len(set(top)) != 10:
+    if not isinstance(top, list) or len(top) != 10:
         return "TOP10_INVALID"
     for x in top:
-        if not isinstance(x, str) or len(x.split("-")) != 3 or sorted(set(x.split("-"))) != sorted(x.split("-")) or any(c not in "123456" for c in x.replace("-","")):
+        if not isinstance(x, str) or not re.fullmatch(r"[1-6]-[1-6]-[1-6]", x) or len(set(x.split("-"))) != 3:
             return "COMBO_INVALID"
+    if len(set(top)) != 10:
+        return "TOP10_INVALID"
     modes = row.get("frozen_mode_tickets")
     if not isinstance(modes, dict) or not isinstance(modes.get("hit"), list):
         return "RANKED_HIT_MISSING"
