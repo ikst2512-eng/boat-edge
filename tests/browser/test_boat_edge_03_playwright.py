@@ -133,6 +133,8 @@ class MobilePredictionBrowser(unittest.TestCase):
                     self.assertIn("参考配分", tickets.first.inner_text())
                     self.assertIn("10,000円", page.locator("#be207Top .be207-budget").inner_text())
                     self.assertIn("未校正", page.locator("#be207Top .be259-confidence").inner_text())
+                    self.assertIn("4号艇の攻め", page.locator("#be207Top .be207-explain").inner_text())
+                    self.assertIn("FIRST", page.locator("#be207Top .be207-freeze").inner_text())
                     self.assertIn("未確認", page.locator("#be207Top .be207-odds").inner_text())
                 finally:
                     context.close()
