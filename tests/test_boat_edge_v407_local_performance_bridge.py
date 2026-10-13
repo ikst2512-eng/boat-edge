@@ -196,6 +196,33 @@ class V407OfflineNativeBridgeTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "OPTIONAL_LOCAL_BOATRACE_LZH_PARSER_NOT_INSTALLED"):
                 parse_local_txt(b"synthetic local text")
 
+    def test_actual_optional_performance_parser_on_invented_cp932_k_text(self):
+        # This is invented local K-style text, NOT an official race or a
+        # downloaded result. It verifies the real optional parser interface.
+        try:
+            import importlib.metadata
+            importlib.metadata.version("boatrace-lzh")
+        except importlib.metadata.PackageNotFoundError:
+            self.skipTest("optional parser not installed")
+        heading = [
+            "STARTK", "01KBGN",
+            "桐　生［成績］       9/30      架空検証の開催　第 1日",
+            "    第 1日      2026/ 9/30       ボートレース桐生",
+            "    1R       一般         H1800m  晴れ  風  南 2m  波 2cm",
+            "   着 艇 登番 選手名 ﾓｰﾀｰ ﾎﾞｰﾄ 展示 進入 ST ﾚｰｽﾀｲﾑ",
+        ]
+        for i in range(1, 7):
+            heading.append(
+                f"   {i:02d}  {i} {4500+i} 架　空　選　手 "
+                f"53 59 6.71 {i} 0.07 2.03.6"
+            )
+        raw = ("\n".join(heading) + "\n" + " "*200).encode("cp932")
+        parsed = parse_local_txt(raw)
+        self.assertEqual(len(parsed), 6)
+        stage = stage_local_entries(parsed, b_stage(KEY), pub(KEY))
+        self.assertEqual(len(stage["races"]), 1)
+        self.assertEqual(len(stage["races"][0]["entries"]), 6)
+
     def test_forged_b_target_actual_course_field_rejected(self):
         b = b_stage(KEY)
         b["races"][0]["entries"][0]["actual_course"] = 1
