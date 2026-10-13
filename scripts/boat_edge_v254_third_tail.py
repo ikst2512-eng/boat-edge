@@ -164,6 +164,9 @@ def freeze(root,now):
     obj={'schema':'BOAT_EDGE_V254_FUTURE_THIRD_TAIL_PRE_SUMMARY_V1',
        'day_jst':day,'frozen_today':len(history),
        'source_cohorts_today':len(source_paths),
+       'upstream_diagnostic':('NO_V232_COHORTS_TODAY' if not source_paths else
+                              'NO_COHORTS_IN_FUTURE_WINDOW' if not window_paths else
+                              'FUTURE_WINDOW_COHORTS_PRESENT'),
        'future_window_cohorts_seen':len(window_paths),
        'unfrozen_future_window_at_start':unfrozen_window,
        'new_frozen_this_run':fresh,
