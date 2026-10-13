@@ -12,6 +12,9 @@ on:
       - 'BOAT EDGE 自動更新'
     types: [completed]
   schedule:
+    # 08:20 JST is 23:20 UTC on the previous calendar day.
+    # PRE_RESULT source prewarm only; the strict V229 2-10m freeze window is unchanged.
+    - cron: '20 23 * * *'
     - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
 permissions:
   contents: write
@@ -170,6 +173,20 @@ jobs:
             echo "V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS_AND_RECHECK_NOW_$attempt"
           done
           if test "$source_success" != true; then echo V234_PRE_RESULT_SOURCE_PUBLISH_UNCONFIRMED; exit 1; fi
+      - name: V235 read-only priority-race source, first-commit and SHA receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Report only saved original PRE_RESULT bytes and Git evidence.
+          # No green PASS for a zero-snapshot run, and no result/formal access.
+          python3 scripts/boat_edge_v235_predeadline_receipt.py | tee "$RUNNER_TEMP/v235-priority-receipt.jsonl"
+          {
+            echo '### V235 priority race: PRE_RESULT source / Git first-commit receipt'
+            echo 'An Actions success is not a prediction-save success.'
+            echo '```json'
+            cat "$RUNNER_TEMP/v235-priority-receipt.jsonl"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: V274 immediately freeze qualifying V254 site-only tail research before any result scoring
         shell: bash
         run: |
