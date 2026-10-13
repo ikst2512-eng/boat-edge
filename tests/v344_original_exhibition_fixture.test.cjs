@@ -162,3 +162,26 @@ test('V348 missing required metric label cannot claim fully acquired', () => {
 test('V348 all six lanes with three valid original metrics retain acquired badge', () => {
   assert.match(api.html(race('20261013-06-01'), null, null), /オリ展 取得済/);
 });
+
+test('V349 missing official exhibition time on one lane cannot claim complete', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6}, (_,i)=>({lane:i+1,exhibition_time:i===4?null:6.5})),
+    start_exhibition: Array.from({length:6}, (_,i)=>({lane:i+1,course:i+1,st:0.12}))
+  };
+  const markup = api.html(data, null, null);
+  assert.match(markup, /公式展示 未取得/);
+  assert.match(markup, /展示ST 取得済/);
+});
+test('V349 missing exhibition ST on one lane cannot claim complete', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6}, (_,i)=>({lane:i+1,exhibition_time:6.5})),
+    start_exhibition: Array.from({length:6}, (_,i)=>({lane:i+1,course:i+1,st:i===3?null:0.12}))
+  };
+  const markup = api.html(data, null, null);
+  assert.match(markup, /公式展示 取得済/);
+  assert.match(markup, /展示ST 未取得/);
+});
