@@ -131,6 +131,13 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  const verify=()=>vm.runInContext('be181VerifiedPreDeadlineFinal('+
    JSON.stringify(KEY)+','+JSON.stringify('08:35')+','+at+')',context);
  const pass=await verify();
+ if(!pass){
+   // Debug a fixture-only rejection without changing the production fail-closed contract.
+   const diagnostic=code.replace('       return null;','       throw Error("CONTRACT_REJECTED");')
+     .replace('}catch(_){return null;}','}catch(e){throw e;}');
+   vm.runInContext(diagnostic,context);
+   await verify();
+ }
  assert.equal(pass.race_key,KEY,'Verified snapshot must match selected race');
  assert.equal((await vm.runInContext('be181VerifiedPreDeadlineFinal('+
    JSON.stringify(KEY)+','+JSON.stringify('08:35')+','+
