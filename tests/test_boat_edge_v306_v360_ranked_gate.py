@@ -38,6 +38,11 @@ class V306Tests(unittest.TestCase):
         x=fixture();rows=x['research_ranked_120_by_mode']['national_only']
         rows[0]['boat_combo'],rows[1]['boat_combo']=rows[1]['boat_combo'],rows[0]['boat_combo']
         self.assertEqual(inspect(x),'INCONSISTENT_ENTRY_MAPPING')
+    def test_cross_mode_entry_mismatch(self):
+        x=fixture();rows=x['research_ranked_120_by_mode']['national_motor']
+        for row in rows:
+            row['boat_combo']=row['boat_combo'].replace('1','X').replace('2','1').replace('X','2')
+        self.assertEqual(inspect(x),'CROSS_MODE_ENTRY_MISMATCH')
     def test_no_ranking(self):
         self.assertEqual(inspect({}),"NO_V360_RANKING")
 
