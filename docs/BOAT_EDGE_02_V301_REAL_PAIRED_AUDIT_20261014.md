@@ -20,3 +20,7 @@ Inventory: v232_cohort 139, v236_frozen 83, v236_scored 43, v240_frozen 50, v240
 
 ## Decision
 **EVIDENCE_COLLECTED; IMPROVEMENT_NOT_PROVEN; NO_PROMOTION.** Exact paired McNemar p-values do not establish a lift, and only 1–2 days per study. This is real SITE-only evidence, not Formal Fresh and not validation of a production model. Next: accumulate additional genuinely prospective days with first-Git predeadline proofs, run same V301 gate, keep challenger pre-registered, report novel Top10 set membership, head/second/third misses, and no promotion until fresh holdout evidence.
+
+## Freeze-to-score coverage audit (CI 38429072587)
+
+Read-only filename comparison from `coverage.json`, artifact `11829937621`; V301 exit_code=0; development CI `38429072605` SUCCESS. V236: 83 frozen, 43 scored, **40 frozen-not-scored all on 20261013**, 0 scored-without-frozen. V240: 50 frozen/50 scored, zero unmatched. V254: 58 frozen/58 scored, zero unmatched. These are counts of committed filenames, not evidence of missing results or permission to fetch them. Investigate V236 scoring workflow and failure conditions on 20261013; never infer outcomes for unmatched races. No backfill of Formal or postdeadline scoring to a predeadline label.
