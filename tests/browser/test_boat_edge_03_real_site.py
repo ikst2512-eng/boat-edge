@@ -124,11 +124,11 @@ def exercise(engine: str, url: str, shots: Path):
                 page.wait_for_function(
                     "(key) => document.querySelector('#raceView.active')"
                     " && document.querySelector('#raceTitle')?.textContent"
-                    "?.includes('1R') && window.state?.race?.race_key === key",
+                    "?.includes('1R') && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
                     arg=first["race_key"], timeout=35000
                 )
                 page.locator("#be207Top.ready").wait_for(state="attached", timeout=35000)
-                original_key = page.evaluate("window.state?.race?.race_key")
+                original_key = page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)")
                 assert original_key == first["race_key"]
                 assert page.locator("#raceView #raceTitle").is_visible()
                 first_panel = page.locator("#be207Top")
@@ -162,7 +162,7 @@ def exercise(engine: str, url: str, shots: Path):
                 switcher.click()
                 page.wait_for_function(
                     "(key) => document.querySelector('#raceView.active')"
-                    " && window.state?.race?.race_key === key",
+                    " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
                     arg=second["race_key"], timeout=35000
                 )
                 page.wait_for_function(
@@ -175,7 +175,7 @@ def exercise(engine: str, url: str, shots: Path):
                 second_panel = page.locator("#be207Top")
                 assert second_panel.locator(".be207-condition").inner_text().strip()
                 assert second_panel.locator(".be207-budget").inner_text().strip()
-                assert page.evaluate("window.state?.race?.race_key") == second["race_key"]
+                assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
                 # Even during asynchronous redraw, never leave previous-race tickets
                 # displayed as if they belonged to the newly selected race.
                 race_waiting = page.locator("html.be306-race-await").count() > 0
@@ -204,7 +204,7 @@ def exercise(engine: str, url: str, shots: Path):
                         "url": page.url, "errors": errors[-12:],
                         "blocked_paths": blocked[:8],
                         "race_title": page.locator("#raceTitle").all_text_contents()[:2],
-                        "race_key": page.evaluate("window.state?.race?.race_key ?? null"),
+                        "race_key": page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null) ?? null"),
                     }, ensure_ascii=False), flush=True)
                 context.close()
                 browser.close()
