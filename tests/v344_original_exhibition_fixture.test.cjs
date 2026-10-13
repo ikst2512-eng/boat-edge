@@ -239,3 +239,62 @@ test('V353 conflicting duplicated course positions are not presented as verified
   assert.equal(rows[2].course, 3);
   assert.equal(rows[0].st, 0.12);
 });
+
+test('V354 blank and boolean exhibition values remain missing instead of zero', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:i===0?'   ':i===1?false:6.5})),
+    start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:i===0?false:0.12}))
+  };
+  const rows = api.makeRows(data).rows;
+  assert.equal(rows[0].displayTime,null);
+  assert.equal(rows[1].displayTime,null);
+  assert.equal(rows[0].st,null);
+  const markup = api.html(data,null,null);
+  assert.match(markup,/公式展示 未取得/);
+  assert.match(markup,/展示ST 未取得/);
+  assert.doesNotMatch(markup,/0\.00<\/span>/);
+});
+
+test('V354 blank original exhibition lap is missing and does not receive acquired badge', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats[0].values[0] = '  ';
+  assert.equal(api.makeRows(data).rows[0].lap,null);
+  assert.equal(api.makeRows(data).rows[1].lap,37.11);
+  assert.match(api.html(data,null,null),/オリ展 未取得/);
+});
+
+test('V354 repeated start-exhibition lane does not overwrite course or ST', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {start_exhibition:[
+    ...Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:0.12})),
+    {lane:1,course:6,st:0.31}
+  ]};
+  const rows = api.makeRows(data).rows;
+  assert.equal(rows[0].course,null);
+  assert.equal(rows[0].st,null);
+  assert.equal(rows[1].course,2);
+  assert.equal(rows[1].st,0.12);
+  assert.match(api.html(data,null,null),/展示ST 未取得/);
+});
+
+test('V354 repeated official exhibition lane is not shown and cannot claim complete', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {racers:[
+    ...Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.5})),
+    {lane:1,exhibition_time:6.33}
+  ]};
+  const rows = api.makeRows(data).rows;
+  assert.equal(rows[0].displayTime,null);
+  assert.equal(rows[1].displayTime,6.5);
+  assert.match(api.html(data,null,null),/公式展示 未取得/);
+});
+
+test('V354 extra duplicated original-exhibition boat prevents complete source badge', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats.push({lane:1,values:[37,5,8]});
+  assert.match(api.html(data,null,null),/オリ展 未取得/);
+});
