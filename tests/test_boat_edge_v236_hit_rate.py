@@ -100,6 +100,39 @@ class Tests(unittest.TestCase):
             s,reason=m.score_row(self.root,self.root/m.PATH/'v236_frozen'/f'{KEY}.json',m.parse(RESULT_TIME))
             self.assertIsNone(s)
             self.assertEqual(reason,'shadow_not_git_frozen_before_deadline')
+    def test_git_timestamp_second_rounding_accepts_802ms_only(self):
+        m.freeze(self.root,self.frozen)
+        path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        row=m.load(path)
+        row['frozen_at']='2026-10-12T05:58:00.802+00:00'
+        write(path,row)
+        def first_second(root,p):
+            if 'v236_frozen' in str(p):
+                return {'commit':'b'*40,'at':m.parse('2026-10-12T05:58:00+00:00'),'sha256':m.sha(p)}
+            return dict(self.original)
+        with patch.object(m,'git_first',side_effect=first_second):
+            obj,reason=m.score_row(self.root,path,m.parse(RESULT_TIME))
+        # Passes immutable source/timestamp/ticket gates, then waits for a
+        # confirmed SITE result. No real hit is asserted by this fixture.
+        self.assertIsNone(obj)
+        self.assertEqual(reason,'site_official_result_unconfirmed')
+
+    def test_git_timestamp_inversion_over_one_second_rejects_before_result(self):
+        m.freeze(self.root,self.frozen)
+        path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        row=m.load(path)
+        row['frozen_at']='2026-10-12T05:58:00.802+00:00'
+        write(path,row)
+        def too_early(root,p):
+            if 'v236_frozen' in str(p):
+                return {'commit':'b'*40,'at':m.parse('2026-10-12T05:57:59+00:00'),'sha256':m.sha(p)}
+            return dict(self.original)
+        with patch.object(m,'git_first',side_effect=too_early), patch.object(m,'load',wraps=m.load) as spy:
+            obj,reason=m.score_row(self.root,path,m.parse(RESULT_TIME))
+            self.assertIsNone(obj)
+            self.assertEqual(reason,'candidate_freeze_time_invalid')
+            self.assertFalse(any('site_results' in str(call.args[0]) for call in spy.call_args_list))
+
     def test_source_wrong_venue_rejected(self):
         result={'schema_version':'boat-edge-site-result-v109','race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
             'trifecta':'2-4-1','finish_order':[2,4,1], 'trifecta_payout_yen_per_100':3140,
