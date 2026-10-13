@@ -23,6 +23,7 @@ assert(js.includes("!ticketViewSynced?'配分：新レースの値を照合中")
 for(const word of ['sync_playwright','webkit','chromium','is_mobile=True','has_touch=True','timezone_id=\"Asia/Tokyo\"',
  'test_top3_top5_top10_order_and_reference_amount','test_blocked_tickets_hide_amounts_and_odds',
  'test_race_switch_discards_old_list_until_new_dom','test_touch_targets_narrow_mobile',
+ 'test_six_boat_comparison_original_and_head_focus',
  'BOAT_EDGE_REQUIRED_BROWSERS','BOAT_EDGE_SCREENSHOT_DIR'])assert(py.includes(word),'missing browser matrix item: '+word);
 for(const file of ['assets/boat_edge_v207_first_prediction.css','assets/boat_edge_v304_topk_mobile.css'])
  assert(fs.existsSync(file),'missing real production CSS: '+file);
