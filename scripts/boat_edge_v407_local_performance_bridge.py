@@ -148,26 +148,77 @@ def stage_local_entries(entries, b_stage, publication):
     }
 
 
-def parse_local_txt(raw: bytes):
-    """Use only a decompressed *local* K text; never instantiate a downloader."""
-    if not isinstance(raw, bytes) or not raw:
-        raise ValueError("LOCAL_K_TEXT_BYTES_REQUIRED")
-    try:
-        text = raw.decode("cp932", errors="strict")
-    except UnicodeError as exc:
-        raise ValueError("LOCAL_K_CP932_DECODE_FAILED") from exc
+MAX_LOCAL_FILES = 48
+MAX_FILE_BYTES = 16 * 1024 * 1024
+
+
+def load_local_txt_sources(local_txt=None, local_dir=None):
+    """Read only operator-selected pre-existing local TXT, never a URL/archive.
+
+    Supports one file or a directory of decompressed per-venue files. Refuses
+    symlinks and excessive file counts/sizes. No recursive tree traversal.
+    """
+    if (local_txt is None) == (local_dir is None):
+        raise ValueError("EXACTLY_ONE_LOCAL_FILE_OR_DIRECTORY_REQUIRED")
+    if local_txt is not None:
+        paths = [Path(local_txt)]
+    else:
+        root = Path(local_dir)
+        if root.is_symlink() or not root.is_dir():
+            raise ValueError("LOCAL_TXT_DIRECTORY_REQUIRED")
+        paths = sorted((p for p in root.iterdir() if p.suffix.lower() == ".txt"),
+                       key=lambda p: p.name)
+    if not 0 < len(paths) <= MAX_LOCAL_FILES:
+        raise ValueError("LOCAL_TXT_FILE_COUNT_OUT_OF_RANGE")
+    sources = {}
+    for p in paths:
+        if p.is_symlink() or not p.is_file() or p.suffix.lower() != ".txt":
+            raise ValueError("LOCAL_TXT_FILE_UNSAFE_OR_MISSING")
+        if p.stat().st_size > MAX_FILE_BYTES:
+            raise ValueError("LOCAL_TXT_FILE_TOO_LARGE")
+        raw = p.read_bytes()
+        if not raw:
+            raise ValueError("LOCAL_TXT_EMPTY_FILE")
+        if p.name in sources:
+            raise ValueError("DUPLICATE_LOCAL_TXT_FILENAME")
+        sources[p.name] = raw
+    return sources
+
+
+def parse_local_k_files(sources):
+    """Parse local decompressed CP932 K text files, without LzhDownloader."""
+    if not isinstance(sources, dict) or not 0 < len(sources) <= MAX_LOCAL_FILES:
+        raise ValueError("LOCAL_K_FILE_MAP_REQUIRED")
+    decoded = {}
+    for filename, raw in sources.items():
+        if not isinstance(filename, str) or not filename.endswith(".txt"):
+            raise ValueError("LOCAL_K_TXT_NAME_REQUIRED")
+        if not isinstance(raw, bytes) or not raw:
+            raise ValueError("LOCAL_K_TEXT_BYTES_REQUIRED")
+        try:
+            decoded[filename] = raw.decode("cp932", errors="strict")
+        except UnicodeError as exc:
+            raise ValueError("LOCAL_K_CP932_DECODE_FAILED") from exc
     try:
         from boatrace_lzh.performance import PerformanceParser
     except ImportError as exc:
         raise RuntimeError("OPTIONAL_LOCAL_BOATRACE_LZH_PARSER_NOT_INSTALLED") from exc
-    parsed = PerformanceParser().parse({"operator_local_K.txt": text})
+    parsed = PerformanceParser().parse(decoded)
     return parsed.entries
+
+
+def parse_local_txt(raw: bytes):
+    """Compatibility function for one local K text, no downloader."""
+    return parse_local_k_files({"operator_local_K.txt": raw})
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--local-k-txt", type=Path, required=True,
-                   help="Preauthorized, already decompressed K TXT; no URL/LZH download")
+    local = p.add_mutually_exclusive_group(required=True)
+    local.add_argument("--local-k-txt", type=Path,
+                       help="Preauthorized single K TXT, no URL/LZH download")
+    local.add_argument("--local-k-dir", type=Path,
+                       help="Directory of locally decompressed venue K TXT files")
     p.add_argument("--local-b-stage", type=Path, required=True,
                    help="Explicit operator-staged B roster for all expected day races")
     p.add_argument("--publication-map", type=Path, required=True,
@@ -176,7 +227,7 @@ def main():
                    help="Private local V401 staged JSON; never commit result rows")
     a = p.parse_args()
     staged = stage_local_entries(
-        parse_local_txt(a.local_k_txt.read_bytes()),
+        parse_local_k_files(load_local_txt_sources(a.local_k_txt, a.local_k_dir)),
         json.loads(a.local_b_stage.read_text(encoding="utf-8")),
         json.loads(a.publication_map.read_text(encoding="utf-8")),
     )
