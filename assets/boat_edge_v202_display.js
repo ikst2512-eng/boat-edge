@@ -22,7 +22,14 @@
   const jstDate=()=>new Date(Date.now()+9*3600000).toISOString().slice(0,10).replaceAll('-','');
   const lastRace={key:'',odds:null,requested:0,seq:0};
   let currentKey='',busy=false,detail=false,latestRace=null,latestPred=null,observer=null;
-  const sourceOK=(race,key)=>race?.source_audit?.[key]?.status==='ok' && Boolean(race?.source_audit?.[key]?.fetched_at);
+  // V358: match the six-racer cards' hashed source proof; a status and a timestamp
+  // alone do not establish a verified official or original-exhibition reading.
+  const sourceOK=(race,key)=>{
+    const proof=race?.source_audit?.[key];
+    return proof?.status==='ok' &&
+      /^[a-f0-9]{64}$/i.test(String(proof?.sha256||'')) &&
+      typeof proof?.fetched_at==='string' && Number.isFinite(Date.parse(proof.fetched_at));
+  };
   function deadlineAt(race){
     const key=race?.race_key, hm=race?.meta?.deadline;
     if(!validKey(key)||!/^\d{1,2}:\d{2}$/.test(String(hm||'')))return NaN;
@@ -56,7 +63,7 @@
   }
   function actualCheck(race){
     const racers=race?.racers||[],a=race?.source_audit?.race_card;
-    return a?.status==='ok'&&racers.length===6&&new Set(racers.map(v=>String(v?.registration_no))).size===6;
+    return sourceOK(race,'race_card')&&racers.length===6&&new Set(racers.map(v=>String(v?.registration_no))).size===6;
   }
   function leaderMetric(values,{faster=false,margin=0}={}){
     const finite=values.map(v=>num(v)).filter(x=>x!==null);
@@ -115,8 +122,17 @@
     const x=num(raw);if(x===null)return '－';
     return item.exhibitionF||x<0?`<span class="be202-f">展示F${esc(Math.abs(x).toFixed(2))}</span>`:esc(x.toFixed(2));
   }
-  function modelStatus(pred){
-    return pred?.mode==='formal'?'正式CURRENT':'サイト参考予想（正式未接続）';
+  // V358: a label from getPrediction() is not formal-model approval.
+  // The strict V178 bridge independently validates the race/model/SHA and 120-way proof.
+  function approvedFormal(race,pred){
+    if(pred?.mode!=='formal'||typeof window.BoatEdgeV178?.isVerified!=='function')return false;
+    try{
+      const status=typeof state==='undefined'?null:state?.formal;
+      return window.BoatEdgeV178.isVerified(race,status)===true;
+    }catch(_){return false;}
+  }
+  function modelStatus(pred,approved){
+    return approved?'正式CURRENT':pred?.mode==='formal'?'正式CURRENTの承認照合待ち（参考扱い）':'サイト参考予想（正式未接続）';
   }
   function sourceChip(race,key,label,has){
     const src=race?.source_audit?.[key]||{},good=sourceOK(race,key)&&has;
@@ -137,7 +153,7 @@
     const official=actualCheck(race),all=rows.length===6;
     const meta=race?.meta||{},w=sourceOK(race,'beforeinfo')?bf.weather||{}:{};
     const water=[['風速',num(w.wind_speed_ms)===null?'－':`${fmt(w.wind_speed_ms,0)}m/s`],['波高',num(w.wave_cm)===null?'－':`${fmt(w.wave_cm,0)}cm`],['気温',num(w.air_temp_c)===null?'－':`${fmt(w.air_temp_c,0)}℃`],['水温',num(w.water_temp_c)===null?'－':`${fmt(w.water_temp_c,0)}℃`]];
-    const model=modelStatus(pred);
+    const formalApproved=approvedFormal(race,pred),model=modelStatus(pred,formalApproved);
     const currentOriginal=original&&sourceOK(race,'original_exhibition')?original:null;
     const status=official&&all?'出走表6艇登録済み（欠場は別途確認）':'出走可否の再確認が必要';
     const o=odds&&odds.race_key===key&&odds.fetched_at?odds:null;
@@ -145,7 +161,7 @@
     const oddsText=o?`公式3連単オッズ ${stamp(o.fetched_at)}取得${Number.isFinite(lag)&&lag>10?'（10分超・再確認）':''}`:'公式3連単オッズ 未取得・更新待ち';
     const dataRows=rows.map(r=>`<tr><th><span class="be202-boat b${r.lane}">${r.lane}</span> ${esc(r.name)}</th><td>${r.course??'－'}</td><td>${displayST(r)}</td><td>${metric(r.displayTime,strongest.displayTime)}</td><td>${metric(r.lap,strongest.lap)}</td><td>${metric(r.turn,strongest.turn)}</td><td>${metric(r.straight,strongest.straight)}</td><td>${metric(r.nationalWin,strongest.nationalWin)}</td><td>${metric(r.nationalQ,null)}</td><td>${metric(r.national3,null)}</td><td>${metric(r.localWin,null)}</td><td>${metric(r.localQ,null)}</td><td>${metric(r.local3,null)}</td><td>${metric(r.motorQ,strongest.motorQ)}</td><td>${metric(r.motor3,null)}</td><td>${metric(r.boatQ,null)}</td><td>${metric(r.boat3,null)}</td></tr>`).join('');
     const isAfter=Number.isFinite(deadlineAt(race))&&Date.now()>=deadlineAt(race);
-    return `<div class="be202-top"><div><div class="be202-kicker">BOAT EDGE / 予想・直前まとめ</div><h3>予想と6艇の直前データ</h3></div><span class="be202-pred-label ${pred?.mode==='formal'?'formal':''}">${esc(model)}</span></div>
+    return `<div class="be202-top"><div><div class="be202-kicker">BOAT EDGE / 予想・直前まとめ</div><h3>予想と6艇の直前データ</h3></div><span class="be202-pred-label ${formalApproved?'formal':''}">${esc(model)}</span></div>
       <div class="be202-brief"><strong>${esc(meta.venue||'開催場')} ${esc(meta.race_no??'')}R</strong><span>締切 ${esc(meta.deadline||'－')}</span><span class="${official?'be202-okay':'be202-attention'}">${esc(status)}</span><span>データ ${stamp(meta.updated_at)}</span></div>
       ${!official?'<div class="be202-warning">欠場・取消を含む6艇の出走可否が未確認。買い目は確認するまで購入判断に使わないでください。</div>':''}
       <div class="be202-under"><b>買い目・1万円配分</b><span>上の「予想スタイル」で選択。買い目を直前データで再計算・書換えはしません。</span></div>
