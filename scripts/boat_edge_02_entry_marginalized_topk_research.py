@@ -22,6 +22,9 @@ from boat_edge_02_hierarchical_conditional_research import _check_scope, _date
 from boat_edge_02_joint_entry_permutation_research import (
     joint_entry_distribution, digest, ID as ENTRY_ID,
 )
+from boat_edge_02_exhibition_to_actual_entry_research import (
+    estimate_exhibition_conditioned_entry, ID as PAIRED_ENTRY_ID,
+)
 from boat_edge_v307_pl120_research import rank_120
 from boat_edge_v317_ticket_mapper import map_course_mass_to_boat_tickets
 
@@ -72,7 +75,9 @@ def _ranked(masses):
     return [{"boat_combo": k, "relative_model_mass": p/z} for k, p in rows]
 
 
-def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
+def prepare_entry_topk_ablation(
+        race_key, scope, cfg, entry_evidence=None,
+        paired_history_evidence=None, paired_history_rows=None):
     """Deterministic pure A/B candidate generation, NEVER live model promotion."""
     _check_scope(scope, race_key)
     if not isinstance(cfg, dict) or set(cfg) != REQUIRED:
@@ -104,12 +109,46 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
     factors = _validate_values(cfg["course_factor_by_course"], BOATS, "COURSE_FACTOR")
     if cfg["course_factor_manifest_sha256"] != digest(factors):
         raise ValueError("COURSE_FACTOR_CONTENT_SHA_MISMATCH")
-    entry = joint_entry_distribution(race_key, scope, entry_evidence)
-    if (entry["model_id"] != ENTRY_ID or entry["race_key"] != race_key or
-            entry["source_permission_and_first_seen_authenticated_by_function"] is not False or
-            entry["full_120_trifecta_ready"] is not False or
-            entry["formal_results_seen"] is not False):
-        raise ValueError("JOINT_ENTRY_RESEARCH_ONLY_INVARIANTS")
+    if paired_history_evidence is None and paired_history_rows is None:
+        # Original course-frame marginal prior, already implemented in 02.
+        if entry_evidence is None:
+            raise ValueError("ENTRY_SOURCE_EVIDENCE_REQUIRED")
+        entry = joint_entry_distribution(race_key, scope, entry_evidence)
+        if (entry["model_id"] != ENTRY_ID or entry["race_key"] != race_key or
+                entry["source_permission_and_first_seen_authenticated_by_function"] is not False or
+                entry["full_120_trifecta_ready"] is not False or
+                entry["formal_results_seen"] is not False):
+            raise ValueError("JOINT_ENTRY_RESEARCH_ONLY_INVARIANTS")
+        entry_count_sha = entry["source_count_sha256"]
+        entry_kind = "UNCONDITIONAL_FRAME_TO_COURSE_PRIOR"
+        exhibition_history_paired = False
+    else:
+        # NEW: historical same-race start exhibition -> verified final entry.
+        # Alternative evidence must be explicitly chosen, never mixed into
+        # the earlier marginal prior or silently substituted for missing data.
+        if entry_evidence is not None or paired_history_evidence is None or paired_history_rows is None:
+            raise ValueError("EXACT_ONE_ENTRY_EVIDENCE_MODE_REQUIRED")
+        entry = estimate_exhibition_conditioned_entry(
+            race_key, scope, paired_history_evidence, paired_history_rows)
+        if (entry["model_id"] != PAIRED_ENTRY_ID
+                or entry["race_key"] != race_key
+                or entry["target_exhibition_mapping_sha256"] != cfg["entry_mapping_sha256"]
+                or entry["training_source_manifest_sha256"] != scope["source_manifest_sha256"]
+                or entry["permission_evidence_sha256"] != scope["reviewed_permission_evidence_sha256"]
+                or entry["rights_sha_and_first_seen_independently_authenticated"] is not False
+                or entry["full_conditional_entry_posterior_calibrated"] is not False
+                or entry["same_race_actual_entry_known"] is not False
+                or entry["formal_results_read"] is not False
+                or entry["target_outcome_read"] is not False):
+            raise ValueError("PAIRED_ENTRY_RESEARCH_ONLY_INVARIANTS")
+        entry_count_sha = entry["observed_paired_counts_sha256"]
+        entry_kind = "PAIRED_EXHIBITION_TO_FINAL_RELATIVE_TRANSITION"
+        exhibition_history_paired = True
+    # In BOTH branches, source rights and timestamps remain caller assertions.
+    if (len(entry["ranked_720"]) != 720 or
+            not math.isclose(sum(r["relative_model_mass"] for r in entry["ranked_720"]),
+                             1.0,rel_tol=0,abs_tol=1e-10)):
+        raise ValueError("ENTRY_720_MASS_NOT_NORMALIZED")
     # Control A: original V307 research strengths with no new venue factor.
     # Control B: exactly the same exhibition mapping with a frozen course factor.
     # Candidate C: same factor and strengths as B, but uncertain joint entry.
@@ -194,9 +233,14 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
         "candidate_top10": candidate_top,
         "entry_permutations_considered": 720,
         "entry_permutations_nonzero_weight": present,
-        "entry_count_sha256": entry["source_count_sha256"],
+        "entry_count_sha256": entry_count_sha,
+        "entry_research_source_kind": entry_kind,
+        "historic_start_exhibition_to_actual_entry_pairs_used": exhibition_history_paired,
         "factor_manifest_sha256": cfg["course_factor_manifest_sha256"],
-        "entry_weight_semantics": "VENUE_FRAME_ACTUAL_COURSE_MARGINAL_PRIOR_NOT_P_OF_FINAL_ENTRY_GIVEN_TODAY_EXHIBITION",
+        "entry_weight_semantics": (
+            "POOLED_HISTORICAL_EXHIBITION_TO_FINAL_TRANSITIONS_NOT_EXACT_EXHIBITION_POSTERIOR"
+            if exhibition_history_paired else
+            "VENUE_FRAME_ACTUAL_COURSE_MARGINAL_PRIOR_NOT_P_OF_FINAL_ENTRY_GIVEN_TODAY_EXHIBITION"),
         "live_exhibition_conditioned_entry_transition_learned": False,
         "entry_720_relative_weights_are_not_calibrated_posterior": True,
         "factor_only_mass_l1_not_hit_improvement": factor_only_distance,
