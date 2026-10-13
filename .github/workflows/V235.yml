@@ -98,7 +98,7 @@ jobs:
             # V295: keep the upstream V230 max worker cap (8), reducing the
             # second network batch for 7-8 imminent races without changing
             # source identity, six-boat exhibition or odds verification.
-            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent
             # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
             # so Git reset/clean and repeated main conflicts cannot rewrite
             # an earlier attestation or backfill a race after deadline.
