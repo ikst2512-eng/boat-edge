@@ -87,7 +87,7 @@ def check_historical_proof(root, key, snap):
         if re.fullmatch(r"[0-9a-f]{40}", sha) is None:
             return "first_git_commit_invalid", None
         at = _parse_instant(committed)
-        if at is None or at >= due or at > datetime.now(timezone.utc) + timedelta(seconds=60):
+        if at is None or at >= due.astimezone(timezone.utc) or at > datetime.now(timezone.utc) + timedelta(seconds=60):
             return "first_git_commit_not_predeadline", None
         # Git only stores seconds; the 1s tolerance is for first_saved_at micros.
         if at + timedelta(seconds=1) < first:
