@@ -31,6 +31,130 @@ FORBIDDEN = (
 )
 
 
+
+def probe_verified_live_topk(context, target, catalog, shots, engine):
+    """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
+
+    Only races with a successful race-specific beforeinfo receipt and a future
+    JST deadline are eligible. No outcome, payout or archived race is accessed.
+    If none qualifies, expose NOT_CERTIFIED rather than silently treating a
+    stopped prediction or an offline fixture as a successful live TopK test.
+    """
+    now = datetime.now(JST)
+    choices = []
+    for venue in catalog.get("venues", []):
+        for race in venue.get("races", []):
+            if race.get("racers_ready") is not True or race.get("beforeinfo_status") != "ok":
+                continue
+            path = str(race.get("file") or "")
+            key = str(race.get("race_key") or "")
+            if not re.fullmatch(r"data/races/\d{8}-\d{2}-\d{2}\.json", path):
+                continue
+            if not re.fullmatch(r"20\d{6}-\d{2}-\d{2}", key):
+                continue
+            if not key.startswith(now.strftime("%Y%m%d")):
+                continue
+            try:
+                due = datetime.strptime(
+                    str(catalog["date"]) + " " + str(race["deadline"]),
+                    "%Y-%m-%d %H:%M"
+                ).replace(tzinfo=JST)
+            except (KeyError, TypeError, ValueError):
+                continue
+            # Never certify a past-deadline race or a race already closing.
+            if due <= now + timedelta(minutes=3):
+                continue
+            choices.append((due, venue, race))
+    choices.sort(key=lambda item: item[0])
+    if not choices:
+        return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE", "eligible_count": 0}
+    stopped_reasons = []
+    for _, venue, race in choices[:5]:
+        path = race["file"]
+        key = race["race_key"]
+        # Additional source audit: only this explicitly allowlisted PRE_RESULT
+        # data/races file is fetched; no result or settlement endpoints.
+        receipt = context.request.get(
+            target.rsplit("/", 1)[0] + "/" + path,
+            headers={"Cache-Control": "no-store"}, timeout=15000
+        )
+        assert receipt.status == 200, "Selected live PRE_RESULT receipt missing: " + key
+        payload = receipt.json()
+        assert payload.get("race_key") == key, "Cross-race live receipt mismatch"
+        audit = (payload.get("source_audit") or {}).get("beforeinfo") or {}
+        if audit.get("status") != "ok" or len(payload.get("racers") or []) != 6:
+            stopped_reasons.append({"race": key, "reason": "source_audit_not_ready"})
+            continue
+        live = context.new_page()
+        browser_errors = []
+        live.on("pageerror", lambda error: browser_errors.append(str(error)[:180]))
+        try:
+            response = live.goto(target + "?e2e=03&topk=source", wait_until="domcontentloaded", timeout=45000)
+            assert response and response.status == 200
+            code = str(venue["jcd"]).zfill(2)
+            live.locator('#be108Hub [data-be108-venue="%s"]' % code).click(timeout=40000)
+            live.locator('#be108Hub [data-be108-file="%s"]' % path).first.click(timeout=20000)
+            live.wait_for_function(
+                "(key) => document.querySelector('#raceView.active')"
+                " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key"
+                " && document.querySelector('#be207Top.ready')",
+                arg=key, timeout=35000
+            )
+            top = live.locator("#be207Top")
+            if top.locator(".be207-stop").count():
+                stopped_reasons.append({
+                    "race": key,
+                    "reason": top.locator(".be207-condition strong").inner_text().strip()
+                })
+                assert top.locator(".be207-ticket").count() == 0
+                continue
+            # These come from the actual original ranked DOM, not a fixture.
+            raw = live.locator(
+                "#be108PredictionModes .be108-ticket-list > .be108-ticket b"
+            ).all_text_contents()
+            expected = []
+            for value in raw:
+                match = re.search(r"(?<!\d)([1-6]-[1-6]-[1-6])(?!\d)", value)
+                assert match, "Malformed live source ticket for " + key
+                combo = match.group(1)
+                assert len(set(combo.split("-"))) == 3, "Repeated lane in live ticket"
+                expected.append(combo)
+            assert len(expected) >= 10, "Live unblocked prediction has fewer than ten ranked tickets"
+            assert len(set(expected)) == len(expected), "Duplicate live prediction tickets"
+            for button_name, size in ((None, 3), ("five", 5), ("ten", 10)):
+                if button_name:
+                    button = top.locator('[data-be207="%s"]' % button_name)
+                    assert button.is_visible(), "Live TopK control hidden: " + button_name
+                    button.click()
+                displayed = live.locator("#be207Top .be207-bets > .be207-ticket")
+                assert displayed.count() == size, "Incorrect live TopK count"
+                rendered = []
+                for row in displayed.all():
+                    combo = "-".join(row.locator(".be207-lane").all_text_contents())
+                    rendered.append(combo)
+                assert rendered == expected[:size], (
+                    "Live TopK order diverges from source list for " + key
+                )
+            assert not browser_errors, "Live TopK JavaScript errors: " + repr(browser_errors)
+            assert live.evaluate(
+                "(typeof state !== 'undefined' ? state?.race?.race_key : null)"
+            ) == key, "Live TopK changed selected race"
+            live.screenshot(
+                path=str(shots / ("live-topk-%s.png" % engine)), full_page=True
+            )
+            return {
+                "status": "VERIFIED_TOP3_TOP5_TOP10_SOURCE_ORDER",
+                "race": key, "venue": venue["venue"], "ticket_count": len(expected),
+                "deadline_jst": race["deadline"], "browser_errors": browser_errors
+            }
+        finally:
+            live.close()
+    return {
+        "status": "NOT_CERTIFIED_ALL_ELIGIBLE_SOURCE_STOPPED",
+        "eligible_count": len(choices), "checked": stopped_reasons
+    }
+
+
 def exercise(engine: str, url: str, shots: Path):
     import functools
     import http.server
@@ -198,7 +322,9 @@ def exercise(engine: str, url: str, shots: Path):
                 race_waiting = page.locator("html.be306-race-await").count() > 0
                 if race_waiting:
                     assert second_panel.locator(".be207-ticket").count() == 0
+                live_topk = probe_verified_live_topk(context, target, catalog, shots, engine)
                 report.update({
+                    "live_topk": live_topk,
                     "date": date, "venue": chosen["venue"], "venue_code": code,
                     "race_1": first["race_key"], "race_2": second["race_key"],
                     "race_switch": "PASS", "mode_switch": "PASS", "actual_dom": True,
