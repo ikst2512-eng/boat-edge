@@ -150,9 +150,21 @@ def parse_local_b_files(sources, source_day):
     except ImportError as exc:
         raise RuntimeError("OPTIONAL_LOCAL_B_SCHEDULE_PARSER_NOT_INSTALLED") from exc
     parser = ScheduleParser()
-    structured = parser.parse(decoded)
-    closes = parser.parse_schedule_with_close_times(decoded, source_day)
-    return stage_b_schedule(structured.entries, closes, structured.races, source_day)
+    entries = []
+    races = []
+    closes = []
+    for filename, content in sorted(decoded.items()):
+        local = {filename: content}
+        structured = parser.parse(local)
+        deadlines = parser.parse_schedule_with_close_times(local, source_day)
+        if not structured.races or not structured.entries or not deadlines:
+            # One silently skipped venue must not turn a partial program
+            # into an apparently reconciled full-day B input.
+            raise ValueError("LOCAL_B_UNPARSEABLE_SOURCE_FILE:" + filename)
+        entries.extend(structured.entries)
+        races.extend(structured.races)
+        closes.extend(deadlines)
+    return stage_b_schedule(entries, closes, races, source_day)
 
 
 def parse_local_b_txt(raw, source_day):
