@@ -33,7 +33,11 @@ def select_source_refresh(root, now, max_target=12):
     if today_path.is_symlink():
         raise ValueError("V365_TODAY_SYMLINK_FORBIDDEN")
     index = load(today_path)
-    if not isinstance(index, dict) or str(index.get("date", "")).replace("-", "") != today:
+    if (not isinstance(index, dict)
+            or str(index.get("date", "")).replace("-", "") != today
+            or index.get("phase") != "PRE_RESULT"
+            or any(index.get(flag) is not False for flag in LOCK_KEYS)
+            or RESULT_KEYS.intersection(index)):
         return {
             "model_id": MODEL, "day_jst": today, "candidates": [],
             "rejected": {"INDEX_NOT_CURRENT_OR_VALID": 1},
@@ -58,8 +62,8 @@ def select_source_refresh(root, now, max_target=12):
             reject("VENUE_ID_INVALID")
             continue
         for row in venue["races"]:
-            if not isinstance(row, dict):
-                reject("INDEX_ROW_INVALID")
+            if not isinstance(row, dict) or RESULT_KEYS.intersection(row):
+                reject("INDEX_ROW_INVALID_OR_RESULT_BEARING")
                 continue
             key = row.get("race_key")
             if not isinstance(key, str) or KEY.fullmatch(key) is None or key[:8] != today:
