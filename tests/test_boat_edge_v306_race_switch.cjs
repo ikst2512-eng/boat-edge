@@ -32,4 +32,17 @@ if(fs.existsSync('index.html')){
  assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306'));
  assert(html.includes('boat_edge_v304_topk_mobile.css?v=328'));
 }
+// Prediction is intentionally unavailable well before the source window;
+// show a truthful reason instead of implying a blank screen is a successful pick.
+const selected={race_key:'20261014-14-01',meta:{date:'2026-10-14',
+ venue:'鳴門',venue_code:'14',race_no:1,deadline:'08:35',
+ phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false}};
+assert.match(a.readinessWindow(selected,Date.parse('2026-10-14T03:40:00+09:00')),/約20分前/);
+assert.match(a.readinessWindow(selected,Date.parse('2026-10-14T08:20:00+09:00')),/直前確認時間帯/);
+assert.match(a.readinessWindow(selected,Date.parse('2026-10-14T08:35:00+09:00')),/締切済み/);
+assert.match(a.readinessWindow({...selected,meta:{...selected.meta,deadline:'25:99'}},0),/照合できません/);
+assert.match(a.readinessWindow({...selected,meta:{...selected.meta,venue_code:'04'}},0),/照合できません/);
+assert.equal(a.readinessWindow({...selected,meta:{...selected.meta,results_seen:true}},0),'');
+assert(js.includes("pendingScratch,ticketViewSynced,pendingWindow,evidence,"));
+assert(js.includes("w.textContent+=pendingWindow?' '+pendingWindow:''"));
 console.log('V306_RACE_SWITCH_STALE_TICKETS_SUPPRESSED_PASS');
