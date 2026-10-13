@@ -243,7 +243,7 @@ function board(){
   if(!awaitingTicketList&&list)lastTicketList=list;
   document.documentElement.classList.toggle('be328-await-ticket-list',awaitingTicketList);
  const box=create(root,p);if(box.nextElementSibling!==p)root.insertBefore(box,p);
- box.dataset.be206Metric=metric;
+ box.setAttribute?.('data-be206-metric',metric);
  const st=window.BoatEdgeV205.sourceStatus();
  const safety=st.title+'|'+st.detail+'|'+st.kind+'|'+awaitingTicketList;
  if(safety!==lastStatus||!$('.be206-safety strong',box)?.textContent){
