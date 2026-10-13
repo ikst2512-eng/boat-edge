@@ -38,6 +38,10 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
+      - name: Prove V257 cron ownership and strict single 08:20 prewarm before main
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v257_event_trigger.py' -v
       - name: Test guards, exact odds mapping, immutable prediction evidence and daily budgets
         env:
           PYTHONPATH: scripts
