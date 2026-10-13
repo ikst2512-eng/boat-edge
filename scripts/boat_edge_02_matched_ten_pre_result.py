@@ -17,6 +17,9 @@ import re
 MODEL = "BOAT_EDGE_02_MATCHED_TEN_PRE_RESULT_CONTRACT_V1"
 COMBOS = frozenset("-".join(map(str, p)) for p in itertools.permutations(range(1, 7), 3))
 JST = timezone(timedelta(hours=9))
+# Conservative, NON-exhaustive FORMAL dates; owner must also check the live
+# formal manifest before trusting any real target. Never weaken this denial.
+KNOWN_FORMAL_PROTECTED_DATES = frozenset(("20261001", "20261005", "20261013"))
 HEX = re.compile(r"[0-9a-f]{64}\Z")
 KEY = re.compile(r"20\d{6}-(?:0[1-9]|1\d|2[0-4])-(?:0[1-9]|1[0-2])\Z")
 CONTEXT_FIELDS = {
@@ -94,7 +97,7 @@ def prepare_matched_ten(context, parent, candidate, now):
     key = context["race_key"]
     if not isinstance(key, str) or KEY.fullmatch(key) is None:
         raise ValueError("INVALID_RACE_KEY")
-    if key.startswith("20261001-"):
+    if key[:8] in KNOWN_FORMAL_PROTECTED_DATES:
         raise ValueError("FORMAL_TARGET_EXCLUDED")
     if (context["scope"] != "SITE_RESEARCH_PRE_RESULT_NOT_FORMAL" or
             context["no_target_outcome"] is not True or
@@ -142,7 +145,11 @@ def prepare_matched_ten(context, parent, candidate, now):
         "parent_ranked_120_sha256": _sha(parent["ranked_120"]),
         "candidate_ranked_120_sha256": _sha(candidate["ranked_120"]),
         "same_ticket_count_each": 10,
+        "parent_top3": parent10[:3],
+        "parent_top5": parent10[:5],
         "parent_top10": parent10,
+        "candidate_top3": candidate10[:3],
+        "candidate_top5": candidate10[:5],
         "candidate_top10": candidate10,
         "parent_and_candidate_are_boat_tickets": True,
         "each_virtual_stake_yen": 1000,
