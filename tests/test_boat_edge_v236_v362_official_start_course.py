@@ -24,8 +24,20 @@ ST = {1: ".13", 2: "F.04", 3: ".16", 4: ".17", 5: ".09", 6: ".11"}
 
 
 def labelled_html(order=ORDER, st=ST):
-    lines = [
-        "<html><body><table><thead><tr><th colspan='3'>スタート展示</th></tr>",
+    # Synthetic version of the actual 12-race official selected-tab and
+    # displayed deadline structure. Its contents are NOT provider evidence.
+    nav = ["<html><body><div class='table1 h-mt10'><table><thead><tr><th>レース</th>"]
+    for rno in range(1, 13):
+        css = "" if rno == 12 else " class='is-thColor3'"
+        nav.append(f"<th{css}><a href='/owpc/pc/race/beforeinfo?"
+                   f"rno={rno}&jcd=22&hd=20261013'>{rno}R</a></th>")
+    nav.append("</tr></thead><tbody><tr><td>締切予定時刻</td>")
+    for rno in range(1, 13):
+        css = " class='is-activeColor1'" if rno == 12 else ""
+        nav.append(f"<td{css}>{'16:40' if rno == 12 else '16:00'}</td>")
+    nav.append("</tr></tbody></table></div>")
+    lines = nav + [
+        "<table><thead><tr><th colspan='3'>スタート展示</th></tr>",
         "<tr><th>コース</th><th>並び</th><th>ST</th></tr>",
         "</thead><tbody>",
     ]
@@ -131,6 +143,34 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
             race["beforeinfo"]["start_exhibition"][0]["st"] = ".30"
             with self.assertRaisesRegex(ValueError, "ST_VS_RACE_MISMATCH"):
                 parse_proven_course_rows(raw, race)
+
+    def test_race_tab_identity_and_official_deadline_are_required(self):
+        with tempfile.TemporaryDirectory() as d:
+            raw, path, _ = fixture(Path(d))
+            race = json.loads(path.read_bytes())
+            proof = parse_proven_course_rows(raw, race)
+            self.assertTrue(proof["active_official_beforeinfo_race_and_deadline_matched"])
+            # Tab links must all belong to the exact target date/venue.
+            with self.assertRaisesRegex(ValueError, "DATE_VENUE_MISMATCH"):
+                parse_proven_course_rows(
+                    raw.replace(b"jcd=22", b"jcd=21", 1), race)
+            with self.assertRaisesRegex(ValueError, "DATE_VENUE_MISMATCH"):
+                parse_proven_course_rows(
+                    raw.replace(b"hd=20261013", b"hd=20261012", 1), race)
+            # Active race designation cannot silently point to 11R or two tabs.
+            moved = raw.replace(
+                b"<th class='is-thColor3'><a href='/owpc/pc/race/beforeinfo?rno=11",
+                b"<th><a href='/owpc/pc/race/beforeinfo?rno=11")
+            with self.assertRaisesRegex(ValueError, "ACTIVE_RACE_TAB_MISMATCH"):
+                parse_proven_course_rows(moved, race)
+            # The official highlighted deadline must match the immutable input.
+            with self.assertRaisesRegex(ValueError, "ACTIVE_RACE_DEADLINE_MISMATCH"):
+                parse_proven_course_rows(
+                    raw.replace(b"<td class='is-activeColor1'>16:40",
+                                b"<td class='is-activeColor1'>16:39"), race)
+            with self.assertRaisesRegex(ValueError, "TWELVE_RACES_REQUIRED"):
+                parse_proven_course_rows(
+                    raw.replace(b"rno=11", b"rno=10", 1), race)
 
     def test_existing_explicit_course_conflict_and_closed_deadline_rejected(self):
         with tempfile.TemporaryDirectory() as d:
