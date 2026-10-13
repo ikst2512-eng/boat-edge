@@ -4,7 +4,8 @@
   'use strict';
   const $=s=>document.querySelector(s);
   const esc=x=>String(x===null||x===undefined?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const num=v=>v===null||v===undefined||v===''?null:Number.isFinite(Number(v))?Number(v):null;
+  // Whitespace-only source fields are absent, not numeric zero (Number('  ') === 0).
+  const num=v=>v===null||v===undefined||(typeof v==='string'&&!v.trim())?null:Number.isFinite(Number(v))?Number(v):null;
   const stNum=v=>typeof v==='string'&&!v.trim()?null:num(v);
   const fmt=(v,d=2)=>num(v)===null?'－':Number(v).toFixed(d);
   const stamp=ts=>{
