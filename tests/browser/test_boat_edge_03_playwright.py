@@ -10,6 +10,8 @@ it does NOT certify WebKit, iOS Safari, Pages, or production accuracy.
 No live race, result, payout, or formal endpoint is requested.
 """
 import os
+import subprocess
+import sys
 from pathlib import Path
 import unittest
 
@@ -248,10 +250,22 @@ class MobilePredictionBrowser(unittest.TestCase):
                       window.BoatEdgeV206.sync();
                     }""")
                     page.locator("#be206Quick").wait_for()
+                    # V371 intentionally defaults to vertical six-racer rows on
+                    # iPhones. Older UI defaults to the six-lane matrix. Verify
+                    # either initial state, then explicitly switch to the common
+                    # six-lane matrix before comparing official/source metrics.
+                    vertical = page.locator("#be206Quick .be206-table-scroll").is_visible()
+                    if (ROOT / "assets/boat_edge_v371_simple_ui.css").is_file():
+                        self.assertTrue(vertical, "V371 mobile must start with readable six-racer rows")
+                        self.assertEqual(
+                            page.locator("#be206Quick .be206-table tbody tr").count(), 6
+                        )
+                    page.locator('#be206Quick [data-be206-layout="lanes"]').tap()
                     self.assertEqual(
                         page.locator('#be206Quick .be206-matrix th[data-be206-lane]').count(),
                         6
                     )
+                    self.assertTrue(page.locator("#be206Quick .be206-matrix-scroll").is_visible())
                     page.locator('#be206Quick [data-be206-metric="original"]').tap()
                     self.assertEqual(page.locator("#be206Quick .be206-matrix tbody tr").count(), 3)
                     # Absent original exhibition never becomes a made-up numeric value.
@@ -270,6 +284,33 @@ class MobilePredictionBrowser(unittest.TestCase):
                 finally:
                     context.close()
 
+
+
+    def test_v371_css_browser_fixture_when_present(self):
+        # The V371 screen redesign ships in a separate PR (#212). Do not
+        # falsely mark it as Chromium/WebKit-verified until both its fixture
+        # and real stylesheet have arrived in the same checkout. After they
+        # land, the existing V373 Actions job executes both actual engines.
+        css = ROOT / "assets/boat_edge_v371_simple_ui.css"
+        fixture = ROOT / "tests/browser/test_boat_edge_v371.py"
+        if not css.is_file() and not fixture.is_file():
+            self.skipTest("V371 candidate is not in this checkout")
+        self.assertTrue(css.is_file() and fixture.is_file(),
+                        "V371 stylesheet and browser fixture must arrive together")
+        for kind in self.browsers:
+            with self.subTest(browser=kind):
+                command = [sys.executable, str(fixture), "--engine", kind]
+                screenshots = os.getenv("BOAT_EDGE_SCREENSHOT_DIR")
+                if screenshots:
+                    command.extend(("--screenshots", screenshots))
+                result = subprocess.run(
+                    command, cwd=ROOT, capture_output=True, text=True,
+                    check=False, timeout=120,
+                )
+                self.assertEqual(result.returncode, 0,
+                    f"V371 {kind} browser test failed:\\n{result.stdout}\\n{result.stderr}")
+                self.assertIn(f"V371_{kind.upper()}_OFFLINE_UI_FIXTURE_PASS",
+                              result.stdout)
 
 
 if __name__ == "__main__":
