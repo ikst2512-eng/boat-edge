@@ -50,6 +50,23 @@ class V287AutopilotPagesAssets(unittest.TestCase):
             one,two=fixtures(UI_PATHS,asset)
             self.assertFalse(same_ui_lineage(one,two),asset)
 
+    def test_v377_race_first_mobile_css_has_exact_pages_lineage(self):
+        asset="assets/boat_edge_v371_simple_ui.css"
+        self.assertIn(asset, UI_PATHS)
+        self.assertTrue((ROOT/asset).is_file())
+        workflow=(ROOT/".github/workflows/v277-pages-monitor.yml").read_text(encoding="utf8")
+        self.assertGreaterEqual(workflow.count("'"+asset+"'"),2,"PR_AND_PUSH_MONITOR_REQUIRED")
+        current,old=fixtures(UI_PATHS,asset)
+        self.assertFalse(same_ui_lineage(current,old))
+        run={"name":"pages build and deployment","head_sha":"a"*40,
+             "created_at":(NOW-timedelta(minutes=5)).isoformat(),
+             "updated_at":(NOW-timedelta(minutes=4)).isoformat(),
+             "status":"completed","conclusion":"success"}
+        failed=report([run],current,NOW,deployed_ui_commits=old)
+        self.assertFalse(failed["ui_lineage_verified"])
+        self.assertEqual(failed["status"],"UI_PUBLISH_OVERDUE_NEEDS_ATTENTION")
+        self.assertFalse(failed["ui_checked_in_safari"])
+
     def test_v374_topk_quickview_scripts_and_styles_are_sha_proven(self):
         # Rendering JS/CSS can change with no index.html update; latest Pages
         # evidence must cover the actual production assets in V373 browser CI.
