@@ -332,3 +332,38 @@ race identity and single-writer ownership. Do not weaken freshness,
 backdate sources, overwrite immutable forecasts, or change formal
 Fresh `results_seen/unlock/scoring`. After eventual merge, the actual
 V336 artifact and V343/V344 replay must verify full 3×120 research coverage.
+
+### V364: executable upstream selector contract
+
+`tests/test_boat_edge_v236_v364_v230_v336_selection_contract.py`
+actually invokes the existing `boat_edge_v230_fast_lane.targets()` and
+`boat_edge_v334_live_batch_runner.live_window()` together on the **same**
+synthetic race at an unchanged fixed predeadline JST clock.
+
+The test proves the following narrow implementation behavior:
+
+- Without a pre-existing SITE first-prediction snapshot, V230 can select
+  the same upcoming race as V336 even if its race-card metadata is stale.
+- Creating that SITE snapshot excludes the race from **V230's source refresh
+  target list**, but V336 still selects the race for its independent research
+  attempt and reports the stale official race-card metadata.
+- The resulting V363 gap report is explicitly diagnostic, not evidence of
+  actual provider-side timestamps or a successful refresh.
+- After the race deadline, neither selector can admit a new research/refresh
+  target. No source/result/odds/payout/network is read or mutated in this test.
+
+This confirms an exact code-path *selection divergence*, not that all
+historic V336 failures were caused by the snapshot guard. In the later
+mutable main checkout for 2026-10-13, one of the three 16:31 V336 failures
+(`20261013-15-04`) had a regular SITE prediction snapshot, while the
+other two snapshots could not be confirmed present. Their PRE_RESULT
+race-card timestamps had meanwhile changed *after* the failed V336 run;
+none of those timestamps retrospectively validates that freeze.
+
+For Track 01, the concrete implementation choice is **separate official
+source refresh eligibility from the idempotence of a first SITE prediction
+snapshot**. Any subsequent live official-source update must still enforce
+the independent source identity, raw bytes/hash, true collection time,
+strict predeadline/freshness, scratch/withdrawal validation, and guarded
+Git publication. Never overwrite frozen picks or raise the model's
+production eligibility solely due to this selector divergence.
