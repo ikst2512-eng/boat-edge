@@ -2,7 +2,9 @@
 """Read-only E2E: actual BOAT EDGE site and PRE_RESULT race files.
 
 Both the repository preview and publicly deployed Pages can be exercised.
-No mocks, outcome endpoints, payouts, formal predictions, or API/v1 calls.
+Live E2E has no mocks; separate HISTORICAL fixture simulates source readiness
+using only saved result-unseen SITE snapshots, never a live prediction proof.
+No outcome endpoints, payout data, formal predictions, or API/v1 calls.
 Headless WebKit is NOT physical iPhone Safari certification.
 """
 import argparse
@@ -333,6 +335,145 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
     }
 
 
+
+def probe_historical_snapshot_render_fixture(context, target, engine):
+    """Real production V207 renderer, historical PRE_RESULT inputs; NOT a live proof.
+
+    The archived SITE reference snapshots supply actual preserved ticket order.
+    The tiny standalone DOM fakes only V108 readiness/source widgets so the
+    presentation module can be tested before fresh data arrives. All saved
+    snapshots are opened from the checkout, never outcome or payout resources.
+    """
+    from html import escape as html_escape
+
+    sources = []
+    for key in ("20261013-14-01", "20261013-14-02"):
+        file = ROOT / "data" / "site_prediction_snapshots" / (key + ".json")
+        saved = json.loads(file.read_text(encoding="utf-8"))
+        assert saved["race_key"] == key
+        assert saved["snapshot_window"] == "FINAL_15M"
+        assert saved["prediction_kind"].startswith("SITE_REFERENCE")
+        assert all(saved["guards"].get(k) is False
+                   for k in ("results_seen", "unlock", "scoring"))
+        rows = saved["modes"]["hit"]["tickets"]
+        combos = [v["combo"] for v in rows]
+        assert len(combos) >= 10 and len(set(combos)) == len(combos)
+        assert all(re.fullmatch(r"[1-6]-[1-6]-[1-6]", x) and
+                   len(set(x.split("-"))) == 3 for x in combos)
+        sources.append({"key": key, "rows": rows, "combos": combos})
+
+    def source_html(rows):
+        return "".join(
+            '<div class="be108-ticket" data-be257-view="reference">'
+            '<b>' + html_escape(item["combo"]) + '</b>'
+            '<em>' + html_escape(str(round(item.get("p", 0), 3))) + '%</em>'
+            '<small>倍率未確認</small>'
+            '<span class="be140-ticket-money">現在の参考配分 '
+            + html_escape(str(item.get("stake_yen", 0))) + '円</span></div>'
+            for item in rows
+        )
+
+    fixture = context.new_page()
+    failures = []
+    fixture.on("pageerror", lambda e: failures.append(str(e)))
+    try:
+        fixture.set_content(
+            '<div id="raceView" class="active"><div class="race-summary"></div></div>'
+            '<div id="tab-pred"><div id="be108PredictionModes">'
+            '<div class="be108-mode-tabs"><button class="on" data-be108-mode="hit">的中重視</button></div>'
+            '<div class="be181-freeze-banner" data-be181-source="latest"></div>'
+            '<div class="be108-ticket-list">' + source_html(sources[0]["rows"]) + '</div>'
+            '</div></div><div id="tab-scenario"></div>'
+            '<div id="scenarioHero"><div class="scenario-main">保存された展開参照</div></div>',
+            wait_until="domcontentloaded",
+        )
+        fixture.evaluate(
+            """key => {
+               window.state = {race: {race_key:key, deadline:"08:35"}};
+               window.BoatEdgeV204 = {
+                 summarize(){return {settled:false, fresh:false}},
+                 sourceLabel(){return "過去PRE_RESULT表示試験（非本番）"},
+                 oddsProof(){return {quality:"unknown",label:"未確認"}}
+               };
+               window.BoatEdgeV205 = {
+                 sourceStatus(){return {kind:"partial",title:"履歴fixture：出走状態は模擬",
+                                       detail:"本番の予想許可を意味しません"}}
+               };
+            }""", sources[0]["key"]
+        )
+        # Fetch the real renderer from checkout/Pages, not a copied test impl.
+        fixture.add_script_tag(url=target.rsplit("/", 1)[0] +
+                               "/assets/boat_edge_v207_first_prediction.js")
+        fixture.wait_for_function(
+            "() => !!document.querySelector('#be207Top.ready')", timeout=15000
+        )
+
+        def combos_in_dom():
+            return fixture.locator("#be207Top .be207-bets > .be207-ticket").evaluate_all(
+                "(nodes) => nodes.map(n => [...n.querySelectorAll('.be207-lane')].map("
+                "x => x.textContent.trim()).join('-'))"
+            )
+
+        def assert_prefix(count, source):
+            actual = combos_in_dom()
+            assert actual == source[:count], (
+                "Historical SITE ticket-order mismatch: %s vs %s" %
+                (actual, source[:count]))
+            assert fixture.locator("#be207Top .be207-stop").count() == 0
+            assert fixture.locator("#be207Top .be207-ticket").count() == count
+
+        assert_prefix(3, sources[0]["combos"])
+        fixture.locator('#be207Top [data-be207="five"]').click()
+        assert_prefix(5, sources[0]["combos"])
+        fixture.locator('#be207Top [data-be207="ten"]').click()
+        assert_prefix(10, sources[0]["combos"])
+        fixture.locator('#be207Top [data-be207="ten"]').click()
+        assert_prefix(3, sources[0]["combos"])
+
+        # Race changes while previous V108 list is still mounted must STOP,
+        # not show the old race's saved historical tickets under the new key.
+        fixture.evaluate("(key) => {window.state.race.race_key=key;"
+                         "window.BoatEdgeV207.render()}", sources[1]["key"])
+        assert fixture.locator("#be207Top .be207-stop").count() == 1
+        assert fixture.locator("#be207Top .be207-ticket").count() == 0
+        fixture.locator("#be391PredictionWait").wait_for(state="visible")
+        assert fixture.locator("#be391PredictionWait").get_attribute(
+            "data-race-key") == sources[1]["key"]
+
+        # Simulate the V108 source DOM REPLACEMENT (not a prediction calculation).
+        fixture.evaluate(
+            """markup => {
+              const previous=document.querySelector(
+                '#be108PredictionModes .be108-ticket-list');
+              const next=document.createElement('div');
+              next.className='be108-ticket-list';
+              next.innerHTML=markup;
+              previous.replaceWith(next);
+              window.BoatEdgeV207.render();
+            }""", source_html(sources[1]["rows"])
+        )
+        assert_prefix(3, sources[1]["combos"])
+        fixture.locator('#be207Top [data-be207="five"]').click()
+        assert_prefix(5, sources[1]["combos"])
+        fixture.locator('#be207Top [data-be207="ten"]').click()
+        assert_prefix(10, sources[1]["combos"])
+        assert fixture.locator("#be391PredictionWait").count() == 0
+        assert not failures, "Historical V207 browser error: " + repr(failures)
+        return {
+            "status": "HISTORICAL_PRE_RESULT_RENDER_FIXTURE_PASS_NOT_LIVE",
+            "historical_races": [item["key"] for item in sources],
+            "mode": "hit",
+            "rank_prefixes_checked": [3, 5, 10],
+            "old_race_not_leaked": True,
+            "production_renderer": "assets/boat_edge_v207_first_prediction.js",
+            "result_or_payout_read": False,
+            "live_prediction_certified": False,
+        }
+    finally:
+        fixture.close()
+
+
+
 def exercise(engine: str, url: str, shots: Path):
     import functools
     import http.server
@@ -523,8 +664,12 @@ def exercise(engine: str, url: str, shots: Path):
                     )
                     assert page.locator("#be391PredictionWait").is_visible()
                     assert second_panel.locator(".be207-ticket").count() == 0
+                historical_display = probe_historical_snapshot_render_fixture(
+                    context, target, engine
+                )
                 live_topk = probe_verified_live_topk(context, target, catalog, shots, engine)
                 report.update({
+                    "historical_display": historical_display,
                     "live_topk": live_topk,
                     "date": date, "venue": chosen["venue"], "venue_code": code,
                     "race_1": first["race_key"], "race_2": second["race_key"],
