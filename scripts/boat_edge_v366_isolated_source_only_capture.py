@@ -25,7 +25,7 @@ import tempfile
 from boat_edge_v230_fast_lane import parse_regs, parse_before, beforeinfo_coverage, extract_blocked
 from boat_edge_v315_source_capture import check_target, real_fetch, MAX_HTML_BYTES
 from boat_edge_v318_shadow_freeze import JST, canonical
-from boat_edge_v362_official_start_course_proof import parse_proven_course_rows
+from boat_edge_v362_official_start_course_proof import parse_proven_course_rows, _check_active_official_race_tab
 from boat_edge_v365_source_only_selection_contract import select_source_refresh
 
 MODEL = "BOAT_EDGE_V366_ISOLATED_OFFICIAL_SOURCE_ONLY_PROOF"
@@ -81,6 +81,11 @@ def _race_snapshot(root, key):
 
 def _validate_registration_parity(race, racelist):
     expected = [str(r.get("registration_no")) for r in race.get("racers", [])]
+    from bs4 import BeautifulSoup
+    # The racelist page MUST independently identify the same active day,
+    # venue, R and advertised deadline as beforeinfo. A matching 6-racer
+    # table alone is not sufficient evidence of same-race provenance.
+    _check_active_official_race_tab(BeautifulSoup(racelist, "lxml"), race, "racelist")
     observed = parse_regs(racelist)
     if (len(expected) != 6 or len(set(expected)) != 6
             or any(not x.isdecimal() or len(x) != 4 for x in expected)
@@ -174,6 +179,7 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
         "source_proof_at_jst": final.isoformat(),
         "evidence_level": "LOCAL_HTTP_RESPONSE_SHA_ONLY",
         "registered_racers_matched": registrations,
+        "official_racelist_active_race_deadline_matched": True,
         "official_exhibition_coverage": coverage,
         "official_start_course_proof": proof,
         "sources": {
