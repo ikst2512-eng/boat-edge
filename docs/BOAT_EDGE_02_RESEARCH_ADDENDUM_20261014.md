@@ -29,3 +29,31 @@ Scope: RESEARCH_ONLY, NO_ACCURACY_CLAIM, NO_MODEL_PROMOTION. Companion to root `
 
 ## Acceptance status
 All above are hypotheses or published data interfaces only; no new feature imported, no new benchmark passed, no verified win-rate change, no model or results read by this note. User-facing odds/ROI and real-money purchase are out of scope.
+
+## Deep-dive 2026-10-14: new source-defined features, fully separated from ingestion rights
+
+Source for D17–D26 below: ボートレース日和 feature changelog https://kyoteibiyori.com/vup/ . These are historical provider announcements, **not** verified current real-time numeric datasets, acquisition rights, model uplift, or formal evidence.
+
+| ID | Original source date and feature | Target metric / specific ablation | Ingestion gate |
+|---|---|---|---|
+| D17 | **2024-01-09「逃がし時全艇複勝率」**: for a selected 2–6-course racer when 1 escapes, compare that racer’s own 2nd rate and *which other course becomes second*. | P(2nd=j | 1 escapes, lineup X); directly address second-place dropout; use valid denominator, course and player context. | Source described, **not licensed for automated reuse**. |
+| D18 | **2024-05-28「負け決まり手一覧表」**: 2–6 courses’ loss by 差し・まくり・まくり差し etc, 1’s loss to opponent/method. | 1/2 defensive wall and opponent attack interactions, not just offensive success. Conditional on a prior contest; not target-race information. | Same. |
+| D19 | **2023-02-17「枠別着順傾向分析グラフ」**: 1着時の決まり手と2・3着コース; 2着時の1着コース・決まり手. | P(3rd | head, runner-up, method/world) and course-conditioned rank topology, with temporal snapshot. Distinguish provider **枠** from independently evidenced **実コース**. | Same. |
+| D20 | **2023-04-08「ST分布・ST順分布」** and **2024-02-16「トップスタート分析」**. | Mean ST vs tail quantiles, top-start probability, relative neighboring ST; compare vs mean-only on same races. Prevent post-slit information leakage. | Same. |
+| D21 | **2023-03-04「展示STと本番STの関連性」** and **2025-08-24「展示STと本番STのズレ」**. | Exhibition-ST bucket-dependent expectation/variance and racer-specific transfer reliability. A provider's SS rank is not a calibrated 3連単 probability. | Same. |
+| D22 | **2023-02-02「モーター過去3節比較」**, **2023-04-20「部品交換一覧」**, **2023-07-14「節間展示履歴」**. | Prior 3 meets and part-change recency × racer ability × same meeting exposure, *pre-race only*. Distinguish repair/adjustment from motor number and racer contribution. | Same. |
+| D23 | **2024-07-09「オリ展計測位置」** and **2024-09-11「選手別周回タイム分析／比較／場別オリ展1位1着率」**. | Venue-specific sensor position and lap measurement; group by measurement definition and venue, then within-race relative gaps. | Same. |
+| D24 | **2022-12-22「場別気候別検索」** by wind / wave and 1-course escape-method filters. | Venue × headwind/tailwind × wave × attacking/defending world interactions, evaluated after upstream timestamp proof. | Same. |
+| D25 | **2023-07-26「勝率上昇／下降選手」** (last 1 month versus prior 3 months). | Time-weighted racer form-drift vs established 3-month prior; reject unstable small-sample noise. | Same. |
+| D26 | **2023-08-27「優勝戦データ」** course-specific 1st/2nd/3rd and entry counts, last 2 years. | Grade/race-type interaction and final-only calibration, avoiding applying finals rates to qualifying races. | Same. |
+
+### High-priority independent model tests, in order
+1. **Audit missing legal/temporal inputs before modeling.** BOATERS Terms https://boaters-boatrace.com/info/terms §8 prohibit web scraping/crawling and purpose-outside usage; 日和 Terms https://kyoteibiyori.com/terms.html Art.5 prohibit automated access/data acquisition and AI training/analysis without permission, including research. Display-only/premium access is not training or redistribution permission. Treat public feature descriptions as **hypothesis discovery only**. No provider numerical scraping, automated observation or copying to GitHub without express authorization.
+2. If authorized historical course/position count data becomes available, compare `baseline → head-conditioned 2nd → pair-conditioned 3rd → loss/defense interactions` as sequential ablations; V360 research full-120 and open PR #192 hierarchical conditional estimator already exist, so research on the *new data and valid comparisons*, not duplicate model classes.
+3. **Joint distribution** `P(i,j,k|X)=sum_s P(s|X) P(i|s,X) P(j|i,s,X) P(k|i,j,s,X)`. Reject any feature derived from the target race's actual 1M world or official outcome. Pre-race scenario weights must be predicted, not known.
+4. Distinguish **ranking gain from calibration gain**. sklearn https://scikit-learn.org/stable/modules/calibration.html describes temperature scaling as a 1-parameter multiclass transformation preserving the argmax/ordering. It may improve reliability/confidence but cannot by itself raise Top3/5/10 of the same 120 list. Examine ranking and log-loss/Brier separately; fit calibration using a disjoint chronological segment. Avoid heavy 120-class isotonic on sparse cohorts.
+5. **Matched significance**: track each precommitted race's binary TopK change (baseline hits/candidate misses, vice versa), paired McNemar/conditional exact binomial with day/venue-cluster sensitivity. Report effect sizes and confidence intervals and whether gain is sustained across separate days. Do not infer superiority from unpaired Top10 vs Top15 comparisons. Only an authorized holdout can be scored.
+6. Don't over-count provider corroboration: BOATERS explains its original exhibition reproduces venue-official measurements https://boaters-boatrace.com/guide/original-exhibition-data ; two site sightings independently establish two captured **pages**, not independent sensor measurements. Attach separate raw receipts and first-seen timestamps when access is expressly permitted; otherwise mark provider numeric evidence `UNAVAILABLE_AUTHORIZATION`. Official remains a separate source and cannot impersonate the required two-site evidence.
+
+### Production acceptance boundary
+`data/formal_status.json` on current main read before research was 2026-10-13 23:59 JST, First100=0, results_seen/unlock/scoring=false. No change to this lock, outcome access, payout, production ranking, confidence or actual wagers. Any additional research item must be checked against newer PRs before implementation.
