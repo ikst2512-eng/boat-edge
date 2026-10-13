@@ -1,0 +1,40 @@
+name: BOAT EDGE 02 Paired TopK
+on:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_02_v236_paired_topk_readonly.py'
+      - '.github/workflows/boat-edge-02-paired-topk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  paired-topk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate syntax
+        run: python -m py_compile scripts/boat_edge_02_v236_paired_topk_readonly.py
+      - name: Evaluate existing frozen site-only cohort
+        run: python scripts/boat_edge_02_v236_paired_topk_readonly.py --root . | tee paired-topk.json
+      - name: Assert nonempty comparison
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('paired-topk.json'))
+          assert d['races'] > 0, 'NO_SCORED_RACES'
+          assert d['promotion_authorized'] is False
+          assert d['production_model_changed'] is False
+          for mode in ('hit10','balance10','scenario7plus3'):
+              for k in ('3','5','10'):
+                  assert d['topk'][mode][k]['races'] == d['races']
+          print('SITE_ONLY_PAIRED_TOPK_PASS', d['races'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: boat-edge-02-paired-topk
+          path: paired-topk.json
