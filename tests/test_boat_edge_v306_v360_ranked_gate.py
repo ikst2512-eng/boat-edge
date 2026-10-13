@@ -34,6 +34,10 @@ class V306Tests(unittest.TestCase):
     def test_mass_order_invalid(self):
         x=fixture();rows=x['research_ranked_120_by_mode']['national_only'];rows[0]['relative_model_mass']=0.001;rows[1]['relative_model_mass']=2/120-0.001
         self.assertEqual(inspect(x),'MASS_RANK_ORDER_INVALID')
+    def test_inconsistent_course_boat_mapping(self):
+        x=fixture();rows=x['research_ranked_120_by_mode']['national_only']
+        rows[0]['boat_combo'],rows[1]['boat_combo']=rows[1]['boat_combo'],rows[0]['boat_combo']
+        self.assertEqual(inspect(x),'INCONSISTENT_ENTRY_MAPPING')
     def test_no_ranking(self):
         self.assertEqual(inspect({}),"NO_V360_RANKING")
 
