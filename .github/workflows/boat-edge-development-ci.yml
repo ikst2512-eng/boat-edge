@@ -60,6 +60,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_boat_edge_v343_scheduled_writer_collision_classes.py' -v
           python3 -m unittest discover -s tests -p 'test_boat_edge_v344_exact_writer_triage.py' -v
           python3 -m unittest discover -s tests -p 'test_boat_edge_v345_writer_trigger_evidence.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v346_runtime_proof_gate.py' -v
           python3 - <<'PY_V341'
           from scripts.boat_edge_v341_scheduled_writer_path_audit import audit
           import json
