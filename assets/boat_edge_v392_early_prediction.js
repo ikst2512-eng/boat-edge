@@ -93,7 +93,7 @@ function style(){
  const el=document.createElement('style');el.id='be392EarlyStyle';
  el.textContent=[
  '.be392-preview{display:none;background:#f0f6ff;border:1px solid #bed4f1;border-radius:14px;padding:14px;color:#122f54}',
- '.be392-preview[data-ready="true"]{display:block}',
+ '.be392-preview[data-ready="true"],.be392-preview[data-ready="status"]{display:block}',
  '.be392-header{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}',
  '.be392-header strong{font-size:17px}.be392-tag{font-size:11px;font-weight:800;color:#6d4300;background:#fff0c9;padding:5px 8px;border-radius:5px}',
  '.be392-meta{font-size:12px;line-height:1.6;color:#345371;margin-top:8px}',
@@ -120,9 +120,20 @@ function drawRows(box,p){
  for(const btn of box.querySelectorAll('.be392-tabs button[data-count]'))
   btn.setAttribute('aria-pressed',String(Number(btn.dataset.count)===shown));
 }
+function showStatus(r,reason){
+ const box=ensure();if(!box)return;
+ box.replaceChildren();
+ box.dataset.ready='status';
+ box.dataset.raceKey=String(r?.race_key||'');
+ box.setAttribute('role','status');
+ box.innerHTML='<div class="be392-header"><strong>出走表ベースの暫定予想</strong>'+
+  '<span class="be392-tag">未凍結・参考順位</span></div><div class="be392-meta"></div>'+
+  '<div class="be392-note">締切前の正式予想・購入配分・的中判定とは別です。</div>';
+ text($('.be392-meta',box),reason);
+}
 function showPreview(r,p){
  const box=ensure();if(!box)return;
- box.dataset.ready='true';box.dataset.raceKey=r.race_key;
+ box.dataset.ready='true';box.dataset.raceKey=r.race_key;box.removeAttribute('role');
  if(!$('.be392-header',box)){
   box.innerHTML='<div class="be392-header"><strong>出走表ベースの暫定予想</strong><span class="be392-tag">未凍結・参考順位</span></div>'+
    '<div class="be392-meta"></div><div class="be392-tabs" role="group" aria-label="暫定予想の買い目件数">'+
@@ -143,24 +154,41 @@ function showPreview(r,p){
  drawRows(box,p);
 }
 function hide(){
- const box=$('#be392EarlyPreview');if(box){box.dataset.ready='false';box.replaceChildren();box.dataset.raceKey='';}
+ const box=$('#be392EarlyPreview');if(box){box.dataset.ready='false';box.replaceChildren();box.dataset.raceKey='';box.removeAttribute('role');}
 }
 async function render(r){
  const ticket=++serial,key=String(r?.race_key||'');activeKey=key;
- if(!cardSafety(r).ok){hide();return;}
- style();const box=ensure();if(!box)return;
- box.dataset.ready='false';box.replaceChildren();box.dataset.raceKey=key;
+ const guard=cardSafety(r);
+ if(!guard.ok){
+  if(keyOK(key)&&r?.meta?.phase==='PRE_RESULT'&&guard.reason!=='締切済み（後付け暫定予想なし）'){
+   style();showStatus(r,guard.reason);
+  }else hide();
+  return;
+ }
+ style();
+ if(!ensure())return;
+ showStatus(r,'暫定予想の保存データを確認中です。');
  try{
   const res=await fetch('./data/site_early_previews/'+key+'.json?early='+Date.now(),{cache:'no-store'});
-  if(!res.ok)throw new Error('preview not published');
+  if(!res.ok){
+   if(res.status===404)throw new Error('PREVIEW_NOT_PUBLISHED');
+   throw new Error('PREVIEW_HTTP_'+res.status);
+  }
   const p=await res.json();
   if(ticket!==serial||activeKey!==key)return;
-  if(!previewSafety(r,p).ok){hide();return;}
+  const checked=previewSafety(r,p);
+  if(!checked.ok){showStatus(r,checked.reason);return;}
   showPreview(r,p);
- }catch(_){if(ticket===serial&&activeKey===key)hide();}
+ }catch(e){
+  if(ticket!==serial||activeKey!==key)return;
+  const reason=String(e?.message||'');
+  showStatus(r,reason==='PREVIEW_NOT_PUBLISHED'
+   ?'暫定予想データはまだ公開されていません。出走表の収集・予想生成後に再表示してください。'
+   :'暫定予想データを読み込めませんでした。通信または公開データを確認して再読み込みしてください。');
+ }
 }
 function tick(){
- const box=$('#be392EarlyPreview');if(box?.dataset.ready!=='true')return;
+ const box=$('#be392EarlyPreview');if(!box||!['true','status'].includes(box.dataset.ready))return;
  const key=box.dataset.raceKey;
  const r=(()=>{try{return typeof state!=='undefined'?state?.race:null;}catch(_){return null;}})();
  if(key!==r?.race_key||!cardSafety(r).ok)hide();
