@@ -55,7 +55,9 @@ assert(css.includes('.be206-matrix-scroll'));
 assert(css.includes('overflow-x:auto'));
 assert(css.includes('position:sticky'));
 assert(css.includes('[hidden]'));
-assert(js.includes("layout='lanes'"));
+// V371: desktop retains six-lane matrix; narrow screens use six readable rows.
+assert(js.includes("?'rows':'lanes'"));
+assert(js.includes('if(raceChanged)layout=preferredLayout()'));
 assert(js.includes('data-be206-layout="rows"'));
 assert(!/(?:fetch\(|XMLHttpRequest|RESULT_UNLOCK_TOKEN|rankPredictions\(|loadRace\(|winning_combo|official_payout)/.test(js));
 if(fs.existsSync('index.html')){

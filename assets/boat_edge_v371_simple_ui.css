@@ -1,0 +1,145 @@
+/* BOAT EDGE 03 V371 — simple race-first, BOATERS-inspired information architecture.
+   Original brand and presentation. No model, odds, tickets or evidence is modified.
+   Audit details stay accessible by the existing "詳しいデータ・監査" button. */
+:root{--be371-ink:#172a3d;--be371-line:#dce4eb;--be371-muted:#657588}
+html,body{background:#f6f7f9;color:var(--be371-ink)}
+.app{max-width:1080px}
+.topbar{box-shadow:none;background:#fff;border-bottom:1px solid var(--be371-line)}
+.edge-accent{height:3px!important;background:#1a5c98}
+.edge-accent span{display:none}
+.topbar .mark{border-radius:6px;box-shadow:none}
+.topbar .be241-brand-home{letter-spacing:.02em;color:#152e48}
+#homeView:has(#be108Hub .be108-shell) > .hero,
+#homeView:has(#be108Hub .be108-shell) > .section,
+#homeView:has(#be108Hub .be108-shell) > .be241-home-shortcuts{display:none!important}
+#homeView #be108Hub{display:block;max-width:980px;margin:0 auto;padding:12px}
+#homeView #be108Hub .be108-shell{background:#fff;border:1px solid var(--be371-line);border-radius:8px;padding:13px;box-shadow:none}
+#homeView #be108Hub #be135Upcoming{padding:0 0 13px;margin-bottom:14px;border-bottom:1px solid var(--be371-line)}
+#homeView #be108Hub .be135-upcoming-head{margin-bottom:8px}
+#homeView #be108Hub .be135-upcoming-head small{display:none}
+#homeView #be108Hub .be108-date-nav{margin:5px 0 12px;padding:9px 4px;border:0;background:#fff}
+#homeView #be108Hub .be108-date-nav span{display:none}
+#homeView #be108Hub .be108-venue-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:12px}
+#homeView #be108Hub .be108-venue{min-width:0;border:1px solid #e0e5ea;background:#fff;border-radius:5px;box-shadow:none;min-height:66px;padding:8px 5px}
+#homeView #be108Hub .be108-venue.active{border-color:#accce8;background:#f4f8fc}
+#homeView #be108Hub .be108-venue.selected{border:2px solid #286caa;background:#eaf3fc}
+#homeView #be108Hub .be108-venue b{font-size:14px;color:#1e3245}
+#homeView #be108Hub .be108-place{margin-top:8px;background:#fff;border-radius:6px;border:1px solid var(--be371-line);padding:10px}
+#homeView #be108Hub .be108-place-head{padding:5px 0 12px}
+#homeView #be108Hub .be108-race-strip{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;overflow:visible}
+#homeView #be108Hub .be108-race-chip{min-width:0;min-height:44px;border-radius:5px;border:1px solid #d6e3ed;background:#fff;padding:7px 2px;box-shadow:none}
+#homeView #be108Hub .be108-race-chip.on{background:#205e93;color:#fff}
+#homeView #be108Hub .be108-race-chip b{font-size:12px}
+#homeView #be108Hub .be108-race-chip span{font-size:10px}
+#homeView #be108Hub .be108-race-row{border-radius:4px;box-shadow:none;border-bottom:1px solid #e9edf1}
+#raceView .race-head{background:#fff;border-bottom:1px solid #e1e7ed;box-shadow:none}
+#raceView .race-summary{border-radius:0;box-shadow:none;border:0;background:#fff;padding:10px 11px}
+#raceView .summary-top{align-items:center;gap:8px}
+#raceView #raceTitle{font-size:20px!important;color:#142b44;line-height:1.2;margin:0 0 3px}
+#raceView #raceSubtitle{font-size:11px;line-height:1.4}
+#raceView #deadlineBig{font-size:23px;color:#1a568d}
+#raceView .deadline-cap{font-size:10px}
+#raceView #be108RaceNav{border-top:1px solid #ebeff3;padding-top:7px}
+#raceView #be108RaceNav .be108-race-nav-head{padding:3px 0 6px}
+#raceView #be108RaceNav .be108-race-strip{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;overflow:visible}
+#raceView #be108RaceNav .be108-race-chip{min-width:0;min-height:42px;border-radius:4px;padding:5px 1px;font-size:11px}
+#raceView #raceTabs{display:flex;justify-content:flex-start;gap:4px;padding:7px 10px 9px;background:#fff;border-top:1px solid #ebeff3}
+#raceView #raceTabs [data-tab]{flex:1;min-width:0;min-height:44px;border-radius:5px;font-size:12px;padding:8px 3px}
+#raceView #tab-pred .section.stack{padding:7px 10px}
+#raceView #be207Top,#raceView #be206Quick{box-shadow:none;border:1px solid var(--be371-line);border-radius:6px;background:#fff}
+#raceView #be207Top{padding:12px;margin:4px 0 9px}
+#raceView #be206Quick{padding:11px;margin:8px 0}
+#raceView #be207Top .be207-topline{margin-bottom:9px}
+#raceView #be207Top .be207-topline strong{font-size:19px;color:#182b40}
+#raceView #be207Top .be207-version,
+#raceView #be207Top .be207-eyebrow,
+#raceView #be207Top .be207-mode-label small,
+#raceView #be206Quick .be206-title small,
+#raceView #be206Quick .be206-compact-tag{display:none!important}
+#raceView #be207Top .be207-condition{font-size:12px;line-height:1.4;padding:9px;margin-bottom:9px}
+#raceView #be207Top .be207-condition strong{font-size:12px}
+#raceView #be207Top .be207-mode-label{font-size:12px;margin:0 0 7px}
+#raceView #be207Top .be207-modes{gap:5px;margin-bottom:9px}
+#raceView #be207Top .be207-modes button{font-size:12px;min-height:44px;background:#f7f9fb;border:1px solid #d7e2ec;color:#304960}
+#raceView #be207Top .be207-modes button.on{background:#205d93;color:#fff;border-color:#205d93}
+#raceView #be207Top .be207-explain{font-size:12px;background:#f4f7fa;padding:9px}
+#raceView #be207Top .be207-explain span{line-height:1.4}
+#raceView #be207Top .be207-bets{border-radius:4px}
+#raceView #be207Top .be207-ticket{grid-template-columns:27px minmax(0,1fr) minmax(58px,auto);gap:4px 8px;padding:10px 8px;min-height:62px}
+#raceView #be207Top .be207-rank{grid-column:1;grid-row:1 / span 2;font-size:12px}
+#raceView #be207Top .be207-combo{grid-column:2;grid-row:1}
+#raceView #be207Top .be207-lane{min-width:26px;width:26px;height:28px;font-size:15px;border-radius:3px}
+#raceView #be207Top .be207-multi{grid-column:3;grid-row:1;font-size:13px;text-align:right}
+#raceView #be207Top .be207-moneys{grid-column:2 / -1;grid-row:2;font-size:11px;line-height:1.5}
+#raceView #be207Top .be207-actions button{min-height:44px;background:#f6f8fa;border-radius:5px}
+#raceView #be207Top .be207-actions button[aria-pressed="true"]{background:#dfeefb;color:#194d7a}
+#raceView #be207Top .be207-budget{font-size:12px}
+#raceView #be207Top .be207-odds{font-size:11px}
+#raceView #be206Quick .be206-title h2{font-size:17px;color:#182b40}
+#raceView #be206Quick .be206-switch{gap:5px}
+#raceView #be206Quick .be206-switch button{border-radius:4px;min-height:44px;font-size:12px}
+#raceView #be206Quick .be206-layout-switch button{min-height:44px}
+#raceView #be206Quick .be206-table{table-layout:fixed;width:100%}
+#raceView #be206Quick .be206-table th:first-child{width:36%}
+#raceView #be206Quick .be206-racername{font-size:12px;line-height:1.25}
+#raceView #be206Quick .be206-table th,#raceView #be206Quick .be206-table td{white-space:normal;overflow-wrap:anywhere}
+#raceView #be206Quick .be206-headpick-trigger,#raceView #be206Quick .be206-racername{min-height:44px;cursor:pointer}
+#raceView #be206Quick .be206-lane{min-width:24px;min-height:24px}
+#raceView #be206Quick .be206-headpanel{background:#f5f9fd;border:1px solid #d1e1f0;border-radius:6px}
+#raceView #be206Quick [data-be206-head-close]{min-height:44px;min-width:44px}
+#raceView #be207Top .be208-detail-actions button{min-height:44px}
+#raceView #be207Top .be305-evidence-head button{min-height:44px}
+/* Hide repetition, not the evidence. The existing detail button restores it. */
+html:not(.be208-details-on) #raceView #be207Top .be305-evidence-items,
+html:not(.be208-details-on) #raceView #be207Top .be305-evidence>small,
+html:not(.be208-details-on) #raceView #be207Top .be259-confidence,
+html:not(.be208-details-on) #raceView #be207Top .be259-metric,
+html:not(.be208-details-on) #raceView #be207Top .be259-disclaimer,
+html:not(.be208-details-on) #raceView #be207Top .be207-prob,
+html:not(.be208-details-on) #raceView #be206Quick .be206-table-help,
+html:not(.be208-details-on) #raceView #be206Quick .be206-swipe-help,
+html:not(.be208-details-on) #raceView #be206Quick .be206-source{display:none!important}
+#raceView #be207Top .be305-evidence{padding:7px 8px;background:#fff;border:1px solid #e4e9ee}
+#raceView #be207Top .be305-evidence-head{margin:0}
+#raceView #be207Top .be259-head-coverage{padding:8px;margin:7px 0;background:#fff;border:1px solid #e3e8ef}
+#raceView #be207Top .be259-head-row{gap:3px;margin:0 0 7px}
+#raceView #be207Top .be259-head-row small{font-size:11px}
+#raceView #be207Top .be259-head-row strong{font-size:18px}
+#raceView #be207Top .be259-top-grid{gap:4px}
+#raceView #be207Top .be259-top-grid span{border:0;background:#f5f7fa;padding:7px;font-size:11px;line-height:1.4}
+#raceView #be207Top .be207-listhead span{display:none}
+/* Safety warnings, missing values, selected-race badges and the detail action remain visible. */
+@media(max-width:760px){
+ .app{max-width:100%}
+ .topbar{padding:9px 11px}
+ .topbar .mark,.topbar .be209-header-link,.topbar .live-pill,.topbar #runCollectorBtn{display:none!important}
+ .topbar .be241-brand-home{font-size:19px}
+ .topbar .header-actions{gap:6px}
+ .topbar .be241-header-results{border-radius:5px;background:#f3f7fa;color:#254d6c;font-size:11px}
+ .topbar #refreshTopBtn{box-shadow:none;border-radius:5px}
+ #homeView #be108Hub{padding:9px}
+ #homeView #be108Hub .be108-shell{padding:10px;border-radius:5px}
+ #homeView #be108Hub .be108-venue-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ #homeView #be108Hub .be108-venue{min-height:64px;padding:7px 3px}
+ #homeView #be108Hub .be108-race-strip{grid-template-columns:repeat(6,minmax(0,1fr))}
+ #homeView #be108Hub .be108-race-chip{min-height:46px}
+ #raceView #be108RaceNav .be108-race-strip{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+ #raceView #be108RaceNav .be108-race-chip{min-height:44px}
+ #raceView #raceTabs{gap:3px;padding:6px}
+ #raceView #raceTabs [data-tab]{font-size:11px}
+ #raceView #be207Top{padding:9px}
+ #raceView #be207Top .be207-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #raceView #be207Top .be207-modes button{font-size:12px}
+ #raceView #be207Top .be207-ticket{grid-template-columns:22px minmax(0,1fr) minmax(50px,auto);padding:8px 6px}
+ #raceView #be207Top .be207-lane{min-width:25px;width:25px}
+ #raceView #be206Quick .be206-switch{grid-template-columns:repeat(4,minmax(0,1fr))}
+ #raceView #be206Quick .be206-switch button{font-size:11px;padding:6px 2px}
+}
+@media(max-width:360px){
+ #homeView #be108Hub .be108-venue-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #raceView #be207Top .be207-lane{min-width:22px;width:22px}
+ #raceView #be206Quick .be206-table th,#raceView #be206Quick .be206-table td{font-size:10px;padding:8px 2px}
+}
+@media(prefers-reduced-motion:reduce){
+ #raceView #raceTabs,#homeView .be108-race-strip{scroll-behavior:auto}
+}

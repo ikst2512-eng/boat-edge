@@ -2,7 +2,7 @@
 /* Exercise real board/init handlers with a synthetic DOM; no data or network. */
 const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-function boot(){
+function boot(mobile=false){
  const handlers={},queue=[],classes=new Set();
  const cls={add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)};
  function makeTable(){
@@ -42,7 +42,7 @@ function boot(){
    tickets.map(combo=>({querySelector:()=>({textContent:combo})})):[],addEventListener:(name,fn)=>{handlers[name]=fn;}};
  const state={race:{race_key:'20261013-02-05',meta:{phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false}}};
  const rows=Array.from({length:6},(_,i)=>({lane:i+1,name:'選手'+(i+1),grade:'A1',national:{win_rate:6+i/10},local:{win_rate:5},motor:{quinella_rate:30}}));
- const window={BoatEdgeV203:{getRows:()=>rows},BoatEdgeV205:{sourceStatus:()=>({kind:'partial',title:'照合中',detail:'fixture'})},addEventListener(){}};
+ const window={BoatEdgeV203:{getRows:()=>rows},BoatEdgeV205:{sourceStatus:()=>({kind:'partial',title:'照合中',detail:'fixture'})},matchMedia:()=>({matches:mobile}),addEventListener(){}};
  vm.runInNewContext(fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8'),{
   window,document,state,console,Date,Number,Math,Map,Set,JSON,queueMicrotask:fn=>queue.push(fn),setInterval(){}
  });
@@ -99,4 +99,18 @@ test('invalid or no-longer-safe head tickets clear while preserving the close co
  assert(!f.panel.querySelector('.be206-head-lines').innerHTML.includes('1-2-3'));
  assert.equal(f.panel.querySelector('[data-be206-head-close]'),button);
  f.nextRace();assert.equal(f.panel.hidden,true);assert.equal(f.panel.childNodes.length,0);
+});
+test('V371 narrow iPhone opens six-racer comparison as readable rows; race switch stays rows',()=>{
+ const f=boot(true);
+ assert.equal(f.compact.hidden,false);
+ assert.equal(f.viewport.hidden,true);
+ f.layout('lanes');
+ assert.equal(f.compact.hidden,true);
+ assert.equal(f.viewport.hidden,false);
+ f.mode.dataset.be108Mode='balance';f.api.sync();
+ assert.equal(f.viewport.hidden,false,'mode change preserves explicit user layout');
+ f.nextRace();
+ assert.equal(f.compact.hidden,false,'new race returns to mobile readable rows');
+ assert.equal(f.viewport.hidden,true);
+ assert.equal(f.panel.hidden,true,'previous race head ticket must remain closed');
 });
