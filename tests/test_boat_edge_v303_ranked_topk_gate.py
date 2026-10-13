@@ -33,3 +33,18 @@ class TopKReadinessTests(unittest.TestCase):
         item = fixture()
         item["top10"][0] = "1-1-3"
         self.assertEqual(inspect(item), "COMBO_INVALID")
+
+    def test_empty_leg_rejected(self):
+        item = fixture()
+        item["top10"][0] = "1-2-"
+        self.assertEqual(inspect(item), "COMBO_INVALID")
+
+    def test_unhashable_ticket_fails_closed(self):
+        item = fixture()
+        item["top10"][0] = {"combo": "1-2-3"}
+        self.assertEqual(inspect(item), "COMBO_INVALID")
+
+    def test_extra_separator_rejected(self):
+        item = fixture()
+        item["top10"][0] = "1--2-3"
+        self.assertEqual(inspect(item), "COMBO_INVALID")
