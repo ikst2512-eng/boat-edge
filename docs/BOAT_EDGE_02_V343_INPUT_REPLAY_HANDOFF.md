@@ -595,3 +595,48 @@ not permission to score or promote a model. PR integration, stable
 Git-source publication and live runs remain with Track 01. The
 formal Fresh 2026-10-01 `results_seen/unlock/scoring` flags must
 remain false.
+
+
+### V369: independent identity for BOTH official pages
+
+Real repository beforeinfo and racelist HTML examples under
+`data/raw/20261013/15_02_{beforeinfo,racelist}.html` independently
+contain an official 12-R navigation table with the selected race,
+date, venue, and deadline. V366's previous six-registration check for
+racelist alone was not enough: an unrelated official racelist could
+have the same registrations but belong to a different race.
+
+V369 hardens the **existing** V362/V366/V367 path, rather than
+introducing another site collector:
+- V362's strict selected-tab/date/venue/R/deadline parser is parameterized
+  to accept exactly one of `racelist` or `beforeinfo`. The existing
+  beforeinfo exhibition-course behavior remains unchanged.
+- V366 now verifies **racelist's own** official 12-R active tab,
+  same date, venue, race number and displayed deadline BEFORE accepting
+  its 6 registration numbers. Independently, V362 still verifies
+  beforeinfo's selected race and six provisional start-exhibition
+  course/boat-image/ST pairs. Both must correspond to the same
+  original pre-result input.
+- A positive boolean `official_racelist_active_race_deadline_matched`
+  is written to the V366 research-only manifest **only after**
+  that actual parser succeeds. V367 requires and revalidates it from
+  the original archived racelist bytes. V368's double-run cohort
+  replay automatically inherits the new requirement.
+- Synthetic negative tests change the racelist tab's R number,
+  date, venue, target endpoint, and advertised deadline while
+  leaving its six racer rows intact; all such captures are refused
+  without any persisted V366 research-only source proof.
+
+Versioning note: **V369 is a hardening revision of V362/V366/V367**,
+not a new model, new prediction score, or a separate live workflow.
+No previously saved proof may be retroactively upgraded without
+its original source bytes.
+
+[Code CI 38407674836](https://github.com/ikst2512-eng/boat-edge/actions/runs/38407674836)
+at SHA `7ad5e0331caae690c65fb84f12705aa5db9b426e`
+passed **338 tests (336 pass, 2 skipped)**. This is a synthetic
+fixture test and checks repo HTML structure for design reference;
+it is NOT an actual new prospective capture, independently
+authenticated server timestamp, BOATERS/競艇日和 original-exhibition
+parity, live V336 3x120 freeze or accuracy improvement. Track 01
+still owns publishing, V235 pinned collector and main integration.
