@@ -38,8 +38,8 @@ def source_pages():
         for lane in range(1, 7)
     ]
     racelist = (
-        official_nav + b"<table><thead><tr><th>ボートレーサー</th>"
-        b"<th>登録番号/級別</th></tr></thead>"
+        official_nav + ("<table><thead><tr><th>ボートレーサー</th>"
+        "<th>登録番号/級別</th></tr></thead>").encode("utf8")
         + "".join(racer_rows).encode("utf8") + b"</table></body></html>"
     )
     before_table = (
