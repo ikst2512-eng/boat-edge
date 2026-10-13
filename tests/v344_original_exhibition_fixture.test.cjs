@@ -185,3 +185,16 @@ test('V349 missing exhibition ST on one lane cannot claim complete', () => {
   assert.match(markup, /公式展示 取得済/);
   assert.match(markup, /展示ST 未取得/);
 });
+
+test('V350 fractional and out-of-range course numbers are not shown as valid', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {start_exhibition:[
+    {lane:1,course:2.5,st:0.12},{lane:2,course:7,st:0.11},
+    {lane:3,course:3,st:0.10}
+  ]};
+  const rows = api.makeRows(data).rows;
+  assert.equal(rows[0].course, null);
+  assert.equal(rows[1].course, null);
+  assert.equal(rows[2].course, 3);
+});
