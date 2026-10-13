@@ -35,8 +35,10 @@ def _st(value):
     return number
 
 
-def _check_active_official_race_tab(soup, race):
-    """Bound HTML body to the exact active official beforeinfo race/day/venue."""
+def _check_active_official_race_tab(soup, race, endpoint="beforeinfo"):
+    """Bind HTML body to the exact active official racelist/beforeinfo tab."""
+    if endpoint not in ("racelist", "beforeinfo"):
+        raise ValueError("START_SOURCE_ACTIVE_RACE_PAGE_TYPE_INVALID")
     key = race["race_key"]
     day, venue, round_no = key.split("-")
     tabs = soup.select("div.table1.h-mt10 > table")
@@ -52,7 +54,7 @@ def _check_active_official_race_tab(soup, race):
         if len(anchors) != 1:
             raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_LINK_MISSING")
         url = urlsplit(anchors[0].get("href", ""))
-        if (url.scheme or url.netloc or url.path != "/owpc/pc/race/beforeinfo"
+        if (url.scheme or url.netloc or url.path != "/owpc/pc/race/" + endpoint
                 or url.fragment):
             raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_ENDPOINT_INVALID")
         params = parse_qs(url.query)
