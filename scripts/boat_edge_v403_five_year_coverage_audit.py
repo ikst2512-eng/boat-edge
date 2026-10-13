@@ -155,7 +155,7 @@ def audit(reports):
         "days_without_verified_v402_reports": missing,
         "unknown_or_unsubmitted_calendar_ranges": spans,
         "annual_counts": {y: v for y, v in years.items()
-                          if int(y) < END.year},
+                          if int(y) <= END.year},
         "venue_counts": venue_stats,
         "report_lineage": sorted(lineage, key=lambda x: x["source_day"]),
         "calendar_coverage_complete": missing == 0,
