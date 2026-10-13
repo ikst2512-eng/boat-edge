@@ -110,6 +110,37 @@ class EntryMarginalizationAblation(unittest.TestCase):
         self.assertEqual(x["parent_top10"],out["baseline_top10"])
         self.assertEqual(x["candidate_top10"],out["candidate_top10"])
         self.assertFalse(x["first_git_commit_time_independently_verified"])
+    def test_a_to_b_and_b_to_c_use_same_existing_ten_ticket_gate(self):
+        # Neither pairing is production CURRENT. Reuse, do not clone, the
+        # existing pure pre-result exact-ten contract for both ablations.
+        c=cfg()
+        out=trial(c)
+        docs=[out[k+"_ranking_document"] for k in
+              ("no_factor_control", "baseline", "candidate")]
+        common={
+            "scope":"SITE_RESEARCH_PRE_RESULT_NOT_FORMAL",
+            "race_key":KEY, "deadline_jst":"10:20",
+            "target_source_sha256":c["target_source_sha256"],
+            "entry_mapping_sha256":c["entry_mapping_sha256"],
+            "source_permission_evidence_sha256":"a"*64,
+            "parent_training_end":"20261013",
+            "candidate_training_end":"20261013",
+            "no_target_outcome":True, "no_formal_fresh":True,
+        }
+        for first,second in ((0,1),(1,2)):
+            ctx=dict(common,
+                     parent_model_id=docs[first]["model_id"],
+                     candidate_model_id=docs[second]["model_id"])
+            pair=prepare_matched_ten(ctx,docs[first],docs[second],NOW)
+            self.assertEqual(pair["same_ticket_count_each"],10)
+            self.assertEqual(pair["per_model_virtual_budget_yen"],10000)
+            self.assertEqual(pair["parent_top10"],
+                             [x["boat_combo"] for x in docs[first]["ranked_120"][:10]])
+            self.assertEqual(pair["candidate_top10"],
+                             [x["boat_combo"] for x in docs[second]["ranked_120"][:10]])
+            self.assertFalse(pair["scoring_authorized"])
+            self.assertFalse(pair["production_eligible"])
+
     def test_identical_one_multipliers_cannot_invent_entry_signal(self):
         c=cfg()
         c["course_factor_by_course"]={b:1.0 for b in range(1,7)}
