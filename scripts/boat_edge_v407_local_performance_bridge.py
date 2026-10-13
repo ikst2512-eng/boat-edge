@@ -191,7 +191,7 @@ def parse_local_k_files(sources):
         raise ValueError("LOCAL_K_FILE_MAP_REQUIRED")
     decoded = {}
     for filename, raw in sources.items():
-        if not isinstance(filename, str) or not filename.endswith(".txt"):
+        if not isinstance(filename, str) or not filename.lower().endswith(".txt"):
             raise ValueError("LOCAL_K_TXT_NAME_REQUIRED")
         if not isinstance(raw, bytes) or not raw:
             raise ValueError("LOCAL_K_TEXT_BYTES_REQUIRED")
