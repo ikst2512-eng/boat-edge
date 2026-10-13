@@ -422,7 +422,9 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     # prediction engine and no relaxation of V229's immutable freeze contract.
     status['imminent_retry_targets']=[]
     status['imminent_retry_snapshots']=0
-    if retry_imminent and selected:
+    # Publish any first successfully frozen prediction immediately; a retry
+    # must never delay its first Git commit until after the cutoff.
+    if retry_imminent and selected and count==0:
         retry_keys=imminent_retry_targets(root,selected,status['outcomes'],local_now())
         if retry_keys:
             time.sleep(20)
