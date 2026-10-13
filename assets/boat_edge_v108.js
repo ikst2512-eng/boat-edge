@@ -1001,7 +1001,49 @@ async function be181ServerFinal(key){
     return be181ValidFinal(s,key)?s:null;
   }catch(_){return null;}
 }
-function be181ShowChoice(key,mins,resultConfirmed,finalSnap,first,modes,mode){
+// SITE-only handoff: never promote an arbitrary JSON file to a saved FINAL.
+ // SHA-check the exact public bytes against V125 and V229 PRE_RESULT evidence.
+ // This is NOT formal CURRENT approval or proof of the first Git-add timestamp.
+async function be181VerifiedPreDeadlineFinal(key,deadline,nowMs=Date.now()){
+  if(!be181KeyValid(key)||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(String(deadline||''))||
+     typeof crypto==='undefined'||!crypto.subtle||typeof TextDecoder==='undefined')return null;
+  const day=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+  const due=Date.parse(day+'T'+deadline+':00+09:00');
+  if(!Number.isFinite(due)||nowMs>=due||due-nowMs>15*60000)return null;
+  const base='./data/';
+  const urls=[
+   'site_prediction_snapshots/'+key+'.json',
+   'site_prediction_audit/'+key+'.json',
+   'site_autopilot/v229_evidence/'+key+'.json'
+  ];
+  try{
+    const responses=await Promise.all(urls.map(p=>fetch(base+p+'?handoff='+Date.now(),{cache:'no-store'})));
+    if(responses.some(r=>!r.ok))return null;
+    const raw=await responses[0].arrayBuffer();
+    const snapshot=JSON.parse(new TextDecoder().decode(raw));
+    const [audit,proof]=await Promise.all([responses[1].json(),responses[2].json()]);
+    const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',raw));
+    const digest=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+    const saved=Date.parse(snapshot.saved_at),first=Date.parse(snapshot.first_saved_at);
+    if(!be181ValidFinal(snapshot,key)||snapshot.prediction_kind!=='SITE_REFERENCE_V122'||
+       snapshot.deadline!==deadline||snapshot.guards?.results_seen!==false||
+       snapshot.guards?.unlock!==false||snapshot.guards?.scoring!==false||
+       !Number.isFinite(saved)||!Number.isFinite(first)||first>saved||
+       saved>nowMs+60000||first>=due||saved>=due||
+       due-first<120000||due-first>600000||
+       audit.race_key!==key||audit.pass!==true||audit.latest_snapshot_sha256!==digest||
+       Object.prototype.hasOwnProperty.call(audit,'settlement')||
+       proof.race_key!==key||proof.snapshot_sha256!==digest||
+       proof.schema!=='BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1'||
+       proof.scope!=='SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS'||
+       proof.new_snapshot_created_this_run!==true||
+       proof.results_seen!==false||proof.formal_fresh_unlock!==false||
+       proof.scoring!==false||proof.snapshot_saved_at!==snapshot.saved_at)
+       return null;
+    return snapshot;
+  }catch(_){return null;}
+}
+function be181ShowChoice(key,mins,resultConfirmed,finalSnap,first,modes,mode,verifiedPreDeadline=false){
   const after=resultConfirmed||(mins!==null&&mins<0);
   const now=modes?.[mode]||[];
   const original=first?.modes?.[mode]?.tickets||null;
@@ -1010,7 +1052,11 @@ function be181ShowChoice(key,mins,resultConfirmed,finalSnap,first,modes,mode){
     return {rows:finalSnap?.modes?.[mode]?.tickets||[],source:finalSnap?'final':'unavailable',
       changed,first,finalSnap,selected:'final'};
   }
-  // V208 UI default: always show the newest available pre-deadline prediction.
+  if(verifiedPreDeadline&&finalSnap){
+    return {rows:finalSnap.modes?.[mode]?.tickets||[],source:'final',changed,
+      first,finalSnap,selected:'site-saved-sha-audited'};
+  }
+  // If the server's PRE_RESULT SHA/audit proof is absent, stay a reference.
   // Immutable first-seen evidence is still captured by be181First above;
   // after deadline the branch above ONLY shows the approved frozen final snapshot.
   return {rows:now,source:'latest',changed,first,finalSnap,selected:'latest'};
@@ -1034,7 +1080,7 @@ function be181Banner(selection,mode,key,mins,finalSnap){
   const counts=first?.modes?.[mode]?.tickets||[];
   const previous=counts.map(x=>x.combo).join(' / ');
   const buttons=after?'':`<div class="be181-switch"><button type="button" data-be181-choice="first" ${fixed?'disabled':''}>初回の買い目</button><button type="button" data-be181-choice="latest" ${fixed?'':'disabled'}>最新の買い目</button></div>`;
-  return `<div class="be181-freeze-banner" data-be181-source="${selection.source}"><b>${title}</b><small>初回/保存の記録：${safe(stamp)} ／ ${safe(updated)}</small>${buttons}`+
+  return `<div class="be181-freeze-banner" data-be181-source="${selection.source}" data-be181-race-key="${safe(key)}" data-be181-verification="${selection.selected==='site-saved-sha-audited'?'site-sha-audit':'unverified'}"><b>${title}</b><small>初回/保存の記録：${safe(stamp)} ／ ${safe(updated)}</small>${buttons}`+
      `${first?`<details><summary>初回の${safe(mode)}モード買い目を確認</summary><span>${safe(previous)}</span></details>`:''}`+
      `<small>途中の予想更新と締切前の最終保存は別記録。結果確定後に再計算した買い目は表示・的中判定に使用しません。</small></div>`;
 }
@@ -1072,9 +1118,12 @@ async function renderPredictionModes(race,pred){
 
   const localFinal=be181ValidFinal(snap,key)?snap:null;
   const serverSnap=be181ValidFinal(serverRecord?.snapshot,key)?serverRecord.snapshot:null;
+  const verifiedPreDeadline=(!resultConfirmed&&mins!==null&&mins>=0&&mins<=15)?
+    await be181VerifiedPreDeadlineFinal(key,race?.meta?.deadline):null;
+  if(!current())return;
   const serverFinal=(resultConfirmed||(mins!==null&&mins<0))?await be181ServerFinal(key):null;
   if(!current())return;
-  const effectiveSnap=serverSnap||serverFinal||localFinal||null;
+  const effectiveSnap=serverSnap||verifiedPreDeadline||serverFinal||localFinal||null;
   const settled=resultConfirmed&&effectiveSnap?(serverSnap&&serverRecord?.settlement?serverRecord.settlement:settle(effectiveSnap,result)):null;
   const win=settled?.winning_combo||null;
   const officialResult=resultConfirmed?normalizeCombo(result?.trifecta||result?.finish_order):null;
@@ -1083,7 +1132,7 @@ async function renderPredictionModes(race,pred){
   if(!LABELS[mode])mode="hit";
 
   be181InstallStyle();
-  const choice=be181ShowChoice(key,mins,resultConfirmed,effectiveSnap,firstShown,modes,mode);
+  const choice=be181ShowChoice(key,mins,resultConfirmed,effectiveSnap,firstShown,modes,mode,Boolean(verifiedPreDeadline));
   const baseRows=choice.rows;
   const officialPay100=resultConfirmed?Number(result?.trifecta_payout_yen_per_100):NaN;
   const validFinal=resultConfirmed&&Boolean(officialResult)&&Number.isFinite(officialPay100)&&officialPay100>0;
@@ -1099,7 +1148,8 @@ async function renderPredictionModes(race,pred){
   window.BoatEdgeV175?.register?.(key,resultConfirmed&&effectiveSnap?.modes?effectiveSnap.modes:modes,odds,resultConfirmed);
 
   let snapStatus="🎯履歴は締切15分前から保存";
-  if(inFinalWindow)snapStatus=`🎯 最終予想を保存中・締切まで${mins}分`;
+  if(verifiedPreDeadline)snapStatus='サイト保存済み最終予想を表示中（SHA・監査照合済み／Git初回保存時刻は別検証）';
+  else if(inFinalWindow)snapStatus=`🎯 この端末の参考予想を保存中・締切まで${mins}分`;
   else if(resultConfirmed&&serverSnap)snapStatus=`サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
   else if(resultConfirmed&&finalSnap)snapStatus=`この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
   else if(resultConfirmed&&!effectiveSnap)snapStatus="締切前保存なし・結果を見た後の予想は非表示・判定対象外";
@@ -1137,6 +1187,7 @@ async function renderPredictionModes(race,pred){
   let panel=$("#be108PredictionModes");
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
+  if(verifiedPreDeadline)window.BoatEdgeV392?.hide?.();
   panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開順位の参考表示（確率は未校正）</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部スコア（未校正）</small><strong>${conf}<span style="font-size:.65em;font-weight:700"> / 100</span></strong></div></div><div class="be255-score-note">内部スコアはランク・順位による未校正指標。買い目の「相対配分%」は表示された買い目内の参考重みであり、120通りの確率分布・1着確率・3連単的中確率ではありません。締切前の保存買い目は結果後に変更しません。</div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
   $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{if(!current())return;localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
