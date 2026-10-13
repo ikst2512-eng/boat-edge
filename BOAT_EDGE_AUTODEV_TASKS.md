@@ -56,3 +56,12 @@ A checked box does not certify Safari visual behavior or prediction accuracy.
 - [x] A31 | On the existing beforeinfo/original-exhibition view, separate verified six-racer exhibition/source evidence from unknown/awaiting publication in compact labels. Do not turn missing values into zero or merge official with BOATERS/競艇日和 evidence.
 - [x] A32 | On the current AI self-drive status UI, show a compact explanation that Actions PASS or Pages SUCCESS is not proof of model accuracy and that formal Fresh stays locked when stored status says so. Do not fetch result or payout endpoints, expose credentials, or claim Safari checks.
 - [x] A33 | On iPhone race results view, improve the visible distinction between predeadline fixed predictions, result waiting, verified hit, verified miss, and ineligible records; use only already verified stored evidence, no retrospective pick reconstruction.
+
+## Owner-requested next UI-only batch (2026-10-14; A34–A37)
+
+These tasks follow the owner's instruction to continue BOAT EDGE development after A33 completed. V240 may execute at most one unchecked task per run, only through its existing isolated UI-only Codex gate and draft-PR publication. Existing implementation must be checked before editing. Never touch scripts, workflows, data, model weights, odds, results, formal Fresh, or frozen predictions. No claims of real-device Safari certification or measured accuracy.
+
+- [ ] A34 | In the existing selected-race iPhone prediction screen, keep venue/R, official deadline and saved source freshness legible together without duplicating existing controls. Use only present data; unknown deadlines remain unknown. Preserve selection, 6 racers and frozen Top3/5/10.
+- [ ] A35 | In the existing no-bet/paused-picks screen, ensure no recommended stake, allocation or payout estimate is presented as actionable. Preserve access to source status and the recorded reason for the pause; do not recompute tickets or fetch odds.
+- [ ] A36 | In the existing six-boat mobile comparison, make the provenance and missing-value state of exhibition/ST/turn/straight metrics readable without conflating BOATERS, 競艇日和 and official data. Do not fabricate measurements or reorder boats.
+- [ ] A37 | In the existing Top3/5/10 mobile prediction list, distinguish saved rank coverage, head selection and uncalibrated allocation weights from verified outcome labels. Preserve exact saved tickets, order, yen amounts and confidence fields; never infer hits from absent results.
