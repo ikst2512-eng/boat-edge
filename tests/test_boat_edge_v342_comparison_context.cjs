@@ -114,3 +114,13 @@ test('V371 narrow iPhone opens six-racer comparison as readable rows; race switc
  assert.equal(f.viewport.hidden,true);
  assert.equal(f.panel.hidden,true,'previous race head ticket must remain closed');
 });
+
+test('A36 only displays matching-race independent exhibition proof and never invents measurements',()=>{
+ const js=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
+ assert(js.includes("host?.dataset?.raceKey!==key"));
+ assert(js.includes("host.hidden"));
+ assert(js.includes("BOATERS 未取得・未照合"));
+ assert(js.includes("競艇日和 未取得・未照合"));
+ assert(js.includes("originalSourceStatus(r.race_key)"));
+ assert(!js.includes("fetch('https://boaters"));
+});
