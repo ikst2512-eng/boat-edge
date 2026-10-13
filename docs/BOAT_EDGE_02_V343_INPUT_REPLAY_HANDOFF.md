@@ -367,3 +367,52 @@ the independent source identity, raw bytes/hash, true collection time,
 strict predeadline/freshness, scratch/withdrawal validation, and guarded
 Git publication. Never overwrite frozen picks or raise the model's
 production eligibility solely due to this selector divergence.
+
+
+### V365: source-refresh-only selection contract for integration by Track 01
+
+V365 provides a new **non-executing, read-only** candidate selector:
+`scripts/boat_edge_v365_source_only_selection_contract.py`. It intentionally
+does not call V230's network fetcher, write any files, update a site prediction,
+or schedule a workflow. It exposes a precise alternative selection contract
+for the source-refresh portion of a possible Track 01 implementation.
+
+The contract:
+- Read only the present-day PRE_RESULT index and race-card metadata; require
+  both the index and race to have explicit results_seen/unlock/scoring=false.
+  Reject any race/index carrying result/outcome-bearing top-level keys.
+- Select only 2–19-minute future races with identical date, venue,
+  race number and deadline between index and actual race JSON. Reject bad
+  types, duplicate keys, six-racer absence, or symlinked source/index.
+- **Do not use a first immutable SITE prediction snapshot as a reason to
+  skip an otherwise safe official source refresh.** Check only file
+  existence; never open, hash, parse, rewrite or remove it. Reject symlinks.
+- Return a bounded (1–12), deterministically ordered candidate set with
+  fail-closed rejection reasons and explicit zero-authority flags.
+- No claim of source authentication, race freeze eligibility, historical
+  completeness, actual entry, or model accuracy follows from this selector.
+
+`tests/test_boat_edge_v236_v365_source_only_selection_contract.py`
+exercises a first-pick snapshot with deliberately non-JSON opaque contents,
+no snapshot, deadlines, metadata conflicts, missing racers, duplicates,
+symlinks, a locked/result-bearing index and race, and invalid clock/cap.
+
+**Track 01 integration precautions:** V235 currently checks the exact
+`scripts/boat_edge_v230_fast_lane.py` Git blob (pin
+`569215c933354db691552965bdff9a91fc611460`) before execution. A
+change to V230 cannot be pushed to main alone without reviewing and safely
+updating the V235 pin and any related concurrency/write-owner guards.
+Do not replace V230's existing atomic first-prediction freeze with a
+source-only selector; instead separate the refresh of verifiable current
+official bytes from the optional creation of **first** site predictions.
+Keep existing official URL/redirect validation, scratch, odds, beforeinfo
+coverage, immutable prediction and Git conflict guards, and the strict
+deadline checks at both fetch and publish time. A data refresh after a
+race's deadline is not a prospective observation. Never present existing
+same-day mutable Git card timestamps as proof of source freshness for a
+prior V336 run.
+
+After an independently checked Track 01 main integration, monitor a
+genuinely *new* eligible V336 live run and confirm completed_count > 0;
+validate its original input and HTML SHA and replay its complete 3x120
+through V343/V344. A V365 test PASS alone does not do any live updating.
