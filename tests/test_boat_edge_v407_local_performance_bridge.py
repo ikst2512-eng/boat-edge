@@ -280,6 +280,9 @@ class V407OfflineNativeBridgeTests(unittest.TestCase):
             self.assertEqual(sorted(loaded),["kiryu.txt","toda.TXT"])
             entries=parse_local_k_files(loaded)
             self.assertEqual(len(entries),12)
+            with self.assertRaisesRegex(ValueError, "LOCAL_K_UNPARSEABLE_SOURCE_FILE"):
+                parse_local_k_files({**loaded,
+                                     "unparsable.txt": b"SYNTHETIC GARBAGE"*12})
             b=b_stage(KEY,"202609300201")
             k=stage_local_entries(entries,b,pub(KEY,"202609300201"))
             self.assertEqual([r["race_key"] for r in k["races"]],
