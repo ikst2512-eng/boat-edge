@@ -143,6 +143,20 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                 assert rendered == expected[:size], (
                     "Live TopK order diverges from source list for " + key
                 )
+            # The browser navigation itself can take time. Re-check the actual
+            # JST deadline before granting a live PRE_RESULT certification.
+            # The original candidate cutoff alone is insufficient if a race
+            # closes while a slow WebKit/Pages run is loading.
+            verified_at = datetime.now(JST)
+            due = datetime.strptime(
+                str(catalog["date"]) + " " + str(race["deadline"]),
+                "%Y-%m-%d %H:%M"
+            ).replace(tzinfo=JST)
+            if verified_at >= due:
+                stopped_reasons.append({
+                    "race": key, "reason": "deadline_passed_during_browser_probe"
+                })
+                continue
             assert not browser_errors, "Live TopK JavaScript errors: " + repr(browser_errors)
             assert live.evaluate(
                 "(typeof state !== 'undefined' ? state?.race?.race_key : null)"
