@@ -23,6 +23,19 @@ def cause(tickets, winner):
         return "second_absent_given_head"
     return "third_absent_given_head_second"
 
+def rank_head_diversified(hit10, k, keep):
+    """Post-hoc hypothesis, NOT a predeadline frozen prediction.
+
+    Preserve `keep` original highest-ranked tickets, then give non-primary
+    heads priority for remaining slots before filling by original rank.
+    This heuristic never uses the race result to construct tickets.
+    """
+    seed = hit10[:keep]
+    alt = [t for t in hit10 if t[0] != hit10[0][0] and t not in seed]
+    fallback = [t for t in hit10 if t not in seed]
+    return list(dict.fromkeys(seed + alt + fallback))[:k]
+
+
 def evaluate(root: Path):
     base = root / "data/site_autopilot"
     scores = base / "v236_scored"
@@ -34,6 +47,8 @@ def evaluate(root: Path):
     baseline_failure_by_k = {str(k): Counter() for k in TOPK}
     prefix_identical = {m: {str(k): True for k in TOPK} for m in MODES if m != "hit10"}
     per_day = {}
+    exploratory = {"head_diversified3": {"k": 3, "keep": 2, "hits": 0, "gain": 0, "loss": 0, "changed": 0},
+                   "head_diversified5": {"k": 5, "keep": 3, "hits": 0, "gain": 0, "loss": 0, "changed": 0}}
     for p in sorted(scores.glob("20??????-??-??.json")):
         try:
             s = json.loads(p.read_text(encoding="utf-8"))
@@ -61,6 +76,15 @@ def evaluate(root: Path):
                       "rank4_5" if rank is not None and rank <= 5 else
                       "rank6_10" if rank is not None else "outside_top10")
             baseline_rank_buckets[bucket] += 1
+            for name, e in exploratory.items():
+                k = e["k"]
+                candidate = rank_head_diversified(tickets["hit10"], k, e["keep"])
+                baseline_hit = winner in tickets["hit10"][:k]
+                candidate_hit = winner in candidate
+                e["hits"] += int(candidate_hit)
+                e["gain"] += int(candidate_hit and not baseline_hit)
+                e["loss"] += int(baseline_hit and not candidate_hit)
+                e["changed"] += int(candidate != tickets["hit10"][:k])
             day = p.stem[:8]
             if day not in per_day:
                 per_day[day] = {m: {str(k): 0 for k in TOPK} for m in MODES}
@@ -87,9 +111,19 @@ def evaluate(root: Path):
             row["races"] = included
             row["hit_rate_percent"] = round(100 * row["hits"] / included, 2) if included else None
             row["net_gain"] = row["gain"] - row["loss"]
+    for row in exploratory.values():
+        row["races"] = included
+        row["hit_rate_percent"] = round(100 * row["hits"] / included, 2) if included else None
+        row["net_gain"] = row["gain"] - row["loss"]
     return {"scope": "POST_RESULT_SITE_ONLY_NOT_FORMAL_FRESH",
             "source": "v236_scored_plus_original_v236_frozen",
             "races": included, "excluded": exclusions, "topk": totals,
+            "post_hoc_exploration_not_predeadline_evidence": {
+                "status": "HYPOTHESIS_ONLY_NO_PROSPECTIVE_CANDIDATE_FREEZE",
+                "construction": "ORIGINAL_TOP10_RANK_ONLY_MOVE_OTHER_HEADS_FORWARD",
+                "candidates": exploratory,
+                "promotion_authorized": False,
+            },
             "diagnostics": {
                 "baseline_rank_buckets": dict(sorted(baseline_rank_buckets.items())),
                 "baseline_failure_by_k": {k: dict(sorted(v.items())) for k, v in baseline_failure_by_k.items()},
