@@ -32,6 +32,18 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertEqual(entries[name]["crons"], [])
         self.assertNotIn(name, report["scheduled_contents_writers"])
 
+    def test_v356_retired_v185_relay_has_no_dispatch_or_write_permission(self):
+        relay = ROOT / ".github/workflows/site-v185-trigger.yml"
+        src = relay.read_text(encoding="utf-8")
+        self.assertNotIn("workflow_run:", src)
+        self.assertNotIn("actions: write", src)
+        self.assertNotIn("curl ", src)
+        self.assertNotIn("/dispatches", src)
+        report = audit(ROOT / ".github" / "workflows")
+        row = next(x for x in report["workflows"] if x["workflow"] == relay.name)
+        self.assertEqual(row["triggers"], ["workflow_dispatch"])
+        self.assertFalse(row["scheduled_write_candidate"])
+
     def test_plain_and_quoted_on_keys_are_equivalent(self):
         from tempfile import TemporaryDirectory
         styles = ("on", "'on'", '"on"')
