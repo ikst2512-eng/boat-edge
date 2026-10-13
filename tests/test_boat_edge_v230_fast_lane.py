@@ -56,6 +56,36 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.targets(self.root,self.now),[KEY])
         self.assertEqual(m.target_diagnostic(self.root,self.now.replace(day=12))['today_mismatch'],1)
 
+    def test_naruto_20261014_0820_preflight_and_strict_freeze_window(self):
+        # Exact priority race: source collection starts before the 2-10 minute
+        # V229 freeze window. This only verifies scheduling/identity, not a
+        # published official beforeinfo value or a saved prediction.
+        key='20261014-14-01'
+        self.assertEqual(key,'20261014-14-01')
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-14',
+            'venues':[{'venue':'鳴門','races':[{'race_key':key,'deadline':'08:35'}]}]})
+        race=makerace('08:35')
+        race['race_key']=key
+        race['meta'].update(date='2026-10-14',race_no=1,venue_code='14')
+        m.write_json(self.root/'data/races'/f'{key}.json',race)
+        def at(hour,minute):return datetime(2026,10,14,hour,minute,tzinfo=JST)
+        self.assertEqual(m.targets(self.root,at(8,15)),[])
+        self.assertEqual(m.target_diagnostic(self.root,at(8,15))['outside_2_to_19_min_window'],1)
+        for hour,minute in ((8,20),(8,22),(8,25),(8,27),(8,32),(8,33)):
+            with self.subTest(clock=f'{hour:02d}:{minute:02d}'):
+                self.assertEqual(m.targets(self.root,at(hour,minute)),[key])
+                self.assertEqual(m.target_diagnostic(self.root,at(hour,minute))['eligible'],1)
+        # V230 source prewarming must not be confused with V229 eligibility:
+        # 08:20 / 08:22 are too early for the immutable FINAL_15M freeze.
+        self.assertGreater((m.due_for(key,'08:35')-at(8,20)).total_seconds(),600)
+        self.assertGreater((m.due_for(key,'08:35')-at(8,22)).total_seconds(),600)
+        for minute in (25,27,32,33):
+            self.assertTrue(120 <= (m.due_for(key,'08:35')-at(8,minute)).total_seconds() <= 600)
+        self.assertEqual(m.targets(self.root,at(8,34)),[])
+        self.assertEqual(m.targets(self.root,at(8,35)),[])
+        snap=self.root/'data/site_prediction_snapshots'/f'{key}.json'
+        self.assertFalse(snap.exists(),'preflight must not write or backfill a prediction')
+
     def test_never_rewrites_snapshot(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         p=self.root/'data/site_prediction_snapshots'/f'{KEY}.json';p.parent.mkdir(parents=True);p.write_bytes(b'IMMUTABLE')
