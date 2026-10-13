@@ -140,3 +140,55 @@ Track 01 still owns PR merge and live V336 artifact confirmation.
 No main merge, Pages publication, actual future capture, Formal Fresh
 Run1/Run2, scoring, site prediction change, model promotion, or proven
 accuracy improvement is claimed by this PR.
+
+
+## V346 extension — explicit source readiness reason at race selection
+
+New V346 is a read-only preflight derived from the exact bytes V334
+read while selecting current-day predeadline PRE_RESULT race cards. V334
+attaches selection_scan to each candidate and, if freezing fails, its
+failure row. It distinguishes:
+
+- official race_card and beforeinfo statuses and self-reported ages
+  (race_card >16min; beforeinfo >15min remain stale, never accepted);
+- start-exhibition rows with an **explicit** course field; six boat/ST
+  observations without the six-course permutation are NOT mapped from
+  lane number to course number;
+- six racer rows with usable national win rate, motor quinella rate and
+  average ST, with no imputation;
+- input SHA256 at **selection**, explicitly not proof that V332 used
+  identical bytes at its later freeze attempt.
+
+V346 may only run after V334 has verified that the day and PRE_RESULT
+locks match and the deadline is future. Any result-bearing race document
+is rejected. It neither calls providers nor loosens the V312/V332 freeze
+gates; the original freeze attempt and error code remain authoritative.
+The full diagnostic in V336's JSON job report helps identify which
+upstream inputs to repair without misreporting a green Actions job as a
+successful research freeze. No historical candidate recovery.
+
+Observed operational examples on 2026-10-13 (JST), before any V346
+post-merge live artifact exists:
+
+- 15:06 V336 run 38354920151: selected 5, frozen 0.
+  Three course/metadata readiness failures and two beforeinfo not-ok.
+- 15:35 V336 run 38357552542: selected 3, frozen 0.
+  One readiness failure and two stale race-card metadata failures.
+- Stored race 20261013-15-02 has six start-exhibition lane/ST rows but
+  no explicit course keys: it is **not** six-course-qualified merely
+  because a separate coverage flag says six boats are present.
+- Stored race 20261013-04-11 has later updated source timestamps than
+  the earlier failed V336 execution; an updated Git file after the
+  execution cannot retroactively make a prior freeze valid.
+
+Regression tests: tests/test_boat_edge_v236_v346_source_readiness.py.
+These exercise healthy synthetic cards, course missing, both stale
+sources, missing average ST, bad PRE_RESULT/locked/result flags, closed
+deadline, input SHA, and diagnostics attached to failure records.
+No source freshness threshold, actual-entry claim, model weights,
+formal locks, public site UI, or Actions workflow file is changed.
+
+Track 01 still owns main integration and upstream collector work.
+After merge, actual success is counted ONLY if a genuinely new
+predeadline freeze with source receipts and all three 120-row lists
+passes V344/V343; Actions exit status alone is insufficient.
