@@ -49,7 +49,7 @@ def package_days(days):
     if not isinstance(days, list) or not 0 < len(days) <= max_days:
         raise ValueError("STAGED_DAY_LIST_REQUIRED")
     seen = set()
-    rows_out = []
+    day_parts = []  # compact canonical text per source day, not one dict per boat
     lineage = []
     reports = []
     for item in days:
@@ -78,13 +78,16 @@ def package_days(days):
             raise ValueError("STAGED_HISTORY_UTF8_REQUIRED") from exc
         race_count = 0
         by_venue = Counter()
+        day_output = io.StringIO(newline="")
+        day_writer = csv.DictWriter(day_output, fieldnames=COLUMNS,
+                                    lineterminator="\n")
         for race in iter_races(source, CUTOFF):
             if race[0][1] != report_day:
                 raise ValueError("STAGED_CSV_SOURCE_DAY_MISMATCH")
             race_count += 1
             by_venue[f"{race[0][2]:02d}"] += 1
             for entry in race:
-                rows_out.append({
+                day_writer.writerow({
                     "race_key": entry[0], "boat": str(entry[3]),
                     "racer_id": entry[4],
                     "actual_course": str(entry[5]),
@@ -100,6 +103,7 @@ def package_days(days):
         }
         if dict(by_venue) != expected_by_venue:
             raise ValueError("V402_K_VENUE_COUNTS_MISMATCH")
+        day_parts.append((day_text, day_output.getvalue()))
         reports.append(report)
         lineage.append({
             "source_day": day_text,
@@ -110,11 +114,11 @@ def package_days(days):
             "excluded_races": report["excluded_with_explicit_reason"],
         })
 
-    rows_out.sort(key=lambda r: (r["race_key"], int(r["boat"])))
     output = io.StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=COLUMNS, lineterminator="\n")
     writer.writeheader()
-    writer.writerows(rows_out)
+    for _, text_rows in sorted(day_parts):
+        output.write(text_rows)
     combined_raw = output.getvalue().encode("utf-8")
     # Revalidate the merged six-entry permutation and ordering, not just days.
     if sum(1 for _ in iter_races(combined_raw.decode("utf-8"), CUTOFF)) != sum(
@@ -135,12 +139,13 @@ def package_days(days):
     }
     validate_manifest(manifest, combined_raw, CUTOFF)
     coverage = coverage_audit(reports)
+    race_total = sum(r["reconciled_six_boat_races"] for r in reports)
     return combined_raw, manifest, {
         "schema": MODEL,
         "research_only": True,
         "input_days": len(days),
-        "normalized_complete_races": len(rows_out) // 6,
-        "normalized_six_boat_rows": len(rows_out),
+        "normalized_complete_races": race_total,
+        "normalized_six_boat_rows": race_total * 6,
         "history_csv_sha256": _sha(combined_raw),
         "lineage_sha256": lineage_sha,
         "source_lineage": lineage,
