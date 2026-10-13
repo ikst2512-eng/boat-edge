@@ -146,6 +146,17 @@ class HistoricalV125Proof(unittest.TestCase):
         finally:
             tmp.cleanup()
 
+    def test_v136_legacy_installer_cannot_overwrite_first_git_scoring(self):
+        workflow = (Path(__file__).resolve().parents[1]
+                    / ".github/workflows/site-v136.yml").read_text(encoding="utf-8")
+        self.assertIn("    if: false", workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch'", workflow)
+        self.assertIn("    needs: [install]", workflow)
+        scorer = (Path(__file__).resolve().parents[1]
+                  / "scripts/site_accuracy_v136.py").read_text(encoding="utf-8")
+        self.assertIn("check_historical_proof(BASE,key,snap)", scorer)
+        self.assertNotIn('audited.get(key)', scorer)
+
     def test_result_never_needed_and_no_formal_read(self):
         tmp, root, snapshot = self.prepare()
         try:
