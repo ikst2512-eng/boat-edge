@@ -41,7 +41,7 @@ def _file(root, relative):
     return path
 
 
-def replay_one(frozen_raw, input_raw, key, expected_freeze_sha):
+def replay_one(frozen_raw, input_raw, key, expected_freeze_sha, official_start_raw=None):
     if hashlib.sha256(frozen_raw).hexdigest() != expected_freeze_sha:
         raise ValueError("REPORTED_FREEZE_SHA_MISMATCH")
     frozen = json.loads(frozen_raw)
@@ -58,7 +58,16 @@ def replay_one(frozen_raw, input_raw, key, expected_freeze_sha):
     # Reconstruct from archived input at the frozen instant. No writes or live
     # current-day source reads; old captures without a snapshot fail closed.
     when = parse_time(frozen.get("frozen_at_jst"))
-    candidate, deadline, race = candidate_from_raw(input_raw, key, when)
+    recorded_official = frozen.get("official_start_course_source_sha256")
+    if recorded_official is not None:
+        if (not isinstance(recorded_official, str) or len(recorded_official) != 64
+                or official_start_raw is None or
+                hashlib.sha256(official_start_raw).hexdigest() != recorded_official):
+            raise ValueError("ARCHIVED_OFFICIAL_START_SOURCE_SHA_MISMATCH")
+    elif official_start_raw is not None:
+        raise ValueError("UNDECLARED_OFFICIAL_START_SOURCE_FORBIDDEN")
+    candidate, deadline, race = candidate_from_raw(
+        input_raw, key, when, official_start_raw)
     if deadline.isoformat() != frozen.get("deadline_jst"):
         raise ValueError("REPLAY_DEADLINE_MISMATCH")
     encoded = canonical(candidate)
@@ -69,7 +78,8 @@ def replay_one(frozen_raw, input_raw, key, expected_freeze_sha):
     return {"race_key": key, "race_input_sha256": digest,
             "candidate_sha256": frozen["candidate_sha256"],
             "exact_candidate_reproduced": True,
-            "saved_full_120_top10_and_head_parity_verified": full_120}
+            "saved_full_120_top10_and_head_parity_verified": full_120,
+            "archived_official_start_course_source_replayed": official_start_raw is not None}
 
 
 def verify(root, report):
@@ -81,8 +91,14 @@ def verify(root, report):
         key = row["race_key"]
         freeze_path = _file(root, row["path"])
         input_path = _file(root, f"data/source_captures/{key[:8]}/{key}/race_input.json")
-        rows.append(replay_one(freeze_path.read_bytes(), input_path.read_bytes(),
-                               key, row["sha256"]))
+        frozen_raw = freeze_path.read_bytes()
+        frozen = json.loads(frozen_raw)
+        source_raw = None
+        if frozen.get("official_start_course_source_sha256") is not None:
+            source_path = _file(root, f"data/source_captures/{key[:8]}/{key}/official_start_beforeinfo.html")
+            source_raw = source_path.read_bytes()
+        rows.append(replay_one(frozen_raw, input_path.read_bytes(),
+                               key, row["sha256"], source_raw))
     return {
         "model_id": MODEL, "supplied_completed_freezes": len(rows),
         "candidate_replay_verified_within_supplied_report": bool(rows),
