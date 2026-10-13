@@ -22,7 +22,7 @@ import json
 from pathlib import Path
 import tempfile
 
-from boat_edge_v230_fast_lane import parse_regs, parse_before, beforeinfo_coverage
+from boat_edge_v230_fast_lane import parse_regs, parse_before, beforeinfo_coverage, extract_blocked
 from boat_edge_v315_source_capture import check_target, real_fetch, MAX_HTML_BYTES
 from boat_edge_v318_shadow_freeze import JST, canonical
 from boat_edge_v362_official_start_course_proof import parse_proven_course_rows
@@ -106,6 +106,8 @@ def _validate_official_beforeinfo(race, beforeinfo):
 
 def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
     """Write-once proof; no shared state writes, no first-prediction access."""
+    if not isinstance(key, str) or key.startswith("20261001-"):
+        raise ValueError("V366_FORMAL_FRESH_TARGET_EXCLUDED")
     root = Path(root).resolve()
     now = _clock(clock)
     # The independent V365 selector rejects stale/outcome-bearing index/race
@@ -148,6 +150,14 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
         }
     registrations = _validate_registration_parity(race, capture["racelist"]["raw"])
     coverage, proof = _validate_official_beforeinfo(race, capture["beforeinfo"]["raw"])
+    # Explicit withdrawal/absence signals are never interpreted as healthy
+    # six-participant eligibility, even when tables contain six rows.
+    from bs4 import BeautifulSoup
+    racelist_text = BeautifulSoup(capture["racelist"]["raw"], "lxml").get_text(" ", strip=True)
+    beforeinfo_text = BeautifulSoup(capture["beforeinfo"]["raw"], "lxml").get_text(" ", strip=True)
+    reasons, lanes, flags = extract_blocked(race["racers"], racelist_text, beforeinfo_text, True)
+    if reasons or lanes or flags:
+        raise ValueError("V366_OFFICIAL_WITHDRAWAL_OR_ABSENCE_SIGNAL")
     # Re-read and byte-compare sources before writing. An external collector
     # update during this capture cannot silently change what was validated.
     if (root / "data/races" / (key + ".json")).read_bytes() != original:
