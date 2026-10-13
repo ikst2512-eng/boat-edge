@@ -157,7 +157,7 @@ class MobilePredictionBrowser(unittest.TestCase):
                       window.boatEdgeTestKind='stop';window.BoatEdgeV207.render();
                     }""")
                     self.assertEqual(page.locator("#be207Top .be207-ticket").count(), 0)
-                    self.assertIn("買い目停止", page.locator("#be207Top .be207-budget").inner_text())
+                    self.assertIn("買い目を停止", page.locator("#be207Top .be207-budget").inner_text())
                     self.assertNotIn("10,000円", page.locator("#be207Top .be207-budget").inner_text())
                     self.assertIn("非表示", page.locator("#be207Top .be207-odds").inner_text())
                     self.assertEqual(page.locator('[data-be259="head"]').inner_text(), "未確認")
