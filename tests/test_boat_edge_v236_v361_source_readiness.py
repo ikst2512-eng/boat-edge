@@ -54,7 +54,7 @@ class V361SourceReadiness(unittest.TestCase):
             self.assertEqual(result["completed_count"], 0)
             self.assertEqual(result["run_diagnostic"], "ELIGIBLE_BUT_NO_FREEZE_COMPLETED")
             f = result["failures"][0]
-            self.assertEqual(f["reason"], "PREDEADLINE_SOURCE_AND_EXHIBITION_GATE_NOT_MET")
+            self.assertEqual(f["reason"], "START_SOURCE_SAME_RACE_RAW_HTML_MISSING")
             scan = f["selection_scan"]
             self.assertFalse(scan["start_exhibition_provisional_permutation_recorded"])
             self.assertEqual(scan["start_exhibition_explicit_course_lanes"], [])
