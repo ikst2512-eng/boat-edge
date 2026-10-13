@@ -143,3 +143,11 @@ html:not(.be208-details-on) #raceView #be206Quick .be206-source{display:none!imp
 @media(prefers-reduced-motion:reduce){
  #raceView #raceTabs,#homeView .be108-race-strip{scroll-behavior:auto}
 }
+
+/* A36 follow-up: V371 compact mode must not conceal the already source-scoped
+   six-boat exhibition receipts introduced on main. Only selected metric tabs. */
+html:not(.be208-details-on) #raceView #be206Quick:has(.be206-switch [data-be206-metric="exhibit"].on) .be206-source,
+html:not(.be208-details-on) #raceView #be206Quick:has(.be206-switch [data-be206-metric="original"].on) .be206-source{
+ display:block!important;margin:7px 0;padding:8px 9px;border-left:3px solid #b9cbde;
+ background:#f6f9fc;border-radius:4px;font-size:11px;line-height:1.7;overflow-wrap:anywhere
+}
