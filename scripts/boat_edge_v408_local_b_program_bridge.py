@@ -20,6 +20,7 @@ from boat_edge_v400_five_year_history_research import (
 )
 from boat_edge_v402_offline_b_k_reconciliation import B_SCHEMA
 from boat_edge_v404_asof_history_features import TARGET_SCHEMA, _target
+from boat_edge_v407_local_performance_bridge import load_local_txt_sources, MAX_LOCAL_FILES
 
 MODEL = "BOAT_EDGE_V408_LOCAL_B_STAGE_RESEARCH_V1"
 MAX_RACES = 288
@@ -129,31 +130,43 @@ def stage_b_schedule(entries, closes, races, source_day):
     }
 
 
-def parse_local_b_txt(raw, source_day):
-    """Run optional ScheduleParser on *local* CP932 bytes, no downloader."""
-    if not isinstance(raw, bytes) or not raw:
-        raise ValueError("LOCAL_B_TEXT_BYTES_REQUIRED")
+def parse_local_b_files(sources, source_day):
+    """Optional parser for one or more locally decompressed B venue TXT files."""
+    if not isinstance(sources, dict) or not 0 < len(sources) <= MAX_LOCAL_FILES:
+        raise ValueError("LOCAL_B_SOURCE_MAP_REQUIRED")
     if type(source_day) is not date:
         raise ValueError("OPERATOR_SOURCE_DAY_REQUIRED")
-    try:
-        text = raw.decode("cp932", errors="strict")
-    except UnicodeError as exc:
-        raise ValueError("LOCAL_B_CP932_DECODE_FAILED") from exc
+    decoded = {}
+    for filename, raw in sources.items():
+        if (not isinstance(filename, str) or not filename.lower().endswith(".txt")
+                or not isinstance(raw, bytes) or not raw):
+            raise ValueError("LOCAL_B_TEXT_BYTES_REQUIRED")
+        try:
+            decoded[filename] = raw.decode("cp932", errors="strict")
+        except UnicodeError as exc:
+            raise ValueError("LOCAL_B_CP932_DECODE_FAILED") from exc
     try:
         from boatrace_lzh.schedule import ScheduleParser
     except ImportError as exc:
         raise RuntimeError("OPTIONAL_LOCAL_B_SCHEDULE_PARSER_NOT_INSTALLED") from exc
     parser = ScheduleParser()
-    content = {"operator_local_B.txt": text}
-    structured = parser.parse(content)
-    closes = parser.parse_schedule_with_close_times(content, source_day)
+    structured = parser.parse(decoded)
+    closes = parser.parse_schedule_with_close_times(decoded, source_day)
     return stage_b_schedule(structured.entries, closes, structured.races, source_day)
+
+
+def parse_local_b_txt(raw, source_day):
+    """Compatibility for single local B TXT; no archive extraction/network."""
+    return parse_local_b_files({"operator_local_B.txt": raw}, source_day)
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--local-b-txt", type=Path, required=True,
-                   help="Already licensed and decompressed B text; no URL")
+    local = p.add_mutually_exclusive_group(required=True)
+    local.add_argument("--local-b-txt", type=Path,
+                       help="Single licensed and decompressed local B TXT")
+    local.add_argument("--local-b-dir", type=Path,
+                       help="Directory of locally decompressed venue B TXT files")
     p.add_argument("--source-day", required=True, help="YYYY-MM-DD, historical only")
     p.add_argument("--output-json", type=Path, required=True,
                    help="Private staged B JSON for V402, never commit source bytes")
@@ -162,8 +175,10 @@ def main():
         source_day = date.fromisoformat(a.source_day)
     except ValueError as exc:
         raise ValueError("INVALID_B_SOURCE_DAY") from exc
-    raw = a.local_b_txt.read_bytes()
-    staged = parse_local_b_txt(raw, source_day)
+    sources = load_local_txt_sources(a.local_b_txt, a.local_b_dir)
+    staged = parse_local_b_files(sources, source_day)
+    lineage = {name: hashlib.sha256(data).hexdigest()
+               for name, data in sorted(sources.items())}
     if a.output_json.exists():
         raise ValueError("REFUSE_OVERWRITE_EXISTING_B_STAGE")
     a.output_json.write_text(
@@ -172,7 +187,9 @@ def main():
     )
     print(json.dumps({
         "schema": MODEL, "source_day": source_day.isoformat(),
-        "b_source_sha256": hashlib.sha256(raw).hexdigest(),
+        "b_source_sha256": next(iter(lineage.values())) if len(lineage) == 1 else None,
+        "b_local_source_sha256_by_filename": lineage,
+        "b_local_source_count": len(lineage),
         "b_parsed_races": len(staged["races"]),
         "b_source_historic_predeadline_capture_verified": False,
         "source_data_rights_independently_verified": False,
