@@ -15,8 +15,6 @@ on:
     # 08:20 JST is 23:20 UTC on the previous calendar day.
     # PRE_RESULT source prewarm only; the strict V229 2-10m freeze window is unchanged.
     - cron: '20 23 * * *'
-    # Extra 08:25/08:30 JST attempts for early races; never relax the 2-10m evidence gate.
-    - cron: '25,30 23 * * *'
     - cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'
 permissions:
   contents: write
