@@ -1,6 +1,6 @@
 """Synthetic-only regression tests; never access race outcomes or Formal files."""
 import unittest
-from scripts.boat_edge_v304_site_topk_audit import summarize, reconcile_v235_baseline
+from scripts.boat_edge_v304_site_topk_audit import summarize, reconcile_v235_baseline, ranked_site_baseline_by_day
 from scripts.boat_edge_v301_paired_evidence import EvidenceError
 
 def row(key, winning, picks):
@@ -30,6 +30,37 @@ class V304TopKTests(unittest.TestCase):
         got=summarize([row("20261012-01-01",PICKS[0],PICKS)])
         self.assertTrue(got["candidate_top3_top5_unavailable"])
         self.assertIsNone(got["new_model_delta"])
+
+
+class V304DayRankBinsTests(unittest.TestCase):
+    def test_nonadditive_per_day_rank_bins(self):
+        rows = [row("20261011-01-01", PICKS[0], PICKS),
+                row("20261011-01-02", PICKS[4], PICKS),
+                row("20261012-01-01", PICKS[9], PICKS),
+                row("20261012-01-02", "6-5-4", PICKS)]
+        result = ranked_site_baseline_by_day(rows)
+        self.assertEqual(list(result), ["20261011", "20261012"])
+        self.assertEqual(result["20261011"]["races"], 2)
+        self.assertEqual(result["20261011"]["rank_bins"],
+                         {"top3": 1, "rank4_5": 1, "rank6_10": 0, "outside_top10": 0})
+        self.assertEqual(result["20261012"]["rank_bins"],
+                         {"top3": 0, "rank4_5": 0, "rank6_10": 1, "outside_top10": 1})
+        self.assertEqual(result["20261011"]["baseline_hits"], {"3": 1, "5": 2, "10": 2})
+        self.assertEqual(result["20261012"]["baseline_hits"], {"3": 0, "5": 0, "10": 1})
+        self.assertEqual(result["20261012"]["miss_leg_partition"]["head_missing"], 1)
+        self.assertEqual(sum(v["races"] for v in result.values()), 4)
+
+    def test_empty_not_implied_zero_accuracy(self):
+        self.assertEqual(ranked_site_baseline_by_day([]), {})
+
+    def test_wrong_day_and_damaged_ticket_fail_closed(self):
+        r = row("20261012-01-01", PICKS[0], PICKS)
+        with self.assertRaisesRegex(EvidenceError, "DAY_OR_RANKING"):
+            ranked_site_baseline_by_day([dict(r, day="20261011")])
+        with self.assertRaisesRegex(EvidenceError, "VALIDATED_RANKING"):
+            ranked_site_baseline_by_day([dict(r, baseline=PICKS[:9] + PICKS[0:1])])
+        with self.assertRaisesRegex(EvidenceError, "VALIDATED_WINNER"):
+            ranked_site_baseline_by_day([dict(r, winning="1-1-1")])
 
 
 def frozen(key, picks=PICKS):
@@ -66,6 +97,9 @@ class V304V235ReconciliationTests(unittest.TestCase):
         self.assertEqual(result["miss_leg_partition"]["top10_hit"],1)
         self.assertEqual(result["miss_leg_partition"]["head_missing"],1)
         self.assertIsNone(result["candidate_top3_top5_delta"])
+        self.assertTrue(result["by_day_descriptive_only_not_evidence_of_model_improvement"])
+        self.assertEqual(result["verified_baseline_by_day"]["20261011"]["rank_bins"]["top3"], 1)
+        self.assertEqual(result["verified_baseline_by_day"]["20261012"]["rank_bins"]["outside_top10"], 1)
         self.assertFalse(result["promotion_authorized"])
 
     def test_reject_duplicate_race_before_counting(self):
