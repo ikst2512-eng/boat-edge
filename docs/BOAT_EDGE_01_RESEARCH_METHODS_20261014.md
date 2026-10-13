@@ -60,3 +60,14 @@ Official Pages custom workflow https://docs.github.com/en/pages/getting-started-
 
 ### 01-E: Provider terms are a first-order feasibility gate, not a footnote
 日和 https://kyoteibiyori.com/terms.html Art.5 explicitly prohibits unpermitted automated scraping/access and AI training/analysis, including research; BOATERS https://boaters-boatrace.com/info/terms §8 prohibits scraping/crawling and purpose-outside usage. Track each planned source as `public_documentation_discovery` vs `machine_access_authorized` vs `AI_training_authorized` vs `site_redistribution_authorized`; none is implied by paid subscription or public display. **Do not automate either provider's service data without express appropriate authorization.** Use officially licensed/independently available inputs as fallback for experimental models. Review any existing collector before increasing access.
+
+
+## P0 operational source-code discovery — V336 scheduled provider fetch (2026-10-14)
+
+A concrete risk emerged after the general policy review:
+
+- `.github/workflows/v336-site-research-live-freeze.yml` schedules every 5 min (minutes 2,7,...57) and runs `scripts/boat_edge_v334_live_batch_runner.py --capture --window-minutes 15 --max-races 12`.
+- V334 calls V332 capture=True, V332 uses V315 `real_fetch` (HTTPS HTML GET), with third-party URL candidates in V333 for both BOATERS and 競艇日和. This is **scheduled opt-in through the workflow**, not merely a dormant manual helper.
+- Provider terms (links in 01-E) forbid unpermitted automated acquisition. No per-provider explicit license/consent guard was observed in the inspected V315/V333 path. This does **not** prove whether any actual live request succeeded or whether some external private authorization exists.
+- Dedicated 01-owned P0 issue: https://github.com/ikst2512-eng/boat-edge/issues/204 . Source observation/review only; ***01 should investigate and fail closed on third-party automatic fetch in the absence of appropriate consent*** without disturbing official-only collection or Formal Fresh.
+- Do not send a trial request to demonstrate the issue, do not run the V336 capture trigger while reviewing. Identify scheduled Actions run history read-only and any approval records. Pending fix must have source-specific authorization flags and synthetic disabled-path tests.
