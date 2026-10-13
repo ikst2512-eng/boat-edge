@@ -148,8 +148,7 @@ class V235Proof(unittest.TestCase):
         text = (Path(__file__).resolve().parents[1] /
                 ".github/workflows/V235.yml").read_text(encoding="utf-8")
         self.assertIn("cron: '20 23 * * *'", text)
-        self.assertIn("python3 scripts/boat_edge_v230_fast_lane.py --workers 8", text)
-        self.assertIn("python3 scripts/boat_edge_v230_fast_lane.py --workers 8", text)
+        self.assertIn("python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent", text)
         self.assertNotIn("--priority-race-key 20261014-14-01", text)
         self.assertIn("python3 scripts/boat_edge_v232_pre_result_cohort.py", text)
         self.assertIn("python3 scripts/boat_edge_v235_predeadline_receipt.py", text)
