@@ -19,12 +19,17 @@ from test_boat_edge_v236_v362_official_start_course import labelled_html
 
 
 def source_pages():
-    racelist = (
-        "<html><body><table>"
-        + "".join(f"<tr><td>{4000+lane} / A1</td></tr>" for lane in range(1, 7))
-        + "</table></body></html>"
-    ).encode("utf8")
     start = labelled_html()
+    # Match the REAL official racelist's own 12-tab navigation, not merely
+    # registrations in a table. Reuse the matching synthetic predeadline tab
+    # with only its exact official page endpoint changed.
+    official_nav = start.split(b"<table><thead><tr><th colspan='3'>", 1)[0]
+    official_nav = official_nav.replace(b"/beforeinfo?", b"/racelist?")
+    racelist = (
+        official_nav + b"<table>"
+        + "".join(f"<tr><td>{4000+lane} / A1</td></tr>" for lane in range(1, 7)).encode("utf8")
+        + b"</table></body></html>"
+    )
     before_table = (
         "<table><thead><tr><th>展示タイム</th></tr></thead><tbody>"
         + "".join(
@@ -132,6 +137,26 @@ class V366SourceOnlyProof(unittest.TestCase):
                 capture_source_only(root, KEY, clock=lambda: NOW,
                                     fetcher=fetcher_for((first, before)))
             self.assertFalse((root / "data/research_source_only_v366").exists())
+
+    def test_racelist_also_must_identify_selected_race_and_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            setup_case(root)
+            original, before = source_pages()
+            for altered in (
+                original.replace(b"/racelist?rno=12", b"/racelist?rno=11", 1),
+                original.replace(b"hd=20261013", b"hd=20261012", 1),
+                original.replace(b"jcd=22", b"jcd=21", 1),
+                original.replace(b"<td class='is-activeColor1'>16:40",
+                                 b"<td class='is-activeColor1'>16:41"),
+                original.replace(b"/racelist?", b"/beforeinfo?", 1),
+            ):
+                with self.subTest(altered=altered[:50]):
+                    with self.assertRaisesRegex(ValueError,
+                                                 "ACTIVE_RACE_TAB_|ACTIVE_RACE_DEADLINE_"):
+                        capture_source_only(root, KEY, clock=lambda: NOW,
+                                            fetcher=fetcher_for((altered, before)))
+                    self.assertFalse((root / "data/research_source_only_v366").exists())
 
     def test_official_wrong_active_race_and_deadline_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
