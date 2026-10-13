@@ -75,3 +75,27 @@ BOAT EDGE正式Freshの結果ロックは引き続き0/100。V400〜V405は合�
 6. 01の自動予想保存と03の画面には02から介入しない。研究PR #253はドラフトを維持する。
 
 **今回の調査はソース確認と方針の確定であり、5年分の実データ取込完了、利用許諾取得、予測改善の実証を意味しない。**
+
+
+## 2026-10-14 現物CSV追加検証（BoatraceCSV、研究用・2026-09-30）
+
+GitHubの公開リポジトリの実ファイルを参照して列構成とレコード数を確認。件数は各CSVのヘッダ以外の行数であり、**異種CSV間のJOIN成功件数ではない**。ライセンス未確定のためBOAT EDGE側へ生データの複製・結果の再配布・モデル学習はしていない。
+
+| 種別 | 実ファイル | データ行 | Git blob SHA |
+|---|---|---:|---|
+| 出走表 | `data/programs/race_cards/2026/09/30.csv` | 145 | `2f6e8a87c8b22c65093a5b4443682117eedf91a3` |
+| 展示進入/ST | `data/previews/stt/2026/09/30.csv` | 145 | `024cb7dbe81138001cf211421a275d47da47a0d1` |
+| 展示タイム/チルト | `data/previews/tkz/2026/09/30.csv` | 144 | `21cb7f27d5e2312f89315a68d88f3cd9f57a3fbb` |
+| 気象 | `data/previews/sui/2026/09/30.csv` | 144 | `186c8a797d8ee43fc4f4a194ab37b13dd7305773` |
+| オリジナル展示 | `data/previews/original_exhibition/2026/09/30.csv` | 132 | `7e2eca242dc719d0411935ccc86c771947f86cf5` |
+| 開催・レース名 | `data/programs/title/2026/09/30.csv` | 144 | `57db4cca732e8088ff82b697f0f457c08045323f` |
+| 競走結果（過去日・研究評価のみ） | `data/results/realtime/2026/09/30.csv` | 145 | `9b60f5a6e7ccf9d02e0dc9ff6e3d08bdc039b623` |
+
+重要な仕様上の注意:
+- `previews` の共通6列はレースコード・レース日・場・レース回・締切時刻・**取得日時(JST)**。直前データを採用するには取得日時が締切より前であることに加え、必要に応じて当時のGit初回保存・実行ログの証拠を要求する。
+- `original_exhibition` は会場別に項目が違う。江戸川は配信無し、桐生は「半周ラップ」、住之江・尼崎・徳山は2項目。**一周/まわり足/直線の3項目が必ず揃うと仮定しない**。132件という数値だけで障害と断定しない。
+- `tkz` と `sui` の144行、`stt` の145行を「全レース一致」とみなさない。実際のレースキー集合の積集合・欠落理由・重複・時間整合を確認するまで予測用の完全な結合と認定しない。
+- `results` は後出し情報。予測特徴量に一切混ぜず、Formal Fresh以外の明示許諾済み履歴評価にのみ使用する。
+- 直近CSVの存在は5年間の連続カバレッジ、再利用許諾、独立したas-of時刻の証明を意味しない。
+
+出典: https://github.com/BoatraceCSV/boatracecsv.github.io/blob/main/docs/data/previews.md および https://github.com/BoatraceCSV/boatracecsv.github.io/blob/main/docs/data/programs.md 。これらの公開仕様を根拠に、01・03を変更せず02のデータ優先順位を固定する。
