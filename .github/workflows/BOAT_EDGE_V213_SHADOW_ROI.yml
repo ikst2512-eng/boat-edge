@@ -1,12 +1,7 @@
 name: BOAT EDGE V213 - Prospective Shadow ROI Audit (No Purchases)
+# V342: Legacy paper writer is manual recovery ONLY. V216 owns the live chain.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/BOAT_EDGE_V213_SHADOW_ROI.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 permissions:
   contents: write
   actions: write

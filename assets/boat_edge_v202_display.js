@@ -35,7 +35,7 @@
       for(const row of arr){
         const lane=String(row?.lane??''),course=num(row?.course);
         if(!/^[1-6]$/.test(lane))continue;
-        out[lane]={course:course!==null&&course>=1&&course<=6?course:null,st:row?.st??null,f:row?.exhibition_f===true};
+        out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:num(row?.st),f:row?.exhibition_f===true};
       }
     }
     return out;
@@ -63,8 +63,8 @@
       const oe=rawOE[lane]||[],pick=name=>{let idx=labelMap.get(name);return idx===undefined?null:num(oe[idx]);};
       return {lane,name:r?.name||'選手未取得',nationalWin:num(r?.national?.win_rate),nationalQ:num(r?.national?.quinella_rate),national3:num(r?.national?.trio_rate),
         localWin:num(r?.local?.win_rate),localQ:num(r?.local?.quinella_rate),local3:num(r?.local?.trio_rate),motorQ:num(r?.motor?.quinella_rate),motor3:num(r?.motor?.trio_rate),boatQ:num(r?.boat?.quinella_rate),boat3:num(r?.boat?.trio_rate),
-        displayTime:num(b.exhibition_time),tilt:num(b.tilt),course:e.course??num(save.course),
-        st:e.st??save.exhibition_st_raw??save.exhibition_st??null,exhibitionF:e.f===true||save.exhibition_f===true,
+        displayTime:ok?num(b.exhibition_time):null,tilt:ok?num(b.tilt):null,course:ok?e.course:null,
+        st:ok?e.st:null,exhibitionF:ok&&e.f===true,
         cachedBeforeinfo:!ok&&(Boolean(b.exhibition_time!==undefined)||Boolean(save.course!==undefined)),
         lap:pick('一周'),turn:pick('まわり足'),straight:pick('直線')};
     });
@@ -96,9 +96,9 @@
   }
   function sourceReport(race,oe,bfRows,starts){
     const card=actualCheck(race),audit=race?.source_audit||{};
-    const originalGood=Boolean(oe&&(oe.boats||[]).length>=4);
-    const startGood=sourceOK(race,'beforeinfo')&&starts.length>=4;
-    const bfGood=sourceOK(race,'beforeinfo')&&bfRows.length>=4;
+    const originalGood=Boolean(oe&&['一周','まわり足','直線'].every(label=>(oe.labels||[]).includes(label))&&new Set((oe.boats||[]).filter(b=>{const lane=Number(b?.lane);return lane>=1&&lane<=6&&['一周','まわり足','直線'].every(label=>num(b?.values?.[(oe.labels||[]).indexOf(label)])!==null);}).map(b=>Number(b.lane))).size===6);
+    const startGood=sourceOK(race,'beforeinfo')&&new Set(starts.filter(b=>num(b?.st)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
+    const bfGood=sourceOK(race,'beforeinfo')&&new Set(bfRows.filter(b=>num(b?.exhibition_time)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
     const cached=!bfGood&&((race?.beforeinfo?.racers||[]).length>=4||(race?.actual_entry||[]).length>=4);
     return `<div class="be202-chips">${sourceChip(race,'race_card','出走表',card)}${sourceChip(race,'beforeinfo','公式展示',bfGood)}${sourceChip(race,'beforeinfo','展示ST',startGood)}${sourceChip(race,'original_exhibition','オリ展',originalGood)}</div><div class="be202-source-note">公式直前 ${bfGood?`${stamp(audit.beforeinfo?.fetched_at)}／${esc(snapshotPhase(audit.beforeinfo?.fetched_at,race))}`:cached?'保存値はあり・現在の取得時刻は未照合':'未取得'} ・ オリ展 ${originalGood?`${stamp(audit.original_exhibition?.fetched_at)}／${esc(snapshotPhase(audit.original_exhibition?.fetched_at,race))}`:'未取得'}</div>`;
   }
@@ -110,7 +110,7 @@
     const meta=race?.meta||{},w=sourceOK(race,'beforeinfo')?bf.weather||{}:{};
     const water=[['風速',num(w.wind_speed_ms)===null?'－':`${fmt(w.wind_speed_ms,0)}m/s`],['波高',num(w.wave_cm)===null?'－':`${fmt(w.wave_cm,0)}cm`],['気温',num(w.air_temp_c)===null?'－':`${fmt(w.air_temp_c,0)}℃`],['水温',num(w.water_temp_c)===null?'－':`${fmt(w.water_temp_c,0)}℃`]];
     const model=modelStatus(pred);
-    const currentOriginal=original&&sourceOK(race,'original_exhibition');
+    const currentOriginal=original&&sourceOK(race,'original_exhibition')?original:null;
     const status=official&&all?'出走表6艇登録済み（欠場は別途確認）':'出走可否の再確認が必要';
     const o=odds&&odds.race_key===key&&odds.fetched_at?odds:null;
     const lag=o?Math.max(0,Math.round((Date.now()-new Date(o.fetched_at).getTime())/60000)):null;
@@ -193,6 +193,6 @@
     if(mode){observer=new MutationObserver(()=>{if(latestRace)draw(latestRace,latestPred);});observer.observe(mode,{childList:true});}
     try{if(typeof window.state!=='undefined'&&window.state?.race)afterRace(window.state.race);}catch(_){}
   }
-  window.BoatEdgeV202={makeRows,entryMap,sourceOK,deadlineAt,snapshotPhase,leaderMetric,refresh:()=>{try{if(window.state?.race)afterRace(window.state.race);}catch(_){}}};
+  window.BoatEdgeV202={makeRows,entryMap,sourceOK,deadlineAt,snapshotPhase,leaderMetric,html,refresh:()=>{try{if(window.state?.race)afterRace(window.state.race);}catch(_){}}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

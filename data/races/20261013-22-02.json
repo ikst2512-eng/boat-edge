@@ -8,7 +8,7 @@
     "event": "日本トーター杯",
     "race_no": 2,
     "deadline": "11:45",
-    "updated_at": "2026-10-13T06:20:43+09:00",
+    "updated_at": "2026-10-13T11:41:51+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=22&rno=2",
-      "fetched_at": "2026-10-13T06:21:58+09:00",
-      "sha256": "94870d33b5c25d964c6fe8b41865bb8b6804f693da6f08c36a7d4b29190bc02b",
+      "fetched_at": "2026-10-13T11:41:43+09:00",
+      "sha256": "da0dc281298e4d965aa1f2596cbac96e6f7b0fdbb549d2ddf70d6618ded8ed82",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=22&rno=2",
+      "fetched_at": "2026-10-13T11:41:51+09:00",
+      "sha256": "880cf1d5b49b0a582f74f81e111cd7002d5eb5926bf2d77565a5fc890b41dddf",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "503e741435d01c11780dec4824fe0aa04f5fd4fc1fc9d02fbf92eef2b375be21"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "84e283b3abb8b57ad4ac825268d6675236ef423a28fce3a1ba8f3577c6963f22"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "fa73159c4e658c1a9c9dc2094ec671dca36f31eda86e7e39232f006f95c005fa"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "8351f28ea64763b3a1e0d6771c886d2ed127b147ebe9e9ae359c90ef533f6afb"
     }
   },
   "racers": [
@@ -80,7 +110,7 @@
       "name": "廣瀬 真也",
       "class": "B1",
       "age": 38,
-      "weight_kg": 51.5,
+      "weight_kg": 51.0,
       "branch": "東京",
       "birthplace": "神奈川",
       "F": 0,
@@ -113,7 +143,7 @@
         "6"
       ],
       "early_race": 7,
-      "raw_text": "2 4568 / B1 廣瀬 真也 東京/神奈川 38歳/51.5kg F0 L0 0.15 5.42 33.71 50.56 5.24 19.05 42.86 52 39.52 54.03 131 18.03 31.15 3 5 11 6 7R"
+      "raw_text": "2 4568 / B1 廣瀬 真也 東京/神奈川 38歳/51.0kg F0 L0 0.15 5.42 33.71 50.56 5.24 19.05 42.86 52 39.52 54.03 131 18.03 31.15 3 5 11 6 7R"
     },
     {
       "lane": 3,
@@ -121,7 +151,7 @@
       "name": "多田 有佑",
       "class": "B1",
       "age": 44,
-      "weight_kg": 52.4,
+      "weight_kg": 52.3,
       "branch": "東京",
       "birthplace": "山形",
       "F": 0,
@@ -154,7 +184,7 @@
         "3"
       ],
       "early_race": 6,
-      "raw_text": "3 4169 / B1 多田 有佑 東京/山形 44歳/52.4kg F0 L0 0.23 4.01 18.68 28.57 3.50 7.69 23.08 17 26.90 44.14 162 38.79 55.17 6 2 6 3 6R"
+      "raw_text": "3 4169 / B1 多田 有佑 東京/山形 44歳/52.3kg F0 L0 0.23 4.01 18.68 28.57 3.50 7.69 23.08 17 26.90 44.14 162 38.79 55.17 6 2 6 3 6R"
     },
     {
       "lane": 4,
@@ -282,9 +312,94 @@
       "raw_text": "6 4431 / B1 石塚 裕介 三重/三重 40歳/52.0kg F0 L0 0.18 4.97 32.47 45.45 4.79 15.79 57.89 54 31.94 46.53 134 39.53 57.36 3 9 2 4"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.86,
+        "tilt": 0.0,
+        "raw_text": "1 藤田 美代 45.5kg 6.86 0.0 リング×2 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.88,
+        "tilt": 0.0,
+        "raw_text": "2 廣瀬 真也 51.0kg 6.88 0.0 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.91,
+        "tilt": 0.0,
+        "raw_text": "3 多田 有佑 52.3kg 6.91 0.0 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.84,
+        "tilt": 0.0,
+        "raw_text": "4 平山 智加 46.0kg 6.84 0.0 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.85,
+        "tilt": 0.0,
+        "raw_text": "5 池田 雄祐 51.0kg 6.85 0.0 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.86,
+        "tilt": 0.0,
+        "raw_text": "6 石塚 裕介 52.0kg 6.86 0.0 R"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".13"
+      },
+      {
+        "lane": 2,
+        "st": "F.04"
+      },
+      {
+        "lane": 3,
+        "st": ".04"
+      },
+      {
+        "lane": 4,
+        "st": ".05"
+      },
+      {
+        "lane": 5,
+        "st": ".08"
+      },
+      {
+        "lane": 6,
+        "st": ".16"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 4.0,
+      "wave_cm": 4.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

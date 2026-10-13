@@ -1,12 +1,8 @@
 name: BOAT EDGE V103 Archive + Back Navigation
 
+# V342: Legacy archive/UI writer is manual recovery ONLY.
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v103.yml"
   workflow_dispatch:
-  schedule:
-    - cron: "2/5 * * * *"
 
 permissions:
   contents: write

@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 10,
     "deadline": "12:58",
-    "updated_at": "2026-10-13T06:20:43+09:00",
+    "updated_at": "2026-10-13T12:40:51+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=14&rno=10",
-      "fetched_at": "2026-10-13T06:22:16+09:00",
-      "sha256": "4588642b87760eeb7fe77eed69bfcb3d978cfb7e9450aaf4ef8385e5ed07e018",
+      "fetched_at": "2026-10-13T12:40:41+09:00",
+      "sha256": "8de9692e0942b461bc0b1ba70dbca626e68e288b5a3dbed6944260bf84d0a500",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=14&rno=10",
+      "fetched_at": "2026-10-13T12:40:51+09:00",
+      "sha256": "bd73e6e24b276e01c8a067f71070438762e3d43a3b49f2ce19d1926ba25c08cc",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "0521522d70024e96e5bc8756283b102fb4ef09c7413ac97b62ce867d8284edc6"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "21c3ecee23749b9c2c7062ab60b41326963d77c63b88e8c299a3878b567eb09e"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "981c584567b7d60a92cb4c1094576e334b2303c8e2878f76903868e6ed94bf76"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "eca00d6a9413dab824cd0f23c1a34ebf068559b64589e968902103cd090c20d3"
     }
   },
   "racers": [
@@ -39,7 +69,7 @@
       "name": "村松 将平",
       "class": "B1",
       "age": 25,
-      "weight_kg": 52.3,
+      "weight_kg": 52.0,
       "branch": "静岡",
       "birthplace": "静岡",
       "F": 1,
@@ -66,10 +96,11 @@
         "trio_rate": 56.57
       },
       "series_tokens": [
-        "8"
+        "8",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "1 5316 / B1 村松 将平 静岡/静岡 25歳/52.3kg F1 L0 0.15 5.01 32.43 47.30 0.00 0.00 0.00 76 32.67 51.49 51 38.38 56.57 8 4R"
+      "raw_text": "1 5316 / B1 村松 将平 静岡/静岡 25歳/52.0kg F1 L0 0.15 5.01 32.43 47.30 0.00 0.00 0.00 76 32.67 51.49 51 38.38 56.57 8 4 4R"
     },
     {
       "lane": 2,
@@ -105,10 +136,11 @@
       },
       "series_tokens": [
         "5",
-        "12"
+        "12",
+        "5"
       ],
       "early_race": 5,
-      "raw_text": "2 5257 / A1 西丸 侑太朗 香川/香川 22歳/52.0kg F1 L0 0.16 6.57 48.48 65.15 6.72 51.72 72.41 11 36.08 48.45 58 30.30 48.48 5 12 5R"
+      "raw_text": "2 5257 / A1 西丸 侑太朗 香川/香川 22歳/52.0kg F1 L0 0.16 6.57 48.48 65.15 6.72 51.72 72.41 11 36.08 48.45 58 30.30 48.48 5 12 5 5R"
     },
     {
       "lane": 3,
@@ -116,7 +148,7 @@
       "name": "山下 心一",
       "class": "B1",
       "age": 22,
-      "weight_kg": 52.1,
+      "weight_kg": 52.0,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -143,10 +175,11 @@
         "trio_rate": 52.53
       },
       "series_tokens": [
-        "8"
+        "8",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "3 5382 / B1 山下 心一 福岡/福岡 22歳/52.1kg F0 L0 0.17 2.15 2.06 9.28 2.63 0.00 12.50 56 26.32 37.89 70 38.38 52.53 8 1R"
+      "raw_text": "3 5382 / B1 山下 心一 福岡/福岡 22歳/52.0kg F0 L0 0.17 2.15 2.06 9.28 2.63 0.00 12.50 56 26.32 37.89 70 38.38 52.53 8 1 1R"
     },
     {
       "lane": 4,
@@ -154,7 +187,7 @@
       "name": "渡邊 雄斗",
       "class": "B1",
       "age": 21,
-      "weight_kg": 52.3,
+      "weight_kg": 52.0,
       "branch": "三重",
       "birthplace": "宮崎",
       "F": 0,
@@ -181,10 +214,11 @@
         "trio_rate": 42.57
       },
       "series_tokens": [
-        "7"
+        "7",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "4 5354 / B1 渡邊 雄斗 三重/宮崎 21歳/52.3kg F0 L0 0.19 4.67 26.73 46.53 0.00 0.00 0.00 58 35.85 49.06 62 29.70 42.57 7 2R"
+      "raw_text": "4 5354 / B1 渡邊 雄斗 三重/宮崎 21歳/52.0kg F0 L0 0.19 4.67 26.73 46.53 0.00 0.00 0.00 58 35.85 49.06 62 29.70 42.57 7 2 2R"
     },
     {
       "lane": 5,
@@ -192,7 +226,7 @@
       "name": "井上 慧人",
       "class": "B1",
       "age": 22,
-      "weight_kg": 54.1,
+      "weight_kg": 53.5,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -219,10 +253,11 @@
         "trio_rate": 42.71
       },
       "series_tokens": [
-        "4"
+        "4",
+        "6"
       ],
       "early_race": 6,
-      "raw_text": "5 5328 / B1 井上 慧人 福岡/福岡 22歳/54.1kg F0 L0 0.19 4.52 24.14 42.53 1.87 0.00 8.70 35 29.29 44.44 25 19.79 42.71 4 6R"
+      "raw_text": "5 5328 / B1 井上 慧人 福岡/福岡 22歳/53.5kg F0 L0 0.19 4.52 24.14 42.53 1.87 0.00 8.70 35 29.29 44.44 25 19.79 42.71 4 6 6R"
     },
     {
       "lane": 6,
@@ -230,7 +265,7 @@
       "name": "荒木 颯斗",
       "class": "A2",
       "age": 24,
-      "weight_kg": 52.6,
+      "weight_kg": 52.1,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 0,
@@ -257,15 +292,101 @@
         "trio_rate": 50.98
       },
       "series_tokens": [
-        "11"
+        "11",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "6 5252 / A2 荒木 颯斗 愛知/愛知 24歳/52.6kg F0 L0 0.14 6.06 41.53 60.17 5.30 37.04 48.15 53 34.83 47.19 67 35.29 50.98 11 3R"
+      "raw_text": "6 5252 / A2 荒木 颯斗 愛知/愛知 24歳/52.1kg F0 L0 0.14 6.06 41.53 60.17 5.30 37.04 48.15 53 34.83 47.19 67 35.29 50.98 11 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.77,
+        "tilt": 0.0,
+        "raw_text": "1 村松 将平 52.0kg 6.77 0.0 R 4"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.78,
+        "tilt": 0.0,
+        "raw_text": "2 西丸 侑太朗 52.0kg 6.78 0.0 R 5"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.76,
+        "tilt": 0.0,
+        "raw_text": "3 山下 心一 52.0kg 6.76 0.0 R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.86,
+        "tilt": 0.0,
+        "raw_text": "4 渡邊 雄斗 52.0kg 6.86 0.0 R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.83,
+        "tilt": 0.0,
+        "raw_text": "5 井上 慧人 53.5kg 6.83 0.0 R 6"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.78,
+        "tilt": 0.0,
+        "raw_text": "6 荒木 颯斗 52.1kg 6.78 0.0 R 3"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".22"
+      },
+      {
+        "lane": 2,
+        "st": ".17"
+      },
+      {
+        "lane": 3,
+        "st": ".17"
+      },
+      {
+        "lane": 4,
+        "st": ".18"
+      },
+      {
+        "lane": 5,
+        "st": ".06"
+      },
+      {
+        "lane": 6,
+        "st": ".04"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

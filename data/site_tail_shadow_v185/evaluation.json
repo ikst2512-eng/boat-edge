@@ -2,74 +2,74 @@
   "awaiting_result": 0,
   "by_band": {
     "10-20": {
-      "candidate_top15_hits": 15,
-      "candidate_top20_hits": 15,
+      "candidate_top15_hits": 25,
+      "candidate_top20_hits": 25,
       "hit": {
         "baseline": {
-          "10": 14,
-          "3": 7,
-          "5": 10
+          "10": 23,
+          "3": 9,
+          "5": 14
         },
         "candidate": {
-          "10": 14,
-          "3": 6,
-          "5": 11
+          "10": 23,
+          "3": 8,
+          "5": 15
         },
         "v180": {
-          "10": 14,
-          "3": 6,
-          "5": 11
+          "10": 23,
+          "3": 8,
+          "5": 15
         }
       },
-      "races": 23
+      "races": 38
     },
     "20-50": {
-      "candidate_top15_hits": 14,
-      "candidate_top20_hits": 15,
+      "candidate_top15_hits": 21,
+      "candidate_top20_hits": 24,
       "hit": {
         "baseline": {
-          "10": 8,
-          "3": 2,
-          "5": 3
+          "10": 13,
+          "3": 3,
+          "5": 6
         },
         "candidate": {
-          "10": 8,
-          "3": 2,
-          "5": 3
+          "10": 13,
+          "3": 4,
+          "5": 6
         },
         "v180": {
-          "10": 8,
-          "3": 0,
-          "5": 3
+          "10": 13,
+          "3": 2,
+          "5": 6
         }
       },
-      "races": 27
+      "races": 40
     },
     "<10": {
-      "candidate_top15_hits": 12,
-      "candidate_top20_hits": 12,
+      "candidate_top15_hits": 19,
+      "candidate_top20_hits": 20,
       "hit": {
         "baseline": {
-          "10": 12,
-          "3": 7,
-          "5": 11
+          "10": 19,
+          "3": 11,
+          "5": 17
         },
         "candidate": {
-          "10": 12,
-          "3": 5,
-          "5": 11
+          "10": 19,
+          "3": 9,
+          "5": 17
         },
         "v180": {
-          "10": 12,
-          "3": 6,
-          "5": 11
+          "10": 19,
+          "3": 11,
+          "5": 17
         }
       },
-      "races": 14
+      "races": 24
     },
     ">50": {
       "candidate_top15_hits": 11,
-      "candidate_top20_hits": 14,
+      "candidate_top20_hits": 18,
       "hit": {
         "baseline": {
           "10": 4,
@@ -87,29 +87,29 @@
           "5": 1
         }
       },
-      "races": 45
+      "races": 58
     },
     "all": {
-      "candidate_top15_hits": 52,
-      "candidate_top20_hits": 56,
+      "candidate_top15_hits": 76,
+      "candidate_top20_hits": 87,
       "hit": {
         "baseline": {
-          "10": 38,
-          "3": 17,
-          "5": 25
+          "10": 59,
+          "3": 24,
+          "5": 38
         },
         "candidate": {
-          "10": 38,
-          "3": 13,
-          "5": 25
+          "10": 59,
+          "3": 21,
+          "5": 38
         },
         "v180": {
-          "10": 38,
-          "3": 12,
-          "5": 26
+          "10": 59,
+          "3": 21,
+          "5": 39
         }
       },
-      "races": 109
+      "races": 160
     },
     "unknown": {
       "candidate_top15_hits": 0,
@@ -136,7 +136,12 @@
   },
   "decision": "NO_PRODUCTION_PROMOTION_WITHOUT_MULTIDAY_PROSPECTIVE_IMPROVEMENT",
   "formal_results_accessed": false,
-  "invalid": [],
+  "invalid": [
+    {
+      "race_key": "20261013-12-07",
+      "reason": "COMMIT_NOT_PROVEN_PRE_DEADLINE"
+    }
+  ],
   "observed_source": "FIRST_COMMITTED_GIT_BLOB_SHA_AND_REPRODUCIBLE_SHADOW",
   "production_changed": false,
   "races": [
@@ -3082,10 +3087,1387 @@
       "payout_yen_per_100": 4020,
       "race_key": "20261012-23-12",
       "winning_combo": "3-1-2"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "b344dc362a3822ac21d3cad983711ed5620a5ea3",
+      "commit_time": "2026-10-13T01:53:00+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1150,
+      "race_key": "20261013-04-02",
+      "winning_combo": "1-2-4"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "64e1845de552644d57622e654f97b5634843756a",
+      "commit_time": "2026-10-13T02:21:57+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 2150,
+      "race_key": "20261013-04-03",
+      "winning_combo": "1-4-3"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "cbde346ae2f52fc2d396508711c93e6040f5cda6",
+      "commit_time": "2026-10-13T03:19:27+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 2030,
+      "race_key": "20261013-04-05",
+      "winning_combo": "1-3-4"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "3d51fd15a9caf92d82cb56b9b28603e671e26e69",
+      "commit_time": "2026-10-13T05:25:18+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 4650,
+      "race_key": "20261013-04-09",
+      "winning_combo": "3-1-5"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "9bad74371dceb768dd12f46669a11a51605e2f91",
+      "commit_time": "2026-10-13T07:11:51+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 3760,
+      "race_key": "20261013-04-12",
+      "winning_combo": "3-1-4"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "c244ccaa3bd57323daa5ab721cbcc27831300624",
+      "commit_time": "2026-10-13T02:13:28+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 11490,
+      "race_key": "20261013-06-02",
+      "winning_combo": "5-3-2"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "ad30c28994bddf2bc62e5c603fc587b858a1fe33",
+      "commit_time": "2026-10-13T02:44:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 4420,
+      "race_key": "20261013-06-03",
+      "winning_combo": "5-4-3"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "1b44da80d4d5dd770a8875a0931cbce0d5072385",
+      "commit_time": "2026-10-13T03:12:43+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1830,
+      "race_key": "20261013-06-04",
+      "winning_combo": "1-2-5"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "5e94d757c6f7deb2e79682ca2f66a63fda33774d",
+      "commit_time": "2026-10-13T03:41:42+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1810,
+      "race_key": "20261013-06-05",
+      "winning_combo": "1-4-2"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "99cdddc453dfb35ff16f999b8c5977559fbe589f",
+      "commit_time": "2026-10-13T06:49:28+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 630,
+      "race_key": "20261013-06-11",
+      "winning_combo": "1-2-3"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "c244ccaa3bd57323daa5ab721cbcc27831300624",
+      "commit_time": "2026-10-13T02:13:28+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 8820,
+      "race_key": "20261013-11-03",
+      "winning_combo": "4-2-5"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "8c34c402f3f219e6d2a60dc77616d67118572dba",
+      "commit_time": "2026-10-13T04:05:34+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1580,
+      "race_key": "20261013-11-07",
+      "winning_combo": "1-2-3"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "a859c699b846e2c1c051c95bad32758c64651077",
+      "commit_time": "2026-10-13T05:51:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 840,
+      "race_key": "20261013-11-10",
+      "winning_combo": "1-2-3"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "745b6719d22f290648fbd2555bd87e3e2cdc2d57",
+      "commit_time": "2026-10-13T06:26:54+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 3460,
+      "race_key": "20261013-11-11",
+      "winning_combo": "2-1-4"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "e8250ecddb7b3d3c85424a85149914a63fadb8e4",
+      "commit_time": "2026-10-13T06:17:44+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 2910,
+      "race_key": "20261013-12-01",
+      "winning_combo": "1-5-2"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "563b51cd3bdd5f67d9f7f17790c3538a24ce14d9",
+      "commit_time": "2026-10-13T08:00:33+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 8450,
+      "race_key": "20261013-12-05",
+      "winning_combo": "1-5-3"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "e9a7f8a847cfbe79b53be20fd3dd81f86465987c",
+      "commit_time": "2026-10-13T09:51:33+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 5620,
+      "race_key": "20261013-12-09",
+      "winning_combo": "5-1-4"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "8a3713678d73ba1ea18c09595bc492ce9f7f09eb",
+      "commit_time": "2026-10-13T10:21:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 10260,
+      "race_key": "20261013-12-10",
+      "winning_combo": "5-6-2"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "8a37a20ca33c035916a0b0ffc9b65d3508e9902c",
+      "commit_time": "2026-10-13T10:55:14+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1800,
+      "race_key": "20261013-12-11",
+      "winning_combo": "2-1-3"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "253347b106909679ae685eed17e9af972e3a5c86",
+      "commit_time": "2026-10-13T02:05:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 2280,
+      "race_key": "20261013-13-02",
+      "winning_combo": "4-2-6"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "5bfcadbd04cb24159d0c715c0c79eb6170d5b53e",
+      "commit_time": "2026-10-13T03:32:25+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 17260,
+      "race_key": "20261013-13-05",
+      "winning_combo": "2-4-5"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "745b6719d22f290648fbd2555bd87e3e2cdc2d57",
+      "commit_time": "2026-10-13T06:26:54+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 1470,
+      "race_key": "20261013-13-11",
+      "winning_combo": "1-5-4"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "0c957875bdb6da1ce12440af62385c8a7e564314",
+      "commit_time": "2026-10-13T07:01:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 620,
+      "race_key": "20261013-13-12",
+      "winning_combo": "1-2-4"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "7cecdaa31e3c69375fd7241cf84e23d8c1bdeff3",
+      "commit_time": "2026-10-12T23:57:36+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 3740,
+      "race_key": "20261013-14-02",
+      "winning_combo": "1-4-2"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "779145a28c75859b4d9cec230366589a9d0562e4",
+      "commit_time": "2026-10-13T01:11:57+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 2130,
+      "race_key": "20261013-14-05",
+      "winning_combo": "5-4-2"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "c244ccaa3bd57323daa5ab721cbcc27831300624",
+      "commit_time": "2026-10-13T02:13:28+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1620,
+      "race_key": "20261013-14-07",
+      "winning_combo": "1-5-3"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "1b44da80d4d5dd770a8875a0931cbce0d5072385",
+      "commit_time": "2026-10-13T03:12:43+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 730,
+      "race_key": "20261013-14-09",
+      "winning_combo": "1-3-2"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "9d2c48ff3093f057c7bfb1f0f079843da61481e9",
+      "commit_time": "2026-10-13T03:53:39+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 78550,
+      "race_key": "20261013-14-10",
+      "winning_combo": "4-1-3"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "e8250ecddb7b3d3c85424a85149914a63fadb8e4",
+      "commit_time": "2026-10-13T06:17:44+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 1540,
+      "race_key": "20261013-15-01",
+      "winning_combo": "1-3-6"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "af297fd7a51a144537bb093bc94c4bd6decc3afd",
+      "commit_time": "2026-10-13T07:11:12+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 2440,
+      "race_key": "20261013-15-03",
+      "winning_combo": "1-3-6"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "97e064da6e33e9aca8e6386f37ef8aed7ea353ac",
+      "commit_time": "2026-10-13T08:29:10+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 930,
+      "race_key": "20261013-15-06",
+      "winning_combo": "3-1-5"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "4be4e8903b372be3b22abf6c7f4d82717a1178bb",
+      "commit_time": "2026-10-13T08:58:02+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1530,
+      "race_key": "20261013-15-07",
+      "winning_combo": "2-1-3"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "2967a58feb3b445b3cd2ca072f6f189af12381f1",
+      "commit_time": "2026-10-13T09:37:44+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 590,
+      "race_key": "20261013-15-08",
+      "winning_combo": "1-2-4"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "e1caa8fe7ace090d45d4d7b2dff77c19de599c54",
+      "commit_time": "2026-10-13T10:34:09+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 14510,
+      "race_key": "20261013-15-10",
+      "winning_combo": "4-1-3"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "14481cbd1dc194dcbb8be6ce9fe483e656b8e589",
+      "commit_time": "2026-10-13T11:30:59+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 1010,
+      "race_key": "20261013-15-12",
+      "winning_combo": "1-3-2"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "0a6a0695b32139d8e3d0d2901441692f398904be",
+      "commit_time": "2026-10-13T00:36:21+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1130,
+      "race_key": "20261013-18-03",
+      "winning_combo": "1-2-6"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "5371000358ae69e139e7e4104d5eb166a11c7943",
+      "commit_time": "2026-10-13T01:57:23+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 29210,
+      "race_key": "20261013-18-06",
+      "winning_combo": "4-3-1"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "3d51fd15a9caf92d82cb56b9b28603e671e26e69",
+      "commit_time": "2026-10-13T05:25:18+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 510,
+      "race_key": "20261013-18-12",
+      "winning_combo": "1-2-4"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "d539b1a6e9648d798d56efc48207eb931ef97de0",
+      "commit_time": "2026-10-13T09:57:14+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 730,
+      "race_key": "20261013-19-04",
+      "winning_combo": "2-5-3"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "54a6969dc25cbe94010bd2dd39b063c521c7a82a",
+      "commit_time": "2026-10-13T11:21:12+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 2690,
+      "race_key": "20261013-19-07",
+      "winning_combo": "3-1-5"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "253ed25bd5fd2e4fcd4ad93643cf0813fac712db",
+      "commit_time": "2026-10-13T11:51:37+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 6950,
+      "race_key": "20261013-19-08",
+      "winning_combo": "2-5-1"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "4becfec39aed4b17dc5526e36ee0cbbc43f14caf",
+      "commit_time": "2026-10-13T06:18:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1590,
+      "race_key": "20261013-20-01",
+      "winning_combo": "3-1-5"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "99cdddc453dfb35ff16f999b8c5977559fbe589f",
+      "commit_time": "2026-10-13T06:49:28+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 1060,
+      "race_key": "20261013-20-02",
+      "winning_combo": "1-4-3"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "4bf532ae1d54ca96aee74c4663240c37def0eef5",
+      "commit_time": "2026-10-13T09:15:50+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 9550,
+      "race_key": "20261013-20-07",
+      "winning_combo": "3-1-4"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": true,
+      "commit_sha": "6e139ae580b184393d766497a10da610eb7aa867",
+      "commit_time": "2026-10-13T10:11:57+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 5930,
+      "race_key": "20261013-20-09",
+      "winning_combo": "3-6-2"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "5080604b6c834b088d99687444425aa35b7e2b9c",
+      "commit_time": "2026-10-13T10:40:17+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": true,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": true,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1200,
+      "race_key": "20261013-20-10",
+      "winning_combo": "2-1-3"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "13440f1b8e70843a0036c9d867c670852ccaf64c",
+      "commit_time": "2026-10-13T11:09:40+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 520,
+      "race_key": "20261013-20-11",
+      "winning_combo": "1-2-3"
+    },
+    {
+      "band": ">50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "33e9c7488ac7978849f656e33314e14e88448f35",
+      "commit_time": "2026-10-13T11:38:56+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 24180,
+      "race_key": "20261013-20-12",
+      "winning_combo": "1-6-4"
+    },
+    {
+      "band": "10-20",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "253347b106909679ae685eed17e9af972e3a5c86",
+      "commit_time": "2026-10-13T02:05:24+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 1180,
+      "race_key": "20261013-22-01",
+      "winning_combo": "1-3-5"
+    },
+    {
+      "band": "<10",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "1b44da80d4d5dd770a8875a0931cbce0d5072385",
+      "commit_time": "2026-10-13T03:12:43+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 990,
+      "race_key": "20261013-22-03",
+      "winning_combo": "1-3-2"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "8c34c402f3f219e6d2a60dc77616d67118572dba",
+      "commit_time": "2026-10-13T04:05:34+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 2650,
+      "race_key": "20261013-22-05",
+      "winning_combo": "1-4-6"
     }
   ],
   "schema_version": "boat-edge-v185-post-settlement-independent-site-shadow-v1",
   "scope": "SITE_REFERENCE_RESEARCH_NOT_FORMAL_FRESH",
-  "settled_verified": 109,
+  "settled_verified": 160,
   "status": "RESEARCH_ONLY"
 }

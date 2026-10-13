@@ -24,13 +24,13 @@ class WorkflowInventoryTests(unittest.TestCase):
         for retired in RETIRED:
             self.assertNotIn(retired, result["scheduled_contents_writers"])
 
-    def test_active_quoted_on_scheduler_is_not_invisible(self):
+    def test_v221_cleanup_is_manual_only(self):
         report = audit(ROOT / ".github" / "workflows")
         entries = {x["workflow"]: x for x in report["workflows"]}
         name = "BOAT_EDGE_V221_GUARDED_DEDUP.yml"
-        self.assertIn("schedule", entries[name]["triggers"])
-        self.assertEqual(entries[name]["crons"], ["29 20 * * *"])
-        self.assertIn(name, report["scheduled_contents_writers"])
+        self.assertEqual(entries[name]["triggers"], ["workflow_dispatch"])
+        self.assertEqual(entries[name]["crons"], [])
+        self.assertNotIn(name, report["scheduled_contents_writers"])
 
     def test_plain_and_quoted_on_keys_are_equivalent(self):
         from tempfile import TemporaryDirectory

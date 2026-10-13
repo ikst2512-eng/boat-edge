@@ -1,12 +1,8 @@
 name: BOAT EDGE 自己復旧ホーム V73
 
+# V342: Legacy V51 recovery writer is manual recovery ONLY.
 on:
-  push:
-    paths:
-      - ".github/workflows/site-recovery.yml"
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 permissions:
   contents: write

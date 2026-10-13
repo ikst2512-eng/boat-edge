@@ -8,7 +8,7 @@
     "event": "日本トーター杯",
     "race_no": 3,
     "deadline": "12:13",
-    "updated_at": "2026-10-13T06:20:43+09:00",
+    "updated_at": "2026-10-13T11:59:32+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=22&rno=3",
-      "fetched_at": "2026-10-13T06:21:57+09:00",
-      "sha256": "440de612b00ba5c83189860d45f3636a0f88d0d3a6bf707b676b9adb9369b21e",
+      "fetched_at": "2026-10-13T11:59:23+09:00",
+      "sha256": "0649fbfe3f0ac146cb2659b1093cf4df31baf8fd650040ff7ed62860d4081fc1",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=22&rno=3",
+      "fetched_at": "2026-10-13T11:59:32+09:00",
+      "sha256": "001418e928e99d8f8edfafab8667d98ef7e14562492c964c07406dddfe231046",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "b73f12f9237e9ee8121bb467e715b43355827b5793b820eec8f7feb8e678b955"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "89a3b2a77393ba853714b2876eff397cb5fd424f714dc41d80c0609353123b19"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "e2b780da720813b60577e080fa062f38c59a2f2e49c8e3d1817364f4bcbef995"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "54350e8cd1ca716435f0aaa8d51eaa606f728c6c81b8165ff7c0a138a25c7809"
     }
   },
   "racers": [
@@ -39,7 +69,7 @@
       "name": "西村 歩",
       "class": "B1",
       "age": 40,
-      "weight_kg": 47.7,
+      "weight_kg": 47.5,
       "branch": "大阪",
       "birthplace": "大阪",
       "F": 1,
@@ -73,7 +103,7 @@
         "9"
       ],
       "early_race": null,
-      "raw_text": "1 4243 / B1 西村 歩 大阪/大阪 40歳/47.7kg F1 L0 0.18 5.54 38.89 56.67 3.18 0.00 9.09 73 31.95 51.48 107 26.88 46.24 3 8 8 4 9"
+      "raw_text": "1 4243 / B1 西村 歩 大阪/大阪 40歳/47.5kg F1 L0 0.18 5.54 38.89 56.67 3.18 0.00 9.09 73 31.95 51.48 107 26.88 46.24 3 8 8 4 9"
     },
     {
       "lane": 2,
@@ -81,7 +111,7 @@
       "name": "村越 篤",
       "class": "B1",
       "age": 48,
-      "weight_kg": 54.3,
+      "weight_kg": 54.8,
       "branch": "香川",
       "birthplace": "愛媛",
       "F": 0,
@@ -114,7 +144,7 @@
         "6"
       ],
       "early_race": 7,
-      "raw_text": "2 3907 / B1 村越 篤 香川/愛媛 48歳/54.3kg F0 L0 0.16 5.44 37.25 50.00 5.63 37.50 52.50 64 27.50 37.50 124 32.43 42.34 4 3 8 6 7R"
+      "raw_text": "2 3907 / B1 村越 篤 香川/愛媛 48歳/54.8kg F0 L0 0.16 5.44 37.25 50.00 5.63 37.50 52.50 64 27.50 37.50 124 32.43 42.34 4 3 8 6 7R"
     },
     {
       "lane": 3,
@@ -206,7 +236,7 @@
       "name": "塚田 修二",
       "class": "B1",
       "age": 59,
-      "weight_kg": 52.2,
+      "weight_kg": 52.3,
       "branch": "東京",
       "birthplace": "東京",
       "F": 0,
@@ -239,7 +269,7 @@
         "7"
       ],
       "early_race": 9,
-      "raw_text": "5 3377 / B1 塚田 修二 東京/東京 59歳/52.2kg F0 L0 0.21 4.22 18.29 39.02 6.20 30.00 80.00 53 25.52 40.00 111 29.03 49.19 2 1 7 7 9R"
+      "raw_text": "5 3377 / B1 塚田 修二 東京/東京 59歳/52.3kg F0 L0 0.21 4.22 18.29 39.02 6.20 30.00 80.00 53 25.52 40.00 111 29.03 49.19 2 1 7 7 9R"
     },
     {
       "lane": 6,
@@ -247,7 +277,7 @@
       "name": "福嶋 智之",
       "class": "B1",
       "age": 48,
-      "weight_kg": 53.0,
+      "weight_kg": 53.1,
       "branch": "岡山",
       "birthplace": "岡山",
       "F": 1,
@@ -280,12 +310,97 @@
         "5"
       ],
       "early_race": 12,
-      "raw_text": "6 4054 / B1 福嶋 智之 岡山/岡山 48歳/53.0kg F1 L0 0.16 4.12 17.98 37.08 3.29 11.76 17.65 47 21.26 44.09 166 28.80 44.80 4 4 10 5 12R"
+      "raw_text": "6 4054 / B1 福嶋 智之 岡山/岡山 48歳/53.1kg F1 L0 0.16 4.12 17.98 37.08 3.29 11.76 17.65 47 21.26 44.09 166 28.80 44.80 4 4 10 5 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.92,
+        "tilt": 0.0,
+        "raw_text": "1 西村 歩 47.5kg 6.92 0.0 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.93,
+        "tilt": -0.5,
+        "raw_text": "2 村越 篤 54.8kg 6.93 -0.5 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.99,
+        "tilt": 0.0,
+        "raw_text": "3 北中 元樹 52.0kg 6.99 0.0 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.92,
+        "tilt": 0.0,
+        "raw_text": "4 伊倉 光 52.0kg 6.92 0.0 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.82,
+        "tilt": -0.5,
+        "raw_text": "5 塚田 修二 52.3kg 6.82 -0.5 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.96,
+        "tilt": 0.0,
+        "raw_text": "6 福嶋 智之 53.1kg 6.96 0.0 R"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".09"
+      },
+      {
+        "lane": 2,
+        "st": ".07"
+      },
+      {
+        "lane": 3,
+        "st": ".12"
+      },
+      {
+        "lane": 4,
+        "st": ".08"
+      },
+      {
+        "lane": 5,
+        "st": ".11"
+      },
+      {
+        "lane": 6,
+        "st": ".14"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

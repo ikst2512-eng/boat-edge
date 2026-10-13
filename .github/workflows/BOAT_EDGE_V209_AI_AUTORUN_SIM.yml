@@ -1,13 +1,8 @@
 name: BOAT EDGE V209 - AI Paper Autonomy 50K (Never Real Bets)
 
+# V342: Legacy paper writer is manual recovery ONLY. V216 owns the live chain.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/BOAT_EDGE_V209_AI_AUTORUN_SIM.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 
 permissions:
   contents: write

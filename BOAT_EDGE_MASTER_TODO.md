@@ -88,3 +88,10 @@
 - **V292 / PR #88 main `748e5291cc8be9887f4ae190eae928ba5ccbc408`**: 安全なV229 PRE_RESULT凍結監査に、mainの公式出走表collector成功・公式3連単オッズ取得成功後の`workflow_run`起動を追加。cron予定とimmutable write-once保持。failure/cancelled、fork・非mainを拒否。ブランチ・mainテストSUCCESS（`38287493864`, `38287573019`）。main反映直後の`38287590847`に`event=workflow_run`の実際の起動を確認。**起動成功と前締切固定の実際の増加は別証拠**。
 - **正式Fresh**: 2026-10-13 02:56 JST時点`formalFirst100.races=0`、`results_seen=false`、`unlock=false`、`scoring=false`、`RESULT_UNLOCK_TOKEN=null`。正式解錠・結果の先読み・未証明モデル本番昇格はしていない。
 - T01, T03, T05, T06, T07は依然**未完了**。次の監視で公式beforeinfo 6艇/全120オッズ/取消・欠場・凍結が揃った率、V229`workflow_run`完了、Pages実行成功とSafari実機を独立検証すること。
+
+## V341–V342 — 定期writer重複の可視化と旧経路の固定停止（2026-10-13 JST）
+
+- **V341 / main `f508816...`**：定期workflowのliteral `git add`対象を読取専用で棚卸しし、重複候補を「重複確定」と誤認しない監査をCIへ追加。予想・結果・正式Freshは未読・未変更。
+- **V342**：GitHub Actions APIで既に`disabled_manually`を確認した旧定期writer 8本（V209/V211/V212/V213/V214、旧site-health、旧site-recovery、site-v103）について、YAML上のpush/cronも削除し`workflow_dispatch`だけの手動復旧専用へ固定。V216の現行paper-only処理順序と旧gzip/base64再導入なしを回帰テストで保護。
+- 静的棚卸しでは定期workflowが59→51、`contents: write`を持つ定期候補が55→47に減少。これは旧8本の再有効化事故を防ぐ改善であり、残る47本が重複確定という意味ではない。
+- **T02は継続**：残りはV341の実パス重複候補、直近成功、後継owner、データ鮮度を1組ずつ照合してから停止する。現行collectorや研究freezeを版番号だけで無効化しない。

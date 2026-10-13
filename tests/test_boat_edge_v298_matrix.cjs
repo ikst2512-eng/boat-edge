@@ -72,4 +72,7 @@ assert(js.includes("!awaitingTicketList"),'V328 must block stale head picks');
 
 // Keep the new display regression in the existing V307 UI gate; no workflow edits.
 require('./test_boat_edge_v341_comparison_scroll.cjs');
+require('./test_boat_edge_v342_head_focus.cjs');
+require('./test_boat_edge_v342_comparison_context.cjs');
+require('./test_boat_edge_v342_comparison_values.cjs');
 

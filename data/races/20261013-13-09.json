@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 9,
     "deadline": "14:39",
-    "updated_at": "2026-10-13T06:20:43+09:00",
+    "updated_at": "2026-10-13T14:28:07+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=13&rno=9",
-      "fetched_at": "2026-10-13T06:21:28+09:00",
-      "sha256": "39b127c2d3d4fe07c9d8e33d3a1954929dfbb913d04f0d835f1cbbb055e927a6",
+      "fetched_at": "2026-10-13T14:27:58+09:00",
+      "sha256": "cc1063e9dd624d963552e7c83c6f6e619b777bc540c780c04200d7bcc45bfd04",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=13&rno=9",
+      "fetched_at": "2026-10-13T14:28:07+09:00",
+      "sha256": "6bc3db11b144eeea44070315e21d8ac46606446026fcd0651ef27e7601b5f3de",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "2ced97415306a903152eb824982d4f63b6c13c7f9ebb0406144ef94f859a255b"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "31760e2eaba068c0b9137cdcfbd4bf57736c5e960167eb500c7059608ef79ac4"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "db40dc0bdc4c6b7a7d38929bf368835122fd0b37b1b0bd4352311a6df42aad43"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
+      "fetched_at": null,
+      "sha256": "ba91cf5e28e456b457a749f3f78e320a0846a83bc3d239ea75041b6e57562309"
     }
   },
   "racers": [
@@ -39,7 +69,7 @@
       "name": "平石 和男",
       "class": "A2",
       "age": 60,
-      "weight_kg": 50.7,
+      "weight_kg": 50.5,
       "branch": "埼玉",
       "birthplace": "埼玉",
       "F": 0,
@@ -67,7 +97,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "1 3251 / A2 平石 和男 埼玉/埼玉 60歳/50.7kg F0 L0 0.20 5.98 38.89 63.49 6.00 33.33 55.56 28 25.86 40.52 46 33.58 50.75"
+      "raw_text": "1 3251 / A2 平石 和男 埼玉/埼玉 60歳/50.5kg F0 L0 0.20 5.98 38.89 63.49 6.00 33.33 55.56 28 25.86 40.52 46 33.58 50.75"
     },
     {
       "lane": 2,
@@ -75,7 +105,7 @@
       "name": "柳瀬 興志",
       "class": "A2",
       "age": 57,
-      "weight_kg": 57.9,
+      "weight_kg": 58.1,
       "branch": "山口",
       "birthplace": "山口",
       "F": 0,
@@ -103,7 +133,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "2 3661 / A2 柳瀬 興志 山口/山口 57歳/57.9kg F0 L0 0.18 4.51 26.36 37.27 3.64 13.64 18.18 1 36.30 48.15 64 37.88 59.85"
+      "raw_text": "2 3661 / A2 柳瀬 興志 山口/山口 57歳/58.1kg F0 L0 0.18 4.51 26.36 37.27 3.64 13.64 18.18 1 36.30 48.15 64 37.88 59.85"
     },
     {
       "lane": 3,
@@ -111,7 +141,7 @@
       "name": "加藤 政彦",
       "class": "B1",
       "age": 42,
-      "weight_kg": 53.5,
+      "weight_kg": 52.1,
       "branch": "東京",
       "birthplace": "東京",
       "F": 0,
@@ -137,9 +167,11 @@
         "quinella_rate": 37.8,
         "trio_rate": 60.63
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "2"
+      ],
       "early_race": 2,
-      "raw_text": "3 4598 / B1 加藤 政彦 東京/東京 42歳/53.5kg F0 L0 0.16 5.79 42.48 56.64 5.56 27.78 61.11 57 31.21 50.35 19 37.80 60.63 2R"
+      "raw_text": "3 4598 / B1 加藤 政彦 東京/東京 42歳/52.1kg F0 L0 0.16 5.79 42.48 56.64 5.56 27.78 61.11 57 31.21 50.35 19 37.80 60.63 2 2R"
     },
     {
       "lane": 4,
@@ -147,7 +179,7 @@
       "name": "熊本 英一",
       "class": "B1",
       "age": 48,
-      "weight_kg": 60.0,
+      "weight_kg": 59.2,
       "branch": "佐賀",
       "birthplace": "佐賀",
       "F": 0,
@@ -175,7 +207,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "4 3989 / B1 熊本 英一 佐賀/佐賀 48歳/60.0kg F0 L0 0.21 4.38 23.08 38.46 4.64 18.18 45.45 11 34.59 50.38 23 33.82 48.53"
+      "raw_text": "4 3989 / B1 熊本 英一 佐賀/佐賀 48歳/59.2kg F0 L0 0.21 4.38 23.08 38.46 4.64 18.18 45.45 11 34.59 50.38 23 33.82 48.53"
     },
     {
       "lane": 5,
@@ -183,7 +215,7 @@
       "name": "吉島 祥之",
       "class": "A2",
       "age": 42,
-      "weight_kg": 54.1,
+      "weight_kg": 53.1,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 1,
@@ -211,7 +243,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "5 4215 / A2 吉島 祥之 愛知/愛知 42歳/54.1kg F1 L0 0.16 5.57 37.84 54.95 5.36 32.14 53.57 52 23.58 38.21 50 30.77 52.31"
+      "raw_text": "5 4215 / A2 吉島 祥之 愛知/愛知 42歳/53.1kg F1 L0 0.16 5.57 37.84 54.95 5.36 32.14 53.57 52 23.58 38.21 50 30.77 52.31"
     },
     {
       "lane": 6,
@@ -219,7 +251,7 @@
       "name": "羽野 諒",
       "class": "B1",
       "age": 29,
-      "weight_kg": 53.1,
+      "weight_kg": 52.8,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -245,14 +277,101 @@
         "quinella_rate": 33.85,
         "trio_rate": 52.31
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "4"
+      ],
       "early_race": 4,
-      "raw_text": "6 5008 / B1 羽野 諒 福岡/福岡 29歳/53.1kg F0 L0 0.15 4.58 23.96 39.58 4.32 21.05 31.58 60 27.59 48.28 60 33.85 52.31 4R"
+      "raw_text": "6 5008 / B1 羽野 諒 福岡/福岡 29歳/52.8kg F0 L0 0.15 4.58 23.96 39.58 4.32 21.05 31.58 60 27.59 48.28 60 33.85 52.31 4 4R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.78,
+        "tilt": -0.5,
+        "raw_text": "1 平石 和男 50.5kg 6.78 -0.5 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.8,
+        "tilt": -0.5,
+        "raw_text": "2 柳瀬 興志 58.1kg 6.80 -0.5 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.79,
+        "tilt": 0.0,
+        "raw_text": "3 加藤 政彦 52.1kg 6.79 0.0 R 2"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.82,
+        "tilt": -0.5,
+        "raw_text": "4 熊本 英一 59.2kg 6.82 -0.5 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.77,
+        "tilt": -0.5,
+        "raw_text": "5 吉島 祥之 53.1kg 6.77 -0.5 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.81,
+        "tilt": 0.0,
+        "raw_text": "6 羽野 諒 52.8kg 6.81 0.0 R 4"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".16"
+      },
+      {
+        "lane": 2,
+        "st": ".22"
+      },
+      {
+        "lane": 3,
+        "st": ".05"
+      },
+      {
+        "lane": 4,
+        "st": ".09"
+      },
+      {
+        "lane": 5,
+        "st": ".19"
+      },
+      {
+        "lane": 6,
+        "st": ".19"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 4.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

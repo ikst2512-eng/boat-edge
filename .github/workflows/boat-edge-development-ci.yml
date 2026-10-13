@@ -50,12 +50,21 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v299_workflow_inventory.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v342_retired_schedulers.py' -v
           python3 scripts/boat_edge_v299_workflow_inventory.py
       - name: Audit static scheduled staging-path overlaps without disabling workflows
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v341_scheduled_writer_path_audit.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v343_scheduled_writer_collision_classes.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v344_exact_writer_triage.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v345_writer_trigger_evidence.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v346_runtime_proof_gate.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v347_runtime_evidence_intake.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v348_actions_run_export.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v349_schedule_run_overlap.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v351_scheduled_evidence.py' -v
           python3 - <<'PY_V341'
           from scripts.boat_edge_v341_scheduled_writer_path_audit import audit
           import json
@@ -69,6 +78,21 @@ jobs:
               'overlap_is_only_candidate_not_proof': a['overlap_is_only_candidate_not_proof'],
           }, sort_keys=True))
           PY_V341
+          python3 - <<'PY_V343'
+          from scripts.boat_edge_v343_scheduled_writer_collision_classes import audit
+          import json
+          a = audit()
+          assert a['verified_duplicate_writers'] == 0
+          assert a['classification_does_not_authorize_workflow_disable']
+          print('V343_REAL_WORKFLOW_CLASSIFICATION_CANDIDATE_ONLY_PASS')
+          print(json.dumps({
+              'pair_class_counts': a['pair_class_counts'],
+              'exact_path_witness_count': a['exact_path_witness_count'],
+              'parent_directory_witness_count': a['parent_directory_witness_count'],
+              'candidate_overlapping_workflow_pairs': a['candidate_overlapping_workflow_pairs'],
+              'candidates_with_unresolved_staging': a['candidates_with_unresolved_staging'],
+          }, sort_keys=True))
+          PY_V343
       - name: Guard V254 site-only research with synthetic formal-cohort fixtures
         env:
           PYTHONDONTWRITEBYTECODE: '1'
