@@ -27,6 +27,7 @@ def inspect(frozen):
     modes=frozen.get("research_ranked_120_by_mode")
     if not isinstance(modes,dict) or set(modes)!=set(MODES):
         return "INVALID_MODES"
+    shared_mapping=None
     for name in MODES:
         rows=modes[name]
         if not isinstance(rows,list) or len(rows)!=120:
@@ -60,6 +61,9 @@ def inspect(frozen):
             previous_mass=mass
         if len(course_to_boat)!=6 or len(boat_to_course)!=6:
             return 'INCONSISTENT_ENTRY_MAPPING'
+        if shared_mapping is not None and course_to_boat!=shared_mapping:
+            return 'CROSS_MODE_ENTRY_MISMATCH'
+        shared_mapping=course_to_boat
         if len(seen)!=120 or abs(sum(r["relative_model_mass"] for r in rows)-1)>1e-8:
             return "INVALID_DISTRIBUTION"
     return "STRUCTURAL_TOP3_TOP5_TOP10_READY_NOT_ATTESTED"
