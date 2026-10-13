@@ -74,6 +74,13 @@ class V409Tests(unittest.TestCase):
         a=audit(DAY,{"race_cards":cards(),**sources})
         self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],0)
         self.assertEqual(a["preview_status"]["original_exhibition"]["source_not_supplied"],1)
+    def test_conflicting_four_source_deadlines_not_counted(self):
+        sources={s:preview() for s in ("stt","tkz","sui")}
+        sources["original_exhibition"]=preview(deadline="08:45")
+        a=audit(DAY,{"race_cards":cards(),**sources})
+        self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],0)
+        self.assertEqual(a["counts"]["all_four_preview_deadline_conflicts"],1)
+
     def test_four_sources_all_same_race(self):
         a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in
                     ("stt","tkz","sui","original_exhibition")}})
