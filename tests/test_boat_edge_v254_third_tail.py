@@ -106,6 +106,21 @@ class ProspectiveThirdTail(unittest.TestCase):
             self.assertFalse(v254.freeze(root,stamp('2026-10-13T02:00:00+00:00'))['accuracy_improvement_proven'])
             self.assertEqual(json.loads(formal.read_text(encoding='utf-8')),status)
 
+    def test_empty_upstream_reports_specific_zero_reason_without_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            p=root/'data/formal_status.json'
+            p.parent.mkdir(parents=True)
+            p.write_text(json.dumps({'guards':{'results_seen':False,'unlock':False,
+                'scoring':False,'RESULT_UNLOCK_TOKEN':None},
+                'formalFirst100':{'races':0}}),encoding='utf-8')
+            summary=v254.freeze(root,stamp('2026-10-14T02:00:00+00:00'))
+            self.assertEqual(summary['source_cohorts_today'],0)
+            self.assertEqual(summary['upstream_diagnostic'],'NO_V232_COHORTS_TODAY')
+            self.assertEqual(summary['new_frozen_this_run'],0)
+            self.assertFalse(summary['result_access'])
+            self.assertFalse(summary['model_promotion_authorized'])
+
     def test_bad_formal_guard_blocks_even_research(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'data/formal_status.json'
