@@ -57,7 +57,7 @@ jobs:
               summary.write("## BOAT EDGE scheduled-run evidence (read-only)\n\n")
               summary.write(f"- Scheduled runs retrieved: **{raw['run_count']}**\n")
               summary.write(f"- Same-start hints (not proof): **{len(report['same_start_candidate_pairs'])}**\n")
-              summary.write("- Verified duplicate writes: **0** (not measured by this collector)\n")
+              summary.write("- Duplicate-write verification: **NOT ASSESSED** (this collector has no changed-file proof)\n")
               summary.write("- Workflow disable authorized: **No**\n")
               summary.write("- Coverage: paginated metadata only; no proven changed paths or completion times.\n")
               summary.write("- Detailed JSON is uploaded as a 14-day artifact.\n")
