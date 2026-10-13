@@ -8,7 +8,7 @@
     "event": "ヴィーナスS15戦マクール杯ナイトプリンセスカップ",
     "race_no": 12,
     "deadline": "20:45",
-    "updated_at": "2026-10-13T17:42:55+09:00",
+    "updated_at": "2026-10-13T18:26:43+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=20&rno=12",
-      "fetched_at": "2026-10-13T17:44:18+09:00",
-      "sha256": "6b205ac1c65b8f98224f672d7115f3987dd250fc25d82d0e7f38c2f6f73edbc8",
+      "fetched_at": "2026-10-13T18:27:59+09:00",
+      "sha256": "bd474fa6cf38a64cbd1aaf9652294dfc29e6cd9b4a594bb31226933ab3ad2db5",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=20&rno=12",
+      "fetched_at": "2026-10-13T18:27:39+09:00",
+      "sha256": "ff7396674e8c88d6b10a5e791804092935626fc8ed2135e1964a46de141095de",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "72165bcec200cc0409dd8c73a5e178199e3722db0266c4b2e96a49a81d4cea06"
+      "sha256": "88b874b04cd2ec6ff239c3e1e95b382c96f71c9cdce52cea8b9bc684c4ceba15"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "4a991d07da74ebb0eedbbc8f60dcbe2f0b693991f899cf92fed31575a5ed6d1c"
+      "sha256": "23bcd3cd979ea9052e0e02c6c5a31723ff79e086d7e0b6b8a6e96d7be12dd143"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "336784c30c1c0c5e916333fef783b3b0c945393e1bcacaaa646285077064c594"
+      "sha256": "fb2c70ac58782f85c39b63fcf910005d16723a64e5793598878c0b4502bc9015"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "66249df2d104b8f3065c22c8b095d860320b478c73b700b488c11d6151bf55c5"
+      "sha256": "66c6947dd72f60c452a212804eb74eaf6682ff6a5b74fe93ccb461d4d6384f05"
     }
   },
   "racers": [
@@ -89,9 +95,11 @@
         "quinella_rate": 25.81,
         "trio_rate": 43.01
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "6"
+      ],
       "early_race": 6,
-      "raw_text": "1 4433 / A1 川野 芽唯 福岡/福岡 40歳/47.0kg F0 L0 0.17 7.36 56.45 76.61 7.25 59.42 78.26 60 32.65 50.00 24 25.81 43.01 6R"
+      "raw_text": "1 4433 / A1 川野 芽唯 福岡/福岡 40歳/47.0kg F0 L0 0.17 7.36 56.45 76.61 7.25 59.42 78.26 60 32.65 50.00 24 25.81 43.01 6 6R"
     },
     {
       "lane": 2,
@@ -280,7 +288,53 @@
       "raw_text": "6 4927 / A2 関野 文 大阪/大阪 32歳/45.0kg F0 L0 0.16 6.05 41.82 64.55 5.32 34.15 46.34 44 33.97 48.33 19 28.17 45.07 5 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 川野 芽唯 47.0kg R 6"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 守屋 美穂 45.5kg R 3"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 米丸 乃絵 47.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 堀之内紀代子 46.5kg R 4"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 内山 七海 45.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 関野 文 45.0kg R 5"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
