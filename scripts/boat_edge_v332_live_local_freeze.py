@@ -14,6 +14,7 @@ automatic URL discovery or retrospective freezing.
 from __future__ import annotations
 
 import argparse
+import copy
 from datetime import datetime
 import hashlib
 import json
@@ -29,6 +30,9 @@ from boat_edge_v315_source_capture import (
 from boat_edge_v318_shadow_freeze import JST, canonical, parse_time
 from boat_edge_v333_source_urls import suggested_source_urls
 from boat_edge_v360_research_ranked120 import MODEL as RANKED120_MODEL, derive_120
+from boat_edge_v362_official_start_course_proof import (
+    MODEL as START_PROOF_MODEL, parse_proven_course_rows,
+)
 
 
 MODEL = "BOAT_EDGE_V332_LIVE_LOCAL_SHA_RESEARCH_ONLY"
@@ -90,7 +94,7 @@ def _local_capture(root, key, provider, deadline, now, expected_url=None):
     return receipt
 
 
-def candidate_from_raw(raw, key, now):
+def candidate_from_raw(raw, key, now, official_start_raw=None):
     """Pure replay of the exact input bytes at an explicitly supplied freeze time.
 
     This validates local metadata only; it never attests upstream authenticity.
@@ -149,7 +153,26 @@ def candidate_from_raw(raw, key, now):
             check_target("official", source["source"], key)
         except (ValueError, KeyError, TypeError) as exc:
             raise ValueError("SOURCE_RACE_URL_MISMATCH:" + provider) from exc
+    if official_start_raw is not None:
+        official = source_audit["beforeinfo"]
+        expected = official.get("sha256")
+        if (not isinstance(expected, str) or SHA.fullmatch(expected) is None
+                or hashlib.sha256(official_start_raw).hexdigest() != expected):
+            raise ValueError("START_SOURCE_RAW_VS_OFFICIAL_AUDIT_SHA_MISMATCH")
+        # Check an exact official beforeinfo endpoint, not an arbitrary
+        # race-labelled page. The same-race URL has been validated above.
+        from urllib.parse import urlsplit
+        if urlsplit(official["source"]).path != "/owpc/pc/race/beforeinfo":
+            raise ValueError("START_SOURCE_NOT_OFFICIAL_BEFOREINFO")
+        proof = parse_proven_course_rows(official_start_raw, race)
+        race = copy.deepcopy(race)
+        for row in race["beforeinfo"]["start_exhibition"]:
+            if row.get("course") is None:
+                row["course"] = proof["course_by_boat"][str(row["lane"])]
     candidate = build_shadow(race)
+    if official_start_raw is not None:
+        candidate["start_course_official_table_proof_model"] = START_PROOF_MODEL
+        candidate["start_course_official_html_sha256"] = proof["official_html_sha256"]
     candidate["race_source_sha256"] = hashlib.sha256(raw).hexdigest()
     return candidate, deadline, race
 
@@ -159,13 +182,34 @@ def _eligible_race(root, key, now):
     if path.is_symlink():
         raise ValueError("RACE_SYMLINK_FORBIDDEN")
     raw = path.read_bytes()
-    candidate, deadline, race = candidate_from_raw(raw, key, now)
-    return candidate, deadline, race, raw
+    try:
+        parsed = json.loads(raw)
+        starts = (parsed.get("beforeinfo") or {}).get("start_exhibition")
+        needs_proof = (isinstance(starts, list) and len(starts) == 6
+                       and any(isinstance(row, dict) and row.get("course") is None
+                               for row in starts))
+    except (ValueError, AttributeError, TypeError):
+        needs_proof = False
+    official_raw = None
+    if needs_proof:
+        venue, round_no = key.split("-")[1:]
+        relative = (Path("data/raw") / key[:8] /
+                    (venue + "_" + round_no + "_beforeinfo.html"))
+        target = root / relative
+        if (any(part.is_symlink() for part in (target, target.parent, target.parent.parent))
+                or not target.is_file() or
+                not target.resolve().is_relative_to(root)):
+            raise ValueError("START_SOURCE_SAME_RACE_RAW_HTML_MISSING")
+        official_raw = target.read_bytes()
+    candidate, deadline, race = candidate_from_raw(raw, key, now, official_raw)
+    return candidate, deadline, race, raw, official_raw
 
 
-def _save_race_input(root, key, raw):
+def _save_race_input(root, key, raw, filename="race_input.json"):
     """Keep the original bytes, never a reread of a changing data/races file."""
-    relative = Path("data/source_captures") / key[:8] / key / "race_input.json"
+    if filename not in ("race_input.json", "official_start_beforeinfo.html"):
+        raise ValueError("UNSUPPORTED_IMMUTABLE_INPUT_NAME")
+    relative = Path("data/source_captures") / key[:8] / key / filename
     path = root / relative
     for part in (path, *path.parents):
         if part == root:
@@ -194,7 +238,7 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
         raise ValueError("FORMAL_FRESH_TARGET_EXCLUDED")
     root = Path(root).resolve()
     now = _now(clock)
-    candidate, deadline, race, race_raw = _eligible_race(root, race_key, now)
+    candidate, deadline, race, race_raw, official_start_raw = _eligible_race(root, race_key, now)
     output = root / "data/research_local_v332" / race_key[:8] / (race_key + ".json")
     if output.exists() or output.is_symlink():
         raise ValueError("IMMUTABLE_RESEARCH_FREEZE_ALREADY_EXISTS")
@@ -227,6 +271,9 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
     # V343: the existing V336 source_captures artifact glob includes this exact
     # input snapshot. Hash-only provenance cannot reproduce the candidate.
     _save_race_input(root, race_key, race_raw)
+    if official_start_raw is not None:
+        _save_race_input(root, race_key, official_start_raw,
+                         filename="official_start_beforeinfo.html")
     # A final live deadline guard prevents a slow validation or capture from
     # being mistaken for a frozen prospective prediction.
     now = _now(clock)
@@ -234,7 +281,10 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
         raise ValueError("INSUFFICIENT_PREDEADLINE_WRITE_MARGIN")
     # Input freshness must still hold at the recorded freeze instant, even if
     # provider capture was slow. Revalidate the original bytes, not current data.
-    candidate_from_raw(race_raw, race_key, now)
+    replayed, _, _ = candidate_from_raw(
+        race_raw, race_key, now, official_start_raw)
+    if canonical(replayed) != canonical(candidate):
+        raise ValueError("START_SOURCE_FINAL_CANDIDATE_REPLAY_DRIFT")
     if (candidate.get("production_eligible") is not False
             or candidate.get("scoring_authorized") is not False
             or candidate.get("calibrated") is not False
@@ -247,6 +297,9 @@ def live_local_freeze(root, race_key, source_urls=None, capture=False,
         "entry_basis": "START_EXHIBITION_PROVISIONAL_NOT_ACTUAL",
         "evidence_level": "LOCAL_RECEIPT_RAW_SHA_ONLY",
         "race_source_sha256": candidate["race_source_sha256"],
+        "official_start_course_source_sha256": (
+            hashlib.sha256(official_start_raw).hexdigest()
+            if official_start_raw is not None else None),
         "source_receipts": receipts,
         "source_bundle_sha256": hashlib.sha256(canonical(receipts)).hexdigest(),
         "candidate_sha256": hashlib.sha256(canonical(candidate)).hexdigest(),
