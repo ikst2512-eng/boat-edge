@@ -172,10 +172,18 @@ def collect(root,now):
     date=now.astimezone(JST).strftime('%Y%m%d')
     base=root/'data/site_autopilot/v232_cohort'
     valid=[];excluded={};window=0
+    snapshot_counts={'total':0,'missing_deadline':0,'before_window':0,'after_window':0}
     for s in sorted((root/'data/site_prediction_snapshots').glob(date+'-??-??.json')):
         key=s.stem
         x=read(s) or {};due=deadline(key,x.get('deadline'))
-        if due is None or not 120<=(due-now).total_seconds()<=900:continue
+        snapshot_counts['total']+=1
+        if due is None:
+            snapshot_counts['missing_deadline']+=1;continue
+        seconds=(due-now).total_seconds()
+        if seconds>900:
+            snapshot_counts['before_window']+=1;continue
+        if seconds<120:
+            snapshot_counts['after_window']+=1;continue
         window+=1
         if (base/f'{key}.json').is_file():continue
         obs,why=verified(root,key,now)
@@ -192,6 +200,7 @@ def collect(root,now):
        'frozen_research_races_today':len(all_today),
        'new_research_races_this_run':len(valid),
        'current_prediction_window_races':window,
+       'snapshot_window_diagnostic':snapshot_counts,
        'not_eligible_reasons':excluded,
        'frozen_races':[
           {'race_key':k,'venue':d.get('venue'),'saved_at':d.get('snapshot_saved_at'),
@@ -202,13 +211,13 @@ def collect(root,now):
        'explanation':'Pre-result frozen evidence for independent Top1 head, Top3/5/10 and odds-band scoring. NOT a betting/ROI claim.'}
     report=root/'data/site_autopilot/v232_current.json'
     old=read(report) or {}
-    cmp_keys=['frozen_research_races_today','current_prediction_window_races','not_eligible_reasons','frozen_races']
+    cmp_keys=['frozen_research_races_today','current_prediction_window_races','snapshot_window_diagnostic','not_eligible_reasons','frozen_races']
     new_total=len(valid)>0 or any(old.get(k)!=payload.get(k) for k in cmp_keys) or old.get('day_jst')!=date
     if new_total or not report.is_file():
         report.parent.mkdir(parents=True,exist_ok=True)
         report.write_text(json.dumps(payload,sort_keys=True,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('V232_PRE_RESULT_SITE_COHORT',json.dumps({'date':date,'new':len(valid),'total':len(all_today),
-          'in_window':window,'rejected':excluded,'saved_report':new_total},ensure_ascii=False,sort_keys=True))
+          'in_window':window,'snapshot_diagnostic':snapshot_counts,'rejected':excluded,'saved_report':new_total},ensure_ascii=False,sort_keys=True))
     return payload
 
 if __name__=='__main__':
