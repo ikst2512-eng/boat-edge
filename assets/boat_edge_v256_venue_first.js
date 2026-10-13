@@ -33,6 +33,9 @@ function start(){
  layout();
  // Existing app redraws individual venue cards only; observe no race events.
  document.addEventListener('visibilitychange',function(){if(!document.hidden)layout()});
+ // iPhone Safari can restore a page from back-forward cache without DOMContentLoaded.
+ // Reapply the idempotent DOM move; never recreate venue/race controls.
+ window.addEventListener('pageshow',function(event){if(event.persisted)layout()});
 }
 window.BoatEdgeV256={layout:layout,version:'V256-MOBILE-VENUE-FIRST'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
