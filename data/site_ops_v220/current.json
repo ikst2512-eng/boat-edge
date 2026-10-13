@@ -2,18 +2,20 @@
   "active_window_races": 8,
   "current_windows": [
     {
-      "deadline_jst": "09:13",
-      "key": "20261013-18-02",
+      "deadline_jst": "09:53",
+      "key": "20261013-14-04",
       "missing_evidence": [
-        "frozen_prediction_missing_or_invalid"
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "scratch_stale"
       ],
-      "venue": "徳山"
+      "venue": "鳴門"
     }
   ],
   "data_sources": {
-    "collector_freshness": "CURRENT",
+    "collector_freshness": "STALE_OR_UNVERIFIED",
     "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 4,
+    "predeadline_observations": 5,
     "site_autovalidation": "EVIDENCE_REVIEW_REQUIRED"
   },
   "day_jst": "20261013",
@@ -21,25 +23,28 @@
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
   "issues": [
+    "collector_index_stale",
     "predeadline_incomplete"
   ],
   "next_race": {
-    "deadline_jst": "09:13",
-    "race_key": "20261013-18-02",
+    "deadline_jst": "09:39",
+    "race_key": "20261013-18-03",
     "venue": "徳山",
-    "watch_from_jst": "08:58"
+    "watch_from_jst": "09:24"
   },
   "official_beforeinfo_urgent_15m": {
-    "error": 0,
-    "health_updated_at": "2026-10-13T08:48:53+09:00",
-    "ok": 1,
-    "partial_six_boat_source": 0,
-    "published_wait": 0,
-    "status": "OBSERVED",
-    "targets": 1
+    "error": null,
+    "health_updated_at": null,
+    "ok": null,
+    "partial_six_boat_source": null,
+    "published_wait": null,
+    "status": "UNVERIFIED_OR_STALE",
+    "targets": null
   },
   "paper_wager_authorized_by_this_runner": false,
-  "recovery_dispatch_candidates": [],
+  "recovery_dispatch_candidates": [
+    "auto-update.yml"
+  ],
   "research_model_production_promotion": false,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
@@ -81,9 +86,9 @@
     },
     "today": {
       "day_jst": "20261013",
-      "early_missing_later_snapshot_present": 2,
+      "early_missing_later_snapshot_present": 3,
       "integrity_note": "A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.",
-      "matured_observed_races": 3,
+      "matured_observed_races": 4,
       "not_found_after_deadline": 1,
       "not_found_last_seen_inside_2_to_10m_window": 1,
       "not_found_last_seen_outside_2_to_10m_window": 0,
@@ -95,18 +100,18 @@
         "beforeinfo_not_ok": 1,
         "scratch_missing_or_blocked": 1
       },
-      "observed_races": 4,
-      "pending_before_deadline": 1,
-      "predeadline_snapshot_with_matching_audit": 2,
+      "observed_races": 5,
+      "pending_before_deadline": 0,
+      "predeadline_snapshot_with_matching_audit": 4,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
-      "sha_consistent_predeadline_snapshots": 2,
+      "sha_consistent_predeadline_snapshots": 4,
       "snapshot_or_audit_unverified": 0,
-      "snapshot_present": 2,
+      "snapshot_present": 4,
       "source_changed_after_freeze": 0,
       "source_missing_after_freeze": 0,
       "status": "OBSERVED_WINDOW_COUNTS",
-      "v229_atomic_evidence_matched": 2,
-      "v229_attestation_record_matched": 2
+      "v229_atomic_evidence_matched": 4,
+      "v229_attestation_record_matched": 4
     }
   },
   "status": "NEEDS_ATTENTION"
