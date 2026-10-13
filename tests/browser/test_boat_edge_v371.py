@@ -120,11 +120,24 @@ async def check(engine, shot_dir=None):
             assert await page.locator("#raceView #be207Top .be207-budget").is_visible(), "allocation hidden"
             assert await page.locator("#raceView #be207Top .be207-odds").is_visible(), "odds verification state hidden"
             assert await page.locator("#raceView #be206Quick .be206-table").is_visible(), "six boats hidden"
+            assert await page.locator("#raceView #be206Quick .be206-table tbody tr").count() == 6, "six racer rows missing"
+            assert await page.locator("#raceView #be206Quick .be206-headpanel").is_hidden(), "head detail must not auto-open"
             assert await page.locator("#raceView #be207Top .be305-evidence-items").is_hidden(), "audit clutter not collapsed"
             details = page.get_by_role("button", name="詳しいデータ・監査を開く")
             if width <= 390:
-                buttons = page.locator("#raceView #be207Top .be207-modes button")
-                assert await buttons.first.evaluate("(el)=>el.getBoundingClientRect().height") >= 44
+                for selector in (
+                    "#raceView #be207Top .be207-modes button",
+                    "#raceView #be108RaceNav .be108-race-chip",
+                    "#raceView #be206Quick .be206-layout-switch button",
+                    "#raceView #be207Top .be208-detail-actions button",
+                ):
+                    control = page.locator(selector).first
+                    assert await control.is_visible(), f"missing mobile control: {selector}"
+                    box = await control.bounding_box()
+                    assert box and box["height"] >= 44, f"undersized touch target: {selector}"
+                assert await page.evaluate(
+                    "() => document.documentElement.scrollWidth <= window.innerWidth + 1"
+                ), "unintended full-page horizontal scrolling on an iPhone"
             before = await page.locator("#raceView #be207Top .be207-combo").inner_text()
             await details.click()
             assert await page.locator("#raceView #be207Top .be305-evidence-items").is_visible(), "audit details inaccessible"
