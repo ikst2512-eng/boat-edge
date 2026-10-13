@@ -67,6 +67,8 @@ assert.match(home,/data\/site_early_calendar\//);
 assert.match(home,/BOAT_EDGE_V392_NEXT_DAY_CARDS_V1/); // explicit future never treated as results
 assert.match(workflow,/boat_edge_v392_card_preview\.py --mode today/);
 assert.match(nightly,/boat_edge_v392_card_preview\.py --mode tomorrow/);
+assert.match(nightly,/boat_edge_v392_card_preview\.py --mode today/);
+assert.match(nightly,/push:\s*\n\s*branches: \[main\]/);
 assert.match(nightly,/schedule:/);
 assert.doesNotMatch(js,/site_results\/|formal_predictions\/|race\/result|race\/pay|fetch\(.+odds/);
 console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
