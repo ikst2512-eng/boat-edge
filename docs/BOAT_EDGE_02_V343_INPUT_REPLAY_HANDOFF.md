@@ -528,3 +528,70 @@ no result endpoint/payout/combined API is accessed.
 V235's source-collector pin and actual predeadline source publishing.
 V367 may help Track 01 check a new source capture *before* deciding
 whether/how to publish, but it authorizes no changes by itself.
+
+
+### V368: explicit non-formal multi-race source-only cohort dual replay
+
+After V367 verified one V366 archived source-only original bundle, V368
+adds `scripts/boat_edge_v368_source_only_cohort_audit.py` to verify an
+**operator-supplied explicit set of 1–100 archived source-only race
+keys and previously retained per-race manifest SHA256 digests**.
+No discovery over `data/results`, old dates, SITE predictions,
+formal cohorts, or implicit extra V366 archives is allowed.
+
+The caller supplies an exact canonical JSON index (sort all object keys,
+compact separators and append one newline). Example **illustrative
+only; the digest shown must be replaced with an actual retained SHA**:
+
+```json
+{
+  "schema": "BOAT_EDGE_V368_EXPLICIT_SOURCE_ONLY_COHORT_V1",
+  "source_capture_only": true,
+  "no_result_inputs": true,
+  "no_formal_fresh": true,
+  "no_model_promotion": true,
+  "declared_expected_count": 1,
+  "expected": [
+    {
+      "race_key": "20261013-22-12",
+      "manifest_sha256": "<actual external retained 64-character SHA256>"
+    }
+  ]
+}
+```
+
+The example is shown pretty-printed for readability, not valid CLI
+canonical format. The index is *not* synthesized from whatever
+archives happen to be present; an absent declared race must fail the
+cohort. The index is not independently authenticated by the tool.
+The caller is responsible for preserving an external expected list
+and digests **as of the original capture, before any result exposure**.
+
+Validation fully completes **before opening any archive**: canonical
+key ordering, no duplicates, no Formal 2026-10-01 race key, no optional
+result-bearing paths or extra index fields, no malformed digest,
+exact declared count and explicit research-only flags. For each
+declared key, V367 runs twice independently with exact retained
+manifest SHA and verifies the canonical report bytes are identical.
+An absent/corrupted archive is recorded as a rejection and
+`all_declared_sources_locally_verified=false`; a zero-count group
+cannot be declared PASS. An accepted cohort is labelled
+`ALL_DECLARED_LOCAL_SOURCE_ARCHIVES_REPLAYED_NOT_FORMAL`.
+
+Fixture-only `tests/test_boat_edge_v236_v368_source_only_cohort_audit.py`
+checks valid archive replay after deleting mutable SITE cards, omitted
+expected archive, wrong SHA, corrupted official bytes, duplicated and
+unsorted race keys, locked/formal index claims, fake replay success
+flags, divergent double-run reports and explicit non-access to
+`data/formal_status.json`. The 2026-10-13 code CI
+[run 38406825185](https://github.com/ikst2512-eng/boat-edge/actions/runs/38406825185)
+completed SUCCESS: **337 Python tests; 335 successful, 2 skipped**,
+commit `f78dda7dec15dde6fb27873c055d19dd0bbbc8da`.
+
+V368 is **not** V344's full 3×120 V336 research freeze audit,
+not proof of cohort completeness beyond the declared external list,
+not an external official provider server-time attestation and
+not permission to score or promote a model. PR integration, stable
+Git-source publication and live runs remain with Track 01. The
+formal Fresh 2026-10-01 `results_seen/unlock/scoring` flags must
+remain false.
