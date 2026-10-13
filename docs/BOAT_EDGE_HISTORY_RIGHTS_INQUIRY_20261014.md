@@ -54,3 +54,24 @@ BOAT EDGE正式Freshの結果ロックは引き続き0/100。V400〜V405は合�
 4. **許諾**: READMEのMIT表記はコードに関する表記で、競走結果の二次利用許諾を自動で証明しない。BoatraceCSVの管理者と公式の権利者に「非公開学習・派生統計・商用公開予想・生CSV再配布の可否」を別々に照会する。問い合わせはまだ未送信。
 
 この調査により「外部に実CSVがあるか」は**YES**、「5年分すべてがこのソースでそろうか」は**NO/未確認**、「BOAT EDGEへの二次利用許諾」は**未確認**と区別できた。
+
+
+## 2026-10-14 追加ウェブ調査・優先順位確定
+
+一次ソース再確認:
+- BoatraceCSV データ一覧 https://boatracecsv.github.io/docs/data/ : 12桁レースコードでJOIN可能。race_cards / waku10 / recent_national / recent_local / motor_stats / previews(tkz,stt,sui,original_exhibition) / results(realtime,payouts)。
+- BoatraceCSV previews https://github.com/BoatraceCSV/boatracecsv.github.io/blob/main/docs/data/previews.md : 締切5分前を狙う5分間隔の収集で、取得日時と締切時刻を別々に記録。保存列だけでは時点の独立証明は完成しない。Git commitや取得ログと照合。
+- BoatraceCSV results https://boatracecsv.github.io/docs/data/results.html : 実進入・着順・払戻。締切後のデータであるため、特徴量には絶対に使わず、許諾済みの非Formal Fresh研究結果検証のみ。
+- BOAT RACE公式 https://www.boatrace.jp/owpc/pc/extra/data/download.html : 24場番組表・競走成績B/K、選手期別成績の公開配布。公開配布とAI学習・商用二次利用の許諾は別。
+- BR-STAT https://br-stat.jp/data-source : 2021年1月以降約288,000レース・全24場と公表。内部PostgreSQL保有の説明であり、一般向け一括CSV/APIや利用許諾は未確認。
+- BoatraceCSV fun-site https://github.com/BoatraceCSV/fun-site/blob/main/docs/data-sources.md : 実運用でGitHub PagesのCSVをHTTPフォールバックとして使用している具体例。これもBOAT EDGEへの権利移転・保証ではない。
+
+**研究実装の固定判断**:
+1. 2026-09-30以前の実データ候補を最優先。Formal Fresh 2026-10-01以降の結果・払戻・combined endpointにアクセスしない。
+2. まずBoatraceCSVのrace_cards, previews/stt, tkz, sui, original_exhibitionの列・取得日時・締切時刻・Git時刻を検証する。単に日付が一致しても予想時点の特徴量として採用しない。
+3. 2021〜2024年はBoatraceCSVの同一race_cardsパスが未確認であり、公式B/Kまたは別の明示許諾ソースで補完する。存在しないCSVを推測して埋めない。
+4. 本番投入前に、第三者CSVの権利、公式一次データの利用条件、商用予想サイトでの表示、派生モデル学習、再配布をそれぞれ確認する。MIT表記だけで元データの再利用権を断定しない。
+5. Top3/5/10改善認定は、既存モデルと同一レース・同一予想時点・同一除外規則で、結果未見の保存予想を比較してから。過去結果の後付け検証は別ラベル。
+6. 01の自動予想保存と03の画面には02から介入しない。研究PR #253はドラフトを維持する。
+
+**今回の調査はソース確認と方針の確定であり、5年分の実データ取込完了、利用許諾取得、予測改善の実証を意味しない。**
