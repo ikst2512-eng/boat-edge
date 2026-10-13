@@ -99,3 +99,11 @@ GitHubの公開リポジトリの実ファイルを参照して列構成とレ�
 - 直近CSVの存在は5年間の連続カバレッジ、再利用許諾、独立したas-of時刻の証明を意味しない。
 
 出典: https://github.com/BoatraceCSV/boatracecsv.github.io/blob/main/docs/data/previews.md および https://github.com/BoatraceCSV/boatracecsv.github.io/blob/main/docs/data/programs.md 。これらの公開仕様を根拠に、01・03を変更せず02のデータ優先順位を固定する。
+
+
+## 2026-10-14 CI確定・実装状況
+
+- V409追加の最新テストを含む GitHub Actions #38466913960 は **SUCCESS**（head `beb35c86eee51b50ddfa055ad75bfff07d485fc3`）。
+- GitHub比較で研究ブランチは main に対して **ahead 87 / behind 49**、差分31ファイル。大半は研究専用の新規ファイル、既存の変更ファイルは `.github/workflows/boat-edge-development-ci.yml`。このため main 更新の衝突を避け、PR #253 はドラフトのまま。mergeableは照会時点で false だが、変更ファイル一覧だけでは具体的な競合ハンクを特定できない。
+- V409は **許諾済みのローカルCSVを受け取って検証する実装**。GitHub上の公開CSVを研究リポジトリへ取り込んだものではない。実CSVでの照合件数、未見Top3/5/10の実測は未達。
+- V409で同一レースの stt/tkz/sui/original_exhibition 4ソースの時刻適格な積集合を算出。取得時刻のみで予想時点のGit証跡まで証明できるとは扱わない。
