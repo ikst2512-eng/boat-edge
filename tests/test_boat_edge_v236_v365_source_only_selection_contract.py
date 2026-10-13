@@ -13,8 +13,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from boat_edge_v365_source_only_selection_contract import select_source_refresh
 from boat_edge_v230_fast_lane import targets as old_v230_targets
 from test_boat_edge_v236_v364_v230_v336_selection_contract import (
-    NOW, KEY, setup_selection,
+    NOW, KEY, setup_selection as v364_setup_selection,
 )
+
+
+def setup_selection(root):
+    v364_setup_selection(root)
+    index = root / "data/today.json"
+    doc = json.loads(index.read_bytes())
+    doc.update({"phase": "PRE_RESULT", "results_seen": False,
+                "unlock": False, "scoring": False})
+    index.write_text(json.dumps(doc), encoding="utf-8")
 
 
 def write_race(root, modifier):
@@ -123,6 +132,37 @@ class V365SourceOnlySelection(unittest.TestCase):
             report = select_source_refresh(root, NOW)
             self.assertEqual(report["candidates"], [])
             self.assertIn("FIRST_PREDICTION_SYMLINK", report["rejected"])
+
+    def test_index_result_bearing_and_unlock_flags_refuse_all_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for change in (
+                lambda d: d.__setitem__("results_seen", True),
+                lambda d: d.__setitem__("unlock", True),
+                lambda d: d.__setitem__("scoring", True),
+                lambda d: d.__setitem__("phase", "POST_RESULT"),
+                lambda d: d.__setitem__("results", {"DO_NOT_READ": True}),
+            ):
+                setup_selection(root)
+                index = root / "data/today.json"
+                doc = json.loads(index.read_bytes())
+                change(doc)
+                index.write_text(json.dumps(doc))
+                report = select_source_refresh(root, NOW)
+                self.assertEqual(report["candidates"], [])
+                self.assertIn("INDEX_NOT_CURRENT_OR_VALID", report["rejected"])
+
+    def test_index_result_bearing_row_is_disallowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            setup_selection(root)
+            index = root / "data/today.json"
+            doc = json.loads(index.read_bytes())
+            doc["venues"][0]["races"][0]["result"] = {"DO_NOT_READ": True}
+            index.write_text(json.dumps(doc))
+            report = select_source_refresh(root, NOW)
+            self.assertEqual(report["candidates"], [])
+            self.assertIn("INDEX_ROW_INVALID_OR_RESULT_BEARING", report["rejected"])
 
     def test_malformed_clock_and_limit_fail_before_any_read(self):
         with tempfile.TemporaryDirectory() as tmp:
