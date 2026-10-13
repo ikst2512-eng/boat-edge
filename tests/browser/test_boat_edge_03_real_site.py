@@ -115,6 +115,68 @@ def probe_site_snapshot_evidence(context, target, key, deadline):
             "first_git_commit_verified": False}
 
 
+
+def test_snapshot_evidence_contract_without_network():
+    """Synthetic verifier regression: no real results or frozen claims."""
+    key = "20261014-14-01"
+    combos = ["1-2-3", "1-2-4", "1-2-5", "1-2-6", "1-3-2",
+              "1-3-4", "1-3-5", "1-3-6", "1-4-2", "1-4-3"]
+    snap = {
+        "race_key": key, "snapshot_window": "FINAL_15M",
+        "guards": {"results_seen": False, "unlock": False, "scoring": False},
+        "first_saved_at": "2026-10-13T23:30:00+00:00",
+        "saved_at": "2026-10-13T23:31:00+00:00",
+        "modes": {"hit": {"tickets": [{"combo": x} for x in combos]}}
+    }
+    raw = json.dumps(snap, sort_keys=True).encode()
+    sha = hashlib.sha256(raw).hexdigest()
+    audit = {"race_key": key, "pass": True, "latest_snapshot_sha256": sha}
+    proof = {
+        "race_key": key, "snapshot_sha256": sha,
+        "schema": "BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1",
+        "scope": "SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS",
+        "new_snapshot_created_this_run": True, "results_seen": False,
+        "formal_fresh_unlock": False, "scoring": False,
+        "snapshot_saved_at": snap["saved_at"]
+    }
+    class Response:
+        def __init__(self, value):
+            self.status = 404 if value is None else 200
+            self.value = value
+        def body(self):
+            return self.value if isinstance(self.value, bytes) else json.dumps(self.value).encode()
+        def json(self):
+            return json.loads(self.body())
+    class Request:
+        def __init__(self, data):
+            self.data = data
+        def get(self, url, **_):
+            return Response(self.data.get(url.split("/data/")[-1]))
+    class Context:
+        def __init__(self, data):
+            self.request = Request(data)
+    data = {
+        "site_prediction_snapshots/" + key + ".json": raw,
+        "site_prediction_audit/" + key + ".json": audit,
+        "site_autopilot/v229_evidence/" + key + ".json": proof
+    }
+    check = lambda d: probe_site_snapshot_evidence(
+        Context(d), "https://pages.example/index.html", key, "08:35")
+    accepted = check(data)
+    assert accepted["status"] == "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+    assert accepted["saved_top3"] == combos[:3]
+    assert accepted["saved_top10"] == combos
+    assert accepted["first_git_commit_verified"] is False
+    assert check({})["status"] == "NO_SITE_PREDEADLINE_SNAPSHOT"
+    assert check({**data, "site_prediction_audit/" + key + ".json":
+                  {**audit, "latest_snapshot_sha256": "0" * 64}}
+                 )["status"] == "SNAPSHOT_SHA_OR_V229_AUDIT_MISMATCH"
+    assert check({**data, "site_prediction_audit/" + key + ".json":
+                  {**audit, "settlement": {}}}
+                 )["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT"
+    print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
+
+
 def probe_verified_live_topk(context, target, catalog, shots, engine):
     """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
 
@@ -505,4 +567,5 @@ if __name__ == "__main__":
     parser.add_argument("--site-url", default="local", help="local or published Pages index.html")
     parser.add_argument("--screenshots", default="artifacts/boat-edge-03-browser")
     args = parser.parse_args()
+    test_snapshot_evidence_contract_without_network()
     exercise(args.engine, args.site_url, Path(args.screenshots))
