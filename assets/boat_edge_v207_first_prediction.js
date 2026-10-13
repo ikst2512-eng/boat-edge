@@ -51,7 +51,7 @@ function readinessWindow(r,now=Date.now()){
  if(String(m.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
     Number(m.race_no)!==Number(key.slice(12,14))||
     (m.date&&m.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8))||
-    !/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(clock))
+    !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(clock))
   return '選択レースの締切時刻を照合できません。買い目は確認待ちです。';
  const day=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
  const due=Date.parse(day+'T'+clock+':00+09:00');
