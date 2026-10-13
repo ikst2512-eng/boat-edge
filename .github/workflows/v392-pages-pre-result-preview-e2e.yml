@@ -1,0 +1,53 @@
+name: BOAT EDGE V392 - Live Pages Early Preview Mobile Proof
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/browser/test_boat_edge_v392_live_preview.py'
+      - 'assets/boat_edge_v392_early_prediction.js'
+      - '.github/workflows/v392-pages-pre-result-preview-e2e.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tests/browser/test_boat_edge_v392_live_preview.py'
+      - 'assets/boat_edge_v392_early_prediction.js'
+      - '.github/workflows/v392-pages-pre-result-preview-e2e.yml'
+permissions:
+  contents: read
+jobs:
+  verify-live-source-card-topk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real mobile-sized browsers
+        run: |
+          python -m pip install --disable-pip-version-check 'playwright==1.58.0'
+          python -m playwright install --with-deps chromium webkit
+      - name: Assert formal Fresh remains unopened
+        run: |
+          python - <<'PY_V392'
+          import json
+          d=json.load(open('data/formal_status.json',encoding='utf8'))
+          g=d.get('guards') or {}
+          assert all(g.get(k) is False for k in ('results_seen','unlock','scoring'))
+          assert g.get('RESULT_UNLOCK_TOKEN') is None
+          assert (d.get('formalFirst100') or {}).get('races',0) == 0
+          print('V392_FORMAL_FRESH_CLOSED_BEFORE_BROWSER_PASS')
+          PY_V392
+      - name: Published Pages - Chromium source-bound early Top3/5/10
+        run: python tests/browser/test_boat_edge_v392_live_preview.py --engine chromium
+      - name: Published Pages - WebKit iPhone-sized source-bound early Top3/5/10
+        run: python tests/browser/test_boat_edge_v392_live_preview.py --engine webkit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: boat-edge-v392-mobile-readonly-screenshots
+          path: artifacts/boat-edge-v392/*.png
+          retention-days: 3
+          if-no-files-found: ignore
