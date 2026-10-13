@@ -207,6 +207,18 @@ function renderHead(box,r,mode,status){
  const content=$('.be206-head-lines',el);
  if(content.innerHTML!==lines)content.innerHTML=lines;
 }
+/* A36: reuse only the race-scoped V223 provenance chips; no values inferred. */
+function originalSourceStatus(key){
+ const host=$('#be223Source');
+ if(!keyOK(key)||host?.dataset?.raceKey!==key||host.hidden)
+  return '独立オリ展：BOATERS 未取得・未照合 ／ 競艇日和 未取得・未照合';
+ const label=(id,name)=>{
+  const chip=$('[data-be223-ex="'+id+'"]',host);
+  const quality=chip?.dataset?.quality||'unknown';
+  return name+' '+(chip&&['ok','stale','wait','limited','stop'].includes(quality)?chip.textContent.trim():'未取得・未照合');
+ };
+ return '独立オリ展：'+label('boaters','BOATERS')+' ／ '+label('biyori','競艇日和');
+}
 function board(){
  const r=race(),p=$('#be108PredictionModes'),root=$('#tab-pred .section.stack');
  if(!keyOK(r?.race_key)||!root||!p||!window.BoatEdgeV203?.getRows||!window.BoatEdgeV205?.sourceStatus||!$('#be203Layout')||!$('#be204Overview')){
@@ -248,7 +260,7 @@ function board(){
    lastTable=data;lastStructure=structure;
  }
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
- setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
+ setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認） ／ ${originalSourceStatus(r.race_key)}`);
  renderHead(box,r,mode,st);
  document.documentElement.classList.add('be206-active');
  updateComparisonScroll(box);
