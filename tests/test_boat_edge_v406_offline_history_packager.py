@@ -16,7 +16,7 @@ from boat_edge_v403_five_year_coverage_audit import UNPROVEN
 from boat_edge_v404_asof_history_features import snapshot
 from boat_edge_v405_batch_asof_history_features import build_batch
 from boat_edge_v406_offline_history_packager import (
-    CUTOFF, INDEX_SCHEMA, package_days, stage_from_index,
+    CUTOFF, INDEX_SCHEMA, package_days, stage_from_index, iter_staged_days,
 )
 
 
@@ -204,6 +204,63 @@ class V406OfflinePackagingTests(unittest.TestCase):
             changed["days"][0]["normalized_csv"] = "/tmp/private.csv"
             with self.assertRaisesRegex(ValueError, "UNSAFE_STAGE_RELATIVE_PATH"):
                 stage_from_index(root, changed)
+
+    def test_lazy_day_generator_exact_output_and_guards(self):
+        inputs = [self.first, self.yesterday, self.today]
+        ordered = package_days(inputs)
+        lazy = package_days(item for item in inputs)
+        self.assertEqual(ordered, lazy)
+        with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
+            package_days(item for item in ())
+        with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
+            package_days(item for item in [self.first]*1827)
+        with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
+            package_days(iter("not a history day"))
+
+    def test_streaming_index_reads_one_day_at_a_time(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            entries = []
+            for label, data in [("first", self.first), ("last", self.today)]:
+                (root / (label+".csv")).write_bytes(data["k_csv"])
+                (root / (label+".manifest.json")).write_text(
+                    json.dumps(data["k_manifest"]), encoding="utf-8")
+                (root / (label+".report.json")).write_text(
+                    json.dumps(data["v402_report"]), encoding="utf-8")
+                entries.append({
+                    "source_day": data["source_day"],
+                    "normalized_csv": label+".csv",
+                    "v400_manifest": label+".manifest.json",
+                    "v402_report": label+".report.json",
+                })
+            index = {"schema": INDEX_SCHEMA, "days": entries}
+            iterator = iter_staged_days(root, index)
+            self.assertFalse(isinstance(iterator, list))
+            first = next(iterator)
+            self.assertEqual(first["source_day"], "2021-10-01")
+            # Source is read on demand: remove the second day's original CSV
+            # before advancing and require a missing-file failure.
+            (root / "last.csv").unlink()
+            with self.assertRaisesRegex(ValueError, "STAGE_FILE_MISSING_OR_OUTSIDE_ROOT"):
+                next(iterator)
+
+    def test_stream_index_rejects_invalid_paths_before_first_read(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            index = {"schema": INDEX_SCHEMA, "days": [{
+                "source_day": "2021-10-01",
+                "normalized_csv": "first.csv",
+                "v400_manifest": "../secret.json",
+                "v402_report": "first.report.json",
+            }]}
+            with self.assertRaisesRegex(ValueError, "UNSAFE_STAGE_RELATIVE_PATH"):
+                next(iter_staged_days(root, index))
+            too_many = {"schema": INDEX_SCHEMA, "days": [
+                {"source_day": "2021-10-01", "normalized_csv": "first.csv",
+                 "v400_manifest": "first.json", "v402_report": "first.report.json"}
+            ] * 1827}
+            with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
+                next(iter_staged_days(root, too_many))
 
     def test_byte_determinism_order_independence(self):
         a = package_days([self.first, self.today])
