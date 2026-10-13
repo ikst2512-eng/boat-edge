@@ -2,6 +2,7 @@
 import hashlib
 import json
 import sys
+import tempfile
 import unittest
 from copy import deepcopy
 from datetime import date, datetime, timedelta
@@ -12,9 +13,9 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from boat_edge_v400_five_year_history_research import JST
 from boat_edge_v402_offline_b_k_reconciliation import B_SCHEMA
-from boat_edge_v407_local_performance_bridge import stage_local_entries
+from boat_edge_v407_local_performance_bridge import stage_local_entries, load_local_txt_sources
 from boat_edge_v408_local_b_program_bridge import (
-    MODEL, parse_local_b_txt, stage_b_schedule,
+    MODEL, parse_local_b_txt, parse_local_b_files, stage_b_schedule,
 )
 
 DAY = date(2026, 9, 30)
@@ -154,6 +155,63 @@ class V408LocalProgramBridgeTests(unittest.TestCase):
             parse_local_b_txt(b"",DAY)
         with self.assertRaisesRegex(ValueError,"LOCAL_B_CP932_DECODE_FAILED"):
             parse_local_b_txt(b"\x81",DAY)
+
+    def test_secure_multi_venue_local_directory_read_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            (root/"a.txt").write_bytes(b"first locally generated B")
+            (root/"b.TXT").write_bytes(b"second locally generated B")
+            (root/"ignore.json").write_text("{}")
+            sources=load_local_txt_sources(local_dir=root)
+            self.assertEqual(sorted(sources),["a.txt","b.TXT"])
+            self.assertEqual(sources["a.txt"],b"first locally generated B")
+            self.assertEqual(len(sources),2)
+
+    def test_local_dir_does_not_follow_symlink(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            (root/"b.txt").write_bytes(b"locally invented B")
+            (root/"alias.txt").symlink_to(root/"b.txt")
+            with self.assertRaisesRegex(ValueError,"LOCAL_TXT_FILE_UNSAFE_OR_MISSING"):
+                load_local_txt_sources(local_dir=root)
+
+    def test_directory_with_no_txt_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            (root/"ignore.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError,"LOCAL_TXT_FILE_COUNT_OUT_OF_RANGE"):
+                load_local_txt_sources(local_dir=root)
+
+    def test_two_venue_parser_processes_all_local_files(self):
+        try:
+            import importlib.metadata
+            importlib.metadata.version("boatrace-lzh")
+        except importlib.metadata.PackageNotFoundError:
+            self.skipTest("optional parser is not installed")
+        def invented_b(code,name,register_start):
+            lines=[
+                "STARTB", f"{code}BBGN",
+                f"ボートレース{name}   ９月３０日   架空開催",
+                "＊＊＊ 番組表 ＊＊＊",
+                f"第１日    2026/ 9/30      ボートレース{name}",
+                "　１Ｒ  一般     Ｈ１８００ｍ  電話投票締切予定０８：３５",
+                "艇 選手 登録 選手名",
+            ]
+            lines.extend(
+                f"{i} {register_start+i}架空選手35東京53B1 5.46 35.44 6.17 50.00 53 34.70 59 29.53"
+                for i in range(1,7)
+            )
+            return ("\n".join(lines)+"\n").encode("cp932")
+        sources={
+            "kiryu.TXT":invented_b("01","桐生",4500),
+            "toda.txt":invented_b("02","戸田",4600),
+        }
+        stage=parse_local_b_files(sources,DAY)
+        self.assertEqual(len(stage["races"]),2)
+        self.assertEqual([r["race_key"] for r in stage["races"]],
+                         ["202609300101","202609300201"])
+        self.assertEqual(stage["races"][0]["entries"][0]["racer_id"],"4501")
+        self.assertEqual(stage["races"][1]["entries"][0]["racer_id"],"4601")
 
     def test_optional_library_actual_scheduleparser_on_invented_local_B(self):
         try:
