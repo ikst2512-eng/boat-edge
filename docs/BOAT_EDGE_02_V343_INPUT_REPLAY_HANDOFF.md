@@ -473,3 +473,58 @@ Git publication, V235's pinned V230, and integration with site prediction
 provenance belong to Track 01. Track 02's subsequent V343/V344 replay
 must verify complete 3 × 120 rows from newly and genuinely frozen
 predeadline research inputs; simulated V366 proof cannot establish that.
+
+
+### V367: exact offline replay of isolated source-only bytes (2026-10-13 JST)
+
+V366 now saves the **unchanged original race JSON bytes** as a fourth
+immutable file, `race_input.json`, alongside `manifest.json`,
+`racelist.html` and `beforeinfo.html`. Its manifest includes the
+archived input's exact relative path and SHA256. Publication uses a
+temporary directory renamed once into a race-keyed research-only
+directory; a repeat is blocked before HTTP, and the selection/deadline
+window plus the exact current race JSON bytes are rechecked immediately
+before the final rename. A late staging operation cannot present itself
+as a predeadline success.
+
+V367 in `scripts/boat_edge_v367_source_only_replay.py` independently
+reads **only these four archived files** to verify:
+- Exact SHA256 for input and both original HTML captures, declared byte
+  lengths, canonical manifest JSON, exact same-race official URLs and
+  canonical filenames; no extra files or symlinks.
+- Original archived race ID/day/venue/number, unmodified PRE_RESULT
+  guards, and strict chronological ordering of source receipt times
+  and as-of date/deadline (bounded 2–19-minute research selection).
+- Re-run of registered six-racer parity, six official exhibition times,
+  six ST rows, official active race tab/deadline and actual
+  **provisional exhibition table row-order**, as well as explicit
+  withdrawal/absence checks. All replayed evidence must exactly equal
+  the captured manifest's original parsed structures.
+- Optional externally retained `expected_manifest_sha256`, so a
+  modified manifest cannot be accepted silently.
+- Two independent `replay_one` calls return byte-identical canonical
+  reports, even after deleting all mutable `data/races`,
+  `data/today.json` and existing first SITE prediction files.
+
+Synthetic positive/tamper tests:
+`tests/test_boat_edge_v236_v367_source_only_replay.py`. They cover
+raw HTML tampering, archived input tampering, manifest edits,
+rebuilt manifest SHA with bad official icon, wrong official race URL,
+unexpected extra file, false authorization flags, bad chronology,
+provisional course field drift, symlink and forbidden formal target.
+Separate V366 regression verifies a deadline crossing during **bundle
+staging**, not only while performing HTTP.
+
+**Limitations:** replay proves deterministic local integrity of the
+archived input/source bytes and a *self-reported* timeline, NOT actual
+external capture time, source authenticity, BOATERS/競艇日和 original
+exhibition parity, final actual entry, real-race cohort completeness,
+improved hit rate or formal Fresh eligibility. This standalone
+source-only artifact does not substitute for a V332 freeze or
+V343/V344 full 3×120 audit. No historic race is backfilled, and
+no result endpoint/payout/combined API is accessed.
+
+**Track 01 owns** review of new source-only integration, main/CI/Pages,
+V235's source-collector pin and actual predeadline source publishing.
+V367 may help Track 01 check a new source capture *before* deciding
+whether/how to publish, but it authorizes no changes by itself.
