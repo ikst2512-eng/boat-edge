@@ -158,7 +158,7 @@ function render(){
  }
  if(awaitingRaceList&&sourceList&&sourceList!==lastListNode)awaitingRaceList=false;
  if(!awaitingRaceList&&sourceList)lastListNode=sourceList;
- const rows=$('.be108-ticket-list > .be108-ticket',p);
+ const rows=Array.from(p.querySelectorAll('.be108-ticket-list > .be108-ticket'));
  const mode=$('.be108-mode-tabs .on',p)?.dataset.be108Mode||'unknown';
  const stage=str('#scenarioHero .scenario-main')||'展開説明は現在確認できません';
  const freeze=window.BoatEdgeV204.sourceLabel?.(p)||'買い目保存状態未確認';
@@ -219,9 +219,10 @@ function render(){
   text(all,showAll?'Top3に戻す':'全買い目を表示');
   all.setAttribute('aria-pressed',String(showAll));
   const total=str('#be204Budget [data-be204="total"]',p);
-  text($('.be207-budget',box),!ticketViewSynced?'配分：新レースの値を照合中（旧レースの値は表示しません）':settled?'締切前の保存配分がある券のみ個別表示（実購入なし）':
+  // A stopped/unverified ticket list must not retain an actionable-looking budget.
+  text($('.be207-budget',box),!ticketViewSynced?'配分：新レースの値を照合中（旧レースの値は表示しません）':stop?'配分：買い目を停止・未確認のため非表示':settled?'締切前の保存配分がある券のみ個別表示（実購入なし）':
     '元画面の参考配分合計：'+(total||'未確認')+' ／ '+(rowOK?rows.length+'点':'券種照合待ち')+'（実購入なし）');
-  text($('.be207-odds',box),!ticketViewSynced?'公式オッズ：新レースの証跡を照合中':fresh?
+  text($('.be207-odds',box),!ticketViewSynced?'公式オッズ：新レースの証跡を照合中':stop?'公式オッズ・想定払戻：買い目停止・未確認のため非表示':fresh?
     '公式3連単オッズの保存値（非リアルタイム）：'+(proof?.label||'取得状態確認中'):
     '公式3連単オッズ未確認／想定払戻は非表示');
   document.documentElement.classList.add('be207-ready');

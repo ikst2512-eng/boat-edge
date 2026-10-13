@@ -104,3 +104,5 @@ console.log('V327_SIX_BOAT_RUNTIME_NODELIST_PASS');
  assert(guard.includes('be328-await-ticket-list'),'V331 pending state must hide previous-race tickets');
  console.log('V331_TICKET_LIST_RENDER_IDENTITY_CONTRACT_PASS');
 }
+// V373: static suite/read-only stop-state contract in the existing UI CI entrypoint.
+require('./test_boat_edge_v373_browser_contract.cjs');

@@ -1,0 +1,65 @@
+name: BOAT EDGE V373 - Chromium WebKit Mobile Browser Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/v373-mobile-playwright-gate.yml'
+      - 'tests/browser/test_boat_edge_03_playwright.py'
+      - 'assets/boat_edge_v207_first_prediction.js'
+      - 'assets/boat_edge_v207_first_prediction.css'
+      - 'assets/boat_edge_v304_topk_mobile.css'
+      - 'assets/boat_edge_v206_quickview.js'
+      - 'assets/boat_edge_v206_quickview.css'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v373-mobile-playwright-gate.yml'
+      - 'tests/browser/test_boat_edge_03_playwright.py'
+      - 'assets/boat_edge_v207_first_prediction.js'
+      - 'assets/boat_edge_v207_first_prediction.css'
+      - 'assets/boat_edge_v304_topk_mobile.css'
+      - 'assets/boat_edge_v206_quickview.js'
+      - 'assets/boat_edge_v206_quickview.css'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Only dispensable preview checks are superseded; live pre-deadline capture
+# workflows must never share this group or inherit this cancellation policy.
+concurrency:
+  group: boat-edge-v373-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-mobile-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Playwright and real Chromium/WebKit browsers
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check playwright==1.56.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Run independent synthetic mobile browser and touch/JST tests
+        env:
+          BOAT_EDGE_REQUIRED_BROWSERS: chromium,webkit
+          BOAT_EDGE_SCREENSHOT_DIR: artifacts/ui-03
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python tests/browser/test_boat_edge_03_playwright.py
+      - name: Preserve screenshots without publishing site data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v373-offline-mobile-browser-${{ github.run_id }}
+          path: artifacts/ui-03/*.png
+          if-no-files-found: ignore
+          retention-days: 7
