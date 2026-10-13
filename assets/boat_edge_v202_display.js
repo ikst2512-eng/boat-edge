@@ -110,7 +110,7 @@
     const meta=race?.meta||{},w=sourceOK(race,'beforeinfo')?bf.weather||{}:{};
     const water=[['風速',num(w.wind_speed_ms)===null?'－':`${fmt(w.wind_speed_ms,0)}m/s`],['波高',num(w.wave_cm)===null?'－':`${fmt(w.wave_cm,0)}cm`],['気温',num(w.air_temp_c)===null?'－':`${fmt(w.air_temp_c,0)}℃`],['水温',num(w.water_temp_c)===null?'－':`${fmt(w.water_temp_c,0)}℃`]];
     const model=modelStatus(pred);
-    const currentOriginal=original&&sourceOK(race,'original_exhibition');
+    const currentOriginal=original&&sourceOK(race,'original_exhibition')?original:null;
     const status=official&&all?'出走表6艇登録済み（欠場は別途確認）':'出走可否の再確認が必要';
     const o=odds&&odds.race_key===key&&odds.fetched_at?odds:null;
     const lag=o?Math.max(0,Math.round((Date.now()-new Date(o.fetched_at).getTime())/60000)):null;
@@ -193,6 +193,6 @@
     if(mode){observer=new MutationObserver(()=>{if(latestRace)draw(latestRace,latestPred);});observer.observe(mode,{childList:true});}
     try{if(typeof window.state!=='undefined'&&window.state?.race)afterRace(window.state.race);}catch(_){}
   }
-  window.BoatEdgeV202={makeRows,entryMap,sourceOK,deadlineAt,snapshotPhase,leaderMetric,refresh:()=>{try{if(window.state?.race)afterRace(window.state.race);}catch(_){}}};
+  window.BoatEdgeV202={makeRows,entryMap,sourceOK,deadlineAt,snapshotPhase,leaderMetric,html,refresh:()=>{try{if(window.state?.race)afterRace(window.state.race);}catch(_){}}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
