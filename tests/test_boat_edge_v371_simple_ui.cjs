@@ -36,3 +36,11 @@ test('V371 never suppresses scratch stops, selected-race guard, stakes or authen
  assert(index.includes('boat_edge_v251_race_result.js'));
 });
 console.log('V371_SIMPLE_RACE_FIRST_UI_CONTRACT_PASS');
+
+test('V371 Playwright fixture parses as Python before device-browser execution',()=>{
+ const {execFileSync}=require('node:child_process');
+ const script='tests/browser/test_boat_edge_v371.py';
+ assert(fs.existsSync(script),'browser acceptance fixture must be version controlled');
+ execFileSync('python3',['-c','import ast,pathlib,sys; ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))',script],
+   {stdio:['ignore','pipe','pipe'],timeout:10000});
+});
