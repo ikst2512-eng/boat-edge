@@ -7,27 +7,27 @@
       "miss_categories": {
         "balance10": {
           "head_absent": 4,
-          "hit": 10,
-          "second_absent_given_head": 5,
-          "third_absent_given_head_second": 10
-        },
-        "coverage15": {
-          "head_absent": 3,
-          "hit": 13,
-          "second_absent_given_head": 3,
-          "third_absent_given_head_second": 10
-        },
-        "hit10": {
-          "head_absent": 3,
-          "hit": 9,
+          "hit": 11,
           "second_absent_given_head": 5,
           "third_absent_given_head_second": 12
         },
-        "scenario7plus3": {
-          "head_absent": 4,
+        "coverage15": {
+          "head_absent": 3,
+          "hit": 14,
+          "second_absent_given_head": 3,
+          "third_absent_given_head_second": 12
+        },
+        "hit10": {
+          "head_absent": 3,
           "hit": 10,
           "second_absent_given_head": 5,
-          "third_absent_given_head_second": 10
+          "third_absent_given_head_second": 14
+        },
+        "scenario7plus3": {
+          "head_absent": 4,
+          "hit": 11,
+          "second_absent_given_head": 5,
+          "third_absent_given_head_second": 12
         }
       },
       "races": [
@@ -396,6 +396,45 @@
           "winning_combo": "2-1-6"
         },
         {
+          "actual_head": "5",
+          "categories": {
+            "balance10": "third_absent_given_head_second",
+            "coverage15": "third_absent_given_head_second",
+            "hit10": "third_absent_given_head_second",
+            "scenario7plus3": "third_absent_given_head_second"
+          },
+          "date_jst": "20261013",
+          "race_key": "20261013-06-02",
+          "reported_head_hit": false,
+          "winning_combo": "5-3-2"
+        },
+        {
+          "actual_head": "4",
+          "categories": {
+            "balance10": "third_absent_given_head_second",
+            "coverage15": "third_absent_given_head_second",
+            "hit10": "third_absent_given_head_second",
+            "scenario7plus3": "third_absent_given_head_second"
+          },
+          "date_jst": "20261013",
+          "race_key": "20261013-11-03",
+          "reported_head_hit": false,
+          "winning_combo": "4-2-5"
+        },
+        {
+          "actual_head": "1",
+          "categories": {
+            "balance10": "hit",
+            "coverage15": "hit",
+            "hit10": "hit",
+            "scenario7plus3": "hit"
+          },
+          "date_jst": "20261013",
+          "race_key": "20261013-14-07",
+          "reported_head_hit": false,
+          "winning_combo": "1-5-3"
+        },
+        {
           "actual_head": "2",
           "categories": {
             "balance10": "hit",
@@ -409,27 +448,27 @@
           "winning_combo": "2-1-3"
         }
       ],
-      "races_verified": 29
+      "races_verified": 32
     },
     "v240": {
       "excluded": {},
       "miss_categories": {
         "hit10": {
           "head_absent": 3,
-          "hit": 8,
+          "hit": 9,
           "second_absent_given_head": 5,
-          "third_absent_given_head_second": 7
+          "third_absent_given_head_second": 9
         },
         "pair_coverage10": {
           "head_absent": 4,
-          "hit": 9,
-          "second_absent_given_head": 6,
-          "third_absent_given_head_second": 4
+          "hit": 10,
+          "second_absent_given_head": 7,
+          "third_absent_given_head_second": 5
         },
         "second_coverage10": {
           "head_absent": 5,
-          "hit": 7,
-          "second_absent_given_head": 4,
+          "hit": 8,
+          "second_absent_given_head": 6,
           "third_absent_given_head_second": 7
         }
       },
@@ -699,6 +738,42 @@
           "winning_combo": "2-1-6"
         },
         {
+          "actual_head": "5",
+          "categories": {
+            "hit10": "third_absent_given_head_second",
+            "pair_coverage10": "second_absent_given_head",
+            "second_coverage10": "second_absent_given_head"
+          },
+          "date_jst": "20261013",
+          "race_key": "20261013-06-02",
+          "reported_head_hit": false,
+          "winning_combo": "5-3-2"
+        },
+        {
+          "actual_head": "4",
+          "categories": {
+            "hit10": "third_absent_given_head_second",
+            "pair_coverage10": "third_absent_given_head_second",
+            "second_coverage10": "second_absent_given_head"
+          },
+          "date_jst": "20261013",
+          "race_key": "20261013-11-03",
+          "reported_head_hit": false,
+          "winning_combo": "4-2-5"
+        },
+        {
+          "actual_head": "1",
+          "categories": {
+            "hit10": "hit",
+            "pair_coverage10": "hit",
+            "second_coverage10": "hit"
+          },
+          "date_jst": "20261013",
+          "race_key": "20261013-14-07",
+          "reported_head_hit": false,
+          "winning_combo": "1-5-3"
+        },
+        {
           "actual_head": "4",
           "categories": {
             "hit10": "head_absent",
@@ -711,7 +786,7 @@
           "winning_combo": "4-3-1"
         }
       ],
-      "races_verified": 23
+      "races_verified": 26
     }
   },
   "method": "FROM_GIT_FROZEN_PRE_DEADLINE_TICKETS_MATCHED_TO_VERIFIED_SITE_RESULTS",
@@ -721,5 +796,5 @@
   "real_or_paper_wagers_placed": 0,
   "schema": "BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1",
   "scope": "POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS",
-  "site_verified_reference_races": 53
+  "site_verified_reference_races": 56
 }
