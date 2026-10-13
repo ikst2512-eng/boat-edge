@@ -32,6 +32,18 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertEqual(entries[name]["crons"], [])
         self.assertNotIn(name, report["scheduled_contents_writers"])
 
+    def test_legacy_relay_has_no_auto_dispatch_or_action_write_permission(self):
+        path = ROOT / ".github" / "workflows" / "site-v185-trigger.yml"
+        source = path.read_text(encoding="utf-8")
+        items = {x["workflow"]: x for x in audit(ROOT / ".github" / "workflows")["workflows"]}
+        entry = items[path.name]
+        self.assertEqual(entry["triggers"], ["workflow_dispatch"])
+        self.assertFalse(entry["contents_write"])
+        self.assertNotIn("workflow_run:", source)
+        self.assertNotIn("actions: write", source)
+        self.assertNotIn("dispatches", source)
+        self.assertNotIn("api.github.com", source)
+
     def test_plain_and_quoted_on_keys_are_equivalent(self):
         from tempfile import TemporaryDirectory
         styles = ("on", "'on'", '"on"')
