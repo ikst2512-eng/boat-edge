@@ -130,27 +130,9 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Score audited prospective site-reference snapshots
-        shell: bash
-        run: |
-          set -e
-          test -f scripts/site_accuracy_v136.py
-          python scripts/site_accuracy_v136.py
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path("data/site_learning/mode_accuracy_v136.json")
-          d=json.loads(p.read_text(encoding="utf-8"))
-          assert d["schema_version"]=="boat-edge-site-mode-accuracy-v136"
-          assert d["scope"]=="SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH"
-          assert d["formal_current_scoring"] is False
-          assert d["rank_120_available"] is False
-          assert d["production_prediction_weights_changed"] is False
-          ns={d["modes"][m]["evaluated"] for m in ("hit","balance","hole","narrow")}
-          assert len(ns)==1
-          assert ns.pop()==d["predictions_evaluated"]
-          print({"scored":d["predictions_evaluated"],"excluded":d["excluded_reasons"]})
-          PY
+      # V136 scores exactly once per publish attempt after fetching latest main.
+      # The legacy preliminary scoring step ran the same Git provenance checks
+      # twice per scheduled run without adding any evidence or safety.
       - name: Publish V136 report only after fresh-main recomputation
         shell: bash
         run: |
