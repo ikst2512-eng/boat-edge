@@ -3,7 +3,14 @@
   if(window.BoatEdgeV203)return;
   const $=(s,r=document)=>r.querySelector(s);
   const esc=x=>String(x??'－').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const n=x=>x===null||x===undefined||String(x).trim()===''?null:Number.isFinite(Number(x))?Number(x):null;
+  // V357: numeric zero is valid; booleans and empty/composite source fields are not measurements.
+  const n=x=>{
+    if(x===null||x===undefined||typeof x==='boolean')return null;
+    if(typeof x==='string'&&!x.trim())return null;
+    if(typeof x!=='number'&&typeof x!=='string')return null;
+    const parsed=Number(x);
+    return Number.isFinite(parsed)?parsed:null;
+  };
   const val=(x,d=2)=>n(x)===null?'－':Number(x).toFixed(d);
   const time=x=>{const d=x?new Date(x):null;return d&&Number.isFinite(d.getTime())?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):'時刻不明'};
   const safeKey=s=>/^20\d{6}-\d{2}-\d{2}$/.test(String(s||''));
@@ -32,24 +39,40 @@
     }
     return {type:'pending',label:'欠場・取消 未照合',description:scratchError?'取消確認データを読み込めませんでした。買い目停止ルールを優先':'6艇の登録と、出走可否の確定確認は別です'};
   }
+  function uniqueLaneRows(items,project=x=>x){
+    const mapped=new Map(),duplicates=new Set();
+    for(const item of Array.isArray(items)?items:[]){
+      const lane=Number(item?.lane);
+      if(!Number.isInteger(lane)||lane<1||lane>6)continue;
+      if(mapped.has(lane)){duplicates.add(lane);continue;}
+      mapped.set(lane,project(item));
+    }
+    for(const lane of duplicates)mapped.delete(lane);
+    return mapped;
+  }
   function getRows(r){
     const racers=Array.isArray(r?.racers)?r.racers:[];
     const ex=src(r,'beforeinfo'),stt=src(r,'stt'),ori=src(r,'original_exhibition');
-    const before=new Map((r?.beforeinfo?.racers||[]).map(x=>[Number(x?.lane),x]));
-    const starts=new Map((r?.beforeinfo?.start_exhibition||[]).map(x=>[Number(x?.lane),x]));
-    const entries=new Map((r?.actual_entry||[]).map(x=>[Number(x?.lane),x]));
+    const before=uniqueLaneRows(r?.beforeinfo?.racers);
+    const starts=uniqueLaneRows(r?.beforeinfo?.start_exhibition);
+    const entries=uniqueLaneRows(r?.actual_entry);
     const orig=r?.original_exhibition,labels=Array.isArray(orig?.labels)?orig.labels:[];
-    const o=new Map((orig?.boats||[]).map(x=>[Number(x?.lane),x?.values||[]]));
-    return racers.map((p,i)=>{
+    const o=uniqueLaneRows(orig?.boats,x=>x?.values||[]);
+    const rows=racers.map((p,i)=>{
       const lane=Number(p?.lane||i+1),b=before.get(lane)||{},s=starts.get(lane)||{},t=entries.get(lane)||{},values=o.get(lane)||[];
       const oe=k=>ori&&labels.includes(k)?n(values[labels.indexOf(k)]):null;
       const sRaw=ex?s.st:stt?(t.exhibition_st_raw??t.exhibition_st):null;
       const course=ex?n(s.course):stt?n(t.course):null;
-      return {lane,name:p?.name||'選手未取得',grade:p?.class||'－',course:course>=1&&course<=6?course:null,st:n(sRaw),f:ex?s.exhibition_f===true:stt?t.exhibition_f===true:false,
+      return {lane,name:p?.name||'選手未取得',grade:p?.class||'－',course:Number.isInteger(course)&&course>=1&&course<=6?course:null,st:n(sRaw),f:ex?s.exhibition_f===true:stt?t.exhibition_f===true:false,
         time:ex?n(b.exhibition_time):null,lap:oe('一周'),turn:oe('まわり足'),straight:oe('直線'),avg:n(p?.avg_st),
         national:p?.national||{},local:p?.local||{},motor:p?.motor||{},boat:p?.boat||{},
         source:ex?'公式展示':stt?'STT':'未取得'};
     });
+    // An actual course cannot belong to two different boats in the same race.
+    const counts=new Map();
+    for(const row of rows)if(row.course!==null)counts.set(row.course,(counts.get(row.course)||0)+1);
+    for(const row of rows)if(row.course!==null&&counts.get(row.course)>1)row.course=null;
+    return rows;
   }
   const distinctBest=(rows,field,margin)=>{
     const sorted=rows.map(x=>field==='st'&&(x.f===true||n(x.st)<0)?null:n(x[field])).filter(x=>x!==null).sort((a,b)=>a-b);
