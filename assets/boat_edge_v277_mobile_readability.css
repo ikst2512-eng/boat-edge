@@ -54,3 +54,17 @@
   }
   #raceView .race-shell { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 }
+
+/* 03: narrow Safari table navigation and readable focused controls.
+   Horizontal movement stays inside each data table, never the full page. */
+@media (max-width: 430px) {
+  #tab-before .tablewrap,
+  #tab-data .tablewrap,
+  #tab-card .tablewrap {
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+  }
+  #raceView #raceTabs > *:focus-visible {
+    scroll-margin-inline: 12px;
+  }
+}
