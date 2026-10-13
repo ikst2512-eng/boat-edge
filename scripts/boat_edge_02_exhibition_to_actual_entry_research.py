@@ -34,7 +34,7 @@ EVIDENCE_KEYS = {
 ROW_KEYS = {
     "race_key", "venue", "exhibition_course_by_boat", "actual_course_by_boat",
     "exhibition_first_seen_jst", "final_actual_course_first_seen_jst",
-    "exhibition_source_sha256", "final_course_source_sha256",
+    "race_deadline_jst", "exhibition_source_sha256", "final_course_source_sha256",
     "has_six_active_boats_no_scratch", "source_licensed_for_research",
 }
 SHRINKAGE_N = 30.0   # fixed prior count: must be retuned only on future train folds
@@ -148,8 +148,11 @@ def estimate_exhibition_conditioned_entry(race_key, scope, evidence, historic_ro
         for name in ("exhibition_source_sha256", "final_course_source_sha256"):
             _sha(row[name])
         exhib_t = _seen(row["exhibition_first_seen_jst"])
+        deadline_t = _seen(row["race_deadline_jst"])
         actual_t = _seen(row["final_actual_course_first_seen_jst"])
-        if (exhib_t.date() != _date(k[:8]) or not exhib_t < actual_t
+        if (exhib_t.date() != _date(k[:8]) or deadline_t.date() != _date(k[:8])
+                or not exhib_t < deadline_t <= actual_t
+                or actual_t.date() > _date(scope["train_end"])
                 or not actual_t < freeze):
             raise ValueError("PAIRED_ENTRY_HISTORIC_ASOF_NOT_PROVED")
         # The boat occupying historical exhibition course e subsequently
