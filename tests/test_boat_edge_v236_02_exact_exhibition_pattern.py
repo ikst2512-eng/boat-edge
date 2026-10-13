@@ -25,6 +25,8 @@ from boat_edge_02_entry_marginalized_topk_research import (
     prepare_entry_topk_ablation, EXACT_CANDIDATE, PAIRED_CANDIDATE,
 )
 from boat_edge_02_joint_entry_permutation_research import digest
+from boat_edge_02_matched_ten_pre_result import prepare_matched_ten
+from test_boat_edge_v236_02_entry_marginalized_topk import NOW
 
 
 def target_identity():
@@ -114,6 +116,41 @@ class ExactPatternTransitions(unittest.TestCase):
         self.assertEqual(out["candidate_ranking_document"]["model_id"],PAIRED_CANDIDATE)
         self.assertFalse(out["exact_exhibition_pattern_conditioning_requested"])
         self.assertFalse(out["historic_transition_counts_conditioned_on_exact_exhibition_pattern"])
+    def test_exact_conditioning_does_not_create_signal_with_all_course_factors_one(self):
+        c=cfg()
+        c["course_factor_by_course"]={b:1.0 for b in range(1,7)}
+        c["course_factor_manifest_sha256"]=digest(c["course_factor_by_course"])
+        out=prepare_entry_topk_ablation(
+            KEY,SCOPE,c,paired_history_evidence=target_identity(),
+            paired_history_rows=two_patterns(),paired_history_mode=EXACT_MODE)
+        self.assertLess(out["factor_only_mass_l1_not_hit_improvement"],1e-10)
+        self.assertLess(out["mass_l1_research_distance_not_hit_improvement"],1e-10)
+        self.assertFalse(out["head_top3_top5_top10_improvement_proven"])
+        self.assertFalse(out["calibration_validated"])
+    def test_exact_conditioning_integrates_existing_equal_ten_without_scoring(self):
+        c=cfg()
+        out=prepare_entry_topk_ablation(
+            KEY,SCOPE,c,paired_history_evidence=target_identity(),
+            paired_history_rows=two_patterns(),paired_history_mode=EXACT_MODE)
+        b,candidate=out["baseline_ranking_document"],out["candidate_ranking_document"]
+        evidence=dict(
+            scope="SITE_RESEARCH_PRE_RESULT_NOT_FORMAL",
+            race_key=KEY,deadline_jst="10:20",
+            target_source_sha256=c["target_source_sha256"],
+            entry_mapping_sha256=c["entry_mapping_sha256"],
+            source_permission_evidence_sha256="a"*64,
+            parent_model_id=b["model_id"],
+            candidate_model_id=candidate["model_id"],
+            parent_training_end="20261013",
+            candidate_training_end="20261013",
+            no_target_outcome=True,no_formal_fresh=True)
+        m=prepare_matched_ten(evidence,b,candidate,NOW)
+        self.assertEqual(m["same_ticket_count_each"],10)
+        self.assertEqual(m["parent_top10"],out["baseline_top10"])
+        self.assertEqual(m["candidate_top10"],out["candidate_top10"])
+        self.assertFalse(m["first_git_commit_time_independently_verified"])
+        self.assertFalse(m["scoring_authorized"])
+        self.assertFalse(m["accuracy_improvement_proven"])
     def test_declared_mode_is_required_and_cannot_silently_fallback(self):
         ev=target_identity()
         with self.assertRaisesRegex(ValueError,"UNDECLARED_EXHIBITION_CONDITIONING_MODE"):
