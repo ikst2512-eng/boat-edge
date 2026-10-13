@@ -214,7 +214,7 @@ class V406OfflinePackagingTests(unittest.TestCase):
             package_days(item for item in ())
         with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
             package_days(item for item in [self.first]*1827)
-        with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
+        with self.assertRaisesRegex(ValueError, "EXACT_STAGED_DAY_FIELDS_REQUIRED"):
             package_days(iter("not a history day"))
 
     def test_streaming_index_reads_one_day_at_a_time(self):
