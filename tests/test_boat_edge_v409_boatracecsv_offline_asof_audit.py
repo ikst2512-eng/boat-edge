@@ -63,6 +63,17 @@ class V409Tests(unittest.TestCase):
         a=audit(DAY,{"race_cards":cards()})
         self.assertEqual(a["preview_status"]["stt"]["source_not_supplied"],1)
         self.assertEqual(a["race_card_rows"],1)
+    def test_all_four_intersection_excludes_late_original_exhibition(self):
+        sources={s:preview() for s in ("stt","tkz","sui")}
+        sources["original_exhibition"]=preview("2026-09-30T08:36:00+09:00")
+        a=audit(DAY,{"race_cards":cards(),**sources})
+        self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],0)
+        self.assertEqual(a["preview_status"]["original_exhibition"]["not_before_deadline"],1)
+    def test_all_four_intersection_excludes_missing_original_exhibition(self):
+        sources={s:preview() for s in ("stt","tkz","sui")}
+        a=audit(DAY,{"race_cards":cards(),**sources})
+        self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],0)
+        self.assertEqual(a["preview_status"]["original_exhibition"]["source_not_supplied"],1)
     def test_four_sources_all_same_race(self):
         a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in
                     ("stt","tkz","sui","original_exhibition")}})
