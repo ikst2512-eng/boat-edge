@@ -47,4 +47,20 @@ BOATERS' backstretch first-boat連対率 is a different target variable from the
 
 ## Handoff to Track 01
 
-Base main SHA `4bbe5bdb5814f4b738ee7bca7ec316a261bafdb0`. Branch `research/02-wave2-conditional-20261013`. Three new files only, no overlap with #161 paths. Local Python 9/9 synthetic PASS. Await PR CI and Track 01 review; **code-ready ≠ deployed ≠ prospective accuracy verified**.
+Base at initial branch creation: main SHA `4bbe5bdb5814f4b738ee7bca7ec316a261bafdb0`. PR [#161](https://github.com/ikst2512-eng/boat-edge/pull/161) was merged by Track 01 at `de6ad6ea4f2ee214e58d3cfeffd6df43fad7278b`; this research PR is [#192](https://github.com/ikst2512-eng/boat-edge/pull/192), branch `research/02-wave2-conditional-20261013`. Five new files only, no overlap with the merged #161 paths. Initial hierarchical-only code CI [run 38415899958](https://github.com/ikst2512-eng/boat-edge/actions/runs/38415899958) SUCCESS. The later matched-ten commit requires its own CI check before PASS may be claimed. Track 01 owns merge. **code-ready ≠ deployed ≠ prospective accuracy verified**.
+
+
+## New P1 equal-ten pre-result pair validator, not a scorer
+
+`scripts/boat_edge_02_matched_ten_pre_result.py` is independent from the already-main V236 score implementation. It does not import any scorer or fetch raw data. It accepts two caller-supplied full 120 BOAT-ticket relative-mass lists (model-specific results must first be explicitly adapted and audited) for one race. Before returning two Top10 lists and SHA256 fingerprints it rejects:
+
+- Target/key/source SHA, provisional course-map SHA or predeclared model ID mismatches
+- Any non-120 record, duplicate/invalid 3-boat permutation, invalid probability mass, non-normalization or bad sorting
+- Any result, odds or other unrecognized field embedded in an input ranking
+- A closed/future-outside-final-window execution (require between 2 and 15 minutes before the deadline on exactly the target JST date)
+- Target-day/future training, missing source-permission evidence digest, result-bearing scope, or locked Formal 2026-10-01
+- Different ticket counts or arbitrary amount selection: always **ten tickets per model, ¥1,000 per ticket virtual = ¥10,000 per model**, without odds based ranking
+
+The unit tests are in `tests/test_boat_edge_v236_02_matched_ten_pre_result.py` (12 synthetic cases). A context SHA or reported local timestamp is NOT independent git-server evidence, source-rights verification, actual-course evidence, or a verifiable predeadline freeze. A successful function return has `scoring_authorized=false`, `results_read=false`, `production_eligible=false`. A caller would have to persist the exact unmodified bytes with an authenticated before-deadline Git history to qualify for any future separate SITE-only scoring. There is **no** outcome interface in this module and no actual matched-race cohort has been created.
+
+Next priority is wiring only an authenticated, consented/predeadline adapter from the existing CURRENT parent and distinct conditional research candidate into these two 120-way input records, then independent Git first-commit audits. Never reconstruct past candidates and never reuse Formal Fresh results.
