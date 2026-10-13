@@ -53,6 +53,9 @@ assert.equal(api.cardSafety({...race,source_audit:{race_card:{status:'missing'}}
 assert.equal(api.previewSafety(race,{...preview,odds_used:true},NOW).ok,false);
 assert.equal(api.previewSafety(race,{...preview,formal_fresh_claim:true},NOW).ok,false);
 assert.equal(api.previewSafety(race,{...preview,source_date:'2026-10-14'},NOW).ok,false);
+assert.equal(api.previewSafety(race,{...preview,source_card_sha256:'f'.repeat(64)},NOW).ok,false);
+assert.equal(api.previewSafety(race,{...preview,source_card_fetched_at:'2026-10-14T19:59:00+09:00'},NOW).ok,false);
+assert.equal(api.previewSafety({...race,source_audit:{race_card:{...race.source_audit.race_card,sha256:'b'.repeat(64)}}},preview,NOW).ok,false);
 assert.equal(api.previewSafety(race,{...preview,racer_inputs_by_lane:[]},NOW).ok,false);
 assert.equal(api.previewSafety(race,{...preview,top5:combos.slice(1,6)},NOW).ok,false);
 assert.equal(api.previewSafety(race,{...preview,ranked_120:rows.slice(0,10)},NOW).ok,false);
