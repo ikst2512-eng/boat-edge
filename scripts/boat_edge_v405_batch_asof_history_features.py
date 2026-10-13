@@ -4,7 +4,7 @@
 Offline, operator-staged, rights-attested input only. No network, results API,
 formal cohorts, model promotion or betting. Publication time is NOT independently
 authenticated by this module. Preserves V404's calendar-day rolling windows,
-including the cutoff calendar day (age <= window), not sliding 24-hour intervals.
+including the cutoff calendar day (0 <= age < window), not sliding 24-hour intervals.
 """
 from __future__ import annotations
 
@@ -60,7 +60,6 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
     expiry = {w: [] for w in WINDOWS}  # heap of (race-date ordinal, event id)
     day_totals = {w: Counter() for w in WINDOWS}
     counters = defaultdict(lambda: [0, 0, 0, 0])
-    positions = {w: w for w in WINDOWS}
     pointer = 0
     source_sha = hashlib.sha256(raw).hexdigest()
     outputs = [None] * len(targets)
@@ -107,14 +106,14 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
             if age < 0:
                 raise ValueError("FUTURE_RACE_PUBLISHED_BEFORE_TARGET")
             for w in WINDOWS:
-                if age <= w:
+                if age < w:
                     modify(w, idx, +1)
                     heapq.heappush(expiry[w], (race_day, idx))
             pointer += 1
 
         for w in WINDOWS:
             lower = target_day - w
-            while expiry[w] and expiry[w][0][0] < lower:
+            while expiry[w] and expiry[w][0][0] <= lower:
                 _, idx = heapq.heappop(expiry[w])
                 # Each event is in the heap only once per window.
                 if idx in active[w]:
@@ -181,7 +180,7 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
         "history_race_count": len(events),
         "asof_method": "published_at_strictly_before_B_only_deadline",
         "target_output_schema": V404_MODEL,
-        "V404_parity_target": True,  # contract; fixtures enforce exact equality
+        "V404_parity_target": True,  # fixture-only contract; not verified on actual K/B
         "timestamps_and_rights_independently_verified": False,
         "formal_fresh_read": False, "trained_model_created": False,
         "accuracy_improvement_proven": False,
