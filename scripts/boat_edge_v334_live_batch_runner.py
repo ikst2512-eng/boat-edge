@@ -19,6 +19,7 @@ from boat_edge_v315_source_capture import real_fetch
 from boat_edge_v318_shadow_freeze import JST, parse_time
 from boat_edge_v332_live_local_freeze import live_local_freeze
 from boat_edge_v361_source_readiness import scan_preflight
+from boat_edge_v363_fast_lane_gap_diagnostic import classify as upstream_gap_diagnostic
 
 
 def _now(clock):
@@ -91,6 +92,9 @@ def live_window(root, now, window_minutes=15, max_races=12):
                     skipped.append({"race_key": key, "reason": "RESEARCH_FREEZE_EXISTS"})
                     continue
                 selection_scan = scan_preflight(obj, scan_raw, now)
+                selection_scan["upstream_fast_lane_gap_diagnostic"] = (
+                    upstream_gap_diagnostic(root, selection_scan)
+                )
                 eligible.append((deadline, key, round(minutes_left, 2), selection_scan))
             except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
                 skipped.append({"race_key": key, "reason": "RACE_WINDOW_INVALID:" + str(exc)})
