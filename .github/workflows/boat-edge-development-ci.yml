@@ -38,6 +38,10 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
+      - name: Compile V136 production scorer before deployment
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m py_compile scripts/site_accuracy_v136.py scripts/site_v136_historical_proof.py
       - name: Prove V136 old-day V125 audit and immutable first Git source before scoring
         env:
           PYTHONDONTWRITEBYTECODE: '1'
