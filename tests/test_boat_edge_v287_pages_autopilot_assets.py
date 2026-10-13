@@ -28,6 +28,28 @@ def fixtures(paths, bad_asset=None):
 
 
 class V287AutopilotPagesAssets(unittest.TestCase):
+    def test_v360_latest_race_ui_scripts_must_have_pages_sha_lineage(self):
+        # Both compact comparison (V202) and racer cards (V203) change without
+        # necessarily changing index.html; old Page success cannot cover them.
+        targets={"assets/boat_edge_v202_display.js", "assets/boat_edge_v203_readable.js"}
+        self.assertTrue(targets.issubset(set(UI_PATHS)))
+        workflow=(ROOT/".github/workflows/v277-pages-monitor.yml").read_text(encoding="utf8")
+        for asset in targets:
+            self.assertTrue((ROOT/asset).is_file(),asset)
+            self.assertGreaterEqual(workflow.count("'"+asset+"'"),2,asset)
+        current,deployed=fixtures(UI_PATHS,"assets/boat_edge_v203_readable.js")
+        run={"name":"pages build and deployment","head_sha":"a"*40,
+             "created_at":(NOW-timedelta(minutes=5)).isoformat(),
+             "updated_at":(NOW-timedelta(minutes=4)).isoformat(),
+             "status":"completed","conclusion":"success"}
+        bad=report([run],current,NOW,deployed_ui_commits=deployed)
+        self.assertFalse(bad["ui_lineage_verified"])
+        self.assertEqual(bad["status"],"UI_PUBLISH_OVERDUE_NEEDS_ATTENTION")
+        self.assertFalse(bad["ui_checked_in_safari"])
+        for asset in targets:
+            one,two=fixtures(UI_PATHS,asset)
+            self.assertFalse(same_ui_lineage(one,two),asset)
+
     def test_every_active_autopilot_script_is_in_pages_lineage(self):
         html=(ROOT/"autopilot.html").read_text(encoding="utf8")
         paths=set(re.findall(r'<script\b[^>]*\bsrc=["\']\./(assets/[^"\'?]+\.js)(?:\?[^"\']*)?["\']',html))

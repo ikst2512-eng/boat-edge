@@ -22,6 +22,10 @@ UI_PATHS = (
     "assets/boat_edge_v177_latest_bridge.js",
     "assets/boat_edge_v204_prediction.js",
     "assets/boat_edge_v241_results.js",
+    # V360: compact race comparison and six-racer cards are independently
+    # changed UI assets; a successful older Pages run must not prove them fresh.
+    "assets/boat_edge_v202_display.js",
+    "assets/boat_edge_v203_readable.js",
     # V287: Pages must publish the actual scripts used by the mobile
     # Autopilot view, not only the parent HTML. Missing/stale JS fails closed.
     "assets/boat_edge_v278_next_watch.js",
