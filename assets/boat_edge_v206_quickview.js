@@ -35,6 +35,22 @@ const completeness=r=>{
  const original=sixBoatCount(orig.boats,x=>Array.isArray(x?.values)&&x.values.some(numericPresent));
  return '展示タイム '+official+'/6艇（'+source(r,'beforeinfo')+'） ／ オリ展 '+original+'/6艇（'+source(r,'original_exhibition')+'）';
 };
+/* A36: labels audit existing inputs, not measurements or provider agreement. */
+const metricSourceLegend=(r,tab)=>{
+ if(tab==='exhibit')return '展示タイム：公式直前 '+source(r,'beforeinfo')+
+  ' ／ 展示ST・展示進入：公式直前 '+source(r,'beforeinfo')+'、STT '+source(r,'stt')+
+  ' ／ 平均ST：選手の登録値。「－」は未取得。展示進入は本番進入ではありません。';
+ if(tab==='original'){
+  const audit=window.BoatEdgeV203?.independentExhibitionAudit?.(r)||{};
+  const pre=r?.meta?.phase==='PRE_RESULT'&&r?.meta?.results_seen===false&&r?.meta?.unlock===false&&r?.meta?.scoring===false;
+  return '1周・まわり足・直線：オリ展CSV '+source(r,'original_exhibition')+
+   ' ／ BOATERS：'+(pre&&typeof audit.boaters==='string'?audit.boaters:'未取得・未確認')+
+   ' ／ 競艇日和：'+(pre&&typeof audit.keiteibiyori==='string'?audit.keiteibiyori:'未取得・未確認')+
+   '。各取得元は独立、数値の一致は未証明。「－」は未取得。';
+ }
+ return '直前データ証跡 '+source(r,'beforeinfo')+' ／ オリ展証跡 '+source(r,'original_exhibition')+
+  '（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）';
+};
 /* V298: independent source-backed compare modes; no derived probabilities. */
 const tabs={
  base:{label:'基本',hint:'全国・当地の勝率とモーター2連率。赤は6艇すべて有効で明確な単独1位のみ。',cols:[['全国勝率','national.win_rate',2,.4,false],['当地勝率','local.win_rate',2,.4,false],['M2連%','motor.quinella_rate',1,3,false]]},
@@ -227,6 +243,7 @@ function board(){
   if(!awaitingTicketList&&list)lastTicketList=list;
   document.documentElement.classList.toggle('be328-await-ticket-list',awaitingTicketList);
  const box=create(root,p);if(box.nextElementSibling!==p)root.insertBefore(box,p);
+ box.dataset.be206Metric=metric;
  const st=window.BoatEdgeV205.sourceStatus();
  const safety=st.title+'|'+st.detail+'|'+st.kind+'|'+awaitingTicketList;
  if(safety!==lastStatus||!$('.be206-safety strong',box)?.textContent){
@@ -248,7 +265,7 @@ function board(){
    lastTable=data;lastStructure=structure;
  }
  setText($('.be206-table-help',box),tabs[metric].hint+'　「－」は未取得。 '+completeness(r)+'。数値の存在は取得元・鮮度・独立照合の証明ではありません。');
- setText($('.be206-source',box),`直前データ証跡 ${source(r,'beforeinfo')} ／ オリ展証跡 ${source(r,'original_exhibition')}（取得履歴のみ。6艇分の値・外部照合・予想利用は別途確認）`);
+ setText($('.be206-source',box),metricSourceLegend(r,metric));
  renderHead(box,r,mode,st);
  document.documentElement.classList.add('be206-active');
  updateComparisonScroll(box);
@@ -324,7 +341,7 @@ function init(){if(started)return;started=true;
  window.addEventListener('resize',schedule,{passive:true});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,updateComparisonValues,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
+window.BoatEdgeV206={metricSourceLegend,sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,updateComparisonValues,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
