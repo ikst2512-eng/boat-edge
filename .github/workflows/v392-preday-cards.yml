@@ -1,0 +1,66 @@
+name: BOAT EDGE V392 - Next-Day Official Racelist Preview
+on:
+  workflow_dispatch:
+  schedule:
+    # 17:00, 20:00 and 23:00 JST. Future PRE_RESULT cards only.
+    - cron: '0 8,11,14 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: boat-edge-v392-nextday-pre-result-cards
+  cancel-in-progress: false
+jobs:
+  nextday-verified-cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Official racelist parser requirements
+        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Validate fail-closed V392 future-only previews
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v392_card_preview.py' -v
+      - name: Fetch only next-day racelists and atomically publish independent previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/early_races/ data/site_early_previews/ data/site_early_calendar/
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v392_card_preview.py --mode tomorrow
+            for dir in data/early_races data/site_early_previews data/site_early_calendar; do
+              if test -d "$dir"; then git add -A -- "$dir"; fi
+            done
+            python3 - <<'PY_V392_STAGING'
+          import re,subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          for path in paths:
+              if re.fullmatch(r'data/(?:early_races|site_early_previews)/20\d{6}-\d{2}-\d{2}\.json',path):continue
+              if re.fullmatch(r'data/site_early_calendar/(?:index|20\d{6})\.json',path):continue
+              raise SystemExit('V392_FORBIDDEN_STAGING_'+path)
+          print('V392_NEXT_DAY_PRE_RESULT_ONLY_STAGED',len(paths))
+          PY_V392_STAGING
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V392_NO_NEW_VERIFIED_FUTURE_RACE_CARDS
+              exit 0
+            fi
+            git commit -m 'V392 official next-day PRE_RESULT card-only previews (not final)'
+            if git push origin HEAD:main; then
+              echo V392_NEXT_DAY_CARDS_AND_UNCALIBRATED_TOP10_PUBLISHED
+              exit 0
+            fi
+            echo "V392_MAIN_ADVANCED_REFETCH_PROSPECTIVE_ONLY_$attempt"
+          done
+          echo V392_PUBLISH_NOT_CONFIRMED_NO_BACKFILL
+          exit 1
