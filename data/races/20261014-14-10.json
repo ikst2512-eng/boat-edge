@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 10,
     "deadline": "12:58",
-    "updated_at": "2026-10-14T07:15:36+09:00",
+    "updated_at": "2026-10-14T07:48:39+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=14&rno=10",
-      "fetched_at": "2026-10-14T07:17:43+09:00",
-      "sha256": "e81791b335fe83c2daea43e1e3104022f572b9b87f2de6da9f8af20815ea09e1",
+      "fetched_at": "2026-10-14T07:51:22+09:00",
+      "sha256": "1cb2e765f5d95bf76fc578515e61e336af557f14d3dad58efac473dcb092627e",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -80,7 +104,7 @@
       "name": "仲本 舜",
       "class": "B1",
       "age": 21,
-      "weight_kg": 52.0,
+      "weight_kg": 52.4,
       "branch": "福岡",
       "birthplace": "沖縄",
       "F": 0,
@@ -112,7 +136,7 @@
         "3"
       ],
       "early_race": 6,
-      "raw_text": "2 5258 / B1 仲本 舜 福岡/沖縄 21歳/52.0kg F0 L0 0.15 3.89 19.18 30.14 3.00 0.00 37.50 59 36.54 51.92 24 30.39 50.00 5 11 3 6R"
+      "raw_text": "2 5258 / B1 仲本 舜 福岡/沖縄 21歳/52.4kg F0 L0 0.15 3.89 19.18 30.14 3.00 0.00 37.50 59 36.54 51.92 24 30.39 50.00 5 11 3 6R"
     },
     {
       "lane": 3,
@@ -160,7 +184,7 @@
       "name": "川原 涼",
       "class": "A2",
       "age": 26,
-      "weight_kg": 52.6,
+      "weight_kg": 52.8,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 0,
@@ -193,7 +217,7 @@
         "11"
       ],
       "early_race": null,
-      "raw_text": "4 5137 / A2 川原 涼 愛知/愛知 26歳/52.6kg F0 L0 0.17 5.35 38.46 53.85 4.00 28.57 28.57 68 32.63 45.26 29 38.14 54.64 5 10 6 11"
+      "raw_text": "4 5137 / A2 川原 涼 愛知/愛知 26歳/52.8kg F0 L0 0.17 5.35 38.46 53.85 4.00 28.57 28.57 68 32.63 45.26 29 38.14 54.64 5 10 6 11"
     },
     {
       "lane": 5,
@@ -280,5 +304,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

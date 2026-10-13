@@ -8,7 +8,7 @@
     "event": "MNBR下関5th ケーブルネット下関杯",
     "race_no": 3,
     "deadline": "18:34",
-    "updated_at": "2026-10-14T07:15:36+09:00",
+    "updated_at": "2026-10-14T07:48:39+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=19&rno=3",
-      "fetched_at": "2026-10-14T07:16:49+09:00",
-      "sha256": "ce986e91abe381218bdbf767e801c7f8cddfba7ea22c0d157d150dfd02d3e5bd",
+      "fetched_at": "2026-10-14T07:49:57+09:00",
+      "sha256": "1b85c67a1fdf0bfc54e6bc1092b51ff0ecf2386603841d5ca32cff5c8bef833e",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -288,5 +312,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
