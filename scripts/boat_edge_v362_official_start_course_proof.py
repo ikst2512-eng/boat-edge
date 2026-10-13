@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from urllib.parse import urlsplit, parse_qs
 from bs4 import BeautifulSoup
 
 from boat_edge_v314_three_source_evidence import KEY
@@ -34,6 +35,58 @@ def _st(value):
     return number
 
 
+def _check_active_official_race_tab(soup, race):
+    """Bound HTML body to the exact active official beforeinfo race/day/venue."""
+    key = race["race_key"]
+    day, venue, round_no = key.split("-")
+    tabs = soup.select("div.table1.h-mt10 > table")
+    if len(tabs) != 1:
+        raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_TABLE_NOT_UNIQUE")
+    table = tabs[0]
+    headings = table.select("thead th")
+    if not headings or headings[0].get_text(" ", strip=True) != "レース":
+        raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_HEADER_INVALID")
+    links = []
+    for th in headings[1:]:
+        anchors = th.find_all("a", recursive=False)
+        if len(anchors) != 1:
+            raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_LINK_MISSING")
+        url = urlsplit(anchors[0].get("href", ""))
+        if (url.scheme or url.netloc or url.path != "/owpc/pc/race/beforeinfo"
+                or url.fragment):
+            raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_ENDPOINT_INVALID")
+        params = parse_qs(url.query)
+        if set(params) != {"rno", "jcd", "hd"} or any(len(v) != 1 for v in params.values()):
+            raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_QUERY_INVALID")
+        if params["jcd"][0] != venue or params["hd"][0] != day:
+            raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_DATE_VENUE_MISMATCH")
+        number = params["rno"][0]
+        if (not number.isdecimal() or number != str(int(number))
+                or not 1 <= int(number) <= 12
+                or anchors[0].get_text(strip=True) != number + "R"):
+            raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_NUMBER_INVALID")
+        links.append((int(number), th))
+    if len(links) != 12 or {num for num, _ in links} != set(range(1, 13)):
+        raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_TWELVE_RACES_REQUIRED")
+    active = [num for num, th in links if not th.get("class")]
+    if active != [int(round_no)]:
+        raise ValueError("START_SOURCE_ACTIVE_RACE_TAB_MISMATCH")
+    tbody = table.find("tbody", recursive=False)
+    rows = tbody.find_all("tr", recursive=False) if tbody else []
+    if len(rows) != 1:
+        raise ValueError("START_SOURCE_DEADLINE_ROW_INVALID")
+    cells = rows[0].find_all("td", recursive=False)
+    if (len(cells) != 13 or cells[0].get_text(" ", strip=True) != "締切予定時刻"):
+        raise ValueError("START_SOURCE_DEADLINE_CELLS_INVALID")
+    active_clocks = [
+        (i, cell.get_text(" ", strip=True))
+        for i, cell in enumerate(cells[1:], start=1)
+        if "is-activeColor1" in cell.get("class", [])
+    ]
+    if active_clocks != [(int(round_no), race.get("meta", {}).get("deadline"))]:
+        raise ValueError("START_SOURCE_ACTIVE_RACE_DEADLINE_MISMATCH")
+
+
 def parse_proven_course_rows(source_raw, race):
     if type(source_raw) is not bytes or not 64 <= len(source_raw) <= 1_000_000:
         raise ValueError("START_SOURCE_HTML_BYTES_REQUIRED")
@@ -43,6 +96,7 @@ def parse_proven_course_rows(source_raw, race):
         soup = BeautifulSoup(source_raw, "lxml")
     except Exception as exc:
         raise ValueError("START_SOURCE_HTML_INVALID") from exc
+    _check_active_official_race_tab(soup, race)
     # Only one table with both the official start-exhibition and course headers
     # is admissible: never infer entries from other tables or row labels alone.
     tables = []
@@ -109,6 +163,7 @@ def parse_proven_course_rows(source_raw, race):
         "official_table_header": "スタート展示 / コース / 並び / ST",
         "course_by_boat": {str(boat): by_boat[boat] for boat in sorted(SIX)},
         "matched_six_race_card_st_values": True,
+        "active_official_beforeinfo_race_and_deadline_matched": True,
         "official_html_sha256": hashlib.sha256(source_raw).hexdigest(),
         "row_order_is_official_labelled_start_exhibition_course": True,
         "source_authenticity_independently_verified": False,
