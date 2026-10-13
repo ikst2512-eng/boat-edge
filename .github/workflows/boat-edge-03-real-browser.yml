@@ -17,11 +17,13 @@ on:
   workflow_dispatch:
   # PRE_RESULT live TopK is not testable at the overnight UI push: revisit
   # public Pages while actual racing is underway (UTC -> JST +9).
-  # 01:23 UTC = 10:23 JST (first daytime readiness check),
+  # This replaces, rather than adds to, the daily browser checks. GitHub cron
+  # is best-effort: NOT a guarantee that the race will have verified TopK.
+  # 23:29 UTC = next-day 08:29 JST (first 08:35 race, near freeze window),
   # 05:43 UTC = 14:43 JST; 09:13 UTC = 18:13 JST.
   # Schedule is owned by 03; 01 collection/freeze workflows remain untouched.
   schedule:
-    - cron: '23 1 * * *'
+    - cron: '29 23 * * *'
     - cron: '43 5 * * *'
     - cron: '13 9 * * *'
 
