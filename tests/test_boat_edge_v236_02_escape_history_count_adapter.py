@@ -174,6 +174,10 @@ class HistoricalCourseOneNigeAdapter(unittest.TestCase):
         t=deepcopy(TARGET);t["race_key"]="20261001-12-01"
         with self.assertRaisesRegex(ValueError,"FORMAL_FRESH_EXCLUDED"):
             build_historical_escape_counts(SCOPE,t,records())
+    def test_unobserved_national_second_course_rejected_not_imputed(self):
+        x=[r for r in records() if r["official_full_finish_boats"][1] != MAP[6]]
+        with self.assertRaisesRegex(ValueError,"UNOBSERVED_SECOND_COURSE_THIRD_DISTRIBUTION"):
+            build_historical_escape_counts(SCOPE,TARGET,x)
 
 
 if __name__ == "__main__":
