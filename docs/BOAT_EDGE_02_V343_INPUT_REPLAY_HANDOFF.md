@@ -283,3 +283,52 @@ tabs, conflicting selected race, altered deadline and wrong official page
 type. It still never reads race outcomes, nor touches main or the live
 source refresh workflow. Strictness can lower coverage when source and
 race metadata differ; such cases must be reported, never bypassed.
+
+
+### V363: V230 upstream refresh gap classification (2026-10-13 evening JST)
+
+V334 records new optional V363 diagnostics for every selected future race.
+V363 **only** checks whether the independent SITE prediction snapshot path
+already exists, then cross-references V361 selection-time source status/age.
+It never opens a site prediction, fetches the internet, authorizes a
+late/invalid freeze, changes V230 target selection, or touches result data.
+
+The concrete currently checked-in V230 target selector contains
+`if (root/'data/site_prediction_snapshots'/f'{key}.json').is_file(): continue`.
+Therefore a preexisting regular SITE freeze is a sufficient **structural
+skip condition** for V230's later official refresh. V363 records this
+potential overlap separately from a stale card that has no SITE snapshot;
+it does not assert that this was the sole cause of a particular live run.
+Symlink targets are identified but never opened or followed as evidence.
+
+Observed **real** PRE_RESULT publishing timing on 2026-10-13:
+- V336 run 38363133649 around 16:31 JST scanned 3R, frozen 0R,
+  all reporting `SOURCE_TOO_STALE_FOR_FINAL_WINDOW:race_card`.
+- The tracked 20261013-12-04 and 20261013-22-12 card files show Git
+  commits at 16:06:56 and then 16:33:05 JST. The later commit is
+  **after** the V336 failure; no retrospective validity is inferred.
+- Latest V336 run 38394468129 at 21:03 JST scanned 132 cards but selected
+  0R and froze 0R (`NO_ELIGIBLE_RACES_IN_CURRENT_FINAL_WINDOW`),
+  which is expected when the day's final-deadline window is over.
+- Existing V235 target selection can stop refreshing a card when a
+  separate SITE prediction snapshot already exists. Track 01 should
+  review this dependency and the source publishing cadence, but never
+  republish historical source stamps as if they were live.
+
+Synthetic V363 tests in
+`tests/test_boat_edge_v236_v363_fast_lane_gap.py` cover four cases:
+stale source + existing site prediction, stale source without a
+prediction, fresh source with a prediction, and a symlinked path.
+The independent SITE prediction file is deliberately invalid opaque
+bytes in fixtures, so an accidental read would break the contract.
+The classification is diagnostic only, not proof of actual causal history.
+
+Required Track 01 follow-up: establish a **source-only** fresh official
+racelist/beforeinfo refresh that is independently validated and available
+before the actual final-window research execution for every still-open
+candidate, regardless of whether a prior SITE prediction was frozen.
+Preserve all official source hashes, timestamps, scratch checks, guards,
+race identity and single-writer ownership. Do not weaken freshness,
+backdate sources, overwrite immutable forecasts, or change formal
+Fresh `results_seen/unlock/scoring`. After eventual merge, the actual
+V336 artifact and V343/V344 replay must verify full 3×120 research coverage.
