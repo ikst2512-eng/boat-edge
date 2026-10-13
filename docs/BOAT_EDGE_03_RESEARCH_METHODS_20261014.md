@@ -56,3 +56,22 @@ Venue & R + official deadline → badge-free compact as-of/source evidence → 6
 prepared → PR CI passed → merged → Pages deployed exact SHA → desktop/WebKit runtime confirmed → physical iPhone Safari confirmed. Prediction calibration and prospective accuracy belong to 02, never inferred from UI tests.
 
 No model weight, generated forecast, snapshot, Formal Fresh guard, outcome/payout collector or actual wagering changed by this research note.
+
+
+## Deep-dive 2026-10-14: UI acceptance threats the existing happy path misses
+
+### 03-A iOS Safari is not Playwright WebKit
+Playwright docs https://playwright.dev/docs/browsers state its WebKit has patches and is not branded Safari; Mac-hosted WebKit gives closer behavior for certain features than Linux. Emulation https://playwright.dev/docs/emulation covers viewport/touch/locale/timezone, not actual mobile browser UI, iOS keyboard, memory/lifecycle or back/forward-cache semantics. Required ladder: synthetic DOM invariants → WebKit & Chromium CI → Pages exact-build smoke → actual iPhone Safari device QA. Never mark Safari PASS from Linux WebKit alone.
+
+### 03-B bfcache can resurrect stale but visually plausible predictions
+MDN https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control explains `no-cache` means revalidate, not “do not store”, and that history navigation/back-forward-cache may restore a past snapshot without validation. Inspect existing `pageshow` listener(s) in `assets/boat_edge_v108.js` before changing. Test back/forward to a previously selected race after time advanced, network reconnection, pending-to-result transition, and a cutoff-crossing refresh. On resume, independently verify race key, freeze ID, displayed data timestamp and status, fail closed instead of displaying a previous race's tickets as current. GitHub Pages header customization can be constrained; verify what hosting actually supports before prescribing Cache-Control rules.
+
+### 03-C Visual screenshots alone cannot certify the result labels
+Open PR #202 https://github.com/ikst2512-eng/boat-edge/pull/202 now targets home/results-list 🎯 indicators for missing immutable freeze, inconsistent mode stakes and untrusted official links; prior #200 (blocked/no-data status) may already have been superseded. **Do not reimplement** their validators; 01 coordinates merge. Build regression cases for list/detail parity across all four modes, same `race_key/model_id/precommit_sha/freeze_sha`, ¥10,000 exact stake sums, and only true site-only verified results. A source result alone is never a verified hit without a qualifying immutable, predeadline ticket.
+- `NO_PREDICTION`, `BLOCKED`, `WAITING_RESULT`, `VERIFIED_HIT`, `VERIFIED_MISS`, `NOT_ELIGIBLE`: distinct readable Japanese status strings and styling.
+- Stale/out-of-order network responses, invalid six-course permutation, scratches, 80–119/120 odds coverage, duplicate tickets, null official payout, zero/negative odds and source timestamp mismatch are **fail-closed** test fixtures. Do not derive missing values or synthesize historical stakes.
+- WCAG status semantics: https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html use meaningful `role=status` or polite live-region for status transitions, without incessant screenreader announcements while typing. WCAG 2.2 SC2.5.8 https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html specifies **24×24 CSS px minimum** with exceptions; design targets at least ~44px in common touch flows as a usability objective, not a falsely quoted WCAG requirement.
+- Explicitly distinguish per-mode ¥10,000 illustrative allocation from separate daily ¥50,000 paper-only research cap; no purchase action.
+
+### 03-D Release and performance test strategy
+Run deterministic Playwright screenshots (freeze clock/JST, font/render profile, network fixtures; preserve factual text) https://playwright.dev/docs/test-snapshots . Snapshot masking of changing datetimes must NOT conceal missing verification timestamps, ticket order or bad totals; assert those in DOM/data equality tests. Lighthouse CI can detect regressions after measured baseline; source https://github.com/GoogleChrome/lighthouse-ci . Record both site build SHA and current source/data SHA; data can be newer than code without proving UI deploy.
