@@ -1,0 +1,31 @@
+# BOAT EDGE 02 — 追加データ源と未見評価方法（2026-10-14）
+
+Scope: RESEARCH_ONLY, NO_ACCURACY_CLAIM, NO_MODEL_PROMOTION. Companion to root `BOAT_EDGE_02_RESEARCH_INBOX.md`, `BOAT_EDGE_MASTER_TODO.md`, `data/site_prediction_policy.json`. 01 alone integrates, 03 alone owns presentation.
+
+## Public source findings not to confuse with permission to ingest
+
+1. **Venue actual-course acquisition matrix.** びわこ公式 https://boatrace-biwako.jp/modules/datafile/?page=index_datacourse publishes recent 3-month 1st/2nd/3rd and winning methods **by course**, and **frame-to-course acquisition proportions** by venue. Observed period 2026-07-01–09-30: 6枠→6コース90.9%, 6枠→5コース5.5%; period/source-specific, not a national rate. Use as possible prospective venue prior for `P(course assignment | frames, six racers, pre-start X)`, not as proof actual course for any target race. Validate source layout, cutoff, denominators and licensing across 24 venues before collecting.
+2. **Attack-and-resistance ontology.** 競艇日和 超展開ガイド https://kyoteibiyori.com/blog/202509111001 describes 1M attack, attacked/defeated situations, resistance, squeezing. Compare offensive and defensive player pair interaction with attack→beneficiary shadow models, using authorized predeadline input only. The data view can be membership-limited; no bypass/scraping assumed.
+3. **Venue-specific tidal interaction.** Official 児島 characteristics https://www.boatrace.jp/owsp/sp/site/place/stadium/br16/ identify high/low tide and following wind as qualitative inputs. JMA https://ds.data.jma.go.jp/obd/stats/etrn/index.php supports 10-minute historical weather observations, but station distance and publication latency mean it is a *candidate auxiliary*, not direct racewater observation; before-deadline availability must be separately verified. Seek tide heights/trend and time alignment using authorized locally relevant sources; **no reverse leak from retrospectively revised data**.
+4. **Conditional first→second distribution.** BOATERS provider guide https://boaters-boatrace.com/guide/data-how-to-read explains first-boat-conditioned second probabilities; it states predictions appear about 15 min before deadline and access varies by paid plan. The website's displayed AI outputs are neither legally/technically guaranteed collector inputs nor evidence our model improved. Build independently from licensed counts/learning data and preserve provider source/permission.
+5. **Provider original-exhibition availability.** https://boaters-boatrace.com/guide/original-exhibition-data states some venues don't offer original exhibition and update times differ. Missingness may correlate with venue/schedule, so record `missing_reason, provider, venue, measured_lap, first_seen`, but do not fill missing numeric values with proxies.
+6. **Official historical layout/source discovery.** https://www.boatrace.jp/owpc/pc/extra/data/download.html is an entrypoint for historical datasets and racer period data. It is *not* authorization to read target Formal Fresh outcome endpoints, payouts or result pages while locked.
+
+## Research directions with highest incremental value
+
+- Model six-boat **permutation** for entry jointly; independent lane-wise `P(course)` can produce impossible duplicate assignments. Until pre-race actual entry is independently proven, call it forecast entry / provisional exhibition entry, not ground-truth race entry.
+- Condition **2着 on 1着** and **3着 on both 1着 and 2着**. Use hierarchical priors across venue→course→racer/motor *only on measured training cells*, distinct from filling missing scraped features. Keep `P(i,j,k|X)` sum over 120 = 1 and no repeated boat; calibration must be empirically verified.
+- Use an explicit **scenario latent variable** for 1逃げ / 2差し / 3・4攻撃 / 5・6受益; compare a single-stage model, scenario mixture, and event-sparse fallback. Do not use actual first-turn outcomes as predictors for a predeadline race.
+- **Temporal and access safety**: reserve chronologically later untouched days for comparison, fit/learn only on formally authorized history and provider-licensed data with `available_at < race_deadline`. Same day finished-race statistics are only permissible in a separate authorized lane whose cutoff and source are verified; no target Formal Fresh results access.
+- Evaluation: same 10-ticket set size, same race cohort, head and Top3/5/10 separately; plus negative log likelihood and multiclass Brier / calibration plots. Reference https://scikit-learn.org/stable/modules/calibration.html (probability calibration requires held-out inputs; proper scores combine calibration and discrimination). Record denominators and uncertainty intervals. `relative_model_mass` is not a calibrated win probability.
+- Source reliability vs model quality are different experiments: first prove capture completeness and field timestamps, then predictive incremental validity.
+
+## Existing work already underway — no duplication
+
+- Current `scripts/boat_edge_v360_research_ranked120.py` generates **research-only 120-ranked tickets** for three V312 hypotheses, with relative uncalibrated mass and provisional exhibition entry, not the production site’s calibrated 120-way probability.
+- Open 02 PR #192 https://github.com/ikst2512-eng/boat-edge/pull/192 already prototypes **hierarchical Dirichlet shrinkage and conditional 120** on synthetic data, with no licensed provider data or prospective accuracy proof. Review it rather than duplicate its estimator. Research-only PR #192 and prior V360 have different scopes.
+- V343/V344 research provenance in `docs/BOAT_EDGE_02_V343_INPUT_REPLAY_HANDOFF.md` already addresses exact input preservation/replay. Don't reimplement from scratch.
+- Formal snapshot 2026-10-13 23:59 JST: formalFirst100 0/100; `results_seen=false, unlock=false, scoring=false, TOKEN=null`. Use live file at each execution, not this frozen count.
+
+## Acceptance status
+All above are hypotheses or published data interfaces only; no new feature imported, no new benchmark passed, no verified win-rate change, no model or results read by this note. User-facing odds/ROI and real-money purchase are out of scope.
