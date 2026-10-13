@@ -154,7 +154,7 @@ def exercise(engine: str, url: str, shots: Path):
                     modes = page.locator("#be207Top .be207-modes [data-be207-mode]")
                     assert modes.count() >= 2, "Prediction mode buttons missing"
                     desired = modes.nth(1).get_attribute("data-be207-mode")
-                    modes.nth(1).click()
+                    # Hidden legacy controls are driven by the visible V207 buttons.\n                    page.locator(\'#be207Top [data-be207-mode="%s"]\' % desired).click()
                     page.wait_for_function(
                         "(mode) => document.querySelector('#be108PredictionModes .be108-mode-tabs .on')?.dataset.be108Mode === mode",
                         arg=desired, timeout=25000
