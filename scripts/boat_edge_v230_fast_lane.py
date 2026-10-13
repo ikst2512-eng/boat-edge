@@ -210,16 +210,31 @@ def fetch(session,url):
 
 def fetch_one(root,key):
     import requests
+    import time
     params={'hd':key[:8],'jcd':key.split('-')[1],'rno':str(int(key.split('-')[2]))}
     session=requests.Session()
     session.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
         'Accept-Language':'ja-JP,ja;q=0.9,en;q=0.7','Connection':'close'})
     q=urlencode(params)
     base='https://www.boatrace.jp/owpc/pc/race/'
+    def retry_transient_only(url):
+        # V230: one bounded second attempt for transient transport / official
+        # 429/5xx responses. The original fetch() still rejects redirects,
+        # different race identity, non-official URLs, or malformed inputs.
+        for attempt in range(2):
+            try:
+                return fetch(session,url)
+            except (requests.exceptions.ConnectionError,requests.exceptions.Timeout):
+                if attempt:raise
+            except requests.exceptions.HTTPError as exc:
+                status=getattr(getattr(exc,'response',None),'status_code',None)
+                if attempt or status not in (429,500,502,503,504):raise
+            time.sleep(0.35)
+        raise RuntimeError('V230_TRANSIENT_RETRY_EXHAUSTED')
     try:
-        rb,rtext,rt=fetch(session,base+'racelist?'+q)
-        bb,btext,bt=fetch(session,base+'beforeinfo?'+q)
-        ob,otext,ot=fetch(session,base+'odds3t?'+q)
+        rb,rtext,rt=retry_transient_only(base+'racelist?'+q)
+        bb,btext,bt=retry_transient_only(base+'beforeinfo?'+q)
+        ob,otext,ot=retry_transient_only(base+'odds3t?'+q)
         return key,{'racelist':(rb,rtext,rt),'beforeinfo':(bb,btext,bt),'odds':(ob,otext,ot)},None
     except Exception as ex:
         return key,None,type(ex).__name__+': '+str(ex)[:130]
