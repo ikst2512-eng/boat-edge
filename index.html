@@ -3140,7 +3140,9 @@ function renderRace(d,opts={}){
   }
 }
 async function loadRace(file, jcd){
-  state.currentVenue = jcd;
+  const previousVenue=state.currentVenue;
+  const previousRace=state.race;
+  let stage="fetch";
   try{
     const r = await fetch(`${file}?t=${Date.now()}`, {cache:"no-store"});
     if(!r.ok) throw new Error(r.status);
@@ -3149,16 +3151,22 @@ async function loadRace(file, jcd){
     await refreshFormalStatus();
     const overlay=await loadFormalOverlay(race.race_key);
     race=mergeFormalOverlay(race,overlay);
+    stage="render";
     renderRace(race);
+    state.currentVenue=jcd;
   }catch(e){
+    state.currentVenue=previousVenue;
+    state.race=previousRace;
     // Do not mistake a failed race load for a prediction-model failure.
     // Keep the previous selected race intact and show an actionable source error.
-    const message="レースデータを読み込めませんでした。通信状況を確認して「更新」を押してください。改善しない場合は時間をおいて再試行してください。";
+    const message=stage==="render"
+      ?"レースの表示処理でエラーが発生しました。更新して再試行してください。"
+      :"レースデータを読み込めませんでした。通信状況を確認して「更新」を押してください。改善しない場合は時間をおいて再試行してください。";
     const live=document.getElementById("live");
     if(live){live.textContent="レース取得エラー";live.setAttribute("title",message);}
     const notice=document.getElementById("predictionAlert");
     if(notice){notice.textContent=message;notice.setAttribute("role","alert");}
-    console.warn("BOAT_EDGE_RACE_LOAD_FAILED",String(file),String(e));
+    console.warn("BOAT_EDGE_RACE_LOAD_FAILED",stage,String(file),String(e));
     alert(message);
   }
 }
