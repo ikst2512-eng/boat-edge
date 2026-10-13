@@ -125,7 +125,8 @@ def receipt(root, now=None, requested=None):
     snap = load(snap_file)
     audit = load(root / "data/site_prediction_audit" / (key + ".json"))
     record["snapshot_sha256"] = digest
-    record["model_id"] = snap.get("prediction_kind", "unknown")
+    record["model_id"] = snap.get("model_id", "not_stored")
+    record["prediction_kind"] = snap.get("prediction_kind", "unknown")
     record["selection_policy"] = snap.get("selection_policy", "unknown")
     record["first_saved_at"] = snap.get("first_saved_at")
     record["saved_at"] = snap.get("saved_at")
