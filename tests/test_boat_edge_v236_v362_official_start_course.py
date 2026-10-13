@@ -143,6 +143,20 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "LIVE_WINDOW_CLOSED"):
                 candidate_from_raw(path.read_bytes(), KEY, LATE, raw)
 
+    def test_wrong_official_page_type_cannot_supply_start_course_proof(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            _, path, _ = fixture(root)
+            race = json.loads(path.read_bytes())
+            race["source_audit"]["beforeinfo"]["source"] = (
+                f"https://www.boatrace.jp/owpc/pc/race/racelist"
+                f"?hd={KEY[:8]}&jcd=22&rno=12"
+            )
+            path.write_text(json.dumps(race))
+            with self.assertRaisesRegex(ValueError, "START_SOURCE_NOT_OFFICIAL_BEFOREINFO"):
+                live_local_freeze(root, KEY, clock=lambda: PRE)
+            self.assertFalse((root / "data/research_local_v332").exists())
+
     def test_archived_table_tamper_blocks_replay_even_if_freeze_unchanged(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
