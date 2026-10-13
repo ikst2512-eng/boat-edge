@@ -34,6 +34,14 @@ jobs:
           assert g.get('RESULT_UNLOCK_TOKEN') is None
           print('FORMAL_GUARD_UNTOUCHED')
           PY
+      - name: Install V357 research parser dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          # V362/V370 introduced bs4+lxml; V336 originally had no dependency setup.
+          # Same parser packages as Development CI and existing V288/V235 workflows.
+          python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+          python3 -c 'from bs4 import BeautifulSoup; import lxml, requests'
       - name: Prospective last-15m SITE capture and immutable research freeze
         shell: bash
         run: |
