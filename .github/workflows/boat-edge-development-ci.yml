@@ -42,6 +42,10 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m py_compile scripts/site_accuracy_v136.py scripts/site_v136_historical_proof.py
+      - name: Validate V136 fresh-main SITE-only score publication on conflicts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v136_safe_publish.py' -v
       - name: Prove V136 old-day V125 audit and immutable first Git source before scoring
         env:
           PYTHONDONTWRITEBYTECODE: '1'
