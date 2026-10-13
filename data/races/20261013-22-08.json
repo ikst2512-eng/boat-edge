@@ -8,7 +8,7 @@
     "event": "日本トーター杯",
     "race_no": 8,
     "deadline": "14:41",
-    "updated_at": "2026-10-13T12:08:52+09:00",
+    "updated_at": "2026-10-13T12:29:54+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=22&rno=8",
-      "fetched_at": "2026-10-13T12:11:33+09:00",
-      "sha256": "e3118eef3177d5f8cd6e34d7a9a43fcec95f586beb1429f3142f6b46599c0db5",
+      "fetched_at": "2026-10-13T12:32:29+09:00",
+      "sha256": "bf771d1d7da5bcaaa3eb7a4fce395cd0ccfed19fe2bf6ab03db8e957748bb8dc",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=22&rno=8",
+      "fetched_at": "2026-10-13T12:31:01+09:00",
+      "sha256": "23df50f8ab58bfa37754f6699accdbda4a813ba9465213a378e193ea96e0659e",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "61ef5f158cc4775c4b28e48dac0ae08bfa37ba967b9e8e1ae427513a08d8cc07"
+      "sha256": "0521522d70024e96e5bc8756283b102fb4ef09c7413ac97b62ce867d8284edc6"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "6cbd5f7b0ffec794ab24494b1ca14190853e227b02b82f6d1670451aba2a1c6a"
+      "sha256": "21c3ecee23749b9c2c7062ab60b41326963d77c63b88e8c299a3878b567eb09e"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "7547dc1fd19ae535e1795c1cdde56c57c822fba80db5e371f874ccadf75063cd"
+      "sha256": "981c584567b7d60a92cb4c1094576e334b2303c8e2878f76903868e6ed94bf76"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "62fffac45be1a5397d6dca514a00ff851354f5a19d2ec60fcac7362383955cdf"
+      "sha256": "eca00d6a9413dab824cd0f23c1a34ebf068559b64589e968902103cd090c20d3"
     }
   },
   "racers": [
@@ -310,7 +316,53 @@
       "raw_text": "6 4465 / B1 大西 賢 東京/茨城 40歳/52.0kg F0 L0 0.20 4.72 22.67 41.33 3.67 6.67 33.33 27 34.25 47.95 143 28.81 49.15 7 5 9 11 1 1R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 森野 正弘 52.8kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 大場 恒季 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 小野寺 智洋 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 藤田 美代 45.5kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 日笠 勝弘 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 大西 賢 52.0kg R 1"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
