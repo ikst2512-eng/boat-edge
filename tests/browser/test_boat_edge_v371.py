@@ -142,8 +142,14 @@ async def check(engine, shot_dir=None):
             await details.click()
             assert await page.locator("#raceView #be207Top .be305-evidence-items").is_visible(), "audit details inaccessible"
             assert await page.locator("#raceView #be207Top .be207-combo").inner_text() == before
-            await page.get_by_role("button", name="詳しいデータ・監査を閉じる").click()
-            assert await page.locator("#raceView #be207Top .be305-evidence-items").is_hidden()
+            # Keyboard users must be able to close the disclosure with Enter.
+            # This is a fixture interaction check, not physical iPhone Safari.
+            close_button = page.get_by_role("button", name="詳しいデータ・監査を閉じる")
+            await close_button.focus()
+            assert await close_button.evaluate("(el) => document.activeElement === el"), "audit control not keyboard focusable"
+            await page.keyboard.press("Enter")
+            assert await page.locator("#raceView #be207Top .be305-evidence-items").is_hidden(), "keyboard cannot close audit"
+            assert await page.get_by_role("button", name="詳しいデータ・監査を開く").is_visible(), "audit reopen label missing"
             if shot_dir:
                 Path(shot_dir).mkdir(parents=True, exist_ok=True)
                 await page.screenshot(path=str(Path(shot_dir) / f"v371-{engine}-{width}.png"), full_page=True)
