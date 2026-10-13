@@ -13,6 +13,10 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from boat_edge_v400_five_year_history_research import JST
 from boat_edge_v401_staged_k_bridge import normalize
+from boat_edge_v402_offline_b_k_reconciliation import reconcile, B_MANIFEST
+from boat_edge_v404_asof_history_features import TARGET_SCHEMA, snapshot
+from boat_edge_v405_batch_asof_history_features import build_batch
+from boat_edge_v406_offline_history_packager import package_days
 from boat_edge_v407_local_performance_bridge import (
     B_SCHEMA, PUB_SCHEMA, STAGING_SCHEMA, parse_local_txt, stage_local_entries,
 )
@@ -93,6 +97,54 @@ class V407OfflineNativeBridgeTests(unittest.TestCase):
         self.assertEqual(len(csv_bytes.decode().splitlines()), 7)
         self.assertEqual(manifest["csv_sha256"], hashlib.sha256(csv_bytes).hexdigest())
         self.assertFalse(audit["model_promotion_authorized"])
+
+    def test_full_v407_to_v401_v402_v406_v404_v405_synthetic_handoff(self):
+        # Entire authorized-local path is tested with invented results only.
+        b = b_stage(KEY)
+        k = stage_local_entries(k_entries(), b, pub(KEY))
+        kraw = json.dumps(k, sort_keys=True, separators=(",", ":")).encode()
+        source_raw = b"SYNTHETIC_K_SOURCE_BYTES_NOT_A_REAL_ARCHIVE"
+        csv_raw, manifest, audit401 = normalize(
+            source_raw, kraw, k_manifest(source_raw, kraw),
+            datetime(2026, 10, 1, tzinfo=JST),
+        )
+        braw = json.dumps(b, sort_keys=True, separators=(",", ":")).encode()
+        b_source = b"SYNTHETIC_B_SOURCE_BYTES_NOT_A_REAL_ARCHIVE"
+        bman = {
+            "schema": B_MANIFEST,
+            "source_sha256": hashlib.sha256(b_source).hexdigest(),
+            "staged_sha256": hashlib.sha256(braw).hexdigest(),
+            "source_locator": "fixture:invented-only",
+            "rights_evidence": "author-created synthetic B, not real permission",
+            "rights_review_status": "OPERATOR_REVIEWED_OFFLINE_RESEARCH_ONLY",
+            "parser_name": "fake-B-roster",
+            "parser_version": "test-only",
+            "retrieved_at_jst": "2026-09-29T20:00:00+09:00",
+        }
+        report402 = reconcile(
+            csv_raw, manifest, audit401, b_source, braw, bman,
+            datetime(2026, 10, 1, tzinfo=JST),
+        )
+        self.assertEqual(report402["reconciled_six_boat_races"], 1)
+        joined, joint_man, audit406 = package_days([{
+            "source_day": DAY.isoformat(), "k_csv": csv_raw,
+            "k_manifest": manifest, "v402_report": report402,
+        }])
+        self.assertEqual(joined, csv_raw)
+        self.assertEqual(audit406["normalized_complete_races"], 1)
+        target = {
+            "schema": TARGET_SCHEMA,
+            "race_key": KEY3,
+            "deadline_jst": "2026-09-30T23:35:00+09:00",
+            "entries": b_race(KEY3)["entries"],
+        }
+        single = snapshot(joined, joint_man, target)
+        batch = build_batch(joined, joint_man, [target])["snapshots"][0]
+        self.assertEqual(single, batch)
+        self.assertEqual(batch["historical_races_eligible_before_target"], 1)
+        self.assertFalse(batch["accuracy_improvement_proven"])
+        self.assertFalse(report402["license_independently_verified"])
+        self.assertFalse(audit406["historic_source_rights_independently_verified"])
 
     def test_missing_k_race_explicit_source_ambiguous_exclusion(self):
         stage = stage_local_entries(k_entries(), b_stage(KEY, KEY2), pub(KEY))
