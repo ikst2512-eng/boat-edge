@@ -4,7 +4,14 @@
   'use strict';
   const $=s=>document.querySelector(s);
   const esc=x=>String(x===null||x===undefined?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const num=v=>v===null||v===undefined||v===''?null:Number.isFinite(Number(v))?Number(v):null;
+  // Unpublished numeric fields must stay missing: Number('   ') and Number(false) are zero.
+  const num=v=>{
+    if(v===null||v===undefined||typeof v==='boolean')return null;
+    if(typeof v==='string'&&!v.trim())return null;
+    if(typeof v!=='number'&&typeof v!=='string')return null;
+    const n=Number(v);
+    return Number.isFinite(n)?n:null;
+  };
   const stNum=v=>typeof v==='string'&&!v.trim()?null:num(v);
   const fmt=(v,d=2)=>num(v)===null?'－':Number(v).toFixed(d);
   const stamp=ts=>{
@@ -31,14 +38,17 @@
   function entryMap(race){
     const arr=race?.beforeinfo?.start_exhibition||[];
     const available=sourceOK(race,'beforeinfo');
-    const out={};
+    const out={},duplicateLanes=new Set();
     if(available){
       for(const row of arr){
         const lane=String(row?.lane??''),course=num(row?.course);
         if(!/^[1-6]$/.test(lane))continue;
+        if(Object.prototype.hasOwnProperty.call(out,lane)){duplicateLanes.add(lane);continue;}
         out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:stNum(row?.st),f:row?.exhibition_f===true};
       }
     }
+    // Two rows for the same lane conflict: neither row can be verified as the source of truth.
+    for(const lane of duplicateLanes)out[lane]={course:null,st:null,f:false};
     const counts={};
     for(const row of Object.values(out))if(row.course!==null)counts[row.course]=(counts[row.course]||0)+1;
     for(const row of Object.values(out))if(row.course!==null&&counts[row.course]>1)row.course=null;
@@ -60,7 +70,14 @@
     const labelMap=new Map((obs?.labels||[]).map((n,i)=>[n,i]));
     const rawOE={};for(const b of obs?.boats||[]){const n=Number(b?.lane);if(n>=1&&n<=6)rawOE[n]=b?.values||[];}
     const start=entryMap(race);
-    const byEx=new Map((bf.racers||[]).map(x=>[Number(x.lane),x]));
+    const byEx=new Map(),duplicateEx=new Set();
+    for(const x of bf.racers||[]){
+      const lane=Number(x?.lane);
+      if(!Number.isInteger(lane)||lane<1||lane>6)continue;
+      if(byEx.has(lane)){duplicateEx.add(lane);continue;}
+      byEx.set(lane,x);
+    }
+    for(const lane of duplicateEx)byEx.delete(lane);
     const savedEntry=new Map((race?.actual_entry||[]).map(x=>[Number(x?.lane),x]));
     const rows=names.map((r,i)=>{
       const lane=Number(r?.lane||i+1),b=byEx.get(lane)||{},e=start[String(lane)]||{},save=savedEntry.get(lane)||{};
@@ -100,9 +117,9 @@
   }
   function sourceReport(race,oe,bfRows,starts){
     const card=actualCheck(race),audit=race?.source_audit||{};
-    const originalGood=Boolean(oe&&['一周','まわり足','直線'].every(label=>(oe.labels||[]).includes(label))&&new Set((oe.boats||[]).filter(b=>{const lane=Number(b?.lane);return lane>=1&&lane<=6&&['一周','まわり足','直線'].every(label=>num(b?.values?.[(oe.labels||[]).indexOf(label)])!==null);}).map(b=>Number(b.lane))).size===6);
-    const startGood=sourceOK(race,'beforeinfo')&&new Set(starts.filter(b=>stNum(b?.st)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
-    const bfGood=sourceOK(race,'beforeinfo')&&new Set(bfRows.filter(b=>num(b?.exhibition_time)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
+    const originalGood=Boolean(oe&&oe.boats?.length===6&&['一周','まわり足','直線'].every(label=>(oe.labels||[]).includes(label))&&new Set((oe.boats||[]).filter(b=>{const lane=Number(b?.lane);return lane>=1&&lane<=6&&['一周','まわり足','直線'].every(label=>num(b?.values?.[(oe.labels||[]).indexOf(label)])!==null);}).map(b=>Number(b.lane))).size===6);
+    const startGood=sourceOK(race,'beforeinfo')&&starts.length===6&&new Set(starts.filter(b=>stNum(b?.st)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
+    const bfGood=sourceOK(race,'beforeinfo')&&bfRows.length===6&&new Set(bfRows.filter(b=>num(b?.exhibition_time)!==null).map(b=>Number(b?.lane)).filter(n=>n>=1&&n<=6)).size===6;
     const cached=!bfGood&&((race?.beforeinfo?.racers||[]).length>=4||(race?.actual_entry||[]).length>=4);
     return `<div class="be202-chips">${sourceChip(race,'race_card','出走表',card)}${sourceChip(race,'beforeinfo','公式展示',bfGood)}${sourceChip(race,'beforeinfo','展示ST',startGood)}${sourceChip(race,'original_exhibition','オリ展',originalGood)}</div><div class="be202-source-note">公式直前 ${bfGood?`${stamp(audit.beforeinfo?.fetched_at)}／${esc(snapshotPhase(audit.beforeinfo?.fetched_at,race))}`:cached?'保存値はあり・現在の取得時刻は未照合':'未取得'} ・ オリ展 ${originalGood?`${stamp(audit.original_exhibition?.fetched_at)}／${esc(snapshotPhase(audit.original_exhibition?.fetched_at,race))}`:'未取得'}</div>`;
   }
