@@ -7,6 +7,14 @@ on:
       - '.github/workflows/v240-autodev.yml'
       - 'scripts/boat_edge_v240_guard.py'
       - 'tests/test_boat_edge_v240_guard.py'
+      - 'tests/test_boat_edge_v240_pr_publish.py'
+      - 'BOAT_EDGE_AUTODEV_TASKS.md'
+  pull_request:
+    paths:
+      - '.github/workflows/v240-autodev.yml'
+      - 'scripts/boat_edge_v240_guard.py'
+      - 'tests/test_boat_edge_v240_guard.py'
+      - 'tests/test_boat_edge_v240_pr_publish.py'
       - 'BOAT_EDGE_AUTODEV_TASKS.md'
   workflow_dispatch:
   schedule:
@@ -14,6 +22,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: boat-edge-v240-guarded-autodev
@@ -35,6 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_pr_publish.py' -v
           # py_compile would create an untracked __pycache__ artifact in the checkout.
           # That artifact would later fail our strict UI-only git status guard.
           PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY_V240_SYNTAX'
@@ -173,11 +183,12 @@ jobs:
             esac
           done < <(git diff --name-only)
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_guard.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v240_pr_publish.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v237_health.py' -q
           git diff --check
           echo "V240_INDEPENDENT_GUARDS_AND_TESTS_PASS"
 
-      - name: Publish gated UI-only result to main with conflict-safe retries
+      - name: Publish verified UI-only changes as a draft PR (never direct main push)
         if: steps.gate.outputs.can_run == 'true'
         shell: bash
         env:
@@ -186,26 +197,30 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -c "v240-approved-ui-${{ github.run_id }}"
+          branch="autodev/v240-${{ github.run_id }}-${{ github.run_attempt }}"
+          git switch -c "$branch"
           git add -- BOAT_EDGE_AUTODEV_TASKS.md
           git diff --name-only | while IFS= read -r name; do
             [ -z "$name" ] || git add -- "$name"
           done
-          git diff --cached --quiet && { echo "V240_NO_VERIFIED_EDIT"; exit 0; }
-          git commit -m 'feat(v240): guarded unattended site UI improvement'
+          git diff --cached --quiet && { echo 'V240_NO_VERIFIED_EDIT'; exit 0; }
+          git diff --cached --check
+          git commit -m 'feat(v240): guarded candidate UI improvement'
           gh auth setup-git
-          for attempt in 1 2 3; do
-            git fetch --no-tags origin main
-            if ! git rebase origin/main; then
-              git rebase --abort || true
-              echo "V240_ABORT_SOURCE_MOVED_CONFLICT"
-              exit 1
-            fi
-            if git push origin HEAD:main; then
-              echo "V240_UI_ONLY_SOURCE_PUBLISHED" >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            sleep 3
-          done
-          echo "V240_PUBLISH_REJECTED_WITHOUT_FORCE_PUSH"
-          exit 1
+          git fetch --no-tags origin main
+          if ! git rebase origin/main; then
+            git rebase --abort || true
+            echo 'V240_ABORT_SOURCE_MOVED_CONFLICT' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          # The agent can never publish directly to main. A rejected branch/PR
+          # permission fails closed without bypassing review or switching to main.
+          git push origin "HEAD:refs/heads/$branch"
+          echo "V240_CANDIDATE_BRANCH=$branch" >> "$GITHUB_STEP_SUMMARY"
+          if ! gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --draft \
+            --title 'V240: guarded UI candidate (review and CI required)' \
+            --body 'UI-only change from an isolated Codex task. Independent V240 safety checks passed locally. Track 01 must review this exact head SHA, verify external CI, reconcile concurrent PRs, and validate Pages/Safari separately. No model/Fresh/payout source modified. Do not assume GITHUB_TOKEN-generated PR automatically triggers CI.'; then
+            echo 'V240_DRAFT_PR_CREATE_BLOCKED_CHECK_ACTIONS_PR_PERMISSIONS' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo 'V240_DRAFT_PR_CREATED_REVIEW_REQUIRED_NOT_MERGED_NOT_DEPLOYED' >> "$GITHUB_STEP_SUMMARY"
