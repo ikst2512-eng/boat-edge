@@ -130,6 +130,24 @@ class V405IndexedBatchTests(unittest.TestCase):
             b_target(date(2026,9,30),1,4),
         ])
 
+
+    def test_explicit_calendar_window_boundaries_parity(self):
+        end = date(2026,9,30)
+        ages = (0, 89, 90, 364, 365, 1094, 1095, 1825)
+        rows = []
+        for age in ages:
+            d = end - timedelta(days=age)
+            rows += fake_race(d,1,1,publish_hour=(7 if age==0 else 19))
+        raw, man = csv_data(rows)
+        target = b_target(end,2,2,hour=8)
+        batched = build_batch(raw,man,[target])["snapshots"][0]
+        single = snapshot(raw,man,target)
+        self.assertEqual(batched,single)
+        actual = batched["national_actual_course_counts"]["1"]
+        self.assertEqual(
+            [actual[str(w)]["entries"] for w in (90,365,1095,1826)],
+            [2,4,6,8])
+
     def test_empty_history_has_empty_snapshots(self):
         raw,man=csv_data([])
         targets=[b_target(date(2026,9,30))]
