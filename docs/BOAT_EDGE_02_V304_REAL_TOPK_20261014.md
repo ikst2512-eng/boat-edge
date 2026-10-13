@@ -60,3 +60,20 @@ GitHub Actions [V304 run 38454611470](https://github.com/ikst2512-eng/boat-edge/
 **Observed output**: `v235_v234_v241_site_baseline.baseline.races=104`, `days=3`, frozen original ranked `baseline_hits={"3":22,"5":28,"10":40}`; `additional_unique_outside_v301=19`; `v301_race_keys_all_contained=true`; mutually exclusive `miss_leg_partition={"top10_hit":40,"head_missing":13,"second_missing_given_head":20,"third_missing_given_head_second":31}`. The 85-race V236/V240/V254 shadow union remains a **subset** with top3/5/10 baseline 18/23/33. Output flags `accuracy_improvement_proven=false`, `promotion_authorized=false`, `formal_results_read=false`, and Top3/Top5 candidate delta `null`.
 
 **CI boundary**: The V304 action validates existing V241/V234 source-evidence logic and the 104R replay. GitHub Actions artifact integrity is verified; no direct production Pages UI runtime or new Oct-14 V235 freeze is established by this artifact. This is **not** an independent result-blind candidate-vs-current forecast and grants **no** model promotion. PR remains Draft; Track01 V235 writers and Track03 UI are unchanged.
+
+## V304 source-validated 104R day and rank-bin CI replay (2026-10-14)
+
+**New code (Track02 only):** `scripts/boat_edge_v304_site_topk_audit.py` adds `ranked_site_baseline_by_day`, using the unchanged existing V241/V234/Git-first originals validation in `audit()`. It partitions pre-result ordered Top10 *after* 104 legitimate SITE-only outcomes were already independently scored. It is descriptive by day (not refitting, candidate comparison, or hindsight ticket revision). Synthetic regression covers bin reconciliation, day integrity, malformed ticket/winner failure, and empty cohort semantics. The existing six PR workflow checks remain scoped to research; no site production change.
+
+**Executed**: [V304 run #38460005517](https://github.com/ikst2512-eng/boat-edge/actions/runs/38460005517), head `85e1da49009cc344246c2446f210af3df285cf50`, completed SUCCESS. Downloaded artifact [#11845595795](https://github.com/ikst2512-eng/boat-edge/actions/runs/38460005517/artifacts/11845595795) and independently recalculated ZIP SHA256 `16ac7240f994fdb0631b6d284f8e03b594299bad5096fc520dba9dccaf8a9b40` (matches GitHub ZIP digest). Internal `v304-topk.json` uncompressed **4002 bytes**, raw SHA256 `b0199ee4824eebd3fe8a4662b57419ab4161f6315e8a6b6aeb10d022cd764fb8`. JSON returned source-verified unique SITE baseline **104R** (3 days), Top3/5/10 hits **22/28/40**, 85 shadow races wholly contained and 19 additional unique, and **no** candidate improvement or promotion flag.
+
+| Preexisting verified cohort day | R | Ranks 1–3 | Ranks 4–5 | Ranks 6–10 | Outside Top10 | Miss: head | Miss: second given head | Miss: third given first two |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2026-10-11 | 19 | 4 | 1 | 2 | 12 | 4 | 5 | 3 |
+| 2026-10-12 | 28 | 6 | 0 | 3 | 19 | 3 | 5 | 11 |
+| 2026-10-13 | 57 | 12 | 5 | 7 | 33 | 6 | 10 | 17 |
+| **Unique total** | **104** | **22** | **6** | **12** | **64** | **13** | **20** | **31** |
+
+Every day's rank-bin sum equals its race count; every day's exclusive miss partition plus Top10 hit equals its race count. The 64 misses are *ticket coverage gaps* only, not causal attribution to actual course, weather, tides, ST, or strength. Per-day change cannot establish trend or calibration from 3 dates. Rank bins and miss bins cannot be added to each other as independent race samples; both describe the **same 104 races**.
+
+**Known upstream blocker:** 2026-10-14 predeadline V232 freeze remains 0 as of last checked V235 early-morning source-window status. Main V336 research workflow is permission-safe dry-run-only with `capture_requested=false` and `completed_count=0`; V360 ranked120 structural readiness is not genuine candidate publication evidence. **Do not fabricate future V360 scores or retrospectively rank old V232 snapshots.** Track01 owns source and live scheduler; Track02 only evaluates newly first-committed equal-budget candidate Top3/5/10 after independent predeadline evidence. Formal First100 stays 0, results/unlock/scoring false; no promotion or PR merge.
