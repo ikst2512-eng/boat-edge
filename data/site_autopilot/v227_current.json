@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-13T01:27:01.116791+00:00",
+  "checked_at": "2026-10-13T01:54:48.336814+00:00",
   "day_jst": "20261013",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -29,63 +29,63 @@
     "evidence_claim": "NOT_PROVEN",
     "model_auto_promotion": false,
     "production_improvement_proven": false,
-    "site_v185_10_20x_settled_races": 23,
+    "site_v185_10_20x_settled_races": 24,
     "site_v185_candidate_top": {
       "top10": {
         "candidate_hits": 38,
-        "candidate_rate_percent": 34.55,
+        "candidate_rate_percent": 34.23,
         "control_hits": 38,
-        "control_rate_percent": 34.55,
+        "control_rate_percent": 34.23,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
         "candidate_hits": 13,
-        "candidate_rate_percent": 11.82,
+        "candidate_rate_percent": 11.71,
         "control_hits": 17,
-        "control_rate_percent": 15.45,
+        "control_rate_percent": 15.32,
         "difference": -4,
         "paired_gains": 2,
         "paired_losses": 6
       },
       "top5": {
         "candidate_hits": 25,
-        "candidate_rate_percent": 22.73,
+        "candidate_rate_percent": 22.52,
         "control_hits": 25,
-        "control_rate_percent": 22.73,
+        "control_rate_percent": 22.52,
         "difference": 0,
         "paired_gains": 1,
         "paired_losses": 1
       }
     },
-    "site_v185_evaluated_races": 110,
-    "site_v199_10_20x_settled_races": 14,
-    "site_v199_evaluated_races": 76,
+    "site_v185_evaluated_races": 111,
+    "site_v199_10_20x_settled_races": 15,
+    "site_v199_evaluated_races": 77,
     "site_v199_head_top": {
       "top10": {
         "candidate_hits": 30,
-        "candidate_rate_percent": 39.47,
+        "candidate_rate_percent": 38.96,
         "control_hits": 30,
-        "control_rate_percent": 39.47,
+        "control_rate_percent": 38.96,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
         "candidate_hits": 12,
-        "candidate_rate_percent": 15.79,
+        "candidate_rate_percent": 15.58,
         "control_hits": 10,
-        "control_rate_percent": 13.16,
+        "control_rate_percent": 12.99,
         "difference": 2,
         "paired_gains": 2,
         "paired_losses": 0
       },
       "top5": {
         "candidate_hits": 22,
-        "candidate_rate_percent": 28.95,
+        "candidate_rate_percent": 28.57,
         "control_hits": 20,
-        "control_rate_percent": 26.32,
+        "control_rate_percent": 25.97,
         "difference": 2,
         "paired_gains": 2,
         "paired_losses": 0
@@ -96,33 +96,50 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
+    "collector_health_issues": [
+      "predeadline_incomplete"
+    ],
     "current_window": [
       {
-        "deadline_jst": "10:30",
+        "deadline_jst": "10:57",
         "issues": [],
-        "minutes_left": 3.0,
-        "race_key": "20261013-04-01",
+        "minutes_left": 2.2,
+        "race_key": "20261013-04-02",
         "venue": "平和島"
       },
       {
-        "deadline_jst": "10:32",
-        "issues": [],
-        "minutes_left": 5.0,
-        "race_key": "20261013-18-05",
+        "deadline_jst": "10:58",
+        "issues": [
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 3.2,
+        "race_key": "20261013-06-01",
+        "venue": "浜名湖"
+      },
+      {
+        "deadline_jst": "11:02",
+        "issues": [
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 7.2,
+        "race_key": "20261013-18-06",
         "venue": "徳山"
       }
     ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 10,
+    "readiness_observed_races": 16,
     "readiness_reasons": {
-      "snapshot_missing": 4,
-      "verified_shadow_ready": 6
+      "snapshot_missing": 7,
+      "verified_shadow_ready": 9
     },
-    "readiness_shadow_verified_races": 6,
+    "readiness_shadow_verified_races": 9,
     "schedule_today": true,
-    "snapshot_files_today": 8,
-    "status": "MONITORING_PREDEADLINE",
+    "snapshot_files_today": 12,
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
