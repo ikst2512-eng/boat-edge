@@ -383,5 +383,120 @@ class MobilePredictionBrowser(unittest.TestCase):
                     context.close()
 
 
+    def test_early_card_real_renderer_mobile_status_and_race_switch(self):
+        """Run the production V392 UI with synthetic, result-free data in both engines."""
+        for kind, browser in self.browsers.items():
+            with self.subTest(browser=kind):
+                context = browser.new_context(
+                    viewport={"width": 390, "height": 844},
+                    device_scale_factor=2, is_mobile=True, has_touch=True,
+                    locale="ja-JP", timezone_id="Asia/Tokyo",
+                )
+                page = context.new_page()
+                page.set_default_timeout(12000)
+                try:
+                    page.set_content("""<!doctype html><meta name="viewport"
+                     content="width=device-width,initial-scale=1">
+                     <div id="tab-pred"><div class="section stack">
+                     <div id="predictionAlert"></div></div></div>""")
+                    page.add_script_tag(path=str(
+                        ROOT / "assets/boat_edge_v392_early_prediction.js"))
+                    result = page.evaluate("""async () => {
+                      // Always use next JST calendar day; never request results.
+                      const date = new Date(Date.now()+9*3600000+86400000)
+                        .toISOString().slice(0,10);
+                      const key = date.replaceAll('-','')+'-14-01';
+                      const fetched = new Date(Date.now()-60000).toISOString();
+                      const produced = new Date().toISOString();
+                      const racers = Array.from({length:6},(_,i)=>({
+                        lane:i+1,registration_no:String(5001+i),class:'B1',
+                        avg_st:0.16,national:{win_rate:5},local:{win_rate:4},
+                        motor:{quinella_rate:35},raw_text:'出走表'
+                      }));
+                      const race={race_key:key,
+                        meta:{date,venue_code:'14',race_no:1,deadline:'23:59',
+                          phase:'PRE_RESULT',results_seen:false,unlock:false,
+                          scoring:false},
+                        source_audit:{race_card:{status:'ok',fetched_at:fetched,
+                          sha256:'a'.repeat(64)}},racers};
+                      const inputs=racers.map(x=>[x.lane,x.registration_no,
+                        x.class,x.avg_st,x.national.win_rate,x.local.win_rate,
+                        x.motor.quinella_rate]);
+                      const combos=[];
+                      for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)
+                        for(let c=1;c<=6;c++)
+                          if(new Set([a,b,c]).size===3)combos.push(a+'-'+b+'-'+c);
+                      const preview={
+                        schema:'BOAT_EDGE_V392_CARD_ONLY_PREVIEW_V1',
+                        model_id:'V392-CARD-HEURISTIC-UNCALIBRATED',
+                        prediction_kind:'EARLY_CARD_ONLY_REFERENCE_NOT_FINAL',
+                        race_key:key,source_date:date,deadline:'23:59',
+                        produced_at:produced,source_card_fetched_at:fetched,
+                        source_card_sha256:'a'.repeat(64),
+                        card_fingerprint_sha256:'b'.repeat(64),
+                        racer_inputs_by_lane:inputs,head_candidate:1,
+                        ranked_120:combos.map((combo,i)=>({
+                          combo,rank:i+1,relative_score:120-i
+                        })),
+                        top3:combos.slice(0,3),top5:combos.slice(0,5),
+                        top10:combos.slice(0,10),
+                        guards:{results_seen:false,unlock:false,scoring:false},
+                        formal_fresh_claim:false,
+                        score_is_calibrated_probability:false,
+                        odds_used:false,betting_enabled:false,stake_yen:null
+                      };
+                      window.state={race};
+                      window.fetch=async()=>({ok:false,status:404});
+                      await BoatEdgeV392.render(race);
+                      const missing=document.querySelector('#be392EarlyPreview');
+                      const missingOk=missing.dataset.ready==='status'
+                        &&missing.textContent.includes('まだ公開')
+                        &&missing.querySelectorAll('.be392-lines li').length===0;
+                      window.fetch=async()=>({ok:true,json:async()=>preview});
+                      await BoatEdgeV392.render(race);
+                      const ready=document.querySelector('#be392EarlyPreview');
+                      const readyOk=ready.dataset.ready==='true'
+                        &&ready.querySelectorAll('.be392-lines li').length===10
+                        &&ready.textContent.includes('未凍結');
+                      ready.querySelector('button[data-count="3"]').click();
+                      const threeOk=ready.querySelectorAll('.be392-lines li').length===3;
+                      ready.querySelector('button[data-count="5"]').click();
+                      const fiveOk=ready.querySelectorAll('.be392-lines li').length===5;
+                      const blocked={...race,racers:racers.map((x,i)=>
+                        i===0?{...x,status:'欠場'}:x)};
+                      await BoatEdgeV392.render(blocked);
+                      const blockedOk=ready.dataset.ready==='status'
+                        &&ready.textContent.includes('欠場')
+                        &&ready.querySelectorAll('.be392-lines li').length===0;
+                      // A delayed request for race 1 cannot repaint race 2.
+                      let resolveOld;
+                      window.fetch=()=>new Promise(resolve=>resolveOld=resolve);
+                      const oldRequest=BoatEdgeV392.render(race);
+                      const nextRace={...race,race_key:key.slice(0,-2)+'02',
+                        meta:{...race.meta,race_no:2}};
+                      window.fetch=async()=>({ok:false,status:404});
+                      window.state.race=nextRace;
+                      await BoatEdgeV392.render(nextRace);
+                      resolveOld({ok:true,json:async()=>preview});
+                      await oldRequest;
+                      const current=document.querySelector('#be392EarlyPreview');
+                      const switchOk=current.dataset.raceKey===nextRace.race_key
+                        &&current.dataset.ready==='status'
+                        &&current.querySelectorAll('.be392-lines li').length===0;
+                      return {missingOk,readyOk,threeOk,fiveOk,blockedOk,switchOk,
+                        state:current.dataset.ready,reason:current.textContent};
+                    }""")
+                    for label in ("missingOk", "readyOk", "threeOk", "fiveOk",
+                                  "blockedOk", "switchOk"):
+                        self.assertTrue(result[label], f"{kind} {label}: {result}")
+                    screenshot_dir = os.getenv("BOAT_EDGE_SCREENSHOT_DIR")
+                    if screenshot_dir:
+                        dest = Path(screenshot_dir)
+                        dest.mkdir(parents=True, exist_ok=True)
+                        page.screenshot(path=str(dest / f"be03_early_status_{kind}.png"))
+                finally:
+                    context.close()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
