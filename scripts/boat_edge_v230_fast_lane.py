@@ -345,7 +345,7 @@ def update_one(root,key,data,now):
     if reasons:return 'source_blocked'
     return 'fresh_verified' if odds is not None else 'odds_incomplete'
 
-def run(root,now=None,worker=6):
+def run(root,now=None,worker=6,priority_key=None):
     from boat_edge_v228_freeze_only import check_formal_closed
     from boat_edge_v229_atomic_freeze import run as atomic_freeze
     root=Path(root).resolve();now=now or datetime.now(JST)
@@ -353,7 +353,15 @@ def run(root,now=None,worker=6):
     check_formal_closed(root)
     selected=targets(root,now)
     diagnostic=target_diagnostic(root,now)
+    # V235 priority safety: for the explicitly requested 2026-10-14 Naruto 1R,
+    # isolate its network batch from later-deadline races during the live window.
+    # Outside that one verified decision window the normal race queue is intact.
+    priority_applied=(priority_key=='20261014-14-01' and
+                      now.strftime('%Y%m%d')=='20261014' and
+                      priority_key in selected)
+    if priority_applied:selected=[priority_key]
     status={'schema':SCHEMA,'day_jst':now.strftime('%Y%m%d'),'targets':selected,'target_diagnostic':diagnostic,
+            'priority_applied':priority_applied,'priority_race_key':priority_key if priority_applied else None,
             'source_refreshed':0,'source_blocked':0,'odds_incomplete':0,'network_error':0,'outcomes':{}}
     if selected:
         with ThreadPoolExecutor(max_workers=worker) as pool:
@@ -380,4 +388,5 @@ def run(root,now=None,worker=6):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--root',default='.');p.add_argument('--workers',type=int,default=6)
-    args=p.parse_args();run(args.root,worker=min(8,max(1,args.workers)))
+    p.add_argument('--priority-race-key',default=None)
+    args=p.parse_args();run(args.root,worker=min(8,max(1,args.workers)),priority_key=args.priority_race_key)

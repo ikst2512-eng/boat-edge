@@ -86,6 +86,41 @@ class FastLaneTests(unittest.TestCase):
         snap=self.root/'data/site_prediction_snapshots'/f'{key}.json'
         self.assertFalse(snap.exists(),'preflight must not write or backfill a prediction')
 
+    def test_naruto_priority_isolates_source_fetch_only_during_decision_window(self):
+        # 08:27: Naruto's deadline is 08:35; Tokuyama 1R at 08:43 is
+        # also eligible for V230. Slow Tokuyama requests must not delay the
+        # owner-priority Naruto snapshot and first Git commit.
+        naruto='20261014-14-01'
+        tokuyama='20261014-18-01'
+        today={'date':'2026-10-14','venues':[
+            {'venue':'鳴門','races':[{'race_key':naruto,'deadline':'08:35'}]},
+            {'venue':'徳山','races':[{'race_key':tokuyama,'deadline':'08:43'}]}]}
+        m.write_json(self.root/'data/today.json',today)
+        for key,venue,deadline in ((naruto,'14','08:35'),
+                                   (tokuyama,'18','08:43')):
+            race=makerace(deadline)
+            race['race_key']=key
+            race['meta'].update(date='2026-10-14',venue_code=venue,race_no=1)
+            m.write_json(self.root/'data/races'/f'{key}.json',race)
+        def fake_fetch(root,key):
+            return key,{'verified_mock':'no_official_network'},None
+        at=lambda h,minute:datetime(2026,10,14,h,minute,tzinfo=JST)
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0),
+              patch.object(m,'fetch_one',side_effect=fake_fetch) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified')):
+            first=m.run(self.root,at(8,27),worker=2,priority_key=naruto)
+            self.assertEqual(first['targets'],[naruto])
+            self.assertTrue(first['priority_applied'])
+            self.assertEqual(fetch.call_count,1)
+            self.assertEqual(fetch.call_args.args[1],naruto)
+            fetch.reset_mock()
+            later=m.run(self.root,at(8,37),worker=2,priority_key=naruto)
+            self.assertEqual(later['targets'],[tokuyama])
+            self.assertFalse(later['priority_applied'])
+            self.assertEqual(fetch.call_count,1)
+            self.assertEqual(fetch.call_args.args[1],tokuyama)
+
     def test_never_rewrites_snapshot(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         p=self.root/'data/site_prediction_snapshots'/f'{KEY}.json';p.parent.mkdir(parents=True);p.write_bytes(b'IMMUTABLE')
