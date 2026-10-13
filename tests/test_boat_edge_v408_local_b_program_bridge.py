@@ -208,6 +208,9 @@ class V408LocalProgramBridgeTests(unittest.TestCase):
         }
         stage=parse_local_b_files(sources,DAY)
         self.assertEqual(len(stage["races"]),2)
+        with self.assertRaisesRegex(ValueError, "LOCAL_B_UNPARSEABLE_SOURCE_FILE"):
+            parse_local_b_files({**sources,
+                                 "unparsable.txt": b"SYNTHETIC GARBAGE"*12},DAY)
         self.assertEqual([r["race_key"] for r in stage["races"]],
                          ["202609300101","202609300201"])
         self.assertEqual(stage["races"][0]["entries"][0]["racer_id"],"4501")
