@@ -203,8 +203,16 @@ def parse_local_k_files(sources):
         from boatrace_lzh.performance import PerformanceParser
     except ImportError as exc:
         raise RuntimeError("OPTIONAL_LOCAL_BOATRACE_LZH_PARSER_NOT_INSTALLED") from exc
-    parsed = PerformanceParser().parse(decoded)
-    return parsed.entries
+    parser = PerformanceParser()
+    entries = []
+    for filename, content in sorted(decoded.items()):
+        parsed = parser.parse({filename: content})
+        if not parsed.races or not parsed.entries:
+            # Upstream parser can silently skip an unknown/short local file.
+            # Never call a partially parsed multi-venue archive complete.
+            raise ValueError("LOCAL_K_UNPARSEABLE_SOURCE_FILE:" + filename)
+        entries.extend(parsed.entries)
+    return entries
 
 
 def parse_local_txt(raw: bytes):
