@@ -212,7 +212,9 @@ class V406OfflinePackagingTests(unittest.TestCase):
         self.assertEqual(ordered, lazy)
         with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
             package_days(item for item in ())
-        with self.assertRaisesRegex(ValueError, "STAGED_DAY_LIST_REQUIRED"):
+        # Duplicate-day protection rejects a repeated 1,827-day stream
+        # before the overall day-count limit can be reached.
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_STAGED_DAY"):
             package_days(item for item in [self.first]*1827)
         with self.assertRaisesRegex(ValueError, "EXACT_STAGED_DAY_FIELDS_REQUIRED"):
             package_days(iter("not a history day"))
