@@ -201,6 +201,11 @@ def build_historical_escape_counts(scope, target, events):
             layer_third[layer][s][t] += 1
     if not seen:
         raise ValueError("EMPTY_VERIFIED_COHORT")
+    # Existing 20-way kernel has no third-stage inference for a second course
+    # with zero national observations. Refuse rather than silently backfill an
+    # unobserved third-place distribution or hand it an unusable cohort.
+    if any(layer_second["national"][s] == 0 for s in TAIL):
+        raise ValueError("UNOBSERVED_SECOND_COURSE_THIRD_DISTRIBUTION")
     # A layer without a single observed event is missing, NOT a zero vector.
     second = {layer: (layer_second[layer] if sum(layer_second[layer].values()) else None)
               for layer in LAYERS}
