@@ -106,3 +106,9 @@ console.log('V327_SIX_BOAT_RUNTIME_NODELIST_PASS');
 }
 // V373: static suite/read-only stop-state contract in the existing UI CI entrypoint.
 require('./test_boat_edge_v373_browser_contract.cjs');
+
+/* V375: the UI does not certify calibrated probabilities or reorder 02's tickets. */
+assert(js.includes('元の予想順位を維持・オッズで並べ替えません'));
+assert(!js.includes('確率順・オッズで順位を変更しません'));
+assert(js.includes('rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh,settled)))'));
+console.log('V375_UNCALIBRATED_RANK_LABEL_SOURCE_ORDER_PASS');
