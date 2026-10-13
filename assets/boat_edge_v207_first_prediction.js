@@ -42,6 +42,26 @@ function shownStake(row,settled){
  const m=raw.match(/現在の参考配分\s*([\d,]+)円/);
  return m?digit(m[1]):null;
 }
+/* Read-only notice for absent tickets; never produces picks or safety approvals.
+ * The source-collection window is approximate, not a publish-time promise. */
+function readinessWindow(r,now=Date.now()){
+ const key=String(r?.race_key||''),m=r?.meta||{},clock=String(m.deadline||'');
+ if(!valid(key)||m.phase!=='PRE_RESULT'||m.results_seen!==false||
+    m.unlock!==false||m.scoring!==false)return '';
+ if(String(m.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
+    Number(m.race_no)!==Number(key.slice(12,14))||
+    (m.date&&m.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8))||
+    !/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(clock))
+  return '選択レースの締切時刻を照合できません。買い目は確認待ちです。';
+ const day=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+ const due=Date.parse(day+'T'+clock+':00+09:00');
+ if(!Number.isFinite(due)||!Number.isFinite(now))return '締切時刻の照合待ちです。';
+ if(now<due-20*60000)
+  return '締切予定 '+clock+'。直前情報は締切約20分前から確認対象です（予想公開時刻の保証ではありません）。';
+ if(now<due)
+  return '締切予定 '+clock+'。直前確認時間帯ですが、出走可否・展示・保存証拠が揃うまでは買い目を表示しません。';
+ return '締切済み。締切前の保存証拠がない買い目を結果後に作ることはありません。';
+}
 function validTickets(rows){
  if(!Array.isArray(rows)||rows.length===0||rows.length>120)return false;
  const combos=rows.map(row=>extractCombo(str('b',row)));
@@ -169,8 +189,9 @@ function render(){
  const rowOK=validTickets(rows);
  const pendingScratch=!settled&&st.kind!=='partial';
  const ticketViewSynced=Boolean(sourceList&&!awaitingRaceList);
+ const pendingWindow=readinessWindow(r);
  document.documentElement.classList.toggle('be306-race-await',!ticketViewSynced);
- const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,ticketViewSynced,evidence,
+ const sig=JSON.stringify([key,mode,st.kind,st.title,st.detail,rows.length,showFive,showTen,showAll,fresh,settled,provenance,proof?.quality,proof?.label,rowOK,pendingScratch,ticketViewSynced,pendingWindow,evidence,
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
@@ -207,7 +228,7 @@ function render(){
   text($('[data-be259="metric"]',box),!ticketViewSynced?'既存参考指標：新レースの値を照合中':evidenceValue?evidenceLabel+'：'+evidenceValue:'信頼度の独立した検証値は未取得');
   const list=$('.be207-bets',box);list.replaceChildren();
   const count=showAll?rows.length:showTen?10:showFive?5:3;
-  if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=!ticketViewSynced?'選択した新しいレースの買い目を照合中。前レースの買い目は表示しません。':'買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';list.append(w);}
+  if(stop){const w=document.createElement('div');w.className='be207-stop';w.textContent=!ticketViewSynced?'選択した新しいレースの買い目を照合中。前レースの買い目は表示しません。':'買い目は非表示：出走可否・締切前保存状態・買い目の一意性を確認してください。欠測値から候補を補完しません。';w.textContent+=pendingWindow?' '+pendingWindow:'';list.append(w);}
   else rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh,settled)));
   const five=$('[data-be207="five"]',box);five.hidden=stop||rows.length<5||showAll;
   text(five,showFive?'Top3に戻す':'Top5を表示');
@@ -258,6 +279,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace};
+window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace,readinessWindow};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
