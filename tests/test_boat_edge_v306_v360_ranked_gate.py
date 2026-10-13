@@ -41,7 +41,7 @@ class V306Tests(unittest.TestCase):
     def test_cross_mode_entry_mismatch(self):
         x=fixture();rows=x['research_ranked_120_by_mode']['national_motor']
         for row in rows:
-            row['boat_combo']=row['boat_combo'].replace('1','X').replace('2','1').replace('X','2')
+            row['course_combo']=row['course_combo'].replace('1','X').replace('2','1').replace('X','2')
         self.assertEqual(inspect(x),'CROSS_MODE_ENTRY_MISMATCH')
     def test_no_ranking(self):
         self.assertEqual(inspect({}),"NO_V360_RANKING")
