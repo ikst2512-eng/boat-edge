@@ -1,5 +1,10 @@
-name: BOAT EDGE V392 - Next-Day Official Racelist Preview
+name: BOAT EDGE V392 - Early Card Preview Publisher
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v392-preday-cards.yml'
+      - 'scripts/boat_edge_v392_card_preview.py'
   workflow_dispatch:
   schedule:
     # 17:00, 20:00 and 23:00 JST. Future PRE_RESULT cards only.
@@ -37,6 +42,9 @@ jobs:
             git fetch --no-tags origin main
             git reset --hard origin/main
             git clean -fd -- data/early_races/ data/site_early_previews/ data/site_early_calendar/
+            # On a new deployment immediately publish already-proven TODAY race cards.
+            # Future next-day collection remains available only in the evening.
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v392_card_preview.py --mode today
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v392_card_preview.py --mode tomorrow
             for dir in data/early_races data/site_early_previews data/site_early_calendar; do
               if test -d "$dir"; then git add -A -- "$dir"; fi
