@@ -199,7 +199,7 @@ class V407OfflineNativeBridgeTests(unittest.TestCase):
     def test_forged_b_target_actual_course_field_rejected(self):
         b = b_stage(KEY)
         b["races"][0]["entries"][0]["actual_course"] = 1
-        with self.assertRaisesRegex(ValueError, "EXACT_B_ONLY_TARGET_REQUIRED"):
+        with self.assertRaisesRegex(ValueError, "TARGET_MUST_NOT_CONTAIN_OUTCOME_OR_ACTUAL_COURSE"):
             stage_local_entries(k_entries(), b, pub(KEY))
 
     def test_no_complete_records_rejected(self):
