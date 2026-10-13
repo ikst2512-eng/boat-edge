@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 2,
     "deadline": "09:09",
-    "updated_at": "2026-10-14T06:20:11+09:00",
+    "updated_at": "2026-10-14T06:51:57+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=18&rno=2",
-      "fetched_at": "2026-10-14T06:21:09+09:00",
-      "sha256": "97bb20057df99dc876c93977d35db6a704798d124b83f9852fb8b1afadece81d",
+      "fetched_at": "2026-10-14T06:54:41+09:00",
+      "sha256": "7dbeb94afcb42ee44cf0a98d6b1b1d41004a53d74789935b3ffd37f6f6d697a2",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=18&rno=2",
+      "fetched_at": "2026-10-14T06:52:35+09:00",
+      "sha256": "5b8c2450f30abc9cd4ce494db3423f770e26777fccbddcea1d0ce0814da8fc5d",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -295,7 +301,53 @@
       "raw_text": "6 4456 / A1 鎌倉 涼 大阪/大阪 37歳/45.5kg F1 L0 0.16 6.32 38.96 55.84 6.97 51.72 62.07 65 25.47 43.40 63 30.49 49.33 5 12 7 12 4 9 5 8R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 藤田 浩人 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 丹下 健 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 川崎 公靖 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 山田 竜一 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 幸田 智裕 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 鎌倉 涼 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

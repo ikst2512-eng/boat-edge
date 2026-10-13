@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 1,
     "deadline": "08:51",
-    "updated_at": "2026-10-14T06:20:11+09:00",
+    "updated_at": "2026-10-14T06:51:57+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=21&rno=1",
-      "fetched_at": "2026-10-14T06:21:18+09:00",
-      "sha256": "84903930319bbcab9605585267972a8ae191e175ee557b3a2d30e3ccce099c0a",
+      "fetched_at": "2026-10-14T06:54:52+09:00",
+      "sha256": "cace70c22167698cbc50a1a40459105bff6337a919859ce05eb014b0c186f4ef",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=21&rno=1",
+      "fetched_at": "2026-10-14T06:52:34+09:00",
+      "sha256": "9e92969ce381489b894081dfe67166f1be57fbede3fd107cea9496d948c76ec6",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -250,7 +256,53 @@
       "raw_text": "6 4022 / B1 待鳥 雄紀 福岡/福岡 46歳/57.3kg F0 L0 0.16 4.75 26.37 41.76 4.92 29.17 45.83 12 39.82 51.33 163 33.91 54.78 10R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 東本 勝利 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 三浦 裕貴 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 富永 正人 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 杉山 喜一 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 池田 剛規 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 待鳥 雄紀 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
