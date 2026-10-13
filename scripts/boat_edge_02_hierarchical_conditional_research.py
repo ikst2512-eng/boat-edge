@@ -18,6 +18,10 @@ LAYERS = ("national", "venue", "racer", "motor")
 PRIOR_STRENGTH = {"national": 12.0, "venue": 32.0, "racer": 48.0, "motor": 64.0}
 RACE = re.compile(r"20\d{6}-\d{2}-\d{2}\Z")
 SHA = re.compile(r"[0-9a-f]{64}\Z")
+# Conservative known Formal/diagnostic research-protected cohort dates.
+# Caller must ALSO check the current dynamic Formal protected date set;
+# this static gate is not an exhaustive permission to access historical outcomes.
+RESEARCH_PROTECTED_DATES = frozenset(("20261001", "20261005", "20261013"))
 
 
 def _date(value):
@@ -32,7 +36,7 @@ def _date(value):
 def _check_scope(scope, race_key):
     if not isinstance(race_key, str) or RACE.fullmatch(race_key) is None:
         raise ValueError("INVALID_RACE_KEY")
-    if race_key.startswith("20261001-"):
+    if race_key[:8] in RESEARCH_PROTECTED_DATES:
         raise ValueError("FORMAL_FRESH_EXCLUDED")
     if not isinstance(scope, dict) or set(scope) != {
         "schema", "race_key", "train_end", "first_frozen_at", "deadline_jst",
