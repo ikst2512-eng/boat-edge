@@ -203,11 +203,11 @@ function render(){
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
+ const stop=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
+ showPredictionWait(r,stop); // Refresh across the deadline even when the ticket signature stays unchanged.
  if(sig===lastSig&&box.classList.contains('ready'))return;
  rendering=true;
  try{
-  const stop=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
-  showPredictionWait(r,stop);
   box.classList.add('ready');box.dataset.status=st.kind;
   text($('.be207-condition strong',box),st.title||'欠場・取消確認待ち');
   text($('.be207-condition span',box),st.detail||'出走可否未確定');
