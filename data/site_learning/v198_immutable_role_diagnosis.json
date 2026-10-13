@@ -31,15 +31,15 @@
       "classes": {
         "HEAD_ABSENT": 2,
         "SECOND_ABSENT_WITH_CORRECT_HEAD": 4,
-        "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 15,
+        "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 16,
         "TOP10_HIT": 13
       },
-      "verified_settled": 34
+      "verified_settled": 35
     }
   },
   "formal_guard_modified": false,
   "formal_results_accessed": false,
-  "independent_verified_settled": 143,
+  "independent_verified_settled": 144,
   "inference": "DIAGNOSTIC_NOT_PROOF_OF_IMPROVED_ACCURACY",
   "invalid_frozen_or_results": [],
   "model_id": "V198_SITE_ONLY_ROLE_MISS_AUDIT_V1",
@@ -3397,6 +3397,33 @@
       "winning_combo": "1-5-2"
     },
     {
+      "actual_head": "1",
+      "actual_head_is_1": true,
+      "actual_second": "5",
+      "actual_third": "3",
+      "baseline_top10_hit": false,
+      "baseline_top3_hit": false,
+      "baseline_top5_hit": false,
+      "classification_v185_top10": "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND",
+      "payout_band": "OVER_50X",
+      "race_key": "20261013-12-05",
+      "source_first_git_commit": "563b51cd3bdd5f67d9f7f17790c3538a24ce14d9",
+      "source_first_git_commit_time_utc": "2026-10-13T08:00:33+00:00",
+      "v180_top10_hit": false,
+      "v180_top3_hit": false,
+      "v180_top5_hit": false,
+      "v185_actual_head_relative_mass_pct_NOT_CALIBRATED": 73.406,
+      "v185_actual_second_rank_given_head": 4,
+      "v185_actual_third_rank_given_head_second": 4,
+      "v185_all120_rank": 37,
+      "v185_rank_within_actual_head": 15,
+      "v185_top10_hit": false,
+      "v185_top10_new_combos_vs_v180": 0,
+      "v185_top3_hit": false,
+      "v185_top5_hit": false,
+      "winning_combo": "1-5-3"
+    },
+    {
       "actual_head": "4",
       "actual_head_is_1": false,
       "actual_second": "2",
@@ -3913,11 +3940,11 @@
   "result_access_rule": "AFTER_V185_INITIAL_GIT_COMMIT_PREDEADLINE_SHA_REPLAY_PASS_ONLY",
   "schema_version": "boat-edge-v198-independent-immutable-site-role-miss-v1",
   "scope": "SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
-  "site_frozen_research_files": 144,
+  "site_frozen_research_files": 145,
   "top10_classification": {
     "HEAD_ABSENT": 20,
     "SECOND_ABSENT_WITH_CORRECT_HEAD": 33,
-    "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 39,
+    "THIRD_ABSENT_WITH_CORRECT_HEAD_SECOND": 40,
     "TOP10_HIT": 51
   }
 }
