@@ -212,3 +212,15 @@ test('V351 invalid exhibition ST becomes null while numeric ST is retained', () 
   assert.equal(rows[1].st, 0.13);
   assert.equal(rows[2].st, null);
 });
+
+test('V352 whitespace ST is missing both in rows and acquisition badge', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.5})),
+    start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:i===2?'   ':'0.12'}))
+  };
+  assert.equal(api.makeRows(data).rows[2].st, null);
+  assert.equal(api.makeRows(data).rows[0].st, 0.12);
+  assert.match(api.html(data,null,null), /展示ST 未取得/);
+});
