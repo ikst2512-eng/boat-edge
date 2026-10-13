@@ -192,13 +192,26 @@ def _eligible_race(root, key, now):
         needs_proof = False
     official_raw = None
     if needs_proof:
+        # Reject locked, result-bearing, wrong-date and closed inputs *before*
+        # even opening the auxiliary official source file.
+        meta = parsed.get("meta") if isinstance(parsed, dict) else None
+        if (parsed.get("race_key") != key or not isinstance(meta, dict)
+                or meta.get("phase") != "PRE_RESULT"
+                or any(meta.get(k) is not False for k in ("results_seen", "unlock", "scoring"))
+                or any(name in parsed for name in ("results", "result", "payout", "finish", "outcomes"))
+                or now.strftime("%Y%m%d") != key[:8]):
+            raise ValueError("START_SOURCE_PRE_RESULT_ONLY")
         venue, round_no = key.split("-")[1:]
         relative = (Path("data/raw") / key[:8] /
                     (venue + "_" + round_no + "_beforeinfo.html"))
         target = root / relative
-        if (any(part.is_symlink() for part in (target, target.parent, target.parent.parent))
-                or not target.is_file() or
-                not target.resolve().is_relative_to(root)):
+        # Reject symlinks at any ancestor, not only the final three paths.
+        parent = target
+        while parent != root:
+            if parent.is_symlink():
+                raise ValueError("START_SOURCE_RAW_SYMLINK_FORBIDDEN")
+            parent = parent.parent
+        if not target.is_file() or not target.resolve().is_relative_to(root):
             raise ValueError("START_SOURCE_SAME_RACE_RAW_HTML_MISSING")
         official_raw = target.read_bytes()
     candidate, deadline, race = candidate_from_raw(raw, key, now, official_raw)
