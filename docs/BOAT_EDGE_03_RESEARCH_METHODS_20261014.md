@@ -19,7 +19,7 @@ Date: 2026-10-14 JST. OWNER: 03 UI-only branch/PR. 01 owns final integration / P
 - `BOAT_EDGE_AUTODEV_TASKS.md` A01–A33 are checked, but an item checked by code review is not a device acceptance proof.
 - `BOAT_EDGE_MASTER_TODO.md` T14/T15/T17/T18 call for full iPhone flow, verified hit/miss/pending/ineligible, staleness and separate completion stages.
 - `data/site_ui_display_requirements.json` expects ¥10,000 mode allocation UI, all 6 lane colors, verified win only on frozen prediction and real source-confirmed outcome, no fabricated payouts.
-- Current open PR #200 https://github.com/ikst2512-eng/boat-edge/pull/200 already fixes incorrect labels where `mode='blocked'` and null were called a normal reference prediction. Review/merge through 01, DO NOT replicate. Its head/base drift must be resolved by 01.
+- Merged PR #200 https://github.com/ikst2512-eng/boat-edge/pull/200 already fixes incorrect labels where `mode='blocked'` and null were called a normal reference prediction. DO NOT replicate. Open PR #202 https://github.com/ikst2512-eng/boat-edge/pull/202 independently hardens homepage/results-list 🎯 proof; 01 must review its HEAD and CI before merge. Successful CI/Pages remain separate from physical iOS Safari acceptance.
 - 03 already has mobile readability CSS and multiple UI feature variants. Simplify only after live DOM ownership and tests; do not blindly rewrite or delete historical assets.
 
 ## P0 UI acceptance design (not a proposed rewrite of model)
