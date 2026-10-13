@@ -43,7 +43,9 @@ const tabs={
  original:{label:'オリ展',hint:'1周・まわり足・直線。オリ展CSVとBOATERS・競艇日和の独立照合は別。',cols:[['1周','lap',2,.08,true],['まわり足','turn',2,.04,true],['直線','straight',2,.04,true]]}
 };
 const field=(r,path)=>path.split('.').reduce((x,k)=>x?.[k],r);
-let metric='base',layout='lanes',selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
+// V371: show all six racers as readable rows on narrow screens; desktop retains the matrix.
+const preferredLayout=()=>window.matchMedia?.('(max-width: 650px)')?.matches?'rows':'lanes';
+let metric='base',layout=preferredLayout(),selectedLane=null,headSig='',showAll=false,ctx='',busy=false,queued=false,lastTable='',lastStatus='',started=false;
 let lastTicketList=null,awaitingTicketList=false;
 let lastStructure='';
 /* A visually outstanding number is never inferred from 4/6 known boats. */
@@ -219,7 +221,7 @@ function board(){
   if(ctx!==next){
    if(oldRace&&oldRace!==r.race_key)awaitingTicketList=!list||list===lastTicketList;
    ctx=next;selectedLane=null;headSig='';showAll=false;lastTable='';lastStatus='';
-   if(raceChanged)layout='lanes';
+   if(raceChanged)layout=preferredLayout();
   }
   if(awaitingTicketList&&list&&list!==lastTicketList)awaitingTicketList=false;
   if(!awaitingTicketList&&list)lastTicketList=list;
