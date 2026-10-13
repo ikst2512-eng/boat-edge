@@ -92,7 +92,10 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  const valStart=home.indexOf('function be181ValidFinal(');
  const valEnd=home.indexOf('async function be181ServerFinal(',valStart);
  assert.ok(start>0 && end>start && valStart>0 && valEnd>valStart);
- const code=home.slice(valStart,valEnd)+'\n'+home.slice(start,end);
+ const ticketStart=home.indexOf('const be181TicketValid=t=>');
+ const ticketEnd=home.indexOf('function be181First(',ticketStart);
+ assert.ok(ticketStart>0&&ticketEnd>ticketStart);
+ const code=home.slice(ticketStart,ticketEnd)+'\n'+home.slice(valStart,valEnd)+'\n'+home.slice(start,end);
  const due='2026-10-15T08:35:00+09:00';
  const at=Date.parse('2026-10-15T08:33:00+09:00');
  const record={
