@@ -50,6 +50,27 @@ class V287AutopilotPagesAssets(unittest.TestCase):
             one,two=fixtures(UI_PATHS,asset)
             self.assertFalse(same_ui_lineage(one,two),asset)
 
+    def test_v377_race_first_mobile_css_cannot_be_unpublished(self):
+        # PR #212 adds a standalone source-ranked mobile layout stylesheet.
+        # A successful prior Pages run cannot validate a subsequent CSS-only edit.
+        css="assets/boat_edge_v371_simple_ui.css"
+        self.assertIn(css,UI_PATHS)
+        self.assertTrue((ROOT/css).is_file())
+        workflow=(ROOT/".github/workflows/v277-pages-monitor.yml").read_text(encoding="utf8")
+        self.assertGreaterEqual(workflow.count("'"+css+"'"),2)
+        index=(ROOT/"index.html").read_text(encoding="utf8")
+        self.assertIn("boat_edge_v371_simple_ui.css?v=371",index)
+        main,older=fixtures(UI_PATHS,css)
+        self.assertFalse(same_ui_lineage(main,older),css)
+        run={"name":"pages build and deployment","head_sha":"a"*40,
+             "created_at":(NOW-timedelta(minutes=5)).isoformat(),
+             "updated_at":(NOW-timedelta(minutes=4)).isoformat(),
+             "status":"completed","conclusion":"success"}
+        out=report([run],main,NOW,deployed_ui_commits=older)
+        self.assertFalse(out["ui_lineage_verified"])
+        self.assertEqual(out["status"],"UI_PUBLISH_OVERDUE_NEEDS_ATTENTION")
+        self.assertFalse(out["ui_checked_in_safari"])
+
     def test_v374_topk_quickview_scripts_and_styles_are_sha_proven(self):
         # Rendering JS/CSS can change with no index.html update; latest Pages
         # evidence must cover the actual production assets in V373 browser CI.

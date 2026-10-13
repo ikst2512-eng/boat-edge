@@ -36,6 +36,9 @@ UI_PATHS = (
     "assets/boat_edge_v207_first_prediction.js",
     "assets/boat_edge_v207_first_prediction.css",
     "assets/boat_edge_v304_topk_mobile.css",
+    # V377: 03 V371 mobile race-first stylesheet can change without HTML or JS.
+    # Its deployed Pages last-touch SHA must be proven independently.
+    "assets/boat_edge_v371_simple_ui.css",
     # V287: Pages must publish the actual scripts used by the mobile
     # Autopilot view, not only the parent HTML. Missing/stale JS fails closed.
     "assets/boat_edge_v278_next_watch.js",
