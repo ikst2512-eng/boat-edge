@@ -130,8 +130,8 @@ class V366SourceOnlyProof(unittest.TestCase):
             root = Path(tmp)
             setup_case(root)
             pages = source_pages()
-            wrong_list = pages[0].replace(b"4006 / A1", b"4444 / A1")
-            with self.assertRaisesRegex(ValueError, "SIX_REGISTERED_RACERS"):
+            wrong_list = pages[0].replace(b"<div>4006 /", b"<div>4444 /")
+            with self.assertRaisesRegex(ValueError, "PRINTED_REGISTERED_NUMBER_MISMATCH"):
                 capture_source_only(root, KEY, clock=lambda: NOW,
                                     fetcher=fetcher_for((wrong_list, pages[1])))
             self.assertFalse((root / "data/research_source_only_v366").exists())
