@@ -15,6 +15,11 @@ html.be207-ready:not(.be208-details-on) #tab-pred #buyBoard,
 html.be207-ready:not(.be208-details-on) #tab-pred #worlds,
 html.be207-ready:not(.be208-details-on) #tab-pred #predictionAlert,
 html.be207-ready:not(.be208-details-on) #tab-pred .section.stack > div:has(> #boats) {display:none!important}
+/* A35: even when Details is opened, do not expose old ticket amounts or
+   payouts while the selected-race V207 source gate is explicitly STOPPED.
+   V207 pause reason and V223 audit remain visible in the race summary. */
+html.be207-ready:has(#be207Top .be207-stop) #tab-pred #be108PredictionModes,
+html.be207-ready:has(#be207Top .be207-stop) #tab-pred #buyBoard{display:none!important}
 /* Compact forecast rows and six-boat table are the main content. */
 html.be207-ready #be207Top{border-color:#cddbe8;margin-bottom:8px}
 html.be207-ready #be207Top .be207-topline{margin-bottom:7px}
