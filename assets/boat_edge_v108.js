@@ -108,6 +108,16 @@ async function loadArchiveIndex(){
   return archiveIndex;
 }
 async function loadArchiveDay(ymd){
+  // V392: a future official racelist is not a historical archived result.
+  // Only the exact next JST calendar day may use the separate PRE_RESULT catalog.
+  if(ymd>todayYmd()){
+    // Correct JST next-day arithmetic: current JST calendar date + one day.
+    const tomorrowJst=new Date(Date.now()+9*3600000+86400000).toISOString().slice(0,10).replaceAll("-","");
+    if(ymd!==tomorrowJst)return null;
+    const future=await J('./data/site_early_calendar/'+ymd+'.json',30000);
+    return future?.ymd===ymd&&future?.schema==='BOAT_EDGE_V392_NEXT_DAY_CARDS_V1'
+      &&Array.isArray(future.venues)?future:null;
+  }
   // Fresh racing cards appear in today.json before the archive writer publishes them.
   if(ymd===todayYmd()){
     const live=await J("./data/today.json",15000);
@@ -136,6 +146,7 @@ function resultText(r){
     const hit=serverHistoryByKey?.[r.race_key]?.hit_any?" 🎯":"";
     return `結果 ${r.trifecta||"確定"}${pay}${hit}`;
   }
+  if(r.result_status==='future_pre_result')return "翌日出走表 / 暫定予想（未凍結）";
   if(String(r.race_key||"").startsWith(todayYmd()))return "当日出走表 / 結果はレース画面で確認";
   return r.has_odds?"オッズあり":"保存データ";
 }
@@ -236,7 +247,11 @@ async function renderHomeHub(){
   const live=await J("./data/today.json",15000);
   const liveDay=String(live?.date||"").replaceAll("-","");
   const hasLiveDay=liveDay===todayYmd()&&Array.isArray(live?.venues)&&live.venues.length>0;
-  const dates=[...new Set([...(idx?.dates||[]).map(x=>x.ymd),...(hasLiveDay?[liveDay]:[])])].sort();
+  const early=await J("./data/site_early_calendar/index.json",30000);
+  const tomorrowJst=new Date(Date.now()+9*3600000+86400000).toISOString().slice(0,10).replaceAll("-","");
+  const earlyDates=early?.schema==="BOAT_EDGE_V392_NEXT_DAY_INDEX_V1"?
+    (early.dates||[]).filter(d=>d===tomorrowJst):[];
+  const dates=[...new Set([...(idx?.dates||[]).map(x=>x.ymd),...(hasLiveDay?[liveDay]:[]),...earlyDates])].sort();
   if(!dates.length){host.innerHTML='<div class="be108-empty">出走表・保存データ準備中</div>';return}
   if(hasLiveDay&&be160LiveDayActivated!==liveDay){
     selectedDate=liveDay;selectedVenue=null;be160LiveDayActivated=liveDay;

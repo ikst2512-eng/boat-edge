@@ -3119,6 +3119,9 @@ function renderRace(d,opts={}){
   renderUrgency(d,pred);
   renderFreshness(d);
   renderDecision(d, pred);
+  // V392: card-only preliminary picks are a separate, explicitly unverified view.
+  // Do not reuse V235 immutable FINAL, odds, stake or formal outcome state.
+  window.BoatEdgeV392?.render(d);
   renderDirectMode(d, pred);
   renderPredictionDiff(d, pred);
   renderBuyBoard(d, pred);
@@ -3277,6 +3280,7 @@ startPassiveRefresh();
 <script src="./assets/boat_edge_v205_clean.js?v=205"></script>
 <script src="./assets/boat_edge_v206_quickview.js?v=328&amp;headtap=338&amp;scroll=341&amp;focus=342&amp;compare=3423&amp;a36=1"></script>
 <script src="./assets/boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306&amp;a37=1&amp;readiness=391"></script>
+<script src="./assets/boat_edge_v392_early_prediction.js?v=392&amp;stage=card-only"></script>
 <script defer src="./assets/boat_edge_v222_live_odds.js?v=256"></script>
 <link rel="stylesheet" href="./assets/boat_edge_v223_source_visibility.css?v=223&amp;rev=244&amp;source=282">
 <script defer src="./assets/boat_edge_v223_source_visibility.js?v=223&amp;rev=244&amp;patch=250&amp;source=282&amp;fix=329"></script>
