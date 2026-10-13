@@ -204,6 +204,22 @@ class V405IndexedBatchTests(unittest.TestCase):
         self.assertEqual(batch["historical_races_eligible_before_target"], 0)
         self.assertEqual(batch["historical_races_not_yet_available"], 1)
 
+    def test_window_expiry_preserves_exact_history_extrema(self):
+        # A long-lived old record must disappear from the 1826-day
+        # history extent when the target advances; shorter-window
+        # bookkeeping must not influence those dates.
+        old = fake_race(date(2021, 10, 1), 1, 1)
+        newer = fake_race(date(2024, 5, 1), 1, 2)
+        raw, man = csv_data(old + newer)
+        targets = [b_target(date(2025, 10, 1), 2, 1),
+                   b_target(date(2026, 9, 30), 2, 2)]
+        result = build_batch(raw, man, targets)["snapshots"]
+        for t, actual in zip(targets, result):
+            self.assertEqual(actual, snapshot(raw, man, t))
+        self.assertEqual(result[0]["history_min_date"], "2021-10-01")
+        self.assertEqual(result[1]["history_min_date"], "2024-05-01")
+        self.assertEqual(result[1]["history_max_date"], "2024-05-01")
+
     def test_one_second_before_deadline_is_eligible(self):
         # Exact boundary counterpart: 08:34:59 is usable at 08:35:00.
         d = date(2026, 9, 30)
