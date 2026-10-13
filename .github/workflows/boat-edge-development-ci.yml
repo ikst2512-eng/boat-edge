@@ -38,6 +38,10 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
+      - name: Prove V136 old-day V125 audit and immutable first Git source before scoring
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v136_historical_proof.py' -v
       - name: Prove V257 cron ownership and strict single 08:20 prewarm before main
         env:
           PYTHONDONTWRITEBYTECODE: '1'

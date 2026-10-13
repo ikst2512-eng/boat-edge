@@ -21,7 +21,9 @@ concurrency:
 
 jobs:
   install:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Installed in 2026: preserve tracked source, never regenerate the obsolete inline V136 scorer.
+    # The old installer overwrites current first-Git proof logic and used unsafe rebase-on-push.
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -29,7 +31,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+      - name: Preserve installed V136 source of truth
+        run: |
+          test -f scripts/site_accuracy_v136.py
+          test -f scripts/site_v136_historical_proof.py
       - name: Install V136 files and audit panel
+        if: false # retired bootstrap; never overwrite reviewed scorer on main
         shell: bash
         run: |
           python - <<'PY'
@@ -115,7 +122,7 @@ jobs:
           git push
   score:
     needs: [install]
-    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_run' || needs.install.result == 'success')
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
