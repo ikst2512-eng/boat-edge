@@ -64,7 +64,7 @@ const nightly=fs.readFileSync('.github/workflows/v392-preday-cards.yml','utf8');
 assert.match(html,/window\.BoatEdgeV392\?\.render\(d\)/);
 assert.match(html,/boat_edge_v392_early_prediction\.js\?v=392/);
 assert.match(home,/data\/site_early_calendar\//);
-assert.match(home,/EARLY_CARD_ONLY/); // explicit future never treated as results
+assert.match(home,/BOAT_EDGE_V392_NEXT_DAY_CARDS_V1/); // explicit future never treated as results
 assert.match(workflow,/boat_edge_v392_card_preview\.py --mode today/);
 assert.match(nightly,/boat_edge_v392_card_preview\.py --mode tomorrow/);
 assert.match(nightly,/schedule:/);
