@@ -428,7 +428,10 @@ def collect_tomorrow(root, now, session=None):
         grouped = {}
         for key, card in found:
             saved += int(put_json_if_changed(root / "data/early_races" / (key + ".json"), card))
-            saved += int(save_preview(root, card, now))
+            # Official response may arrive minutes after the batch began.
+            # Bind the reference ranking to the actual source collection time.
+            fetch_at = datetime.fromisoformat(card["source_audit"]["race_card"]["fetched_at"])
+            saved += int(save_preview(root, card, max(now, fetch_at)))
             code = key[9:11]
             grouped.setdefault(code, []).append({
                 "race_key": key, "race_no": int(key[12:14]), "deadline": card["meta"]["deadline"],
