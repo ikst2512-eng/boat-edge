@@ -6,6 +6,7 @@ Structural readiness is NOT evidence of independent predeadline publication.
 """
 import argparse
 import json
+import math
 import re
 from pathlib import Path
 
@@ -39,7 +40,7 @@ def inspect(frozen):
                 return "INVALID_TICKET"
             seen.add(boat)
             mass=row.get("relative_model_mass")
-            if type(mass) not in (int,float) or not (0<=mass<=1):
+            if type(mass) not in (int,float) or not math.isfinite(mass) or not (0<=mass<=1):
                 return "INVALID_MASS"
         if len(seen)!=120 or abs(sum(r["relative_model_mass"] for r in rows)-1)>1e-8:
             return "INVALID_DISTRIBUTION"
