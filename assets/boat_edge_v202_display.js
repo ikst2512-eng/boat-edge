@@ -35,7 +35,7 @@
       for(const row of arr){
         const lane=String(row?.lane??''),course=num(row?.course);
         if(!/^[1-6]$/.test(lane))continue;
-        out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:row?.st??null,f:row?.exhibition_f===true};
+        out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:num(row?.st),f:row?.exhibition_f===true};
       }
     }
     return out;
