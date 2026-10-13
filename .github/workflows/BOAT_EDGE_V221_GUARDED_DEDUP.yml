@@ -1,14 +1,9 @@
 # V221 conservative legacy workflow dedup: exact SHAs, healthy alternatives, fail-closed.
 name: BOAT EDGE V221 - Safe Verified Legacy Workflow Dedup
 'on':
-  push:
-    branches:
-    - main
-    paths:
-    - .github/workflows/BOAT_EDGE_V221_GUARDED_DEDUP.yml
+  # V221's three legacy targets were already disabled in the 2026-10-12 audit.
+  # Keep the guarded cleanup available manually; no automatic disabling loop.
   workflow_dispatch: null
-  schedule:
-  - cron: 29 20 * * *
 permissions:
   contents: write
   actions: write
