@@ -45,4 +45,20 @@ assert.match(a.readinessWindow({...selected,meta:{...selected.meta,venue_code:'0
 assert.equal(a.readinessWindow({...selected,meta:{...selected.meta,results_seen:true}},0),'');
 assert(js.includes("pendingScratch,ticketViewSynced,pendingWindow,evidence,"));
 assert(js.includes("w.textContent+=pendingWindow?' '+pendingWindow:''"));
+// Real-JST window explanation is display-only and never enables an unverified pick.
+assert.equal(typeof a.readinessWindow,'function');
+const selected={race_key:'20261014-14-01',meta:{
+ date:'2026-10-14',venue_code:'14',race_no:1,deadline:'08:35',
+ phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false}};
+const before=Date.parse('2026-10-14T07:30:00+09:00');
+const near=Date.parse('2026-10-14T08:29:00+09:00');
+const past=Date.parse('2026-10-14T08:36:00+09:00');
+assert.match(a.readinessWindow(selected,before),/締切約20分前/);
+assert.match(a.readinessWindow(selected,near),/直前確認時間帯/);
+assert.match(a.readinessWindow(selected,past),/締切済み/);
+assert.match(a.readinessWindow({...selected,meta:{...selected.meta,deadline:'25:99'}},before),/照合できません/);
+assert.match(a.readinessWindow({...selected,meta:{...selected.meta,venue_code:'15'}},before),/照合できません/);
+assert.equal(a.readinessWindow({...selected,meta:{...selected.meta,results_seen:true}},before),'');
+assert.equal(a.readinessWindow(null,before),'');
+assert(!/(?:fetch\\(|XMLHttpRequest|rankPredictions\\(|RESULT_UNLOCK_TOKEN|winning_combo|official_payout)/.test(js));
 console.log('V306_RACE_SWITCH_STALE_TICKETS_SUPPRESSED_PASS');
