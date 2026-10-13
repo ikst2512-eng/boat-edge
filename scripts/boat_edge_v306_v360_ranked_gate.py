@@ -45,7 +45,7 @@ def inspect(frozen):
             return "INVALID_DISTRIBUTION"
     return "STRUCTURAL_TOP3_TOP5_TOP10_READY_NOT_ATTESTED"
 
-def audit(root):
+def audit(root, folder):
     status=json.loads((root/"data/formal_status.json").read_text(encoding="utf-8"))
     guards=status.get("guards") or {}
     if (any(guards.get(k) is not False for k in ("results_seen","unlock","scoring"))
@@ -53,7 +53,7 @@ def audit(root):
         or (status.get("formalFirst100") or {}).get("races")!=0):
         raise ValueError("FORMAL_LOCK_REQUIRED")
     counts={}
-    folder=root/"data/site_autopilot/v332_frozen"
+    folder=Path(folder).resolve()
     if not folder.is_dir():
         return {"scope":"PRE_RESULT_V360_STRUCTURAL_ONLY","folder_present":False,
                 "counts":{},"eligible_scored_races":0,"promotion_authorized":False}
@@ -69,5 +69,6 @@ def audit(root):
 if __name__=="__main__":
     p=argparse.ArgumentParser()
     p.add_argument("--root",type=Path,default=Path("."))
+    p.add_argument("--folder",type=Path,required=True,help="Explicit directory of original V332 frozen research JSON; never infer historical paths")
     args=p.parse_args()
-    print(json.dumps(audit(args.root),sort_keys=True))
+    print(json.dumps(audit(args.root,args.folder),sort_keys=True))
