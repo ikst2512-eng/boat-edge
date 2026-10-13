@@ -82,3 +82,32 @@ test('V202 markup keeps missing original exhibition blank and labels it uncollec
   assert.match(markup, /オリ展 未取得/);
   assert.doesNotMatch(markup, /37\.23|5\.33|8\.20/);
 });
+
+test('V346 never presents unverified saved course, ST, or exhibition time as current', () => {
+  const data = race('20261013-04-01');
+  data.beforeinfo = {
+    racers: [{lane:1,exhibition_time:6.42,tilt:-0.5}],
+    start_exhibition: [{lane:1,course:2,st:0.11}]
+  };
+  data.actual_entry = [{lane:1,course:3,exhibition_st_raw:0.08}];
+  const row = api.makeRows(data).rows[0];
+  assert.equal(row.course, null);
+  assert.equal(row.st, null);
+  assert.equal(row.displayTime, null);
+  const markup = api.html(data, null, null);
+  assert.match(markup, /公式展示 未取得/);
+  assert.match(markup, /展示ST 未取得/);
+  assert.doesNotMatch(markup, /6\.42|0\.11|0\.08/);
+});
+test('V346 verified beforeinfo still renders exhibition course ST and time', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: [{lane:1,exhibition_time:6.42}],
+    start_exhibition: [{lane:1,course:2,st:0.11}]
+  };
+  const row = api.makeRows(data).rows[0];
+  assert.equal(row.course, 2);
+  assert.equal(row.st, 0.11);
+  assert.equal(row.displayTime, 6.42);
+});
