@@ -1,6 +1,8 @@
-name: BOAT EDGE V350 Actions Evidence (manual read-only)
+name: BOAT EDGE V351 Actions Evidence (read-only)
 
 on:
+  schedule:
+    - cron: '23 3 * * *'
   workflow_dispatch:
     inputs:
       max_pages:
@@ -36,7 +38,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          MAX_PAGES: ${{ inputs.max_pages }}
+          MAX_PAGES: ${{ inputs.max_pages || '3' }}
         run: |
           set -euo pipefail
           mkdir -p evidence
