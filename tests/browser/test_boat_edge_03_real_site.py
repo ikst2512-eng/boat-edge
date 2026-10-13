@@ -6,6 +6,7 @@ No mocks, outcome endpoints, payouts, formal predictions, or API/v1 calls.
 Headless WebKit is NOT physical iPhone Safari certification.
 """
 import argparse
+import hashlib
 from datetime import datetime, timezone, timedelta
 import json
 import os
@@ -30,6 +31,150 @@ FORBIDDEN = (
     "/api/v1/", "/result/", "combined", "settlement",
 )
 
+
+
+
+def probe_site_snapshot_evidence(context, target, key, deadline):
+    """Read current SITE PRE_RESULT snapshot/audit receipts, never outcome data.
+
+    This proves byte-SHA and V229 audit consistency, NOT the first Git commit,
+    and it never equates predeadline live reference rankings with frozen picks.
+    Only invoke for an eligible same-day race still before its JST deadline.
+    """
+    base = target.rsplit("/", 1)[0] + "/"
+    snap_url = base + "data/site_prediction_snapshots/" + key + ".json"
+    snap_res = context.request.get(snap_url, timeout=12000,
+                                   headers={"Cache-Control": "no-store"})
+    if snap_res.status == 404:
+        return {"status": "NO_SITE_PREDEADLINE_SNAPSHOT", "first_git_commit_verified": False}
+    if snap_res.status != 200:
+        return {"status": "SNAPSHOT_FETCH_UNAVAILABLE",
+                "http_status": snap_res.status, "first_git_commit_verified": False}
+    raw = snap_res.body()
+    sha = hashlib.sha256(raw).hexdigest()
+    try:
+        snap = json.loads(raw)
+    except (ValueError, UnicodeDecodeError):
+        return {"status": "SNAPSHOT_INVALID_JSON", "first_git_commit_verified": False}
+    if snap.get("race_key") != key or snap.get("snapshot_window") != "FINAL_15M" or any(
+        (snap.get("guards") or {}).get(k) is not False
+        for k in ("results_seen", "unlock", "scoring")
+    ):
+        return {"status": "SNAPSHOT_RACE_OR_GUARD_INVALID", "first_git_commit_verified": False}
+    try:
+        due = datetime.strptime(key[:8] + str(deadline), "%Y%m%d%H:%M").replace(tzinfo=JST)
+        first = datetime.fromisoformat(str(snap["first_saved_at"]).replace("Z", "+00:00"))
+        saved = datetime.fromisoformat(str(snap["saved_at"]).replace("Z", "+00:00"))
+        if first.utcoffset() is None or saved.utcoffset() is None:
+            raise ValueError("timezone required")
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return {"status": "SNAPSHOT_TIME_INVALID", "first_git_commit_verified": False}
+    if not (first <= saved < due and
+            2 <= (due - first).total_seconds() / 60 <= 10):
+        return {"status": "SNAPSHOT_OUTSIDE_PREDEADLINE_WINDOW",
+                "first_git_commit_verified": False}
+    top10 = [(x.get("combo") if isinstance(x, dict) else None) for x in
+             (((snap.get("modes") or {}).get("hit") or {}).get("tickets") or [])[:10]]
+    if len(top10) != 10 or len(set(top10)) != 10 or any(
+        not re.fullmatch(r"[1-6]-[1-6]-[1-6]", x or "") or len(set(x.split("-"))) != 3
+        for x in top10
+    ):
+        return {"status": "SNAPSHOT_TOP10_INVALID", "first_git_commit_verified": False}
+    audit_res = context.request.get(
+        base + "data/site_prediction_audit/" + key + ".json", timeout=12000,
+        headers={"Cache-Control": "no-store"})
+    evidence_res = context.request.get(
+        base + "data/site_autopilot/v229_evidence/" + key + ".json", timeout=12000,
+        headers={"Cache-Control": "no-store"})
+    if audit_res.status != 200 or evidence_res.status != 200:
+        return {"status": "SNAPSHOT_AUDIT_OR_V229_NOT_PUBLISHED",
+                "snapshot_sha256": sha, "first_git_commit_verified": False}
+    try:
+        audit, proof = audit_res.json(), evidence_res.json()
+    except (ValueError, TypeError):
+        return {"status": "SNAPSHOT_AUDIT_INVALID_JSON", "first_git_commit_verified": False}
+    # An outcome embedded in audit is not valid PRE_RESULT evidence.
+    if "settlement" in audit:
+        return {"status": "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT",
+                "first_git_commit_verified": False}
+    if (audit.get("pass") is not True or audit.get("race_key") != key or
+        audit.get("latest_snapshot_sha256") != sha or
+        proof.get("race_key") != key or proof.get("snapshot_sha256") != sha or
+        proof.get("schema") != "BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1" or
+        proof.get("scope") != "SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS" or
+        proof.get("new_snapshot_created_this_run") is not True or
+        proof.get("results_seen") is not False or
+        proof.get("formal_fresh_unlock") is not False or proof.get("scoring") is not False or
+        proof.get("snapshot_saved_at") != snap.get("saved_at")):
+        return {"status": "SNAPSHOT_SHA_OR_V229_AUDIT_MISMATCH",
+                "snapshot_sha256": sha, "first_git_commit_verified": False}
+    return {"status": "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED",
+            "snapshot_sha256": sha, "first_saved_at": snap["first_saved_at"],
+            "saved_at": snap["saved_at"], "saved_top3": top10[:3],
+            "saved_top5": top10[:5], "saved_top10": top10,
+            "first_git_commit_verified": False}
+
+
+
+def test_snapshot_evidence_contract_without_network():
+    """Synthetic verifier regression: no real results or frozen claims."""
+    key = "20261014-14-01"
+    combos = ["1-2-3", "1-2-4", "1-2-5", "1-2-6", "1-3-2",
+              "1-3-4", "1-3-5", "1-3-6", "1-4-2", "1-4-3"]
+    snap = {
+        "race_key": key, "snapshot_window": "FINAL_15M",
+        "guards": {"results_seen": False, "unlock": False, "scoring": False},
+        "first_saved_at": "2026-10-13T23:30:00+00:00",
+        "saved_at": "2026-10-13T23:31:00+00:00",
+        "modes": {"hit": {"tickets": [{"combo": x} for x in combos]}}
+    }
+    raw = json.dumps(snap, sort_keys=True).encode()
+    sha = hashlib.sha256(raw).hexdigest()
+    audit = {"race_key": key, "pass": True, "latest_snapshot_sha256": sha}
+    proof = {
+        "race_key": key, "snapshot_sha256": sha,
+        "schema": "BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1",
+        "scope": "SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS",
+        "new_snapshot_created_this_run": True, "results_seen": False,
+        "formal_fresh_unlock": False, "scoring": False,
+        "snapshot_saved_at": snap["saved_at"]
+    }
+    class Response:
+        def __init__(self, value):
+            self.status = 404 if value is None else 200
+            self.value = value
+        def body(self):
+            return self.value if isinstance(self.value, bytes) else json.dumps(self.value).encode()
+        def json(self):
+            return json.loads(self.body())
+    class Request:
+        def __init__(self, data):
+            self.data = data
+        def get(self, url, **_):
+            return Response(self.data.get(url.split("/data/")[-1]))
+    class Context:
+        def __init__(self, data):
+            self.request = Request(data)
+    data = {
+        "site_prediction_snapshots/" + key + ".json": raw,
+        "site_prediction_audit/" + key + ".json": audit,
+        "site_autopilot/v229_evidence/" + key + ".json": proof
+    }
+    check = lambda d: probe_site_snapshot_evidence(
+        Context(d), "https://pages.example/index.html", key, "08:35")
+    accepted = check(data)
+    assert accepted["status"] == "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+    assert accepted["saved_top3"] == combos[:3]
+    assert accepted["saved_top10"] == combos
+    assert accepted["first_git_commit_verified"] is False
+    assert check({})["status"] == "NO_SITE_PREDEADLINE_SNAPSHOT"
+    assert check({**data, "site_prediction_audit/" + key + ".json":
+                  {**audit, "latest_snapshot_sha256": "0" * 64}}
+                 )["status"] == "SNAPSHOT_SHA_OR_V229_AUDIT_MISMATCH"
+    assert check({**data, "site_prediction_audit/" + key + ".json":
+                  {**audit, "settlement": {}}}
+                 )["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT"
+    print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
 
 
 def probe_verified_live_topk(context, target, catalog, shots, engine):
@@ -93,6 +238,9 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
         if audit.get("status") != "ok" or len(payload.get("racers") or []) != 6:
             stopped_reasons.append({"race": key, "reason": "source_audit_not_ready"})
             continue
+        saved_evidence = probe_site_snapshot_evidence(
+            context, target, key, race["deadline"]
+        )
         live = context.new_page()
         browser_errors = []
         live.on("pageerror", lambda error: browser_errors.append(str(error)[:180]))
@@ -112,7 +260,8 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             if top.locator(".be207-stop").count():
                 stopped_reasons.append({
                     "race": key,
-                    "reason": top.locator(".be207-condition strong").inner_text().strip()
+                    "reason": top.locator(".be207-condition strong").inner_text().strip(),
+                    "saved_prediction": saved_evidence
                 })
                 assert top.locator(".be207-ticket").count() == 0
                 continue
@@ -167,7 +316,13 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             return {
                 "status": "VERIFIED_TOP3_TOP5_TOP10_SOURCE_ORDER",
                 "race": key, "venue": venue["venue"], "ticket_count": len(expected),
-                "deadline_jst": race["deadline"], "browser_errors": browser_errors
+                "deadline_jst": race["deadline"], "browser_errors": browser_errors,
+                "saved_prediction": saved_evidence,
+                "displayed_matches_saved_hit10": (
+                    expected[:10] == saved_evidence.get("saved_top10")
+                    if saved_evidence["status"] ==
+                    "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED" else None
+                )
             }
         finally:
             live.close()
@@ -412,4 +567,5 @@ if __name__ == "__main__":
     parser.add_argument("--site-url", default="local", help="local or published Pages index.html")
     parser.add_argument("--screenshots", default="artifacts/boat-edge-03-browser")
     args = parser.parse_args()
+    test_snapshot_evidence_contract_without_network()
     exercise(args.engine, args.site_url, Path(args.screenshots))
