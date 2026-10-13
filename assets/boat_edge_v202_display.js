@@ -39,6 +39,9 @@
         out[lane]={course:course!==null&&Number.isInteger(course)&&course>=1&&course<=6?course:null,st:stNum(row?.st),f:row?.exhibition_f===true};
       }
     }
+    const counts={};
+    for(const row of Object.values(out))if(row.course!==null)counts[row.course]=(counts[row.course]||0)+1;
+    for(const row of Object.values(out))if(row.course!==null&&counts[row.course]>1)row.course=null;
     return out;
   }
   function actualCheck(race){
