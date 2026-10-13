@@ -151,17 +151,60 @@ jobs:
           assert ns.pop()==d["predictions_evaluated"]
           print({"scored":d["predictions_evaluated"],"excluded":d["excluded_reasons"]})
           PY
-      - name: Commit V136 report
+      - name: Publish V136 report only after fresh-main recomputation
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_learning/mode_accuracy_v136.json data/site_learning/site_mode_evaluations_v136
-          git diff --cached --quiet && exit 0
-          git commit -m "Update audited site-reference mode accuracy V136"
-          for n in 1 2 3; do
-            git push && exit 0
-            git pull --rebase origin main
+          published=false
+          for attempt in 1 2 3 4; do
+            # A competing writer invalidates the previous checkout/score.
+            # Never rebase an old derived accuracy report onto new source data.
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_learning/site_mode_evaluations_v136
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_accuracy_v136.py
+            python3 - <<'PY_V136_CONTRACT'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('data/site_learning/mode_accuracy_v136.json').read_text(encoding='utf-8'))
+          assert d['schema_version']=='boat-edge-site-mode-accuracy-v136'
+          assert d['scope']=='SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH'
+          assert d['formal_current_scoring'] is False
+          assert d['production_prediction_weights_changed'] is False
+          assert d['rank_120_available'] is False
+          n=d['predictions_evaluated']
+          assert type(n) is int and n>=0
+          assert all(d['modes'][k]['evaluated']==n for k in ('hit','balance','hole','narrow'))
+          print('V136_MAIN_REFRESH_SCORE_PROOF_PASS',n,d['excluded_reasons'])
+          PY_V136_CONTRACT
+            git add -- data/site_learning/mode_accuracy_v136.json
+            if test -d data/site_learning/site_mode_evaluations_v136; then
+              git add -A -- data/site_learning/site_mode_evaluations_v136
+            fi
+            python3 - <<'PY_V136_STAGE'
+          import re,subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          for path in paths:
+              if path=='data/site_learning/mode_accuracy_v136.json':continue
+              if re.fullmatch(r'data/site_learning/site_mode_evaluations_v136/20\d{6}-\d{2}-\d{2}\.json',path):continue
+              raise SystemExit('V136_UNEXPECTED_STAGED_PATH_'+path)
+          print('V136_SITE_ONLY_SCORE_OUTPUTS',len(paths))
+          PY_V136_STAGE
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V136_FRESH_MAIN_REPORT_ALREADY_CURRENT
+              published=true;break
+            fi
+            git commit -m "Update Git-first-attested site-reference accuracy V136"
+            if git push origin HEAD:main; then
+              echo V136_FRESH_MAIN_SCORE_PUBLISHED
+              published=true;break
+            fi
+            echo "V136_PUSH_CONFLICT_RECOMPUTE_FRESH_MAIN_ATTEMPT_$attempt"
           done
-          git push
+          if test "$published" != true; then
+            echo V136_FRESH_MAIN_SCORE_PUBLISH_BLOCKED >&2
+            exit 1
+          fi
