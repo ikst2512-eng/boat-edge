@@ -103,8 +103,8 @@ class Tests(unittest.TestCase):
     def test_git_timestamp_second_rounding_accepts_802ms_only(self):
         m.freeze(self.root,self.frozen)
         path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
-        row=m.load(path)
-        row['frozen_at']='2026-10-12T05:58:00.802+00:00'
+        row,reason=m.prepare(self.root,self.cp,m.parse('2026-10-12T05:58:00.802+00:00'))
+        self.assertIsNone(reason)
         write(path,row)
         def first_second(root,p):
             if 'v236_frozen' in str(p):
