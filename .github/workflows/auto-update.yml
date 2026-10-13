@@ -871,6 +871,14 @@ jobs:
           print(json.dumps(status,ensure_ascii=False))
           PY
 
+      - name: V392 当日出走表から暫定120通りを自動更新（正式凍結と別）
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v392_card_preview.py --mode today
+          echo V392_CARD_ONLY_PROSPECTIVE_PREVIEW_UPDATED_NO_FINAL_UNLOCK
+
       - name: 更新内容を保存
         if: always()
         shell: bash
