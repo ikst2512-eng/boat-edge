@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 3,
     "deadline": "09:35",
-    "updated_at": "2026-10-14T06:51:57+09:00",
+    "updated_at": "2026-10-14T07:15:36+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=18&rno=3",
-      "fetched_at": "2026-10-14T06:54:43+09:00",
-      "sha256": "bc85cd33fd8b93ca783fdf18251c9e27db5339192d78fbaab58919d219144314",
+      "fetched_at": "2026-10-14T07:18:11+09:00",
+      "sha256": "878f84e26e63c821423d384c056c4cf854cc5e438ddc8fd9087a82918e703d28",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=18&rno=3",
+      "fetched_at": "2026-10-14T07:16:12+09:00",
+      "sha256": "a28b9297b117f32fb0835c7d41231f0e3c506e0dca1c8644c57df5d1f146b46f",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -292,7 +298,53 @@
       "raw_text": "6 4047 / B1 吉永 浩則 大阪/大阪 46歳/52.6kg F1 L0 0.18 3.44 14.67 26.67 4.32 20.45 36.36 18 28.71 48.51 67 40.27 58.41 7 2 9 6 9 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 大橋 純一郎 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 木村 紗友希 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 渡辺 千草 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 赤峰 和也 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 広次 修 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 吉永 浩則 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
