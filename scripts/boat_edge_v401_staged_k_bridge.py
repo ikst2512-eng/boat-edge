@@ -137,6 +137,7 @@ def normalize(source_raw: bytes, staged_raw: bytes, source_manifest: dict,
             })
         counts[key[8:10]] += 1
     excluded_counts = Counter()
+    excluded_rows = []
     for exclusion in data["excluded"]:
         if not isinstance(exclusion, dict) or set(exclusion) != {"race_key", "reason"}:
             raise ValueError("EXACT_EXCLUSION_KEYS_REQUIRED")
@@ -152,6 +153,7 @@ def normalize(source_raw: bytes, staged_raw: bytes, source_manifest: dict,
         if reason not in EXCLUSION_REASONS:
             raise ValueError("UNDECLARED_EXCLUSION_REASON")
         excluded_counts[reason] += 1
+        excluded_rows.append({"race_key": key, "reason": reason})
     if not normalized:
         raise ValueError("NO_COMPLETE_K_RACES_IN_SOURCE_DAY")
     normalized.sort(key=lambda x: (x["race_key"], int(x["boat"])))
@@ -175,6 +177,7 @@ def normalize(source_raw: bytes, staged_raw: bytes, source_manifest: dict,
         "included_races": measured["race_count"],
         "excluded_races": sum(excluded_counts.values()),
         "excluded_reasons": dict(sorted(excluded_counts.items())),
+        "excluded_race_rows": sorted(excluded_rows, key=lambda r: r["race_key"]),
         "included_by_venue": dict(sorted(counts.items())),
         "total_races_from_source_not_independently_audited": True,
         "race_coverage_complete": False,
