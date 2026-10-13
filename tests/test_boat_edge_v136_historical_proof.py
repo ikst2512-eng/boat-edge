@@ -12,10 +12,10 @@ import unittest
 
 from scripts.site_v136_historical_proof import check_historical_proof
 
-KEY = "20261014-14-01"
+KEY = "20261008-14-01"
 SNAP = f"data/site_prediction_snapshots/{KEY}.json"
 AUDIT = f"data/site_prediction_audit/{KEY}.json"
-ORIGINAL_TIME = "2026-10-14T08:29:00+09:00"
+ORIGINAL_TIME = "2026-10-08T08:29:00+09:00"
 
 
 def write_json(root, path, val):
@@ -26,7 +26,7 @@ def write_json(root, path, val):
 
 
 class HistoricalV125Proof(unittest.TestCase):
-    def prepare(self, *, commit_time=ORIGINAL_TIME, snap_time="2026-10-14T08:28:30+09:00"):
+    def prepare(self, *, commit_time=ORIGINAL_TIME, snap_time="2026-10-08T08:28:30+09:00"):
         tmp = tempfile.TemporaryDirectory()
         root = Path(tmp.name)
         snapshot = {
@@ -102,7 +102,7 @@ class HistoricalV125Proof(unittest.TestCase):
             tmp.cleanup()
 
     def test_git_commit_after_deadline_rejected(self):
-        tmp, root, snapshot = self.prepare(commit_time="2026-10-14T08:36:00+09:00")
+        tmp, root, snapshot = self.prepare(commit_time="2026-10-08T08:36:00+09:00")
         try:
             self.assertEqual(check_historical_proof(root, KEY, snapshot)[0],
                              "first_git_commit_not_predeadline")
@@ -110,7 +110,7 @@ class HistoricalV125Proof(unittest.TestCase):
             tmp.cleanup()
 
     def test_earlier_than_claimed_first_snapshot_commit_rejected(self):
-        tmp, root, snapshot = self.prepare(commit_time="2026-10-14T08:25:00+09:00")
+        tmp, root, snapshot = self.prepare(commit_time="2026-10-08T08:25:00+09:00")
         try:
             self.assertEqual(check_historical_proof(root, KEY, snapshot)[0],
                              "first_git_commit_before_snapshot")
