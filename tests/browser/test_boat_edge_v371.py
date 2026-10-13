@@ -109,6 +109,13 @@ async def check(engine, shot_dir=None):
             venues = page.locator("#homeView #be108Hub .be108-venue")
             assert await venues.count() == 6, "six venue selection buttons missing"
             assert await venues.first.is_visible(), "venue selection hidden"
+            # Real responsive CSS: 320px keeps 2 columns, 390px 3 and
+            # tablet/desktop use four. The six venue buttons remain visible.
+            expected_cols = 2 if width <= 360 else 3 if width <= 760 else 4
+            actual_cols = await page.locator("#homeView .be108-venue-grid").evaluate(
+                "(el) => getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length"
+            )
+            assert actual_cols == expected_cols, f"responsive venue grid {actual_cols} != {expected_cols}"
             assert await page.locator("#raceView #be207Top .be207-condition").is_visible(), "scratch stop hidden"
             assert await page.locator("#raceView #be207Top .be207-budget").is_visible(), "allocation hidden"
             assert await page.locator("#raceView #be207Top .be207-odds").is_visible(), "odds verification state hidden"
