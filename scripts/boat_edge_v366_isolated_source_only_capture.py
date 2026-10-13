@@ -114,6 +114,12 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
     if key not in [x["race_key"] for x in selected["candidates"]]:
         raise ValueError("V366_SOURCE_REFRESH_NOT_CURRENTLY_ELIGIBLE")
     original, race = _race_snapshot(root, key)
+    out = root / OUTPUT_ROOT / key[:8] / key
+    _safe_parent(root, out)
+    # On retry, refuse BEFORE any network call. Never fetch a second live page
+    # for an already finalised immutable research source-only proof.
+    if out.exists() or out.is_symlink():
+        raise ValueError("V366_IMMUTABLE_SOURCE_PROOF_ALREADY_EXISTS")
     record = {
         "model_id": MODEL,
         "race_key": key,
@@ -150,8 +156,6 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
     if (final - now).total_seconds() < 0 or key not in [
             x["race_key"] for x in select_source_refresh(root, final)["candidates"]]:
         raise ValueError("V366_WINDOW_CLOSED_BEFORE_SOURCE_WRITE")
-    out = root / OUTPUT_ROOT / key[:8] / key
-    _safe_parent(root, out)
     if out.exists() or out.is_symlink():
         raise ValueError("V366_IMMUTABLE_SOURCE_PROOF_ALREADY_EXISTS")
     manifest = {
