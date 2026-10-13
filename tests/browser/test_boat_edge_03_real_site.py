@@ -287,6 +287,17 @@ def exercise(engine: str, url: str, shots: Path):
                 if first_stopped:
                     assert first_panel.locator(".be207-ticket").count() == 0
                     assert "非表示" in first_panel.locator(".be207-budget").inner_text()
+                    # The waiting notice is part of the public mobile UX, not
+                    # a generic PASS merely because prediction rows are hidden.
+                    page.wait_for_function(
+                        "(key) => { const n=document.querySelector('#be391PredictionWait');"
+                        " return n && n.dataset.raceKey===key &&"
+                        " n.textContent.includes('予想表示待ち'); }",
+                        arg=first["race_key"], timeout=15000
+                    )
+                    assert page.locator("#be391PredictionWait").is_visible(), (
+                        "Source-wait message is hidden on mobile"
+                    )
                 else:
                     assert first_panel.locator(".be207-ticket").count() >= 3
                     for label, expected in (("five", 5), ("ten", 10)):
@@ -344,6 +355,18 @@ def exercise(engine: str, url: str, shots: Path):
                 # displayed as if they belonged to the newly selected race.
                 race_waiting = page.locator("html.be306-race-await").count() > 0
                 if race_waiting:
+                    assert second_panel.locator(".be207-ticket").count() == 0
+                second_stopped = second_panel.locator(".be207-stop").count() > 0
+                if second_stopped:
+                    # A 1R source-wait banner must never remain attached to 2R.
+                    # This verifies the live Pages race-specific UI status.
+                    page.wait_for_function(
+                        "(key) => { const n=document.querySelector('#be391PredictionWait');"
+                        " return n && n.dataset.raceKey===key &&"
+                        " n.textContent.includes('予想表示待ち'); }",
+                        arg=second["race_key"], timeout=15000
+                    )
+                    assert page.locator("#be391PredictionWait").is_visible()
                     assert second_panel.locator(".be207-ticket").count() == 0
                 live_topk = probe_verified_live_topk(context, target, catalog, shots, engine)
                 report.update({
