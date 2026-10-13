@@ -1,0 +1,28 @@
+name: V303 ranked TopK readiness (pre-result only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v303_ranked_topk_gate.py'
+      - 'tests/test_boat_edge_v303_ranked_topk_gate.py'
+      - '.github/workflows/v303-ranked-topk-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ranked-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run V303 synthetic guard tests
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v303_ranked_topk_gate.py' -v
+      - name: Audit only PRE_RESULT ranked cohort availability
+        run: python3 scripts/boat_edge_v303_ranked_topk_gate.py
