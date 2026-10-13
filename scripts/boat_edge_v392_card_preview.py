@@ -218,8 +218,15 @@ def save_preview(root, race, now):
         return False
     path = root / "data/site_early_previews" / (race["race_key"] + ".json")
     previous = get_json(path)
+    # The public preview renderer binds a preview to the exact official card
+    # source SHA *and fetch timestamp*. A new official fetch may retain the
+    # same six-racer semantic fingerprint. Refresh source provenance without
+    # changing the 120-way ranking; otherwise the real-site renderer must hide
+    # the stale preview on every routine PRE_RESULT collector update.
     if (isinstance(previous, dict) and previous.get("schema") == SCHEMA
-        and previous.get("card_fingerprint_sha256") == preview["card_fingerprint_sha256"]):
+        and previous.get("card_fingerprint_sha256") == preview["card_fingerprint_sha256"]
+        and previous.get("source_card_sha256") == preview["source_card_sha256"]
+        and previous.get("source_card_fetched_at") == preview["source_card_fetched_at"]):
         return False
     return put_json_if_changed(path, preview)
 

@@ -133,9 +133,26 @@ class V392Tests(unittest.TestCase):
             self.assertTrue(m.save_preview(root,d,NOW))
             path=root/"data/site_early_previews"/(KEY+".json")
             blob=path.read_bytes()
-            d["source_audit"]["race_card"]["sha256"] = "b"*64
+            # No-op with identical source proof; avoid redundant Pages writes.
             self.assertFalse(m.save_preview(root,d,NOW+timedelta(minutes=1)))
             self.assertEqual(path.read_bytes(),blob)
+            # A changed official HTML SHA with identical racers must refresh
+            # provenance so the live renderer does not suppress valid TopK.
+            d["source_audit"]["race_card"]["sha256"] = "b"*64
+            self.assertTrue(m.save_preview(root,d,NOW+timedelta(minutes=1)))
+            fresh=json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(fresh["source_card_sha256"],"b"*64)
+            self.assertEqual(fresh["top10"],p["top10"])
+            self.assertEqual(fresh["ranked_120"],p["ranked_120"])
+            self.assertFalse(m.save_preview(root,d,NOW+timedelta(minutes=2)))
+            # Even when response bytes remain equal, a refreshed official
+            # fetched_at must propagate because the site matches that too.
+            newer=(NOW+timedelta(minutes=2)).isoformat()
+            d["source_audit"]["race_card"]["fetched_at"]=newer
+            self.assertTrue(m.save_preview(root,d,NOW+timedelta(minutes=3)))
+            latest=json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(latest["source_card_fetched_at"],newer)
+            self.assertEqual(latest["ranked_120"],p["ranked_120"])
 
     def test_today_only_reads_selected_future_source_cards(self):
         with tempfile.TemporaryDirectory() as base:
