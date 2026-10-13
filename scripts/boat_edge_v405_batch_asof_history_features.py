@@ -43,6 +43,9 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
     if not isinstance(targets, list) or len(targets) > MAX_TARGETS:
         raise ValueError("TARGET_LIST_REQUIRED_OR_TOO_LARGE")
     parsed_targets = [_target(t) for t in targets]
+    # Guard a retrospective paradox: a K result cannot be published before its
+    # own race date. V404 already rejects it during iter_races validation, but
+    # V405 must not turn a forged timestamp into a past feature during sweep.
     if len({key for key, _, _, _ in parsed_targets}) != len(parsed_targets):
         raise ValueError("DUPLICATE_B_ONLY_TARGET_RACE_KEY")
     try:
@@ -50,6 +53,9 @@ def build_batch(raw: bytes, manifest: dict, targets: list[dict]):
     except UnicodeError as exc:
         raise ValueError("HISTORY_UTF8_REQUIRED") from exc
     events = [tuple(rows) for rows in iter_races(src, cutoff)]
+    for rows in events:
+        if rows[0][7].date() < rows[0][1]:
+            raise ValueError("HISTORICAL_PUBLISHED_AT_LEAK")
     events.sort(key=lambda rows: (rows[0][7], rows[0][0]))
     event_ids = {rows[0][0]: i for i, rows in enumerate(events)}
     if len(event_ids) != len(events):
