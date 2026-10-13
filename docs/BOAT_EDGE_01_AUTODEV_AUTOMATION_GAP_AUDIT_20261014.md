@@ -70,3 +70,25 @@ Status: **RESEARCH / PROPOSAL ONLY**. This document changes no workflows, model,
 
 ## Scope and owner handoff
 No Actions, source collection, Pages, repository settings, AI agent code, data, forecasts, wagers, Fresh flags or payouts were changed. 01 should review and execute safe PR-based autonomy after #204 compliance / release gates; 02 researches legally sourced accuracy improvements separately; 03 continues existing PR #206 and Safari testing. Reinspect main / PRs / metadata immediately before implementing because parallel chats keep changing the repository.
+
+## Deep follow-up 2026-10-14: real Actions proof and deployment blockers
+
+- PR #211: https://github.com/ikst2512-eng/boat-edge/pull/211 creates a draft-PR-only UI Codex publication change. At head 3bb9e7dad98d38c96abd1f042b221bcb99c3f937, V240 run 38423654959 PASSED (original 4 guard tests + 5 new static contract tests + formal guard); Development CI 38423654845 PASSED. Actual Codex and its draft-PR publication steps were SKIPPED and the run log reports V240_QUEUE_COMPLETE. The real end-to-end AI edit, PR publish, merge, Pages SHA and Safari are **UNPROVEN**.
+- GitHub raw PR API returned mergeable=null, mergeable_state=unknown for #211 at the time inspected; do not label that a proven conflict. It is draft/unmerged.
+- GitHub Actions settings for a personal repository default to BLOCKING GITHUB_TOKEN creation/approval of PRs. To verify/change: Settings > Actions > General > Workflow permissions > Allow GitHub Actions to create and approve pull requests. **Current setting UNKNOWN**, since permission API cannot be accessed by the connector in this audit. Official: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository
+- Get repository default workflow permission API GET /repos/{owner}/{repo}/actions/permissions/workflow requires Administration(read) for fine-grained tokens; do not infer setting from API access denied. Official: https://docs.github.com/en/rest/actions/permissions
+- GitHub docs say GITHUB_TOKEN-created PR events can trigger workflow runs but CI requires approval. Bot-origin pushes do not trigger new normal push-workflows and do not trigger Pages builds. A least-privilege GitHub App installation token might avoid manual approvals only if scoped/authorized carefully. Official: https://docs.github.com/en/actions/concepts/security/github_token
+- GitHub repo settings metadata showed allow_auto_merge=false, main.protected=false, rulesets list empty. More detailed branch protection API returned 403. No repo setting has been changed by this audit.
+- Required checks with path-filtered/skipped workflow events can become Pending and block merging; a conditionally skipped job may appear as Success. Do not designate a status required until always-on CI coverage of relevant PRs has been proven. https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks
+- Merge queue currently documented for organization-owned eligible repositories, not immediately selectable on this personal repo. https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-a-pull-request-with-a-merge-queue
+- Workflow directory currently lists 223 files, **not** 223 active jobs. Similar workflow names conceal different responsibilities: .github/workflows/v240.yml is the Effective Second Coverage Prospective Ten Point Audit, whereas v240-autodev.yml is guarded UI Codex. The coverage V240 embedded gzip/pinned-resource installer fails closed on existing-file SHA drift; its presence is not proof it overwrites newer code.
+- Existing V251 Pages recovery and V277 Pages SHA monitor mean a new release-monitor cron would duplicate existing ownership. Audit actual missing release evidence before proposing a new workflow.
+
+### Owner 01 next action order
+1. Preserve Issue #204 provider permissions and Formal Fresh locks; no third-party automated capture expansion.
+2. Review PR #211 with current main and PRs; validate exact head CI and change scope, not just green action names.
+3. Check V240 Secret OPENAI_API_KEY presence without revealing value. Queue A01-A33 is exhausted; require a real nonduplicated approved task rather than manufacture one.
+4. Verify GitHub Actions PR creation permission, protected-main/required checks and token trust. Enable only the minimum required abilities after approval; no broad auto-merge of model, formal, workflows or data.
+5. Prove one real Codex edit -> isolated diff -> independent PR CI -> owner integration -> Pages SHA and iPhone Safari, with each state recorded separately. Unproven steps remain unproven.
+
+Research-only document. No workflow/code/credential/source/Fresh/result/payout/site production alteration by this update.
