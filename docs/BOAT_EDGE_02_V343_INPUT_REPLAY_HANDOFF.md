@@ -192,3 +192,66 @@ Track 01 still owns main integration and upstream collector work.
 After merge, actual success is counted ONLY if a genuinely new
 predeadline freeze with source receipts and all three 120-row lists
 passes V344/V343; Actions exit status alone is insufficient.
+
+
+## V360/V361 naming correction and V362 labelled official start-table proof
+
+Track 01 merged unrelated V345 writer-trigger evidence and V346 runtime
+duplicate proof to main while Track 02 was developing. To avoid two
+different features sharing version identifiers, Track 02's full-ranked
+research module/test was renamed **V360**, and selection-time source
+diagnostic module/test was renamed **V361**. V312 (hypotheses), V332
+(immutable local freeze), V343 (exact replay), V344 (evidence audit) and
+the existing V336 Actions workflow are unchanged in name.
+
+**V362** adds a source-backed, strictly optional repair for
+V332 candidate input containing six start-exhibition ST entries but no
+explicit course indices:
+
+1. Require an existing same-race official pre-result HTML file at
+   data/raw/<date>/<venue>_<round>_beforeinfo.html. Neither a network
+   fetch nor a substituted race/venue is attempted.
+2. Require its SHA256 to equal the same PRE_RESULT race card's
+   source_audit.beforeinfo.sha256 and its source URL to be the exact
+   official beforeinfo endpoint for that race. Existing 15-minute
+   beforeinfo and 16-minute race-card freshness constraints, six
+   racer-feature requirements and all formal/result locks stay active.
+3. Identify **one** official table labelled スタート展示 with
+   explicitly labelled コース / 並び / ST headers. Require exactly
+   six rows, unique boat numbers, matching printed boat image IDs,
+   six verified ST strings that agree with the race input, and no
+   conflicts with any already recorded course indices.
+4. Only when these tests pass, assign course=official-labelled-table
+   **row position** in a local candidate copy. This is not inferred
+   from boat number and is still the *provisional exhibition course*,
+   not independently authenticated final actual entry.
+5. Preserve the exact original race_input.json **unchanged** and
+   the exact original official HTML as
+   data/source_captures/<date>/<race_key>/official_start_beforeinfo.html.
+   Record its digest in frozen JSON and candidate; V343 must replay the
+   same full 3x120 against both archived originals. Any source
+   mismatch, missing/symlinked capture, wrong result/lock status or
+   expired deadline aborts without an immutable research freeze.
+6. When all six course fields are already valid, the former V312/V332
+   path remains unchanged and V362 is unused. No historical V332
+   freeze lacking original HTML may be retroactively upgraded.
+
+Synthetic tests:
+tests/test_boat_edge_v236_v362_official_start_course.py. Covers
+course-swap parity, archived original byte identity, V343 360-row
+replay after deleting mutable local cards, mismatched SHA, bad headers,
+duplicated boat, icon mismatch, changed ST, conflicting course,
+missing source, symlink, closed deadline, lock and formal exclusion.
+No real race freeze, authentic upstream timestamp, external network,
+official result or model-accuracy claim is established by those tests.
+
+**Operational observation still outstanding:** an actual new
+post-merge V336 run must have completed_count > 0, a valid V332
+predeadline frozen record, all 3 x 120 persisted rows and a PASS
+from V344/V343 on its exact uploaded artifacts. A green workflow
+that reports frozen=0 remains zero valid research races.
+
+No change to site UI, production prediction engine, model weights,
+official current/future outcomes, formal Fresh results_seen/unlock/
+scoring, or main/shared workflow ownership. Track 01 alone handles
+PR integration and live source-collector remediation.
