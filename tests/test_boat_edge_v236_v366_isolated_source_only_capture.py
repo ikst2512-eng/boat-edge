@@ -2,6 +2,8 @@
 import hashlib
 import json
 from datetime import timedelta
+from unittest.mock import patch
+import tempfile as real_tempfile
 from pathlib import Path
 import sys
 import tempfile
@@ -192,6 +194,29 @@ class V366SourceOnlyProof(unittest.TestCase):
                 capture_source_only(root, KEY, clock=lambda: current[0],
                                     fetcher=too_slow)
             self.assertFalse((root / "data/research_source_only_v366").exists())
+
+    def test_deadline_during_bundle_staging_never_publishes_source_proof(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first, _, original_prediction = setup_case(root)
+            instant = [NOW]
+            actual_stage = real_tempfile.TemporaryDirectory
+            def after_stage_starts(*args, **kwargs):
+                instant[0] = NOW + timedelta(minutes=12)
+                return actual_stage(*args, **kwargs)
+            with patch("boat_edge_v366_isolated_source_only_capture.tempfile.TemporaryDirectory",
+                       side_effect=after_stage_starts):
+                with self.assertRaisesRegex(ValueError, "WINDOW_CLOSED_DURING_SOURCE_STAGING"):
+                    capture_source_only(root, KEY, clock=lambda: instant[0],
+                                        fetcher=fetcher_for(source_pages()))
+            self.assertFalse((root / "data/research_source_only_v366" /
+                              KEY[:8] / KEY).exists())
+            self.assertEqual(
+                (root / "data/site_prediction_snapshots" / (KEY + ".json")).read_bytes(),
+                original_prediction)
+            self.assertEqual(
+                (root / "data/races" / (KEY + ".json")).read_bytes(),
+                first)
 
     def test_change_race_during_fetch_refuses_provenance(self):
         with tempfile.TemporaryDirectory() as tmp:
