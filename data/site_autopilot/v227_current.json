@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-13T11:55:28.695929+00:00",
+  "checked_at": "2026-10-13T12:13:27.061309+00:00",
   "day_jst": "20261013",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -33,31 +33,31 @@
     "site_v185_candidate_top": {},
     "site_v185_evaluated_races": 0,
     "site_v199_10_20x_settled_races": 23,
-    "site_v199_evaluated_races": 105,
+    "site_v199_evaluated_races": 107,
     "site_v199_head_top": {
       "top10": {
-        "candidate_hits": 42,
-        "candidate_rate_percent": 40.0,
-        "control_hits": 42,
-        "control_rate_percent": 40.0,
+        "candidate_hits": 44,
+        "candidate_rate_percent": 41.12,
+        "control_hits": 44,
+        "control_rate_percent": 41.12,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
-        "candidate_hits": 15,
-        "candidate_rate_percent": 14.29,
-        "control_hits": 15,
-        "control_rate_percent": 14.29,
+        "candidate_hits": 16,
+        "candidate_rate_percent": 14.95,
+        "control_hits": 16,
+        "control_rate_percent": 14.95,
         "difference": 0,
         "paired_gains": 2,
         "paired_losses": 2
       },
       "top5": {
-        "candidate_hits": 30,
-        "candidate_rate_percent": 28.57,
-        "control_hits": 28,
-        "control_rate_percent": 26.67,
+        "candidate_hits": 31,
+        "candidate_rate_percent": 28.97,
+        "control_hits": 29,
+        "control_rate_percent": 27.1,
         "difference": 2,
         "paired_gains": 2,
         "paired_losses": 0
@@ -68,15 +68,20 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
+    "collector_health_issues": [
+      "predeadline_incomplete"
+    ],
     "current_window": [
       {
-        "deadline_jst": "20:59",
+        "deadline_jst": "21:25",
         "issues": [
-          "予想SHA監査未一致"
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
         ],
-        "minutes_left": 3.5,
-        "race_key": "20261013-19-08",
+        "minutes_left": 11.5,
+        "race_key": "20261013-19-09",
         "venue": "下関"
       }
     ],
@@ -91,7 +96,7 @@
     "readiness_shadow_verified_races": 67,
     "schedule_today": true,
     "snapshot_files_today": 99,
-    "status": "MONITORING_PREDEADLINE",
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
