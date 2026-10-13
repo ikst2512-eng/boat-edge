@@ -25,10 +25,22 @@ def source_pages():
     # with only its exact official page endpoint changed.
     official_nav = start.split(b"<table><thead><tr><th colspan='3'>", 1)[0]
     official_nav = official_nav.replace(b"/beforeinfo?", b"/racelist?")
+    # Six separate official-style racer row groups, with first-cell
+    # boat color N, profile ID and photo ID matching the printed reg number.
+    # A six-number list with no lane provenance must NOT pass V370.
+    racer_rows = [
+        ("<tbody class='is-fs12'><tr>"
+         f"<td class='is-boatColor{lane}' rowspan='4'>{lane}</td>"
+         f"<td><a href='/owpc/pc/data/racersearch/profile?toban={4000+lane}'>"
+         f"<img src='/racerphoto/{4000+lane}.jpg'/></a></td>"
+         f"<td><div>{4000+lane} / <span>A1</span></div></td>"
+         "</tr></tbody>")
+        for lane in range(1, 7)
+    ]
     racelist = (
-        official_nav + b"<table>"
-        + "".join(f"<tr><td>{4000+lane} / A1</td></tr>" for lane in range(1, 7)).encode("utf8")
-        + b"</table></body></html>"
+        official_nav + b"<table><thead><tr><th>ボートレーサー</th>"
+        b"<th>登録番号/級別</th></tr></thead>"
+        + "".join(racer_rows).encode("utf8") + b"</table></body></html>"
     )
     before_table = (
         "<table><thead><tr><th>展示タイム</th></tr></thead><tbody>"
