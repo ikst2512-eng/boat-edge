@@ -151,9 +151,9 @@ def exercise(engine: str, url: str, shots: Path):
                 # A previous querySelector(...).forEach bug prevented changing modes.
                 # Exercise this ONLY against the patched checkout before merging.
                 if url == "local":
-                    modes = page.locator("#be108PredictionModes .be108-mode-tabs [data-be108-mode]")
+                    modes = page.locator("#be207Top .be207-modes [data-be207-mode]")
                     assert modes.count() >= 2, "Prediction mode buttons missing"
-                    desired = modes.nth(1).get_attribute("data-be108-mode")
+                    desired = modes.nth(1).get_attribute("data-be207-mode")
                     modes.nth(1).click()
                     page.wait_for_function(
                         "(mode) => document.querySelector('#be108PredictionModes .be108-mode-tabs .on')?.dataset.be108Mode === mode",
