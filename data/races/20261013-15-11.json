@@ -8,7 +8,7 @@
     "event": "BTS西予開設11周年記念 スポーツニッポンカップ",
     "race_no": 11,
     "deadline": "20:10",
-    "updated_at": "2026-10-13T17:16:04+09:00",
+    "updated_at": "2026-10-13T17:42:55+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=15&rno=11",
-      "fetched_at": "2026-10-13T17:17:22+09:00",
-      "sha256": "9ecdab4b262afe2e844fb27e7d8110aefcc3fdddd054f7d0a02139be7a213e32",
+      "fetched_at": "2026-10-13T17:44:20+09:00",
+      "sha256": "dca26d3654864eb7bc533afa60ad7e5239886d742b997f495498eb986135a790",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=15&rno=11",
+      "fetched_at": "2026-10-13T17:43:52+09:00",
+      "sha256": "2a9702e0f15dfd984533bc5201e7719275f3520982fa3e6efc3c9ea39182d684",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "4f9b43f9c28ad67c340cfdd0ec99f55e90cbd074360ce9be3a551032b74b0c1f"
+      "sha256": "72165bcec200cc0409dd8c73a5e178199e3722db0266c4b2e96a49a81d4cea06"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "df5252a37368a917934b96ce20a457d89fa3ee8d4824f4f3ffe72f5047fa5ac8"
+      "sha256": "4a991d07da74ebb0eedbbc8f60dcbe2f0b693991f899cf92fed31575a5ed6d1c"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "1647d2078a0dee7bd5d7ee2a5c557a4f7f301d38532580f6d66b5718af4ffdec"
+      "sha256": "336784c30c1c0c5e916333fef783b3b0c945393e1bcacaaa646285077064c594"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "d9adc9b2437c4dfcb1681f198f5ac9e35b8786fd3b0cb5f16361ebd1ac0b34f6"
+      "sha256": "66249df2d104b8f3065c22c8b095d860320b478c73b700b488c11d6151bf55c5"
     }
   },
   "racers": [
@@ -307,13 +313,60 @@
         "12",
         "10",
         "5",
-        "11"
+        "11",
+        "5"
       ],
       "early_race": 5,
-      "raw_text": "6 3952 / A1 中澤 和志 埼玉/岩手 50歳/52.0kg F0 L0 0.14 6.45 45.60 64.00 7.32 54.84 67.74 22 44.44 66.67 39 32.20 62.71 8 12 10 5 11 5R"
+      "raw_text": "6 3952 / A1 中澤 和志 埼玉/岩手 50歳/52.0kg F0 L0 0.14 6.45 45.60 64.00 7.32 54.84 67.74 22 44.44 66.67 39 32.20 62.71 8 12 10 5 11 5 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 佐藤 大介 52.3kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 枝尾 賢 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 平見 真彦 52.5kg R 3"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 藤田 俊祐 52.4kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 正木 聖賢 52.0kg R 4"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中澤 和志 52.0kg R 5"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
