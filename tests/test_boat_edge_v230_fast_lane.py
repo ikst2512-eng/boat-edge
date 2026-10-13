@@ -105,10 +105,10 @@ class FastLaneTests(unittest.TestCase):
         def fake_fetch(root,key):
             return key,{'verified_mock':'no_official_network'},None
         at=lambda h,minute:datetime(2026,10,14,h,minute,tzinfo=JST)
-        with patch('boat_edge_v228_freeze_only.check_formal_closed'), \\
-             patch('boat_edge_v229_atomic_freeze.run',return_value=0), \\
-             patch.object(m,'fetch_one',side_effect=fake_fetch) as fetch, \\
-             patch.object(m,'update_one',return_value='fresh_verified'):
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0),
+              patch.object(m,'fetch_one',side_effect=fake_fetch) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified')):
             first=m.run(self.root,at(8,27),worker=2,priority_key=naruto)
             self.assertEqual(first['targets'],[naruto])
             self.assertTrue(first['priority_applied'])
