@@ -248,9 +248,21 @@ class MobilePredictionBrowser(unittest.TestCase):
                       window.BoatEdgeV206.sync();
                     }""")
                     page.locator("#be206Quick").wait_for()
+                    # V376: legacy desktop-style matrix and V371 mobile row
+                    # default are both supported, but each must show all six.
+                    racer_rows=page.locator("#be206Quick .be206-table tbody tr").count()
+                    lane_columns=page.locator("#be206Quick .be206-matrix th[data-be206-lane]").count()
+                    if (ROOT / "assets/boat_edge_v371_simple_ui.css").is_file():
+                        self.assertEqual(racer_rows, 6, "mobile row default must show all six racers")
+                        self.assertEqual(lane_columns, 0, "hidden legacy matrix must not duplicate the six racers")
+                        self.assertTrue(page.locator("#be206Quick .be206-table-scroll").is_visible())
+                    else:
+                        self.assertEqual(lane_columns, 6, "legacy default must retain six lanes")
+                    # Explicit user toggle must still restore the six-lane matrix,
+                    # with correct original-exhibition missingness and back to rows.
+                    page.locator('#be206Quick [data-be206-layout="lanes"]').tap()
                     self.assertEqual(
-                        page.locator('#be206Quick .be206-matrix th[data-be206-lane]').count(),
-                        6
+                        page.locator('#be206Quick .be206-matrix th[data-be206-lane]').count(), 6
                     )
                     page.locator('#be206Quick [data-be206-metric="original"]').tap()
                     self.assertEqual(page.locator("#be206Quick .be206-matrix tbody tr").count(), 3)
