@@ -213,7 +213,7 @@ jobs:
           if not passed:
               raise SystemExit('V235_FIRST_GIT_PROOF_REQUIRED_KEEP_V233')
           with open(os.environ['GITHUB_ENV'],'a',encoding='utf-8') as env:
-              env.write('V235_TAKEOVER_VERIFIED=1\\n')
+              env.write('V235_TAKEOVER_VERIFIED=1' + chr(10))
           print('V235_END_TO_END_SITE_PRE_RESULT_COHORT_VERIFIED')
           PY_V235_TAKEOVER_PROOF
           fi
