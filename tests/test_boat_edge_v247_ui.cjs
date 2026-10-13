@@ -51,3 +51,5 @@ assert(nav.includes("b.textContent='↻ 更新'"));
 assert(nav.includes("aria-label','現在のページのデータを更新"));
 assert(nav.includes('window.BoatEdgeV166Refresh={refresh}'));
 console.log('V247_FLOW_SIX_RACERS_VERIFIED_RESULTS_NAV_TESTS_PASS');
+// V357: ensure five new fail-closed racer-card fixtures run in the existing V307 UI CI step.
+require('./test_boat_edge_v357_card_source_integrity.cjs');
