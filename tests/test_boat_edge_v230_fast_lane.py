@@ -197,6 +197,73 @@ class FastLaneTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 
 
+class TransientOfficialFetchRetryTests(unittest.TestCase):
+    """PRE_RESULT-only retries cannot weaken identity or outcome restrictions."""
+
+    @staticmethod
+    def fixture():
+        return b'<html>official PRE_RESULT fixture</html>', 'official PRE_RESULT fixture', datetime(2026,10,14,8,25,tzinfo=JST)
+
+    def test_one_transport_timeout_retries_same_official_url_then_succeeds(self):
+        import requests
+        sess=Mock();sess.headers=Mock()
+        good=self.fixture()
+        with patch('requests.Session',return_value=sess),patch('time.sleep') as nap,patch.object(
+                m,'fetch',side_effect=[requests.exceptions.Timeout('slow'),good,good,good]) as call:
+            key,data,error=m.fetch_one(Path('.'),'20261014-14-01')
+        self.assertEqual(key,'20261014-14-01')
+        self.assertIsNone(error)
+        self.assertEqual(list(data),['racelist','beforeinfo','odds'])
+        self.assertEqual(call.call_count,4)
+        self.assertEqual(call.call_args_list[0],call.call_args_list[1])
+        self.assertIn('hd=20261014',call.call_args_list[0].args[1])
+        self.assertIn('jcd=14',call.call_args_list[0].args[1])
+        self.assertIn('rno=1',call.call_args_list[0].args[1])
+        nap.assert_called_once_with(0.35)
+        sess.close.assert_called_once()
+
+    def test_one_official_503_retries_only_failed_odds_url(self):
+        import requests
+        sess=Mock();sess.headers=Mock();good=self.fixture()
+        temporary=requests.exceptions.HTTPError('503',response=Mock(status_code=503))
+        with patch('requests.Session',return_value=sess),patch('time.sleep') as nap,patch.object(
+                m,'fetch',side_effect=[good,good,temporary,good]) as call:
+            key,data,error=m.fetch_one(Path('.'),'20261014-14-01')
+        self.assertIsNone(error)
+        self.assertEqual(call.call_count,4)
+        self.assertEqual(call.call_args_list[2],call.call_args_list[3])
+        self.assertIn('/odds3t?',call.call_args_list[2].args[1])
+        nap.assert_called_once_with(0.35)
+        sess.close.assert_called_once()
+
+    def test_persistent_timeout_stops_after_two_and_never_forges_source(self):
+        import requests
+        sess=Mock();sess.headers=Mock()
+        with patch('requests.Session',return_value=sess),patch('time.sleep') as nap,patch.object(
+                m,'fetch',side_effect=[requests.exceptions.Timeout('first'),requests.exceptions.Timeout('again')]) as call:
+            key,data,error=m.fetch_one(Path('.'),'20261014-14-01')
+        self.assertIsNone(data)
+        self.assertIn('Timeout',error)
+        self.assertEqual(call.call_count,2)
+        nap.assert_called_once_with(0.35)
+        sess.close.assert_called_once()
+
+    def test_redirect_and_nontransient_404_never_retried(self):
+        import requests
+        for bad in (RuntimeError('V278_REDIRECT_BLOCKED_BEFORE_FOLLOW'),
+                    RuntimeError('V278_RESPONSE_RACE_IDENTITY_MISMATCH'),
+                    requests.exceptions.HTTPError('404',response=Mock(status_code=404))):
+            sess=Mock();sess.headers=Mock()
+            with self.subTest(error=str(bad)),patch('requests.Session',return_value=sess),patch(
+                    'time.sleep') as nap,patch.object(m,'fetch',side_effect=bad) as call:
+                key,data,error=m.fetch_one(Path('.'),'20261014-14-01')
+                self.assertIsNone(data)
+                self.assertTrue(error)
+                call.assert_called_once()
+                nap.assert_not_called()
+                sess.close.assert_called_once()
+
+
 class SourceIdentityTests(unittest.TestCase):
     url='https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=06&rno=8'
 
