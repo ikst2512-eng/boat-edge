@@ -87,6 +87,7 @@ def audit(day, files):
     counts = Counter()
     # No outcome fields are read, returned, or persisted.
     eligible_by_source = {name: set() for name in PREVIEWS}
+    deadlines_by_source = {name: {} for name in PREVIEWS}
     for key in sorted(baseline):
         counts["race_cards"] += 1
         for source in ("title",):
