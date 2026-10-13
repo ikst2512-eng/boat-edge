@@ -6,6 +6,7 @@ on:
       - 'index.html'
       - 'assets/**'
       - 'tests/test_boat_edge_v*.cjs'
+      - 'tests/v344_original_exhibition_fixture.test.cjs'
       - '.github/workflows/v307-ui-integration-gate.yml'
       - 'tests/test_boat_edge_v307_ui_ci.py'
   push:
@@ -14,6 +15,7 @@ on:
       - 'index.html'
       - 'assets/**'
       - 'tests/test_boat_edge_v*.cjs'
+      - 'tests/v344_original_exhibition_fixture.test.cjs'
       - '.github/workflows/v307-ui-integration-gate.yml'
       - 'tests/test_boat_edge_v307_ui_ci.py'
 
@@ -62,6 +64,8 @@ jobs:
               echo "CANDIDATE_TEST_NOT_YET_ON_BRANCH $test"
             fi
           done
+      - name: Check original exhibition display and missing-metric guards
+        run: node --test tests/v344_original_exhibition_fixture.test.cjs
       - name: Formal Fresh must remain PRE_RESULT and untouched
         shell: bash
         run: |
