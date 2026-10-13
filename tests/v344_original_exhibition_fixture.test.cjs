@@ -361,3 +361,14 @@ test('V358 formal badge cannot be asserted by an unapproved mode alone', () => {
   context.window.BoatEdgeV178={isVerified:()=>{throw Error('approval not available')}};
   assert.match(api.html(data,forged,null),/承認照合待ち/);
 });
+
+test('V359 source-blocked prediction must not appear as a normal site forecast', () => {
+  const data=race('20261013-04-01');
+  const blocked={mode:'blocked',label:'出走可否の確認待ち：買い目停止'};
+  const label=api.html(data,blocked,null);
+  assert.match(label,/買い目停止・出走可否確認待ち/);
+  assert.doesNotMatch(label,/サイト参考予想（正式未接続）/);
+  const pending=api.html(data,null,null);
+  assert.match(pending,/予想未取得・表示待ち/);
+  assert.doesNotMatch(pending,/サイト参考予想（正式未接続）/);
+});
