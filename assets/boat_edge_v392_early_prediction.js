@@ -134,7 +134,8 @@ function showStatus(r,reason){
 function showPreview(r,p){
  const box=ensure();if(!box)return;
  box.dataset.ready='true';box.dataset.raceKey=r.race_key;box.removeAttribute('role');
- if(!$('.be392-header',box)){
+ if(!$('.be392-tabs',box)){
+  box.replaceChildren();
   box.innerHTML='<div class="be392-header"><strong>出走表ベースの暫定予想</strong><span class="be392-tag">未凍結・参考順位</span></div>'+
    '<div class="be392-meta"></div><div class="be392-tabs" role="group" aria-label="暫定予想の買い目件数">'+
    '<button type="button" data-count="3">Top3</button><button type="button" data-count="5">Top5</button>'+
