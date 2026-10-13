@@ -640,3 +640,58 @@ it is NOT an actual new prospective capture, independently
 authenticated server timestamp, BOATERS/競艇日和 original-exhibition
 parity, live V336 3x120 freeze or accuracy improvement. Track 01
 still owns publishing, V235 pinned collector and main integration.
+
+
+### V370: explicit six-boat official racelist registration parity
+
+A further substantive provenance gap was found in V366's
+`_validate_registration_parity`: its comparison used **sets of six
+registration numbers**. It could pass even if two racers were attached
+to the wrong boat numbers. This matters directly for the 120 distinct
+trifecta tickets; a misassigned racer invalidates a prospective pick.
+
+V370 adds `scripts/boat_edge_v370_official_racelist_lane_proof.py`
+to parse one official racelist table specifically labelled
+`ボートレーサー` / `登録番号/級別`. It requires exactly six
+explicit `is-boatColor1` through `is-boatColor6` race entry groups
+and checks, for each row:
+
+- The printed boat number agrees with that row's boat-color class.
+- The registration number from the official player profile URL,
+  the player photo file, and the third direct cell's printed
+  registration all agree.
+- The boat-number-to-registration mapping matches the six original
+  PRE_RESULT `racers` entries, including the correct lane for each
+  individual racer. Duplicate/unlabelled rows or ambiguous profiles
+  are forbidden.
+
+V366 now **rejects capture** if this complete mapping is not proven
+and archives the exact parsed proof in its research-only manifest.
+V367 independently re-parses the original archived official HTML
+and compares the proof; the V368 double-run cohort verification
+inherits these stronger checks. The existing selected-race/date/
+venue/deadline and course/ST evidence checks remain mandatory.
+
+Fixture tests in
+`tests/test_boat_edge_v236_v370_six_lane_registration_proof.py`
+cover a swap of lane-1 and lane-2 racers despite unchanged six-person
+registration *set*, altered printed registration, wrong photo,
+mismatched boat color/printed number, missing lane labels, and
+provisional source-only evidence claims. The archived real HTML
+smoke test is **explicitly skipped when absent from a CI checkout**;
+a saved HTML file's presence in the GitHub API is *not* evidence
+that a separate Actions checkout includes it. That skip must never
+be counted as authentic provider verification.
+
+Code head `076ebea9c529db55d80ccbcde19fc7fff5762977` passed
+[Actions CI 38409924011](https://github.com/ikst2512-eng/boat-edge/actions/runs/38409924011):
+343 Python tests, 340 passed, 3 skipped.
+The formal 2026-10-01 Fresh cohort, results/unlock/scoring and
+production weights, actual entry, external source timestamps,
+V230/V235/V336 workflow and main have **not changed**.
+
+**Outstanding:** Track 01 still must review/reconcile the moving
+main branch and safely integrate an authorized official-source
+refresh pathway before anyone can assert real fresh 3x120 research
+freezes. Local V366/V367 source integrity, however strong, is NOT
+evidence of current prospective prediction accuracy.
