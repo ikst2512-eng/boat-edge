@@ -146,3 +146,19 @@ test('V347 six unique official exhibition lanes show complete badges', () => {
   assert.match(markup, /公式展示 取得済/);
   assert.match(markup, /展示ST 取得済/);
 });
+
+test('V348 missing one original exhibition metric cannot claim fully acquired', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats[3].values[1] = null;
+  const markup = api.html(data, null, null);
+  assert.match(markup, /オリ展 未取得/);
+  assert.equal(api.makeRows(data).rows[3].turn, null);
+});
+test('V348 missing required metric label cannot claim fully acquired', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.labels = ['一周','まわり足','別指標'];
+  assert.match(api.html(data, null, null), /オリ展 未取得/);
+});
+test('V348 all six lanes with three valid original metrics retain acquired badge', () => {
+  assert.match(api.html(race('20261013-06-01'), null, null), /オリ展 取得済/);
+});
