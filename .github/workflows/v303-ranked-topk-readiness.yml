@@ -5,6 +5,8 @@ on:
       - 'scripts/boat_edge_v303_ranked_topk_gate.py'
       - 'tests/test_boat_edge_v303_ranked_topk_gate.py'
       - '.github/workflows/v303-ranked-topk-readiness.yml'
+      - 'scripts/boat_edge_v306_v360_ranked_gate.py'
+      - 'tests/test_boat_edge_v306_v360_ranked_gate.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,5 +26,10 @@ jobs:
           PYTHONPATH: .
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v303_ranked_topk_gate.py' -v
+      - name: Test V306 research-only V360 120-way ranking
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v306_v360_ranked_gate.py' -v
       - name: Audit only PRE_RESULT ranked cohort availability
         run: python3 scripts/boat_edge_v303_ranked_topk_gate.py
