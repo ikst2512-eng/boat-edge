@@ -154,6 +154,29 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
                    for row in left)
     factor_only_distance = l1(no_factor, baseline)
     distance = l1(baseline, candidate)
+
+    def topk_delta(left, right):
+        # This only measures how many boat tickets change, NOT accuracy.
+        return {str(k): {
+            "removed_boat_tickets": sorted(set(left[:k]) - set(right[:k])),
+            "added_boat_tickets": sorted(set(right[:k]) - set(left[:k])),
+            "changed_ticket_count_per_side": len(set(left[:k]) - set(right[:k])),
+            "ordered_topk_identical": left[:k] == right[:k],
+        } for k in (3, 5, 10)}
+
+    def head_marginal(rows):
+        out = {str(b): 0.0 for b in range(1, 7)}
+        for row in rows:
+            out[row["boat_combo"].split("-")[0]] += row["relative_model_mass"]
+        if not math.isclose(sum(out.values()), 1.0, rel_tol=0, abs_tol=2e-10):
+            raise ValueError("HEAD_MASS_NOT_NORMALIZED")
+        return out
+
+    a_head, b_head, c_head = (head_marginal(rows) for rows in
+                              (no_factor, baseline, candidate))
+    a_first_head = max(a_head, key=lambda k: (a_head[k], -int(k)))
+    b_first_head = max(b_head, key=lambda k: (b_head[k], -int(k)))
+    c_first_head = max(c_head, key=lambda k: (c_head[k], -int(k)))
     return {
         "schema": MODEL,
         "race_key": race_key,
@@ -174,6 +197,17 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
         "entry_count_sha256": entry["source_count_sha256"],
         "factor_manifest_sha256": cfg["course_factor_manifest_sha256"],
         "factor_only_mass_l1_not_hit_improvement": factor_only_distance,
+        "topk_membership_a_to_b_not_hit_rates": topk_delta(no_factor_top, base_top),
+        "topk_membership_b_to_c_not_hit_rates": topk_delta(base_top, candidate_top),
+        "head_relative_mass_a": a_head,
+        "head_relative_mass_b": b_head,
+        "head_relative_mass_c": c_head,
+        "top_head_boat_a": int(a_first_head),
+        "top_head_boat_b": int(b_first_head),
+        "top_head_boat_c": int(c_first_head),
+        "head_top1_change_a_to_b": a_first_head != b_first_head,
+        "head_top1_change_b_to_c": b_first_head != c_first_head,
+        "model_ranking_change_is_not_real_accuracy_gain": True,
         "mass_l1_research_distance_not_hit_improvement": distance,
         "three_arm_predeclared_ablation": "A_no_factor__B_fixed_exhibition_with_course_factor__C_joint_entry_with_same_factor",
         "change_is_entry_uncertainty_only_at_fixed_strengths_and_factors": True,
