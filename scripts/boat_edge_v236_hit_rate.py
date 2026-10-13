@@ -206,7 +206,14 @@ def score_row(root,path,now):
     # Reproduce only the already-frozen PRE_RESULT ticket definitions. Validate
     # scope, times and equal-point comparators BEFORE opening any outcome file.
     frozen_at=parse(row.get('frozen_at'))
-    if not frozen_at or frozen_at>frozen_commit['at']:return None,'candidate_freeze_time_invalid'
+    # Git commit timestamps have only whole-second precision. A PRE_RESULT
+    # freeze captured within that same second can appear up to 999ms later.
+    # Keep both instants strictly before the race deadline, and reject any
+    # inversion greater than one second. The Git first-add SHA check above
+    # remains mandatory; this is not permission to backfill a candidate.
+    if (not frozen_at or frozen_at>=deadline or
+            frozen_at>frozen_commit['at']+dt.timedelta(seconds=1)):
+        return None,'candidate_freeze_time_invalid'
     expected,reason=prepare(root,cohort_path,frozen_at)
     if reason or any(row.get(k)!=v for k,v in expected.items()):
         return None,'candidate_not_matching_predeclared_source'
