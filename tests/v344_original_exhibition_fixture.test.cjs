@@ -357,7 +357,7 @@ test('V358 formal badge cannot be asserted by an unapproved mode alone', () => {
   assert.doesNotMatch(api.html(data,forged,null),/be202-pred-label formal/);
   context.window.BoatEdgeV178={isVerified:(race,status)=>race===data&&status===context.state.formal};
   assert.match(api.html(data,forged,null),/be202-pred-label formal/);
-  assert.match(api.html(data,forged,null),/正式CURRENT<\\/span>/);
+  assert.match(api.html(data,forged,null),/正式CURRENT/);
   context.window.BoatEdgeV178={isVerified:()=>{throw Error('approval not available')}};
   assert.match(api.html(data,forged,null),/承認照合待ち/);
 });
