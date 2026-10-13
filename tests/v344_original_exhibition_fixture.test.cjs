@@ -198,3 +198,17 @@ test('V350 fractional and out-of-range course numbers are not shown as valid', (
   assert.equal(rows[1].course, null);
   assert.equal(rows[2].course, 3);
 });
+
+test('V351 invalid exhibition ST becomes null while numeric ST is retained', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {start_exhibition:[
+    {lane:1,course:1,st:'invalid'},
+    {lane:2,course:2,st:'0.13'},
+    {lane:3,course:3,st:null}
+  ]};
+  const rows = api.makeRows(data).rows;
+  assert.equal(rows[0].st, null);
+  assert.equal(rows[1].st, 0.13);
+  assert.equal(rows[2].st, null);
+});
