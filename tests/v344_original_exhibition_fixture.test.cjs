@@ -111,3 +111,38 @@ test('V346 verified beforeinfo still renders exhibition course ST and time', () 
   assert.equal(row.st, 0.11);
   assert.equal(row.displayTime, 6.42);
 });
+
+test('V347 partial five-boat original exhibition cannot claim fully acquired', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats.pop();
+  const markup = api.html(data, null, null);
+  assert.match(markup, /オリ展 未取得/);
+  assert.doesNotMatch(markup, /オリ展 取得済/);
+});
+test('V347 duplicate lanes cannot fake complete original exhibition', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats[5].lane = 1;
+  assert.match(api.html(data, null, null), /オリ展 未取得/);
+});
+test('V347 four-boat official exhibition and ST cannot claim fully acquired', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:4}, (_,i)=>({lane:i+1,exhibition_time:6.5})),
+    start_exhibition: Array.from({length:4}, (_,i)=>({lane:i+1,course:i+1,st:0.12}))
+  };
+  const markup = api.html(data, null, null);
+  assert.match(markup, /公式展示 未取得/);
+  assert.match(markup, /展示ST 未取得/);
+});
+test('V347 six unique official exhibition lanes show complete badges', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6}, (_,i)=>({lane:i+1,exhibition_time:6.5})),
+    start_exhibition: Array.from({length:6}, (_,i)=>({lane:i+1,course:i+1,st:0.12}))
+  };
+  const markup = api.html(data, null, null);
+  assert.match(markup, /公式展示 取得済/);
+  assert.match(markup, /展示ST 取得済/);
+});
