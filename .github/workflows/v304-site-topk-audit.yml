@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/boat_edge_v304_site_topk_audit.py'
+      - 'tests/test_boat_edge_v304_site_topk_audit.py'
       - 'scripts/boat_edge_v301_paired_evidence.py'
       - '.github/workflows/v304-site-topk-audit.yml'
   workflow_dispatch:
@@ -20,6 +21,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Test V304 TopK denominators and no-lift guards
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v304_site_topk_audit.py' -v
       - name: Verify read-only SITE baseline TopK
         env:
           PYTHONPATH: .
