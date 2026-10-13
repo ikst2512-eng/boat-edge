@@ -2,12 +2,12 @@
 from pathlib import Path
 from datetime import datetime, timezone
 import json, hashlib, collections
+from site_v136_historical_proof import check_historical_proof
 
 BASE=Path(".")
 HISTORY=BASE/"data/site_prediction_history"
 RESULTS=BASE/"data/site_results"
-AUDIT=BASE/"data/site_prediction_audit/index.json"
-OUT=BASE/"data/site_learning/mode_accuracy_v136.json"
+ OUT=BASE/"data/site_learning/mode_accuracy_v136.json"
 DETAIL=BASE/"data/site_learning/site_mode_evaluations_v136"
 MODES=("hit","balance","hole","narrow")
 POLICY="BALANCE10_WAVE12_15_18_V133_FIXED"
@@ -26,8 +26,6 @@ def iso(v):
 def digest(p):
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
-audit=get(AUDIT) or {}
-audited=audit.get("audited") or {}
 counts=collections.Counter()
 by_mode={m:{"label":LABELS[m],"evaluated":0,"hits":0,"misses":0,"hit_rate_percent":None} for m in MODES}
 by_head={"1":{"evaluated":0,"hits":{m:0 for m in MODES}},"2-6":{"evaluated":0,"hits":{m:0 for m in MODES}}}
@@ -63,9 +61,9 @@ for hp in sorted(HISTORY.glob("20??????-??-??.json")):
     if not first or not saved or not settled or not first<=saved<settled:
         counts["temporal_order_invalid"]+=1
         continue
-    proof=audited.get(key) or {}
-    if proof.get("pass") is not True or proof.get("latest_snapshot_saved_at")!=snap.get("saved_at"):
-        counts["awaiting_matching_v125_audit"]+=1
+    proof_state, first_git_commit = check_historical_proof(BASE,key,snap)
+    if proof_state != "PASS":
+        counts[proof_state]+=1
         continue
     result_path=RESULTS/f"{key}.json"
     result=get(result_path) or {}
@@ -106,6 +104,7 @@ for hp in sorted(HISTORY.glob("20??????-??-??.json")):
         "mode_policy":POLICY,
         "winning_combo":winning,
         "official_result_source":result.get("source"),
+        "first_git_snapshot_commit":first_git_commit,
         "source_history_sha256":digest(hp),
         "source_result_sha256":digest(result_path),
         "used_inputs":snap.get("used_inputs") or [],
@@ -140,7 +139,7 @@ summary={
     "modes":by_mode,
     "by_winning_head":by_head,
     "excluded_reasons":dict(sorted(counts.items())),
-    "method":"Only V133 prospective FINAL_15M snapshots with matching V125 audit and confirmed official result; no race/result endpoint consulted, no historical prediction backfill.",
+    "method":"Only original first-Git-committed predeadline SITE snapshots with matching race-specific V125 SHA/revision attestations and already confirmed SITE results; no result endpoint, no historical prediction backfill.",
     "rank_120_available":False,
     "latest_settlement":max((e["settled_at"] for e in evidence),default=None),
     "example_race_keys":[e["race_key"] for e in evidence[:10]],
