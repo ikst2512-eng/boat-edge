@@ -83,6 +83,8 @@ class MobilePredictionBrowser(unittest.TestCase):
             color_scheme="light",
         )
         page = context.new_page()
+        # Bound missing selectors/actions; never wait 30s per broken mobile interaction.
+        page.set_default_timeout(12000)
         page.set_content(HTML)
         for path in CSS:
             page.add_style_tag(path=str(path))
