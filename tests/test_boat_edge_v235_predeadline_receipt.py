@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import unittest
 
-from scripts.boat_edge_v235_predeadline_receipt import JST, receipt
+from scripts.boat_edge_v235_predeadline_receipt import JST, receipt, choose
 
 KEY = "20261014-14-01"
 
@@ -62,6 +62,20 @@ class V235Proof(unittest.TestCase):
             active = receipt(root, datetime(2026, 10, 14, 8, 28, tzinfo=JST))
             self.assertEqual(active["status"], "SOURCE_WINDOW_NO_SNAPSHOT")
             self.assertFalse(active["prediction_saved_proven"])
+
+    def test_1r_priority_advances_to_next_race_after_deadline(self):
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            source(root)
+            catalog = json.loads((root / "data/today.json").read_text())
+            catalog["venues"][0]["races"].append({
+                "race_key": "20261014-14-02", "deadline": "09:01"})
+            save(root, "data/today.json", catalog)
+            before = datetime(2026, 10, 14, 8, 20, tzinfo=JST)
+            after = datetime(2026, 10, 14, 8, 38, tzinfo=JST)
+            self.assertEqual(choose(root, before)[1], KEY)
+            self.assertEqual(choose(root, after)[1], "20261014-14-02")
+            self.assertEqual(choose(root, after, requested=KEY)[1], KEY)
 
     def test_local_only_not_a_git_commit(self):
         with tempfile.TemporaryDirectory() as base:
