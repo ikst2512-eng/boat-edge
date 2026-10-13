@@ -37,6 +37,23 @@ jobs:
                      for k in folders}
           Path('audit-output/inventory.json').write_text(json.dumps(inventory,indent=2,sort_keys=True)+'\n')
           print(json.dumps(inventory,sort_keys=True))
+          # Coverage is filename-only. Never open scored/result JSON here.
+          cohorts={}
+          for study in ('v236','v240','v254'):
+              frozen={p.stem for p in (root/(study+'_frozen')).glob('*.json')}
+              scored={p.stem for p in (root/(study+'_scored')).glob('*.json')}
+              cohorts[study]={
+                  'frozen':len(frozen),'scored':len(scored),
+                  'frozen_not_scored':len(frozen-scored),
+                  'scored_without_frozen':len(scored-frozen),
+                  'frozen_not_scored_by_day':{
+                      day:sum(k.startswith(day) for k in frozen-scored)
+                      for day in sorted({k[:8] for k in frozen-scored})
+                  },
+                  'scored_days':sorted({k[:8] for k in scored}),
+              }
+          Path('audit-output/coverage.json').write_text(json.dumps(cohorts,indent=2,sort_keys=True)+'\\n')
+          print('COVERAGE',json.dumps(cohorts,sort_keys=True))
           PY
       - name: Execute strict V301 (never fetch result endpoints)
         shell: bash
