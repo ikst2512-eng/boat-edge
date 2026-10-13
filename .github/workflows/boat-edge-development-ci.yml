@@ -22,6 +22,7 @@ jobs:
             scripts
             tests
             assets
+            index.html
             .github
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -38,6 +39,14 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
+      - name: V392 verify prospective next-day official cards and independent UI TopK
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v392_card_preview.py' -v
+          node tests/test_boat_edge_v392_early_prediction.cjs
+          python3 -m py_compile scripts/boat_edge_v392_card_preview.py
+
       - name: Compile V136 production scorer before deployment
         env:
           PYTHONDONTWRITEBYTECODE: '1'
