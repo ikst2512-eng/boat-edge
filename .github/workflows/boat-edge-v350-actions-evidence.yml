@@ -53,6 +53,14 @@ jobs:
           print("Same-start hints:", len(report["same_start_candidate_pairs"]))
           print("Duplicate writes proven:", report["duplicate_writes_proven"])
           print("Workflow disable authorized:", report["workflow_disable_authorized"])
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("## BOAT EDGE scheduled-run evidence (read-only)\n\n")
+              summary.write(f"- Scheduled runs retrieved: **{raw['run_count']}**\n")
+              summary.write(f"- Same-start hints (not proof): **{len(report['same_start_candidate_pairs'])}**\n")
+              summary.write("- Verified duplicate writes: **0** (not measured by this collector)\n")
+              summary.write("- Workflow disable authorized: **No**\n")
+              summary.write("- Coverage: paginated metadata only; no proven changed paths or completion times.\n")
+              summary.write("- Detailed JSON is uploaded as a 14-day artifact.\n")
           PY
       - name: Upload evidence (no repository commit)
         uses: actions/upload-artifact@v4
