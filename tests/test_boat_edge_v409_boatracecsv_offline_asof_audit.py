@@ -68,5 +68,6 @@ class V409Tests(unittest.TestCase):
                     ("stt","tkz","sui","original_exhibition")}})
         for s in ("stt","tkz","sui","original_exhibition"):
             self.assertEqual(a["preview_status"][s]["timestamp_eligible_unverified"],1)
+        self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],1)
 
 if __name__=="__main__":unittest.main()
