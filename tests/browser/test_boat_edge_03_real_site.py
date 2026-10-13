@@ -148,6 +148,19 @@ def exercise(engine: str, url: str, shots: Path):
                         button.click()
                         assert first_panel.locator(".be207-ticket").count() == expected
 
+                # A previous querySelector(...).forEach bug prevented changing modes.
+                # Exercise this ONLY against the patched checkout before merging.
+                if url == "local":
+                    modes = page.locator("#be108PredictionModes .be108-mode-tabs [data-be108-mode]")
+                    assert modes.count() >= 2, "Prediction mode buttons missing"
+                    desired = modes.nth(1).get_attribute("data-be108-mode")
+                    modes.nth(1).click()
+                    page.wait_for_function(
+                        "(mode) => document.querySelector('#be108PredictionModes .be108-mode-tabs .on')?.dataset.be108Mode === mode",
+                        arg=desired, timeout=25000
+                    )
+                    assert not errors, "Uncaught browser JavaScript errors: " + repr(errors)
+
                 # Switch via the actual race navigator, without reloading the page.
                 switcher = page.locator(
                     '#be108RaceNav [data-be108-file="%s"]' % second["file"]
