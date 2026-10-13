@@ -92,3 +92,11 @@ No Actions, source collection, Pages, repository settings, AI agent code, data, 
 5. Prove one real Codex edit -> isolated diff -> independent PR CI -> owner integration -> Pages SHA and iPhone Safari, with each state recorded separately. Unproven steps remain unproven.
 
 Research-only document. No workflow/code/credential/source/Fresh/result/payout/site production alteration by this update.
+
+## P0 sequencing correction: do not suddenly enforce PR-only on main
+
+- Current source writers still commit to main. Example: .github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml runs git push origin HEAD:main to publish data/site_ops_v220/current.json and data/site_autopilot/v227_current.json. Other source owner workflows also have historical direct-main writes. The 2026-10-13 master TODO's V342 inventory described 47 scheduled contents:write candidates; **not proof all 47 still operate or write main today**.
+- An indiscriminate main branch rule requiring all changes through PRs **may block those active predeadline collectors and other source writers**. It is not safe to claim enabling required PR review immediately can happen without migration; it could reduce current-race freshness or immutable predeadline snapshots.
+- Staged migration prerequisite: (a) owner-level list by exact written path, (b) demonstrated consumers and deadlines, (c) safe mechanism for source-only bot writes using limited trusted identity or separate data update/publish lane, (d) CI proving freshness unchanged and no Formal results, (e) then apply branch rules for code changes. If a bypass actor is introduced, limit it carefully and log exact touched path/commit; an unrestricted bypass makes the protection meaningless.
+- Until that migration is validated, protect UI agent by **changing only V240** to draft PR and forbidding any AI direct-main write, as in draft PR #211. Do not unilaterally turn off essential existing collectors to make branch protection pass.
+- Post-migration acceptance: measured update coverage/freeze rate before vs after, old cron owner continuity, 01-owned review of code commits, no uncontrolled branch bypass, Pages build/data SHA separation. See GitHub branch rules documentation: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches
