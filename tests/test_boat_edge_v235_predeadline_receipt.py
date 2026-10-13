@@ -99,6 +99,26 @@ class V235Proof(unittest.TestCase):
             self.assertEqual(len(result["first_git_commit"]), 40)
             self.assertTrue(result["first_git_commit_at"].startswith("2026-10-14T08:29:00"))
 
+    def test_git_first_commit_after_deadline_is_not_a_valid_save(self):
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            source(root)
+            frozen(root)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
+            subprocess.run(["git", "add", "data/today.json", "data/races",
+                            "data/site_prediction_snapshots", "data/site_prediction_audit"],
+                           cwd=root, check=True)
+            env = os.environ.copy()
+            env["GIT_AUTHOR_DATE"] = "2026-10-14T08:36:00+09:00"
+            env["GIT_COMMITTER_DATE"] = "2026-10-14T08:36:00+09:00"
+            subprocess.run(["git", "commit", "-qm", "late publish not prospective"],
+                           cwd=root, env=env, check=True)
+            result = receipt(root, datetime(2026, 10, 14, 8, 37, tzinfo=JST))
+            self.assertEqual(result["status"], "FIRST_GIT_COMMIT_NOT_SOURCE_BOUND_PREDEADLINE")
+            self.assertFalse(result["prediction_saved_proven"])
+
     def test_audit_failure_fails_closed(self):
         with tempfile.TemporaryDirectory() as base:
             root = Path(base)
@@ -118,6 +138,18 @@ class V235Proof(unittest.TestCase):
         self.assertIn("python3 scripts/boat_edge_v232_pre_result_cohort.py", text)
         self.assertIn("python3 scripts/boat_edge_v235_predeadline_receipt.py", text)
         self.assertIn("V235_END_TO_END_SITE_PRE_RESULT_COHORT_VERIFIED", text)
+        # A local predeadline snapshot is not proof of a timely first Git commit.
+        self.assertIn("V235_TAKEOVER_CANDIDATE=1", text)
+        self.assertIn("V235_TAKEOVER_FIRST_GIT_PROOF", text)
+        self.assertIn("V235_FIRST_GIT_PROOF_REQUIRED_KEEP_V233", text)
+        self.assertIn("if: ${{ !cancelled() }}", text)
+        self.assertIn("env.write('V235_TAKEOVER_VERIFIED=1' + chr(10))", text)
+        self.assertLess(text.index("V235_TAKEOVER_CANDIDATE=1"),
+                        text.index("V235_TAKEOVER_FIRST_GIT_PROOF"))
+        self.assertLess(text.index("V235_TAKEOVER_FIRST_GIT_PROOF"),
+                        text.index("V235_TAKEOVER_VERIFIED=1' + chr(10)"))
+        self.assertLess(text.index("V235_TAKEOVER_VERIFIED=1' + chr(10)"),
+                        text.index("Disable obsolete V234 and V233"))
         self.assertIn("V235_KEEP_V233_UNTIL_NEW_PRE_RESULT_EVIDENCE_IS_COMMITTED", text)
         for unsafe in ("results_seen=true", "scoring=true", "git push --force"):
             self.assertNotIn(unsafe, text)

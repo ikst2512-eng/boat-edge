@@ -164,8 +164,10 @@ jobs:
               )
               read -r snaps cohorts <<< "$counts"
               if (( snaps>0 && cohorts>0 )); then
-                echo 'V235_TAKEOVER_VERIFIED=1' >> "$GITHUB_ENV"
-                echo 'V235_END_TO_END_SITE_PRE_RESULT_COHORT_VERIFIED'
+                # New snapshots/cohort prove local creation, NOT a first Git commit
+                # before the deadline. Keep V233 until the next step verifies that.
+                echo 'V235_TAKEOVER_CANDIDATE=1' >> "$GITHUB_ENV"
+                echo 'V235_NEW_SITE_COHORT_COMMITTED_FIRST_GIT_PROOF_PENDING'
               fi
               source_success=true; break
             fi
@@ -174,6 +176,8 @@ jobs:
           done
           if test "$source_success" != true; then echo V234_PRE_RESULT_SOURCE_PUBLISH_UNCONFIRMED; exit 1; fi
       - name: V235 read-only priority-race source, first-commit and SHA receipt
+        # A failed fetch/commit is precisely when source diagnostics are needed.
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
@@ -187,6 +191,32 @@ jobs:
             cat "$RUNNER_TEMP/v235-priority-receipt.jsonl"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          # An atomic snapshot and cohort can be committed too late. No V233
+          # retirement unless a *first-add* Git blob, SHA and commit timestamp
+          # pass the same result-free evidence gate as this priority receipt.
+          if [[ "${V235_TAKEOVER_CANDIDATE:-0}" == '1' ]]; then
+            python3 - <<'PY_V235_TAKEOVER_PROOF'
+          import json,os
+          from pathlib import Path
+          from scripts.boat_edge_v235_predeadline_receipt import receipt,load
+          root=Path('.')
+          status=load(root/'data/site_autopilot/v230_fast_current.json')
+          keys=status.get('targets') or []
+          outcomes=[receipt(root,requested=key) for key in keys]
+          passed=[x for x in outcomes if x.get('prediction_saved_proven') is True]
+          print('V235_TAKEOVER_FIRST_GIT_PROOF',json.dumps({
+            'targets':len(keys),'proven':len(passed),
+            'race_keys':[x['race_key'] for x in passed],
+            'failed_statuses':{x.get('race_key'):x.get('status') for x in outcomes
+                               if not x.get('prediction_saved_proven')}
+          },sort_keys=True))
+          if not passed:
+              raise SystemExit('V235_FIRST_GIT_PROOF_REQUIRED_KEEP_V233')
+          with open(os.environ['GITHUB_ENV'],'a',encoding='utf-8') as env:
+              env.write('V235_TAKEOVER_VERIFIED=1' + chr(10))
+          print('V235_END_TO_END_SITE_PRE_RESULT_COHORT_VERIFIED')
+          PY_V235_TAKEOVER_PROOF
+          fi
       - name: V274 immediately freeze qualifying V254 site-only tail research before any result scoring
         shell: bash
         run: |
