@@ -91,7 +91,7 @@ function skeleton(){
      <small class="be259-metric" data-be259="metric"></small>
      <small class="be259-disclaimer">Top3/5/10は買い目の順位別範囲。独立した頭予想の1着確率でも、買い目の的中率でもありません。</small>
    </section>
-   <div class="be207-listhead"><strong>上位買い目</strong><span>確率順・オッズで順位を変更しません</span></div>
+   <div class="be207-listhead"><strong>上位買い目</strong><span>元の予想順位を維持・オッズで並べ替えません</span></div>
    <div class="be207-bets"></div>
    <div class="be207-actions" role="group" aria-label="表示する3連単買い目の件数"><button type="button" data-be207="five">Top5</button><button type="button" data-be207="ten">Top10</button><button type="button" data-be207="all">全買い目</button></div><div class="be208-detail-actions"><button type="button" data-be207="detail">詳しいデータ・監査を開く</button></div>
    <div class="be207-bottom"><div class="be207-budget"></div><div class="be207-odds"></div></div>`;
