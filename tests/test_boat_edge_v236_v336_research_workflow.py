@@ -1,6 +1,7 @@
 """V336 isolated scheduled research workflow guardrails (static, offline)."""
 from pathlib import Path
 import json
+import subprocess
 import unittest
 
 
@@ -30,7 +31,16 @@ class V336WorkflowSafety(unittest.TestCase):
         self.assertIn("'research_only':True", s)
 
     def test_issue_204_provider_permission_register_denies_all_unknown(self):
-        document=json.loads((ROOT/"docs/BOAT_EDGE_01_V374_SOURCE_PERMISSION_REGISTER.json").read_text(encoding="utf8"))
+        # Development CI uses sparse checkout (scripts/tests/assets/.github),
+        # so read the exact committed docs blob without creating a duplicate.
+        permission_path="docs/BOAT_EDGE_01_V374_SOURCE_PERMISSION_REGISTER.json"
+        installed=ROOT/permission_path
+        if installed.is_file():
+            source=installed.read_text(encoding="utf8")
+        else:
+            source=subprocess.check_output(
+                ["git","show","HEAD:"+permission_path],cwd=ROOT,text=True)
+        document=json.loads(source)
         self.assertEqual(document["issue"],204)
         self.assertEqual(set(document["providers"]),{"boaters","kyoteibiyori"})
         fields={"approved_for_automated_access","approved_for_ai_training",
