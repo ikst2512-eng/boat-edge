@@ -158,7 +158,7 @@ function render(){
  }
  if(awaitingRaceList&&sourceList&&sourceList!==lastListNode)awaitingRaceList=false;
  if(!awaitingRaceList&&sourceList)lastListNode=sourceList;
- const rows=$('.be108-ticket-list > .be108-ticket',p);
+ const rows=Array.from(p.querySelectorAll('.be108-ticket-list > .be108-ticket'));
  const mode=$('.be108-mode-tabs .on',p)?.dataset.be108Mode||'unknown';
  const stage=str('#scenarioHero .scenario-main')||'展開説明は現在確認できません';
  const freeze=window.BoatEdgeV204.sourceLabel?.(p)||'買い目保存状態未確認';
