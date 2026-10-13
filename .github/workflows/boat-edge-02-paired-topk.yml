@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/boat_edge_02_v236_paired_topk_readonly.py'
+      - 'tests/test_boat_edge_02_v236_paired_topk.py'
       - '.github/workflows/boat-edge-02-paired-topk.yml'
   workflow_dispatch:
 permissions:
@@ -19,6 +20,8 @@ jobs:
           python-version: '3.11'
       - name: Validate syntax
         run: python -m py_compile scripts/boat_edge_02_v236_paired_topk_readonly.py
+      - name: Test rank and attribution invariants
+        run: python -m unittest discover -s tests -p test_boat_edge_02_v236_paired_topk.py -v
       - name: Evaluate existing frozen site-only cohort
         run: python scripts/boat_edge_02_v236_paired_topk_readonly.py --root . | tee paired-topk.json
       - name: Assert nonempty comparison
