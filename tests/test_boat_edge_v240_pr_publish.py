@@ -58,7 +58,6 @@ class TestV240DraftPRPublish(unittest.TestCase):
         self.assertIn("permission-profile: ':workspace'", script)
         self.assertIn("python3 scripts/boat_edge_v240_guard.py --verify", script)
         self.assertIn("git diff --cached --check", script)
-        self.assertIn("No real", "No real")  # Test has no network operation.
         self.assertIn("MAX_UI_FILES = 4", self.guard)
         self.assertIn("MAX_CHANGED_LINES = 300", self.guard)
         self.assertIn("data/formal_", self.guard)
