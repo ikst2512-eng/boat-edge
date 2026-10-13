@@ -41,4 +41,4 @@ Shared contract: `docs/BOAT_EDGE_3_TRACK_HANDOFF.md`. Read live main, open PRs a
 - No production model weights, formal status, result/payout/combined endpoints or live wagers touched by research notes.
 
 ## Handoff
-02 supplies tested model/data schema PRs; 03 supplies UI-only PRs. 01 serially integrates after conflict inspection. No simultaneous main edits by 02/03 and no blind force push. Existing PR #192 (02) and #200 (03) remain independent.
+02 supplies tested model/data schema PRs; 03 supplies UI-only PRs. 01 serially integrates after conflict inspection. No simultaneous main edits by 02/03 and no blind force push. As of 2026-10-14 00:12 JST: PR #200 (03 blocked/null forecast status) is already merged; PR #203 (01 V202/V203 Pages SHA lineage monitor) is already merged with exact-sha Pages SUCCESS. Open 02 PR #192 and 03 PR #202 have independent scopes; verify their actual HEADs and CI before any integration. V360 Pages lineage improves proof, but T01 cancellation churn and Safari gate remain open.
