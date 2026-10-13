@@ -46,13 +46,16 @@ def package_days(days):
     previously authorized local files and must match V402 reconciled evidence.
     """
     max_days = (FIVE_YEAR_END_EXCLUSIVE - FIVE_YEAR_START).days
-    if not isinstance(days, list) or not 0 < len(days) <= max_days:
+    if (isinstance(days, (dict, bytes, str)) or
+            not hasattr(days, "__iter__")):
         raise ValueError("STAGED_DAY_LIST_REQUIRED")
     seen = set()
     day_parts = []  # compact canonical text per source day, not one dict per boat
     lineage = []
     reports = []
-    for item in days:
+    for day_number, item in enumerate(days, 1):
+        if day_number > max_days:
+            raise ValueError("STAGED_DAY_LIST_REQUIRED")
         if not isinstance(item, dict) or set(item) != {
             "source_day", "k_csv", "k_manifest", "v402_report"
         }:
@@ -114,6 +117,8 @@ def package_days(days):
             "excluded_races": report["excluded_with_explicit_reason"],
         })
 
+    if not reports:
+        raise ValueError("STAGED_DAY_LIST_REQUIRED")
     output = io.StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=COLUMNS, lineterminator="\n")
     writer.writeheader()
@@ -143,7 +148,7 @@ def package_days(days):
     return combined_raw, manifest, {
         "schema": MODEL,
         "research_only": True,
-        "input_days": len(days),
+        "input_days": len(reports),
         "normalized_complete_races": race_total,
         "normalized_six_boat_rows": race_total * 6,
         "history_csv_sha256": _sha(combined_raw),
@@ -173,24 +178,40 @@ def _read_local(root, name):
     return path.read_bytes()
 
 
-def stage_from_index(root, index):
-    """Read explicit local paths ONLY; cannot fetch a URL or browse a result API."""
+def iter_staged_days(root, index):
+    """Stream one local source day at a time, never downloading race outcomes.
+
+    The index is validated before yielding any daily bytes. This keeps the
+    five-year staging input from retaining 1,826 daily CSVs in a Python list.
+    """
     if not isinstance(index, dict) or set(index) != {"schema", "days"}:
         raise ValueError("EXACT_LOCAL_INDEX_REQUIRED")
     if index["schema"] != INDEX_SCHEMA or not isinstance(index["days"], list):
         raise ValueError("INVALID_LOCAL_INDEX_SCHEMA")
-    days = []
+    count = len(index["days"])
+    if not 0 < count <= (FIVE_YEAR_END_EXCLUSIVE - FIVE_YEAR_START).days:
+        raise ValueError("STAGED_DAY_LIST_REQUIRED")
     for item in index["days"]:
         if not isinstance(item, dict) or set(item) != DAY_FIELDS:
             raise ValueError("EXACT_LOCAL_DAY_INDEX_FIELDS")
+        for key in ("normalized_csv", "v400_manifest", "v402_report"):
+            name = item[key]
+            if (not isinstance(name, str) or not name or
+                    Path(name).is_absolute() or ".." in Path(name).parts):
+                raise ValueError("UNSAFE_STAGE_RELATIVE_PATH")
+    for item in index["days"]:
         raw = _read_local(root, item["normalized_csv"])
         man = json.loads(_read_local(root, item["v400_manifest"]).decode("utf-8"))
         report = json.loads(_read_local(root, item["v402_report"]).decode("utf-8"))
-        days.append({
+        yield {
             "source_day": item["source_day"], "k_csv": raw,
             "k_manifest": man, "v402_report": report,
-        })
-    return days
+        }
+
+
+def stage_from_index(root, index):
+    """Compatibility helper for small audits; CLI uses iter_staged_days."""
+    return list(iter_staged_days(root, index))
 
 
 def main():
@@ -202,7 +223,7 @@ def main():
                         help="Private offline output; NEVER commit real K data")
     args = parser.parse_args()
     root = args.staging_dir.resolve(strict=True)
-    raw, manifest, audit = package_days(stage_from_index(
+    raw, manifest, audit = package_days(iter_staged_days(
         root, json.loads(args.index_json.read_text(encoding="utf-8"))
     ))
     dest = args.output_dir.resolve()
