@@ -17,6 +17,12 @@ on:
       - 'tests/test_boat_edge_v240_pr_publish.py'
       - 'BOAT_EDGE_AUTODEV_TASKS.md'
   workflow_dispatch:
+    inputs:
+      run_paid_codex:
+        description: 'Explicit opt-in: Codex API usage may incur charges'
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: '30 18 * * *'
 
@@ -70,6 +76,7 @@ jobs:
         env:
           OPENAI_KEY_PRESENT: ${{ secrets.OPENAI_API_KEY != '' }}
           BRANCH_REF: ${{ github.ref }}
+          PAID_AGENT_OPT_IN: ${{ github.event_name == 'workflow_dispatch' && inputs.run_paid_codex == true }}
         run: |
           set -euo pipefail
           if ! python3 scripts/boat_edge_v240_guard.py --pending; then
@@ -78,6 +85,9 @@ jobs:
           elif [ "$BRANCH_REF" != 'refs/heads/main' ]; then
             echo "can_run=false" >> "$GITHUB_OUTPUT"
             echo "V240: CI validation only on test branch." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$PAID_AGENT_OPT_IN" != 'true' ]; then
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            echo "V240: FREE_MODE_AUDIT_PASS; paid Codex skipped (explicit manual opt-in required). No UI task claimed." >> "$GITHUB_STEP_SUMMARY"
           elif [ "$OPENAI_KEY_PRESENT" != 'true' ]; then
             echo "can_run=false" >> "$GITHUB_OUTPUT"
             echo "V240: code-editing agent NOT ACTIVE; GitHub Actions secret OPENAI_API_KEY is not configured." >> "$GITHUB_STEP_SUMMARY"
