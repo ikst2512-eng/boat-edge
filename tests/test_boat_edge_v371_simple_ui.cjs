@@ -7,7 +7,7 @@ const js=fs.readFileSync('assets/boat_edge_v206_quickview.js','utf8');
 test('V371 style is loaded after all earlier CSS without deleting source or predictor code',()=>{
  const newer='boat_edge_v371_simple_ui.css?v=371';
  const old='boat_edge_v304_topk_mobile.css?v=328&amp;layout=338';
- assert.equal((index.match(new RegExp(newer.replaceAll('.','\\.'),'g'))||[]).length,1);
+ assert.equal(index.split(newer).length-1,1);
  assert(index.indexOf(old)>0&&index.indexOf(newer)>index.indexOf(old));
  assert(css.includes('#homeView:has(#be108Hub .be108-shell)'),'legacy home is hidden only after race hub mounts');
  assert(css.includes('#homeView #be108Hub .be108-venue-grid'));
