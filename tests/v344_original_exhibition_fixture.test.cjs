@@ -101,7 +101,7 @@ test('V346 never presents unverified saved course, ST, or exhibition time as cur
 });
 test('V346 verified beforeinfo still renders exhibition course ST and time', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: [{lane:1,exhibition_time:6.42}],
     start_exhibition: [{lane:1,course:2,st:0.11}]
@@ -126,7 +126,7 @@ test('V347 duplicate lanes cannot fake complete original exhibition', () => {
 });
 test('V347 four-boat official exhibition and ST cannot claim fully acquired', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:4}, (_,i)=>({lane:i+1,exhibition_time:6.5})),
     start_exhibition: Array.from({length:4}, (_,i)=>({lane:i+1,course:i+1,st:0.12}))
@@ -137,7 +137,7 @@ test('V347 four-boat official exhibition and ST cannot claim fully acquired', ()
 });
 test('V347 six unique official exhibition lanes show complete badges', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:6}, (_,i)=>({lane:i+1,exhibition_time:6.5})),
     start_exhibition: Array.from({length:6}, (_,i)=>({lane:i+1,course:i+1,st:0.12}))
@@ -165,7 +165,7 @@ test('V348 all six lanes with three valid original metrics retain acquired badge
 
 test('V349 missing official exhibition time on one lane cannot claim complete', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:6}, (_,i)=>({lane:i+1,exhibition_time:i===4?null:6.5})),
     start_exhibition: Array.from({length:6}, (_,i)=>({lane:i+1,course:i+1,st:0.12}))
@@ -176,7 +176,7 @@ test('V349 missing official exhibition time on one lane cannot claim complete', 
 });
 test('V349 missing exhibition ST on one lane cannot claim complete', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:6}, (_,i)=>({lane:i+1,exhibition_time:6.5})),
     start_exhibition: Array.from({length:6}, (_,i)=>({lane:i+1,course:i+1,st:i===3?null:0.12}))
@@ -188,7 +188,7 @@ test('V349 missing exhibition ST on one lane cannot claim complete', () => {
 
 test('V350 fractional and out-of-range course numbers are not shown as valid', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {start_exhibition:[
     {lane:1,course:2.5,st:0.12},{lane:2,course:7,st:0.11},
     {lane:3,course:3,st:0.10}
@@ -201,7 +201,7 @@ test('V350 fractional and out-of-range course numbers are not shown as valid', (
 
 test('V351 invalid exhibition ST becomes null while numeric ST is retained', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {start_exhibition:[
     {lane:1,course:1,st:'invalid'},
     {lane:2,course:2,st:'0.13'},
@@ -215,7 +215,7 @@ test('V351 invalid exhibition ST becomes null while numeric ST is retained', () 
 
 test('V352 whitespace ST is missing both in rows and acquisition badge', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.5})),
     start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:i===2?'   ':'0.12'}))
@@ -227,7 +227,7 @@ test('V352 whitespace ST is missing both in rows and acquisition badge', () => {
 
 test('V353 conflicting duplicated course positions are not presented as verified', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {start_exhibition:[
     {lane:1,course:2,st:0.12},
     {lane:2,course:2,st:0.11},
@@ -242,7 +242,7 @@ test('V353 conflicting duplicated course positions are not presented as verified
 
 test('V355 whitespace official exhibition time stays missing, not acquired', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:i===4?'  ':6.5})),
     start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:0.12}))
@@ -261,7 +261,7 @@ test('V355 whitespace original exhibition value stays missing, not acquired', ()
 
 test('V355 real numeric zero remains visible for calm wind and exhibition ST', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {weather:{wind_speed_ms:0},start_exhibition:[{lane:1,course:1,st:0}]};
   assert.equal(api.makeRows(data).rows[0].st, 0);
   assert.match(api.html(data,null,null), /風速 <b>0m\/s<\/b>/);
@@ -269,7 +269,7 @@ test('V355 real numeric zero remains visible for calm wind and exhibition ST', (
 
 test('V356 boolean and composite metric values are not treated as measured zero', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {
     racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:i===0?false:i===1?[]:6.5})),
     start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:i===0?false:0.12})),
@@ -286,7 +286,7 @@ test('V356 boolean and composite metric values are not treated as measured zero'
 
 test('V356 duplicate start-exhibition lane blanks its course and ST, not other boats', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {start_exhibition:[
     ...Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:0.12})),
     {lane:1,course:6,st:0.31}
@@ -301,7 +301,7 @@ test('V356 duplicate start-exhibition lane blanks its course and ST, not other b
 
 test('V356 duplicate official exhibition lane cannot overwrite the verified comparison', () => {
   const data = race('20261013-04-01');
-  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00',sha256:'a'.repeat(64)};
   data.beforeinfo = {racers:[
     ...Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.5})),
     {lane:1,exhibition_time:6.33}
@@ -320,4 +320,44 @@ test('V356 duplicate original-exhibition boat cannot overwrite lap and source ba
   assert.equal(rows[0].turn,null);
   assert.equal(rows[1].lap,37.11);
   assert.match(api.html(data,null,null),/オリ展 未取得/);
+});
+
+test('V358 no hashed/timestamp-valid source receipt means no exhibited numeric claims', () => {
+  const data=race('20261013-04-01');
+  data.source_audit.beforeinfo={status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo={racers:[{lane:1,exhibition_time:6.55}],start_exhibition:[{lane:1,course:2,st:0.15}]};
+  assert.equal(api.sourceOK(data,'beforeinfo'),false);
+  assert.equal(api.makeRows(data).rows[0].displayTime,null);
+  assert.equal(api.makeRows(data).rows[0].course,null);
+  assert.match(api.html(data,null,null),/公式展示 未取得/);
+  data.source_audit.beforeinfo.sha256='not-a-hash';
+  assert.equal(api.sourceOK(data,'beforeinfo'),false);
+  data.source_audit.beforeinfo.sha256='a'.repeat(64);
+  data.source_audit.beforeinfo.fetched_at='not-a-date';
+  assert.equal(api.sourceOK(data,'beforeinfo'),false);
+});
+
+test('V358 missing original-exhibition SHA suppresses numeric metrics and complete badge', () => {
+  const data=race('20261013-06-01');
+  delete data.source_audit.original_exhibition.sha256;
+  assert.equal(api.sourceOK(data,'original_exhibition'),false);
+  const row=api.makeRows(data).rows[0];
+  assert.equal(row.lap,null);
+  assert.equal(row.turn,null);
+  assert.equal(row.straight,null);
+  assert.match(api.html(data,null,null),/オリ展 未取得/);
+});
+
+test('V358 formal badge cannot be asserted by an unapproved mode alone', () => {
+  const data=race('20261013-06-01');
+  const forged={mode:'formal'};
+  context.state={formal:{connected:false,predictions_ready:false}};
+  context.window.BoatEdgeV178={isVerified:()=>false};
+  assert.match(api.html(data,forged,null),/正式CURRENTの承認照合待ち（参考扱い）/);
+  assert.doesNotMatch(api.html(data,forged,null),/be202-pred-label formal/);
+  context.window.BoatEdgeV178={isVerified:(race,status)=>race===data&&status===context.state.formal};
+  assert.match(api.html(data,forged,null),/be202-pred-label formal/);
+  assert.match(api.html(data,forged,null),/正式CURRENT/);
+  context.window.BoatEdgeV178={isVerified:()=>{throw Error('approval not available')}};
+  assert.match(api.html(data,forged,null),/承認照合待ち/);
 });
