@@ -248,6 +248,15 @@ class EntryMarginalizationAblation(unittest.TestCase):
         self.assertTrue(r["model_ranking_change_is_not_real_accuracy_gain"])
         self.assertFalse(r["calibration_validated"])
 
+    def test_entry_weights_explicitly_not_live_exhibition_posterior(self):
+        r=trial()
+        self.assertFalse(r["live_exhibition_conditioned_entry_transition_learned"])
+        self.assertTrue(r["entry_720_relative_weights_are_not_calibrated_posterior"])
+        self.assertEqual(
+            r["entry_weight_semantics"],
+            "VENUE_FRAME_ACTUAL_COURSE_MARGINAL_PRIOR_NOT_P_OF_FINAL_ENTRY_GIVEN_TODAY_EXHIBITION")
+        self.assertFalse(r["head_top3_top5_top10_improvement_proven"])
+
     def test_no_unverified_beneficial_hit_rate_from_mass_distance(self):
         out=trial()
         self.assertGreaterEqual(out["mass_l1_research_distance_not_hit_improvement"],0)
