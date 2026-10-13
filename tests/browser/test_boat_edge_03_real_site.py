@@ -148,19 +148,22 @@ def exercise(engine: str, url: str, shots: Path):
                         button.click()
                         assert first_panel.locator(".be207-ticket").count() == expected
 
-                # A previous querySelector(...).forEach bug prevented changing modes.
-                # Exercise this ONLY against the patched checkout before merging.
-                if url == "local":
-                    modes = page.locator("#be207Top .be207-modes [data-be207-mode]")
-                    assert modes.count() >= 2, "Prediction mode buttons missing"
-                    desired = modes.nth(1).get_attribute("data-be207-mode")
-                    # Drive the visible V207 mode button; legacy controls are hidden.
-                    page.locator('#be207Top [data-be207-mode="%s"]' % desired).click()
-                    page.wait_for_function(
-                        "(mode) => document.querySelector('#be108PredictionModes .be108-mode-tabs .on')?.dataset.be108Mode === mode",
-                        arg=desired, timeout=25000
-                    )
-                    assert not errors, "Uncaught browser JavaScript errors: " + repr(errors)
+                # The actual public Pages runtime must also pass the V207 mode
+                # click regression; checkout-only proof misses stale deployed JS.
+                # This only changes a visible mode and never fetches results.
+                modes = page.locator("#be207Top .be207-modes [data-be207-mode]")
+                assert modes.count() >= 2, "Prediction mode buttons missing"
+                desired = modes.nth(1).get_attribute("data-be207-mode")
+                assert desired, "Second prediction mode has no mode key"
+                page.locator('#be207Top [data-be207-mode="%s"]' % desired).click()
+                page.wait_for_function(
+                    "(mode) => document.querySelector('#be108PredictionModes .be108-mode-tabs .on')?.dataset.be108Mode === mode",
+                    arg=desired, timeout=25000
+                )
+                assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == first["race_key"], (
+                    "Changing prediction mode altered selected race"
+                )
+                assert not errors, "Uncaught browser JavaScript errors: " + repr(errors)
 
                 # Switch via the actual race navigator, without reloading the page.
                 switcher = page.locator(
@@ -198,8 +201,9 @@ def exercise(engine: str, url: str, shots: Path):
                 report.update({
                     "date": date, "venue": chosen["venue"], "venue_code": code,
                     "race_1": first["race_key"], "race_2": second["race_key"],
-                    "race_switch": "PASS", "actual_dom": True,
+                    "race_switch": "PASS", "mode_switch": "PASS", "actual_dom": True,
                     "initial_prediction": "STOPPED_WITH_REASON" if first_stopped else "TOPK_VISIBLE",
+                    "topk_evidence": "NOT_CERTIFIED_STOPPED" if first_stopped else "TOP3_TOP5_TOP10_PASS",
                     "second_prediction_condition": second_panel.locator(".be207-condition strong").inner_text(),
                     "guard_blocked_requests": len(blocked),
                     "page_errors": errors[:10],
