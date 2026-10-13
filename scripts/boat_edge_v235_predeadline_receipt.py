@@ -69,10 +69,14 @@ def choose(root, now, requested=None):
             if item[1] == requested:
                 return item
         return None
-    # One-day owner-requested priority; no historical or other-date guesses.
+    # One-day 1R priority applies only through its near-deadline audit grace.
+    # Otherwise the read-only receipt would keep reporting the expired 08:35
+    # race all day and hide source/freeze failures in 2R and later races.
+    # A caller explicitly requesting 1R still receives its exact audit.
     if date == "20261014":
         for item in found:
-            if item[1] == "20261014-14-01":
+            if (item[1] == "20261014-14-01"
+                    and item[0] >= now - timedelta(minutes=2)):
                 return item
     upcoming = [x for x in found if x[0] >= now - timedelta(minutes=2)]
     return min(upcoming or found, key=lambda x: x[0])
