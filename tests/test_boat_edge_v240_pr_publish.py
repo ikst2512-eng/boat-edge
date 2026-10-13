@@ -52,6 +52,17 @@ class TestV240DraftPRPublish(unittest.TestCase):
         self.assertIn("if: steps.gate.outputs.can_run == 'true'", script)
         self.assertIn("V240_FORMAL_GUARD_READ_ONLY_PASS", script)
 
+    def test_paid_codex_requires_explicit_manual_opt_in(self):
+        script = self.workflow
+        self.assertIn("run_paid_codex:", script)
+        self.assertIn("default: false", script)
+        self.assertIn("github.event_name == 'workflow_dispatch' && inputs.run_paid_codex == true", script)
+        self.assertIn("PAID_AGENT_OPT_IN:", script)
+        self.assertIn('elif [ "$PAID_AGENT_OPT_IN" != \'true\' ]; then', script)
+        self.assertIn("FREE_MODE_AUDIT_PASS", script)
+        # Both scheduled and push/PR runs must not invoke the paid API.
+        self.assertIn("if: steps.gate.outputs.can_run == 'true'", script)
+
     def test_isolated_agent_scope_and_independent_tests_retained(self):
         script = self.workflow
         self.assertIn("working-directory: ${{ runner.temp }}/v240-ui", script)
