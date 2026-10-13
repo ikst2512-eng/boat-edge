@@ -144,6 +144,40 @@ def targets(root,now,max_target=12):
             selected.append((due,key))
     return [key for _,key in sorted(selected)[:max_target]]
 
+def target_diagnostic(root, now):
+    """Read-only eligibility counts; never loads results or relaxes targets()."""
+    today=now.strftime('%Y%m%d')
+    summary=load(root/'data/today.json') or {}
+    counts={'today_mismatch':0,'invalid_deadline_or_key':0,
+            'outside_2_to_19_min_window':0,'snapshot_exists':0,
+            'race_missing_or_unsafe':0,'racers_not_six':0,
+            'race_identity_mismatch':0,'eligible':0}
+    if str(summary.get('date','')).replace('-','')!=today:
+        counts['today_mismatch']=1
+        return counts
+    for venue in summary.get('venues') or []:
+        for row in venue.get('races') or []:
+            key=row.get('race_key')
+            due=due_for(key,row.get('deadline'))
+            if not due or not str(key).startswith(today+'-'):
+                counts['invalid_deadline_or_key']+=1;continue
+            mins=(due-now).total_seconds()/60
+            if not 2<=mins<=19:
+                counts['outside_2_to_19_min_window']+=1;continue
+            if (root/'data/site_prediction_snapshots'/f'{key}.json').is_file():
+                counts['snapshot_exists']+=1;continue
+            race=load(root/'data/races'/f'{key}.json') or {}
+            meta=race.get('meta') or {}
+            if meta.get('phase')!='PRE_RESULT' or any(meta.get(f) is not False for f in ('results_seen','unlock','scoring')):
+                counts['race_missing_or_unsafe']+=1;continue
+            if len(race.get('racers') or [])!=6:
+                counts['racers_not_six']+=1;continue
+            if race.get('race_key') not in (None,key) or str(meta.get('venue_code')).zfill(2)!=key.split('-')[1] or int(meta.get('race_no') or 0)!=int(key.split('-')[2]):
+                counts['race_identity_mismatch']+=1;continue
+            counts['eligible']+=1
+    return counts
+
+
 def source_identity(url):
     """Accept only one explicit official PRE_RESULT race, before any request."""
     u=urlsplit(url)
@@ -303,7 +337,8 @@ def run(root,now=None,worker=6):
     now=now.astimezone(JST)
     check_formal_closed(root)
     selected=targets(root,now)
-    status={'schema':SCHEMA,'day_jst':now.strftime('%Y%m%d'),'targets':selected,
+    diagnostic=target_diagnostic(root,now)
+    status={'schema':SCHEMA,'day_jst':now.strftime('%Y%m%d'),'targets':selected,'target_diagnostic':diagnostic,
             'source_refreshed':0,'source_blocked':0,'odds_incomplete':0,'network_error':0,'outcomes':{}}
     if selected:
         with ThreadPoolExecutor(max_workers=worker) as pool:

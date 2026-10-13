@@ -48,6 +48,14 @@ class FastLaneTests(unittest.TestCase):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         self.assertEqual(m.targets(self.root,self.now+timedelta(minutes=6)),[])
         self.assertEqual(m.targets(self.root,self.now-timedelta(minutes=18)),[])
+    def test_zero_target_diagnostic_is_read_only(self):
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
+        self.assertEqual(m.target_diagnostic(self.root,self.now)['eligible'],1)
+        self.assertEqual(m.target_diagnostic(self.root,self.now-timedelta(minutes=18))['outside_2_to_19_min_window'],1)
+        self.assertEqual(m.target_diagnostic(self.root,self.now+timedelta(minutes=6))['outside_2_to_19_min_window'],1)
+        self.assertEqual(m.targets(self.root,self.now),[KEY])
+        self.assertEqual(m.target_diagnostic(self.root,self.now.replace(day=12))['today_mismatch'],1)
+
     def test_never_rewrites_snapshot(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         p=self.root/'data/site_prediction_snapshots'/f'{KEY}.json';p.parent.mkdir(parents=True);p.write_bytes(b'IMMUTABLE')
