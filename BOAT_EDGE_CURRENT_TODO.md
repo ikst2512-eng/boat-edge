@@ -8,7 +8,7 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 - Latest model/formal freeze is NOT certified by this TODO.
 - Official V185 prospective freeze requires pre-deadline immutable Git evidence.
 - Browser display and model accuracy are separate certification gates.
-- Site snapshot count: 393; SHA-verified audits: 393; settled reference histories: 391.
+- Site snapshot count: 393; SHA-verified audits: 393; settled reference histories: 393.
 - 🎯 indicator strings present in JS: true; Safari confirmation: false.
 - Formal state recorded as of: 2026-10-08 (may be stale).
 - Formal guards (recorded): results_seen=False, unlock=False, scoring=False.
