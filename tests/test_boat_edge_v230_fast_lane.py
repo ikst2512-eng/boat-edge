@@ -178,6 +178,22 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(status['source_refreshed'],1)
         self.assertEqual(status['odds_incomplete'],0)
 
+    def test_successful_first_freeze_is_never_delayed_by_retry(self):
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=1) as frozen,
+              patch.object(m,'fetch_one',return_value=(KEY,{'fixture':True},None)) as fetched,
+              patch.object(m,'update_one',return_value='odds_incomplete'),
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as paused):
+            status=m.run(self.root,now=self.now,worker=2,retry_imminent=True)
+        self.assertEqual(status['new_snapshots_atomic_audited'],1)
+        self.assertEqual(status['imminent_retry_targets'],[])
+        frozen.assert_called_once()
+        fetched.assert_called_once()
+        paused.assert_not_called()
+
     def test_never_rewrites_snapshot(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         p=self.root/'data/site_prediction_snapshots'/f'{KEY}.json';p.parent.mkdir(parents=True);p.write_bytes(b'IMMUTABLE')
