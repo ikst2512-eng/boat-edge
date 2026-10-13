@@ -34,6 +34,8 @@ def inspect(frozen):
         seen=set()
         seen_courses=set()
         previous_mass=float('inf')
+        course_to_boat={}
+        boat_to_course={}
         for rank,row in enumerate(rows,1):
             if not isinstance(row,dict) or type(row.get("rank")) is not int or row["rank"]!=rank:
                 return "INVALID_RANK"
@@ -45,12 +47,19 @@ def inspect(frozen):
             if not valid_combo(course) or course in seen_courses:
                 return 'INVALID_COURSE_TICKET'
             seen_courses.add(course)
+            for c,b in zip(course.split('-'),boat.split('-')):
+                if (c in course_to_boat and course_to_boat[c]!=b) or (b in boat_to_course and boat_to_course[b]!=c):
+                    return 'INCONSISTENT_ENTRY_MAPPING'
+                course_to_boat[c]=b
+                boat_to_course[b]=c
             mass=row.get("relative_model_mass")
             if type(mass) not in (int,float) or not math.isfinite(mass) or not (0<=mass<=1):
                 return 'INVALID_MASS'
             if mass > previous_mass + 1e-12:
                 return 'MASS_RANK_ORDER_INVALID'
             previous_mass=mass
+        if len(course_to_boat)!=6 or len(boat_to_course)!=6:
+            return 'INCONSISTENT_ENTRY_MAPPING'
         if len(seen)!=120 or abs(sum(r["relative_model_mass"] for r in rows)-1)>1e-8:
             return "INVALID_DISTRIBUTION"
     return "STRUCTURAL_TOP3_TOP5_TOP10_READY_NOT_ATTESTED"
