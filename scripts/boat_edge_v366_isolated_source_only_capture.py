@@ -81,7 +81,7 @@ def _race_snapshot(root, key):
 
 def _validate_registration_parity(race, racelist):
     expected = [str(r.get("registration_no")) for r in race.get("racers", [])]
-    observed = parse_regs(racelist.decode("utf-8", errors="replace"))
+    observed = parse_regs(racelist)
     if (len(expected) != 6 or len(set(expected)) != 6
             or any(not x.isdecimal() or len(x) != 4 for x in expected)
             or len(observed) != 6 or set(expected) != set(observed)):
@@ -92,7 +92,7 @@ def _validate_registration_parity(race, racelist):
 def _validate_official_beforeinfo(race, beforeinfo):
     # V230's parsing is used solely for evidence; the first site prediction is
     # not rebuilt, replaced, or re-ranked by this source-only proof.
-    parsed = parse_before(beforeinfo.decode("utf-8", errors="replace"))
+    parsed = parse_before(beforeinfo)
     coverage = beforeinfo_coverage(parsed)
     if not coverage.get("six_boat_complete"):
         raise ValueError("V366_OFFICIAL_EXHIBITION_SIX_BOAT_INCOMPLETE")
