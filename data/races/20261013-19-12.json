@@ -8,7 +8,7 @@
     "event": "MNBR下関5th ケーブルネット下関杯",
     "race_no": 12,
     "deadline": "22:45",
-    "updated_at": "2026-10-13T20:10:59+09:00",
+    "updated_at": "2026-10-13T20:35:06+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261013&jcd=19&rno=12",
-      "fetched_at": "2026-10-13T20:11:47+09:00",
-      "sha256": "18108d5c064551b7ff5f6e44b3f223175dabafb0d2dae2f18524feb4f4d568ae",
+      "fetched_at": "2026-10-13T20:35:55+09:00",
+      "sha256": "9b78c664c3b39a20f017d64535876218b7a92578c3d40b803e1fb48116e69cad",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261013&jcd=19&rno=12",
+      "fetched_at": "2026-10-13T20:35:45+09:00",
+      "sha256": "81d38e21bbba00b4b611f9d2a32bb923abb03a08e2c1a371407d293ded0385a4",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "d7784bfecb0e6845fa544b4153e3ff06533a94aad1d11d1f10161d24df811d76"
+      "sha256": "2559d7281ec69cf6760b9befcc814526b3caaaf04724057cf6237da61591ced9"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "5bb5f440af717e04a5c117647bd1d22b2b6ff391fec3825b37ff380203920a82"
+      "sha256": "f0a0fb480c097abe473ef385e0801ccdbd7f8009ca99d41fc910a21cefa67b84"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "16eaec96c4d0ffc6372447fe9a5dfa237239e9c136c116f8074462dfaf1a4b8e"
+      "sha256": "cbf918bd9f6c2680c3f80b6c272799c0764d25ae561d47821e377553803a2e91"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/13.csv",
       "fetched_at": null,
-      "sha256": "b0ec4ccfe9e0571a3e4825133c1d0bccf90c0d8d7cbc1480c7b74518e0785d25"
+      "sha256": "61dab05e0725f0aad757334f2fcaca8c939661b14d4371abba3ebf90c7d9ec09"
     }
   },
   "racers": [
@@ -300,7 +306,53 @@
       "raw_text": "6 5073 / A2 上原 健次郎 福岡/沖縄 31歳/52.6kg F0 L0 0.18 5.14 29.36 41.28 4.91 21.74 47.83 48 34.23 52.25 21 34.62 50.00 9 4 10 8R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 富永 修一 52.1kg R 5"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 峰重 力也 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 小林 文彦 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 木場 悠介 52.0kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 品田 直樹 52.6kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 上原 健次郎 52.6kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
