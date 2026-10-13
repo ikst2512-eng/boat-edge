@@ -1,0 +1,7 @@
+# Track02 V336 prospective-data blocker (2026-10-14)
+
+Read-only inspection of main `.github/workflows/v336-site-research-live-freeze.yml` confirms the scheduled workflow is **explicitly source-readiness-only**. It calls V334 without `--capture`, and explicitly rejects `completed_count != 0` and `capture_requested != false`. The workflow says unattended BOATERS / 競艇日和 collection is forbidden under issue #204. Therefore **V336 SUCCESS cannot create a V360 prospective frozen cohort**, and waiting for its green CI to yield actual research predictions would be incorrect. It may upload diagnostics, not complete frozen predictions.
+
+V360 generator is attached to the existing V332 freeze path, but its automatic V336 invocation currently forbids completed freezes. V343/V344 replay of a genuinely captured artifact cannot repair a non-existent freeze. Do not bypass source permissions, turn on automatic capture, reconstruct historical predictions, or claim a predeadline cohort exists.
+
+Track01 owns the source-permission and scheduling decisions and V230/V232/V235 live production evidence. Track02 can independently inspect authorized predeadline V232 freezes for Top3/5/10 baseline, and will only evaluate V360 challengers from prospectively frozen, provenance-verified original bytes when the permission gate is legitimately resolved. Formal Fresh remains locked. No production model promotion.
