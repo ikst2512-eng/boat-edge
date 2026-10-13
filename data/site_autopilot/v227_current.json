@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-13T12:51:52.624163+00:00",
+  "checked_at": "2026-10-13T13:13:33.222340+00:00",
   "day_jst": "20261013",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -33,31 +33,31 @@
     "site_v185_candidate_top": {},
     "site_v185_evaluated_races": 0,
     "site_v199_10_20x_settled_races": 24,
-    "site_v199_evaluated_races": 108,
+    "site_v199_evaluated_races": 109,
     "site_v199_head_top": {
       "top10": {
         "candidate_hits": 45,
-        "candidate_rate_percent": 41.67,
+        "candidate_rate_percent": 41.28,
         "control_hits": 45,
-        "control_rate_percent": 41.67,
+        "control_rate_percent": 41.28,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
         "candidate_hits": 16,
-        "candidate_rate_percent": 14.81,
+        "candidate_rate_percent": 14.68,
         "control_hits": 16,
-        "control_rate_percent": 14.81,
+        "control_rate_percent": 14.68,
         "difference": 0,
         "paired_gains": 2,
         "paired_losses": 2
       },
       "top5": {
         "candidate_hits": 32,
-        "candidate_rate_percent": 29.63,
+        "candidate_rate_percent": 29.36,
         "control_hits": 30,
-        "control_rate_percent": 27.78,
+        "control_rate_percent": 27.52,
         "difference": 2,
         "paired_gains": 2,
         "paired_losses": 0
@@ -69,9 +69,22 @@
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
     "collector_health_issues": [
-      "collector_index_stale"
+      "predeadline_incomplete"
     ],
-    "current_window": [],
+    "current_window": [
+      {
+        "deadline_jst": "22:20",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 6.4,
+        "race_key": "20261013-19-11",
+        "venue": "下関"
+      }
+    ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
     "readiness_observed_races": 118,
     "readiness_reasons": {
