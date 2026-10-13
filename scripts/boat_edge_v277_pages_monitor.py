@@ -29,6 +29,13 @@ UI_PATHS = (
     # changed UI assets; a successful older Pages run must not prove them fresh.
     "assets/boat_edge_v202_display.js",
     "assets/boat_edge_v203_readable.js",
+    # V374: TopK budget/stop controls and quickview script+CSS must be part
+    # of the tested Pages publication lineage, not only the parent HTML.
+    "assets/boat_edge_v206_quickview.js",
+    "assets/boat_edge_v206_quickview.css",
+    "assets/boat_edge_v207_first_prediction.js",
+    "assets/boat_edge_v207_first_prediction.css",
+    "assets/boat_edge_v304_topk_mobile.css",
     # V287: Pages must publish the actual scripts used by the mobile
     # Autopilot view, not only the parent HTML. Missing/stale JS fails closed.
     "assets/boat_edge_v278_next_watch.js",

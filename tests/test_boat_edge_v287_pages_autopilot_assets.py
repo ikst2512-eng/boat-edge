@@ -50,6 +50,34 @@ class V287AutopilotPagesAssets(unittest.TestCase):
             one,two=fixtures(UI_PATHS,asset)
             self.assertFalse(same_ui_lineage(one,two),asset)
 
+    def test_v374_topk_quickview_scripts_and_styles_are_sha_proven(self):
+        # Rendering JS/CSS can change with no index.html update; latest Pages
+        # evidence must cover the actual production assets in V373 browser CI.
+        targets={
+            "assets/boat_edge_v206_quickview.js",
+            "assets/boat_edge_v206_quickview.css",
+            "assets/boat_edge_v207_first_prediction.js",
+            "assets/boat_edge_v207_first_prediction.css",
+            "assets/boat_edge_v304_topk_mobile.css",
+        }
+        self.assertTrue(targets.issubset(set(UI_PATHS)))
+        workflow=(ROOT/".github/workflows/v277-pages-monitor.yml").read_text(encoding="utf8")
+        for path in targets:
+            self.assertTrue((ROOT/path).is_file(),path)
+            self.assertGreaterEqual(workflow.count("'"+path+"'"),2,path)
+            main,old=fixtures(UI_PATHS,path)
+            self.assertFalse(same_ui_lineage(main,old),path)
+        changed="assets/boat_edge_v207_first_prediction.js"
+        main,old=fixtures(UI_PATHS,changed)
+        run={"name":"pages build and deployment","head_sha":"a"*40,
+             "created_at":(NOW-timedelta(minutes=5)).isoformat(),
+             "updated_at":(NOW-timedelta(minutes=4)).isoformat(),
+             "status":"completed","conclusion":"success"}
+        result=report([run],main,NOW,deployed_ui_commits=old)
+        self.assertFalse(result["ui_lineage_verified"])
+        self.assertEqual(result["status"],"UI_PUBLISH_OVERDUE_NEEDS_ATTENTION")
+        self.assertFalse(result["ui_checked_in_safari"])
+
     def test_t01_all_sha_monitored_site_ui_paths_also_trigger_audit(self):
         # V277 already resolves last-touch SHA for each UI_PATHS member, but
         # path-filter omissions meant those updates did not launch monitoring.
