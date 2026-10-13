@@ -1,4 +1,4 @@
-"""V345 full 120-way predeadline research freeze, synthetic-only regressions."""
+"""V360 full 120-way predeadline research freeze, synthetic-only regressions."""
 from datetime import timedelta
 import copy
 import hashlib
@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from boat_edge_v318_shadow_freeze import canonical
 from boat_edge_v332_live_local_freeze import candidate_from_raw, live_local_freeze
 from boat_edge_v343_race_input_replay import verify
-from boat_edge_v345_research_ranked120 import MODEL, MODES, derive_120
+from boat_edge_v360_research_ranked120 import MODEL, MODES, derive_120
 from test_boat_edge_v236_v332_live_local_e2e import (
     KEY, PRE, LATE, mock_page, prepare,
 )
@@ -35,7 +35,7 @@ def resign(frozen_path, report_doc, data):
     report_doc["completed"][0]["sha256"] = hashlib.sha256(raw).hexdigest()
 
 
-class V345Ranked120(unittest.TestCase):
+class V360Ranked120(unittest.TestCase):
     def test_three_full_boat_rankings_match_saved_top10_and_head_mass(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

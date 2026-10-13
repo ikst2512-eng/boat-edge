@@ -1,4 +1,4 @@
-"""V346 safe selection-time diagnostics; synthetic current-day PRE_RESULT only."""
+"""V361 safe selection-time diagnostics; synthetic current-day PRE_RESULT only."""
 from datetime import timedelta
 import hashlib
 import json
@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_v346_source_readiness import scan_preflight
+from boat_edge_v361_source_readiness import scan_preflight
 from boat_edge_v334_live_batch_runner import run
 from test_boat_edge_v236_v334_live_batch import NOW, prepare, fake_fetch
 
@@ -28,7 +28,7 @@ def edit(root, fn):
     path.write_text(json.dumps(doc), encoding="utf-8")
 
 
-class V346SourceReadiness(unittest.TestCase):
+class V361SourceReadiness(unittest.TestCase):
     def test_healthy_synthetic_card_reports_readiness_not_certification(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

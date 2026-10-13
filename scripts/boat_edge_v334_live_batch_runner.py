@@ -18,7 +18,7 @@ from boat_edge_v314_three_source_evidence import KEY
 from boat_edge_v315_source_capture import real_fetch
 from boat_edge_v318_shadow_freeze import JST, parse_time
 from boat_edge_v332_live_local_freeze import live_local_freeze
-from boat_edge_v346_source_readiness import scan_preflight
+from boat_edge_v361_source_readiness import scan_preflight
 
 
 def _now(clock):

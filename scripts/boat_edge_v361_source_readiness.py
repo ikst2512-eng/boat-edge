@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V346: read-only SITE pre-result input readiness diagnostics at selection time.
+"""V361: read-only SITE pre-result input readiness diagnostics at selection time.
 
 Purely descriptive and sampled from already-read raw race-card bytes. NEVER
 make a candidate eligible, infer a course, authenticate sources, or touch
@@ -98,7 +98,7 @@ def scan_preflight(race, raw, now):
     if feature_boats != REQUIRED or len(racers) != 6:
         issues.append("SIX_RACER_FEATURES_INCOMPLETE")
     result = {
-        "model_id": "BOAT_EDGE_V346_SITE_SELECTION_INPUT_DIAGNOSTIC_ONLY",
+        "model_id": "BOAT_EDGE_V361_SITE_SELECTION_INPUT_DIAGNOSTIC_ONLY",
         "race_key": key,
         "selection_sampled_at_jst": now.isoformat(),
         "selection_race_input_sha256": hashlib.sha256(raw).hexdigest(),

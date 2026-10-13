@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V345 research-only 120 ranked BOAT tickets for the existing V312 modes.
+"""V360 research-only 120 ranked BOAT tickets for the existing V312 modes.
 
 Only called by the V332 predeadline freeze path. The companion verifier runs
 offline against already-frozen bytes. It never reconstructs or writes missing
@@ -13,7 +13,7 @@ import math
 from boat_edge_v307_pl120_research import rank_120
 from boat_edge_v317_ticket_mapper import map_course_mass_to_boat_tickets
 
-MODEL = "BOAT_EDGE_V345_PREDEADLINE_RESEARCH_RANKED120"
+MODEL = "BOAT_EDGE_V360_PREDEADLINE_RESEARCH_RANKED120"
 MODES = ("national_only", "national_motor", "national_motor_st")
 BOATS = set(range(1, 7))
 
@@ -124,7 +124,7 @@ def derive_120(race, candidate):
 
 
 def verify_saved_120(frozen, race, candidate):
-    """True only for a complete V345 payload exactly matching the saved Top10.
+    """True only for a complete V360 payload exactly matching the saved Top10.
 
     Legacy V332 freezes remain valid as Top10-only, never treated as full120.
     """
