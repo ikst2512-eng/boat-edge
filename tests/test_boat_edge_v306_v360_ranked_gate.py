@@ -3,7 +3,7 @@ from scripts.boat_edge_v306_v360_ranked_gate import inspect, MODEL, MODES
 
 def fixture():
     tickets=[f"{a}-{b}-{c}" for a in range(1,7) for b in range(1,7) for c in range(1,7) if len({a,b,c})==3]
-    rows=[{"rank":i,"boat_combo":ticket,"relative_model_mass":1/120} for i,ticket in enumerate(tickets,1)]
+    rows=[{"rank":i,"boat_combo":ticket,"course_combo":ticket,"relative_model_mass":1/120} for i,ticket in enumerate(tickets,1)]
     return {"research_ranked_120_schema":MODEL,
             "research_ranked_120_by_mode":{m:[dict(x) for x in rows] for m in MODES}}
 
@@ -25,6 +25,15 @@ class V306Tests(unittest.TestCase):
     def test_infinite_mass_rejected(self):
         x=fixture();x['research_ranked_120_by_mode']['national_only'][0]['relative_model_mass']=float('inf')
         self.assertEqual(inspect(x),'INVALID_MASS')
+    def test_missing_course_ticket(self):
+        x=fixture();x['research_ranked_120_by_mode']['national_only'][0].pop('course_combo')
+        self.assertEqual(inspect(x),'INVALID_COURSE_TICKET')
+    def test_duplicate_course_ticket(self):
+        x=fixture();rows=x['research_ranked_120_by_mode']['national_only'];rows[1]['course_combo']=rows[0]['course_combo']
+        self.assertEqual(inspect(x),'INVALID_COURSE_TICKET')
+    def test_mass_order_invalid(self):
+        x=fixture();rows=x['research_ranked_120_by_mode']['national_only'];rows[0]['relative_model_mass']=0.001;rows[1]['relative_model_mass']=2/120-0.001
+        self.assertEqual(inspect(x),'MASS_RANK_ORDER_INVALID')
     def test_no_ranking(self):
         self.assertEqual(inspect({}),"NO_V360_RANKING")
 
