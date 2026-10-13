@@ -64,6 +64,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_boat_edge_v347_runtime_evidence_intake.py' -v
           python3 -m unittest discover -s tests -p 'test_boat_edge_v348_actions_run_export.py' -v
           python3 -m unittest discover -s tests -p 'test_boat_edge_v349_schedule_run_overlap.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v351_scheduled_evidence.py' -v
           python3 - <<'PY_V341'
           from scripts.boat_edge_v341_scheduled_writer_path_audit import audit
           import json
