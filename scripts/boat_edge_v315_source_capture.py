@@ -35,6 +35,24 @@ BLOCKED = re.compile(
 )
 
 
+def assert_source_network_allowed(source_url):
+    """Issue #204: disallow third-party HTTP BEFORE any request is opened.
+
+    Public visibility, an opt-in CLI, a fake receipt or a checked-in permission
+    declaration is not evidence of provider consent. A future permission grant
+    needs independent review and a separate narrowly scoped code change.
+    Official racelist/beforeinfo is not affected by this third-party stop.
+    """
+    try:
+        host = urlsplit(source_url).hostname
+    except (ValueError, TypeError):
+        host = None
+    for provider in ("boaters", "kyoteibiyori"):
+        if host in PROVIDERS[provider]:
+            raise ValueError("THIRD_PARTY_NETWORK_CAPTURE_PAUSED_NO_VERIFIED_GRANT:" + provider)
+    return source_url
+
+
 class NoRedirects(HTTPRedirectHandler):
     def redirect_request(self, request, fp, code, msg, headers, newurl):
         return None
@@ -65,6 +83,8 @@ def check_target(provider, source_url, race_key):
 
 
 def real_fetch(source_url):
+    # Guard the shared real network transport, including callers other than V315.
+    assert_source_network_allowed(source_url)
     opener = build_opener(HTTPSHandler(), NoRedirects())
     req = Request(source_url, headers={
         "User-Agent": "BOAT-EDGE-ResearchSourceAudit/1.0 (one-page manual capture)",
@@ -90,6 +110,8 @@ def capture_one(root, race_key, deadline_jst, provider, source_url,
     if deadline.strftime("%Y%m%d") != race_key[:8]:
         raise ValueError("DEADLINE_DATE_MISMATCH")
     check_target(provider, source_url, race_key)
+    if fetcher is real_fetch:
+        assert_source_network_allowed(source_url)
     def now():
         dt = clock() if clock else datetime.now(JST)
         if not isinstance(dt, datetime) or dt.tzinfo is None or dt.utcoffset() is None:

@@ -42,11 +42,11 @@ jobs:
           # Same parser packages as Development CI and existing V288/V235 workflows.
           python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
           python3 -c 'from bs4 import BeautifulSoup; import lxml, requests'
-      - name: Prospective last-15m SITE capture and immutable research freeze
+      - name: Permission-safe SITE predeadline readiness scan (no automated third-party capture)
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/boat_edge_v334_live_batch_runner.py --root . --capture --window-minutes 15 --max-races 12 > "$RUNNER_TEMP/v336_report.json"
+          python3 scripts/boat_edge_v334_live_batch_runner.py --root . --window-minutes 15 --max-races 12 > "$RUNNER_TEMP/v336_report.json"
           python3 - <<'PY'
           import json, os
           from pathlib import Path
@@ -59,6 +59,10 @@ jobs:
                               'immutable_across_independent_actions_runs_verified')
           if any(report.get(flag) is not False for flag in forbidden_claims):
               raise SystemExit('RESEARCH_REPORT_SAFETY_FLAGS_INVALID')
+          # Issue #204: unattended research must never fetch BOATERS / 競艇日和.
+          # A successful dry-run is not a provider snapshot or model freeze.
+          if report.get('capture_requested') is not False or report.get('completed_count') != 0:
+              raise SystemExit('V336_UNAUTHORIZED_AUTOCAPTURE_OR_FREEZE')
           window = report['window']
           coverage = window['coverage']
           diagnostic = report['run_diagnostic']
@@ -70,6 +74,7 @@ jobs:
             'failures':report['failures'],
             'global_uniqueness_verified':False,
             'research_only':True,
+            'third_party_capture_permitted':False,
           },ensure_ascii=False,sort_keys=True))
           PY
       - name: Upload immutable prospective research artifacts and audit report

@@ -1,5 +1,7 @@
 """V336 isolated scheduled research workflow guardrails (static, offline)."""
 from pathlib import Path
+import json
+import subprocess
 import unittest
 
 
@@ -13,7 +15,10 @@ class V336WorkflowSafety(unittest.TestCase):
         self.assertIn("workflow_dispatch:", s)
         self.assertIn("2,7,12,17,22,27,32,37,42,47,52,57", s)
         self.assertIn("python3 scripts/boat_edge_v334_live_batch_runner.py", s)
-        self.assertIn("--capture --window-minutes 15 --max-races 12", s)
+        self.assertIn("--root . --window-minutes 15 --max-races 12", s)
+        self.assertNotIn("--capture --window-minutes", s)
+        self.assertIn("V336_UNAUTHORIZED_AUTOCAPTURE_OR_FREEZE", s)
+        self.assertIn("'third_party_capture_permitted':False", s)
         self.assertIn("actions/upload-artifact@v4", s)
         self.assertIn("retention-days: 30", s)
         self.assertIn("data/research_local_v332/", s)
@@ -24,6 +29,28 @@ class V336WorkflowSafety(unittest.TestCase):
         self.assertIn("RESEARCH_REPORT_SAFETY_FLAGS_INVALID", s)
         self.assertIn("'global_uniqueness_verified':False", s)
         self.assertIn("'research_only':True", s)
+
+    def test_issue_204_provider_permission_register_denies_all_unknown(self):
+        # Development CI uses sparse checkout (scripts/tests/assets/.github),
+        # so read the exact committed docs blob without creating a duplicate.
+        permission_path="docs/BOAT_EDGE_01_V374_SOURCE_PERMISSION_REGISTER.json"
+        installed=ROOT/permission_path
+        if installed.is_file():
+            source=installed.read_text(encoding="utf8")
+        else:
+            source=subprocess.check_output(
+                ["git","show","HEAD:"+permission_path],cwd=ROOT,text=True)
+        document=json.loads(source)
+        self.assertEqual(document["issue"],204)
+        self.assertEqual(set(document["providers"]),{"boaters","kyoteibiyori"})
+        fields={"approved_for_automated_access","approved_for_ai_training",
+                "approved_for_redistribution","scope","date","written_grant"}
+        for record in document["providers"].values():
+            self.assertEqual(set(record), fields)
+            self.assertIs(record["approved_for_automated_access"],False)
+            self.assertIs(record["approved_for_ai_training"],False)
+            self.assertIs(record["approved_for_redistribution"],False)
+            self.assertIsNone(record["written_grant"])
 
     def test_v357_parser_dependencies_installed_before_capture(self):
         # PR #161 introduced BeautifulSoup/lxml parsers; V336 failed on absent bs4.
