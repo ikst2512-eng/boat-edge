@@ -10,6 +10,53 @@ from scripts.boat_edge_v301_paired_evidence import BASE, CONFIG, EvidenceError, 
 from scripts.boat_edge_v241_results import build as verified_v241_build
 from scripts.boat_edge_v305_site_miss_attribution import category as existing_v305_category
 
+def ranked_site_baseline_by_day(normalized):
+    """Descriptive, non-additive rank bins from *already validated* V241 rows.
+
+    Caller must have applied V241 Git-original and V234 post-result guards.
+    No candidate comparison, retro-ranking or model-selection inference.
+    """
+    by_day = {}
+    rank_bins = ("top3", "rank4_5", "rank6_10", "outside_top10")
+    for row in normalized:
+        key, day = row["key"], row["day"]
+        if day != key[:8] or not isinstance(row["baseline"], list) or len(row["baseline"]) != 10:
+            raise EvidenceError("V235_INVALID_VALIDATED_DAY_OR_RANKING")
+        if len(set(row["baseline"])) != 10 or any(not combo(x) for x in row["baseline"]):
+            raise EvidenceError("V235_INVALID_VALIDATED_RANKING")
+        win = row["winning"]
+        if not combo(win):
+            raise EvidenceError("V235_INVALID_VALIDATED_WINNER")
+        d = by_day.setdefault(day, {
+            "races": 0,
+            "baseline_hits": {"3": 0, "5": 0, "10": 0},
+            "rank_bins": {k: 0 for k in rank_bins},
+            "miss_leg_partition": {k: 0 for k in (
+                "top10_hit", "head_missing", "second_missing_given_head",
+                "third_missing_given_head_second")},
+        })
+        d["races"] += 1
+        position = row["baseline"].index(win) + 1 if win in row["baseline"] else None
+        bin_name = ("outside_top10" if position is None else "top3" if position <= 3
+                    else "rank4_5" if position <= 5 else "rank6_10")
+        d["rank_bins"][bin_name] += 1
+        for n in (3, 5, 10):
+            d["baseline_hits"][str(n)] += (position is not None and position <= n)
+        d["miss_leg_partition"][existing_v305_category(row)] += 1
+    if sum(d["races"] for d in by_day.values()) != len(normalized):
+        raise EvidenceError("V235_DAY_TOTAL_MISMATCH")
+    for day, d in by_day.items():
+        b = d["rank_bins"]
+        hits = d["baseline_hits"]
+        if (sum(b.values()) != d["races"]
+                or hits != {"3": b["top3"], "5": b["top3"] + b["rank4_5"],
+                            "10": b["top3"] + b["rank4_5"] + b["rank6_10"]}
+                or sum(d["miss_leg_partition"].values()) != d["races"]
+                or d["miss_leg_partition"]["top10_hit"] != hits["10"]):
+            raise EvidenceError("V235_DAY_RANK_BUCKETS_INCONSISTENT_" + day)
+    return {day: by_day[day] for day in sorted(by_day)}
+
+
 def reconcile_v235_baseline(rows, original_cohorts, shadow_unique):
     """Pure reconciliation of V241-verified SITE rows; not a result scorer.
 
@@ -74,6 +121,8 @@ def reconcile_v235_baseline(rows, original_cohorts, shadow_unique):
     return {"scope": "V241_GIT_VERIFIED_SITE_BASELINE_NOT_FORMAL_FRESH",
             "baseline": summarize(normalized),
             "miss_leg_partition": counts,
+            "verified_baseline_by_day": ranked_site_baseline_by_day(normalized),
+            "by_day_descriptive_only_not_evidence_of_model_improvement": True,
             "additional_unique_outside_v301": len(by_key) - len(shadow_unique),
             "v301_race_keys_all_contained": True,
             "candidate_top3_top5_delta": None,
