@@ -139,7 +139,11 @@ async def check(engine, shot_dir=None):
                     "() => document.documentElement.scrollWidth <= window.innerWidth + 1"
                 ), "unintended full-page horizontal scrolling on an iPhone"
             before = await page.locator("#raceView #be207Top .be207-combo").inner_text()
-            await details.click()
+            # Open by keyboard as well as close: both directions are required
+            # for a complete accessible disclosure interaction.
+            await details.focus()
+            assert await details.evaluate("(el) => document.activeElement === el"), "audit open control not keyboard focusable"
+            await page.keyboard.press("Enter")
             assert await page.locator("#raceView #be207Top .be305-evidence-items").is_visible(), "audit details inaccessible"
             assert await page.locator("#raceView #be207Top .be207-combo").inner_text() == before
             # Keyboard users must be able to close the disclosure with Enter.
