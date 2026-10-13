@@ -26,6 +26,7 @@ from boat_edge_v307_pl120_research import rank_120
 from boat_edge_v317_ticket_mapper import map_course_mass_to_boat_tickets
 
 MODEL = "BOAT_EDGE_02_ENTRY_MARGINALIZED_TOPK_ABLATION_V1"
+NO_FACTOR = "BOAT_EDGE_02_V307_EXHIBITION_NO_COURSE_FACTOR_CONTROL_V1"
 BASELINE = "BOAT_EDGE_02_V307_EXHIBITION_SINGLE_ENTRY_BASELINE_V1"
 CANDIDATE = "BOAT_EDGE_02_V307_JOINT_ENTRY_MARGINAL_RESEARCH_V1"
 BOATS = frozenset(range(1, 7))
@@ -109,8 +110,15 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
             entry["full_120_trifecta_ready"] is not False or
             entry["formal_results_seen"] is not False):
         raise ValueError("JOINT_ENTRY_RESEARCH_ONLY_INVARIANTS")
-    # Baseline: one official start-exhibition projected permutation, with the
-    # very same strengths + course factors as candidate. Only entry changes.
+    # Control A: original V307 research strengths with no new venue factor.
+    # Control B: exactly the same exhibition mapping with a frozen course factor.
+    # Candidate C: same factor and strengths as B, but uncertain joint entry.
+    # Hence A→B isolates the new factor, while B→C isolates entry uncertainty.
+    unadjusted = rank_120({course: strengths[boat] for boat, course in observed.items()})
+    unadjusted_mapped = map_course_mass_to_boat_tickets(
+        unadjusted, observed, "START_EXHIBITION_PROVISIONAL")
+    no_factor = _ranked({row["boat_combo"]: row["relative_model_mass"]
+                         for row in unadjusted_mapped["ranked_120_boat"]})
     prior_weights = {course: strengths[boat] * factors[course]
                      for boat, course in observed.items()}
     base_ranked = rank_120(prior_weights)
@@ -137,17 +145,24 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
             bcombo = "-".join(str(boat_by_course[int(c)]) for c in ccombo.split("-"))
             result_mass[bcombo] += mass * prob
     candidate = _ranked(result_mass)
+    no_factor_top = [r["boat_combo"] for r in no_factor[:10]]
     base_top = [r["boat_combo"] for r in baseline[:10]]
     candidate_top = [r["boat_combo"] for r in candidate[:10]]
-    distance = sum(abs(a["relative_model_mass"] -
-                       next(b["relative_model_mass"] for b in candidate
-                            if b["boat_combo"] == a["boat_combo"]))
-                   for a in baseline)
+    def l1(left, right):
+        lookup = {r["boat_combo"]: r["relative_model_mass"] for r in right}
+        return sum(abs(row["relative_model_mass"] - lookup[row["boat_combo"]])
+                   for row in left)
+    factor_only_distance = l1(no_factor, baseline)
+    distance = l1(baseline, candidate)
     return {
         "schema": MODEL,
         "race_key": race_key,
+        "no_factor_control_ranking_document": _doc(NO_FACTOR, race_key, cfg, no_factor),
         "baseline_ranking_document": _doc(BASELINE, race_key, cfg, baseline),
         "candidate_ranking_document": _doc(CANDIDATE, race_key, cfg, candidate),
+        "no_factor_control_top3": no_factor_top[:3],
+        "no_factor_control_top5": no_factor_top[:5],
+        "no_factor_control_top10": no_factor_top,
         "baseline_top3": base_top[:3],
         "candidate_top3": candidate_top[:3],
         "baseline_top5": base_top[:5],
@@ -158,7 +173,9 @@ def prepare_entry_topk_ablation(race_key, scope, cfg, entry_evidence):
         "entry_permutations_nonzero_weight": present,
         "entry_count_sha256": entry["source_count_sha256"],
         "factor_manifest_sha256": cfg["course_factor_manifest_sha256"],
+        "factor_only_mass_l1_not_hit_improvement": factor_only_distance,
         "mass_l1_research_distance_not_hit_improvement": distance,
+        "three_arm_predeclared_ablation": "A_no_factor__B_fixed_exhibition_with_course_factor__C_joint_entry_with_same_factor",
         "change_is_entry_uncertainty_only_at_fixed_strengths_and_factors": True,
         "baseline_entry_is_observed_exhibition_not_actual": True,
         "candidate_entry_is_hypothetical_permutation_not_actual": True,
