@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 
 from boat_edge_v230_fast_lane import extract_blocked
 from boat_edge_v318_shadow_freeze import canonical, JST
+from boat_edge_v370_official_racelist_lane_proof import proof_six_lane_registrations
 from boat_edge_v366_isolated_source_only_capture import (
     MODEL as SOURCE_MODEL, OUTPUT_ROOT, ENDPOINTS, _source_url,
     _validate_registration_parity, _validate_official_beforeinfo, _safe_parent,
@@ -138,6 +139,7 @@ def replay_one(root, key, expected_manifest_sha256=None):
     if not all(2*60 <= (deadline - t).total_seconds() <= 19*60 for t in times + [frozen]):
         raise ValueError("V367_FINAL_SELECTION_WINDOW_INVALID")
     registrations = _validate_registration_parity(race, collected["racelist"])
+    lane_proof = proof_six_lane_registrations(collected["racelist"], race["racers"])
     coverage, proof = _validate_official_beforeinfo(race, collected["beforeinfo"])
     reg_text = BeautifulSoup(collected["racelist"], "lxml").get_text(" ", strip=True)
     bf_text = BeautifulSoup(collected["beforeinfo"], "lxml").get_text(" ", strip=True)
@@ -145,6 +147,7 @@ def replay_one(root, key, expected_manifest_sha256=None):
     if reasons or lanes or flags:
         raise ValueError("V367_EXPLICIT_WITHDRAWAL_OR_ABSENCE_FOUND")
     if (registrations != doc.get("registered_racers_matched") or
+            lane_proof != doc.get("official_racelist_lane_registration_proof") or
             doc.get("official_racelist_active_race_deadline_matched") is not True or
             coverage != doc.get("official_exhibition_coverage") or
             proof != doc.get("official_start_course_proof")):
