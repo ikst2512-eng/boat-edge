@@ -22,6 +22,7 @@ jobs:
             scripts
             tests
             assets
+            index.html
             .github
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -34,6 +35,34 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
       - name: Validate tracked source pins
         run: python3 scripts/verify_workflow_source_pins.py
+      - name: Prove V235 08:20 window and source-bound Git first-add SHA (no result access)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
+      - name: V392 verify prospective next-day official cards and independent UI TopK
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v392_card_preview.py' -v
+          node tests/test_boat_edge_v392_early_prediction.cjs
+          python3 -m py_compile scripts/boat_edge_v392_card_preview.py
+
+      - name: Compile V136 production scorer before deployment
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m py_compile scripts/site_accuracy_v136.py scripts/site_v136_historical_proof.py
+      - name: Validate V136 fresh-main SITE-only score publication on conflicts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v136_safe_publish.py' -v
+      - name: Prove V136 old-day V125 audit and immutable first Git source before scoring
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v136_historical_proof.py' -v
+      - name: Prove V257 cron ownership and strict single 08:20 prewarm before main
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v257_event_trigger.py' -v
       - name: Test guards, exact odds mapping, immutable prediction evidence and daily budgets
         env:
           PYTHONPATH: scripts
