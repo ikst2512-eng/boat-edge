@@ -1005,7 +1005,7 @@ async function be181ServerFinal(key){
  // SHA-check the exact public bytes against V125 and V229 PRE_RESULT evidence.
  // This is NOT formal CURRENT approval or proof of the first Git-add timestamp.
 async function be181VerifiedPreDeadlineFinal(key,deadline,nowMs=Date.now()){
-  if(!be181KeyValid(key)||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(String(deadline||''))||
+  if(!be181KeyValid(key)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(deadline||''))||
      typeof crypto==='undefined'||!crypto.subtle||typeof TextDecoder==='undefined')return null;
   const day=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
   const due=Date.parse(day+'T'+deadline+':00+09:00');
