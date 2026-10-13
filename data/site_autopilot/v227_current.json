@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-13T22:34:17.837782+00:00",
+  "checked_at": "2026-10-13T23:31:36.856401+00:00",
   "day_jst": "20261014",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -68,15 +68,41 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
-    "current_window": [],
+    "collector_health_issues": [
+      "predeadline_incomplete"
+    ],
+    "current_window": [
+      {
+        "deadline_jst": "08:35",
+        "issues": [
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 3.4,
+        "race_key": "20261014-14-01",
+        "venue": "鳴門"
+      },
+      {
+        "deadline_jst": "08:43",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 11.4,
+        "race_key": "20261014-18-01",
+        "venue": "徳山"
+      }
+    ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
     "readiness_observed_races": 0,
     "readiness_reasons": {},
     "readiness_shadow_verified_races": 0,
     "schedule_today": true,
     "snapshot_files_today": 0,
-    "status": "WAITING_FOR_PREDEADLINE",
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
