@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 6,
     "deadline": "10:52",
-    "updated_at": "2026-10-14T08:10:36+09:00",
+    "updated_at": "2026-10-14T08:31:57+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=14&rno=6",
-      "fetched_at": "2026-10-14T08:11:52+09:00",
-      "sha256": "fd4c8ea2add15d9213f208a3f12d2597719c792923b610e2ce959bc774d69e16",
+      "fetched_at": "2026-10-14T08:33:26+09:00",
+      "sha256": "228793bacb5fb5c97c2e80fa987193c85cf281e64e7a6da2110c621af779578e",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=14&rno=6",
+      "fetched_at": "2026-10-14T08:32:54+09:00",
+      "sha256": "6727a8d3c3aaf4815ff82436316ae730bd689850398a583e83edf8611b7b7014",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "80898114285ddc1aed8a96dc39c7b7e84266556ee07e5bb1d628c2c2335f3726"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "c62a85a93b4d3715913d4a19da88b0c8ff58c08ff0cad2ab56418e1d484e1374"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "8a7ce702e84ef83bda056e60b8971d3ed8fe1f5cf23a37f5958d94e484618b03"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "2a423b107fed801c5d7737b9c94534afb90fb14fe35651eb8eb411aa04ae982c"
     }
   },
   "racers": [
@@ -299,7 +305,53 @@
       "raw_text": "6 5423 / B2 高橋 嗣穏 徳島/高知 24歳/50.5kg F2 L0 0.22 1.25 0.00 0.00 1.16 0.00 0.00 75 28.26 44.57 79 34.65 54.46 2 1 6"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 常盤 海心 54.4kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 廣瀬 凜 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 村本 大成 52.1kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 登玉 隼百 52.9kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 仲本 舜 52.4kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 高橋 嗣穏 50.5kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 5.0,
+      "wave_cm": 5.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

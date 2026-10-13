@@ -8,7 +8,7 @@
     "event": "開設72周年記念トーキョー・ベイ・カップ",
     "race_no": 2,
     "deadline": "10:57",
-    "updated_at": "2026-10-14T08:10:36+09:00",
+    "updated_at": "2026-10-14T08:31:57+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=04&rno=2",
-      "fetched_at": "2026-10-14T08:12:47+09:00",
-      "sha256": "8e5a50138ae67117fd34f5d017f0a4a17d2e6cb91e97de2b45107d0bf7301fa7",
+      "fetched_at": "2026-10-14T08:33:15+09:00",
+      "sha256": "7dd73311ee39088de6ecf72381a52c42bbc7b6161aa66835df70342a5c3a39d4",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=04&rno=2",
+      "fetched_at": "2026-10-14T08:32:56+09:00",
+      "sha256": "b2fe136dad327ff2038cb96dce6d55907d4270151d37429e601a521379614591",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "80898114285ddc1aed8a96dc39c7b7e84266556ee07e5bb1d628c2c2335f3726"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "c62a85a93b4d3715913d4a19da88b0c8ff58c08ff0cad2ab56418e1d484e1374"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "8a7ce702e84ef83bda056e60b8971d3ed8fe1f5cf23a37f5958d94e484618b03"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "2a423b107fed801c5d7737b9c94534afb90fb14fe35651eb8eb411aa04ae982c"
     }
   },
   "racers": [
@@ -287,7 +293,53 @@
       "raw_text": "6 3783 / A1 瓜生 正義 福岡/福岡 50歳/52.6kg F0 L0 0.15 6.61 37.90 55.65 6.33 50.00 55.56 53 36.84 55.26 71 42.31 60.26 12 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 海野 康志郎 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 中田 竜太 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 永井 彪也 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 藤原 啓史朗 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 上田 龍星 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 瓜生 正義 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
