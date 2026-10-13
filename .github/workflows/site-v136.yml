@@ -21,7 +21,9 @@ concurrency:
 
 jobs:
   install:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Installed in 2026: preserve tracked source, never regenerate the obsolete inline V136 scorer.
+    # The old installer overwrites current first-Git proof logic and used unsafe rebase-on-push.
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -115,7 +117,7 @@ jobs:
           git push
   score:
     needs: [install]
-    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_run' || needs.install.result == 'success')
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
