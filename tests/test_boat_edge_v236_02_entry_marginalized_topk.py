@@ -195,6 +195,59 @@ class EntryMarginalizationAblation(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,"FORMAL_FRESH_EXCLUDED"):
                     prepare_entry_topk_ablation(key,SCOPE,cfg(),evidence())
 
+    def test_topk_ticket_turnover_is_not_measured_accuracy(self):
+        r=trial()
+        for comparison in ("a_to_b", "b_to_c"):
+            delta=r["topk_membership_"+comparison+"_not_hit_rates"]
+            self.assertEqual(set(delta), {"3", "5", "10"})
+            for k in (3,5,10):
+                row=delta[str(k)]
+                self.assertEqual(
+                    row["changed_ticket_count_per_side"],
+                    len(row["removed_boat_tickets"]))
+                self.assertEqual(
+                    len(row["added_boat_tickets"]),len(row["removed_boat_tickets"]))
+                self.assertLessEqual(row["changed_ticket_count_per_side"], k)
+                self.assertEqual(
+                    row["ordered_topk_identical"],
+                    (r["no_factor_control_top10"] if comparison=="a_to_b" else r["baseline_top10"])[:k] ==
+                    (r["baseline_top10"] if comparison=="a_to_b" else r["candidate_top10"])[:k])
+        self.assertTrue(r["model_ranking_change_is_not_real_accuracy_gain"])
+        self.assertFalse(r["head_top3_top5_top10_improvement_proven"])
+    def test_head_masses_are_six_normalized_boat_labels(self):
+        r=trial()
+        for group in "abc":
+            heads=r["head_relative_mass_"+group]
+            self.assertEqual(set(heads),set(str(i) for i in range(1,7)))
+            self.assertAlmostEqual(sum(heads.values()),1,places=11)
+            self.assertIn(r["top_head_boat_"+group],range(1,7))
+        self.assertEqual(r["head_top1_change_a_to_b"],
+                         r["top_head_boat_a"] != r["top_head_boat_b"])
+        self.assertEqual(r["head_top1_change_b_to_c"],
+                         r["top_head_boat_b"] != r["top_head_boat_c"])
+    def test_negative_control_all_one_course_factors_zero_ticket_turnover(self):
+        config=cfg()
+        config["course_factor_by_course"]={b:1.0 for b in range(1,7)}
+        config["course_factor_manifest_sha256"]=digest(config["course_factor_by_course"])
+        r=trial(config,evidence(uniform=True))
+        for compare in ("a_to_b","b_to_c"):
+            for k in ("3","5","10"):
+                self.assertEqual(
+                    r["topk_membership_"+compare+"_not_hit_rates"][k]["changed_ticket_count_per_side"],0)
+                self.assertTrue(
+                    r["topk_membership_"+compare+"_not_hit_rates"][k]["ordered_topk_identical"])
+        self.assertFalse(r["head_top1_change_a_to_b"])
+        self.assertFalse(r["head_top1_change_b_to_c"])
+    def test_large_course_factor_can_change_topk_without_measured_hit(self):
+        config=cfg()
+        config["course_factor_by_course"]={
+            b:float(12 if b==4 else 2 if b==2 else 1) for b in range(1,7)}
+        config["course_factor_manifest_sha256"]=digest(config["course_factor_by_course"])
+        r=trial(config,evidence(uniform=True))
+        self.assertGreater(r["factor_only_mass_l1_not_hit_improvement"],0.01)
+        self.assertTrue(r["model_ranking_change_is_not_real_accuracy_gain"])
+        self.assertFalse(r["calibration_validated"])
+
     def test_no_unverified_beneficial_hit_rate_from_mass_distance(self):
         out=trial()
         self.assertGreaterEqual(out["mass_l1_research_distance_not_hit_improvement"],0)
