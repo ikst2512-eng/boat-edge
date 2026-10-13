@@ -32,6 +32,8 @@ def inspect(frozen):
         if not isinstance(rows,list) or len(rows)!=120:
             return "INVALID_CARDINALITY"
         seen=set()
+        seen_courses=set()
+        previous_mass=float('inf')
         for rank,row in enumerate(rows,1):
             if not isinstance(row,dict) or type(row.get("rank")) is not int or row["rank"]!=rank:
                 return "INVALID_RANK"
@@ -39,9 +41,16 @@ def inspect(frozen):
             if not valid_combo(boat) or boat in seen:
                 return "INVALID_TICKET"
             seen.add(boat)
+            course=row.get('course_combo')
+            if not valid_combo(course) or course in seen_courses:
+                return 'INVALID_COURSE_TICKET'
+            seen_courses.add(course)
             mass=row.get("relative_model_mass")
             if type(mass) not in (int,float) or not math.isfinite(mass) or not (0<=mass<=1):
-                return "INVALID_MASS"
+                return 'INVALID_MASS'
+            if mass > previous_mass + 1e-12:
+                return 'MASS_RANK_ORDER_INVALID'
+            previous_mass=mass
         if len(seen)!=120 or abs(sum(r["relative_model_mass"] for r in rows)-1)>1e-8:
             return "INVALID_DISTRIBUTION"
     return "STRUCTURAL_TOP3_TOP5_TOP10_READY_NOT_ATTESTED"
