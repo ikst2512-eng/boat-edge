@@ -143,3 +143,10 @@ html:not(.be208-details-on) #raceView #be206Quick .be206-source{display:none!imp
 @media(prefers-reduced-motion:reduce){
  #raceView #raceTabs,#homeView .be108-race-strip{scroll-behavior:auto}
 }
+
+/* A36: keep evidence visible for the two source-sensitive 6-boat tabs on mobile. */
+html:not(.be208-details-on) #raceView #be206Quick[data-be206-metric="exhibit"] .be206-source,
+html:not(.be208-details-on) #raceView #be206Quick[data-be206-metric="original"] .be206-source{
+ display:block!important;margin:7px 0;padding:8px 9px;border-left:3px solid #b9cbde;
+ background:#f6f9fc;border-radius:4px;font-size:11px;line-height:1.7;overflow-wrap:anywhere
+}
