@@ -100,6 +100,34 @@ function skeleton(){
  }
  return box;
 }
+/* Presentation only: never infer a prediction, verified source or freeze. */
+function predictionWindowNotice(r,now=Date.now()){
+ const key=String(r?.race_key||''),time=String(r?.meta?.deadline||'');
+ const clock=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
+ if(!valid(key)||!clock||String(r?.meta?.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
+    Number(r?.meta?.race_no)!==Number(key.slice(12,14)))
+  return '出走表と締切予定を照合できません。未確認の買い目は表示しません。';
+ const day=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+ if(r?.meta?.date&&r.meta.date!==day)
+  return 'レース日付が一致しません。未確認の買い目は表示しません。';
+ const due=Date.parse(day+'T'+time+':00+09:00');
+ if(!Number.isFinite(due))return '締切予定時刻を確認できません。買い目は表示しません。';
+ if(now>=due)return '締切済み：締切前に固定保存された買い目がなければ後付け表示しません。';
+ if(now<due-15*60000){
+  const from=new Date(due-15*60000).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});
+  return '直前データ照合前：締切予定 '+time+' ／ 直前照合の目安 '+from+' JST。欠場・取消と保存証拠が揃うまでは買い目を表示しません。';
+ }
+ return '締切前の直前照合時間帯です。公式直前情報・欠場／取消・予想保存の証拠が揃うまでは買い目停止中です。';
+}
+function showPredictionWait(r,blocked){
+ const host=$('#raceView .race-summary');
+ let note=$('#be391PredictionWait');
+ if(!host||!valid(r?.race_key)||!blocked){note?.remove();return;}
+ if(!note){note=document.createElement('div');note.id='be391PredictionWait';note.className='be391-prediction-wait';note.setAttribute('role','status');host.appendChild(note);}
+ if(note.parentElement!==host)host.appendChild(note);
+ note.dataset.raceKey=r.race_key;
+ text(note,'予想表示待ち｜'+predictionWindowNotice(r));
+}
 function safety(r){
  if($('#be182ScratchStop')?.isConnected)return {kind:'stop',title:'欠場・取消確認中／買い目停止',detail:'出走可否の確認が必要'};
  const s=window.BoatEdgeV205?.sourceStatus?.();
@@ -145,6 +173,7 @@ function render(){
  if(rendering)return;
  const r=race(),p=$('#be108PredictionModes'),v=$('#raceView');
  if(!valid(r?.race_key)||!p||!v||!window.BoatEdgeV204?.summarize){
+  showPredictionWait(r,valid(r?.race_key)&&Boolean(v));
   $('#be207Top')?.remove();document.documentElement.classList.remove('be207-ready','be306-race-await');return;
  }
  const key=r.race_key,st=safety(r),sum=window.BoatEdgeV204.summarize(p),settled=sum.settled;
@@ -178,6 +207,7 @@ function render(){
  rendering=true;
  try{
   const stop=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
+  showPredictionWait(r,stop);
   box.classList.add('ready');box.dataset.status=st.kind;
   text($('.be207-condition strong',box),st.title||'欠場・取消確認待ち');
   text($('.be207-condition span',box),st.detail||'出走可否未確定');
@@ -258,6 +288,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace};
+window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace,predictionWindowNotice};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
