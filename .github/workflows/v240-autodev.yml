@@ -102,7 +102,7 @@ jobs:
           dst=Path(os.environ["UI_WORK"])
           dst.mkdir(parents=True,exist_ok=True)
           paths=[QUEUE]+sorted(x for x in ALLOWED_PAGES if (src/x).is_file())
-          paths+=sorted(str(x) for x in (src/"assets").glob("*") if x.is_file() and permitted_ui(str(x)))
+          paths+=sorted(str(x.relative_to(src)) for x in (src/"assets").glob("*") if x.is_file() and permitted_ui(str(x.relative_to(src))))
           for name in paths:
               inp=src/name
               assert inp.is_file() and not inp.is_symlink(), name
@@ -160,7 +160,7 @@ jobs:
           statuses=subprocess.check_output(["git","status","--porcelain","--untracked-files=all"],cwd=work,text=True).splitlines()
           assert not any(not s.startswith(" M ") for s in statuses), "V240_UNSAFE_AGENT_STATUS"
           paths=[QUEUE]+sorted(x for x in ALLOWED_PAGES if (home/x).is_file())
-          paths+=sorted(str(x) for x in (home/"assets").glob("*") if x.is_file() and permitted_ui(str(x)))
+          paths+=sorted(str(x.relative_to(home)) for x in (home/"assets").glob("*") if x.is_file() and permitted_ui(str(x.relative_to(home))))
           for name in paths:
               output=work/name
               original=home/name
