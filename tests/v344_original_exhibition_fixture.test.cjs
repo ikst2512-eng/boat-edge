@@ -266,3 +266,58 @@ test('V355 real numeric zero remains visible for calm wind and exhibition ST', (
   assert.equal(api.makeRows(data).rows[0].st, 0);
   assert.match(api.html(data,null,null), /風速 <b>0m\/s<\/b>/);
 });
+
+test('V356 boolean and composite metric values are not treated as measured zero', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {
+    racers: Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:i===0?false:i===1?[]:6.5})),
+    start_exhibition: Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:i===0?false:0.12})),
+    weather: {wind_speed_ms:0}
+  };
+  const rows=api.makeRows(data).rows,markup=api.html(data,null,null);
+  assert.equal(rows[0].displayTime,null);
+  assert.equal(rows[1].displayTime,null);
+  assert.equal(rows[0].st,null);
+  assert.match(markup,/公式展示 未取得/);
+  assert.match(markup,/展示ST 未取得/);
+  assert.match(markup,/風速 <b>0m\/s<\/b>/);
+});
+
+test('V356 duplicate start-exhibition lane blanks its course and ST, not other boats', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {start_exhibition:[
+    ...Array.from({length:6},(_,i)=>({lane:i+1,course:i+1,st:0.12})),
+    {lane:1,course:6,st:0.31}
+  ]};
+  const rows=api.makeRows(data).rows;
+  assert.equal(rows[0].course,null);
+  assert.equal(rows[0].st,null);
+  assert.equal(rows[1].course,2);
+  assert.equal(rows[1].st,0.12);
+  assert.match(api.html(data,null,null),/展示ST 未取得/);
+});
+
+test('V356 duplicate official exhibition lane cannot overwrite the verified comparison', () => {
+  const data = race('20261013-04-01');
+  data.source_audit.beforeinfo = {status:'ok',fetched_at:'2026-10-13T10:30:00+09:00'};
+  data.beforeinfo = {racers:[
+    ...Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.5})),
+    {lane:1,exhibition_time:6.33}
+  ]};
+  const rows=api.makeRows(data).rows;
+  assert.equal(rows[0].displayTime,null);
+  assert.equal(rows[1].displayTime,6.5);
+  assert.match(api.html(data,null,null),/公式展示 未取得/);
+});
+
+test('V356 duplicate original-exhibition boat cannot overwrite lap and source badge', () => {
+  const data = race('20261013-06-01');
+  data.original_exhibition.boats.push({lane:1,values:[36.0,5.0,8.0]});
+  const rows=api.makeRows(data).rows;
+  assert.equal(rows[0].lap,null);
+  assert.equal(rows[0].turn,null);
+  assert.equal(rows[1].lap,37.11);
+  assert.match(api.html(data,null,null),/オリ展 未取得/);
+});
