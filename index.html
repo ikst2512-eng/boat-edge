@@ -3182,7 +3182,6 @@ async function loadRace(file, jcd){
     race=await be182FetchScratch(race);
     if(request!==be03RaceRequestSerial)return;
     await refreshFormalStatus();
-    if(request!==be03RaceRequestSerial)return;
     const overlay=await loadFormalOverlay(race.race_key);
     if(request!==be03RaceRequestSerial)return;
     race=mergeFormalOverlay(race,overlay);
