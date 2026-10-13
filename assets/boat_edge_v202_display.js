@@ -63,8 +63,8 @@
       const oe=rawOE[lane]||[],pick=name=>{let idx=labelMap.get(name);return idx===undefined?null:num(oe[idx]);};
       return {lane,name:r?.name||'選手未取得',nationalWin:num(r?.national?.win_rate),nationalQ:num(r?.national?.quinella_rate),national3:num(r?.national?.trio_rate),
         localWin:num(r?.local?.win_rate),localQ:num(r?.local?.quinella_rate),local3:num(r?.local?.trio_rate),motorQ:num(r?.motor?.quinella_rate),motor3:num(r?.motor?.trio_rate),boatQ:num(r?.boat?.quinella_rate),boat3:num(r?.boat?.trio_rate),
-        displayTime:num(b.exhibition_time),tilt:num(b.tilt),course:e.course??num(save.course),
-        st:e.st??save.exhibition_st_raw??save.exhibition_st??null,exhibitionF:e.f===true||save.exhibition_f===true,
+        displayTime:ok?num(b.exhibition_time):null,tilt:ok?num(b.tilt):null,course:ok?e.course:null,
+        st:ok?e.st:null,exhibitionF:ok&&e.f===true,
         cachedBeforeinfo:!ok&&(Boolean(b.exhibition_time!==undefined)||Boolean(save.course!==undefined)),
         lap:pick('一周'),turn:pick('まわり足'),straight:pick('直線')};
     });
