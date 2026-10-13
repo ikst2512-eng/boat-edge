@@ -132,7 +132,11 @@
     }catch(_){return false;}
   }
   function modelStatus(pred,approved){
-    return approved?'正式CURRENT':pred?.mode==='formal'?'正式CURRENTの承認照合待ち（参考扱い）':'サイト参考予想（正式未接続）';
+    if(approved)return '正式CURRENT';
+    if(pred?.mode==='formal')return '正式CURRENTの承認照合待ち（参考扱い）';
+    if(!pred)return '予想未取得・表示待ち';
+    if(pred?.mode==='blocked')return '買い目停止・出走可否確認待ち';
+    return 'サイト参考予想（正式未接続）';
   }
   function sourceChip(race,key,label,has){
     const src=race?.source_audit?.[key]||{},good=sourceOK(race,key)&&has;
