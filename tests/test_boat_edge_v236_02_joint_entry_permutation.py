@@ -137,6 +137,14 @@ class JointSixEntryResearch(unittest.TestCase):
         r=joint_entry_distribution(KEY,SCOPE,ev)
         self.assertAlmostEqual(r["ranked_720"][0]["relative_model_mass"],1/720)
         self.assertEqual(r["top10_provisional_course_assignments"][0],[1,2,3,4,5,6])
+    def test_commercial_provider_cannot_be_mislabelled_official(self):
+        for url in ("https://boaters-boatrace.com/guide/data-how-to-read",
+                    "https://kyoteibiyori.com/data/",
+                    "https://www.boatrace.jp.evil.example/data",
+                    "http://www.boatrace.jp/owpc/pc/extra/data/download.html"):
+            ev=evidence();ev["source_url"]=url
+            with self.assertRaisesRegex(ValueError,"OFFICIAL_SOURCE_URL_REQUIRED"):
+                joint_entry_distribution(KEY,SCOPE,ev)
 
 
 if __name__=="__main__":
