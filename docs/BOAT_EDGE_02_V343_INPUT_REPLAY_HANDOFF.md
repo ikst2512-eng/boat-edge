@@ -255,3 +255,31 @@ No change to site UI, production prediction engine, model weights,
 official current/future outcomes, formal Fresh results_seen/unlock/
 scoring, or main/shared workflow ownership. Track 01 alone handles
 PR integration and live source-collector remediation.
+
+
+### V362 active official race-identity hardening (2026-10-13)
+
+The initially introduced labelled-table proof is insufficient by itself to
+exclude identical six-boat/ST data from a **different race**: source URLs
+and hashes are recorded metadata, not independent proof of HTML identity.
+
+V362 now requires exactly one official current-race navigation table matching
+the saved official markup `div.table1.h-mt10 > table`, with the printed
+`レース` header and 12 individually labelled `beforeinfo` links for the
+same day and venue. It requires exactly one selected, uncolored race tab and
+that tab's R number to equal the frozen race key. The single `締切予定時刻`
+row must contain 12 displayed times and exactly one selected-time cell;
+that time must equal the frozen race metadata deadline. These checks are
+**in addition** to all six original source table boat/icon/ST checks and
+SHA256 matching. Any mismatch is a fail-closed exception.
+
+This was designed against actual existing repository official HTML shapes
+under data/raw/20261013/{15_02,04_11,12_01}_beforeinfo.html.
+Checking those HTML structures is *not* a formal future freeze, server
+timestamp authentication, or independent source authorization.
+
+V362 synthetic regression adds wrong venue/date, duplicate/incorrect race
+tabs, conflicting selected race, altered deadline and wrong official page
+type. It still never reads race outcomes, nor touches main or the live
+source refresh workflow. Strictness can lower coverage when source and
+race metadata differ; such cases must be reported, never bypassed.
