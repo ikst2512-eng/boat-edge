@@ -86,6 +86,7 @@ def audit(day, files):
     counters = {s: Counter() for s in PREVIEWS}
     counts = Counter()
     # No outcome fields are read, returned, or persisted.
+    eligible_by_source = {name: set() for name in PREVIEWS}
     for key in sorted(baseline):
         counts["race_cards"] += 1
         for source in ("title",):
@@ -111,11 +112,13 @@ def audit(day, files):
                 counters[source]["not_before_deadline"] += 1
             else:
                 counters[source]["timestamp_eligible_unverified"] += 1
-        if all(counters[s]["timestamp_eligible_unverified"] > 0 for s in ()):
-            pass
+                eligible_by_source[source].add(key)
     for source, rows in source_rows.items():
         counts[source + "_rows"] = len(rows)
         counts[source + "_outside_race_cards"] = len(set(rows) - set(baseline))
+    counts["all_four_preview_timestamps_eligible_unverified"] = len(set.intersection(
+        *(eligible_by_source[name] for name in PREVIEWS)
+    ))
     # Never label timestamps as independently verified as-of proof.
     return {
         "schema": SCHEMA,
