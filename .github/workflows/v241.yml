@@ -42,12 +42,17 @@ jobs:
               blob=gzip.decompress(base64.b64decode(item['gz']))
               if hashlib.sha256(blob).hexdigest()!=item['sha256']:
                   raise SystemExit('V241_PACKAGED_BYTES_INVALID_'+name)
+              # Site home indicator V360+ is independently maintained and must
+              # never be reinstalled from this obsolete V241 UI package.
+              if name == 'assets/boat_edge_v241_home.js' and not dest.is_file():
+                  raise SystemExit('V241_PUBLIC_HOME_JS_MISSING_NO_LEGACY_REINSTALL')
               if dest.exists():
                   if dest.read_bytes()!=blob:
                       # Public result UI is maintained independently. Preserve HTML/JS/CSS
                       # while keeping source-hashed scorer and its tests fail-closed.
                       if name in ('index.html','results.html','assets/boat_edge_v241_results.js',
-                                  'assets/boat_edge_v241_results.css'):
+                                  'assets/boat_edge_v241_results.css',
+                                  'assets/boat_edge_v241_home.js'):
                           print('V241_PRESERVE_INDEPENDENTLY_UPDATED_PUBLIC_UI',name)
                       else:
                           raise SystemExit('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'+name)

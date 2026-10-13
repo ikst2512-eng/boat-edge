@@ -40,6 +40,20 @@ const keys=['results.html','assets/boat_edge_v241_results.js','assets/boat_edge_
 const worker=fs.readFileSync('.github/workflows/v241.yml','utf8');
 for(const path of keys)assert(worker.includes("'"+path+"'"));
 assert(worker.includes('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'));
+/* T02 regression: legacy V241 scheduled package must not clobber V360's
+ * source-verified home 🎯 renderer; bundled scorer/tests remain strict. */
+const allowStart=worker.indexOf("if name in ('index.html'");
+const allowEnd=worker.indexOf(":\n                          print('V241_PRESERVE_INDEPENDENTLY_UPDATED_PUBLIC_UI'",allowStart);
+assert(allowStart>=0&&allowEnd>allowStart,'V241 explicit public UI exemption must exist');
+const allow=worker.slice(allowStart,allowEnd);
+assert(allow.includes("'assets/boat_edge_v241_home.js'"),'current verified home UI must be preserved');
+assert(worker.includes('V241_PUBLIC_HOME_JS_MISSING_NO_LEGACY_REINSTALL'),'missing current JS must not install stale V241 copy');
+for(const sensitive of ['scripts/boat_edge_v241_results.py','scripts/boat_edge_v241_patch_home.py',
+                        'tests/test_boat_edge_v241_results.py'])
+  assert(!allow.includes("'"+sensitive+"'"),'scorer and source-bound regression code must remain fail-closed');
+assert(worker.includes("raise SystemExit('V241_PACKAGED_BYTES_INVALID_'+name)"));
+assert(worker.includes("raise SystemExit('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'+name)"));
+console.log('V241_LEGACY_PACKAGED_UI_PRESERVE_SCORER_FAIL_CLOSED_PASS');
 const resultJs=fs.readFileSync('assets/boat_edge_v241_results.js','utf8');
 assert(resultJs.includes('!o.rows.every(verifiedRow)'));
 assert(resultJs.includes("data-verification"));
