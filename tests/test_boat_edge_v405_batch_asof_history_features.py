@@ -204,6 +204,20 @@ class V405IndexedBatchTests(unittest.TestCase):
         self.assertEqual(batch["historical_races_eligible_before_target"], 0)
         self.assertEqual(batch["historical_races_not_yet_available"], 1)
 
+    def test_one_second_before_deadline_is_eligible(self):
+        # Exact boundary counterpart: 08:34:59 is usable at 08:35:00.
+        d = date(2026, 9, 30)
+        rows = fake_race(d, 1, 2, publish_hour=8)
+        for row in rows:
+            row["published_at"] = "2026-09-30T08:34:59+09:00"
+        raw, man = csv_data(rows)
+        t = b_target(d, 1, 3, hour=8)
+        batch = build_batch(raw, man, [t])["snapshots"][0]
+        single = snapshot(raw, man, t)
+        self.assertEqual(batch, single)
+        self.assertEqual(batch["historical_races_eligible_before_target"], 1)
+        self.assertEqual(batch["historical_races_not_yet_available"], 0)
+
     def test_impossible_published_before_own_race_rejected(self):
         # A fake K record claiming availability the day before its own race
         # must never enter the as-of sweep even if a target is later.
