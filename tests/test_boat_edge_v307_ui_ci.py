@@ -19,6 +19,14 @@ class UIWorkflowContract(unittest.TestCase):
         for forbidden in ('git push ', 'gh workflow run', 'RESULT_UNLOCK_TOKEN=', 'git commit ', '/race/result', '/race/pay', 'site_results/', 'data/formal_predictions/'):
             self.assertNotIn(forbidden,text)
         self.assertIn('cancel-in-progress: true',text)
+    def test_v357_racer_card_source_integrity_is_mandatory(self):
+        text=YAML.read_text(encoding='utf8')
+        self.assertIn("      - 'tests/test_boat_edge_v357_card_source_integrity.cjs'",text)
+        self.assertIn('node --check assets/boat_edge_v203_readable.js',text)
+        self.assertIn('node --test tests/test_boat_edge_v357_card_source_integrity.cjs',text)
+        # This is a mandatory check; a missing fixture must fail, never silently skip.
+        self.assertNotIn('if [[ -f "tests/test_boat_edge_v357_card_source_integrity.cjs" ]]',text)
+
     def test_all_site_candidates_and_formal_gate_are_explicit(self):
         text=YAML.read_text(encoding='utf8')
         for p in ('tests/test_boat_edge_v248_ui.cjs', 'tests/test_boat_edge_v244_site.cjs',
