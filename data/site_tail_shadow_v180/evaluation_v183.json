@@ -34,7 +34,7 @@
         "3": -1,
         "5": 0
       },
-      "races": 16
+      "races": 17
     },
     "all": {
       "baseline_hits": {
@@ -52,7 +52,7 @@
         "3": -2,
         "5": 1
       },
-      "races": 69
+      "races": 70
     },
     "over50": {
       "baseline_hits": {
@@ -116,7 +116,7 @@
   "invalid_shadows": [],
   "no_odds_used_for_prediction": true,
   "note": "Realized-payout bands are post-settlement diagnostics, never odds-based ticket selection. First-commit time must precede deadline.",
-  "pending_results": 1,
+  "pending_results": 0,
   "pre_result_commit_provenance_required": true,
   "prediction_weights_changed": false,
   "races": [
@@ -1844,10 +1844,35 @@
       "source_saved_at": "2026-10-12T02:27:04.363450+00:00",
       "source_sha256": "260920cdeb8fb6ca5e3b42afb7a4ab2f0cb44221b585babe2ce6cbbefd6730fd",
       "winning_combo": "2-6-4"
+    },
+    {
+      "added_at": "2026-10-12T23:56:11Z",
+      "added_commit": "3a740e46f2e2260d1cc199038f773e6d4078e3ec",
+      "baseline_head_top10": true,
+      "baseline_hits": {
+        "10": false,
+        "3": false,
+        "5": false
+      },
+      "baseline_miss_class": "pairing_miss",
+      "candidate_head_top10": true,
+      "candidate_hits": {
+        "10": false,
+        "3": false,
+        "5": false
+      },
+      "candidate_miss_class": "pairing_miss",
+      "payout_band": "20to50",
+      "payout_yen_per_100": 3740,
+      "race_key": "20261013-14-02",
+      "result_status": "confirmed",
+      "source_saved_at": "2026-10-12T23:52:33.695917+00:00",
+      "source_sha256": "efd1f196c7695c50979e6a8a1668ecfcb3610ca2742f5ab349b53e380797dad3",
+      "winning_combo": "1-4-2"
     }
   ],
   "schema_version": "boat-edge-v183-independent-shadow-score-v1",
   "scope": "POST_SETTLEMENT_FUTURE_SITE_REFERENCE_ONLY_NOT_FORMAL_FRESH",
-  "settled_races": 69,
+  "settled_races": 70,
   "status": "RESEARCH_ONLY_NO_ADOPTION"
 }
