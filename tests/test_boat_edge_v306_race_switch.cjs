@@ -32,4 +32,15 @@ if(fs.existsSync('index.html')){
  assert(html.includes('boat_edge_v207_first_prediction.js?v=208&amp;a24=1&amp;ui=306'));
  assert(html.includes('boat_edge_v304_topk_mobile.css?v=328'));
 }
+// Saved BOAT RACE cards use ISO yyyy-mm-dd, while the race key uses yyyymmdd.
+// Both verified spellings must be accepted; unrelated dates remain a hard hold.
+const explain=a.predictionWindowNotice;
+assert.equal(typeof explain,'function');
+const race={race_key:'20261014-14-01',meta:{date:'2026-10-14',venue_code:'14',race_no:1,deadline:'08:35'}};
+const early=Date.parse('2026-10-14T04:00:00+09:00');
+assert.match(explain(race,early),/直前データ照合前/);
+assert.match(explain({...race,meta:{...race.meta,date:'20261014'}},early),/直前データ照合前/);
+assert.match(explain({...race,meta:{...race.meta,date:'2026-10-13'}},early),/日付が一致しません/);
+assert.match(explain({...race,meta:{...race.meta,venue_code:'15'}},early),/照合できません/);
+assert.match(explain({...race,meta:{...race.meta,deadline:'25:99'}},early),/照合できません/);
 console.log('V306_RACE_SWITCH_STALE_TICKETS_SUPPRESSED_PASS');
