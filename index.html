@@ -3151,7 +3151,15 @@ async function loadRace(file, jcd){
     race=mergeFormalOverlay(race,overlay);
     renderRace(race);
   }catch(e){
-    alert("レースデータを取得できませんでした");
+    // Do not mistake a failed race load for a prediction-model failure.
+    // Keep the previous selected race intact and show an actionable source error.
+    const message="レースデータを読み込めませんでした。通信状況を確認して「更新」を押してください。改善しない場合は時間をおいて再試行してください。";
+    const live=document.getElementById("live");
+    if(live){live.textContent="レース取得エラー";live.setAttribute("title",message);}
+    const notice=document.getElementById("predictionAlert");
+    if(notice){notice.textContent=message;notice.setAttribute("role","alert");}
+    console.warn("BOAT_EDGE_RACE_LOAD_FAILED",String(file),String(e));
+    alert(message);
   }
 }
 async function refreshFormalStatus(){
