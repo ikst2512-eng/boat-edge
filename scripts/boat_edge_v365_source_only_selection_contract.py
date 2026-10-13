@@ -69,6 +69,9 @@ def select_source_refresh(root, now, max_target=12):
             if not isinstance(key, str) or KEY.fullmatch(key) is None or key[:8] != today:
                 reject("INVALID_RACE_KEY")
                 continue
+            if key.startswith("20261001-"):
+                reject("FORMAL_FRESH_TARGET_EXCLUDED")
+                continue
             if key in seen:
                 reject("DUPLICATE_INDEX_RACE")
                 pool = [item for item in pool if item[1] != key]
