@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/v373-mobile-playwright-gate.yml'
       - 'tests/browser/test_boat_edge_03_playwright.py'
+      - 'tests/browser/test_boat_edge_v371.py'
+      - 'assets/boat_edge_v371_simple_ui.css'
       - 'assets/boat_edge_v207_first_prediction.js'
       - 'assets/boat_edge_v207_first_prediction.css'
       - 'assets/boat_edge_v304_topk_mobile.css'
@@ -15,6 +17,8 @@ on:
     paths:
       - '.github/workflows/v373-mobile-playwright-gate.yml'
       - 'tests/browser/test_boat_edge_03_playwright.py'
+      - 'tests/browser/test_boat_edge_v371.py'
+      - 'assets/boat_edge_v371_simple_ui.css'
       - 'assets/boat_edge_v207_first_prediction.js'
       - 'assets/boat_edge_v207_first_prediction.css'
       - 'assets/boat_edge_v304_topk_mobile.css'
@@ -55,6 +59,15 @@ jobs:
         run: |
           set -euo pipefail
           python tests/browser/test_boat_edge_03_playwright.py
+          # V371 is an optional reviewed CSS UI feature, but once either the
+          # stylesheet or its offline fixture exists BOTH must be present and
+          # both actual browser engines must PASS. No network/source reads.
+          if [ -f assets/boat_edge_v371_simple_ui.css ] || [ -f tests/browser/test_boat_edge_v371.py ]; then
+            test -f assets/boat_edge_v371_simple_ui.css
+            test -f tests/browser/test_boat_edge_v371.py
+            python tests/browser/test_boat_edge_v371.py --engine chromium --screenshots artifacts/ui-03
+            python tests/browser/test_boat_edge_v371.py --engine webkit --screenshots artifacts/ui-03
+          fi
       - name: Preserve screenshots without publishing site data
         if: always()
         uses: actions/upload-artifact@v4
