@@ -209,5 +209,53 @@ class MobilePredictionBrowser(unittest.TestCase):
                         context.close()
 
 
+    def test_six_boat_comparison_original_and_head_focus(self):
+        # Reuse the actual V206 comparison renderer, but no external data/forecast.
+        for kind, browser in self.browsers.items():
+            with self.subTest(browser=kind):
+                context, page = self.boot(browser, 390)
+                try:
+                    page.locator("#tab-pred .section.stack").evaluate("""host => {
+                      host.insertAdjacentHTML('afterbegin',
+                        '<div id="be203Layout"></div><div id="be204Overview"></div>');
+                      window.state.race.meta = {phase:'PRE_RESULT',
+                        results_seen:false,unlock:false,scoring:false,
+                        deadline:'18:00'};
+                      window.BoatEdgeV203 = {getRows:()=>Array.from(
+                        {length:6},(_,i)=>({
+                          lane:i+1,name:'選手'+(i+1),grade:'A1',
+                          national:{win_rate:5+i*0.2,quinella_rate:30},
+                          local:{win_rate:4.5,quinella_rate:28},
+                          motor:{quinella_rate:35},
+                          time:null,st:null,lap:null,turn:null,straight:null
+                        }))};
+                    }""")
+                    page.add_style_tag(path=str(ROOT / "assets/boat_edge_v206_quickview.css"))
+                    page.add_script_tag(path=str(ROOT / "assets/boat_edge_v206_quickview.js"))
+                    page.locator("#be206Quick").wait_for()
+                    self.assertEqual(
+                        page.locator('#be206Quick .be206-matrix th[data-be206-lane]').count(),
+                        6
+                    )
+                    page.locator('#be206Quick [data-be206-metric="original"]').tap()
+                    self.assertEqual(page.locator("#be206Quick .be206-matrix tbody tr").count(), 3)
+                    # Absent original exhibition never becomes a made-up numeric value.
+                    self.assertIn("－", page.locator("#be206Quick .be206-matrix").inner_text())
+                    page.locator('#be206Quick [data-be206-layout="rows"]').tap()
+                    self.assertTrue(page.locator("#be206Quick .be206-table-scroll").is_visible())
+                    page.locator('.be206-table-scroll [data-be206-head="1"]').click()
+                    panel = page.locator("#be206HeadPanel")
+                    self.assertTrue(panel.is_visible())
+                    self.assertIn("1-2-3", panel.inner_text())
+                    panel.locator("[data-be206-head-close]").click()
+                    self.assertTrue(panel.is_hidden())
+                    self.assertEqual(
+                        page.evaluate("document.activeElement?.dataset?.be206Head || ''"), "1"
+                    )
+                finally:
+                    context.close()
+
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
