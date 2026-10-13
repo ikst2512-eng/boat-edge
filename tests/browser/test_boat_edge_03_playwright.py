@@ -284,5 +284,104 @@ class MobilePredictionBrowser(unittest.TestCase):
 
 
 
+    def test_actual_race_loader_last_selection_wins_and_404_is_nonblocking(self):
+        """Execute the actual index.html race loader in both mobile engines.
+
+        The fetches are synthetic, pre-result-only; no result/odds/final data.
+        This specifically catches late responses overwriting the selected race.
+        """
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        start = html.index("/* BOAT EDGE 03: last selected race wins.")
+        end = html.index("async function refreshFormalStatus(){", start)
+        actual_loader = html[start:end]
+        self.assertIn("be03RaceRequestSerial", actual_loader)
+        self.assertIn("be03RaceLoadNotice", actual_loader)
+        for kind, browser in self.browsers.items():
+            with self.subTest(browser=kind):
+                context = browser.new_context(
+                    viewport={"width": 390, "height": 844},
+                    device_scale_factor=2, is_mobile=True, has_touch=True,
+                    locale="ja-JP", timezone_id="Asia/Tokyo",
+                )
+                page = context.new_page()
+                page.set_default_timeout(12000)
+                try:
+                    page.set_content("""<!doctype html><meta name="viewport"
+                     content="width=device-width,initial-scale=1">
+                     <div id="raceView" class="view active">
+                     <div class="race-summary"><div class="summary-top" id="raceTitle">以前のレース</div></div>
+                     <div id="be207Top">以前のレースの買い目</div></div>
+                     <span id="live">正常</span><div id="refreshToast"></div>""")
+                    page.evaluate("""() => {
+                      window.state={currentVenue:'14',race:{race_key:'20261014-14-10'}};
+                      window.__renders=[];
+                      window.__toasts=[];
+                      window.alert=()=>{throw new Error('blocking alert is forbidden')};
+                      window.be182FetchScratch=async race=>race;
+                      window.refreshFormalStatus=async()=>{};
+                      window.loadFormalOverlay=async()=>null;
+                      window.mergeFormalOverlay=(race)=>race;
+                      window.renderRace=(race)=>{
+                        window.state.race=race;
+                        window.__renders.push(race.race_key);
+                        document.querySelector('#raceTitle').textContent=race.meta.race_no+'R';
+                      };
+                      window.showToast=(message)=>{window.__toasts.push(message)};
+                      window.fetch=(url)=>new Promise(resolve=>{
+                        const file=String(url);
+                        const delay=file.startsWith('slow')?230:15;
+                        setTimeout(()=>{
+                          if(file.startsWith('missing'))resolve({ok:false,status:404});
+                          else{
+                            const n=file.startsWith('slow')?1:2;
+                            resolve({ok:true,json:async()=>({
+                              race_key:'20261014-14-0'+n,
+                              meta:{date:'2026-10-14',venue_code:'14',race_no:n,
+                                phase:'PRE_RESULT',results_seen:false,
+                                unlock:false,scoring:false}
+                            })});
+                          }
+                        },delay);
+                      });
+                    }""")
+                    page.add_script_tag(content=actual_loader)
+                    result = page.evaluate("""async () => {
+                      const earlier=loadRace('slow.json','14');
+                      const newer=loadRace('fast.json','14');
+                      await Promise.all([earlier,newer]);
+                      return {key:state.race.race_key,renders:window.__renders,
+                        loading:document.getElementById('raceView').classList
+                          .contains('be03-race-loading'),
+                        note:document.getElementById('be03RaceLoadNotice')?.textContent||''};
+                    }""")
+                    self.assertEqual(result["key"], "20261014-14-02")
+                    self.assertEqual(result["renders"], ["20261014-14-02"])
+                    self.assertFalse(result["loading"])
+                    self.assertFalse(result["note"])
+                    self.assertEqual(page.locator("#raceTitle").inner_text(), "2R")
+                    failed = page.evaluate("""async () => {
+                      await loadRace('missing.json','14');
+                      const note=document.getElementById('be03RaceLoadNotice');
+                      return {key:state.race.race_key,role:note?.getAttribute('role'),
+                        message:note?.textContent||'',
+                        loading:document.getElementById('raceView').classList
+                          .contains('be03-race-loading'),
+                        toast:window.__toasts.at(-1)||''};
+                    }""")
+                    self.assertEqual(failed["key"], "20261014-14-02")
+                    self.assertEqual(failed["role"], "alert")
+                    self.assertIn("404", failed["message"])
+                    self.assertFalse(failed["loading"])
+                    self.assertIn("404", failed["toast"])
+                    self.assertEqual(page.locator("#raceTitle").inner_text(), "2R")
+                    screenshot_dir = os.getenv("BOAT_EDGE_SCREENSHOT_DIR")
+                    if screenshot_dir:
+                        dest = Path(screenshot_dir)
+                        dest.mkdir(parents=True, exist_ok=True)
+                        page.screenshot(path=str(dest / f"be03_race_switch_{kind}.png"))
+                finally:
+                    context.close()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

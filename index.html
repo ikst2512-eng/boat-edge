@@ -131,6 +131,9 @@ button{cursor:pointer}
 .racechip small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}
 .racechip.ready{background:#f2f7ff}
 .racechip.before{background:#ebfff7;border-color:#c6f1e2}
+.be03-load-notice{margin:8px 0;padding:11px 13px;border:1px solid #adc9ee;border-radius:10px;background:#edf5ff;color:#173d6a;font-size:13px;line-height:1.6;font-weight:700}
+.be03-load-notice[data-error="true"]{border-color:#f2c2bf;background:#fff2f0;color:#94332b}
+.be03-race-loading #be207Top,.be03-race-loading #be392EarlyPreview,.be03-race-loading #decision,.be03-race-loading #buyBoard,.be03-race-loading #worlds{display:none!important}
 .view{display:none}
 .view.active{display:block}
 .race-head{position:sticky;top:63px;z-index:50;background:rgba(243,248,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
@@ -3142,35 +3145,71 @@ function renderRace(d,opts={}){
     showView("raceView");
   }
 }
+/* BOAT EDGE 03: last selected race wins. An older async response must
+ * never repaint a newer selection or restore an obsolete error. UI only. */
+let be03RaceRequestSerial=0;
+function be03RaceLoadNotice(message,isError=false){
+  const host=document.querySelector("#raceView .race-summary");
+  if(!host)return;
+  let notice=document.getElementById("be03RaceLoadNotice");
+  if(!message){notice?.remove();return;}
+  if(!notice){
+    notice=document.createElement("div");
+    notice.id="be03RaceLoadNotice";
+    notice.className="be03-load-notice";
+    host.insertBefore(notice,host.firstChild);
+  }
+  notice.textContent=message;
+  notice.dataset.error=String(isError);
+  notice.setAttribute("role",isError?"alert":"status");
+}
 async function loadRace(file, jcd){
+  const request=++be03RaceRequestSerial;
   const previousVenue=state.currentVenue;
   const previousRace=state.race;
+  const raceView=document.getElementById("raceView");
+  raceView?.classList.add("be03-race-loading");
+  be03RaceLoadNotice("選択したレースの出走表と予想を読み込み中です。");
   let stage="fetch";
   try{
-    const r = await fetch(`${file}?t=${Date.now()}`, {cache:"no-store"});
-    if(!r.ok) throw new Error(r.status);
+    const r=await fetch(`${file}?t=${Date.now()}`,{cache:"no-store"});
+    if(request!==be03RaceRequestSerial)return;
+    if(!r.ok)throw new Error("HTTP "+r.status);
     let race=await r.json();
+    if(request!==be03RaceRequestSerial)return;
+    if(!/^\d{8}-\d{2}-\d{2}$/.test(String(race?.race_key||"")))
+      throw new Error("INVALID_RACE_ID");
     race=await be182FetchScratch(race);
+    if(request!==be03RaceRequestSerial)return;
     await refreshFormalStatus();
     const overlay=await loadFormalOverlay(race.race_key);
+    if(request!==be03RaceRequestSerial)return;
     race=mergeFormalOverlay(race,overlay);
     stage="render";
-    renderRace(race);
     state.currentVenue=jcd;
+    renderRace(race);
+    be03RaceLoadNotice("");
   }catch(e){
+    if(request!==be03RaceRequestSerial)return;
     state.currentVenue=previousVenue;
     state.race=previousRace;
-    // Do not mistake a failed race load for a prediction-model failure.
-    // Keep the previous selected race intact and show an actionable source error.
+    const detail=String(e?.message||e||"");
     const message=stage==="render"
-      ?"レースの表示処理でエラーが発生しました。更新して再試行してください。"
-      :"レースデータを読み込めませんでした。通信状況を確認して「更新」を押してください。改善しない場合は時間をおいて再試行してください。";
+      ?"レース画面の表示に失敗しました。更新して再試行してください。"
+      :/HTTP 404/.test(detail)
+        ?"選択したレースの出走表がサイトに未公開です（404）。更新後に再選択してください。"
+        :/INVALID_RACE_ID/.test(detail)
+          ?"レースIDが不正です。出走表の公開データを確認してください。"
+          :"レースデータを取得できませんでした。通信状況を確認して、更新後に再選択してください。";
     const live=document.getElementById("live");
     if(live){live.textContent="レース取得エラー";live.setAttribute("title",message);}
-    const notice=document.getElementById("predictionAlert");
-    if(notice){notice.textContent=message;notice.setAttribute("role","alert");}
-    console.warn("BOAT_EDGE_RACE_LOAD_FAILED",stage,String(file),String(e));
-    alert(message);
+    be03RaceLoadNotice(message,true);
+    // No blocking native alert on iPhone. Keep the last valid race intact.
+    if(typeof showToast==="function")showToast(message,5000);
+    console.warn("BOAT_EDGE_RACE_LOAD_FAILED",stage,String(file),detail);
+  }finally{
+    // A superseded request must not remove the newer request's loading guard.
+    if(request===be03RaceRequestSerial)raceView?.classList.remove("be03-race-loading");
   }
 }
 async function refreshFormalStatus(){
