@@ -27,6 +27,7 @@ from boat_edge_v315_source_capture import check_target, real_fetch, MAX_HTML_BYT
 from boat_edge_v318_shadow_freeze import JST, canonical
 from boat_edge_v362_official_start_course_proof import parse_proven_course_rows, _check_active_official_race_tab
 from boat_edge_v365_source_only_selection_contract import select_source_refresh
+from boat_edge_v370_official_racelist_lane_proof import proof_six_lane_registrations
 
 MODEL = "BOAT_EDGE_V366_ISOLATED_OFFICIAL_SOURCE_ONLY_PROOF"
 ENDPOINTS = ("racelist", "beforeinfo")
@@ -86,10 +87,11 @@ def _validate_registration_parity(race, racelist):
     # venue, R and advertised deadline as beforeinfo. A matching 6-racer
     # table alone is not sufficient evidence of same-race provenance.
     _check_active_official_race_tab(BeautifulSoup(racelist, "lxml"), race, "racelist")
-    observed = parse_regs(racelist)
-    if (len(expected) != 6 or len(set(expected)) != 6
-            or any(not x.isdecimal() or len(x) != 4 for x in expected)
-            or len(observed) != 6 or set(expected) != set(observed)):
+    # V370 requires an exact boat-number -> registration-number mapping.
+    # A six-element SET parity alone can accept swapped lanes.
+    proof = proof_six_lane_registrations(racelist, race["racers"])
+    observed = [proof["lane_to_registration"][str(lane)] for lane in range(1, 7)]
+    if len(expected) != 6 or set(expected) != set(observed):
         raise ValueError("V366_SIX_REGISTERED_RACERS_NOT_PROVEN")
     return sorted(observed)
 
@@ -180,6 +182,8 @@ def capture_source_only(root, key, *, fetcher=real_fetch, clock=None):
         "evidence_level": "LOCAL_HTTP_RESPONSE_SHA_ONLY",
         "registered_racers_matched": registrations,
         "official_racelist_active_race_deadline_matched": True,
+        "official_racelist_lane_registration_proof": proof_six_lane_registrations(
+            capture["racelist"]["raw"], race["racers"]),
         "official_exhibition_coverage": coverage,
         "official_start_course_proof": proof,
         "sources": {
