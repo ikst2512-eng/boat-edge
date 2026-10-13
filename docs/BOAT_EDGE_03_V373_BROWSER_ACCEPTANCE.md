@@ -22,7 +22,7 @@ BOAT_EDGE_REQUIRED_BROWSERS=chromium,webkit \
   python tests/browser/test_boat_edge_03_playwright.py
 ```
 
-Runs viewport widths **320, 375, 390, 430 px**, JST clock, Japanese locale, mobile/touch. It loads checked-in V207 JS and CSS, with 10 synthetic non-result tickets, no real API calls, and exercises top3/5/10 ordering, missing-confidence labels, display-only reference amount, blocked/frozen-source state, stale old-race tickets, and touch targets. The smoke suite is **not** a production Pages test.
+Runs viewport widths **320, 375, 390, 430 px**, JST clock, Japanese locale, mobile/touch. It loads checked-in V207 JS and CSS, with 10 synthetic non-result tickets, no real API calls, and exercises Top3/5/10 ordering, scenario/freeze and uncalibrated-confidence labels, display-only reference amount, blocked/frozen-source state, stale old-race tickets, 6艇比較・オリ展欠測・選手頭候補・フォーカス復帰, and touch targets. The smoke suite is **not** a production Pages test.
 
 For a Chromium-only local preflight (explicitly not WebKit):
 
