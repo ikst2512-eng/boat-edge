@@ -123,7 +123,7 @@ def usable_card(race, now):
         return False
     lanes = [r.get("lane") for r in rows if isinstance(r, dict)]
     regs = [str(r.get("registration_no") or "") for r in rows if isinstance(r, dict)]
-    if sorted(lanes) != [1, 2, 3, 4, 5, 6] or len(set(regs)) != 6 or any(not re.fullmatch(r"\d{4}", r) for r in regs):
+    if sorted(lanes, key=lambda x: (not isinstance(x, int), str(x))) != [1, 2, 3, 4, 5, 6] or len(set(regs)) != 6 or any(not re.fullmatch(r"\d{4}", r) for r in regs):
         return False
     for racer in rows:
         flags = " ".join(str(racer.get(k) or "") for k in ("raw_text", "status", "entry_status", "race_status"))
@@ -190,6 +190,13 @@ def make_preview(race, now):
         "source_card_sha256": src["sha256"], "source_card_fetched_at": src["fetched_at"],
         "card_fingerprint_sha256": card_fingerprint(race),
         "registrations_by_lane": [r["registration_no"] for r in rows],
+        "racer_inputs_by_lane": [
+            [r["lane"], r["registration_no"], r.get("class"), r.get("avg_st"),
+             (r.get("national") or {}).get("win_rate"),
+             (r.get("local") or {}).get("win_rate"),
+             (r.get("motor") or {}).get("quinella_rate")]
+            for r in rows
+        ],
         "head_candidate": int(combos[0][1][0]),
         "ranked_120": [{"rank": i+1, "combo": combo, "relative_score": value}
                        for i, (value, combo) in enumerate(combos)],
