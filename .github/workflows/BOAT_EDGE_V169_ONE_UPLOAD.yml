@@ -56,36 +56,36 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/site_racer_venue_v169.py .
-      - name: Connect view only UI and verify no model change
+      - name: Validate existing V169 venue imports without rewriting UI
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PYIN'
+          python3 - <<'PY_V169_IMPORTS'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          css='<link rel="stylesheet" href="./assets/boat_edge_v169_venue_stats.css?v=169">'
-          js='<script src="./assets/boat_edge_v169_venue_stats.js?v=169"></script>'
-          assert s.count('</head>')==1 and s.count('</body>')==1
-          assert 'boat_edge_v165_racer_stats.js' in s and 'boat_edge_v166_refresh.js' in s
-          if css not in s:
-              assert 'boat_edge_v169_venue_stats.css' not in s
-              s=s.replace('</head>',css+'\n</head>')
-          if js not in s:
-              assert 'boat_edge_v169_venue_stats.js' not in s
-              s=s.replace('</body>',js+'\n</body>')
-          assert s.count(css)==1 and s.count(js)==1
-          p.write_text(s,encoding='utf-8')
-          assert 'site_final_history_v133.py' not in str(Path('scripts/site_racer_venue_v169.py').read_text())
-          print('V169 HTML 1/1; prediction, stake, freeze, payout unchanged')
-          PYIN
+          html=Path('index.html').read_text(encoding='utf-8')
+          for resource in (
+              './assets/boat_edge_v169_venue_stats.css?v=169',
+              './assets/boat_edge_v169_venue_stats.js?v=169',
+              'boat_edge_v165_racer_stats.js',
+              'boat_edge_v166_refresh.js',
+          ):
+              if html.count(resource)!=1:
+                  raise SystemExit('V169_TRACKED_SITE_IMPORT_NOT_UNIQUE_'+resource)
+          code=Path('scripts/site_racer_venue_v169.py').read_text(encoding='utf-8')
+          if 'site_final_history_v133.py' in code:
+              raise SystemExit('V169_PREDICTION_SOURCE_COUPLING_FORBIDDEN')
+          print('V169_TRACKED_SITE_IMPORTS_READ_ONLY_PASS')
+          PY_V169_IMPORTS
       - name: Commit only independent V169 display source and facts
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- index.html assets/boat_edge_v169_venue_stats.js assets/boat_edge_v169_venue_stats.css scripts/site_racer_venue_v169.py tests/test_site_racer_venue_v169.py data/site_racer_venue_v169/
+          # Tracked source and UI are owned by reviewed PRs; never let daily
+          # historical report runs resurrect old UI or fight track 03.
+          git diff --exit-code -- index.html assets/boat_edge_v169_venue_stats.js assets/boat_edge_v169_venue_stats.css scripts/site_racer_venue_v169.py tests/test_site_racer_venue_v169.py
+          git add -- data/site_racer_venue_v169/
           if git diff --cached --quiet; then echo 'V169 already up to date'; exit 0; fi
           git commit -m 'V169: display audited racer-by-venue preference without prediction changes'
           for attempt in 1 2 3; do
