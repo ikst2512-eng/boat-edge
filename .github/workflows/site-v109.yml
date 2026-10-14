@@ -557,7 +557,11 @@ jobs:
           set -e
           git config user.name "boat-edge-site-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_results data/site_archive BOAT_EDGE_CURRENT_TODO.md
+          # V125 exclusively publishes the site prediction audit TODO.
+          # Restore the local unowned edit before the retry/rebase sequence;
+          # otherwise unrelated V125/V134 state can block result publication.
+          git restore -- BOAT_EDGE_CURRENT_TODO.md
+          git add data/site_results data/site_archive
           git diff --cached --quiet && exit 0
           git commit -m "Repair BOAT EDGE result payouts V109"
           for n in 1 2 3; do
