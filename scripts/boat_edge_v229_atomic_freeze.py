@@ -145,6 +145,41 @@ def validate(root:Path,key:str,now:datetime):
             or set(rows)!=COMBOS or any(not isinstance(v,(int,float)) or isinstance(v,bool)
                                         or not math.isfinite(v) or v<=0 for v in rows.values())):
         raise AssertionError('V229_ODDS_120_NOT_VALID_AT_SAVE')
+    # 02/01 prospective user-selected best observed Top10. A new SITE mode
+    # is only source-audited when its entire ten-ticket permutation matches
+    # the predeclared V254 construction from the exact frozen hit/hole modes.
+    # Earlier four-mode snapshots retain their untouched original contract.
+    selected=doc.get('default_display_mode')
+    tail_present='tail' in modes
+    if selected not in (None,'tail') or tail_present!=(selected=='tail'):
+        raise AssertionError('V229_PROVISIONAL_TAIL_MARKER_INVALID')
+    if tail_present:
+        if (set(modes)!={'hit','balance','hole','narrow','tail'} or
+            doc.get('mode_policy')!='PROVISIONAL_V254_THIRD_TAIL10_FIXED_TOP7' or
+            doc.get('adopted_ticket_policy')!='PROVISIONAL_V254_THIRD_TAIL10_FROM_PREDECLARED_FROZEN_MODES' or
+            doc.get('statistical_significance_claim') is not False or
+            doc.get('formal_current_model_changed') is not False):
+            raise AssertionError('V229_PROVISIONAL_TAIL_POLICY_UNVERIFIED')
+        from boat_edge_v254_third_tail import third_tail_candidate
+        source_hit=[x.get('combo') for x in modes['hit']['tickets']]
+        source_hole=[x.get('combo') for x in modes['hole']['tickets']]
+        expected=third_tail_candidate(source_hit,source_hole)
+        tail=(modes.get('tail') or {}).get('tickets')
+        if (expected is None or not isinstance(tail,list) or
+            len(tail)!=10 or [x.get('combo') for x in tail]!=expected):
+            raise AssertionError('V229_PROVISIONAL_TAIL_RANK_MISMATCH')
+        total=0
+        for t in tail:
+            combo=t.get('combo');stake=t.get('stake_yen');p=t.get('p');price=t.get('odds')
+            if (combo not in COMBOS or type(stake) is not int or stake<100 or
+                stake%100 or type(p) not in (float,int) or
+                isinstance(p,bool) or not math.isfinite(p) or not 0<p<100 or
+                type(price) not in (float,int) or isinstance(price,bool) or
+                not math.isfinite(price) or abs(price-rows[combo])>.05):
+                raise AssertionError('V229_PROVISIONAL_TAIL_TICKET_UNVERIFIED')
+            total+=stake
+        if total!=10000:
+            raise AssertionError('V229_PROVISIONAL_TAIL_STAKE_NOT_10000')
     return {'schema':'BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1',
             'scope':'SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS',
             'race_key':key,'snapshot_sha256':digest(sp),'snapshot_saved_at':saved.isoformat(),

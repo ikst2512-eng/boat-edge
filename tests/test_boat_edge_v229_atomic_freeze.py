@@ -69,6 +69,68 @@ class AtomicFreezeTests(unittest.TestCase):
         self.assertTrue(x['new_snapshot_created_this_run'])
         self.assertFalse(x['model_accuracy_proven'])
 
+    def make_adopted_tail_fixture(self):
+        from scripts.boat_edge_v254_third_tail import third_tail_candidate
+        path=self.root/'data/site_prediction_snapshots'/f'{KEY}.json'
+        doc=v.read_obj(path)
+        hit=['1-2-3','1-2-4','1-3-2','1-4-2','2-1-3',
+             '2-3-1','3-1-2','1-3-4','1-4-3','3-2-1']
+        hole=['1-2-5','1-3-5','2-1-4','3-1-4','1-2-3',
+              '1-2-4','1-3-2','1-4-2','2-1-3','2-3-1']
+        def make(ids):
+            counts=len(ids);amounts=[1000]*counts if counts==10 else [3400,3300,3300]
+            return [{'combo':c,'p':float(12-i*.3),'odds':12.5,
+                     'stake_yen':a} for i,(c,a) in enumerate(zip(ids,amounts))]
+        chosen=third_tail_candidate(hit,hole)
+        assert chosen is not None and chosen[:7]==hit[:7]
+        doc['modes']={
+            'hit':{'tickets':make(hit)},
+            'balance':{'tickets':make(hit)},
+            'hole':{'tickets':make(hole)},
+            'narrow':{'tickets':make(hit[:3])},
+            'tail':{'tickets':make(chosen)},
+        }
+        doc['default_display_mode']='tail'
+        doc['mode_policy']='PROVISIONAL_V254_THIRD_TAIL10_FIXED_TOP7'
+        doc['adopted_ticket_policy']='PROVISIONAL_V254_THIRD_TAIL10_FROM_PREDECLARED_FROZEN_MODES'
+        doc['statistical_significance_claim']=False
+        doc['formal_current_model_changed']=False
+        write(path,doc)
+        return path
+
+    def test_v254_best_observed_future_mode_is_exact_source_odds_stake_attested(self):
+        sp=self.make_adopted_tail_fixture()
+        receipt=v.validate(self.root,KEY,NOW)
+        self.assertEqual(receipt['odds_combinations'],120)
+        self.assertFalse(receipt['model_accuracy_proven'])
+        doc=v.read_obj(sp)
+        self.assertEqual(doc['modes']['tail']['tickets'][:7],
+                         doc['modes']['hit']['tickets'][:7])
+        # Same frozen file must fail closed if even one speculative tail changes.
+        doc['modes']['tail']['tickets'][7]['combo']='6-5-4'
+        write(sp,doc)
+        with self.assertRaisesRegex(AssertionError,'PROVISIONAL_TAIL_RANK_MISMATCH'):
+            v.validate(self.root,KEY,NOW)
+
+    def test_v254_tail_requires_signed_marker_and_valid_stake(self):
+        sp=self.make_adopted_tail_fixture()
+        original=v.read_obj(sp)
+        doc=v.read_obj(sp)
+        doc['default_display_mode']='hit'
+        write(sp,doc)
+        with self.assertRaisesRegex(AssertionError,'PROVISIONAL_TAIL_MARKER_INVALID'):
+            v.validate(self.root,KEY,NOW)
+        doc=v.read_obj(sp);doc.update(original)
+        doc['modes']['tail']['tickets'][0]['stake_yen']=900
+        write(sp,doc)
+        with self.assertRaisesRegex(AssertionError,'PROVISIONAL_TAIL_STAKE_NOT_10000'):
+            v.validate(self.root,KEY,NOW)
+        doc=v.read_obj(sp);doc.update(original)
+        doc['modes']['tail']['tickets'][0]['odds']=1.0
+        write(sp,doc)
+        with self.assertRaisesRegex(AssertionError,'PROVISIONAL_TAIL_TICKET_UNVERIFIED'):
+            v.validate(self.root,KEY,NOW)
+
     def test_refuse_stale_race_card(self):
         j=v.read_obj(self.rp)
         j['source_audit']['race_card']['fetched_at']=iso(SAVED-timedelta(minutes=17))
