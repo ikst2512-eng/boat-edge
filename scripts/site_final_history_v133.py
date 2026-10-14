@@ -457,7 +457,7 @@ def scenario_adjust(race,pred):
     enriched.sort(key=lambda x:x["p"],reverse=True)
     return {"tickets":enriched,"used":used,"applied":True}
 
-def modes_from_tickets(allrows,odds,wave_rows=None):
+def modes_from_tickets(allrows,odds,wave_rows=None,adopt_tail=False):
     def od(x):
         v=num(odds.get(x["combo"]))
         return v if v is not None and v>0 else None
@@ -515,6 +515,19 @@ def modes_from_tickets(allrows,odds,wave_rows=None):
         "hole":wave,
         "narrow":allrows[:3]
     }
+    if adopt_tail:
+        # The real first-Git-frozen V254 shadow was the top-performing
+        # *same-ten-point* third-tail candidate at the user's 2026-10-14
+        # provisional selection (37/89 vs 34/89, not statistically proven).
+        # Apply its PREDECLARED construction only to NEW site snapshots;
+        # older first-saved selections are never re-ranked.
+        from boat_edge_v254_third_tail import third_tail_candidate
+        combo_order=third_tail_candidate(
+            [r["combo"] for r in modes["hit"]],
+            [r["combo"] for r in modes["hole"]])
+        if combo_order is not None:
+            by_combo={r["combo"]:r for r in modes["hole"]+modes["hit"]}
+            modes["tail"]=[by_combo[c] for c in combo_order]
     return {k:[dict(x,odds=od(x)) for x in v] for k,v in modes.items()}
 
 def confidence(pred,mode,rows):
@@ -633,7 +646,11 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
             for x in _v226_rows.values()):
         continue
     odds=odds_doc.get("trifecta_odds") or {}
-    modes=modes_from_tickets(adjusted["tickets"],odds,wave_adjusted["tickets"])
+    # Prospective SITE-only adoption. The file-exists guard above prevents
+    # ALL pre-existing snapshots/history from being rewritten or backfilled.
+    adopt_tail=(pred.get("mode")!="formal" and key[:8]>="20261014")
+    modes=modes_from_tickets(adjusted["tickets"],odds,wave_adjusted["tickets"],
+                             adopt_tail=adopt_tail)
     old=read_json(SNAPS/f"{key}.json") or {}
     policy="FORMAL_CURRENT" if pred.get("mode")=="formal" else "V122_SCENARIO_AWARE_PROBABILITY_FIRST"
     snap={
@@ -642,7 +659,8 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
         "race_key":key,
         "prediction_kind":"FORMAL_CURRENT" if pred.get("mode")=="formal" else "SITE_REFERENCE_V122",
         "selection_policy":policy,
-        "mode_policy":"BALANCE10_WAVE12_15_18_V133_FIXED",
+        "mode_policy":("PROVISIONAL_V254_THIRD_TAIL10_FIXED_TOP7"
+                       if "tail" in modes else "BALANCE10_WAVE12_15_18_V133_FIXED"),
         "used_inputs":adjusted.get("used") or [],
         "first_saved_at":old.get("first_saved_at") or datetime.now(timezone.utc).isoformat(),
         "saved_at":datetime.now(timezone.utc).isoformat(),
@@ -662,6 +680,12 @@ for race_path in sorted(RACES.glob(f"{TODAY}-*.json")):
             } for k,rows in modes.items()
         }
     }
+    if "tail" in modes:
+        snap["default_display_mode"]="tail"
+        snap["adopted_ticket_policy"]="PROVISIONAL_V254_THIRD_TAIL10_FROM_PREDECLARED_FROZEN_MODES"
+        snap["adoption_basis"]="SITE_ONLY_FORWARD_89R_CONTROL_34_CANDIDATE_37_TEN_TICKETS"
+        snap["statistical_significance_claim"]=False
+        snap["formal_current_model_changed"]=False
     # Never infer historical stake suggestions: only store with new snapshots, or
     # refresh a prospectively captured V141 snapshot while results are unseen.
     capture=not old or old.get("stake_plan_version")=="V141-10000-PROSPECTIVE"
