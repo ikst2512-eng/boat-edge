@@ -107,7 +107,14 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("scripts/boat_edge_v211_paper_sim.py select", late)
         self.assertIn("scripts/boat_edge_v214_shadow.py settle", late)
         self.assertIn("scripts/boat_edge_v211_paper_sim.py settle", late)
-        self.assertEqual(workflow.count("git commit -m"), 4)
+        self.assertEqual(workflow.count("git commit -m"), 3)
+        later = workflow.split("      - name: Settle earlier frozen shadow and paper ledgers in one Git commit",1)[1]
+        self.assertIn("python3 scripts/boat_edge_v214_shadow.py settle",later)
+        self.assertIn("python3 scripts/boat_edge_v211_paper_sim.py settle",later)
+        self.assertEqual(later.count("git commit -m"),1)
+        self.assertEqual(later.count("git push origin HEAD:main"),1)
+        self.assertIn("V216_SETTLE_FORMAL_FRESH_GUARD_BLOCKED",later)
+        self.assertIn("V216_SETTLEMENT_FORBIDDEN_STAGED_FILES_",later)
         self.assertIn("cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'", workflow)
 
 

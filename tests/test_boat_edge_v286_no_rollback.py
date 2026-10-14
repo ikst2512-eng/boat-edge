@@ -21,8 +21,7 @@ class NoPinnedRollback(unittest.TestCase):
     def test_atomic_pre_result_receipt_before_grade_and_settlement(self):
         steps=['Freeze PRE_RESULT diagnostics and shadow evidence in one Git commit',
                'Continue approved-only daily 50000 yen paper selection BEFORE results',
-               'Grade only earlier committed shadow records AFTER freeze',
-               'Settle only previously committed paper records']
+               'Settle earlier frozen shadow and paper ledgers in one Git commit']
         offsets=[self.src.index('      - name: '+s) for s in steps]
         self.assertEqual(offsets,sorted(offsets))
         commands=('python3 scripts/boat_edge_v215_readiness.py',
@@ -42,9 +41,20 @@ class NoPinnedRollback(unittest.TestCase):
         self.assertNotIn('scripts/boat_edge_v214_shadow.py settle',early)
         self.assertNotIn('scripts/boat_edge_v211_paper_sim.py settle',early)
         self.assertNotIn('data/site_results/',early)
-        # Later results are consumed only after the combined pre-result Git receipt.
-        self.assertLess(early.index('git push origin HEAD:main'),
-                        len(early))
+        # Pre-result frozen decisions are first pushed in their own receipt.
+        # Only a later SITE-only step may read already-committed results.
+        settled=self.src[offsets[2]:]
+        self.assertLess(self.src.index('git push origin HEAD:main'),
+                        self.src.index('python3 scripts/boat_edge_v214_shadow.py settle'))
+        self.assertIn("V216_SETTLE_FORMAL_FRESH_GUARD_BLOCKED", settled)
+        self.assertIn("V216_SETTLEMENT_FORBIDDEN_STAGED_FILES_", settled)
+        self.assertLess(settled.index('scripts/boat_edge_v214_shadow.py settle'),
+                        settled.index('scripts/boat_edge_v211_paper_sim.py settle'))
+        self.assertLess(settled.index('scripts/boat_edge_v211_paper_sim.py settle'),
+                        settled.index("git commit -m"))
+        self.assertEqual(settled.count("git commit -m"),1)
+        self.assertEqual(settled.count("git push origin HEAD:main"),1)
+        self.assertEqual(self.src.count("git commit -m"),3)
 
     def test_schedule_and_formal_lock_retained(self):
         self.assertIn("cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'",self.src)
