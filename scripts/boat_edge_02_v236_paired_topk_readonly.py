@@ -7,10 +7,24 @@ import argparse
 from collections import Counter
 import hashlib
 import json
+import re
+from datetime import datetime
 from pathlib import Path
 
 MODES = ("hit10", "balance10", "scenario7plus3")
 TOPK = (3, 5, 10)
+COMBO = re.compile(r"^[1-6]-[1-6]-[1-6]$")
+
+
+def valid_combo(value):
+    return isinstance(value, str) and COMBO.fullmatch(value) is not None and len(set(value.split("-"))) == 3
+
+
+def timestamp(value):
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("naive_timestamp")
+    return parsed
 
 
 def cause(tickets, winner):
@@ -60,13 +74,22 @@ def evaluate(root: Path):
                 raise ValueError("schema_or_identity")
             winner = s["official_result"]
             tickets = f["comparators"]
-            if not isinstance(winner, str) or len(winner.split("-")) != 3:
+            if not valid_combo(winner):
                 raise ValueError("winner_invalid")
             if any(not isinstance(tickets.get(m), list) or len(tickets[m]) != 10
-                   or len(set(tickets[m])) != 10 for m in MODES):
+                   or len(set(tickets[m])) != 10
+                   or not all(valid_combo(t) for t in tickets[m]) for m in MODES):
                 raise ValueError("tickets_invalid")
-            if any(bool(s["outcomes"][m]) != (winner in tickets[m]) for m in MODES):
-                raise ValueError("score_parity")
+            if (f.get("result_seen_at_freeze") is not False
+                    or f.get("production_model_changed") is not False
+                    or s.get("model_promotion_authorized") is not False
+                    or s.get("production_accuracy_improvement_proven") is not False
+                    or any(type(s["outcomes"][m]) is not bool for m in MODES)
+                    or any(s["outcomes"][m] != (winner in tickets[m]) for m in MODES)):
+                raise ValueError("scope_or_score_parity")
+            if not (timestamp(f["frozen_at"]) < timestamp(f["deadline_jst"])
+                    and timestamp(f["v232_first_git_committed_at"]) < timestamp(f["deadline_jst"])):
+                raise ValueError("deadline_parity")
             if s.get("frozen_candidate_sha256") != hashlib.sha256((frozen / p.name).read_bytes()).hexdigest():
                 raise ValueError("frozen_digest_mismatch")
             included += 1
