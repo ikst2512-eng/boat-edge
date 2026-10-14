@@ -5,8 +5,8 @@ on:
     paths:
       - ".github/workflows/site-v117.yml"
   workflow_dispatch:
-  schedule:
-    - cron: "10 21 * * *"
+  # Legacy V117 installer may rewrite index.html and V108 assets.
+  # Manual recovery only; never schedule a rollback of the modern site UI.
 
 permissions:
   contents: write
