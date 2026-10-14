@@ -54,7 +54,7 @@ def copy_public_tree(source: Path, destination: Path) -> int:
         elif item.is_dir() and (item.name.startswith("site_") or item.name == "races"):
             selected.append(item)
     for item in selected:
-        if item.is_symlink() or any(p.is_symlink() for p in item.rglob("*")) if item.is_dir() else item.is_symlink():
+        if item.is_symlink() or (item.is_dir() and any(p.is_symlink() for p in item.rglob("*"))):
             raise ValueError("Symlink in published asset: " + str(item.relative_to(source)))
     if destination.exists():
         if not destination.is_dir():
