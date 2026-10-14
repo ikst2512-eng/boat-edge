@@ -344,6 +344,24 @@ def cross_study_ranked_topk(left, right, left_mode, right_mode):
     return result
 
 
+def cross_study_ranked_topk_by_day(left, right, left_mode, right_mode):
+    """Expose day concentration without pooling or reselecting winning dates."""
+    if len(left) != len(right):
+        raise EvidenceError("CROSS_STUDY_TOPK_LENGTH_MISMATCH")
+    days = sorted({row["day"] for row in left})
+    if days != sorted({row["day"] for row in right}):
+        raise EvidenceError("CROSS_STUDY_TOPK_DAY_MISMATCH")
+    output = {}
+    for day in days:
+        lrows = [row for row in left if row["day"] == day]
+        rrows = [row for row in right if row["day"] == day]
+        if [row["key"] for row in lrows] != [row["key"] for row in rrows]:
+            raise EvidenceError("CROSS_STUDY_TOPK_DAY_RACE_MISMATCH")
+        output[day] = cross_study_ranked_topk(
+            lrows, rrows, left_mode, right_mode)
+    return output
+
+
 def audit(root, attest=first_added):
     root = Path(root).resolve()
     formal_lock(root)
@@ -410,6 +428,12 @@ def audit(root, attest=first_added):
                     for mode in CONFIG[right][7] if mode not in ("hit10", "coverage15")
                 },
                 "equal_ten_ticket_head_to_head_only": mode_pairs,
+                "ranked_topk_head_to_head_by_day": {
+                    l_mode + "_vs_" + r_mode: cross_study_ranked_topk_by_day(
+                        left_rows, right_rows, l_mode, r_mode)
+                    for l_mode in CONFIG[left][7] if l_mode != "coverage15"
+                    for r_mode in CONFIG[right][7] if r_mode != "coverage15"
+                },
                 "ranked_topk_head_to_head": {
                     l_mode + "_vs_" + r_mode: cross_study_ranked_topk(
                         left_rows, right_rows, l_mode, r_mode)
