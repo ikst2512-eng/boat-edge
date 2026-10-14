@@ -179,3 +179,55 @@ assert.equal(duplicates.length,6);
 assert(duplicates[0].includes('<span>—</span>'),'duplicate start lane must be missing');
 assert(duplicates[1].includes('<span>F.02</span><span>—</span><span>—</span>'),'duplicate racer time/tilt must be missing');
 console.log('BOAT_EDGE_03_BEFOREINFO_SOURCE_BOUND_PRE_RESULT_COMPACT_PASS');
+
+// 03 regression: a syntactically valid but wrong race file must never render.
+const selectedRaceHtml=fs.readFileSync('index.html','utf8');
+const identityStart=selectedRaceHtml.indexOf('function be03RaceSourceIdentity(file,jcd,race){');
+const identityEnd=selectedRaceHtml.indexOf('async function refreshFormalStatus(){',identityStart);
+assert(identityStart>0&&identityEnd>identityStart);
+const guardContext=vm.createContext({
+  Date,Set,Map,Promise,
+  state:{currentVenue:'14',race:{race_key:'20261014-14-01'}},
+  document:{
+    querySelector:()=>null,
+    getElementById:s=>s==='raceView'?{classList:{add(){},remove(){}}}:s==='live'?{setAttribute(){}}:null
+  },
+  fetch:async()=>({ok:true,json:async()=>guardContext.payload}),
+  be182FetchScratch:async r=>{guardContext.scratchCalls++;return r;},
+  refreshFormalStatus:async()=>{},loadFormalOverlay:async()=>null,
+  mergeFormalOverlay:r=>r,
+  renderRace:r=>{guardContext.rendered.push(r.race_key);guardContext.state.race=r;},
+  showToast:()=>{},console:{warn:()=>{}}
+});
+guardContext.payload={
+ race_key:'20261014-14-03',
+ meta:{date:'2026-10-14',venue_code:'14',race_no:3,
+  phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false},
+ racers:Array.from({length:6},(_,i)=>({lane:i+1}))
+};
+guardContext.rendered=[];guardContext.scratchCalls=0;
+vm.runInContext(selectedRaceHtml.slice(identityStart,identityEnd),guardContext);
+const loadFixture=(path='data/races/20261014-14-03.json',venue='14')=>
+ vm.runInContext('loadRace('+JSON.stringify(path)+','+JSON.stringify(venue)+')',guardContext);
+(async()=>{
+ await loadFixture();
+ assert.deepEqual(guardContext.rendered,['20261014-14-03']);
+ assert.equal(guardContext.scratchCalls,1);
+ guardContext.rendered.length=0;guardContext.scratchCalls=0;
+ const baseline=guardContext.state.race;
+ guardContext.payload={...baseline,race_key:'20261014-14-02'};
+ await loadFixture();
+ assert.equal(guardContext.rendered.length,0);
+ assert.equal(guardContext.scratchCalls,0,'wrong race cannot reach scratch/overlay');
+ assert.equal(guardContext.state.race,baseline,'invalid card cannot replace selected race');
+ guardContext.payload={...baseline,meta:{...baseline.meta,race_no:4}};
+ await loadFixture();assert.equal(guardContext.rendered.length,0);
+ guardContext.payload=baseline;
+ await loadFixture('data/races/20261014-14-03.json','06');
+ assert.equal(guardContext.rendered.length,0,'wrong venue must stop');
+ await loadFixture('data/races/20261014-14-02.json','14');
+ assert.equal(guardContext.rendered.length,0,'filename must match contents');
+ await loadFixture('../data/races/20261014-14-03.json','14');
+ assert.equal(guardContext.rendered.length,0,'unexpected file path must stop');
+ console.log('BOAT_EDGE_03_SELECTED_RACE_SOURCE_IDENTITY_FAIL_CLOSED_PASS');
+})().catch(e=>{console.error(e);process.exitCode=1});
