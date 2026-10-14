@@ -242,6 +242,20 @@ def test_snapshot_evidence_contract_without_network():
     assert reasons["beforeinfo_missing"] == 1
     assert reasons["deadline_invalid_or_too_close"] == 1
     assert reasons["invalid_race"] == 1
+    # When a source-verified frozen SITE final is available, it must be
+    # preferred over a dynamic reference race during a live browser check.
+    order = [
+        (fixed_now + timedelta(minutes=4), None, {"race_key": "near-reference"}),
+        (fixed_now + timedelta(minutes=8), None, {"race_key": "saved-final"}),
+        (fixed_now + timedelta(minutes=10), None, {"race_key": "other-reference"}),
+    ]
+    ranked = prioritize_saved_final_candidates(order, {"saved-final": {}})
+    assert [x[2]["race_key"] for x in ranked] == [
+        "saved-final", "near-reference", "other-reference"
+    ]
+    assert [x[2]["race_key"] for x in prioritize_saved_final_candidates(order, {})] == [
+        "near-reference", "saved-final", "other-reference"
+    ]
     print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
 
 
@@ -284,6 +298,17 @@ def choose_live_receipt_candidates(catalog, now):
     return choices, readiness
 
 
+def prioritize_saved_final_candidates(choices, verified_keys):
+    """Inspect SHA-proven, still-future SITE FINALs first; keep stable due order.
+
+    This changes only read-only browser coverage, never prediction ranking.
+    """
+    known = set(verified_keys)
+    return sorted(choices, key=lambda item: (
+        item[2]["race_key"] not in known, item[0]
+    ))
+
+
 def probe_verified_live_topk(context, target, catalog, shots, engine):
     """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
 
@@ -297,11 +322,24 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
     if not choices:
         return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE",
                 "eligible_count": 0, "readiness": readiness}
+    # A verified snapshot has higher diagnostic value than a moving live
+    # reference: look for it first, but only inside the real FINAL_15M window.
+    # This reads at most 36 site-only candidates, never result or payout data.
+    near = choices[:36]
+    verified_saved = {}
+    for due, _, race in near:
+        if now < due <= now + timedelta(minutes=15):
+            evidence = probe_site_snapshot_evidence(
+                context, target, race["race_key"], race["deadline"]
+            )
+            if evidence["status"] == "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED":
+                verified_saved[race["race_key"]] = evidence
+    near = prioritize_saved_final_candidates(near, verified_saved)
     stopped_reasons = []
     source_ready_checked = 0
-    # At most 36 prospective same-day source receipts. Navigation remains
-    # capped at five genuinely source-ready races, avoiding a Pages race storm.
-    for _, venue, race in choices[:36]:
+    # Source requests are bounded; live mobile browser navigations are capped
+    # at five source-ready races to avoid timing out a closing window.
+    for _, venue, race in near:
         if source_ready_checked >= 5:
             break
         path = race["file"]
@@ -327,7 +365,7 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             stopped_reasons.append({"race": key, "reason": "source_audit_not_ready"})
             continue
         source_ready_checked += 1
-        saved_evidence = probe_site_snapshot_evidence(
+        saved_evidence = verified_saved.get(key) or probe_site_snapshot_evidence(
             context, target, key, race["deadline"]
         )
         live = context.new_page()
@@ -431,13 +469,27 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             same_mode_parity = (
                 expected[:10] == saved_mode_rows if saved_mode_rows is not None else None
             )
-            if verified_site_final and saved_mode_rows is not None:
-                assert same_mode_parity, (
-                    "Verified final Top10 diverged from immutable same-mode snapshot: "
-                    + key + " mode=" + str(selected_mode)
+            source_has_saved_final = (
+                saved_evidence.get("status") ==
+                "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+            )
+            if source_has_saved_final:
+                # The complete SHA/audit/V229 receipt existed BEFORE this
+                # prospective browser navigation. A generic dynamic TopK does
+                # not establish that the frozen picks reached the public UI.
+                assert verified_site_final, (
+                    "Saved FINAL exists but public UI did not show its SHA-verified "
+                    "frozen picks: " + key + " mode=" + str(selected_mode)
+                )
+                assert saved_mode_rows is not None and same_mode_parity, (
+                    "Published frozen FINAL Top3/5/10 differs from original "
+                    "immutable mode-ranked picks: " + key + " mode=" +
+                    str(selected_mode)
                 )
             return {
-                "status": "VERIFIED_TOP3_TOP5_TOP10_SOURCE_ORDER",
+                "status": ("VERIFIED_SAVED_FINAL_TOP3_TOP5_TOP10_SHA_PARITY"
+                           if source_has_saved_final else
+                           "VERIFIED_TOP3_TOP5_TOP10_SOURCE_ORDER"),
                 "race": key, "venue": venue["venue"], "ticket_count": len(expected),
                 "deadline_jst": race["deadline"], "browser_errors": browser_errors,
                 "saved_prediction": saved_evidence,
