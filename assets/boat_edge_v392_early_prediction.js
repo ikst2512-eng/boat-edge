@@ -8,7 +8,7 @@ const shaOK=k=>/^[a-f0-9]{64}$/.test(String(k||''));
 const comboOK=s=>/^[1-6]-[1-6]-[1-6]$/.test(String(s||''))&&new Set(s.split('-')).size===3;
 const $=(s,r=document)=>r.querySelector(s);
 const text=(el,value)=>{if(el)el.textContent=String(value??'');};
-let serial=0,activeKey='',shown=10;
+let serial=0,activeKey='',shown=10,currentPreview=null;
 function cardSafety(r,now=Date.now()){
  const key=r?.race_key,meta=r?.meta||{};
  if(!keyOK(key)||String(meta.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
@@ -122,6 +122,7 @@ function drawRows(box,p){
 }
 function showStatus(r,reason){
  if(finalFor(r?.race_key)){hide();return;}
+ currentPreview=null;
  const box=ensure();if(!box)return;
  box.replaceChildren();
  box.dataset.ready='status';
@@ -139,6 +140,7 @@ function finalFor(key){
 function showPreview(r,p){
  if(finalFor(r.race_key)){hide();return;}
  const box=ensure();if(!box)return;
+ currentPreview=p; // The tabs may already exist after a same-race source refresh.
  box.dataset.ready='true';box.dataset.raceKey=r.race_key;box.removeAttribute('role');
  if(!$('.be392-tabs',box)){
   box.replaceChildren();
@@ -151,7 +153,10 @@ function showPreview(r,p){
   $('.be392-tabs',box).addEventListener('click',e=>{
    const button=e.target.closest('button[data-count]');if(!button)return;
    const value=Number(button.dataset.count);if(![3,5,10].includes(value))return;
-   shown=value;drawRows(box,p);
+   // Never restore old tickets after a new race or a source refresh.
+   if(box.dataset.ready!=='true'||box.dataset.raceKey!==activeKey||
+      currentPreview?.race_key!==activeKey||finalFor(activeKey))return;
+   shown=value;drawRows(box,currentPreview);
   });
  }
  const stamp=new Date(p.produced_at).toLocaleString('ja-JP',{
@@ -161,6 +166,7 @@ function showPreview(r,p){
  drawRows(box,p);
 }
 function hide(){
+ currentPreview=null;
  const box=$('#be392EarlyPreview');if(box){box.dataset.ready='false';box.replaceChildren();box.dataset.raceKey='';box.removeAttribute('role');}
 }
 async function render(r){
