@@ -52,6 +52,67 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(c['comparators']['scenario7plus3']),10)
         self.assertEqual(len(c['comparators']['coverage15']),15)
         self.assertFalse(c['result_seen_at_freeze'])
+    def test_headsecond_future_10_changes_top3_top5_and_membership(self):
+        # Construction uses existing PRE_RESULT mode tickets, never the result.
+        with patch.object(m,'load',wraps=m.load) as spy:
+            m.freeze(self.root,self.frozen)
+            self.assertFalse(any('site_results' in str(c.args[0])
+                                 for c in spy.call_args_list))
+        p=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        row=m.load(p);cs=row['comparators']
+        self.assertEqual(row['comparison_policy'],m.POLICY_V2)
+        self.assertEqual(len(cs['headsecond10']),10)
+        self.assertEqual(len(set(cs['headsecond10'])),10)
+        self.assertEqual(cs['headsecond10'][0],cs['hit10'][0])
+        self.assertEqual(cs['headsecond10'][1],cs['hit10'][1])
+        self.assertNotEqual(cs['headsecond10'][:3],cs['hit10'][:3])
+        self.assertNotEqual(cs['headsecond10'][:5],cs['hit10'][:5])
+        self.assertNotEqual(set(cs['headsecond10']),set(cs['hit10']))
+        self.assertEqual(cs['headsecond10'][2],'2-4-1')
+        self.assertFalse(row['result_seen_at_freeze'])
+
+    def test_legacy_frozen_four_mode_still_scores_without_retrofit(self):
+        # Frozen V1 cohort was committed before code evolved; its original
+        # source contract must remain scoreable with the exact old 4 modes.
+        legacy,reason=m.prepare(self.root,self.cp,self.frozen)
+        self.assertIsNone(reason)
+        self.assertEqual(legacy['comparison_policy'],m.POLICY_V1)
+        self.assertNotIn('headsecond10',legacy['comparators'])
+        path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        write(path,legacy)
+        write(self.root/'data/site_results'/f'{KEY}.json',{
+            'schema_version':'boat-edge-site-result-v109',
+            'race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
+            'trifecta':'2-4-1','finish_order':[2,4,1],
+            'trifecta_payout_yen_per_100':3140,
+            'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
+        scored=m.score(self.root,m.parse(RESULT_TIME))
+        self.assertEqual(scored['scored_total'],1)
+        self.assertEqual(scored['comparisons']['scenario7plus3']['hit'],1)
+        self.assertEqual(scored['headsecond10_matched_prospective_only']['races'],0)
+        stored=m.load(self.root/m.PATH/'v236_scored'/f'{KEY}.json')
+        self.assertNotIn('headsecond10',stored['outcomes'])
+
+    def test_headsecond_scores_only_new_predeadline_candidate(self):
+        m.freeze(self.root,self.frozen)
+        write(self.root/'data/site_results'/f'{KEY}.json',{
+            'schema_version':'boat-edge-site-result-v109',
+            'race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
+            'trifecta':'2-4-1','finish_order':[2,4,1],
+            'trifecta_payout_yen_per_100':3140,
+            'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
+        scored=m.score(self.root,m.parse(RESULT_TIME))
+        pair=scored['headsecond10_matched_prospective_only']
+        self.assertEqual(pair['races'],1)
+        self.assertEqual(pair['current_hit10_hits'],0)
+        self.assertEqual(pair['candidate_hit10_hits'],1)
+        self.assertEqual((pair['gains'],pair['losses']),(1,0))
+        self.assertEqual(pair['paired_exact_p_two_sided'],1.0)
+        self.assertFalse(pair['promotion_authorized'])
+        again=m.score(self.root,m.parse(RESULT_TIME))
+        self.assertEqual(again['new_scored_this_run'],0)
+        self.assertEqual(again['headsecond10_matched_prospective_only'],pair)
+
     def test_freeze_idempotent(self):
         m.freeze(self.root,self.frozen)
         x=m.freeze(self.root,self.frozen+dt.timedelta(seconds=10))
@@ -161,6 +222,20 @@ class Tests(unittest.TestCase):
                 with patch.object(m,'load',wraps=m.load) as spy:
                     with self.assertRaisesRegex(RuntimeError,'COHORT'):m.score(self.root,m.parse(RESULT_TIME))
                     self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+
+    def test_mutated_headsecond_rank_fails_before_result_read(self):
+        m.freeze(self.root,self.frozen)
+        path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        row=m.load(path)
+        combos=row['comparators']['headsecond10']
+        combos[1],combos[2]=combos[2],combos[1]
+        write(path,row)
+        with patch.object(m,'load',wraps=m.load) as spy:
+            data,reason=m.score_row(self.root,path,m.parse(RESULT_TIME))
+            self.assertIsNone(data)
+            self.assertEqual(reason,'candidate_not_matching_predeclared_source')
+            self.assertFalse(any('site_results' in str(c.args[0])
+                                 for c in spy.call_args_list))
 
     def test_candidate_tampering_is_rejected_before_result_read(self):
         m.freeze(self.root,self.frozen)
