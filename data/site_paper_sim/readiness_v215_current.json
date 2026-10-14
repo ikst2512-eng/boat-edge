@@ -1,73 +1,67 @@
 {
-  "checked_at": "2026-10-14T08:40:47.009548+00:00",
+  "checked_at": "2026-10-14T08:49:12.016420+00:00",
   "current_window": [
     {
-      "deadline": "17:47",
-      "minutes_left": 6.2,
-      "race_key": "20261014-20-06",
-      "reason": "verified_shadow_ready",
-      "source_gaps": [],
-      "venue": "若松"
-    },
-    {
       "deadline": "17:52",
-      "minutes_left": 11.2,
+      "minutes_left": 2.8,
       "race_key": "20261014-12-07",
       "reason": "snapshot_missing",
       "source_gaps": [],
       "venue": "住之江"
+    },
+    {
+      "deadline": "17:58",
+      "minutes_left": 8.8,
+      "race_key": "20261014-15-07",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "beforeinfo_not_ok",
+        "scratch_missing_or_blocked"
+      ],
+      "venue": "丸亀"
+    },
+    {
+      "deadline": "18:03",
+      "minutes_left": 13.8,
+      "race_key": "20261014-24-07",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "race_card_stale",
+        "beforeinfo_not_ok",
+        "scratch_stale"
+      ],
+      "venue": "大村"
     }
   ],
   "day_jst": "20261014",
   "day_latest_reasons": {
     "no_raw_ev_candidate_8_25x": 2,
     "snapshot_audit_sha_failed": 1,
-    "snapshot_missing": 38,
+    "snapshot_missing": 40,
     "verified_shadow_ready": 56
   },
-  "day_observed_races": 97,
+  "day_observed_races": 99,
   "day_verified_races": 56,
   "next_race": {
-    "deadline": "17:41",
-    "race_key": "20261014-19-01",
-    "venue": "下関",
-    "watch_start": "17:26"
+    "deadline": "17:52",
+    "race_key": "20261014-12-07",
+    "venue": "住之江",
+    "watch_start": "17:37"
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
-    "snapshot_missing": 1,
-    "verified_shadow_ready": 1
+    "snapshot_missing": 3
   },
   "schedule_source_today": true,
   "scheduled_races": 156,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 2,
+    "beforeinfo_ok": 1,
     "race_card_ok": 3,
-    "snapshot_exists": 1
+    "snapshot_exists": 0
   },
   "upcoming": [
-    {
-      "beforeinfo_status": "published_wait",
-      "deadline": "17:41",
-      "race_card_status": "ok",
-      "race_key": "20261014-19-01",
-      "scratch_status": "blocked",
-      "snapshot_exists": false,
-      "venue": "下関",
-      "watch_start": "17:26"
-    },
-    {
-      "beforeinfo_status": "ok",
-      "deadline": "17:47",
-      "race_card_status": "ok",
-      "race_key": "20261014-20-06",
-      "scratch_status": "uncertified",
-      "snapshot_exists": true,
-      "venue": "若松",
-      "watch_start": "17:32"
-    },
     {
       "beforeinfo_status": "ok",
       "deadline": "17:52",
@@ -127,7 +121,27 @@
       "snapshot_exists": false,
       "venue": "住之江",
       "watch_start": "18:07"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "18:28",
+      "race_card_status": "ok",
+      "race_key": "20261014-15-08",
+      "scratch_status": "uncertified",
+      "snapshot_exists": false,
+      "venue": "丸亀",
+      "watch_start": "18:13"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "18:34",
+      "race_card_status": "ok",
+      "race_key": "20261014-19-03",
+      "scratch_status": "uncertified",
+      "snapshot_exists": false,
+      "venue": "下関",
+      "watch_start": "18:19"
     }
   ],
-  "window_races": 2
+  "window_races": 3
 }
