@@ -206,7 +206,7 @@ class Tests(unittest.TestCase):
                "-p 'test_boat_edge_v236_hit_rate.py' -q")
         self.assertEqual(text.count(current),2)
         self.assertGreaterEqual(text.count(suite),3)
-        self.assertEqual(text.count('python3 "$RUNNER_TEMP/v236_install.py"'),0)
+        self.assertEqual(text.count('python3 "$RUNNER_TEMP/v236_install.py"'),1)
         self.assertEqual(text.count('git reset --hard origin/main'),2)
         self.assertIn('source_pins = ',text)
 
