@@ -95,10 +95,25 @@ def probe_site_snapshot_evidence(context, target, key, deadline):
         audit, proof = audit_res.json(), evidence_res.json()
     except (ValueError, TypeError):
         return {"status": "SNAPSHOT_AUDIT_INVALID_JSON", "first_git_commit_verified": False}
-    # An outcome embedded in audit is not valid PRE_RESULT evidence.
+    # V125 normally includes an explicit UNSETTLED sentinel even before a
+    # race starts. An empty-result sentinel is not an observed outcome.
+    # Reject any other shape/content fail-closed: this probe must never treat
+    # a post-result or noncanonical audit as PRE_RESULT freeze evidence.
     if "settlement" in audit:
-        return {"status": "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT",
-                "first_git_commit_verified": False}
+        settlement = audit["settlement"]
+        allowed = {"available", "winning_combo", "hit_any", "mode_hits", "payout"}
+        valid_unsettled = (
+            isinstance(settlement, dict)
+            and set(settlement) == allowed
+            and settlement.get("available") is False
+            and settlement.get("winning_combo") is None
+            and settlement.get("hit_any") is None
+            and settlement.get("mode_hits") == {}
+            and settlement.get("payout") is None
+        )
+        if not valid_unsettled:
+            return {"status": "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT",
+                    "first_git_commit_verified": False}
     if (audit.get("pass") is not True or audit.get("race_key") != key or
         audit.get("latest_snapshot_sha256") != sha or
         proof.get("race_key") != key or proof.get("snapshot_sha256") != sha or
@@ -181,8 +196,30 @@ def test_snapshot_evidence_contract_without_network():
     assert check({**data, "site_prediction_audit/" + key + ".json":
                   {**audit, "settlement": {}}}
                  )["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT"
-    # V235 can update the race-specific beforeinfo receipt *after* the
-    # summary catalog was published. Never reject it solely on a stale hint.
+    # V125 writes this unset sentinel before a race settles; it is not an outcome.
+    sentinel = {"available": False, "winning_combo": None, "hit_any": None,
+                "mode_hits": {}, "payout": None}
+    fresh_audit = {**audit, "settlement": sentinel}
+    still_pre = check({**data, "site_prediction_audit/" + key + ".json": fresh_audit})
+    assert still_pre["status"] == "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+    assert still_pre["first_git_commit_verified"] is False
+    # Reject any observed payout, result, unsupported field or unknown shape.
+    for contaminated in (
+        {**sentinel, "available": True},
+        {**sentinel, "winning_combo": "1-2-3"},
+        {**sentinel, "hit_any": False},
+        {**sentinel, "mode_hits": {"hit": False}},
+        {**sentinel, "payout": 0},
+        {**sentinel, "unexpected": None},
+        {"available": False},
+        None,
+        {},
+    ):
+        blocked = check({**data, "site_prediction_audit/" + key + ".json":
+                         {**audit, "settlement": contaminated}})
+        assert blocked["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT", contaminated
+    # A summary hint may be stale; invalid race paths and elapsed deadlines
+    # are still excluded without touching result or payout sources.
     fixed_now = datetime(2026, 10, 14, 10, 55, tzinfo=JST)
     live_key = "20261014-14-05"
     stale = {
@@ -209,11 +246,7 @@ def test_snapshot_evidence_contract_without_network():
 
 
 def choose_live_receipt_candidates(catalog, now):
-    """Read catalog as an index, never as authoritative live source status.
-
-    Only exact same-day PRE_RESULT file keys and future deadlines may be read.
-    Stale catalog beforeinfo hints count as diagnostics, not as exclusions.
-    """
+    """Use same-day race keys and future deadlines; catalog source status is only a hint."""
     choices = []
     readiness = {"not_ready": 0, "beforeinfo_missing": 0,
                  "invalid_race": 0, "deadline_invalid_or_too_close": 0}
@@ -222,9 +255,8 @@ def choose_live_receipt_candidates(catalog, now):
             if race.get("racers_ready") is not True:
                 readiness["not_ready"] += 1
                 continue
-            # Catalog status is an early publication hint, not the authority
-            # for final live exhibition. V235 updates the race-specific source
-            # receipt after the collector last published data/today.json.
+            # Catalog status can lag the race-specific V235 PRE_RESULT refresh.
+            # Count it as diagnostic only; the live race receipt decides safety.
             if race.get("beforeinfo_status") != "ok":
                 readiness["beforeinfo_missing"] += 1
             path = str(race.get("file") or "")
@@ -267,9 +299,8 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                 "eligible_count": 0, "readiness": readiness}
     stopped_reasons = []
     source_ready_checked = 0
-    # Check up to 36 *same-day, future PRE_RESULT* race receipts. A stale
-    # catalog must not hide a verified live source; browser navigations remain
-    # capped at five to avoid delaying predeadline attestations.
+    # At most 36 prospective same-day source receipts. Navigation remains
+    # capped at five genuinely source-ready races, avoiding a Pages race storm.
     for _, venue, race in choices[:36]:
         if source_ready_checked >= 5:
             break
