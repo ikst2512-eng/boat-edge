@@ -37,7 +37,7 @@ class ResearchFreezeSingleOwner(unittest.TestCase):
         events = x.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
         self.assertIn("    - cron: '33 0-14,23 * * *'", events)
         self.assertEqual(len(re.findall(r"(?m)^    - cron:", events)), 1)
-        self.assertIn("'BOAT_EDGE_V194.yml'", events)
+        self.assertIn("'.github/workflows/BOAT_EDGE_V194.yml'", events)
         self.assertIn("  workflow_dispatch:", events)
         self.assertIn("if: github.ref == 'refs/heads/main'", x)
         self.assertIn("V194_PRE_RESULT_FREEZE_DIAG", x)
