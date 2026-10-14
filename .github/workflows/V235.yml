@@ -65,7 +65,7 @@ jobs:
             'scripts/boat_edge_v232_pre_result_cohort.py:99c69c924de451fe6635961253e9ea61d314366b' \
             'scripts/boat_edge_v215_readiness.py:f74705858e9bffbe28b4ce444d29aa8565ed6497' \
             'scripts/boat_edge_v214_shadow.py:2fafe6932383c0ace68d82d3cc2591591b6affdb' \
-            'scripts/boat_edge_v229_atomic_freeze.py:3112e04bee01477c70f952d44aaccb77a836d862'; do
+            'scripts/boat_edge_v229_atomic_freeze.py:23246495c6296177f8d95a93eeabc0a832c633a4'; do
             path="${spec%:*}"; sha="${spec##*:}"
             test -f "$path" && test "$(git hash-object "$path")" = "$sha" || { echo "V234_PRE_RESULT_DEPENDENCY_CHANGED_$path"; exit 1; }
           done
