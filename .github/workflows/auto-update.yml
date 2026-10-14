@@ -920,6 +920,19 @@ jobs:
           print(json.dumps(status,ensure_ascii=False))
           PY
 
+      # V01: keep scratch evidence in the SAME Git push as the official
+      # PRE_RESULT source HTML. A later V186 cron is not required for freshness.
+      # Source SHA, original Japanese withdrawal flags, six real exhibition
+      # rows, valid race identity and strict future deadline all fail closed.
+      - name: 原本SHA検証済み欠場確認を同一収集コミットへ反映
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v01_collector_scratch.py' -q
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v01_collector_scratch.py
+          echo COLLECTOR_OFFICIAL_SCRATCH_SAME_COMMIT_PROOF_CHECKED
+
       - name: V392 当日出走表から暫定120通りを自動更新（正式凍結と別）
         if: success()
         shell: bash
