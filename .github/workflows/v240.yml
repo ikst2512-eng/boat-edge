@@ -1,19 +1,11 @@
 name: BOAT EDGE V240 - Effective Second Coverage Prospective Ten Point Audit
 
+# V240 retired from automatic research collection on 2026-10-15.
+# Frozen SITE-only results and independent audit history remain untouched.
+# Research candidates preserve Top7 exactly and cannot improve Top3/Top5;
+# 61 scored races showed no Top10 gain. Explicit manual recovery ONLY.
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/v240.yml']
   workflow_dispatch:
-  # 01 runtime dedup: five-minute prospective schedule remains the owner.
-  # V235 also runs frequently; a workflow_run relay doubled research jobs,
-  # commits and automatic Pages builds without improving freeze cadence.
-  schedule:
-    # Keep the five-minute PRE_RESULT freeze cadence; score older SITE-only
-    # frozen cohorts on one staggered 15-minute tick to reduce Pages churn.
-    - cron: '1,16,31,46 0-14,23 * * *'
-    - cron: '6,21,36,51 0-14,23 * * *'
-    - cron: '11,26,41,56 0-14,23 * * *'
 
 permissions:
   contents: write
