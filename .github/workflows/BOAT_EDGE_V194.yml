@@ -1,13 +1,15 @@
-name: BOAT EDGE V194 - Prospective Freeze Health and Diagnostics
+name: BOAT EDGE V194 - Research Freeze Health Diagnostics
 
 on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/V194.yml'
+      - '.github/workflows/BOAT_EDGE_V194.yml'
   workflow_dispatch:
   schedule:
-    - cron: '3,13,23,33,43,53 0-14,23 * * *'
+    # Research-only diagnostic. V180 and V185 retain their own 10-minute
+    # immutable freeze schedules; do not run a third competing writer.
+    - cron: '33 0-14,23 * * *'
 
 permissions:
   contents: write
@@ -49,13 +51,6 @@ jobs:
           if test -f tests/test_v185_role_shadow.py; then
             python3 tests/test_v185_role_shadow.py
           fi
-
-      - name: Freeze V180 and V185 only before deadlines
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/site_v180_shadow.py --repo .
-          python3 scripts/site_v185_role_shadow.py --repo .
 
       - name: Diagnose every same-day FINAL15M snapshot without opening outcomes
         shell: bash
@@ -147,40 +142,30 @@ jobs:
           PYDIAG
           git diff --check
 
-      - name: Commit frozen predictions and diagnostics without workflow modifications
+      - name: Publish only independently observed research diagnostics
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # The V180 and V185 freeze owners publish their own immutable bytes.
+          # The health watcher never stages or rewrites those frozen predictions.
+          git add -A -- data/site_tail_shadow_v185/diagnostics/
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo V194_DIAGNOSTICS_UNCHANGED_NO_MAIN_CHURN
+            exit 0
+          fi
+          git commit -m 'V194 site-only research freeze health diagnostics'
           for attempt in 1 2 3 4; do
-            # Regenerate against the latest working tree after any racing update.
-            # No already committed freeze may be overwritten.
-            if [ "$attempt" -gt 1 ]; then
-              python3 scripts/site_v180_shadow.py --repo .
-              python3 scripts/site_v185_role_shadow.py --repo .
-            fi
-            if test -d data/site_tail_shadow_v180/predictions; then
-              git add -A -- data/site_tail_shadow_v180/predictions
-            fi
-            if test -d data/site_tail_shadow_v185/predictions; then
-              git add -A -- data/site_tail_shadow_v185/predictions
-            fi
-            if test -d data/site_tail_shadow_v185/diagnostics; then
-              git add -A -- data/site_tail_shadow_v185/diagnostics
-            fi
-            git diff --cached --check
-            if git diff --cached --quiet; then
-              echo V194_NO_NEW_PRE_RESULT_EVIDENCE_TO_COMMIT
-              exit 0
-            fi
-            git commit -m 'V194 freeze future PRE_RESULT research and record source-eligibility diagnostics'
             if git push origin HEAD:main; then
-              echo V194_RESEARCH_EVIDENCE_COMMITTED
+              echo V194_DIAGNOSTICS_ONLY_PUBLISHED
               exit 0
             fi
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch --no-tags origin main
+            # Retain the exact diagnosed artifact; do not lose the report
+            # through reset --hard while another writer updates main.
+            git rebase origin/main
           done
-          echo V194_PUSH_BLOCKED_NO_UNVERIFIED_FREEZE_CLAIM >&2
+          echo V194_DIAGNOSTICS_UNPUBLISHED_AFTER_RETRIES >&2
           exit 1
