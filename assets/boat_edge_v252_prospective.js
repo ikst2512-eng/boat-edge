@@ -23,6 +23,23 @@
      seen.add(r.race_key);raceDays.add(r.race_key.slice(0,8));
    }
    const days=[...raceDays].sort();if(!days.length)return null;
+   if(lane==='v236'){
+     const summaries=p.headsecond_by_frozen_policy;
+     if(!summaries||Object.keys(summaries).length!==forwardPolicies.length)return null;
+     for(const policy of forwardPolicies){
+       const matched=p.races.filter(r=>r.candidate_policy===policy);
+       const entry=summaries[policy];
+       if(!entry||entry.matched_races!==matched.length||
+          !entry.miss_categories||Object.keys(entry.miss_categories).length!==2)return null;
+       for(const mode of ['hit10','headsecond10']){
+         const counts=entry.miss_categories[mode];
+         if(!counts||Object.keys(counts).length!==cats.length||
+            cats.some(k=>!int(counts[k]))||
+            cats.reduce((n,k)=>n+counts[k],0)!==matched.length||
+            cats.some(k=>matched.filter(r=>r.categories[mode]===k).length!==counts[k]))return null;
+       }
+     }
+   }
    const output=[];
    for(const k of keys){
      const x=d.comparisons[k];
@@ -48,6 +65,12 @@
  const MISSSCHEMA='BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1';
  const MISSCOPE='POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS';
  const cats=['hit','head_absent','second_absent_given_head','third_absent_given_head_second'];
+ const v236Policies=[
+  'PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST',
+  'PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER',
+  'PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES'
+ ];
+ const forwardPolicies=v236Policies.slice(1);
  function completeLane(d,lane,keys,paired){
    const p=d?.lanes?.[lane],n=p?.races_verified;
    if(!int(n)||n===0||n>d.site_verified_reference_races||
@@ -55,12 +78,17 @@
       Object.keys(p.miss_categories).length!==keys.length)return null;
    const seen=new Set(),days=new Set();
    for(const r of p.races){
+     const expected=keys.slice();
+     if(lane==='v236'){
+       if(!v236Policies.includes(r?.candidate_policy))return null;
+       if(forwardPolicies.includes(r.candidate_policy))expected.push('headsecond10');
+     }
      if(!goodKey(r?.race_key)||seen.has(r.race_key)||
         r.date_jst!==r.race_key.slice(0,8)||
         !/^([1-6]-){2}[1-6]$/.test(r.winning_combo||'')||
         new Set(r.winning_combo.split('-')).size!==3||
-        !r.categories||Object.keys(r.categories).length!==keys.length||
-        keys.some(k=>!cats.includes(r.categories[k])))return null;
+        !r.categories||Object.keys(r.categories).length!==expected.length||
+        expected.some(k=>!cats.includes(r.categories[k])))return null;
      seen.add(r.race_key);days.add(r.date_jst);
    }
    const output=[];
