@@ -15,6 +15,7 @@ import re
 import time
 import unicodedata
 from urllib.parse import urlencode,urlsplit,parse_qs
+from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
 
 JST=timezone(timedelta(hours=9))
 UTC=timezone.utc
@@ -135,7 +136,7 @@ def targets(root,now,max_target=12):
             if not due or not str(key).startswith(today+'-'):continue
             mins=(due-now).total_seconds()/60
             if not 2<=mins<=19:continue
-            if (root/'data/site_prediction_snapshots'/f'{key}.json').is_file():continue
+            if not source_write_allowed(root/'data',key,row.get('deadline'),now):continue
             race=load(root/'data/races'/f'{key}.json') or {}
             m=race.get('meta') or {}
             if m.get('phase')!='PRE_RESULT' or any(m.get(f) is not False for f in ('results_seen','unlock','scoring')):continue
@@ -165,7 +166,7 @@ def target_diagnostic(root, now):
             mins=(due-now).total_seconds()/60
             if not 2<=mins<=19:
                 counts['outside_2_to_19_min_window']+=1;continue
-            if (root/'data/site_prediction_snapshots'/f'{key}.json').is_file():
+            if not source_write_allowed(root/'data',key,row.get('deadline'),now):
                 counts['snapshot_exists']+=1;continue
             race=load(root/'data/races'/f'{key}.json') or {}
             meta=race.get('meta') or {}
@@ -284,8 +285,15 @@ def update_one(root,key,data,now):
     due=due_for(key,m.get('deadline'))
     if not due or not 2<=(due-now).total_seconds()/60<=19:return 'window_passed'
     if m.get('phase')!='PRE_RESULT' or any(m.get(f) is not False for f in ('results_seen','unlock','scoring')):return 'pre_result_unverified'
+    if not source_write_allowed(root/'data',key,m.get('deadline'),now):return 'source_locked'
     rb,rtext,rt=data['racelist'];bb,btext,bt=data['beforeinfo']
     ob,otext,ot=data['odds']
+    # Reject bytes received at/after cutoff even if a stale caller clock
+    # still points at the pre-deadline selection time.
+    if any(not isinstance(t,datetime) or t.tzinfo is None for t in (rt,bt,ot)):
+        return 'source_timestamp_unverified'
+    latest=max(now,rt,bt,ot)
+    if not source_write_allowed(root/'data',key,m.get('deadline'),latest):return 'source_locked'
     try: odds=verified_odds(otext)
     except (ValueError,TypeError,OverflowError):odds=None
     stored=[str(x.get('registration_no')) for x in (race.get('racers') or [])]
@@ -311,6 +319,9 @@ def update_one(root,key,data,now):
     m['updated_at']=bt.isoformat(timespec='seconds')
     race['meta']=m
     raw=root/'data/raw'/key[:8];vv,rr=key.split('-')[1:]
+    # Recheck existence-only immutable freeze immediately before source writes.
+    # A V232 freeze created after targets() must win over this async refresh.
+    if not source_write_allowed(root/'data',key,m.get('deadline'),latest):return 'source_locked'
     # Stage HTML + parsed source + scratch check for the very same official bytes.
     write_bytes_exact(raw/f'{vv}_{rr}_racelist.html',rb)
     write_bytes_exact(raw/f'{vv}_{rr}_beforeinfo.html',bb)
@@ -361,7 +372,7 @@ def imminent_retry_targets(root, keys, outcomes, now):
         due=due_for(key,(race.get('meta') or {}).get('deadline'))
         if due is None or not 2 <= (due-now).total_seconds()/60 <= 10:
             continue
-        if (root/'data/site_prediction_snapshots'/f'{key}.json').is_file():
+        if not source_write_allowed(root/'data',key,(race.get('meta') or {}).get('deadline'),now):
             continue
         outcome=outcomes.get(key)
         if outcome=='odds_incomplete':
