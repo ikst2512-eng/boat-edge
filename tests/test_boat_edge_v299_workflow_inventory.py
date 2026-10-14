@@ -24,6 +24,24 @@ class WorkflowInventoryTests(unittest.TestCase):
         for retired in RETIRED:
             self.assertNotIn(retired, result["scheduled_contents_writers"])
 
+    def test_v240_research_retired_without_dropping_original_audit(self):
+        workflow = ROOT / ".github/workflows/v240.yml"
+        contents = workflow.read_text(encoding="utf-8")
+        from scripts.boat_edge_v299_workflow_inventory import event_block
+        events = event_block(contents)
+        self.assertIn("  workflow_dispatch:", events)
+        self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
+        # Explicit operator replay may still run the original frozen-only
+        # scorer. Never delete immutable frozen/scored research files.
+        self.assertNotIn("scripts/boat_edge_v240_coverage.py freeze", contents)
+        self.assertIn("scripts/boat_edge_v240_coverage.py score", contents)
+        self.assertNotIn("V240_FROZEN_GIT_ATTESTED", contents)
+        self.assertIn("V240_SCORING_GIT_PUBLISHED", contents)
+        self.assertIn("manual recovery ONLY", contents)
+        report = audit(ROOT / ".github/workflows")
+        self.assertNotIn("v240.yml", report["scheduled_contents_writers"])
+        verify_retired(report)
+
     def test_v221_cleanup_is_manual_only(self):
         report = audit(ROOT / ".github" / "workflows")
         entries = {x["workflow"]: x for x in report["workflows"]}
@@ -88,7 +106,7 @@ class WorkflowInventoryTests(unittest.TestCase):
         targets = (
             ("v236.yml", 3, "3,18,33,48", "boat_edge_v236_hit_rate.py"),
             ("v239.yml", 4, "9,24,39,54", "boat_edge_v239_second_tail.py"),
-            ("v240.yml", 1, "11,26,41,56", "boat_edge_v240_coverage.py"),
+            # V240 was retired after checking all 61 frozen same-Top7 tickets.
             ("v254-third-tail-shadow.yml", 3, "13,28,43,58",
              "boat_edge_v254_third_tail.py"),
         )
