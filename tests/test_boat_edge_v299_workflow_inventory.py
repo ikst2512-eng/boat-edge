@@ -33,8 +33,10 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
         # Explicit operator replay may still run the original frozen-only
         # scorer. Never delete immutable frozen/scored research files.
-        self.assertIn("scripts/boat_edge_v240_coverage.py freeze", contents)
+        self.assertNotIn("scripts/boat_edge_v240_coverage.py freeze", contents)
         self.assertIn("scripts/boat_edge_v240_coverage.py score", contents)
+        self.assertNotIn("V240_FROZEN_GIT_ATTESTED", contents)
+        self.assertIn("V240_SCORING_GIT_PUBLISHED", contents)
         self.assertIn("manual recovery ONLY", contents)
         report = audit(ROOT / ".github/workflows")
         self.assertNotIn("v240.yml", report["scheduled_contents_writers"])
