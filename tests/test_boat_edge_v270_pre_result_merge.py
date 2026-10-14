@@ -54,6 +54,14 @@ class SourceMerge(unittest.TestCase):
         self.assertTrue(guard.is_file())
         put(self.writer,'scripts/boat_edge_v277_snapshot_push_guard.py',
             guard.read_text(encoding='utf-8'))
+        # The real V270 rebase path calls this second, fail-closed guard for
+        # scratch conflicts. Before this fixture tracked only the V277 guard,
+        # so valid race-source conflicts failed with "can't open file" instead
+        # of exercising the actual production shell behavior.
+        scratch_guard=ROOT/'scripts/boat_edge_v01_scratch_rebase_guard.py'
+        self.assertTrue(scratch_guard.is_file())
+        put(self.writer,'scripts/boat_edge_v01_scratch_rebase_guard.py',
+            scratch_guard.read_text(encoding='utf-8'))
         git(self.writer,'add','data','scripts')
         git(self.writer,'commit','-m','base PRE_RESULT only')
         git(self.writer,'push','-u','origin','main')
@@ -73,6 +81,9 @@ class SourceMerge(unittest.TestCase):
                        'data/races/20??????-??-??.json'):
             self.assertIn(phrase,shell())
         self.assertNotIn('git push --force',shell())
+        # Guard must be present both in the live script and fixture checkout.
+        self.assertIn('scripts/boat_edge_v01_scratch_rebase_guard.py',shell())
+        self.assertTrue((self.collector/'scripts/boat_edge_v01_scratch_rebase_guard.py').is_file())
     def test_preserves_remote_conflict_and_commits_unrelated_source(self):
         put(self.writer,'data/races/20261012-19-09.json','REMOTE_NEW_RACE\n')
         put(self.writer,'data/raw/20261012/19_09_beforeinfo.html','REMOTE_NEW_BEFORE\n')
