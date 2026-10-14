@@ -1,10 +1,8 @@
 name: BOAT EDGE V134 - Repair Source-Bound TODO Reconciler
 
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/site-v134.yml']
   workflow_dispatch:
+  # manual recovery ONLY: no push/schedule trigger for retired TODO writer.
   # Retired hourly TODO writer: manual recovery only. Prevent repeated commits\n  # and overwrites of the user-defined product completion checklist.\n  # This workflow never owns the live PRE_RESULT freeze pipeline.
 
 permissions:
