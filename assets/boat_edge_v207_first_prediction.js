@@ -105,7 +105,7 @@ function skeleton(){
  * infer a final freeze or result from a numerical score. */
 function predictionDisplayPhase(r,source,blocked,settled,now=Date.now()){
  const key=String(r?.race_key||''),time=String(r?.meta?.deadline||'');
- const clock=/^([01]\\d|2[0-3]):([0-5]\\d)$/.exec(time);
+ const clock=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
  if(!valid(key)||!clock||String(r?.meta?.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
     Number(r?.meta?.race_no)!==Number(key.slice(12,14))||
     r?.meta?.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8))
