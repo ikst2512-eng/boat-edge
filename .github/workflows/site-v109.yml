@@ -195,13 +195,45 @@ jobs:
               }
               current_candidates+=1
 
+          # 2) Recover missing/pending prior-day results only for races with
+          # an existing race card and a verified, already-passed deadline.
+          # Never create a pre-result card or modify any prediction snapshot.
+          for p in sorted(races.glob('*.json')):
+              m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',p.name)
+              if not m:
+                  continue
+              ymd,jcd,rno=m.groups()
+              if not (START<=ymd<today):
+                  continue
+              doc=read_json(p)
+              if not isinstance(doc,dict):
+                  continue
+              meta=doc.get('meta') or {}
+              if not isinstance(meta,dict):
+                  continue
+              # File naming is the canonical site race identity; do not require
+              # optional card metadata to use a particular serialization.
+              target=out/p.name
+              old=read_json(target) if target.exists() else None
+              if old and old.get('status')=='confirmed' and old.get('trifecta') and old.get('trifecta_payout_yen_per_100') is not None:
+                  continue
+              # Site-only results must never unlock or score Formal Fresh.
+              # The protected 2026-10-01 date is excluded explicitly.
+              if ymd=='20261001':
+                  continue
+              candidates[p.stem]={
+                  'key':p.stem,'ymd':ymd,'jcd':jcd,'rno':int(rno),
+                  'target':target,'old':old,'kind':'historical_missing'
+              }
+              historical_candidates+=1
+
           # 2) Historical confirmed results since 10/7 with payout missing.
           for p in sorted(out.glob('*.json')):
               m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',p.name)
               if not m:
                   continue
               ymd,jcd,rno=m.groups()
-              if ymd<START or ymd==today:
+              if ymd<START or ymd>=today or ymd=='20261001':
                   continue
               old=read_json(p)
               if not old or old.get('status')!='confirmed':
@@ -219,7 +251,7 @@ jobs:
           rows=list(candidates.values())
           if __import__('os').environ.get('GITHUB_EVENT_NAME')=='schedule':
               current=[x for x in rows if x['kind']=='current']
-              historical=[x for x in rows if x['kind']=='historical'][:36]
+              historical=[x for x in rows if x['kind']!='current'][:36]
               rows=current+historical
 
           def worker(item):
