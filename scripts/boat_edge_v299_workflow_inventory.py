@@ -48,6 +48,8 @@ RETIRED = (
     "v240.yml",
     # The 54 observed V239 frozen races preserved reference ranks 1-7.
     "v239.yml",
+    # V190 now runs V184-guarded future-only scoring and verifies old V183 disabled.
+    "BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml",
 )
 LIVE = "V235.yml"
 
