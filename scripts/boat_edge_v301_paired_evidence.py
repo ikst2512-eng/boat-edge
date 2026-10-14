@@ -281,6 +281,10 @@ def audit(root, attest=first_added):
         rows = list(items.values())
         within[study] = {
             "sample_races": len(rows), "sample_days": len({r["day"] for r in rows}),
+            "baseline_topk": {f"top{k}": {"hits": sum(r["winning"] in r["baseline"][:k] for r in rows),
+                                            "races": len(rows),
+                                            "hit_rate": (sum(r["winning"] in r["baseline"][:k] for r in rows) / len(rows)) if rows else None}
+                               for k in (3, 5, 10)},
             "baseline_miss_slots": misses(rows),
             "equal_ten_point_modes": {m: paired(rows, m) for m in CONFIG[study][7]
                                       if m != "hit10" and m != "coverage15"},
