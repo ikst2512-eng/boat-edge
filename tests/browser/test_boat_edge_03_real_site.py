@@ -181,18 +181,39 @@ def test_snapshot_evidence_contract_without_network():
     assert check({**data, "site_prediction_audit/" + key + ".json":
                   {**audit, "settlement": {}}}
                  )["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT"
+    # V235 can update the race-specific beforeinfo receipt *after* the
+    # summary catalog was published. Never reject it solely on a stale hint.
+    fixed_now = datetime(2026, 10, 14, 10, 55, tzinfo=JST)
+    live_key = "20261014-14-05"
+    stale = {
+        "date": "2026-10-14",
+        "venues": [{"jcd": "14", "venue": "鳴門", "races": [
+            {"race_key": live_key, "file": "data/races/" + live_key + ".json",
+             "racers_ready": True, "beforeinfo_status": "published_wait",
+             "deadline": "11:20"},
+            {"race_key": "20261014-14-01",
+             "file": "data/races/20261014-14-01.json",
+             "racers_ready": True, "beforeinfo_status": "ok",
+             "deadline": "08:35"},
+            {"race_key": "20261014-14-06", "file": "../data/site_results/bad.json",
+             "racers_ready": True, "beforeinfo_status": "ok",
+             "deadline": "11:45"}
+        ]}]
+    }
+    candidates, reasons = choose_live_receipt_candidates(stale, fixed_now)
+    assert [r["race_key"] for _, _, r in candidates] == [live_key]
+    assert reasons["beforeinfo_missing"] == 1
+    assert reasons["deadline_invalid_or_too_close"] == 1
+    assert reasons["invalid_race"] == 1
     print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
 
 
-def probe_verified_live_topk(context, target, catalog, shots, engine):
-    """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
+def choose_live_receipt_candidates(catalog, now):
+    """Read catalog as an index, never as authoritative live source status.
 
-    Only races with a successful race-specific beforeinfo receipt and a future
-    JST deadline are eligible. No outcome, payout or archived race is accessed.
-    If none qualifies, expose NOT_CERTIFIED rather than silently treating a
-    stopped prediction or an offline fixture as a successful live TopK test.
+    Only exact same-day PRE_RESULT file keys and future deadlines may be read.
+    Stale catalog beforeinfo hints count as diagnostics, not as exclusions.
     """
-    now = datetime.now(JST)
     choices = []
     readiness = {"not_ready": 0, "beforeinfo_missing": 0,
                  "invalid_race": 0, "deadline_invalid_or_too_close": 0}
@@ -227,6 +248,20 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                 continue
             choices.append((due, venue, race))
     choices.sort(key=lambda item: item[0])
+
+    return choices, readiness
+
+
+def probe_verified_live_topk(context, target, catalog, shots, engine):
+    """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
+
+    Only races with a successful race-specific beforeinfo receipt and a future
+    JST deadline are eligible. No outcome, payout or archived race is accessed.
+    If none qualifies, expose NOT_CERTIFIED rather than silently treating a
+    stopped prediction or an offline fixture as a successful live TopK test.
+    """
+    now = datetime.now(JST)
+    choices, readiness = choose_live_receipt_candidates(catalog, now)
     if not choices:
         return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE",
                 "eligible_count": 0, "readiness": readiness}
