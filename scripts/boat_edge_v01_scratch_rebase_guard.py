@@ -11,7 +11,9 @@ formal prediction data are read, and no file is modified.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+
+JST = timezone(timedelta(hours=9))
 import json
 from pathlib import Path
 import re
@@ -42,9 +44,7 @@ def safe_remote_scratch(path: str, remote: dict, local: dict, now: datetime) -> 
         return False
     key = m.group(1)
     day = key[:8]
-    if key[:8] != now.astimezone(timezone.utc).astimezone(
-        __import__("datetime").timezone(__import__("datetime").timedelta(hours=9))
-    ).strftime("%Y%m%d"):
+    if day != now.astimezone(JST).strftime("%Y%m%d"):
         return False
     for item in (remote, local):
         if (item.get("schema_version") != "boat-edge-v182-scratch-evidence-v1"
