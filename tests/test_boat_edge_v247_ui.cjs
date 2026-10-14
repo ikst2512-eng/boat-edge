@@ -87,3 +87,39 @@ const opsJs=fs.readFileSync('assets/boat_edge_v220_site_ops.js','utf8');
 assert(opsJs.includes('id="be220Status"'));
 assert(opsJs.includes('aria-label="AI仮想運用と未見検証を見る"'));
 console.log('BOAT_EDGE_03_MOBILE_RACE_FIRST_OPS_STATUS_PRESERVED_PASS');
+
+// 03: data missing on a six-racer preview is not a measured 0.0%.
+// Execute the production renderer, not a duplicate rate-format implementation.
+const sixBoatSrc=fs.readFileSync('assets/boat_edge_final_v48.js','utf8');
+const sixStart=sixBoatSrc.indexOf('function renderRacers(d){');
+const sixEnd=sixBoatSrc.indexOf('function beforeMaps(d)',sixStart);
+assert(sixStart>=0&&sixEnd>sixStart,'production six-boat renderer must be present');
+const sixHost={innerHTML:''};
+const sixCtx=vm.createContext({
+  q:sel=>sel==='#be48Racers'?sixHost:null,
+  lane:l=>'['+l+']',
+  laneNo:(r,i)=>Number(r?.lane??i+1),
+  value:v=>v===null||v===undefined||v===''?'—':v,
+  esc:v=>String(v)
+});
+vm.runInContext(sixBoatSrc.slice(sixStart,sixEnd),sixCtx);
+sixCtx.rows=[
+ {lane:1,name:'Missing Both',motor:{quinella_rate:null},boat:{quinella_rate:''}},
+ {lane:2,name:'Missing Motor',motor:{},boat:{quinella_rate:35.26}},
+ {lane:3,name:'Measured Zero',motor:{quinella_rate:0},boat:{quinella_rate:0}},
+ {lane:4,name:'No Motor/Boat',motor:null,boat:undefined},
+ {lane:5,name:'Garbage',motor:{quinella_rate:'unknown'},boat:{quinella_rate:'NaN'}},
+ {lane:6,name:'Standard',motor:{quinella_rate:27.75},boat:{quinella_rate:42.12}}
+];
+vm.runInContext('renderRacers({racers:rows})',sixCtx);
+for(const textValue of ['Missing Both','Missing Motor','Measured Zero','No Motor/Boat','Garbage','Standard'])
+ assert(sixHost.innerHTML.includes(textValue));
+const sixCards=sixHost.innerHTML.match(/<article class="be48-racer">[\s\S]*?<\/article>/g)||[];
+assert.equal(sixCards.length,6);
+assert(sixCards[0].includes('M2<b>—</b>')&&sixCards[0].includes('B2<b>—</b>'));
+assert(sixCards[1].includes('M2<b>—</b>')&&sixCards[1].includes('B2<b>35.3%</b>'));
+assert(sixCards[2].includes('M2<b>0.0%</b>')&&sixCards[2].includes('B2<b>0.0%</b>'));
+assert(sixCards[3].includes('M2<b>—</b>')&&sixCards[3].includes('B2<b>—</b>'));
+assert(sixCards[4].includes('M2<b>—</b>')&&sixCards[4].includes('B2<b>—</b>'));
+assert(sixCards[5].includes('M2<b>27.8%</b>')&&sixCards[5].includes('B2<b>42.1%</b>'));
+console.log('BOAT_EDGE_03_SIX_BOAT_MISSING_RATE_NOT_ZERO_PASS');
