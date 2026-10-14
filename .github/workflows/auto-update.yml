@@ -698,13 +698,62 @@ jobs:
 
               before=doc.setdefault("beforeinfo",{})
               if preview_boats:
-                  before["racers"]=preview_boats
+                  # The official beforeinfo was obtained in the earlier stage.
+                  # Do not destroy six real official exhibition measurements
+                  # just because a later third-party CSV row is incomplete.
+                  official_rows=before.get("racers") if isinstance(before.get("racers"),list) else []
+                  official_by_lane={r["lane"]:r for r in official_rows
+                      if isinstance(r,dict) and type(r.get("lane")) is int
+                      and 1<=r["lane"]<=6}
+                  merged=[]
+                  for csv_row in preview_boats:
+                      prior=official_by_lane.get(csv_row["lane"],{})
+                      row=dict(prior)
+                      row["lane"]=csv_row["lane"]
+                      old_time=prior.get("exhibition_time")
+                      new_time=csv_row.get("exhibition_time")
+                      if (type(old_time) in (int,float) and math.isfinite(old_time)
+                              and 6.0<=old_time<=8.5):
+                          row["exhibition_time"]=old_time
+                      elif (type(new_time) in (int,float) and math.isfinite(new_time)
+                              and 6.0<=new_time<=8.5):
+                          row["exhibition_time"]=new_time
+                      for field,value in csv_row.items():
+                          if field not in ("lane","exhibition_time") and value is not None:
+                              if field!="tilt" or prior.get("tilt") is None:
+                                  row[field]=value
+                      merged.append(row)
+                  before["racers"]=merged
               if actual:
-                  before["start_exhibition"]=[
-                    {"lane":x["lane"],"course":x["course"],
-                     "st":x["exhibition_st_raw"],"exhibition_f":x["exhibition_f"]}
-                    for x in actual
-                  ]
+                  # Start-exhibition course is NOT final actual entry.
+                  # Only a complete observed six-course permutation may
+                  # enrich independently observed official ST. Partial CSV
+                  # must not replace a usable official six-boat start table.
+                  courses=[x["course"] for x in actual]
+                  if (len(actual)==6 and all(type(c) is int for c in courses)
+                          and sorted(courses)==[1,2,3,4,5,6]):
+                      official_st=before.get("start_exhibition")
+                      old_st={r["lane"]:r for r in
+                          (official_st if isinstance(official_st,list) else [])
+                          if isinstance(r,dict) and type(r.get("lane")) is int
+                          and 1<=r["lane"]<=6}
+                      combined=[]
+                      for x in actual:
+                          prior=old_st.get(x["lane"],{})
+                          token=prior.get("st")
+                          v,fl,_=st_parse(token)
+                          if not (fl or (v is not None and -1<=v<=1)):
+                              token=x["exhibition_st_raw"]
+                              v,fl,_=st_parse(token)
+                          if not (fl or (v is not None and -1<=v<=1)):
+                              combined=[]
+                              break
+                          combined.append({
+                              "lane":x["lane"],"course":x["course"],
+                              "st":token,"exhibition_f":fl,
+                          })
+                      if len(combined)==6:
+                          before["start_exhibition"]=combined
 
               if sui:
                   before["weather"]={
