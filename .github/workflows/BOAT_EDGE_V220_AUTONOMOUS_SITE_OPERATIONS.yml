@@ -12,6 +12,14 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '11,26,41,56 * * * *'
+  # When GitHub delays the primary collector cron, the already scheduled V216
+  # source-readiness pass can nudge the EXISTING V220 recovery logic. No new
+  # collector, no new schedule, and no new prediction or model writer.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
@@ -23,7 +31,14 @@ concurrency:
 
 jobs:
   site-operations:
-    if: github.ref == 'refs/heads/main'
+    # workflow_run must be a verified successful SAME-REPOSITORY main event;
+    # a forked/failed source job never authorizes dispatch or repository writes.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -34,6 +49,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
       - name: Verify current versioned site-operations code without overwriting main
+        # Event recovery reuses the already-tested V220 plan and only dispatches
+        # absent sources; no expensive report run and no extra main/Pages write.
+        if: github.event_name != 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
@@ -48,6 +66,7 @@ jobs:
           test -f index.html
 
       - name: Generate observed pre-result site-operations report
+        if: github.event_name != 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
@@ -97,6 +116,9 @@ jobs:
           test "$saved" = 1
 
       - name: Retry missed PRE_RESULT collector workflows only if no recent runs
+        # Exact same existing --recovery-plan + 15-minute cool-down for both
+        # quarter-hour scheduler and V216 completion; never dispatch V229/V235
+        # directly, never bypass source-rights, deadline or Formal Fresh guards.
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
