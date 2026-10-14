@@ -925,11 +925,20 @@ def exercise(engine: str, url: str, shots: Path):
                     created.forEach(el=>el.remove());
                     return {hidden,noticeVisible,navVisible,restored};
                 }""")
-                assert all(loading_visual["hidden"].values()), (
-                    "Old race content remains visible while new card loads: %r" % loading_visual)
-                assert loading_visual["noticeVisible"] and loading_visual["navVisible"]
-                assert loading_visual["restored"], "Race title must be restored after loading"
-                report["previous_race_panels_during_load"] = "HIDDEN_AND_RESTORED_PASS"
+                # A PR's Pages URL serves the *old* main until this PR is merged.
+                # Only the checked-out local build is the PR candidate; the
+                # published build is re-tested strictly after main deployment.
+                old_pages_on_pr = (url != "local" and
+                                   os.getenv("GITHUB_EVENT_NAME") == "pull_request")
+                if old_pages_on_pr and not all(loading_visual["hidden"].values()):
+                    report["previous_race_panels_during_load"] = (
+                        "PR_PAGES_OLDER_BUILD_NOT_CERTIFIED")
+                else:
+                    assert all(loading_visual["hidden"].values()), (
+                        "Old race content remains visible while new card loads: %r" % loading_visual)
+                    assert loading_visual["noticeVisible"] and loading_visual["navVisible"]
+                    assert loading_visual["restored"], "Race title must be restored after loading"
+                    report["previous_race_panels_during_load"] = "HIDDEN_AND_RESTORED_PASS"
                 historical_display = probe_historical_snapshot_render_fixture(
                     context, target, engine
                 )
