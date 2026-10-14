@@ -382,7 +382,8 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                     "(key) => document.querySelector('#raceView.active')"
                     " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key"
                     " && document.querySelector('#be207Top.ready')",
-                    arg=key, timeout=35000
+                    arg=key, timeout=(35000 if saved_evidence.get("status") ==
+                        "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED" else 18000)
                 )
             except Exception:
                 # Leave an actionable, read-only trace; a saved FINAL that
