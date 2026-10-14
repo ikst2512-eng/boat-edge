@@ -1,58 +1,41 @@
 {
-  "active_window_races": 8,
+  "active_window_races": 4,
   "current_windows": [
     {
-      "deadline_jst": "20:13",
-      "key": "20261014-24-11",
-      "missing_evidence": [
-        "frozen_prediction_missing_or_invalid"
-      ],
-      "venue": "大村"
-    },
-    {
-      "deadline_jst": "20:18",
-      "key": "20261014-20-11",
+      "deadline_jst": "20:45",
+      "key": "20261014-20-12",
       "missing_evidence": [
         "beforeinfo_unavailable",
         "frozen_prediction_missing_or_invalid",
+        "odds_evidence_stale",
         "scratch_unverified_or_blocked"
       ],
       "venue": "若松"
-    },
-    {
-      "deadline_jst": "20:25",
-      "key": "20261014-19-07",
-      "missing_evidence": [
-        "beforeinfo_unavailable",
-        "frozen_prediction_missing_or_invalid",
-        "scratch_stale"
-      ],
-      "venue": "下関"
     }
   ],
   "data_sources": {
     "collector_freshness": "CURRENT",
     "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 115,
+    "predeadline_observations": 119,
     "site_autovalidation": "EVIDENCE_BLOCKED_OR_MISSING"
   },
   "day_jst": "20261014",
-  "decision_window_races": 3,
+  "decision_window_races": 1,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
   "issues": [
     "predeadline_incomplete"
   ],
   "next_race": {
-    "deadline_jst": "20:13",
-    "race_key": "20261014-24-11",
-    "venue": "大村",
-    "watch_from_jst": "19:58"
+    "deadline_jst": "20:45",
+    "race_key": "20261014-20-12",
+    "venue": "若松",
+    "watch_from_jst": "20:30"
   },
   "official_beforeinfo_urgent_15m": {
-    "error": 2,
-    "health_updated_at": "2026-10-14T19:53:53+09:00",
-    "ok": 1,
+    "error": 1,
+    "health_updated_at": "2026-10-14T20:22:46+09:00",
+    "ok": 2,
     "partial_six_boat_source": 0,
     "published_wait": 0,
     "status": "OBSERVED",
@@ -60,7 +43,8 @@
   },
   "paper_wager_authorized_by_this_runner": false,
   "recovery_dispatch_candidates": [
-    "auto-update.yml"
+    "auto-update.yml",
+    "site-odds.yml"
   ],
   "research_model_production_promotion": false,
   "scheduled_races": 156,
@@ -103,38 +87,38 @@
     },
     "today": {
       "day_jst": "20261014",
-      "early_missing_later_snapshot_present": 58,
+      "early_missing_later_snapshot_present": 61,
       "integrity_note": "A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.",
-      "matured_observed_races": 115,
-      "not_found_after_deadline": 36,
-      "not_found_last_seen_inside_2_to_10m_window": 22,
+      "matured_observed_races": 119,
+      "not_found_after_deadline": 37,
+      "not_found_last_seen_inside_2_to_10m_window": 23,
       "not_found_last_seen_outside_2_to_10m_window": 14,
       "not_found_last_seen_unverified": 0,
-      "not_found_with_observed_gaps": 27,
+      "not_found_with_observed_gaps": 28,
       "not_found_without_gaps_inside_2_to_10m_window": 2,
       "not_found_without_observed_gaps": 9,
       "observed_gaps_for_currently_missing": {
-        "beforeinfo_not_ok": 27,
+        "beforeinfo_not_ok": 28,
         "official_dom_proof_missing": 1,
         "pre_result_odds_120_incomplete": 1,
-        "pre_result_odds_stale": 11,
+        "pre_result_odds_stale": 12,
         "pre_result_odds_unverified": 1,
-        "race_card_stale": 12,
-        "scratch_missing_or_blocked": 15,
+        "race_card_stale": 13,
+        "scratch_missing_or_blocked": 16,
         "scratch_stale": 13
       },
-      "observed_races": 115,
+      "observed_races": 119,
       "pending_before_deadline": 0,
-      "predeadline_snapshot_with_matching_audit": 78,
+      "predeadline_snapshot_with_matching_audit": 81,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
-      "sha_consistent_predeadline_snapshots": 78,
+      "sha_consistent_predeadline_snapshots": 81,
       "snapshot_or_audit_unverified": 1,
-      "snapshot_present": 79,
+      "snapshot_present": 82,
       "source_changed_after_freeze": 0,
       "source_missing_after_freeze": 0,
       "status": "OBSERVED_WINDOW_COUNTS",
-      "v229_atomic_evidence_matched": 73,
-      "v229_attestation_record_matched": 73
+      "v229_atomic_evidence_matched": 76,
+      "v229_attestation_record_matched": 76
     }
   },
   "status": "NEEDS_ATTENTION"
