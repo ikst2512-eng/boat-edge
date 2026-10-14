@@ -1,12 +1,14 @@
 """V253 no-network tests: exact freeze/result boundary and staged evidence."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import shutil
 import tempfile
 import unittest
 
-from scripts.boat_edge_v253_miss_audit import build, category, validate_entry, verified_site_rows
+from scripts.boat_edge_v253_miss_audit import (build, category, validate_entry,
+    verified_site_rows, V236_V1, V236_V2, V236_V3)
 
 ROOT=Path(__file__).resolve().parents[1]
 KEY="20261012-09-02"
@@ -62,6 +64,82 @@ class V253SiteOnlyMissAudit(unittest.TestCase):
                 self.assertEqual(row["winning_combo"],"3-4-1")
                 self.assertEqual(row["categories"]["hit10"],"second_absent_given_head")
             self.assertEqual(build(root)["lanes"]["v236"]["races_verified"],1)
+        finally:tmp.cleanup()
+
+    def make_future_5mode(self,root,policy):
+        """Synthetic policy on existing verified SITE-only frozen/source fixture."""
+        f=root/f"data/site_autopilot/v236_frozen/{KEY}.json"
+        p=root/f"data/site_autopilot/v236_scored/{KEY}.json"
+        frozen=json.loads(f.read_text(encoding="utf-8"))
+        scored=json.loads(p.read_text(encoding="utf-8"))
+        hit=frozen["comparators"]["hit10"]
+        win=scored["official_result"]
+        self.assertNotIn(win,hit)
+        candidate=hit[:2]+[win]+hit[2:9]
+        self.assertEqual(len(set(candidate)),10)
+        frozen["comparison_policy"]=policy
+        frozen["comparators"]["headsecond10"]=candidate
+        f.write_text(json.dumps(frozen,sort_keys=True),encoding="utf-8")
+        scored["frozen_candidate_sha256"]=hashlib.sha256(f.read_bytes()).hexdigest()
+        scored["candidate_policy"]=policy
+        scored["outcomes"]["headsecond10"]=True
+        scored["ticket_counts"]["headsecond10"]=10
+        scored["prefix_outcomes"]={
+            mode:{str(k):win in frozen["comparators"][mode][:k] for k in (3,5,10)}
+            for mode in ("hit10","headsecond10")}
+        p.write_text(json.dumps(scored,sort_keys=True),encoding="utf-8")
+        return f,p
+
+    def test_prospective_v2_and_v3_misses_are_counted_only_in_own_policy(self):
+        for policy,other in ((V236_V2,V236_V3),(V236_V3,V236_V2)):
+            with self.subTest(policy=policy):
+                tmp,root=self.fixture()
+                try:
+                    self.make_future_5mode(root,policy)
+                    site=verified_site_rows(root)[KEY]
+                    record=validate_entry(root,"v236",KEY,site)
+                    self.assertIsNotNone(record)
+                    self.assertEqual(record["categories"]["hit10"],"second_absent_given_head")
+                    self.assertEqual(record["categories"]["headsecond10"],"hit")
+                    output=build(root)
+                    baseline=output["lanes"]["v236"]
+                    self.assertEqual(baseline["races_verified"],1)
+                    self.assertEqual(baseline["miss_categories"]["hit10"]["second_absent_given_head"],1)
+                    self.assertEqual(baseline["headsecond_by_frozen_policy"][policy]["matched_races"],1)
+                    self.assertEqual(baseline["headsecond_by_frozen_policy"][policy]["miss_categories"]["headsecond10"]["hit"],1)
+                    self.assertEqual(baseline["headsecond_by_frozen_policy"][other]["matched_races"],0)
+                    self.assertEqual(output["lanes"]["v240"]["races_verified"],1)
+                finally:tmp.cleanup()
+
+    def test_malformed_future_headsecond_prefix_and_policy_not_scored(self):
+        for bad in ("policy","prefix","missing_candidates"):
+            with self.subTest(bad=bad):
+                tmp,root=self.fixture()
+                try:
+                    f,p=self.make_future_5mode(root,V236_V3)
+                    data=json.loads(p.read_text(encoding="utf-8"))
+                    if bad=="policy":data["candidate_policy"]=V236_V2
+                    elif bad=="prefix":data["prefix_outcomes"]["headsecond10"]["3"]=False
+                    else:
+                        src=json.loads(f.read_text(encoding="utf-8"))
+                        del src["comparators"]["headsecond10"]
+                        f.write_text(json.dumps(src,sort_keys=True))
+                        data["frozen_candidate_sha256"]=hashlib.sha256(f.read_bytes()).hexdigest()
+                    p.write_text(json.dumps(data,sort_keys=True),encoding="utf-8")
+                    result=build(root)
+                    self.assertEqual(result["lanes"]["v236"]["races_verified"],0)
+                    self.assertEqual(result["lanes"]["v240"]["races_verified"],1)
+                finally:tmp.cleanup()
+
+    def test_missing_formal_cohort_races_never_passes_read_guard(self):
+        tmp,root=self.fixture()
+        try:
+            p=root/"data/formal_status.json"
+            d=json.loads(p.read_text(encoding="utf-8"))
+            del d["formalFirst100"]["races"]
+            p.write_text(json.dumps(d),encoding="utf-8")
+            with self.assertRaisesRegex(AssertionError,"FORMAL_COHORT_ACTIVE"):
+                build(root)
         finally:tmp.cleanup()
 
     def test_sha_tamper_is_excluded(self):
