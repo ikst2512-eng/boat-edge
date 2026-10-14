@@ -5,11 +5,7 @@ on:
     branches: [main]
     paths: ['.github/workflows/site-v134.yml']
   workflow_dispatch:
-  # V133 runs every 5 minutes for live FINAL15M history, but its completion
-  # is not a reason to commit TODO text repeatedly. Reconcile hourly instead:
-  # reference analytics are not the source of any PRE_RESULT predictions.
-  schedule:
-    - cron: '38 * * * *'
+  # Retired hourly TODO writer: manual recovery only. Prevent repeated commits\n  # and overwrites of the user-defined product completion checklist.\n  # This workflow never owns the live PRE_RESULT freeze pipeline.
 
 permissions:
   contents: write
