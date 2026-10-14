@@ -133,7 +133,7 @@ class WorkflowInventoryTests(unittest.TestCase):
         """Protect 12 prospective freezes; delay only retrospective SITE scoring."""
         import re
         workflow = (ROOT / ".github/workflows/V234.yml").read_text(encoding="utf-8")
-        slots = re.findall(r"^\\s+- cron: '([^']+)'$", workflow, re.MULTILINE)
+        slots = re.findall(r"^\s+- cron: '([^']+)'$", workflow, re.MULTILINE)
         self.assertEqual(len(slots), 3)
         minutes = []
         for slot in slots:
