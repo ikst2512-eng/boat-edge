@@ -9,6 +9,11 @@ on:
       - 'index.html'
       - 'tests/test_boat_edge_v257_ticket_mobile.cjs'
       - '.github/workflows/v257-ticket-mobile-readability.yml'
+  pull_request:
+    paths:
+      - 'assets/boat_edge_v108.js'
+      - 'tests/test_boat_edge_v257_ticket_mobile.cjs'
+      - '.github/workflows/v257-ticket-mobile-readability.yml'
   workflow_dispatch:
 
 permissions:

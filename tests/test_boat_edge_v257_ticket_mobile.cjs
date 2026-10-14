@@ -56,3 +56,29 @@ assert(styles.includes('.be140-ticket-money'));
 const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('boat_edge_v204_prediction.css?v=204&amp;rev=244&amp;patch=247&amp;patch2=248&amp;patch3=250&amp;a22=1'));
 console.log('A22_TICKET_MOBILE_SOURCE_ONLY_PASS: ordered tickets, 10000 reference budget, saved stakes, no invented payout');
+
+
+/* Result-confirmed UI status must use only the already verified, race-bound
+ * local/server snapshot. Synthetic objects only: no result URL, payout fetch,
+ * retrospective prediction reconstruction, or Formal Fresh outcome reads. */
+const statusStart=source.indexOf('  let snapStatus="🎯履歴は締切15分前から保存";');
+const statusEnd=source.indexOf('\n  const modeHit=',statusStart);
+assert(statusStart>=0&&statusEnd>statusStart,'find production snapshot-status branch');
+const statusSource=source.slice(statusStart,statusEnd);
+assert(!/\bfinalSnap\b/.test(statusSource),'result UI must never reference an undeclared snapshot');
+function frozenStatus(changes){
+  const state={
+    resultConfirmed:true,serverSnap:null,localFinal:null,effectiveSnap:null,
+    verifiedPreDeadline:null,inFinalWindow:false,mins:-8,esc:safe,...changes
+  };
+  return vm.runInNewContext('(()=>{'+statusSource+';return snapStatus;})()',state);
+}
+const localSaved={saved_at:'2026-10-14T01:21:40Z'};
+assert.match(frozenStatus({localFinal:localSaved,effectiveSnap:localSaved}),
+  /この端末の締切前最終予想で判定/,'settled race with verified local final must render without ReferenceError');
+assert.match(frozenStatus({serverSnap:localSaved,effectiveSnap:localSaved}),
+  /サーバー保存の締切前最終予想で判定/,'verified server final takes precedence');
+assert.match(frozenStatus({}),/判定対象外/,'missing both finals must stop without inventing bets');
+assert.match(frozenStatus({resultConfirmed:false}),/締切済み・締切前保存なし/,
+  'a missed local freeze cannot be rebuilt after the deadline');
+console.log('V257_RESULT_SNAPSHOT_SOURCE_SAFE_PASS: server final, local final, missing-final and deadline guard');
