@@ -35,6 +35,15 @@ test('V371 never suppresses scratch stops, selected-race guard, stakes or authen
  assert(index.includes('boat_edge_v241_home.js'));
  assert(index.includes('boat_edge_v251_race_result.js'));
 });
+test('V371 compact screen always explains TopK ranks are not hit probabilities',()=>{
+ const permanent='#raceView #be207Top .be259-disclaimer{';
+ assert(css.includes(permanent),'compact TopK semantic note has no visible style');
+ const collapse=css.slice(css.indexOf('/* Hide repetition, not the evidence.'));
+ assert(!/html:not\(\.be208-details-on\)\s+#raceView\s+#be207Top\s+\.be259-disclaimer\s*,/.test(collapse),
+  'semantic warning must not be part of the collapsed diagnostic selector list');
+ const renderer=fs.readFileSync('assets/boat_edge_v207_first_prediction.js','utf8');
+ assert(renderer.includes('Top3/5/10は買い目の順位別範囲。頭の1着確率・3連単的中率とは別。'));
+});
 console.log('V371_SIMPLE_RACE_FIRST_UI_CONTRACT_PASS');
 
 test('V371 Playwright fixture parses as Python before device-browser execution',()=>{
