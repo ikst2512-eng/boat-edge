@@ -112,3 +112,6 @@ assert(js.includes('元の予想順位を維持・オッズで並べ替えませ
 assert(!js.includes('確率順・オッズで順位を変更しません'));
 assert(js.includes('rows.slice(0,count).forEach((row,i)=>list.append(listRow(row,i,fresh,settled)))'));
 console.log('V375_UNCALIBRATED_RANK_LABEL_SOURCE_ORDER_PASS');
+
+// 03: keep already saved first-seen reference picks visible independently of purchase safety.
+require('./test_boat_edge_03_saved_tickets.cjs');
