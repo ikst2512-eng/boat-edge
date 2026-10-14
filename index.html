@@ -3290,7 +3290,7 @@ function be03UsableTodayCatalog(data){
   const prefix=date.replaceAll("-","");
   return data.venues.every(venue=>{
     const code=String(venue?.jcd||"").padStart(2,"0");
-    if(!/^(0[1-9]|1\\d|2[0-4])$/.test(code)||!Array.isArray(venue?.races))return false;
+    if(!/^(0[1-9]|1[0-9]|2[0-4])$/.test(code)||!Array.isArray(venue?.races))return false;
     return venue.races.every(r=>{
       const key=String(r?.race_key||"");
       return new RegExp("^"+prefix+"-"+code+"-(0[1-9]|1[0-2])$").test(key)&&
