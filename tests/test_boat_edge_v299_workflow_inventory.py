@@ -156,6 +156,35 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("python3 scripts/boat_edge_v234_settle.py", score)
         self.assertIn("git commit -m 'V234 score confirmed post-result", score)
 
+    def test_v199_all_future_freeze_minutes_preserved_with_scoring_only_each_15m(self):
+        """Do not lose first-addition research provenance to save Pages builds."""
+        import re
+        workflow = (ROOT / ".github/workflows/BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml").read_text(encoding="utf-8")
+        slots = re.findall(r"^\s+- cron: '([^']+)'$", workflow, re.MULTILINE)
+        self.assertEqual(len(slots), 3)
+        minutes = []
+        for slot in slots:
+            minute, hour, day, month, weekday = slot.split()
+            self.assertEqual((hour, day, month, weekday),
+                             ("0-14,23", "*", "*", "*"))
+            minutes.extend(map(int, minute.split(",")))
+        self.assertEqual(sorted(minutes), list(range(0, 60, 5)))
+        self.assertEqual(len(set(minutes)), 12)
+        freeze = workflow.index("      - name: Freeze only eligible future races without reading results")
+        replay = workflow.index("      - name: Independently replay first Git addition before optional site-only result scoring")
+        report = workflow.index("      - name: Save only research evidence with safe concurrent-write retry")
+        self.assertLess(freeze, replay)
+        self.assertLess(replay, report)
+        gate = ("github.event_name == 'schedule' && "
+                "github.event.schedule == '0,15,30,45 0-14,23 * * *'")
+        self.assertEqual(workflow.count(gate), 2)
+        self.assertIn("python3 scripts/site_v199_research.py freeze", workflow[freeze:replay])
+        self.assertNotIn("python3 scripts/site_v199_research.py score", workflow[freeze:replay])
+        self.assertIn("python3 scripts/site_v199_research.py score", workflow[replay:report])
+        self.assertIn("python3 scripts/site_v199_research.py score", workflow[report:])
+        self.assertIn("github.event_name == 'workflow_dispatch'", workflow)
+        self.assertIn("github.event_name == 'push'", workflow)
+
     def test_v216_one_git_receipt_for_pre_result_readiness_and_shadow(self):
         """Avoid two Pages-invalidating commits while keeping settled phases separate."""
         workflow = (ROOT / ".github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml").read_text(encoding="utf-8")
