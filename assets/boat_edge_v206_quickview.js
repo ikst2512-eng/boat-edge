@@ -35,12 +35,13 @@ const source=(r,k)=>{
 const numericPresent=x=>typeof x==='number'&&Number.isFinite(x)&&x>0;
 const sixBoatCount=(items,valid)=>{
  if(!Array.isArray(items)||items.length>6)return 0;
- const known=new Set(),duplicate=new Set();
+ const seen=new Set(),known=new Set(),duplicate=new Set();
  for(const item of items){
   const lane=item?.lane;
-  if(!Number.isInteger(lane)||lane<1||lane>6||!valid(item))continue;
-  if(known.has(lane))duplicate.add(lane);
-  known.add(lane);
+  if(!Number.isInteger(lane)||lane<1||lane>6)continue;
+  if(seen.has(lane))duplicate.add(lane);
+  seen.add(lane);
+  if(valid(item))known.add(lane);
  }
  for(const lane of duplicate)known.delete(lane);
  return known.size;
