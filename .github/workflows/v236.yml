@@ -40,7 +40,7 @@ jobs:
           cat > "$RUNNER_TEMP/v236_install.py" <<'PY_V236_INSTALL'
           import hashlib
           from pathlib import Path
-          source_pins = {'scripts/boat_edge_v236_hit_rate.py': 'a8c0130b3e6a3db44cbcfa90175167990a09e3b36cebf09f6c00c0ce6bcb9e60', 'tests/test_boat_edge_v236_hit_rate.py': '4cfed6464a5345d1740ffc04afba8881e63afd38921354ea81d00dded55d847b'}
+          source_pins = {'scripts/boat_edge_v236_hit_rate.py': 'f8d5a70f79313c675ef904f1737d863434f442b0a2f1a731786a7c1bb87939b6', 'tests/test_boat_edge_v236_hit_rate.py': 'd1f5f32ea4369d3cadf90dcc1fd5f44694ba3b818f1162728d64823a770c088d'}
           for name, expected in source_pins.items():
               path = Path(name)
               if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
