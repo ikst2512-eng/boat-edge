@@ -41,6 +41,12 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v01_live_browser_gate.py' -v
           python3 -m py_compile scripts/boat_edge_v01_live_browser_gate.py
+      - name: Verify concurrent first-freeze preserves remote race and publishes unrelated source
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v01_prune_frozen_collector.py' -v
+          python3 -m py_compile scripts/boat_edge_v01_prune_frozen_collector.py
       - name: Verify conflict-safe collector rebase against simultaneous V186 scratch writes
         env:
           PYTHONDONTWRITEBYTECODE: '1'

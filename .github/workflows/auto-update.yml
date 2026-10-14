@@ -958,6 +958,9 @@ jobs:
           # Another trusted source job may advance main while this collector crawls.
           # In that case, preserve the REMOTE version of any overlapping raw/race
           # PRE_RESULT evidence; publish only the still-disjoint collected files.
+          # Remote FIRST freezes always win; the V277 guard verifies and
+          # excludes only the same-race in-flight source paths before push.
+          export BOAT_EDGE_V277_COLLECTOR_PRUNE_FROZEN=1
           for n in 1 2 3 4 5 6; do
             # V277: a V235 freeze may arrive after V275 checked source paths.
             # Always fetch and inspect origin/main before a collector publication;
