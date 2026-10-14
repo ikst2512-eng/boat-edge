@@ -1,18 +1,33 @@
 name: BOAT EDGE 01 - Controlled GitHub Pages Publish
 
-# Only the publishing cadence changes. Main continues receiving every
-# pre-deadline immutable SITE prediction and independent research commit.
+# Keep PRE_RESULT Git commits independent of public deployment.
+# Pages must be switched from "Deploy from a branch" to "GitHub Actions"
+# before this workflow is allowed to deploy. Legacy Pages stays untouched
+# until then; do not let every high-frequency data commit trigger deployment.
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pages-controlled-publish.yml'
+      - 'scripts/site_pages_stage.py'
+      - 'tests/test_site_pages_stage.py'
+      - '*.html'
+      - 'assets/**'
   pull_request:
     paths:
       - '.github/workflows/pages-controlled-publish.yml'
       - 'scripts/site_pages_stage.py'
       - 'tests/test_site_pages_stage.py'
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
+    types: [completed]
   schedule:
-    # Reduce redundant release checks while retaining manual dispatch.
-    # This workflow only deploys when Pages source is GitHub Actions.
-    - cron: '*/15 * * * *'
+    # Five-minute fallback during live Japanese racing (08:00–23:59 JST).
+    # Independent of GitHub's best-effort collector event delivery.
+    # Only acts as a deploy trigger when Pages build_type=workflow.
+    - cron: '*/5 23,0-14 * * *'
 
 permissions:
   contents: read
@@ -25,6 +40,13 @@ concurrency:
 
 jobs:
   stage-regression:
+    # workflow_run can originate from other refs: accept only a successful
+    # first-freeze run on this repository's main. Never run on forks.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -53,7 +75,13 @@ jobs:
 
   verify-source:
     needs: stage-regression
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
