@@ -40,9 +40,7 @@ RETIRED = (
     "site-v103.yml",
     # V356: dormant legacy writers and post-V133 V185 relay.
     "auto-update-5min.yml",
-    "auto-update-5min 2.yml",
     "auto-update-v10.yml",
-    "auto-update-v10 2.yml",
     "site-v185-trigger.yml",
     "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
     # V240 was an exact-Top7 research-only second-leg shadow.
