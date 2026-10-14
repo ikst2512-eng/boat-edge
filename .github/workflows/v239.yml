@@ -1,19 +1,12 @@
 name: BOAT EDGE V239 - Forward Ten Point Second Tail Independent Validation
 
+# V239 auto-freeze retired: 54/54 original tickets had the same first
+# seven ranks as reference for both unique V239 modes. 2nd-diverse
+# Top10 tied reference; tail-swap was worse. The balance mode is already
+# tested by V236. Manual post-result replay of earlier Git-frozen SITE
+# cohorts only; no new V239 freezes. Historical data remains intact.
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/v239.yml']
   workflow_dispatch:
-  # 01 runtime dedup: five-minute prospective schedule remains the owner.
-  # V235 also runs frequently; a workflow_run relay doubled research jobs,
-  # commits and automatic Pages builds without improving freeze cadence.
-  schedule:
-    # Keep the five-minute PRE_RESULT freeze cadence; score older SITE-only
-    # frozen cohorts on one staggered 15-minute tick to reduce Pages churn.
-    - cron: '4,19,34,49 0-14,23 * * *'
-    - cron: '9,24,39,54 0-14,23 * * *'
-    - cron: '14,29,44,59 0-14,23 * * *'
 
 permissions:
   contents: write
@@ -58,39 +51,8 @@ jobs:
           PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v239_second_tail.py' -q
           python3 -m py_compile scripts/boat_edge_v239_second_tail.py
           echo V239_THIRTEEN_FAIL_CLOSED_TESTS_PASS
-      - name: Prospective pre-result cohort freeze and commit (no result reads)
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          success=false
-          for attempt in 1 2 3; do
-            git fetch --no-tags origin main
-            git reset --hard origin/main
-            git clean -fd -- data/site_autopilot/v239_frozen data/site_autopilot/v239_pre_current.json
-            python3 "$RUNNER_TEMP/v239_install.py"
-            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v239_second_tail.py freeze
-            git add -- scripts/boat_edge_v239_second_tail.py tests/test_boat_edge_v239_second_tail.py second-tail.html
-            if test -f data/site_autopilot/v239_pre_current.json; then git add -- data/site_autopilot/v239_pre_current.json; fi
-            if test -d data/site_autopilot/v239_frozen; then git add -A -- data/site_autopilot/v239_frozen; fi
-            python3 - <<'PY_V239_STAGE_FREEZE'
-          import re,subprocess
-          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
-          ok={'scripts/boat_edge_v239_second_tail.py','tests/test_boat_edge_v239_second_tail.py','second-tail.html','data/site_autopilot/v239_pre_current.json'}
-          if any(x not in ok and not re.fullmatch(r'data/site_autopilot/v239_frozen/20\d{6}-\d{2}-\d{2}\.json',x) for x in staged):
-              raise SystemExit('V239_STAGED_PRODUCTION_PATH_FAIL_CLOSED')
-          print('V239_PRE_RESULT_WHITELIST_PASS',len(staged))
-          PY_V239_STAGE_FREEZE
-            git diff --cached --check
-            if git diff --cached --quiet; then echo V239_NO_NEW_PRE_RESULT_DATA; success=true; break; fi
-            git commit -m 'V239 prospective ten-point second/tail shadow freeze (site only)'
-            if git push origin HEAD:main; then echo V239_FUTURE_SHADOW_GIT_FROZEN; success=true; break; fi
-            echo "V239_PUSH_CONFLICT_RETRY_${attempt}"
-          done
-          if test "$success" != true; then echo V239_PRE_RESULT_COMMIT_FAILED; exit 1; fi
-      # Previous Git-attested SITE cohorts can be scored later; never delay
-      # the five-minute, result-unseen prospective freeze above.
+      # No new V239 PRE_RESULT freeze: preserved scores derive only from
+      # earlier immutable first-Git-frozen SITE files.
       - name: Post-result independent scoring of only Git-frozen site cohorts
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '9,24,39,54 0-14,23 * * *') }}
         shell: bash
