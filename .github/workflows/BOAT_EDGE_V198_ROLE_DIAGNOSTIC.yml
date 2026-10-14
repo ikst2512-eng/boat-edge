@@ -1,17 +1,12 @@
 name: BOAT EDGE V198 - Independent Head Second Third Miss Diagnosis
 
+# Historical SITE role diagnosis is blocked by an unverified original
+# Git-before-deadline proof for 20261013-12-07 (V198 run 38635773633).
+# It must fail closed, not backfill, skip the invalid record or poll daily.
+# Keep the code/report and explicit manual investigation for 02, but retire
+# both automatic triggers until provenance is independently resolved.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/BOAT_EDGE_V198_ROLE_DIAGNOSTIC.yml'
   workflow_dispatch:
-  schedule:
-    # Retrospective-only V198 result attribution has no live pre-deadline
-    # freeze or public-site reader. Refresh the completed prior-day cohort
-    # once after the daily result collection, instead of 32 Git jobs/day.
-    # 01:20 UTC = 10:20 JST. Manual reruns are still supported.
-    - cron: '20 1 * * *'
 
 permissions:
   contents: write
