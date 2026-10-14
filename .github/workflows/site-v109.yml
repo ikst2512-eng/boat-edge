@@ -426,13 +426,108 @@ jobs:
               print({'sample':sample.name,'payout':d.get('trifecta_payout_yen_per_100')})
           PY
 
+      - name: Rebuild browseable historical site archive from saved race cards
+        shell: bash
+        run: |
+          python - <<'PY_ARCHIVE'
+          import json
+          import re
+          from pathlib import Path
+          from datetime import datetime, timedelta, timezone
+
+          JST = timezone(timedelta(hours=9))
+          today = datetime.now(JST).strftime('%Y%m%d')
+          races = Path('data/races')
+          results = Path('data/site_results')
+          odds = Path('data/site_odds')
+          archive = Path('data/site_archive')
+          archive.mkdir(parents=True, exist_ok=True)
+          grouped = {}
+          for card in sorted(races.glob('*.json')):
+              match = re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json', card.name)
+              if not match:
+                  continue
+              day, venue_code, race_no = match.groups()
+              # Archive completed days only. Current-day PRE_RESULT stays untouched.
+              # The protected formal 2026-10-01 target is never read here.
+              if not ('20261005' <= day < today) or day == '20261001':
+                  continue
+              try:
+                  record = json.loads(card.read_text(encoding='utf-8'))
+              except (OSError, ValueError):
+                  continue
+              meta = record.get('meta') or {}
+              if not isinstance(meta, dict):
+                  continue
+              venue = grouped.setdefault(day, {}).setdefault(venue_code, {
+                  'jcd': venue_code, 'venue': meta.get('venue') or venue_code,
+                  'event': meta.get('event') or '', 'races': []
+              })
+              result_path = results / card.name
+              try:
+                  result = json.loads(result_path.read_text(encoding='utf-8')) if result_path.exists() else {}
+              except (OSError, ValueError):
+                  result = {}
+              if not isinstance(result, dict):
+                  result = {}
+              key = card.stem
+              venue['races'].append({
+                  'race_key': key, 'race_no': int(race_no),
+                  'deadline': meta.get('deadline'), 'file': 'data/races/' + card.name,
+                  'jcd': venue_code, 'result_status': result.get('status'),
+                  'trifecta': result.get('trifecta'),
+                  'payout': result.get('trifecta_payout_yen_per_100'),
+                  'has_odds': (odds / card.name).exists()
+              })
+
+          dates = []
+          for day, venue_map in sorted(grouped.items()):
+              venues = [venue_map[k] for k in sorted(venue_map)]
+              for venue in venues:
+                  venue['races'].sort(key=lambda row: row['race_no'])
+              count = sum(len(venue['races']) for venue in venues)
+              payload = {'schema_version': 'boat-edge-site-archive-v111',
+                         'ymd': day, 'venue_count': len(venues),
+                         'race_count': count, 'venues': venues}
+              path = archive / (day + '.json')
+              data = json.dumps(payload, ensure_ascii=False, indent=2) + '\n'
+              if not path.exists() or path.read_text(encoding='utf-8') != data:
+                  path.write_text(data, encoding='utf-8')
+              dates.append({'ymd': day, 'venues': len(venues), 'races': count})
+
+          index_path = archive / 'index.json'
+          previous = {}
+          if index_path.exists():
+              try:
+                  previous = json.loads(index_path.read_text(encoding='utf-8'))
+              except (OSError, ValueError):
+                  pass
+          # Never remove existing dates when source checkout is incomplete.
+          previous_dates = {d['ymd']: d for d in previous.get('dates', [])
+                            if isinstance(d, dict) and isinstance(d.get('ymd'), str)}
+          previous_dates.update({d['ymd']: d for d in dates})
+          merged_dates = [previous_dates[k] for k in sorted(previous_dates)]
+          base = {'schema_version': 'boat-edge-site-archive-index-v111',
+                  'start_date': '2026-10-05', 'dates': merged_dates,
+                  'retention': 'saved source data; no deletion',
+                  'note': 'missing historical odds/results are shown as unavailable'}
+          comparable_old = {k: previous.get(k) for k in base}
+          base['updated_at'] = (previous.get('updated_at')
+                                if comparable_old == base and previous.get('updated_at')
+                                else datetime.now(JST).isoformat(timespec='seconds'))
+          data = json.dumps(base, ensure_ascii=False, indent=2) + '\n'
+          if not index_path.exists() or index_path.read_text(encoding='utf-8') != data:
+              index_path.write_text(data, encoding='utf-8')
+          print('SITE_ARCHIVE_DATES', len(merged_dates), 'LATEST', merged_dates[-1]['ymd'] if merged_dates else 'NONE')
+          PY_ARCHIVE
+
       - name: Save result repair
         shell: bash
         run: |
           set -e
           git config user.name "boat-edge-site-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_results BOAT_EDGE_CURRENT_TODO.md
+          git add data/site_results data/site_archive BOAT_EDGE_CURRENT_TODO.md
           git diff --cached --quiet && exit 0
           git commit -m "Repair BOAT EDGE result payouts V109"
           for n in 1 2 3; do
