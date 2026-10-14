@@ -5,9 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/v238.yml']
   workflow_dispatch:
-  workflow_run:
-    workflows: ['BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring']
-    types: [completed]
+  # Keep a bounded hourly diagnostic; V235 already freezes and scores evidence.
+  # Do not fan out another writer after each V235 success.
   schedule:
     - cron: '17 0-14,23 * * *'
 
@@ -20,7 +19,7 @@ concurrency:
 
 jobs:
   site-only-verified-tail-report:
-    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
