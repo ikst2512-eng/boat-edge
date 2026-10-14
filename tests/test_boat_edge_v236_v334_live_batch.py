@@ -10,14 +10,14 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "scripts"))
 from boat_edge_v334_live_batch_runner import live_window, run
 
 JST = timezone(timedelta(hours=9))
-NOW = datetime(2026, 10, 13, 16, 30, tzinfo=JST)
+NOW = datetime(2026, 10, 15, 16, 30, tzinfo=JST)
 
 
 def fake_fetch(url):
     return ("<html>mocked external page for " + url + "</html>" * 4).encode(), "text/html", url
 
 
-def prepare(root, key="20261013-22-12", deadline="16:40", lock=False,
+def prepare(root, key="20261015-22-12", deadline="16:40", lock=False,
             meta_result=False, original=True):
     date, venue, no = key.split("-")
     url = (f"https://www.boatrace.jp/owpc/pc/race/beforeinfo"
@@ -55,6 +55,15 @@ def prepare(root, key="20261013-22-12", deadline="16:40", lock=False,
     target = root / "data/races"
     target.mkdir(parents=True, exist_ok=True)
     (target / (key + ".json")).write_text(json.dumps(doc), encoding="utf-8")
+    (root / "data/formal_status.json").write_text(json.dumps({
+        "schema_version": "boat-edge-formal-status-v2",
+        "asOf": "2026-10-15T16:20:00+09:00",
+        "target_date": "2026-10-14",
+        "last_cohort": {"date": "2026-10-05"},
+        "formalFirst100": {"races": 0},
+        "guards": {"results_seen": False, "unlock": False, "scoring": False,
+                   "RESULT_UNLOCK_TOKEN": None},
+    }), encoding="utf-8")
 
 
 class V334LiveBatch(unittest.TestCase):
@@ -62,10 +71,10 @@ class V334LiveBatch(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             prepare(root)
-            (root / "data/formal_status.json").write_text("DO NOT OPEN")
+            (root / "data/formal_results.txt").write_text("DO NOT OPEN")
             dry = run(root, clock=lambda: NOW)
             self.assertEqual([x["race_key"] for x in dry["window"]["candidates"]],
-                             ["20261013-22-12"])
+                             ["20261015-22-12"])
             self.assertFalse(dry["capture_requested"])
             self.assertEqual(dry["run_diagnostic"], "ELIGIBLE_RACES_DRY_RUN_ONLY")
             self.assertEqual(dry["window"]["coverage"]["current_day_race_card_files"], 1)
@@ -97,14 +106,14 @@ class V334LiveBatch(unittest.TestCase):
     def test_current_date_only_and_near_deadline_window(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
-            prepare(root, "20261013-22-12", "16:40")
+            prepare(root, "20261015-22-12", "16:40")
             prepare(root, "20261012-02-09", "16:40")
-            prepare(root, "20261013-22-11", "17:20")
-            prepare(root, "20261013-22-10", "15:30")
-            prepare(root, "20261013-22-09", "16:31")
+            prepare(root, "20261015-22-11", "17:20")
+            prepare(root, "20261015-22-10", "15:30")
+            prepare(root, "20261015-22-09", "16:31")
             selected = live_window(root, NOW)
             self.assertEqual([x["race_key"] for x in selected["candidates"]],
-                             ["20261013-22-12"])
+                             ["20261015-22-12"])
             self.assertIn("LESS_THAN_TWO_MINUTES",
                           [x["reason"] for x in selected["skipped"]])
             self.assertEqual(selected["coverage"]["current_day_race_card_files"], 4)
@@ -135,10 +144,10 @@ class V334LiveBatch(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             prepare(root)
-            race_path = root / "data/races/20261013-22-12.json"
+            race_path = root / "data/races/20261015-22-12.json"
             race = json.loads(race_path.read_text())
             race["source_audit"]["beforeinfo"]["fetched_at"] = (
-                "2026-10-13T16:00:00+09:00"
+                "2026-10-15T16:00:00+09:00"
             )
             race_path.write_text(json.dumps(race))
             calls = []
@@ -155,17 +164,17 @@ class V334LiveBatch(unittest.TestCase):
     def test_v335_malformed_cards_do_not_abort_healthy_races(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
-            prepare(root, "20261013-22-12", "16:40")
+            prepare(root, "20261015-22-12", "16:40")
             races = root / "data/races"
             malformed = {
-                "20261013-22-01": "[]",
-                "20261013-22-02": json.dumps({
-                    "race_key": "20261013-22-02",
-                    "meta": {"date": 20261013},
+                "20261015-22-01": "[]",
+                "20261015-22-02": json.dumps({
+                    "race_key": "20261015-22-02",
+                    "meta": {"date": 20261015},
                 }),
-                "20261013-22-03": "{invalid json",
-                "20261013-22-04": json.dumps({
-                    "race_key": "20261013-22-04", "meta": [],
+                "20261015-22-03": "{invalid json",
+                "20261015-22-04": json.dumps({
+                    "race_key": "20261015-22-04", "meta": [],
                 }),
             }
             for key, payload in malformed.items():
@@ -173,14 +182,14 @@ class V334LiveBatch(unittest.TestCase):
             dry = run(root, clock=lambda: NOW)
             self.assertEqual(
                 [race["race_key"] for race in dry["window"]["candidates"]],
-                ["20261013-22-12"],
+                ["20261015-22-12"],
             )
             reasons = {entry["race_key"]: entry["reason"]
                        for entry in dry["window"]["skipped"]}
             self.assertEqual(set(reasons), set(malformed))
-            self.assertIn("RACE_DOCUMENT_NOT_OBJECT", reasons["20261013-22-01"])
-            self.assertIn("RACE_METADATA_MISMATCH", reasons["20261013-22-02"])
-            self.assertIn("RACE_WINDOW_INVALID", reasons["20261013-22-03"])
+            self.assertIn("RACE_DOCUMENT_NOT_OBJECT", reasons["20261015-22-01"])
+            self.assertIn("RACE_METADATA_MISMATCH", reasons["20261015-22-02"])
+            self.assertIn("RACE_WINDOW_INVALID", reasons["20261015-22-03"])
             actual = run(root, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
             self.assertEqual(actual["completed_count"], 1)
             self.assertEqual(actual["failures"], [])
