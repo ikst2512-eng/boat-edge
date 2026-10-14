@@ -267,10 +267,14 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("  install:\\n", history) if False else None
         self.assertIn("if: ${{ false }}", history)
         self.assertIn("if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')", history)
-        self.assertIn("  workflow_dispatch:", todo)
-        self.assertIn("  schedule:", todo)
-        self.assertIn("cron: '38 * * * *'", todo)
-        self.assertNotIn("  workflow_run:", todo)
+        # V134 is now manual recovery only; never reactivate its hourly
+        # TODO rewrite just to satisfy a stale guard assertion.
+        from scripts.boat_edge_v299_workflow_inventory import event_block
+        todo_events = event_block(todo)
+        self.assertIn("  workflow_dispatch:", todo_events)
+        self.assertNotIn("  schedule:", todo_events)
+        self.assertNotIn("  workflow_run:", todo_events)
+        self.assertNotIn("cron: '38 * * * *'", todo_events)
         self.assertIn("git add -- BOAT_EDGE_CURRENT_TODO.md", todo)
         # V134's fix cannot disable or backdate the prediction source freeze.
         primary = (root / "V235.yml").read_text(encoding="utf-8")
