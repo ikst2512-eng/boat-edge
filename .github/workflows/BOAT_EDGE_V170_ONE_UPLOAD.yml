@@ -8,7 +8,11 @@ on:
       - 'data/site_learning/mode_accuracy_v136.json'
   workflow_dispatch:
   schedule:
-    - cron: '13 0-14 * * *'
+    # Post-settlement descriptive venue stats, not a predeadline forecast.
+    # The V136 source-change push hook and manual dispatch are kept; two
+    # daily fallbacks bound freshness without hourly Git main contention.
+    # UTC 00:13 / 13:13 = JST 09:13 / 22:13.
+    - cron: '13 0,13 * * *'
 
 permissions:
   contents: write

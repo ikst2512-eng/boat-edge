@@ -19,7 +19,7 @@ class SiteTrackedVenueSourceContracts(unittest.TestCase):
              'data/site_racer_venue_v169/'),
             ('BOAT_EDGE_V170_ONE_UPLOAD.yml',
              'V170_TRACKED_SOURCES_NO_LEGACY_REINSTALL_PASS',
-             "cron: '13 0-14 * * *'",
+             "cron: '13 0,13 * * *'",
              'python3 scripts/site_mode_venue_v170.py',
              'data/site_learning/mode_venue_accuracy_v170.json'),
         )
@@ -39,6 +39,19 @@ class SiteTrackedVenueSourceContracts(unittest.TestCase):
                 self.assertIn("github.ref == 'refs/heads/main'",source)
                 self.assertNotIn('git push --force',source)
                 self.assertNotIn('git push -f',source)
+
+    def test_v170_research_only_bounded_daily_fallback(self):
+        source=(WORKFLOWS/'BOAT_EDGE_V170_ONE_UPLOAD.yml').read_text(encoding='utf-8')
+        events=source.split('on:',1)[1].split('permissions:',1)[0]
+        self.assertIn("cron: '13 0,13 * * *'", events)
+        self.assertEqual(events.count('cron:'),1)
+        self.assertIn("data/site_learning/mode_accuracy_v136.json", events)
+        self.assertIn('  workflow_dispatch:',events)
+        self.assertIn('  push:',events)
+        self.assertIn('production_prediction_weights_changed', (ROOT/'scripts/site_mode_venue_v170.py').read_text(encoding='utf-8'))
+        self.assertIn("git add -- data/site_learning/mode_venue_accuracy_v170.json",source)
+        self.assertNotIn('gh workflow run',source)
+        self.assertNotIn('data/formal_results',source)
 
     def test_venue_jobs_cannot_rewrite_main_ui_or_source(self):
         # V169/V170 historical report jobs are not 03-owned UI installers.
