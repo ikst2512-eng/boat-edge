@@ -1,27 +1,27 @@
 {
-  "awaiting_result": 0,
+  "awaiting_result": 1,
   "by_band": {
     "10-20": {
-      "candidate_top15_hits": 27,
-      "candidate_top20_hits": 27,
+      "candidate_top15_hits": 28,
+      "candidate_top20_hits": 28,
       "hit": {
         "baseline": {
-          "10": 24,
-          "3": 10,
-          "5": 15
+          "10": 25,
+          "3": 11,
+          "5": 16
         },
         "candidate": {
-          "10": 24,
-          "3": 8,
-          "5": 16
+          "10": 25,
+          "3": 9,
+          "5": 17
         },
         "v180": {
-          "10": 24,
-          "3": 8,
-          "5": 16
+          "10": 25,
+          "3": 9,
+          "5": 17
         }
       },
-      "races": 41
+      "races": 42
     },
     "20-50": {
       "candidate_top15_hits": 25,
@@ -43,7 +43,7 @@
           "5": 8
         }
       },
-      "races": 45
+      "races": 46
     },
     "<10": {
       "candidate_top15_hits": 20,
@@ -90,26 +90,26 @@
       "races": 63
     },
     "all": {
-      "candidate_top15_hits": 84,
-      "candidate_top20_hits": 95,
+      "candidate_top15_hits": 85,
+      "candidate_top20_hits": 96,
       "hit": {
         "baseline": {
-          "10": 64,
-          "3": 27,
-          "5": 43
+          "10": 65,
+          "3": 28,
+          "5": 44
         },
         "candidate": {
-          "10": 64,
-          "3": 22,
-          "5": 42
-        },
-        "v180": {
-          "10": 64,
+          "10": 65,
           "3": 23,
           "5": 43
+        },
+        "v180": {
+          "10": 65,
+          "3": 24,
+          "5": 44
         }
       },
-      "races": 174
+      "races": 176
     },
     "unknown": {
       "candidate_top15_hits": 0,
@@ -4493,6 +4493,33 @@
       "winning_combo": "4-5-6"
     },
     {
+      "band": "10-20",
+      "candidate_top15_hit": true,
+      "candidate_top20_hit": true,
+      "commit_sha": "0996d3b4329144f2a6d1a5070f15aa5b6c51d283",
+      "commit_time": "2026-10-14T05:29:20+00:00",
+      "hits": {
+        "baseline": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "candidate": {
+          "10": true,
+          "3": true,
+          "5": true
+        },
+        "v180": {
+          "10": true,
+          "3": true,
+          "5": true
+        }
+      },
+      "payout_yen_per_100": 1870,
+      "race_key": "20261014-04-09",
+      "winning_combo": "1-2-3"
+    },
+    {
       "band": "20-50",
       "candidate_top15_hit": false,
       "candidate_top20_hit": false,
@@ -4518,6 +4545,33 @@
       "payout_yen_per_100": 2240,
       "race_key": "20261014-06-05",
       "winning_combo": "3-1-2"
+    },
+    {
+      "band": "20-50",
+      "candidate_top15_hit": false,
+      "candidate_top20_hit": false,
+      "commit_sha": "5ad02b120ec4970ab61bcb28938bae73c96acea3",
+      "commit_time": "2026-10-14T05:36:25+00:00",
+      "hits": {
+        "baseline": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "candidate": {
+          "10": false,
+          "3": false,
+          "5": false
+        },
+        "v180": {
+          "10": false,
+          "3": false,
+          "5": false
+        }
+      },
+      "payout_yen_per_100": 3890,
+      "race_key": "20261014-06-08",
+      "winning_combo": "6-1-4"
     },
     {
       "band": ">50",
@@ -4846,6 +4900,6 @@
   ],
   "schema_version": "boat-edge-v185-post-settlement-independent-site-shadow-v1",
   "scope": "SITE_REFERENCE_RESEARCH_NOT_FORMAL_FRESH",
-  "settled_verified": 174,
+  "settled_verified": 176,
   "status": "RESEARCH_ONLY"
 }
