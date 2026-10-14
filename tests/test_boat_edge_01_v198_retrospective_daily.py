@@ -34,7 +34,7 @@ class V198RetrospectiveSchedule(unittest.TestCase):
         self.assertLess(if_failed_index, outcome_index)
         self.assertIn("result.get('status')!='confirmed'", source)
         self.assertIn("HISTORICAL_BACKFILL_FORBIDDEN", source)
-        self.assertIn("RETROSPECTIVE", "RETROSPECTIVE")
+        self.assertIn("'scope':'SITE_REFERENCE_RESEARCH_ONLY_NOT_FORMAL_FRESH'", source)
 
     def test_only_diagnostic_artifact_is_staged_and_determinism_retained(self):
         src = self.source
