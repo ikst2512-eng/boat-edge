@@ -296,7 +296,7 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  const retryStart=js.indexOf('async function render(r){');
  const retryEnd=js.indexOf('function init(){',retryStart);
  assert(retryStart>0&&retryEnd>retryStart);
- let clock=NOW,fetchCount=0,published=false,selected=true,visible=true,active=KEY;
+ let clock=NOW,fetchCount=0,published=false,visibleRace=true,visible=true,active=KEY;
  const retryBox={dataset:{raceKey:KEY,ready:'false'}};
  const fakeClock=class extends Date{static now(){return clock;}};
  const retryContext=vm.createContext({
@@ -309,7 +309,7 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
    showStatus:(r,reason)=>{retryBox.dataset.ready='status';retryBox.dataset.raceKey=r.race_key;retryBox.reason=reason;},
    showPreview:(r,p)=>{retryBox.dataset.ready='true';retryBox.dataset.raceKey=r.race_key;retryBox.preview=p;},
    $:s=>s==='#be392EarlyPreview'?retryBox:
-     s==='#raceView'?{classList:{contains:()=>selected}}:null,
+     s==='#raceView'?{classList:{contains:()=>visibleRace}}:null,
    fetch:async()=>{fetchCount++;return published?
      {ok:true,json:async()=>preview}:{ok:false,status:404};}
  });
@@ -322,10 +322,10 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  published=true;clock+=30000;
  await vm.runInContext('tick()',retryContext);
  assert.equal(fetchCount,1,'do not retry repeatedly inside one minute');
- clock+=30001;selected=false;
+ clock+=30001;visibleRace=false;
  await vm.runInContext('tick()',retryContext);
  assert.equal(fetchCount,1,'do not poll when race view is inactive');
- selected=true;visible=false;
+ visibleRace=true;visible=false;
  await vm.runInContext('tick()',retryContext);
  assert.equal(fetchCount,1,'do not poll while tab is hidden');
  visible=true;
