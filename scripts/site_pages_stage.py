@@ -8,6 +8,7 @@ This script never modifies predictions, Git history, results or publication sett
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import shutil
 import sys
@@ -46,6 +47,18 @@ def copy_public_tree(source: Path, destination: Path) -> int:
         path = source / item
         if not path.is_file() or path.is_symlink():
             raise ValueError("Missing or unsafe public asset: " + item)
+    # Site results are allowed only while the independent FORMAL Fresh gate
+    # remains closed. Never open formal predictions, payouts, or results.
+    try:
+        formal = json.loads((source / "data/formal_status.json").read_text(encoding="utf-8"))
+        guards = formal["guards"]
+        cohort = formal["formalFirst100"]
+        if (any(guards.get(key) is not False for key in ("results_seen", "unlock", "scoring"))
+                or guards.get("RESULT_UNLOCK_TOKEN") is not None
+                or type(cohort.get("races")) is not int or cohort["races"] != 0):
+            raise ValueError("Formal Fresh lock not independently closed")
+    except (OSError, UnicodeError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("Formal Fresh lock unavailable") from exc
     selected = sorted(source.glob("*.html")) + [source / ".nojekyll", source / "assets"]
     data = source / "data"
     for item in sorted(data.iterdir()):
