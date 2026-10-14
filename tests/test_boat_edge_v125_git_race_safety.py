@@ -44,6 +44,19 @@ class V125GitRaceSafety(unittest.TestCase):
                         save.index("git commit -m"))
         self.assertLess(save.index("git commit -m"), save.index("git push origin HEAD:main"))
 
+    def test_only_main_and_successful_same_repo_upstream_may_write(self):
+        """V125 uses checkout main and contents:write, never branch event side effects."""
+        src = self.src
+        pre, job = src.split("jobs:\\n  audit:", 1)
+        self.assertIn("  push:\\n    branches: [main]", pre)
+        self.assertIn("github.ref == 'refs/heads/main'", job)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", job)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", job)
+        self.assertIn("ref: main", job)
+        self.assertIn("  contents: write", pre)
+        self.assertIn("git push origin HEAD:main", job)
+
     def test_late_replay_fail_closed_without_formal_results(self):
         src = self.src
         save = src.split("      - name: Recompute and publish V125 audit from the latest main", 1)[1]
