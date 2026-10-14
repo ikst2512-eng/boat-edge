@@ -8,7 +8,7 @@
     "event": "第15回近江米カップ",
     "race_no": 2,
     "deadline": "10:49",
-    "updated_at": "2026-10-15T08:11:19+09:00",
+    "updated_at": "2026-10-15T08:32:14+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,35 +19,41 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=11&rno=2",
-      "fetched_at": "2026-10-15T08:13:30+09:00",
-      "sha256": "eca594b610aaaaf1e70127c33cbc882952caec20679cb6414b12edf2f082afe4",
+      "fetched_at": "2026-10-15T08:35:34+09:00",
+      "sha256": "dc29fcedb957bdf5cf2357e742c18ea0bd00175e067e7efd25ea92a936919cfa",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=11&rno=2",
+      "fetched_at": "2026-10-15T08:33:11+09:00",
+      "sha256": "eec2ce27387354446dea835d6aeb6b1fe3743374a76bd52a334f75217c1a4905",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "8b99e5a5515c89d0f58aa70dc74656e8562932243ad731af6c89162a4ad67b13"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "4e8ba6ac710958b9681593852eeaf9188cd2855b8df7530fce583d68b6bad84b"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "85dd9a62d47f4cc3d98f7bdf85965eb4f058b6a127cdf32f37ed16c2e9546a45"
     },
     "original_exhibition": {
       "status": "not_published",
@@ -308,7 +314,53 @@
       "raw_text": "6 5128 / B1 坪井 爽佑 三重/三重 29歳/53.9kg F2 L0 0.18 3.69 14.71 29.41 4.67 22.22 50.00 26 38.10 53.97 11 37.01 57.48 2 7 9 7 8R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 岡部 浩 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 山一 鉄也 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 田邉 亮蔵 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 入澤 友治 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 木下 大將 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 坪井 爽佑 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

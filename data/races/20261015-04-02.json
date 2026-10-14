@@ -8,7 +8,7 @@
     "event": "開設72周年記念トーキョー・ベイ・カップ",
     "race_no": 2,
     "deadline": "10:57",
-    "updated_at": "2026-10-15T08:11:19+09:00",
+    "updated_at": "2026-10-15T08:32:14+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,35 +19,41 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=04&rno=2",
-      "fetched_at": "2026-10-15T08:12:36+09:00",
-      "sha256": "c2634d4b5bd15099bc0f9e408e5b4933615b85d3fc2bfcfd5c98d18df797b3ea",
+      "fetched_at": "2026-10-15T08:34:57+09:00",
+      "sha256": "732feeb7af930a9cc12ed83dd01374a83831cfebf102d792bb2da2abe2315dc7",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=04&rno=2",
+      "fetched_at": "2026-10-15T08:33:12+09:00",
+      "sha256": "6afbd2a31fa8c88ab1c7299307715de54f733c5e77f8e0391fd37edf8777d0ec",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "8b99e5a5515c89d0f58aa70dc74656e8562932243ad731af6c89162a4ad67b13"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "4e8ba6ac710958b9681593852eeaf9188cd2855b8df7530fce583d68b6bad84b"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "85dd9a62d47f4cc3d98f7bdf85965eb4f058b6a127cdf32f37ed16c2e9546a45"
     },
     "original_exhibition": {
       "status": "not_published",
@@ -294,7 +300,53 @@
       "raw_text": "6 3854 / A1 吉川 元浩 兵庫/兵庫 54歳/51.5kg F1 L0 0.14 7.08 50.45 71.17 6.74 45.71 60.00 12 55.81 68.60 41 40.79 57.89 9 9 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 澤田 尚也 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 下出 卓矢 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 大池 佑来 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 山崎 郡 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 篠崎 仁志 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 吉川 元浩 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
