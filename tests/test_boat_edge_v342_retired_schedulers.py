@@ -18,6 +18,8 @@ LEGACY = (
     "site-health.yml",
     "site-recovery.yml",
     "site-v103.yml",
+    "site-v117.yml",
+    "site-v134.yml",
 )
 
 
