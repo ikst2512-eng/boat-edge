@@ -13,7 +13,7 @@ import re
 JST=timezone(timedelta(hours=9))
 SCHEMA='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'
 KEY=re.compile(r'^20\d{6}-\d{2}-\d{2}$')
-RECOVER_ALLOW={'auto-update.yml','site-odds.yml'}
+RECOVER_ALLOW={'auto-update.yml','site-odds.yml','BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'}
 
 def load(p):
     try:
@@ -280,6 +280,22 @@ def compute(root,now):
         recover.append('site-odds.yml')
     if any(r['minutes_left']<=12 and any(i.startswith('odds_evidence_') or i in ('odds_120_incomplete','odds_official_dom_unverified') for i in r['missing_evidence']) for r in urgent):
         recover.append('site-odds.yml')
+    # V410: GitHub's best-effort cron missed the V229/V235 2-10m
+    # decision window for three observed 2026-10-14 races. Reuse the
+    # EXISTING guarded V229 workflow only with complete currently saved
+    # source evidence. Readiness observations alone never authorize a freeze.
+    # No retrospective runs or writes into already-present/invalid snapshots.
+    formal_locked=(
+        all(formal_guard.get(k) is False for k in ('results_seen','unlock','scoring'))
+        and formal_guard.get('RESULT_UNLOCK_TOKEN') is None
+        and (formal.get('formalFirst100') or {}).get('races',0)==0)
+    if formal_locked and any(
+        2<=r['minutes_left']<=10
+        and r['missing_evidence']==['frozen_prediction_missing_or_invalid']
+        and not (root/'data/site_prediction_snapshots'/f"{r['key']}.json").exists()
+        for r in urgent
+    ):
+        recover.append('BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml')
     recover=sorted(set(recover)&RECOVER_ALLOW)
     if reasons:status='NEEDS_ATTENTION'
     elif not urgent:status='WAITING_FOR_PREDEADLINE'
