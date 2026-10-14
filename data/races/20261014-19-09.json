@@ -8,7 +8,7 @@
     "event": "MNBR下関5th ケーブルネット下関杯",
     "race_no": 9,
     "deadline": "21:25",
-    "updated_at": "2026-10-14T18:38:17+09:00",
+    "updated_at": "2026-10-14T19:09:31+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=19&rno=9",
-      "fetched_at": "2026-10-14T18:39:27+09:00",
-      "sha256": "96ef8e3a3dadf3ebed004753526bc21aad2f65e2e04301fa9a1dba66435a1888",
+      "fetched_at": "2026-10-14T19:10:48+09:00",
+      "sha256": "6facc57c50126629b69f8de645f08ec61c57cc5fa8c287f1b9e026778930cdc2",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=19&rno=9",
+      "fetched_at": "2026-10-14T19:10:29+09:00",
+      "sha256": "384cb5d936a02ca767ad65d1d2c260f906b5b865a88da5ea99e6882bbe500e05",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "36aa21bad39bcbc529ff0a95d39fef62a123a6c4e312cc605dbb689a7897a6f6"
+      "sha256": "4340cbb88512cfbfdb110c411019e09e4738941c02f28dc839542f2e5670fb91"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "5e3e7644c06cfeefc97f959ccc79015c48086be8607773db5931f96d5257afef"
+      "sha256": "b7fc458a10157af1265c70b3de7e1d7e50dc48131bcbfff49b4199a2ee89a2dc"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "e1155d2962d4ed6a17455c144d2041c5162214f152947bbc3b83f15a6cfe884f"
+      "sha256": "d000653d3af01b6b96e20ecbae2f6345f71548d4c5d8f13cb5d10b12bf06f945"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "e8e798635c86540cfec7d350a933b20089c0d92e157b1ec109bc5e9247e7cd2e"
+      "sha256": "34f9ed22fe594421f91aef4fa5528fd4bd0b57fcf7b46596dafad4cc403bd2ec"
     }
   },
   "racers": [
@@ -306,13 +312,60 @@
         "11",
         "8",
         "7",
-        "12"
+        "12",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "6 4549 / A2 小林 文彦 福岡/福岡 38歳/52.0kg F0 L0 0.19 6.18 44.44 63.64 5.32 36.36 45.45 36 27.72 43.56 25 43.56 57.43 7 11 8 7 12 3R"
+      "raw_text": "6 4549 / A2 小林 文彦 福岡/福岡 38歳/52.0kg F0 L0 0.19 6.18 44.44 63.64 5.32 36.36 45.45 36 27.72 43.56 25 43.56 57.43 7 11 8 7 12 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 澁川 夏 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 黒柳 浩孝 54.0kg R 2"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 森 雄利 52.0kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 上原 健次郎 52.9kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 豊田 結 53.2kg R 2"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 小林 文彦 52.0kg R 3"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
