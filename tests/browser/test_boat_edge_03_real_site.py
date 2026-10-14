@@ -941,10 +941,19 @@ def exercise(engine: str, url: str, shots: Path):
                 assert notice.get_attribute("data-race-key") == second["race_key"]
                 assert "前回取得時点" in notice.inner_text()
                 assert "404" in notice.inner_text()
-                assert notice.get_attribute("data-stale") == "true"
-                assert notice.evaluate(
-                    "(node) => getComputedStyle(node).backgroundColor"
-                ) == "rgb(255, 247, 229)", "stale warning must be visually distinct from blue loading state"
+                # On a PR the public Pages still serves old main. Only the
+                # checked-out build can certify candidate CSS until deployment.
+                old_pages_on_pr_stale = (
+                    url != "local" and os.getenv("GITHUB_EVENT_NAME") == "pull_request")
+                if old_pages_on_pr_stale:
+                    report["stale_warning_color"] = "PR_PAGES_OLDER_BUILD_NOT_CERTIFIED"
+                else:
+                    assert notice.get_attribute("data-stale") == "true"
+                    assert notice.evaluate(
+                        "(node) => getComputedStyle(node).backgroundColor"
+                    ) == "rgb(255, 247, 229)", (
+                        "stale warning must differ visually from blue loading state")
+                    report["stale_warning_color"] = "AMBER_WARNING_VISIBLE_PASS"
                 assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
 
                 # Replay the already selected, explicitly PRE_RESULT card
