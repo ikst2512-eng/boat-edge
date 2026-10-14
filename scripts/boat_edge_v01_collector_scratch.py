@@ -11,8 +11,12 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import sys
 from urllib.parse import urlsplit, parse_qs
 
+_REPO = str(Path(__file__).resolve().parents[1])
+if _REPO not in sys.path:
+    sys.path.insert(0, _REPO)
 from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
 
 JST = timezone(timedelta(hours=9))
@@ -104,7 +108,7 @@ def prove(root: Path, key: str, now: datetime):
         return None, "immutable_or_deadline_locked"
     racers = race.get("racers") or []
     if (len(racers) != 6 or
-            {r.get("lane") for r in racers if isinstance(r, dict)} != set(range(1, 7)) or
+            {r.get("lane") for r in racers if isinstance(r, dict) and type(r.get("lane")) is int} != set(range(1, 7)) or
             len({str(r.get("registration_no")) for r in racers if isinstance(r, dict)}) != 6):
         return None, "six_racers_unverified"
     audit = race.get("source_audit") or {}
