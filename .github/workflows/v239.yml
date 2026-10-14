@@ -9,7 +9,11 @@ on:
     workflows: ['BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring']
     types: [completed]
   schedule:
-    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 0-14,23 * * *'
+    # Keep the five-minute PRE_RESULT freeze cadence; score older SITE-only
+    # frozen cohorts on one staggered 15-minute tick to reduce Pages churn.
+    - cron: '4,19,34,49 0-14,23 * * *'
+    - cron: '9,24,39,54 0-14,23 * * *'
+    - cron: '14,29,44,59 0-14,23 * * *'
 
 permissions:
   contents: write
@@ -85,7 +89,10 @@ jobs:
             echo "V239_PUSH_CONFLICT_RETRY_${attempt}"
           done
           if test "$success" != true; then echo V239_PRE_RESULT_COMMIT_FAILED; exit 1; fi
+      # Previous Git-attested SITE cohorts can be scored later; never delay
+      # the five-minute, result-unseen prospective freeze above.
       - name: Post-result independent scoring of only Git-frozen site cohorts
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '9,24,39,54 0-14,23 * * *') }}
         shell: bash
         run: |
           set -euo pipefail

@@ -83,6 +83,41 @@ class WorkflowInventoryTests(unittest.TestCase):
                 self.assertEqual(entry["crons"], ["29 20 * * *"])
 
 
+    def test_01_site_only_post_result_scores_no_longer_push_each_5_minutes(self):
+        """Cut Pages build churn without slowing prospective unseen freezes."""
+        targets = (
+            ("v236.yml", 3, "3,18,33,48", "boat_edge_v236_hit_rate.py"),
+            ("v239.yml", 4, "9,24,39,54", "boat_edge_v239_second_tail.py"),
+            ("v240.yml", 1, "11,26,41,56", "boat_edge_v240_coverage.py"),
+            ("v254-third-tail-shadow.yml", 3, "13,28,43,58",
+             "boat_edge_v254_third_tail.py"),
+        )
+        for filename, offset, score_slot, script in targets:
+            with self.subTest(workflow=filename):
+                src = (ROOT / ".github/workflows" / filename).read_text(encoding="utf-8")
+                import re
+                crons = re.findall(r"^\s+- cron: '([^']+)'$", src, re.MULTILINE)
+                self.assertEqual(len(crons), 3)
+                minutes = []
+                for cron in crons:
+                    fields = cron.split()
+                    self.assertEqual(fields[1:], ["0-14,23", "*", "*", "*"])
+                    minutes.extend(int(t) for t in fields[0].split(","))
+                self.assertEqual(sorted(minutes), list(range(offset, 60, 5)))
+                self.assertEqual(len(minutes), len(set(minutes)))
+                self.assertIn(f"scripts/{script} freeze", src)
+                self.assertIn(f"scripts/{script} score", src)
+                self.assertLess(src.index(f"scripts/{script} freeze"),
+                                src.index(f"scripts/{script} score"))
+                guard = ("github.event_name == 'schedule' && "
+                         f"github.event.schedule == '{score_slot} 0-14,23 * * *'")
+                self.assertEqual(src.count(guard), 1)
+                self.assertIn("github.event_name == 'workflow_dispatch'", src)
+                self.assertIn("github.event_name == 'push'", src)
+                # score never runs on five-minute workflow_run source-trigger
+                # ticks; result-unseen freeze still runs on all three ticks.
+                self.assertIn("workflow_run:", src)
+
     def test_v216_one_git_receipt_for_pre_result_readiness_and_shadow(self):
         """Avoid two Pages-invalidating commits while keeping settled phases separate."""
         workflow = (ROOT / ".github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml").read_text(encoding="utf-8")
