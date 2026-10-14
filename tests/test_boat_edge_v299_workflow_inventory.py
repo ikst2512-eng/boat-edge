@@ -185,6 +185,33 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("github.event_name == 'workflow_dispatch'", workflow)
         self.assertIn("github.event_name == 'push'", workflow)
 
+    def test_01_retire_obsolete_v249_and_decouple_todo_from_five_minute_history(self):
+        """Protect live Pages from obsolete UI installs and redundant TODO pushes."""
+        root = ROOT / ".github/workflows"
+        old_ui = (root / "v249.yml").read_text(encoding="utf-8")
+        todo = (root / "site-v134.yml").read_text(encoding="utf-8")
+        history = (root / "site-v133.yml").read_text(encoding="utf-8")
+        # V249 is no longer byte-identical to today's newer mobile CSS.
+        # Existing safety checks remain for explicit manual legacy inspection.
+        self.assertIn("  workflow_dispatch:", old_ui)
+        self.assertNotIn("  schedule:", old_ui)
+        self.assertNotIn("  push:", old_ui)
+        self.assertIn("V249_VERIFIED_UI_RESOURCE_DRIFT_", old_ui)
+        self.assertIn("assets/boat_edge_v249_focus.css", old_ui)
+        # The user-facing V133 FINAL15M history keeps its 5-minute cadence,
+        # while the TODO documentation no longer republishes on every run.
+        self.assertIn('cron: "*/5 * * * *"', history)
+        self.assertIn("  workflow_dispatch:", todo)
+        self.assertIn("  schedule:", todo)
+        self.assertIn("cron: '38 * * * *'", todo)
+        self.assertNotIn("  workflow_run:", todo)
+        self.assertIn("git add -- BOAT_EDGE_CURRENT_TODO.md", todo)
+        # V134's fix cannot disable or backdate the prediction source freeze.
+        primary = (root / "V235.yml").read_text(encoding="utf-8")
+        atomic = (root / "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
+        self.assertIn("  schedule:", primary)
+        self.assertIn("  schedule:", atomic)
+
     def test_v216_one_git_receipt_for_pre_result_readiness_and_shadow(self):
         """Avoid two Pages-invalidating commits while keeping settled phases separate."""
         workflow = (ROOT / ".github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml").read_text(encoding="utf-8")
