@@ -112,16 +112,23 @@ assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.production_model_chang
 assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.lanes.v236.miss_categories.hit10.hit++)),null);
 assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.lanes.v240.races[0].categories.hit10='invented')),null);
 assert.equal(api.fromFullMissProof(mutate(fullSource,d=>d.lanes.v240.races[0].race_key=d.lanes.v240.races[1].race_key)),null);
+// The real SITE-only cohort keeps growing. Use a *future relative to the
+// newest verified race*, never a hardcoded date that eventually becomes old.
+const proofDays=fullSource.lanes.v240.races.map(r=>r.date_jst).sort();
+const latestProofDay=proofDays[proofDays.length-1];
+const nextProofDay=new Date(Date.UTC(Number(latestProofDay.slice(0,4)),
+ Number(latestProofDay.slice(4,6))-1,Number(latestProofDay.slice(6,8))+1))
+ .toISOString().slice(0,10).replace(/-/g,'');
 const multiday=mutate(fullSource,d=>{
  const lane=d.lanes.v240;
  const extra=JSON.parse(JSON.stringify(lane.races[0]));
- extra.race_key='20261013-14-01';extra.date_jst='20261013';
+ extra.race_key=nextProofDay+'-14-01';extra.date_jst=nextProofDay;
  lane.races.push(extra);lane.races_verified++;
  for(const key of Object.keys(extra.categories))lane.miss_categories[key][extra.categories[key]]++;
  d.site_verified_reference_races++;
 });
 const m=api.fromFullMissProof(multiday);
-assert(m&&m.b.day.includes('20261013'),'Latest unseen day should be shown');
+assert(m&&m.b.day.includes(nextProofDay),'Latest unseen day should be shown');
 const truncated=mutate(fixture240,d=>{d.scored_total+=20;d.comparisons.hit10.races+=20;});
 assert.equal(api.check240(truncated),null,'Never claim incomplete examples verify 100% of aggregate');
 
