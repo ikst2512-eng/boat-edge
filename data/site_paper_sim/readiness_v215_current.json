@@ -1,23 +1,20 @@
 {
-  "checked_at": "2026-10-14T06:52:04.805438+00:00",
+  "checked_at": "2026-10-14T06:52:51.102553+00:00",
   "current_window": [
     {
       "deadline": "15:58",
-      "minutes_left": 5.9,
+      "minutes_left": 5.1,
       "race_key": "20261014-22-11",
-      "reason": "snapshot_missing",
+      "reason": "verified_shadow_ready",
       "source_gaps": [],
       "venue": "福岡"
     },
     {
       "deadline": "16:05",
-      "minutes_left": 12.9,
+      "minutes_left": 12.1,
       "race_key": "20261014-13-12",
       "reason": "snapshot_missing",
-      "source_gaps": [
-        "beforeinfo_not_ok",
-        "scratch_stale"
-      ],
+      "source_gaps": [],
       "venue": "尼崎"
     }
   ],
@@ -25,11 +22,11 @@
   "day_latest_reasons": {
     "no_raw_ev_candidate_8_25x": 2,
     "snapshot_audit_sha_failed": 1,
-    "snapshot_missing": 31,
-    "verified_shadow_ready": 50
+    "snapshot_missing": 30,
+    "verified_shadow_ready": 51
   },
   "day_observed_races": 84,
-  "day_verified_races": 50,
+  "day_verified_races": 51,
   "next_race": {
     "deadline": "15:54",
     "race_key": "20261014-20-02",
@@ -38,16 +35,17 @@
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
-    "snapshot_missing": 2
+    "snapshot_missing": 1,
+    "verified_shadow_ready": 1
   },
   "schedule_source_today": true,
   "scheduled_races": 156,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 2,
+    "beforeinfo_ok": 3,
     "race_card_ok": 3,
-    "snapshot_exists": 0
+    "snapshot_exists": 1
   },
   "upcoming": [
     {
@@ -66,12 +64,12 @@
       "race_card_status": "ok",
       "race_key": "20261014-22-11",
       "scratch_status": "uncertified",
-      "snapshot_exists": false,
+      "snapshot_exists": true,
       "venue": "福岡",
       "watch_start": "15:43"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "16:05",
       "race_card_status": "ok",
       "race_key": "20261014-13-12",
@@ -81,7 +79,7 @@
       "watch_start": "15:50"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "16:09",
       "race_card_status": "ok",
       "race_key": "20261014-06-11",
@@ -95,7 +93,7 @@
       "deadline": "16:11",
       "race_card_status": "ok",
       "race_key": "20261014-12-03",
-      "scratch_status": "uncertified",
+      "scratch_status": "blocked",
       "snapshot_exists": false,
       "venue": "住之江",
       "watch_start": "15:56"
