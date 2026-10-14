@@ -76,7 +76,12 @@ def audit(root: Path) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40,64}", ancestor):
         raise GuardFailure("V277_MERGE_BASE_INVALID")
     changed = set(git(root, "diff", "--name-only", ancestor, "HEAD").splitlines())
-    changes = {key for path in changed if (key := race_from_source(path))}
+    # Remote may already have published updated source bytes before freezing.
+    # Exact Git blob parity with remote cannot overwrite that frozen input.
+    remote_distinct = set(git(root, "diff", "--name-only", "origin/main", "HEAD",
+                              "--", "data/races", "data/raw").splitlines())
+    changes = {key for path in changed & remote_distinct
+               if (key := race_from_source(path))}
     remote_frozen_paths = {
         prefix: set(
             git(root, "ls-tree", "-r", "--name-only", "origin/main", "--", prefix).splitlines()
