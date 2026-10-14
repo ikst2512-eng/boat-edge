@@ -8,7 +8,7 @@ const shaOK=k=>/^[a-f0-9]{64}$/.test(String(k||''));
 const comboOK=s=>/^[1-6]-[1-6]-[1-6]$/.test(String(s||''))&&new Set(s.split('-')).size===3;
 const $=(s,r=document)=>r.querySelector(s);
 const text=(el,value)=>{if(el)el.textContent=String(value??'');};
-let serial=0,activeKey='',shown=10,currentPreview=null;
+let serial=0,activeKey='',shown=10,currentPreview=null,lastPreviewAttemptAt=0;
 function cardSafety(r,now=Date.now()){
  const key=r?.race_key,meta=r?.meta||{};
  if(!keyOK(key)||String(meta.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
@@ -98,7 +98,7 @@ function style(){
  '.be392-header strong{font-size:17px}.be392-tag{font-size:11px;font-weight:800;color:#6d4300;background:#fff0c9;padding:5px 8px;border-radius:5px}',
  '.be392-meta{font-size:12px;line-height:1.6;color:#345371;margin-top:8px}',
  '.be392-tabs{display:flex;gap:6px;margin-top:12px}',
- '.be392-tabs button{flex:1;font:inherit;font-size:13px;font-weight:800;border:1px solid #a6bfdd;color:#234b73;background:#fff;padding:9px 3px;border-radius:7px;cursor:pointer}',
+ '.be392-tabs button{flex:1;font:inherit;font-size:13px;font-weight:800;border:1px solid #a6bfdd;color:#234b73;background:#fff;padding:9px 3px;min-height:44px;border-radius:7px;cursor:pointer}',
  '.be392-tabs button[aria-pressed="true"]{background:#174c83;color:#fff;border-color:#174c83}',
  '.be392-lines{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:5px}',
  '.be392-lines li{display:flex;justify-content:space-between;gap:12px;border:1px solid #dae6f6;background:#fff;padding:9px 12px;border-radius:8px}',
@@ -171,6 +171,7 @@ function hide(){
 }
 async function render(r){
  const ticket=++serial,key=String(r?.race_key||'');activeKey=key;
+ lastPreviewAttemptAt=Date.now();
  if(finalFor(key)){hide();return;}
  const guard=cardSafety(r);
  if(!guard.ok){
@@ -206,7 +207,12 @@ function tick(){
  const box=$('#be392EarlyPreview');if(!box||!['true','status'].includes(box.dataset.ready))return;
  const key=box.dataset.raceKey;
  const r=(()=>{try{return typeof state!=='undefined'?state?.race:null;}catch(_){return null;}})();
- if(key!==r?.race_key||!cardSafety(r).ok||finalFor(key))hide();
+ if(key!==r?.race_key||!cardSafety(r).ok||finalFor(key)){hide();return;}
+ // A PRE_RESULT preview may be published after the race card without any
+ // change to that card. Retry the same race only while visible and valid.
+ if(box.dataset.ready==='status'&&!document.hidden&&
+    $('#raceView')?.classList?.contains('active')&&
+    Date.now()-lastPreviewAttemptAt>=60000)return render(r);
 }
 function init(){style();setInterval(tick,30000);}
 window.BoatEdgeV392={render,cardSafety,previewSafety,finalFor,hide,version:'V392-CARD-ONLY-UNFROZEN'};
