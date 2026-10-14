@@ -75,3 +75,15 @@ html.be306-race-await #raceView #be108PredictionModes{display:none!important}
  #raceView #be207Top .be207-listhead{display:block}
  #raceView #be207Top .be207-listhead span{display:block;margin-top:4px}
 }
+
+/* 03: race-scoped prediction state, not a model confidence claim. */
+#be207Top .be207-display-phase{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;
+ padding:9px 10px;margin:4px 0 9px;border:1px solid #d1dce7;border-radius:8px;
+ background:#f6f9fc;color:#254767;font-size:12px;line-height:1.5}
+#be207Top .be207-display-phase strong{font-size:13px;font-weight:900}
+#be207Top .be207-display-phase span{flex:1 1 170px;min-width:0;overflow-wrap:anywhere}
+#be207Top .be207-display-phase[data-phase="final-source"]{background:#ecf7f2;border-color:#bddfce;color:#14614b}
+#be207Top .be207-display-phase[data-phase="provisional"]{background:#f4f8fd;border-color:#c8d9eb;color:#20547c}
+#be207Top .be207-display-phase[data-phase="closed"]{background:#fff6eb;border-color:#e8ca9c;color:#784a18}
+#be207Top .be207-display-phase[data-phase="waiting"],
+#be207Top .be207-display-phase[data-phase="unverified"]{background:#fff5ed;border-color:#edc7a8;color:#8b461e}

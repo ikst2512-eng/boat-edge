@@ -620,7 +620,7 @@ def probe_historical_snapshot_render_fixture(context, target, engine):
         assert len(combos) >= 10 and len(set(combos)) == len(combos)
         assert all(re.fullmatch(r"[1-6]-[1-6]-[1-6]", x) and
                    len(set(x.split("-"))) == 3 for x in combos)
-        sources.append({"key": key, "rows": rows, "combos": combos})
+        sources.append({"key": key, "deadline": saved["deadline"], "rows": rows, "combos": combos})
 
     def source_html(rows):
         return "".join(
@@ -648,8 +648,11 @@ def probe_historical_snapshot_render_fixture(context, target, engine):
             wait_until="domcontentloaded",
         )
         fixture.evaluate(
-            """key => {
-               window.state = {race: {race_key:key, deadline:"08:35"}};
+            """input => {
+               const key=input.key,date=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+               window.state = {race: {race_key:key, meta:{
+                 date,venue_code:key.slice(9,11),race_no:Number(key.slice(12,14)),
+                 deadline:input.deadline}}};
                window.BoatEdgeV204 = {
                  summarize(){return {settled:false, fresh:false}},
                  sourceLabel(){return "過去PRE_RESULT表示試験（非本番）"},
@@ -659,7 +662,7 @@ def probe_historical_snapshot_render_fixture(context, target, engine):
                  sourceStatus(){return {kind:"partial",title:"履歴fixture：出走状態は模擬",
                                        detail:"本番の予想許可を意味しません"}}
                };
-            }""", sources[0]["key"]
+            }""", {"key":sources[0]["key"],"deadline":sources[0]["deadline"]}
         )
         # Fetch the real renderer from checkout/Pages, not a copied test impl.
         fixture.add_script_tag(url=target.rsplit("/", 1)[0] +
@@ -692,8 +695,19 @@ def probe_historical_snapshot_render_fixture(context, target, engine):
 
         # Race changes while previous V108 list is still mounted must STOP,
         # not show the old race's saved historical tickets under the new key.
-        fixture.evaluate("(key) => {window.state.race.race_key=key;"
-                         "window.BoatEdgeV207.render()}", sources[1]["key"])
+        fixture.evaluate(
+            """input => {
+              const key=input.key;
+              window.state.race.race_key=key;
+              window.state.race.meta={
+                date:key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8),
+                venue_code:key.slice(9,11),race_no:Number(key.slice(12,14)),
+                deadline:input.deadline
+              };
+              window.BoatEdgeV207.render();
+            }""",
+            {"key":sources[1]["key"],"deadline":sources[1]["deadline"]}
+        )
         assert fixture.locator("#be207Top .be207-stop").count() == 1
         assert fixture.locator("#be207Top .be207-ticket").count() == 0
         fixture.locator("#be391PredictionWait").wait_for(state="visible")
