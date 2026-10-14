@@ -92,6 +92,31 @@ class V409Tests(unittest.TestCase):
         self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],0)
         self.assertEqual(a["counts"]["all_four_preview_deadline_conflicts"],1)
 
+    def test_edogawa_three_sources_eligible_without_original(self):
+        edogawa=csvbytes(["レースコード","レース日"],[
+            {"レースコード":"202609300301","レース日":DAY.isoformat()}])
+        sources={s:preview().replace(KEY.encode(),b"202609300301").replace(b",01,01R,",b",03,01R,")
+                 for s in ("stt","tkz","sui")}
+        a=audit(DAY,{"race_cards":edogawa,**sources})
+        self.assertEqual(a["counts"]["venue_aware_preview_timestamps_eligible_unverified"],1)
+        self.assertEqual(a["counts"]["edogawa_three_preview_timestamps_eligible_unverified"],1)
+        self.assertEqual(a["counts"]["all_four_preview_timestamps_eligible_unverified"],0)
+
+    def test_non_edogawa_missing_original_is_not_eligible(self):
+        a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in ("stt","tkz","sui")}})
+        self.assertEqual(a["counts"]["venue_aware_preview_timestamps_eligible_unverified"],0)
+        self.assertEqual(a["counts"]["non_edogawa_missing_original_exhibition"],1)
+
+    def test_three_source_deadline_conflict_excludes_edogawa(self):
+        edogawa=csvbytes(["レースコード","レース日"],[
+            {"レースコード":"202609300301","レース日":DAY.isoformat()}])
+        sources={s:preview().replace(KEY.encode(),b"202609300301").replace(b",01,01R,",b",03,01R,")
+                 for s in ("stt","tkz","sui")}
+        sources["sui"]=sources["sui"].replace(b"08:35",b"08:45")
+        a=audit(DAY,{"race_cards":edogawa,**sources})
+        self.assertEqual(a["counts"]["three_preview_deadline_conflicts"],1)
+        self.assertEqual(a["counts"]["venue_aware_preview_timestamps_eligible_unverified"],0)
+
     def test_four_sources_all_same_race(self):
         a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in
                     ("stt","tkz","sui","original_exhibition")}})
