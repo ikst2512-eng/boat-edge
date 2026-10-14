@@ -123,3 +123,59 @@ assert(sixCards[3].includes('M2<b>—</b>')&&sixCards[3].includes('B2<b>—</b>'
 assert(sixCards[4].includes('M2<b>—</b>')&&sixCards[4].includes('B2<b>—</b>'));
 assert(sixCards[5].includes('M2<b>27.8%</b>')&&sixCards[5].includes('B2<b>42.1%</b>'));
 console.log('BOAT_EDGE_03_SIX_BOAT_MISSING_RATE_NOT_ZERO_PASS');
+
+// 03: the legacy compact beforeinfo must not bypass PRE_RESULT source evidence
+// or silently overwrite duplicated start/exhibition entries.
+const beforeSrc=fs.readFileSync('assets/boat_edge_final_v48.js','utf8');
+const beforeStart=beforeSrc.indexOf('function sourceReady(d,kind){');
+const beforeEnd=beforeSrc.indexOf('function compactDetails(d){',beforeStart);
+assert(beforeStart>0&&beforeEnd>beforeStart,'beforeinfo guard source must exist');
+const beforeHost={innerHTML:''};
+const beforeCtx=vm.createContext({
+ q:s=>s==='#be48Before'?beforeHost:null,
+ lane:l=>'['+l+']',esc:v=>String(v),
+ value:v=>v===null||v===undefined||v===''?'—':v,
+ Date,Map,Set,Number,String
+});
+vm.runInContext(beforeSrc.slice(beforeStart,beforeEnd),beforeCtx);
+const mkAudit=(t='2026-10-14T08:22:00+09:00')=>({
+ status:'ok',sha256:'b'.repeat(64),fetched_at:t
+});
+const bRace={
+ race_key:'20261014-14-01',
+ meta:{date:'2026-10-14',venue_code:'14',race_no:1,deadline:'08:35',
+  phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false},
+ racers:Array.from({length:6},(_,i)=>({lane:i+1,name:'選手'+(i+1)})),
+ beforeinfo:{
+  racers:Array.from({length:6},(_,i)=>({lane:i+1,exhibition_time:6.8+i/100,tilt:0})),
+  start_exhibition:Array.from({length:6},(_,i)=>({lane:i+1,st:i===0?'.12':i===1?'F.02':'.15',course:i+1}))
+ },
+ source_audit:{beforeinfo:mkAudit(),stt:{status:'missing'}},actual_entry:[]
+};
+beforeCtx.sample=bRace;
+const renderBefore=()=>vm.runInContext('renderBeforeCompact(sample)',beforeCtx);
+renderBefore();
+assert(beforeHost.innerHTML.includes('展示進入（枠→コース・保存値）'));
+assert(!beforeHost.innerHTML.includes('実進入'));
+assert(beforeHost.innerHTML.includes('.12'));
+assert(beforeHost.innerHTML.includes('F.02'));
+assert(beforeHost.innerHTML.includes('6.8'));
+assert(beforeHost.innerHTML.includes('締切前の取得証跡を照合した保存値'));
+const withRace=(patch)=>{beforeCtx.sample={...bRace,...patch};renderBefore();return beforeHost.innerHTML;};
+let htmlBefore=withRace({source_audit:{beforeinfo:{status:'missing'},stt:{status:'missing'}}});
+assert(!htmlBefore.includes('.12')&&!htmlBefore.includes('6.8'));
+assert(htmlBefore.includes('数値を非表示'));
+htmlBefore=withRace({source_audit:{beforeinfo:mkAudit('2026-10-14T08:36:00+09:00'),stt:{status:'missing'}}});
+assert(!htmlBefore.includes('.12')&&!htmlBefore.includes('6.8'),'post deadline evidence cannot show displayed measurements');
+htmlBefore=withRace({meta:{...bRace.meta,results_seen:true}});
+assert(!htmlBefore.includes('.12')&&!htmlBefore.includes('6.8'),'opened result guard cannot drive PRE_RESULT compact display');
+htmlBefore=withRace({beforeinfo:{...bRace.beforeinfo,
+ start_exhibition:[...bRace.beforeinfo.start_exhibition,{lane:1,st:'.99',course:6}],
+ racers:[...bRace.beforeinfo.racers,{lane:2,exhibition_time:1.11,tilt:9}]
+}});
+assert(!htmlBefore.includes('.99')&&!htmlBefore.includes('1.11'));
+const duplicates=htmlBefore.split('<div class="be48-brow">').slice(1).map(x=>x.split('</div>')[0]);
+assert.equal(duplicates.length,6);
+assert(duplicates[0].includes('<span>—</span>'),'duplicate start lane must be missing');
+assert(duplicates[1].includes('<span>F.02</span><span>—</span><span>—</span>'),'duplicate racer time/tilt must be missing');
+console.log('BOAT_EDGE_03_BEFOREINFO_SOURCE_BOUND_PRE_RESULT_COMPACT_PASS');
