@@ -315,6 +315,35 @@ def compare_10point_modes(left, right, left_mode, right_mode):
             "improvement_proven": False, "model_promotion_authorized": False}
 
 
+def cross_study_ranked_topk(left, right, left_mode, right_mode):
+    """Exact TopK comparison restricted to shared, already attested races."""
+    if len(left) != len(right):
+        raise EvidenceError("CROSS_STUDY_TOPK_LENGTH_MISMATCH")
+    result = {}
+    for k in (3, 5, 10):
+        gain = loss = left_hits = right_hits = 0
+        for a, b in zip(left, right):
+            if a["race_key"] != b["race_key"] or a["winning"] != b["winning"]:
+                raise EvidenceError("CROSS_STUDY_TOPK_RACE_MISMATCH")
+            x = a["winning"] in (a["baseline"] if left_mode == "hit10" else
+                                  a["ranked_comparators"][left_mode])[:k]
+            y = b["winning"] in (b["baseline"] if right_mode == "hit10" else
+                                  b["ranked_comparators"][right_mode])[:k]
+            left_hits += x
+            right_hits += y
+            gain += y and not x
+            loss += x and not y
+        n = gain + loss
+        p = min(1.0, 2 * sum(math.comb(n, i) for i in range(min(gain, loss) + 1))
+                / 2**n) if n else None
+        result[f"top{k}"] = {"races": len(left), "left_hits": left_hits,
+                              "right_hits": right_hits, "right_only_hits": gain,
+                              "left_only_hits": loss, "discordant_pairs": n,
+                              "exact_mcnemar_two_sided_p": p,
+                              "improvement_proven": False}
+    return result
+
+
 def audit(root, attest=first_added):
     root = Path(root).resolve()
     formal_lock(root)
@@ -381,6 +410,12 @@ def audit(root, attest=first_added):
                     for mode in CONFIG[right][7] if mode not in ("hit10", "coverage15")
                 },
                 "equal_ten_ticket_head_to_head_only": mode_pairs,
+                "ranked_topk_head_to_head": {
+                    l_mode + "_vs_" + r_mode: cross_study_ranked_topk(
+                        left_rows, right_rows, l_mode, r_mode)
+                    for l_mode in CONFIG[left][7] if l_mode != "coverage15"
+                    for r_mode in CONFIG[right][7] if r_mode != "coverage15"
+                },
                 "separate_cohorts_must_not_be_pooled": True,
                 "cross_study_superiority_proven": False,
             }
