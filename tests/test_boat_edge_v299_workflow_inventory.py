@@ -114,9 +114,15 @@ class WorkflowInventoryTests(unittest.TestCase):
                 self.assertEqual(src.count(guard), 1)
                 self.assertIn("github.event_name == 'workflow_dispatch'", src)
                 self.assertIn("github.event_name == 'push'", src)
-                # score never runs on five-minute workflow_run source-trigger
-                # ticks; result-unseen freeze still runs on all three ticks.
-                self.assertIn("workflow_run:", src)
+                # Freeze still runs on all twelve distinct five-minute
+                # schedule ticks. Replaying the same freeze on each V235
+                # completion causes duplicate main pushes / cancelled Pages.
+                from scripts.boat_edge_v299_workflow_inventory import event_block
+                events = event_block(src)
+                self.assertNotRegex(events, r"(?m)^  workflow_run:")
+                self.assertIsNotNone(re.search(r"(?m)^  schedule:", events))
+                self.assertIn("workflow_dispatch:", events)
+                self.assertNotIn("github.event.workflow_run", src)
 
     def test_v216_one_git_receipt_for_pre_result_readiness_and_shadow(self):
         """Avoid two Pages-invalidating commits while keeping settled phases separate."""
