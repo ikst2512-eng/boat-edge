@@ -210,6 +210,29 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
                     m.audit(self.root, attest=self.proof)
                 self.assertEqual([c.args[0] for c in calls.call_args_list], [formal])
 
+    def test_direct_paired_scorer_rejects_wrong_race_or_unequal_tickets(self):
+        def row():
+            return {"key": KEY1, "day": KEY1[:8], "winning": "1-2-3",
+                    "outcomes": {"hit10": True, "third_tail10": False},
+                    "modes": {"hit10": 10, "third_tail10": 10}}
+        left, right = row(), row()
+        good = m.compare_10point_modes([left], [right], "hit10", "third_tail10")
+        self.assertEqual((good["races"], good["left_hits"], good["right_hits"]), (1, 1, 0))
+        self.assertFalse(good["improvement_proven"])
+        for field, other in (
+                ("key", KEY2), ("winning", "2-1-3"), ("day", "20261012")):
+            with self.subTest(field=field):
+                wrong = row()
+                wrong[field] = other
+                with self.assertRaisesRegex(m.EvidenceError, "RACE_OR_OUTCOME_MISMATCH"):
+                    m.compare_10point_modes([left], [wrong], "hit10", "third_tail10")
+        wrong = row()
+        wrong["modes"]["third_tail10"] = 9
+        with self.assertRaisesRegex(m.EvidenceError, "EXACT_TEN_TICKETS_REQUIRED"):
+            m.compare_10point_modes([left], [wrong], "hit10", "third_tail10")
+        with self.assertRaisesRegex(m.EvidenceError, "RACE_COUNT_MISMATCH"):
+            m.compare_10point_modes([left], [], "hit10", "third_tail10")
+
     def test_precise_paired_mcnemar_and_miss_slot_attribution(self):
         row = {"key": KEY1, "day": "20261013", "winning": "1-5-6",
                "baseline": HIT, "outcomes": {"hit10": False, "test10": True}}
