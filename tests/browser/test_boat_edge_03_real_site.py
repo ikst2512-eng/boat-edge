@@ -941,6 +941,10 @@ def exercise(engine: str, url: str, shots: Path):
                 assert notice.get_attribute("data-race-key") == second["race_key"]
                 assert "前回取得時点" in notice.inner_text()
                 assert "404" in notice.inner_text()
+                assert notice.get_attribute("data-stale") == "true"
+                assert notice.evaluate(
+                    "(node) => getComputedStyle(node).backgroundColor"
+                ) == "rgb(255, 247, 229)", "stale warning must be visually distinct from blue loading state"
                 assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
 
                 # Replay the already selected, explicitly PRE_RESULT card
@@ -1052,6 +1056,31 @@ def exercise(engine: str, url: str, shots: Path):
                     "guard_blocked_requests": len(blocked),
                     "page_errors": errors[:10],
                 })
+                # 03: navigate back and forth through real venue/race buttons.
+                # All three transitions must settle on the selected race,
+                # with no previous race's status/combos painted as current.
+                for expected in (first, second):
+                    jump = page.locator(
+                        '#be108RaceNav [data-be108-file="%s"]' % expected["file"]
+                    ).first
+                    jump.wait_for(state="visible", timeout=15000)
+                    jump.click()
+                    page.wait_for_function(
+                        """key => state?.race?.race_key === key &&
+                            document.querySelector('#raceView.active') &&
+                            document.querySelector('#be207Top.ready') &&
+                            !document.querySelector('#raceView.be03-race-loading') &&
+                            !document.querySelector('#be03RaceLoadNotice') &&
+                            !document.querySelector('#be03PassiveRefreshNotice')""",
+                        arg=expected["race_key"], timeout=35000
+                    )
+                    assert page.locator("#raceTitle").inner_text().find(
+                        str(expected["race_no"]) + "R") >= 0
+                    assert page.locator("#be207Top .be207-condition").inner_text().strip()
+                    assert page.locator("#be207Top .be207-stop").count() or (
+                        page.locator("#be207Top .be207-ticket").count() >= 3)
+                report["race_bounce"] = "FIRST_SECOND_FIRST_SECOND_NO_STALE_RECEIPTS_PASS"
+                assert not errors, "JavaScript error on repeat race navigation: " + repr(errors)
                 print("BOAT_EDGE_03_REAL_BROWSER_PASS " + json.dumps(report, ensure_ascii=False), flush=True)
             finally:
                 path = shots / ("%s-%s.png" % (
