@@ -1155,7 +1155,7 @@ async function renderPredictionModes(race,pred){
   if(verifiedPreDeadline)snapStatus='サイト保存済み最終予想を表示中（SHA・監査照合済み／Git初回保存時刻は別検証）';
   else if(inFinalWindow)snapStatus=`🎯 この端末の参考予想を保存中・締切まで${mins}分`;
   else if(resultConfirmed&&serverSnap)snapStatus=`サーバー保存の締切前最終予想で判定・${esc(serverSnap.saved_at||"")}`;
-  else if(resultConfirmed&&finalSnap)snapStatus=`この端末の締切前最終予想で判定・${esc(finalSnap.saved_at||"")}`;
+  else if(resultConfirmed&&localFinal)snapStatus=`この端末の締切前最終予想で判定・${esc(localFinal.saved_at||"")}`;
   else if(resultConfirmed&&!effectiveSnap)snapStatus="締切前保存なし・結果を見た後の予想は非表示・判定対象外";
   else if(mins!==null&&mins<0)snapStatus=effectiveSnap?"締切済み・締切前保存の買い目のみ表示":"締切済み・締切前保存なし（当時の買い目は復元しません）";
 
