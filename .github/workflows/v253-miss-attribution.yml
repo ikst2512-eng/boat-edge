@@ -14,6 +14,11 @@ on:
       - 'assets/boat_edge_v253_misses.css'
       - 'autopilot.html'
       - '.github/workflows/v253-miss-attribution.yml'
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v253_miss_audit.py'
+      - 'tests/test_boat_edge_v253_miss_audit.py'
+      - '.github/workflows/v253-miss-attribution.yml'
   workflow_dispatch:
   schedule:
     - cron: '12,27,42,57 0-14,23 * * *'
