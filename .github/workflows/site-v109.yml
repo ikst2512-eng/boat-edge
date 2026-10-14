@@ -251,7 +251,12 @@ jobs:
           rows=list(candidates.values())
           if __import__('os').environ.get('GITHUB_EVENT_NAME')=='schedule':
               current=[x for x in rows if x['kind']=='current']
-              historical=[x for x in rows if x['kind']!='current'][:36]
+              # Rotate the historical window so a persistent unavailable race
+              # cannot starve newer recoverable results indefinitely.
+              historical=sorted((x for x in rows if x['kind']!='current'),key=lambda x:x['key'])
+              if historical:
+                  offset=(now.toordinal()*288+now.hour*12+now.minute//5)*36 % len(historical)
+                  historical=(historical[offset:]+historical[:offset])[:36]
               rows=current+historical
 
           def worker(item):
