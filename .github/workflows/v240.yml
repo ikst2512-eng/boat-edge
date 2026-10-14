@@ -5,9 +5,9 @@ on:
     branches: [main]
     paths: ['.github/workflows/v240.yml']
   workflow_dispatch:
-  workflow_run:
-    workflows: ['BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring']
-    types: [completed]
+  # 01 runtime dedup: five-minute prospective schedule remains the owner.
+  # V235 also runs frequently; a workflow_run relay doubled research jobs,
+  # commits and automatic Pages builds without improving freeze cadence.
   schedule:
     # Keep the five-minute PRE_RESULT freeze cadence; score older SITE-only
     # frozen cohorts on one staggered 15-minute tick to reduce Pages churn.
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   guarded-v240-site-shadow:
-    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
