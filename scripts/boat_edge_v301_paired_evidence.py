@@ -201,7 +201,7 @@ def checked_row(root, study, path, attest=first_added):
     if study == "v254" and scored.get("result_precommitted_sha256") != frozen.get(parent_sha_field):
         raise EvidenceError("V254_PARENT_RESULT_IDENTITY_" + key)
     return {"key": key, "day": key[:8], "winning": winning,
-            "baseline": lists["hit10"], "outcomes": outcomes,
+            "baseline": lists["hit10"], "ranked_comparators": lists, "outcomes": outcomes,
             "modes": {m: len(lists[m]) for m in names}}
 
 
@@ -221,6 +221,19 @@ def paired(rows, mode):
             "paired_gain": gain, "paired_loss": loss, "paired_discordant": discordant,
             "exact_mcnemar_two_sided_p": p,
             "accuracy_improvement_proven": False, "promotion_authorized": False}
+
+
+def comparator_topk(rows, mode):
+    """Ranked hit rates for the same verified race cohort and candidate."""
+    return {
+        f"top{k}": {
+            "hits": sum(r["winning"] in r["ranked_comparators"][mode][:k] for r in rows),
+            "races": len(rows),
+            "hit_rate": (sum(r["winning"] in r["ranked_comparators"][mode][:k]
+                             for r in rows) / len(rows)) if rows else None,
+        }
+        for k in (3, 5, 10)
+    }
 
 
 def baseline_topk(rows):
@@ -295,6 +308,8 @@ def audit(root, attest=first_added):
         within[study] = {
             "sample_races": len(rows), "sample_days": len({r["day"] for r in rows}),
             "baseline_topk": baseline_topk(rows),
+            "candidate_topk": {mode: comparator_topk(rows, mode) for mode in CONFIG[study][7]
+                               if mode != "hit10" and mode != "coverage15"},
             "baseline_miss_slots": misses(rows),
             "equal_ten_point_modes": {m: paired(rows, m) for m in CONFIG[study][7]
                                       if m != "hit10" and m != "coverage15"},
@@ -327,6 +342,13 @@ def audit(root, attest=first_added):
                 "identical_race_baseline_matches": len(shared),
                 "sample_days": len({key[:8] for key in shared}),
                 "shared_baseline_topk": baseline_topk(left_rows),
+                "shared_candidate_topk": {
+                    left + ":" + mode: comparator_topk(left_rows, mode)
+                    for mode in CONFIG[left][7] if mode not in ("hit10", "coverage15")
+                } | {
+                    right + ":" + mode: comparator_topk(right_rows, mode)
+                    for mode in CONFIG[right][7] if mode not in ("hit10", "coverage15")
+                },
                 "equal_ten_ticket_head_to_head_only": mode_pairs,
                 "separate_cohorts_must_not_be_pooled": True,
                 "cross_study_superiority_proven": False,
