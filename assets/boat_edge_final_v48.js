@@ -49,17 +49,46 @@ function detailBar(){
   [["scenario","展開"],["card","選手"],["before","直前"],["data","データ"],["audit","監査"]].forEach(([id,label])=>{const b=document.createElement("button");b.textContent=label;b.onclick=()=>{const tab=q(`#raceTabs [data-tab="${id}"]`);if(tab)tab.click();else{qa(".subview").forEach(x=>x.classList.toggle("active",x.id===`tab-${id}`));}};bar.appendChild(b)});
   pred.appendChild(bar);
 }
+/* A frozen-looking budget can exist in legacy world markup while verified
+ * V207 tickets are stopped; only the current race's visible tickets permit
+ * an actionable navigation label. No stake or prediction is changed. */
 function actionBar(d){
-  let x=q("#be48Action");if(!x){x=document.createElement("div");x.id="be48Action";x.className="be48-action";q("#raceView")?.appendChild(x)}
-  const title=q("#raceTitle")?.textContent?.trim()||"レース",deadline=q("#deadlineBig")?.textContent?.trim()||"—",decision=q("#decision")?.textContent?.replace(/\s+/g," ").trim()||"予想確認";
-  let total=0;qa("#worlds .world-budget b").forEach(b=>{const n=Number((b.textContent||"").replace(/[^\d]/g,""));if(Number.isFinite(n))total+=n});
-  x.innerHTML=`<div><b>${esc(title)}${total?`　合計 ${total.toLocaleString()}円`:""}</b><span>締切 ${esc(deadline)} / ${esc(decision.slice(0,28))}</span></div><button type="button">買い目を見る</button>`;
-  x.querySelector("button").onclick=()=>q("#worlds")?.scrollIntoView({behavior:"smooth",block:"start"});
+  let x=q("#be48Action");
+  if(!x){x=document.createElement("div");x.id="be48Action";x.className="be48-action";q("#raceView")?.appendChild(x)}
+  const title=q("#raceTitle")?.textContent?.trim()||"レース";
+  const deadline=q("#deadlineBig")?.textContent?.trim()||"—";
+  const pick=q("#be207Top");
+  const sameRace=Boolean(d?.race_key&&rawRace()?.race_key===d.race_key);
+  const ready=Boolean(sameRace&&pick?.classList?.contains("ready")&&
+    !pick.querySelector(".be207-stop")&&pick.querySelector(".be207-ticket")&&
+    !document.documentElement.classList.contains("be306-race-await")&&
+    !q("#raceView")?.classList?.contains("be03-race-loading"));
+  x.dataset.be48TicketState=ready?"ready":"stopped";
+  const status=ready?"買い目を表示中（購入ではありません）":
+    "買い目停止・直前情報または保存状態を確認中";
+  x.innerHTML=`<div><b>${esc(title)}</b><span>締切 ${esc(deadline)} / ${status}</span></div><button type="button">${ready?"買い目を確認":"取得状況を見る"}</button>`;
+  x.querySelector("button").onclick=()=>{
+    (q("#be207Top")||q("#tab-pred"))?.scrollIntoView({behavior:"smooth",block:"start"});
+  };
+}
+let be48ActionQueued=false;
+function scheduleActionBar(){
+  if(be48ActionQueued)return;
+  be48ActionQueued=true;
+  queueMicrotask(()=>{be48ActionQueued=false;if(rawRace())actionBar(rawRace())});
 }
 function raceRefresh(d){decorateWorlds();compactDetails(d);detailBar();actionBar(d)}
 function install(){
   if(typeof renderRace==="function"&&!renderRace.__be48){const orig=renderRace;const wrapped=function(d){const r=orig.apply(this,arguments);queueMicrotask(()=>raceRefresh(d));return r};wrapped.__be48=true;renderRace=wrapped}
   if(typeof showView==="function"&&!showView.__be48){const orig=showView;const wrapped=function(id){const r=orig.apply(this,arguments);document.body.classList.toggle("be48-race-active",id==="raceView");return r};wrapped.__be48=true;showView=wrapped}
+  // V207 refreshes its ticket rows after the base race render.
+  // Follow changes without ever reusing another race's legacy budget.
+  const predPanel=q("#tab-pred");
+  if(predPanel&&typeof MutationObserver==="function"){
+    new MutationObserver(scheduleActionBar).observe(predPanel,{
+      subtree:true,childList:true,attributes:true,attributeFilter:["class","data-status"]
+    });
+  }
   if(rawRace())raceRefresh(rawRace());
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});else install();

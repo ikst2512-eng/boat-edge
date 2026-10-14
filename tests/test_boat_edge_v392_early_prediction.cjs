@@ -204,6 +204,39 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  await Promise.resolve();
  assert.match(navHost.innerHTML,/20261014-14-03/,'Slow prior race must not repaint selection');
  console.log('BOAT_EDGE_03_ASYNC_RACE_NAV_STALE_SELECTION_REGRESSION_PASS');
+ // 03: legacy sticky strip must not offer unverified 10,000-yen ticket CTA.
+ const v48=fs.readFileSync('assets/boat_edge_final_v48.js','utf8');
+ const aStart=v48.indexOf('function actionBar(d){');
+ const aEnd=v48.indexOf('let be48ActionQueued=false;',aStart);
+ assert.ok(aStart>=0&&aEnd>aStart,'V48 action bar source must exist');
+ const top={classList:{contains:()=>true},querySelector:()=>null};
+ const stubButton={onclick:null};
+ const actionNode={dataset:{},innerHTML:'',querySelector:()=>stubButton};
+ let raceKey='20261014-14-02';
+ const actionContext=vm.createContext({
+   q:selector=>selector==='#be48Action'?actionNode:
+     selector==='#raceTitle'?{textContent:'鳴門 2R'}:
+     selector==='#deadlineBig'?{textContent:'09:00'}:
+     selector==='#be207Top'?top:
+     selector==='#raceView'?{classList:{contains:()=>false}}:
+     selector==='#tab-pred'?{}:null,
+   rawRace:()=>({race_key:raceKey}),
+   document:{documentElement:{classList:{contains:()=>false}},createElement:()=>actionNode},
+   esc:s=>String(s)
+ });
+ vm.runInContext(v48.slice(aStart,aEnd),actionContext);
+ vm.runInContext("actionBar({race_key:'20261014-14-02'})",actionContext);
+ assert.equal(actionNode.dataset.be48TicketState,'stopped');
+ assert.match(actionNode.innerHTML,/買い目停止/);
+ assert.doesNotMatch(actionNode.innerHTML,/10,000|買い目を見る/);
+ top.querySelector=selector=>selector==='.be207-ticket'?{}:null;
+ vm.runInContext("actionBar({race_key:'20261014-14-02'})",actionContext);
+ assert.equal(actionNode.dataset.be48TicketState,'ready');
+ assert.match(actionNode.innerHTML,/買い目を確認/);
+ raceKey='20261014-14-03';
+ vm.runInContext("actionBar({race_key:'20261014-14-02'})",actionContext);
+ assert.equal(actionNode.dataset.be48TicketState,'stopped');
+ console.log('BOAT_EDGE_03_STOPPED_ACTION_BAR_FAIL_CLOSED_REGRESSION_PASS');
  console.log('V392_SITE_FINAL_SHA_AUDIT_HANDOFF_FIXTURE_PASS');
  console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
 })().catch(error=>{console.error(error);process.exitCode=1});
