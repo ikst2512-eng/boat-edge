@@ -964,6 +964,9 @@ body{background:
 .urgency-ribbon .u-sub{font-size:8px;color:#6d829c;margin-top:2px}
 .urgency-ribbon .u-time{font-size:18px;font-weight:950;color:#1769e0}
 .urgency-ribbon.warn{border-color:#f0cf91;background:linear-gradient(180deg,#fffdf8,#fff8eb)}
+.urgency-ribbon.closed{border-color:#aebdcc;background:#edf0f5}
+.urgency-ribbon.closed .u-dot{background:#64748b;box-shadow:none;animation:none}
+.urgency-ribbon.closed .u-time{color:#334155}
 .urgency-ribbon.warn .u-dot{background:#f0a52b;box-shadow:0 0 0 4px rgba(240,165,43,.12)}
 .urgency-ribbon.warn .u-time{color:#b86c00}
 .urgency-ribbon.hot{border-color:#f0a8a8;background:linear-gradient(180deg,#fff9f9,#fff1f1)}
@@ -2525,7 +2528,7 @@ function selectedMemoRows(d,pred){
 }
 function renderDirectMode(d,pred){
   const el=document.getElementById("directMode"); if(!el) return;
-  const sec=deadlineDeltaSeconds(d.meta?.deadline);
+  const sec=deadlineDeltaSeconds(d.meta?.deadline,d.meta?.date);
   const worlds=pred.worlds||[];
   const A=worlds.find(x=>x.key==="A")||worlds[0]||{};
   const B=worlds.find(x=>x.key==="B")||worlds[1]||{};
@@ -3073,17 +3076,20 @@ function renderBeforeChanges(d){
 }
 
 
-function parseDeadlineToday(deadline){
-  if(!deadline) return null;
-  const m=String(deadline).match(/^(\d{1,2}):(\d{2})/);
-  if(!m) return null;
-  const now=new Date();
-  const dt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),Number(m[1]),Number(m[2]),0,0);
-  return dt;
+/* 03: countdown is tied to the selected race's JST calendar date, not
+ * the viewer's timezone and never to the device's local current date. */
+function parseDeadlineToday(deadline,raceDate){
+  const m=String(deadline||"").match(/^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/);
+  if(!m)return null;
+  const day=raceDate||new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+  if(!/^20\d{2}-\d{2}-\d{2}$/.test(String(day)))return null;
+  const stamp=Date.parse(day+"T"+m[1].padStart(2,"0")+":"+m[2]+":00+09:00");
+  if(!Number.isFinite(stamp)||new Date(stamp+9*3600000).toISOString().slice(0,10)!==day)return null;
+  return new Date(stamp);
 }
-function deadlineDeltaSeconds(deadline){
-  const dt=parseDeadlineToday(deadline); if(!dt) return null;
-  return Math.floor((dt.getTime()-Date.now())/1000);
+function deadlineDeltaSeconds(deadline,raceDate){
+  const dt=parseDeadlineToday(deadline,raceDate);
+  return dt?Math.floor((dt.getTime()-Date.now())/1000):null;
 }
 function formatCountdown(sec){
   if(sec==null) return "－";
@@ -3099,16 +3105,40 @@ function freshnessLabel(ts){
   if(mins<=15) return {text:`${mins}分前`,cls:""};
   return {text:`${mins}分前`,cls:"warn"};
 }
+function be03DeadlinePresentation(seconds){
+  if(seconds===null)return {cls:"warn",main:"締切時刻未確認"};
+  if(seconds<0)return {cls:"closed",main:"締切済"};
+  if(seconds<=120)return {cls:"hot",main:"締切2分前"};
+  if(seconds<=300)return {cls:"warn",main:"締切5分前"};
+  return {cls:"",main:"締切まで余裕あり"};
+}
 function renderUrgency(d,pred){
-  const el=document.getElementById("urgencyRibbon"); if(!el) return;
-  const sec=deadlineDeltaSeconds(d.meta?.deadline);
-  let cls="",main="締切まで余裕あり";
-  if(sec!=null && sec<=120 && sec>=0){cls="hot";main="締切2分前"; }
-  else if(sec!=null && sec<=300 && sec>=0){cls="warn";main="締切5分前"; }
-  else if(sec!=null && sec<0){main="締切済";}
+  const el=document.getElementById("urgencyRibbon");if(!el)return;
+  const sec=deadlineDeltaSeconds(d.meta?.deadline,d.meta?.date);
+  const status=be03DeadlinePresentation(sec);
   const beforeReady=be162BeforeCoverage(d).ready;
-  el.className=`urgency-ribbon ${cls}`;
-  el.innerHTML=`<div class="u-left"><span class="u-dot"></span><div><div class="u-main">${main}</div><div class="u-sub">${beforeReady?"直前データ取得済み":"直前データ公開待ち"} / ${pred.mode==="formal"?"正式予想":"暫定予想"}</div></div></div><div class="u-time">${formatCountdown(sec)}</div>`;
+  el.className=`urgency-ribbon ${status.cls}`;
+  el.innerHTML=`<div class="u-left"><span class="u-dot"></span><div><div class="u-main">${status.main}</div><div class="u-sub">${beforeReady?"直前データ取得済み":"直前データ公開待ち"} / ${pred.mode==="formal"?"正式予想":"暫定予想"}</div></div></div><div class="u-time">${formatCountdown(sec)}</div>`;
+}
+/* Update the two visible counters without recomputing tickets or fetching
+ * any source. In particular, crossing midnight must mark the prior race shut. */
+function be03RefreshVisibleDeadline(){
+  const view=document.getElementById("raceView");
+  if(!view?.classList.contains("active")||view.classList.contains("be03-race-loading"))return;
+  const race=state.race,key=String(race?.race_key||"");
+  if(!/^20\d{6}-\d{2}-\d{2}$/.test(key))return;
+  const date=key.slice(0,4)+"-"+key.slice(4,6)+"-"+key.slice(6,8);
+  if(race?.meta?.date!==date)return;
+  const sec=deadlineDeltaSeconds(race.meta.deadline,date),status=be03DeadlinePresentation(sec);
+  const ribbon=document.getElementById("urgencyRibbon");
+  if(ribbon){
+    ribbon.className=`urgency-ribbon ${status.cls}`;
+    const label=ribbon.querySelector(".u-main"),counter=ribbon.querySelector(".u-time");
+    if(label)label.textContent=status.main;
+    if(counter)counter.textContent=formatCountdown(sec);
+  }
+  const direct=document.querySelector("#directMode .direct-count");
+  if(direct)direct.textContent=formatCountdown(sec);
 }
 function renderFreshness(d){
   const el=document.getElementById("freshnessStrip"); if(!el) return;
@@ -3170,6 +3200,7 @@ function renderRace(d,opts={}){
     document.querySelectorAll("#raceTabs [data-tab]").forEach((b,i)=>b.classList.toggle("on", i===0));
     document.querySelectorAll(".subview").forEach(v=>v.classList.toggle("active", v.id==="tab-pred"));
     showView("raceView");
+    be03RefreshVisibleDeadline();
   }
 }
 /* BOAT EDGE 03: last selected race wins. An older async response must
@@ -3449,11 +3480,18 @@ async function refreshAll(force=false){
   await be162RefreshVisibleRace();
 }
 let passiveRefreshTimer=null;
+let be03CountdownTimer=null;
 function startPassiveRefresh(){
   clearInterval(passiveRefreshTimer);
   passiveRefreshTimer=setInterval(async()=>{if(document.visibilityState==="visible") await refreshAll(true);},30000);
+  clearInterval(be03CountdownTimer);
+  be03CountdownTimer=setInterval(()=>{
+    if(document.visibilityState==="visible")be03RefreshVisibleDeadline();
+  },1000);
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible") refreshAll(true);});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){
+  be03RefreshVisibleDeadline();refreshAll(true);
+}});
 
 refreshAll();
 startPassiveRefresh();
