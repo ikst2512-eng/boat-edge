@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 1,
     "deadline": "10:39",
-    "updated_at": "2026-10-15T07:45:20+09:00",
+    "updated_at": "2026-10-15T08:11:19+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=13&rno=1",
-      "fetched_at": "2026-10-15T07:46:28+09:00",
-      "sha256": "5e2333012128225fe9cc1cbfa69127ca1315540023e5844eaa633a4f41c31417",
+      "fetched_at": "2026-10-15T08:13:40+09:00",
+      "sha256": "20ed6bef8d618ad58aa678c0bd27f74ab53c232c191dd938df8d260e5c24d5f4",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=13&rno=1",
+      "fetched_at": "2026-10-15T08:12:16+09:00",
+      "sha256": "c12edac75d4f57003e733a996553a773cf5d077bfdd502682464c91443a7fd70",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
@@ -298,7 +304,53 @@
       "raw_text": "6 5439 / B2 志賀 美優 愛知/愛知 21歳/48.5kg F0 L0 0.21 1.69 1.23 7.41 0.00 0.00 0.00 27 24.59 40.98 51 31.25 42.97 2 8 4"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 鈴木 章司 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 宮内 由紀英 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 丸尾 義孝 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 富澤 祐作 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 抹香 雄三 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 志賀 美優 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
