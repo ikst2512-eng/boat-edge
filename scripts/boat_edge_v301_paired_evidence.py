@@ -323,7 +323,7 @@ def cross_study_ranked_topk(left, right, left_mode, right_mode):
     for k in (3, 5, 10):
         gain = loss = left_hits = right_hits = 0
         for a, b in zip(left, right):
-            if a["race_key"] != b["race_key"] or a["winning"] != b["winning"]:
+            if a["key"] != b["key"] or a["winning"] != b["winning"]:
                 raise EvidenceError("CROSS_STUDY_TOPK_RACE_MISMATCH")
             x = a["winning"] in (a["baseline"] if left_mode == "hit10" else
                                   a["ranked_comparators"][left_mode])[:k]
