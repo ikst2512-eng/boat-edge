@@ -1,4 +1,4 @@
-"""V336 isolated scheduled research workflow guardrails (static, offline)."""
+"""V336 manual-only permission-blocked research guardrails (static, offline)."""
 from pathlib import Path
 import json
 import subprocess
@@ -10,10 +10,16 @@ WORKFLOW = ROOT / ".github/workflows/v336-site-research-live-freeze.yml"
 
 
 class V336WorkflowSafety(unittest.TestCase):
-    def test_schedule_and_artifact_retention(self):
+    def test_manual_only_and_artifact_retention(self):
         s = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", s)
-        self.assertIn("2,7,12,17,22,27,32,37,42,47,52,57", s)
+        # Periodic diagnostics cannot create authorized source captures or
+        # immutable predictions. Keep the manual research route without
+        # launching up to 288 redundant runners/day.
+        events = s.split("on:", 1)[1].split("permissions:", 1)[0]
+        self.assertNotIn("  schedule:", events)
+        self.assertNotIn("  workflow_run:", events)
+        self.assertNotIn("  push:", events)
         self.assertIn("python3 scripts/boat_edge_v334_live_batch_runner.py", s)
         self.assertIn("--root . --window-minutes 15 --max-races 12", s)
         self.assertNotIn("--capture --window-minutes", s)

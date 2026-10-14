@@ -1,9 +1,11 @@
 name: BOAT EDGE V336 - SITE Research Live Freeze (isolated)
 
+# V336 is an isolated permission-safe dry-run only: explicit validation
+# requires completed_count==0 and no provider capture. Re-running it every
+# five minutes produces no predeadline committed prediction and does not
+# improve the production V229/V235 freeze. Preserve manual diagnosis only.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
 
 permissions:
   contents: read
