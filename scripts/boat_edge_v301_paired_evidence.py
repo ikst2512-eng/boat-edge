@@ -298,6 +298,15 @@ def compare_10point_modes(left, right, left_mode, right_mode):
     """
     if len(left) != len(right):
         raise EvidenceError("PAIRED_MODE_RACE_COUNT_MISMATCH")
+    # This function is also directly callable by research code. Even when the
+    # caller skipped audit(), never zip distinct race IDs/outcomes as pairs.
+    for a, b in zip(left, right):
+        if (a["key"] != b["key"] or a["winning"] != b["winning"]
+                or a["day"] != b["day"]):
+            raise EvidenceError("PAIRED_MODE_RACE_OR_OUTCOME_MISMATCH")
+        if (a["modes"].get(left_mode) != 10
+                or b["modes"].get(right_mode) != 10):
+            raise EvidenceError("PAIRED_MODE_EXACT_TEN_TICKETS_REQUIRED")
     gain = sum((not a["outcomes"][left_mode]) and b["outcomes"][right_mode]
                for a, b in zip(left, right))
     loss = sum(a["outcomes"][left_mode] and (not b["outcomes"][right_mode])
