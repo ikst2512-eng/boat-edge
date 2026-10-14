@@ -329,11 +329,11 @@ class MobilePredictionBrowser(unittest.TestCase):
                       window.showToast=(message)=>{window.__toasts.push(message)};
                       window.fetch=(url)=>new Promise(resolve=>{
                         const file=String(url);
-                        const delay=file.startsWith('slow')?230:15;
+                        const delay=file.includes('20261014-14-01.json')?230:15;
                         setTimeout(()=>{
-                          if(file.startsWith('missing'))resolve({ok:false,status:404});
+                          if(file.includes('20261014-14-03.json'))resolve({ok:false,status:404});
                           else{
-                            const n=file.startsWith('slow')?1:2;
+                            const n=file.includes('20261014-14-01.json')?1:2;
                             resolve({ok:true,json:async()=>({
                               race_key:'20261014-14-0'+n,
                               meta:{date:'2026-10-14',venue_code:'14',race_no:n,
@@ -346,8 +346,8 @@ class MobilePredictionBrowser(unittest.TestCase):
                     }""")
                     page.add_script_tag(content=actual_loader)
                     result = page.evaluate("""async () => {
-                      const earlier=loadRace('slow.json','14');
-                      const newer=loadRace('fast.json','14');
+                      const earlier=loadRace('data/races/20261014-14-01.json','14');
+                      const newer=loadRace('data/races/20261014-14-02.json','14');
                       await Promise.all([earlier,newer]);
                       return {key:state.race.race_key,renders:window.__renders,
                         loading:document.getElementById('raceView').classList
@@ -360,7 +360,7 @@ class MobilePredictionBrowser(unittest.TestCase):
                     self.assertFalse(result["note"])
                     self.assertEqual(page.locator("#raceTitle").inner_text(), "2R")
                     failed = page.evaluate("""async () => {
-                      await loadRace('missing.json','14');
+                      await loadRace('data/races/20261014-14-03.json','14');
                       const note=document.getElementById('be03RaceLoadNotice');
                       return {key:state.race.race_key,role:note?.getAttribute('role'),
                         message:note?.textContent||'',
@@ -373,6 +373,17 @@ class MobilePredictionBrowser(unittest.TestCase):
                     self.assertIn("404", failed["message"])
                     self.assertFalse(failed["loading"])
                     self.assertIn("404", failed["toast"])
+                    self.assertEqual(page.locator("#raceTitle").inner_text(), "2R")
+                    # A well-formed but mismatched selected file must also fail closed.
+                    mismatch = page.evaluate("""async () => {
+                      await loadRace('data/races/20261014-14-04.json','14');
+                      const note=document.getElementById('be03RaceLoadNotice');
+                      return {key:state.race.race_key,role:note?.getAttribute('role'),
+                        message:note?.textContent||''};
+                    }""")
+                    self.assertEqual(mismatch["key"], "20261014-14-02")
+                    self.assertEqual(mismatch["role"], "alert")
+                    self.assertIn("一致しません", mismatch["message"])
                     self.assertEqual(page.locator("#raceTitle").inner_text(), "2R")
                     screenshot_dir = os.getenv("BOAT_EDGE_SCREENSHOT_DIR")
                     if screenshot_dir:
