@@ -211,12 +211,8 @@ jobs:
               meta=doc.get('meta') or {}
               if not isinstance(meta,dict):
                   continue
-              if str(meta.get('date') or ymd).replace('-','')!=ymd:
-                  continue
-              if str(meta.get('venue_code') or jcd).zfill(2)!=jcd:
-                  continue
-              if str(meta.get('race_no') or int(rno))!=str(int(rno)):
-                  continue
+              # File naming is the canonical site race identity; do not require
+              # optional card metadata to use a particular serialization.
               target=out/p.name
               old=read_json(target) if target.exists() else None
               if old and old.get('status')=='confirmed' and old.get('trifecta') and old.get('trifecta_payout_yen_per_100') is not None:
