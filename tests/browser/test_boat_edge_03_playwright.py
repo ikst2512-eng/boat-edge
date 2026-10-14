@@ -436,6 +436,75 @@ class MobilePredictionBrowser(unittest.TestCase):
                     context.close()
 
 
+    def test_midnight_catalog_guard_hides_prior_day_home_races(self):
+        """Real Chromium/WebKit, same production guard, result-unseen synthetic."""
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        a = html.index("function be03UsableTodayCatalog(data){")
+        b = html.index("async function refreshModel(){", a)
+        script = html[a:b]
+        assert "data-be03-catalog" in html
+        for kind, browser in self.browsers.items():
+            with self.subTest(browser=kind):
+                context = browser.new_context(
+                    viewport={"width": 390, "height": 844},
+                    device_scale_factor=2, is_mobile=True, has_touch=True,
+                    locale="ja-JP", timezone_id="Asia/Tokyo")
+                page = context.new_page()
+                try:
+                    page.set_content("""<!doctype html><meta name="viewport"
+                      content="width=device-width,initial-scale=1">
+                      <style>
+                      #homeView[data-be03-catalog="blocked"] #be108Hub,
+                      #homeView[data-be03-catalog="blocked"] #deadlineBoard,
+                      #homeView[data-be03-catalog="blocked"] #venues{display:none!important}
+                      </style>
+                      <main id="homeView" class="view active">
+                      <div id="be108Hub">legacy hub race choices</div>
+                      <div id="deadlineBoard">last-day race</div>
+                      <div id="venues">last-day venues</div></main>
+                      <div id="live">-</div>""")
+                    page.evaluate("""() => {
+                      const now=new Date(Date.now()+9*3600000);
+                      const yesterday=new Date(now.getTime()-86400000);
+                      const today=now.toISOString().slice(0,10);
+                      const prior=yesterday.toISOString().slice(0,10);
+                      const card=date=>({date,phase:'PRE_RESULT',
+                        results_seen:false,unlock:false,scoring:false,
+                        venues:[{jcd:'02',races:[{
+                          race_key:date.replaceAll('-','')+'-02-01',
+                          race_no:1,file:'data/races/'+date.replaceAll('-','')+'-02-01.json'
+                        }]}]});
+                      window.state={today:card(prior)};
+                      window.__card=card(prior);
+                      window.__errors=0;
+                      window.renderHome=()=>{};
+                      window.updateSystemBanner=()=>{};
+                      window.fetch=async()=>({ok:true,json:async()=>window.__card});
+                      window.__validCard=card(today);
+                    }""")
+                    page.add_script_tag(content=script)
+                    page.evaluate("async()=>await refreshToday()")
+                    note = page.locator("#be03TodayCatalogNotice")
+                    self.assertTrue(note.is_visible())
+                    self.assertEqual(note.get_attribute("role"), "alert")
+                    self.assertEqual(page.locator("#homeView").get_attribute(
+                        "data-be03-catalog"), "blocked")
+                    self.assertFalse(page.locator("#be108Hub").is_visible())
+                    self.assertFalse(page.locator("#deadlineBoard").is_visible())
+                    self.assertEqual(page.evaluate("state.today"), None)
+                    page.evaluate("""async()=>{
+                       window.__card=window.__validCard;
+                       await refreshToday();
+                    }""")
+                    self.assertEqual(note.count(), 0)
+                    self.assertTrue(page.locator("#be108Hub").is_visible())
+                    self.assertIsNone(page.locator("#homeView").get_attribute(
+                        "data-be03-catalog"))
+                    self.assertEqual(page.evaluate("state.today.date"),
+                                     page.evaluate("window.__validCard.date"))
+                finally:
+                    context.close()
+
     def test_early_card_real_renderer_mobile_status_and_race_switch(self):
         """Run the production V392 UI with synthetic, result-free data in both engines."""
         for kind, browser in self.browsers.items():

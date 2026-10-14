@@ -134,6 +134,13 @@ button{cursor:pointer}
 .be03-load-notice{margin:8px 0;padding:11px 13px;border:1px solid #adc9ee;border-radius:10px;background:#edf5ff;color:#173d6a;font-size:13px;line-height:1.6;font-weight:700}
 .be03-load-notice[data-error="true"]{border-color:#f2c2bf;background:#fff2f0;color:#94332b}
 #be03HomeRaceLoadNotice{margin:12px 14px;position:relative;z-index:2}
+/* 03: hide unverified previous-day selectors, including the separate hub. */
+#be03TodayCatalogNotice{margin:12px 14px;line-height:1.7;overflow-wrap:anywhere}
+#homeView[data-be03-catalog="blocked"] #be108Hub,
+#homeView[data-be03-catalog="blocked"] #deadlineBoard,
+#homeView[data-be03-catalog="blocked"] #spotlightRaces,
+#homeView[data-be03-catalog="blocked"] #venues,
+#homeView[data-be03-catalog="blocked"] #nextRaceBar{display:none!important}
 .be03-load-notice .be03-retry-button{display:block;margin:9px 0 0;padding:9px 14px;min-height:44px;max-width:100%;border:1px solid #b64c40;border-radius:9px;background:#fff;color:#862b22;font:inherit;font-size:13px;font-weight:850;cursor:pointer;touch-action:manipulation}
 .be03-load-notice .be03-retry-button:focus-visible{outline:3px solid #245cb0;outline-offset:2px}
 /* Stale cards are warnings, not successful blue loading receipts. */
@@ -3273,18 +3280,73 @@ async function refreshFormalStatus(){
   }catch(_){}
 }
 
+/* 03: midnight or a broken catalog must not present yesterday's race
+ * selectors as today's confirmed PRE_RESULT card. UI guard, not collection. */
+function be03UsableTodayCatalog(data){
+  const date=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+  if(data?.date!==date||data.phase!=="PRE_RESULT"||
+     data.results_seen!==false||data.unlock!==false||data.scoring!==false||
+     !Array.isArray(data.venues))return false;
+  const prefix=date.replaceAll("-","");
+  return data.venues.every(venue=>{
+    const code=String(venue?.jcd||"").padStart(2,"0");
+    if(!/^(0[1-9]|1[0-9]|2[0-4])$/.test(code)||!Array.isArray(venue?.races))return false;
+    return venue.races.every(r=>{
+      const key=String(r?.race_key||"");
+      return new RegExp("^"+prefix+"-"+code+"-(0[1-9]|1[0-2])$").test(key)&&
+        r.file==="data/races/"+key+".json"&&Number(r.race_no)===Number(key.slice(-2));
+    });
+  });
+}
+function be03TodayCatalogNotice(message,blocked=false){
+  const host=document.getElementById("homeView");
+  if(!host)return;
+  let notice=document.getElementById("be03TodayCatalogNotice");
+  if(!message){notice?.remove();delete host.dataset.be03Catalog;return;}
+  host.dataset.be03Catalog=blocked?"blocked":"stale";
+  if(!notice){
+    notice=document.createElement("div");
+    notice.id="be03TodayCatalogNotice";
+    notice.className="be03-load-notice";
+    host.insertBefore(notice,host.firstChild);
+  }
+  notice.dataset.error=String(blocked);
+  notice.setAttribute("role",blocked?"alert":"status");
+  notice.textContent=message;
+}
 async function refreshToday(){
-  const live = document.getElementById("live");
-  live.innerHTML = `<span class="live-dot"></span><span>更新中</span>`;
+  const live=document.getElementById("live");
+  if(live)live.innerHTML=`<span class="live-dot"></span><span>更新中</span>`;
+  let invalidNewCatalog=false;
   try{
-    const r = await fetch(`./data/today.json?t=${Date.now()}`, {cache:"no-store"});
-    if(!r.ok) throw new Error(r.status);
-    state.today = await r.json();
+    const r=await fetch(`./data/today.json?t=${Date.now()}`,{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const catalog=await r.json();
+    if(!be03UsableTodayCatalog(catalog)){
+      invalidNewCatalog=true;
+      throw new Error("TODAY_CATALOG_DAY_OR_RACE_MISMATCH");
+    }
+    state.today=catalog;
     renderHome();
     updateSystemBanner();
-    live.innerHTML = `<span class="live-dot"></span><span>定期収集</span>`;
-  }catch(e){
-    live.innerHTML = `<span class="live-dot" style="background:var(--warn)"></span><span>データ待ち</span>`;
+    be03TodayCatalogNotice("");
+    if(live)live.innerHTML=`<span class="live-dot"></span><span>定期収集</span>`;
+  }catch(_){
+    // Preserve only a PRE_RESULT card already verified for THIS JST date.
+    // Across midnight, discard the old selectors entirely.
+    const reusable=be03UsableTodayCatalog(state.today);
+    if(!reusable){
+      state.today=null;
+      renderHome();
+      updateSystemBanner();
+    }
+    const reason=invalidNewCatalog
+      ?"出走表の日付・レースID・結果未見条件が一致しません。"
+      :"最新の出走表を再取得できませんでした。";
+    be03TodayCatalogNotice(reusable?
+      reason+" 前回確認した本日の一覧を表示中。自動更新で再確認します。":
+      reason+" 本日のレース選択は確認できるまで停止しています。",!reusable);
+    if(live)live.innerHTML=`<span class="live-dot" style="background:var(--warn)"></span><span>当日データ待ち</span>`;
   }
 }
 async function refreshModel(){
