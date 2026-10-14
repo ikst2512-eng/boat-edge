@@ -269,7 +269,7 @@ def score_row(root,path,now):
     result=load(root/'data/site_results'/path.name)
     if not confirmed_result(result,key,deadline,now):return None,'site_official_result_unconfirmed'
     winning=result['trifecta'];hits={name:winning in tickets for name,tickets in lists.items()}
-    return {'schema':SCORE_SCHEMA,'scope':'POST_RESULT_SITE_ONLY_NOT_FORMAL_FRESH',
+    record={'schema':SCORE_SCHEMA,'scope':'POST_RESULT_SITE_ONLY_NOT_FORMAL_FRESH',
       'race_key':key,'official_result':winning,'official_result_source':result['source'],
       'result_sha256':sha(root/'data/site_results'/path.name),
       'frozen_candidate_sha256':sha(path),
@@ -277,7 +277,14 @@ def score_row(root,path,now):
       'candidate_first_git_committed_at':frozen_commit['at'].isoformat(),
       'outcomes':hits,'ticket_counts':{x:len(v) for x,v in lists.items()},
       'production_accuracy_improvement_proven':False,
-      'real_or_paper_purchase':False,'model_promotion_authorized':False},None
+      'real_or_paper_purchase':False,'model_promotion_authorized':False}
+    if policy==POLICY_V2:
+        # The first 3/5/10 predictions were ranked and frozen BEFORE results.
+        # Scoring those frozen prefixes uses no fitted/post-result re-ranking.
+        record['prefix_outcomes']={
+            mode:{str(k):winning in lists[mode][:k] for k in (3,5,10)}
+            for mode in ('hit10','headsecond10')}
+    return record,None
 
 
 def score(root,now):
@@ -302,6 +309,22 @@ def score(root,now):
     discord=gains+losses
     paired_p=(min(1.,2*sum(math.comb(discord,j) for j in range(min(gains,losses)+1))/(2**discord))
               if discord else None)
+    topk={}
+    for k in (3,5,10):
+        value=str(k)
+        pairs=[(x['prefix_outcomes']['hit10'][value],
+                x['prefix_outcomes']['headsecond10'][value])
+               for x in future]
+        plus=sum(c and not b for b,c in pairs)
+        minus=sum(b and not c for b,c in pairs)
+        n=plus+minus
+        p=(min(1.,2*sum(math.comb(n,j) for j in range(min(plus,minus)+1))/(2**n))
+           if n else None)
+        topk[value]={
+          'races':len(pairs),'current_hits':sum(b for b,c in pairs),
+          'candidate_hits':sum(c for b,c in pairs),
+          'gains':plus,'losses':minus,'paired_exact_p_two_sided':p,
+        }
     s={'schema':'BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1',
        'scope':'POST_RESULT_SAME_COHORT_COMPARISON_NOT_FORMAL_FRESH',
        'scored_total':len(settled),'new_scored_this_run':count,
@@ -312,7 +335,7 @@ def score(root,now):
          'races':len(future),'current_hit10_hits':sum(x['outcomes']['hit10'] for x in future),
          'candidate_hit10_hits':sum(x['outcomes']['headsecond10'] for x in future),
          'gains':gains,'losses':losses,'paired_exact_p_two_sided':paired_p,
-         'top3_top5_requires_separate_frozen_ranked_scoring':True,
+         'ranked_top3_top5_top10':topk,
          'promotion_authorized':False},
        'rejected_or_pending_this_run':excluded,'production_model_changed':False,
        'promotion_authorized':False,'real_or_paper_purchase':False,
