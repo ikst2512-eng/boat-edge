@@ -409,6 +409,25 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                       json.dumps({"key": key, "saved_evidence": saved_evidence["status"],
                                   "dom": dom, "browser_errors": browser_errors},
                                  ensure_ascii=False), flush=True)
+                # A race with NO immutable site-final receipt may safely stay
+                # at explicit source-wait. It is NOT a TopK UI PASS. Only
+                # classify that visible fail-closed state; unexpected blank
+                # screens, JS errors and missing verified FINAL remain failures.
+                waiting = str(dom.get("wait") or "")
+                if (saved_evidence.get("status") !=
+                        "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+                        and dom.get("selected") == key
+                        and dom.get("race_view") is True
+                        and not dom.get("top_ready")
+                        and not browser_errors
+                        and ("予想表示待ち" in waiting or "買い目停止" in waiting)):
+                    stopped_reasons.append({
+                        "race": key,
+                        "reason": "SOURCE_WAIT_NO_VERIFIED_SAVED_FINAL",
+                        "saved_evidence": saved_evidence["status"],
+                        "wait": waiting[:120]
+                    })
+                    continue
                 raise
             # A race switch can paint the source list asynchronously after
             # V207 becomes ready. Wait for either an explicit stop or ten
