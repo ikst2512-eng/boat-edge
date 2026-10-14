@@ -257,22 +257,6 @@ jobs:
               }
               historical_candidates+=1
 
-          # Count coverage using site cards only, without reading Formal Fresh.
-          coverage_total=0
-          coverage_complete=0
-          for card in races.glob('*.json'):
-              m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',card.name)
-              if not m or not (START<=m.group(1)<today):
-                  continue
-              card_doc=read_json(card)
-              card_meta=(card_doc or {}).get('meta') or {}
-              if not card_meta.get('deadline') and card_meta.get('event')=='データがありません。':
-                  continue
-              existing=read_json(out/card.name)
-              coverage_total+=1
-              if existing and (existing.get('status')=='trifecta_not_established' or (existing.get('status')=='confirmed' and existing.get('trifecta') and existing.get('trifecta_payout_yen_per_100') is not None)):
-                  coverage_complete+=1
-
           # During scheduled runs, limit historical repairs to avoid needless load.
           rows=list(candidates.values())
           if __import__('os').environ.get('GITHUB_EVENT_NAME')=='schedule':
@@ -381,6 +365,22 @@ jobs:
                       if was_confirmed and was_missing_payout and payout is not None:
                           payout_backfilled+=1
 
+          # Count coverage using site cards only, without reading Formal Fresh.
+          coverage_total=0
+          coverage_complete=0
+          for card in races.glob('*.json'):
+              m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',card.name)
+              if not m or not (START<=m.group(1)<today):
+                  continue
+              card_doc=read_json(card)
+              card_meta=(card_doc or {}).get('meta') or {}
+              if not card_meta.get('deadline') and card_meta.get('event')=='データがありません。':
+                  continue
+              existing=read_json(out/card.name)
+              coverage_total+=1
+              if existing and (existing.get('status')=='trifecta_not_established' or (existing.get('status')=='confirmed' and existing.get('trifecta') and existing.get('trifecta_payout_yen_per_100') is not None)):
+                  coverage_complete+=1
+
           idx={
               'schema_version':'boat-edge-site-results-index-v109',
               'updated_at':iso,
@@ -397,7 +397,7 @@ jobs:
               'historical_incomplete':coverage_total-coverage_complete,
               'errors':errors[:30],
               'payout_parser':'¥ / ￥ / 円',
-              'complete_rule':'confirmed + trifecta + payout non-null'
+              'complete_rule':'confirmed + trifecta + payout OR trifecta_not_established'
           }
           # The index timestamp is the last MATERIAL change, never a fake
           # freshness signal generated from polling an unchanged result.
