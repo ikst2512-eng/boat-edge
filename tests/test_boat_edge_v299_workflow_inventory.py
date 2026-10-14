@@ -82,5 +82,34 @@ class WorkflowInventoryTests(unittest.TestCase):
                 self.assertEqual(entry["triggers"], ["workflow_dispatch", "schedule"])
                 self.assertEqual(entry["crons"], ["29 20 * * *"])
 
+
+    def test_v216_one_git_receipt_for_pre_result_readiness_and_shadow(self):
+        """Avoid two Pages-invalidating commits while keeping settled phases separate."""
+        workflow = (ROOT / ".github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml").read_text(encoding="utf-8")
+        first = "      - name: Freeze PRE_RESULT diagnostics and shadow evidence in one Git commit"
+        next_step = "      - name: Continue approved-only daily 50000 yen paper selection BEFORE results"
+        self.assertIn(first, workflow)
+        self.assertIn(next_step, workflow)
+        early = workflow.split(first, 1)[1].split(next_step, 1)[0]
+        self.assertIn("python3 scripts/boat_edge_v215_readiness.py", early)
+        self.assertIn("python3 scripts/boat_edge_v214_shadow.py freeze", early)
+        self.assertLess(early.index("scripts/boat_edge_v215_readiness.py"),
+                        early.index("scripts/boat_edge_v214_shadow.py freeze"))
+        self.assertLess(early.index("scripts/boat_edge_v214_shadow.py freeze"),
+                        early.index("git commit -m"))
+        self.assertEqual(early.count("git commit -m"), 1)
+        self.assertEqual(early.count("git push origin HEAD:main"), 1)
+        self.assertIn("V216_FORMAL_RESULT_UNSEEN_GUARD_BLOCKED", early)
+        self.assertNotIn("scripts/boat_edge_v214_shadow.py settle", early)
+        self.assertNotIn("scripts/boat_edge_v211_paper_sim.py settle", early)
+        self.assertNotIn("data/site_results/", early)
+        late = workflow.split(next_step, 1)[1]
+        self.assertIn("scripts/boat_edge_v211_paper_sim.py select", late)
+        self.assertIn("scripts/boat_edge_v214_shadow.py settle", late)
+        self.assertIn("scripts/boat_edge_v211_paper_sim.py settle", late)
+        self.assertEqual(workflow.count("git commit -m"), 4)
+        self.assertIn("cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'", workflow)
+
+
 if __name__ == "__main__":
     unittest.main()
