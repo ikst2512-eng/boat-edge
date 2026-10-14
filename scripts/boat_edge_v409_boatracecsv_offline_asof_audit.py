@@ -103,6 +103,8 @@ def audit(day, files):
                 continue
             try:
                 capture = parse_jst(row["取得日時"])
+                if not re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]", row["締切時刻"]):
+                    raise ValueError("INVALID_DEADLINE_CLOCK_FORMAT")
                 deadline = datetime.combine(day, time.fromisoformat(row["締切時刻"]), JST)
             except ValueError:
                 counters[source]["invalid_timestamp"] += 1
