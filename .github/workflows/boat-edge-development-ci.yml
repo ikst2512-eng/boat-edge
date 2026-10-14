@@ -33,6 +33,10 @@ jobs:
           node-version: '22'
       - name: Install parser dependencies
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
+      - name: Verify obsolete V226 recovery cannot interrupt active SITE collectors
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_01_v226_recovery_owner.py' -v
       - name: Validate tracked source pins
         run: python3 scripts/verify_workflow_source_pins.py
       - name: Check V229 live browser trigger needs real Git-first-add and SHA
