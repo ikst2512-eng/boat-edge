@@ -236,6 +236,8 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
     # catalog must not hide a verified live source; browser navigations remain
     # capped at five to avoid delaying predeadline attestations.
     for _, venue, race in choices[:36]:
+        if source_ready_checked >= 5:
+            break
         path = race["file"]
         key = race["race_key"]
         # Additional source audit: only this explicitly allowlisted PRE_RESULT
@@ -379,8 +381,6 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             }
         finally:
             live.close()
-        if source_ready_checked >= 5:
-            break
     return {
         "status": "NOT_CERTIFIED_ALL_ELIGIBLE_SOURCE_STOPPED",
         "eligible_count": len(choices),
