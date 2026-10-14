@@ -261,7 +261,7 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  const showContext=vm.createContext({
    activeKey:KEY,currentPreview:null,shown:10,
    ensure:()=>box,finalFor:()=>false,
-   $:(sel,root)=>root?root.querySelector(sel):null,
+   $:(sel,root)=>root?root.querySelector(sel):sel==='#be392EarlyPreview'?box:null,
    text:(el,value)=>{if(el)el.textContent=String(value??'');},
    document:{createElement:makeNode,querySelector:()=>box},
    Date
