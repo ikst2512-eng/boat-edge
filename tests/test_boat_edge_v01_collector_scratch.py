@@ -102,6 +102,16 @@ class SameRunScratch(unittest.TestCase):
         self.assertEqual(proof["official_raw_flags"], ["racelist"])
         self.assertEqual(run(self.root, NOW)["blocked"], 1)
 
+    def test_cp932_official_html_withdrawal_is_never_missed(self):
+        raw = CARDS + " 2号艇欠場".encode("cp932")
+        (self.raw / "12_06_racelist.html").write_bytes(raw)
+        self.race["source_audit"]["race_card"]["sha256"] = hashlib.sha256(raw).hexdigest()
+        self.save()
+        proof, reason = prove(self.root, KEY, NOW)
+        self.assertEqual(reason, "blocked")
+        self.assertIs(proof["blocked"], True)
+        self.assertEqual(proof["official_raw_flags"], ["racelist"])
+
     def test_stale_source_and_late_clock_refuse_backfill(self):
         proof, reason = prove(self.root, KEY, NOW + timedelta(minutes=10))
         self.assertIsNone(proof)
