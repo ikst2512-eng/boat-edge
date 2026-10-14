@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 8,
     "deadline": "11:49",
-    "updated_at": "2026-10-15T07:14:16+09:00",
+    "updated_at": "2026-10-15T07:45:20+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=14&rno=8",
-      "fetched_at": "2026-10-15T07:15:59+09:00",
-      "sha256": "e9b1ff624e32f96ec2abe977804f6df006a88cbc932fbbb77693c680697f02a1",
+      "fetched_at": "2026-10-15T07:47:28+09:00",
+      "sha256": "2b4b7df3aca8da2db82027ceefa3790fc64b6cca5cf5346a6fdab8768f4e6eb5",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -39,7 +63,7 @@
       "name": "荒木 颯斗",
       "class": "A2",
       "age": 24,
-      "weight_kg": 52.1,
+      "weight_kg": 52.4,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 0,
@@ -73,7 +97,7 @@
         "12"
       ],
       "early_race": 2,
-      "raw_text": "1 5252 / A2 荒木 颯斗 愛知/愛知 24歳/52.1kg F0 L0 0.14 6.06 41.53 60.17 5.30 37.04 48.15 53 34.83 47.19 67 35.29 50.98 11 3 10 5 12 2R"
+      "raw_text": "1 5252 / A2 荒木 颯斗 愛知/愛知 24歳/52.4kg F0 L0 0.14 6.06 41.53 60.17 5.30 37.04 48.15 53 34.83 47.19 67 35.29 50.98 11 3 10 5 12 2R"
     },
     {
       "lane": 2,
@@ -123,7 +147,7 @@
       "name": "常盤 海心",
       "class": "B1",
       "age": 25,
-      "weight_kg": 54.4,
+      "weight_kg": 54.0,
       "branch": "徳島",
       "birthplace": "徳島",
       "F": 0,
@@ -157,7 +181,7 @@
         "11"
       ],
       "early_race": 3,
-      "raw_text": "3 5143 / B1 常盤 海心 徳島/徳島 25歳/54.4kg F0 L0 0.19 4.26 19.19 41.41 4.01 16.83 40.59 71 32.99 53.61 57 22.11 36.84 1 7 3 6 11 3R"
+      "raw_text": "3 5143 / B1 常盤 海心 徳島/徳島 25歳/54.0kg F0 L0 0.19 4.26 19.19 41.41 4.01 16.83 40.59 71 32.99 53.61 57 22.11 36.84 1 7 3 6 11 3R"
     },
     {
       "lane": 4,
@@ -289,5 +313,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

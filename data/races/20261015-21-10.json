@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 10,
     "deadline": "13:05",
-    "updated_at": "2026-10-15T07:14:16+09:00",
+    "updated_at": "2026-10-15T07:45:20+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=21&rno=10",
-      "fetched_at": "2026-10-15T07:15:31+09:00",
-      "sha256": "38e7d4c6d8824cf090fded8063f5fafff323fd8063fedf4e49f6abb8fc8c1213",
+      "fetched_at": "2026-10-15T07:48:38+09:00",
+      "sha256": "260d48139e2f173526d18822553009c7066eab663d878a32add04c637b85ec2e",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -230,7 +254,7 @@
       "name": "薗頭 心",
       "class": "B2",
       "age": 21,
-      "weight_kg": 47.8,
+      "weight_kg": 47.5,
       "branch": "兵庫",
       "birthplace": "兵庫",
       "F": 0,
@@ -260,12 +284,26 @@
         "7"
       ],
       "early_race": 3,
-      "raw_text": "6 5440 / B2 薗頭 心 兵庫/兵庫 21歳/47.8kg F0 L0 0.19 1.55 1.52 3.03 1.56 0.00 11.11 51 29.25 49.06 133 33.03 48.62 7 3R"
+      "raw_text": "6 5440 / B2 薗頭 心 兵庫/兵庫 21歳/47.5kg F0 L0 0.19 1.55 1.52 3.03 1.56 0.00 11.11 51 29.25 49.06 133 33.03 48.62 7 3R"
     }
   ],
   "beforeinfo": {},
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
