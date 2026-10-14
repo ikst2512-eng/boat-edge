@@ -151,3 +151,25 @@ html:not(.be208-details-on) #raceView #be206Quick:has(.be206-switch [data-be206-
  display:block!important;margin:7px 0;padding:8px 9px;border-left:3px solid #b9cbde;
  background:#f6f9fc;border-radius:4px;font-size:11px;line-height:1.7;overflow-wrap:anywhere
 }
+
+/* 03 mobile race-first: the global monitoring receipt used to consume much
+   of the first iPhone screen before the selected race and its six-boat view.
+   Keep the actual site warning and verification link visible. Only condense
+   the unrelated upcoming-race audit details while viewing a race. */
+@media(max-width:760px){
+ body.be48-race-active #be220Ops{
+  margin:0 0 6px;padding:7px 10px;border-radius:6px;
+  border-color:#d8e5ef;font-size:11px
+ }
+ body.be48-race-active #be220Ops #be220Info,
+ body.be48-race-active #be220Ops #be259OpsProof{
+  display:none!important
+ }
+ body.be48-race-active #be220Ops .be220-line{gap:6px}
+ body.be48-race-active #be220Ops #be220Status{
+  white-space:normal;overflow-wrap:anywhere
+ }
+ body.be48-race-active #be220Ops .be220-line a{
+  min-height:44px;display:inline-flex;align-items:center
+ }
+}
