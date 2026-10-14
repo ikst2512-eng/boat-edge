@@ -12,7 +12,7 @@ from boat_edge_v361_source_readiness import scan_preflight
 from boat_edge_v334_live_batch_runner import run
 from test_boat_edge_v236_v334_live_batch import NOW, prepare, fake_fetch
 
-KEY = "20261013-22-12"
+KEY = "20261015-22-12"
 
 
 def inspect(root):
@@ -67,7 +67,7 @@ class V361SourceReadiness(unittest.TestCase):
             prepare(root)
             def change(r):
                 for name in ("race_card", "beforeinfo"):
-                    r["source_audit"][name]["fetched_at"] = "2026-10-13T16:00:00+09:00"
+                    r["source_audit"][name]["fetched_at"] = "2026-10-15T16:00:00+09:00"
             edit(root, change)
             out = inspect(root)
             self.assertIn("SOURCE_SCAN_STALE:race_card", out["issues"])
