@@ -1,0 +1,126 @@
+name: BOAT EDGE 01 - Controlled GitHub Pages Publish
+
+# Only the publishing cadence changes. Main continues receiving every
+# pre-deadline immutable SITE prediction and independent research commit.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages-controlled-publish.yml'
+      - 'scripts/site_pages_stage.py'
+      - 'tests/test_site_pages_stage.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+
+# A pending Pages publish is not disposable; never cancel an in-flight
+# deployment to chase high-frequency main data commits.
+concurrency:
+  group: boat-edge-01-controlled-pages-release
+  cancel-in-progress: false
+
+jobs:
+  stage-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Synthetic site-asset and no-formal-result inclusion checks
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_site_pages_stage.py' -v
+          python3 -m py_compile scripts/site_pages_stage.py
+      - name: Test actual site artifact composition without deploying
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site
+          cmp index.html _pages_site/index.html
+          cmp data/today.json _pages_site/data/today.json
+          cmp data/formal_status.json _pages_site/data/formal_status.json
+          test ! -e _pages_site/data/raw
+          test ! -e _pages_site/data/formal_predictions
+          test ! -e _pages_site/scripts
+          test ! -e _pages_site/.github
+          echo CONTROLLED_PAGES_ACTUAL_MAIN_SITE_STAGE_PASS
+
+  verify-source:
+    needs: stage-regression
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      enabled: ${{ steps.mode.outputs.enabled }}
+    steps:
+      - name: Do not deploy until Pages source is explicitly GitHub Actions
+        id: mode
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mode="$(gh api "repos/$GH_REPO/pages" --jq '.build_type')"
+          case "$mode" in
+            legacy)
+              echo enabled=false >> "$GITHUB_OUTPUT"
+              echo 'PAGES_LEGACY_SOURCE_UNCHANGED_NO_CUSTOM_DEPLOY'
+              ;;
+            workflow)
+              echo enabled=true >> "$GITHUB_OUTPUT"
+              echo 'PAGES_ACTIONS_SOURCE_CONFIRMED'
+              ;;
+            *)
+              echo "UNRECOGNIZED_PAGES_BUILD_MODE_FAIL_CLOSED"
+              exit 1
+              ;;
+          esac
+
+  build:
+    needs: verify-source
+    if: needs.verify-source.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Stage browser and SITE data from one immutable main checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site
+          echo "Pages source main SHA: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the static site artifact for direct Pages deployment
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _pages_site
+
+  deploy:
+    needs: build
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Publish exact staged Pages artifact
+        id: publish
+        uses: actions/deploy-pages@v4
