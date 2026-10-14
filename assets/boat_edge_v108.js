@@ -15,7 +15,8 @@ const LABELS={
   hit:{name:"的中重視",desc:"展開確率の上位を広めに残して取りこぼしを減らす",icon:"◎"},
   balance:{name:"バランス",desc:"上位7点＋別頭/別展開3点を基本に10点。オッズでは順位を変えない",icon:"◐"},
   hole:{name:"波乱展開",desc:"別頭を先に、頭の分散で12・15・18点。オッズでは増減しない",icon:"◆"},
-  narrow:{name:"激絞り3点",desc:"展開確率の上位3点だけに絞る",icon:"⚡"}
+  narrow:{name:"激絞り3点",desc:"展開確率の上位3点だけに絞る",icon:"⚡"},
+  tail:{name:"暫定採用・3着補完10点",desc:"同一点数の未見89Rで37的中（旧34）。上位7点を固定し3着候補を補完。改善保証なし",icon:"◎"}
 };
 
 const KDATE="boatEdgeV108Date";
@@ -773,6 +774,25 @@ function be132BalanceRows(all,waveAll=all){
   }
   return out;
 }
+/* Same pure first/second-preserving V254 policy used by the prospective
+ * Python snapshot producer. No results, payouts or odd-derived new multiplier.
+ * Source ranking may already reflect the legacy HOLE mode's construction. */
+function be254SelectedThirdTail10(hit,hole){
+  if(!Array.isArray(hit)||!Array.isArray(hole)||hit.length!==10||hole.length<10)return null;
+  const key=x=>x?.combo;
+  const complete=a=>a.every(x=>typeof key(x)==='string'&&
+    /^[1-6]-[1-6]-[1-6]$/.test(key(x))&&new Set(key(x).split('-')).size===3);
+  const h=hit.map(key),w=hole.map(key);
+  if(!complete(hit)||!complete(hole)||new Set(h).size!==10||new Set(w).size!==w.length)return null;
+  const base=hit.slice(0,7),prefixes=new Set(base.map(x=>x.combo.slice(0,3)));
+  const outside=hole.filter(x=>!h.includes(x.combo)&&prefixes.has(x.combo.slice(0,3)));
+  const result=[...base],seen=new Set(result.map(x=>x.combo));
+  for(const x of [...outside,...hit.slice(7)]){
+    if(!seen.has(x.combo)){seen.add(x.combo);result.push(x);}
+    if(result.length===10)break;
+  }
+  return result.length===10?result:null;
+}
 function be122ModesFromTickets(all,odds,waveAll=all){
   const od=x=>{const v=n(odds?.[x.combo]);return Number.isFinite(v)&&v>0?v:null};
   const modes={
@@ -969,8 +989,13 @@ const be181TicketValid=t=>{
   return /^[1-6]-[1-6]-[1-6]$/.test(c)&&new Set(c.split('-')).size===3;
 };
 function be181ValidModeRows(m){
-  return !!m&&typeof m==='object'&&Object.values(m).length===4&&
-    ['hit','balance','hole','narrow'].every(k=>Array.isArray(m[k]?.tickets)&&m[k].tickets.length>0&&
+  if(!m||typeof m!=='object')return false;
+  const names=Object.keys(m);
+  if(names.length!==4&&names.length!==5)return false;
+  if(names.length===5&&(!names.includes('tail')||!Array.isArray(m.tail?.tickets)||
+     m.tail.tickets.length!==10||!m.tail.tickets.every(be181TicketValid)||
+     new Set(m.tail.tickets.map(x=>x.combo)).size!==10))return false;
+  return ['hit','balance','hole','narrow'].every(k=>Array.isArray(m[k]?.tickets)&&m[k].tickets.length>0&&
       m[k].tickets.every(be181TicketValid));
 }
 function be181First(key,modes,mins,resultConfirmed){
@@ -1125,6 +1150,12 @@ async function renderPredictionModes(race,pred){
     if(!current())return;
   }
   const modes=be122ModesFromTickets(adjusted.tickets,odds,waveAdjusted.tickets);
+  // Prospective site-default adoption, no historical recalculation.
+  // A saved FINAL without the tail mode always remains on its original modes.
+  if(pred.mode!=='formal'&&key.slice(0,8)>='20261014'){
+    const tail=be254SelectedThirdTail10(modes.hit,modes.hole);
+    if(tail)modes.tail=tail;
+  }
   const mins=raceMinutesToDeadline(race);
   const resultConfirmed=result?.status==="confirmed";
   const serverSummary=resultConfirmed?(serverHistoryByKey?.[key]||null):null;
@@ -1148,8 +1179,19 @@ async function renderPredictionModes(race,pred){
   const win=settled?.winning_combo||null;
   const officialResult=resultConfirmed?normalizeCombo(result?.trifecta||result?.finish_order):null;
 
-  let mode=localStorage.getItem(ACTIVE_MODE)||"hit";
-  if(!LABELS[mode])mode="hit";
+  const selectedTail=pred.mode!=='formal'&&
+    effectiveSnap?.modes?.tail?.tickets?.length===10&&
+    effectiveSnap?.default_display_mode==='tail'&&
+    key.slice(0,8)>='20261014';
+  const perRaceModeKey='boatEdgeProvisionalSiteMode:'+key;
+  const localChoice=readLocal(perRaceModeKey,null);
+  // Newly frozen V254 SITE reference defaults to the best observed 10-point
+  // candidate; prior saved races and independently approved Formal CURRENT
+  // keep their original mode without re-ranking.
+  let mode=localChoice||(selectedTail?'tail':(localStorage.getItem(ACTIVE_MODE)||"hit"));
+  if(!LABELS[mode]||(mode==='tail'&&!selectedTail))mode='hit';
+  const availableModeLabels=selectedTail?LABELS:
+    Object.fromEntries(Object.entries(LABELS).filter(([k])=>k!=='tail'));
 
   be181InstallStyle();
   const choice=be181ShowChoice(key,mins,resultConfirmed,effectiveSnap,firstShown,modes,mode,Boolean(verifiedPreDeadline));
@@ -1208,9 +1250,12 @@ async function renderPredictionModes(race,pred){
   if(!panel){panel=document.createElement("section");panel.id="be108PredictionModes";panel.className="be108-panel";stack.prepend(panel)}
 
   if(verifiedPreDeadline)window.BoatEdgeV392?.hide?.();
-  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開順位の参考表示（確率は未校正）</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(LABELS).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部スコア（未校正）</small><strong>${conf}<span style="font-size:.65em;font-weight:700"> / 100</span></strong></div></div><div class="be255-score-note">内部スコアはランク・順位による未校正指標。買い目の「相対配分%」は表示された買い目内の参考重みであり、120通りの確率分布・1着確率・3連単的中確率ではありません。締切前の保存買い目は結果後に変更しません。</div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
+  panel.innerHTML=`${sourceBar}${be166OddsStatus(key,resultConfirmed)}${resultBar}<div class="be108-head"><div><h3>予想スタイル</h3><p>展開順位の参考表示（確率は未校正）</p></div><button id="be108HistoryBtn" type="button">過去の🎯履歴</button></div><div class="be108-snapshot-status">${snapStatus}</div>${be181Banner(choice,mode,key,mins,effectiveSnap)}<div class="be108-mode-tabs">${Object.entries(availableModeLabels).map(([k,v])=>`<button type="button" data-be108-mode="${k}" class="${k===mode?"on":""}">${settled?.mode_hits?.[k]?"🎯 ":""}${v.name}</button>`).join("")}</div><div class="be108-mode-card ${modeHit?"hit":""}"><div class="be108-mode-top"><div><b>${modeHit?"🎯 ":""}${LABELS[mode].icon} ${LABELS[mode].name}</b><span>${LABELS[mode].desc}</span></div><div><small>内部スコア（未校正）</small><strong>${conf}<span style="font-size:.65em;font-weight:700"> / 100</span></strong></div></div><div class="be255-score-note">内部スコアはランク・順位による未校正指標。買い目の「相対配分%」は表示された買い目内の参考重みであり、120通りの確率分布・1着確率・3連単的中確率ではありません。締切前の保存買い目は結果後に変更しません。</div><div class="be140-budget-notice">${resultConfirmed?"結果確定後：当時の配分が締切前に保存されている場合のみ参考払戻を表示。購入履歴ではありません。":"参考配分：1万円／レース（100円単位）。オッズからの想定払戻は概算で、購入履歴ではありません。"}</div><div class="be108-ticket-list">${renderTicketRows(rows,win,resultConfirmed,result?.trifecta_payout_yen_per_100??null)}</div></div><div id="be108History" class="be108-history" hidden>${historyHtml()}</div>`;
 
-  $$("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{if(!current())return;localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);renderPredictionModes(race,pred)});
+  $("[data-be108-mode]",panel).forEach(b=>b.onclick=()=>{if(!current())return;
+    writeLocal(perRaceModeKey,b.dataset.be108Mode);
+    localStorage.setItem(ACTIVE_MODE,b.dataset.be108Mode);
+    renderPredictionModes(race,pred)});
   $$("[data-be181-choice]",panel).forEach(b=>b.onclick=()=>{
     if(!current()||resultConfirmed||(mins!==null&&mins<0))return;
     writeLocal(BE181_VIEW_KEY+key,b.dataset.be181Choice);
