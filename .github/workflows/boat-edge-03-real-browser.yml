@@ -15,6 +15,12 @@ on:
       - 'index.html'
       - 'assets/**'
   workflow_dispatch:
+  # Integration-owned source signal: trigger existing read-only browser tests
+  # only if a V229 commit has truly published a still-live SHA-audited FINAL.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
+    types: [completed]
   # PRE_RESULT live TopK is not testable at the overnight UI push: revisit
   # public Pages while actual racing is underway (UTC -> JST +9).
   # This replaces, rather than adds to, the daily browser checks. GitHub cron
@@ -31,11 +37,44 @@ permissions:
   contents: read
 
 concurrency:
-  group: boat-edge-03-real-browser-${{ github.ref }}
+  group: boat-edge-03-real-browser-${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Cheap evidence and Git first-add check; zero-shot runs do not download
+  # browsers or report a false LIVE TopK PASS.
+  v229-source-first-add:
+    runs-on: ubuntu-latest
+    outputs:
+      live_candidate: ${{ steps.probe.outputs.live_candidate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require actual source-SHA and first Git commit before the deadline
+        id: probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" != 'workflow_run' ]]; then
+            echo 'live_candidate=true' >> "$GITHUB_OUTPUT"
+            echo V01_NORMAL_BROWSER_CHECK_UNCHANGED
+            exit 0
+          fi
+          if [[ "${{ github.event.workflow_run.conclusion }}" != 'success' ||
+                "${{ github.event.workflow_run.head_branch }}" != 'main' ||
+                "${{ github.event.workflow_run.head_repository.full_name }}" != "${{ github.repository }}" ]]; then
+            echo 'live_candidate=false' >> "$GITHUB_OUTPUT"
+            echo V01_UNTRUSTED_OR_FAILED_TRIGGER_NOT_CERTIFIED
+            exit 0
+          fi
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v01_live_browser_gate.py
+
   selected-race-to-prediction:
+    needs: v229-source-first-add
+    if: needs.v229-source-first-add.outputs.live_candidate == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
