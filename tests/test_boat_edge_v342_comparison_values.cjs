@@ -53,3 +53,34 @@ test('unexpected table shapes fail before any cell writes so board can rerender 
  assert.equal(api.updateComparisonValues(f.table,r,'bad','base'),false);
  assert.equal(api.updateComparisonValues(f.table,r,'rows','bad'),false);
 });
+
+test('bad source types never masquerade as measured zero in six-lane basic metrics',()=>{
+ const api=boot(),r=rows(),f=fixture(18);
+ r[0].national.win_rate=false;    // previously 0.00
+ r[1].national.win_rate=[];       // previously 0.00
+ r[2].national.win_rate={};       // malformed composite
+ r[3].national.win_rate='';       // empty source
+ r[4].national.win_rate='0';      // measured numeric zero stays measurable
+ r[5].national.win_rate=0;        // raw measured numeric zero
+ assert.equal(api.updateComparisonValues(f.table,r,'lanes','base'),true);
+ assert.deepEqual(f.cells.slice(0,6).map(x=>x.textContent),
+  ['－','－','－','－','0.00','0.00']);
+ assert(f.cells.slice(0,6).every(x=>!x.className.includes('best')),
+  'missing lanes cannot establish a six-of-six best boat');
+ const rr=rows();rr[0].motor.quinella_rate=true;rr[1].motor.quinella_rate=[];
+ assert.equal(api.updateComparisonValues(f.table,rr,'lanes','base'),true);
+ assert.equal(f.cells[12].textContent,'－');
+ assert.equal(f.cells[13].textContent,'－');
+ assert.equal(api.best(rr,'motor.quinella_rate',3,false),null);
+});
+test('exhibition ST preserves measured zero and F while rejecting malformed booleans',()=>{
+ const api=boot(),r=rows(),f=fixture(24);
+ r[0].st=false;r[1].st=[];r[2].st=0;r[3].st=-0.02;r[3].f=true;
+ api.updateComparisonValues(f.table,r,'lanes','exhibit');
+ assert.equal(f.cells[6].textContent,'－');
+ assert.equal(f.cells[7].textContent,'－');
+ assert.equal(f.cells[8].textContent,'0.00');
+ assert.equal(f.cells[9].textContent,'F0.02');
+ assert(f.cells[6].className.includes('be206-val'));
+ assert(f.cells.slice(6,12).every(x=>!x.className.includes('best')));
+});

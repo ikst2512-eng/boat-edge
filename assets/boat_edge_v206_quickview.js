@@ -5,7 +5,13 @@ if(window.BoatEdgeV206)return;
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const keyOK=k=>/^20\d{6}-\d{2}-\d{2}$/.test(String(k||''));
-const nr=x=>x===null||x===undefined||String(x).trim()===''?null:Number.isFinite(Number(x))?Number(x):null;
+// 03: booleans and composite fields are not numeric measurements; genuine zero is.
+const nr=x=>{
+ if(x===null||x===undefined||typeof x==='boolean')return null;
+ if(typeof x==='string'&&!x.trim())return null;
+ if(typeof x!=='number'&&typeof x!=='string')return null;
+ const n=Number(x);return Number.isFinite(n)?n:null;
+};
 const val=(x,d=2)=>nr(x)===null?'－':Number(x).toFixed(d);
 const esc=x=>String(x??'－').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 const setText=(el,value)=>{if(el&&el.textContent!==value)el.textContent=value;};
@@ -27,8 +33,19 @@ const source=(r,k)=>{
 };
 /* Counts represent present numeric fields only, not source verification or approval. */
 const numericPresent=x=>typeof x==='number'&&Number.isFinite(x)&&x>0;
-const sixBoatCount=(items,valid)=>Array.isArray(items)&&items.length<=6?
- items.filter(valid).length:0;
+const sixBoatCount=(items,valid)=>{
+ if(!Array.isArray(items)||items.length>6)return 0;
+ const seen=new Set(),known=new Set(),duplicate=new Set();
+ for(const item of items){
+  const lane=item?.lane;
+  if(!Number.isInteger(lane)||lane<1||lane>6)continue;
+  if(seen.has(lane))duplicate.add(lane);
+  seen.add(lane);
+  if(valid(item))known.add(lane);
+ }
+ for(const lane of duplicate)known.delete(lane);
+ return known.size;
+};
 const completeness=r=>{
  const before=r?.beforeinfo||{},orig=r?.original_exhibition||{};
  const official=sixBoatCount(before.racers,x=>numericPresent(x?.exhibition_time));
@@ -336,7 +353,7 @@ function init(){if(started)return;started=true;
  window.addEventListener('resize',schedule,{passive:true});
  setInterval(()=>{if(!document.hidden)sync();},5000);sync();
 }
-window.BoatEdgeV206={sync,format,matrix,best,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,updateComparisonValues,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
+window.BoatEdgeV206={sync,format,matrix,best,completeness,headTickets,canRevealHead,restoreHeadFocus,comparisonScrollState,updateComparisonScroll,scrollComparison,updateComparisonValues,version:'V299-UI-ONLY',displayRevision:'V342',displayOnly:true};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
