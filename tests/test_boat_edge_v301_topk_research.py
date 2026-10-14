@@ -16,6 +16,16 @@ class BaselineTopKTests(unittest.TestCase):
         self.assertEqual([r[f"top{k}"]["hits"] for k in (3, 5, 10)], [0, 1, 1])
         self.assertEqual(r["top5"]["hit_rate"], 0.5)
 
+    def test_topk_monotonic_on_ranked_frozen_tickets(self):
+        rows = [
+            {"winning": "1-2-3", "baseline": ["1-2-3", "1-3-2", "2-1-3"]},
+            {"winning": "1-3-2", "baseline": ["1-2-3", "1-3-2", "2-1-3"]},
+            {"winning": "2-1-3", "baseline": ["1-2-3", "1-3-2", "2-1-3"]},
+        ]
+        r = baseline_topk(rows)
+        self.assertEqual([r[f"top{k}"]["hits"] for k in (3, 5, 10)], [3, 3, 3])
+        self.assertTrue(r["top3"]["hits"] <= r["top5"]["hits"] <= r["top10"]["hits"])
+
     def test_empty_sample_is_not_perfect_accuracy(self):
         r = baseline_topk([])
         for k in (3, 5, 10):
