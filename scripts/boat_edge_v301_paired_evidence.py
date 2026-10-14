@@ -238,7 +238,9 @@ def checked_row(root, study, path, attest=first_added):
             "modes": {m: len(lists[m]) for m in names},
             "policy": v236_policy,
             "prefixes": scored.get("prefix_outcomes") if study == "v236" and
-            V236_POLICIES[v236_policy] else None}
+            V236_POLICIES[v236_policy] else None,
+            # Internal audit evidence only, never written back to predictions.
+            "frozen_ticket_lists": {mode: list(values) for mode, values in lists.items()}}
 
 
 def paired(rows, mode):
@@ -306,6 +308,46 @@ def compare_10point_modes(left, right, left_mode, right_mode):
             "right_hits": sum(x["outcomes"][right_mode] for x in right),
             "right_only_hits": gain, "left_only_hits": loss,
             "discordant_pairs": disagree, "exact_mcnemar_two_sided_p": p,
+            "improvement_proven": False, "model_promotion_authorized": False}
+
+
+def compare_ranked_10point_modes(left, right, left_mode, right_mode):
+    """Paired Top3/5/10 *ranked prefixes* from first-Git-attested frozen tickets.
+
+    Separate from ticket membership Top10. An ordered candidate may improve
+    Top3 yet leave Top10 unchanged. Refuse arbitrary/mismatched direct inputs.
+    """
+    top10 = compare_10point_modes(left, right, left_mode, right_mode)
+    pairs = []
+    for a, b in zip(left, right):
+        l = a.get("frozen_ticket_lists", {}).get(left_mode)
+        r = b.get("frozen_ticket_lists", {}).get(right_mode)
+        if (not isinstance(l, list) or not isinstance(r, list)
+                or len(l) != 10 or len(r) != 10
+                or len(set(l)) != 10 or len(set(r)) != 10
+                or any(not combo(x) for x in l + r)):
+            raise EvidenceError("PAIRED_RANKED_EXACT_TEN_FROZEN_TICKETS_REQUIRED")
+        if ((a["winning"] in l) is not a["outcomes"][left_mode]
+                or (b["winning"] in r) is not b["outcomes"][right_mode]):
+            raise EvidenceError("PAIRED_RANKED_OUTCOME_NOT_FROZEN")
+        pairs.append((a["winning"], l, r))
+    ranked = {}
+    for k in (3, 5, 10):
+        outcomes = [(winning in l[:k], winning in r[:k])
+                    for winning, l, r in pairs]
+        gain = sum(not a and b for a, b in outcomes)
+        loss = sum(a and not b for a, b in outcomes)
+        n = gain + loss
+        p = (min(1.0, 2 * sum(math.comb(n, i)
+             for i in range(min(gain, loss) + 1)) / (2 ** n)) if n else None)
+        ranked[str(k)] = {
+            "races": len(outcomes), "left_hits": sum(a for a, b in outcomes),
+            "right_hits": sum(b for a, b in outcomes),
+            "right_only_hits": gain, "left_only_hits": loss,
+            "discordant_pairs": n, "exact_mcnemar_two_sided_p": p}
+    return {"races": len(left), "sample_days": top10["sample_days"],
+            "point_count_each": 10, "top10_ticket_membership": top10,
+            "ranked_top3_top5_top10": ranked,
             "improvement_proven": False, "model_promotion_authorized": False}
 
 
@@ -386,13 +428,29 @@ def audit(root, attest=first_added):
                 for l_mode in CONFIG[left][7] if l_mode != "coverage15"
                 for r_mode in CONFIG[right][7] if r_mode != "coverage15"
             }
-            between[left + "_vs_" + right] = {
+            comparison = {
                 "identical_race_baseline_matches": len(shared),
                 "sample_days": len({key[:8] for key in shared}),
                 "equal_ten_ticket_head_to_head_only": mode_pairs,
                 "separate_cohorts_must_not_be_pooled": True,
                 "cross_study_superiority_proven": False,
             }
+            if left == "v236" and right == "v254":
+                # V1 has no headsecond ticket. Compare V2/V3 separately on
+                # the identical-race intersection only, never concatenate.
+                comparison["ranked_headsecond_vs_third_tail10_by_v236_policy"] = {}
+                for policy, has_alt in V236_POLICIES.items():
+                    if not has_alt:
+                        continue
+                    policy_keys = [
+                        key for key in shared
+                        if available["v236"][key]["policy"] == policy]
+                    comparison["ranked_headsecond_vs_third_tail10_by_v236_policy"][
+                        policy] = compare_ranked_10point_modes(
+                            [available["v236"][key] for key in policy_keys],
+                            [available["v254"][key] for key in policy_keys],
+                            "headsecond10", "third_tail10")
+            between[left + "_vs_" + right] = comparison
     return {"schema": "BOAT_EDGE_V301_PAIRED_SITE_ONLY_AUDIT_V1",
             "scope": "VERIFIED_GIT_PREFREEZE_SITE_SCORE_RECHECK_NOT_FORMAL_FRESH",
             "formal_results_read": False, "production_model_changed": False,
