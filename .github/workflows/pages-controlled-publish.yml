@@ -34,6 +34,20 @@ jobs:
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_site_pages_stage.py' -v
           python3 -m py_compile scripts/site_pages_stage.py
+      - name: Test actual site artifact composition without deploying
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site
+          cmp index.html _pages_site/index.html
+          cmp data/today.json _pages_site/data/today.json
+          cmp data/formal_status.json _pages_site/data/formal_status.json
+          test ! -e _pages_site/data/raw
+          test ! -e _pages_site/data/formal_predictions
+          test ! -e _pages_site/scripts
+          test ! -e _pages_site/.github
+          echo CONTROLLED_PAGES_ACTUAL_MAIN_SITE_STAGE_PASS
 
   verify-source:
     needs: stage-regression
