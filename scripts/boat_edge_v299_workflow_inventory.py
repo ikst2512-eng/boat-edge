@@ -45,6 +45,9 @@ RETIRED = (
     "auto-update-v10 2.yml",
     "site-v185-trigger.yml",
     "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
+    # V240 was an exact-Top7 research-only second-leg shadow.
+    # Its new freezes were 0/61 capable of changing Top3 or Top5.
+    "v240.yml",
 )
 LIVE = "V235.yml"
 
