@@ -22,7 +22,12 @@ assert 'git fetch --no-tags origin main' in v235
 assert 'git reset --hard origin/main' in v235
 assert 'V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS' in v235
 assert 'cancel-in-progress: false' in v235
-assert 'if (root/\'data/site_prediction_snapshots\'/f\'{key}.json\').is_file():continue' in fast
+# The stronger shared V288 guard protects site snapshots, V232 cohorts and
+# the deadline both when selecting and after in-flight source fetches.
+assert "from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed" in fast
+assert "if not source_write_allowed(root/'data',key,row.get('deadline'),now):continue" in fast
+assert "if not source_write_allowed(root/'data',key,m.get('deadline'),latest):return 'source_locked'" in fast
+assert "if not source_write_allowed(root/'data',key,(race.get('meta') or {}).get('deadline'),now):" in fast
 assert 'check_formal_closed(root)' in fast
 assert 'V229' in fast and 'atomic_freeze(root)' in fast
 assert 'results_seen' in fast and 'scoring' in fast
