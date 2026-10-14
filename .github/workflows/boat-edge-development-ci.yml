@@ -35,6 +35,12 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
       - name: Validate tracked source pins
         run: python3 scripts/verify_workflow_source_pins.py
+      - name: Verify conflict-safe collector rebase against simultaneous V186 scratch writes
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v01_scratch_rebase_guard.py' -v
+          python3 -m py_compile scripts/boat_edge_v01_scratch_rebase_guard.py
       - name: Verify same-run official scratch evidence (synthetic HTML only)
         env:
           PYTHONDONTWRITEBYTECODE: '1'
