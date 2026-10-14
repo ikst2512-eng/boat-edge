@@ -40,6 +40,32 @@ class SiteTrackedVenueSourceContracts(unittest.TestCase):
                 self.assertNotIn('git push --force',source)
                 self.assertNotIn('git push -f',source)
 
+    def test_venue_jobs_cannot_rewrite_main_ui_or_source(self):
+        # V169/V170 historical report jobs are not 03-owned UI installers.
+        rules=(
+            ('BOAT_EDGE_V169_ONE_UPLOAD.yml',
+             'V169_TRACKED_SITE_IMPORTS_READ_ONLY_PASS',
+             'git add -- data/site_racer_venue_v169/',
+             'git diff --exit-code -- index.html'),
+            ('BOAT_EDGE_V170_ONE_UPLOAD.yml',
+             'V170_TRACKED_SITE_IMPORTS_READ_ONLY_PASS',
+             'git add -- data/site_learning/mode_venue_accuracy_v170.json',
+             'git diff --exit-code -- index.html'),
+        )
+        for file,marker,staging,guard in rules:
+            with self.subTest(file=file):
+                workflow=(WORKFLOWS/file).read_text(encoding='utf-8')
+                self.assertIn(marker,workflow)
+                self.assertIn(staging,workflow)
+                self.assertIn(guard,workflow)
+                self.assertNotIn('p.write_text(data,encoding=',workflow)
+                self.assertNotIn('p.write_text(s,encoding=',workflow)
+                self.assertNotIn('git add -- index.html',workflow)
+                self.assertNotIn(' index.html\n',workflow.split('git add --',1)[-1])
+                # Source edits may only happen through PRs, never scheduled jobs.
+                self.assertNotIn('git add scripts/site_mode_venue_v170.py',workflow)
+                self.assertNotIn('git add -- index.html assets/',workflow)
+
     def test_existing_site_venue_imports_are_one_each(self):
         html=(ROOT/'index.html').read_text(encoding='utf-8')
         paths=(
