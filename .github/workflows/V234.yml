@@ -191,7 +191,11 @@ jobs:
           echo V275_NO_PUBLISHED_SHADOW_CONFLICT_SAFE_RETRY_NEXT_RUN
           # The optional research lane cannot block primary frozen prediction
           # or its separate source-verified retrospective scoring.
+      # SITE result settlement is retrospective and can wait; PRE_RESULT
+      # capture/V275 freeze above keep their original five-minute cadence.
+      # This avoids an extra Pages-invalidating main push on 8 of 12 ticks.
       - name: Only after pre-result commit - score already confirmed SITE results
+        if: ${{ github.event_name != 'schedule' || contains(fromJSON('["4,19,34,49 0-14,23 * * *"]'), github.event.schedule) }}
         shell: bash
         run: |
           set -euo pipefail
