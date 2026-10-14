@@ -1,0 +1,38 @@
+name: V305 SITE-only leg miss attribution
+on:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v305_site_miss_attribution.py'
+      - 'tests/test_boat_edge_v305_site_miss_attribution.py'
+      - '.github/workflows/v305-site-miss-attribution.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test leg miss classifications
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v305_site_miss_attribution.py' -v
+      - name: Verify Git-attested SITE-only miss attribution
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m scripts.boat_edge_v305_site_miss_attribution > v305-misses.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v305-site-only-misses
+          path: v305-misses.json
+          if-no-files-found: warn

@@ -1,0 +1,39 @@
+name: V304 SITE-only ranked TopK audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v304_site_topk_audit.py'
+      - 'tests/test_boat_edge_v304_site_topk_audit.py'
+      - 'scripts/boat_edge_v301_paired_evidence.py'
+      - '.github/workflows/v304-site-topk-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test V304 TopK denominators and no-lift guards
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v304_site_topk_audit.py' -v
+      - name: Verify read-only SITE baseline TopK
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m scripts.boat_edge_v304_site_topk_audit > v304-topk.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v304-site-only-topk
+          path: v304-topk.json
+          if-no-files-found: warn

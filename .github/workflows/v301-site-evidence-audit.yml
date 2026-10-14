@@ -1,0 +1,75 @@
+name: V301 SITE-only evidence audit (read-only)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v301_paired_evidence.py'
+      - 'tests/test_boat_edge_v236_v301_paired.py'
+      - 'tests/test_boat_edge_v301_missing_cohort_gate.py'
+      - '.github/workflows/v301-site-evidence-audit.yml'
+permissions:
+  contents: read
+jobs:
+  site-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Record immutable source and eligible local-file inventory (no Formal result reads)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-output
+          git rev-parse HEAD > audit-output/source_commit.txt
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('data/site_autopilot')
+          folders=['v232_cohort','v236_frozen','v236_scored','v240_frozen','v240_scored','v254_frozen','v254_scored']
+          inventory={k:{'exists':(root/k).is_dir(),
+                         'json_files':len(list((root/k).glob('*.json'))) if (root/k).is_dir() else None}
+                     for k in folders}
+          Path('audit-output/inventory.json').write_text(json.dumps(inventory,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(inventory,sort_keys=True))
+          # Coverage is filename-only. Never open scored/result JSON here.
+          cohorts={}
+          for study in ('v236','v240','v254'):
+              frozen={p.stem for p in (root/(study+'_frozen')).glob('*.json')}
+              scored={p.stem for p in (root/(study+'_scored')).glob('*.json')}
+              cohorts[study]={
+                  'frozen':len(frozen),'scored':len(scored),
+                  'frozen_not_scored':len(frozen-scored),
+                  'scored_without_frozen':len(scored-frozen),
+                  'frozen_not_scored_by_day':{
+                      day:sum(k.startswith(day) for k in frozen-scored)
+                      for day in sorted({k[:8] for k in frozen-scored})
+                  },
+                  'scored_days':sorted({k[:8] for k in scored}),
+              }
+          Path('audit-output/coverage.json').write_text(json.dumps(cohorts,indent=2,sort_keys=True)+'\\n')
+          print('COVERAGE',json.dumps(cohorts,sort_keys=True))
+          PY
+      - name: Execute strict V301 (never fetch result endpoints)
+        shell: bash
+        run: |
+          set -uo pipefail
+          python scripts/boat_edge_v301_paired_evidence.py --root . > audit-output/v301.json 2> audit-output/v301.stderr
+          status=$?
+          printf '%s\n' "$status" > audit-output/exit_code.txt
+          if [ "$status" -ne 0 ]; then
+            echo "EVIDENCE_NOT_AVAILABLE_OR_INVALID; see stderr and inventory"
+            exit "$status"
+          fi
+      - name: Preserve audit outcome even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v301-site-only-evidence
+          path: audit-output/
+          retention-days: 30

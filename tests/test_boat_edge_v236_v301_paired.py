@@ -32,6 +32,10 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
+        # The V301 audit now fails closed on missing cohort directories.
+        # Build all three empty study directories for unrelated test cases.
+        for study in m.CONFIG:
+            (self.root / m.BASE / (study + "_scored")).mkdir(parents=True)
         write(self.root / "data/formal_status.json",
               {"guards": {"results_seen": False, "unlock": False,
                           "scoring": False, "RESULT_UNLOCK_TOKEN": None},
