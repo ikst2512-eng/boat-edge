@@ -178,7 +178,7 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
    selectedDate:null,selectedVenue:null,saveSelection(){},
    $:selector=>selector==='#be108RaceNav'?navHost:
       selector==='.race-summary'?{}:selector==='#be108BackPlace'?backButton:null,
-   $:()=>[],esc:s=>s,dateLabel:s=>s,raceStrip:(_venue,key)=>'<race>'+key+'</race>',
+   $$:()=>[],esc:s=>s,dateLabel:s=>s,raceStrip:(_venue,key)=>'<race>'+key+'</race>',
    showInternal(){},renderHomeHub:async()=>{},requestAnimationFrame(){},
    cleanTabs(){},
    window:{},document:{}
