@@ -195,6 +195,41 @@ jobs:
               }
               current_candidates+=1
 
+          # 2) Recover missing/pending prior-day results only for races with
+          # an existing race card and a verified, already-passed deadline.
+          # Never create a pre-result card or modify any prediction snapshot.
+          for p in sorted(races.glob('*.json')):
+              m=re.fullmatch(r'(\\d{8})-(\\d{2})-(\\d{2})\\.json',p.name)
+              if not m:
+                  continue
+              ymd,jcd,rno=m.groups()
+              if not (START<=ymd<today):
+                  continue
+              doc=read_json(p)
+              if not isinstance(doc,dict):
+                  continue
+              meta=doc.get('meta') or {}
+              if not isinstance(meta,dict):
+                  continue
+              if str(meta.get('date') or ymd).replace('-','')!=ymd:
+                  continue
+              if str(meta.get('venue_code') or jcd).zfill(2)!=jcd:
+                  continue
+              if str(meta.get('race_no') or int(rno))!=str(int(rno)):
+                  continue
+              target=out/p.name
+              old=read_json(target) if target.exists() else None
+              if old and old.get('status')=='confirmed' and old.get('trifecta') and old.get('trifecta_payout_yen_per_100') is not None:
+                  continue
+              # Do not read or mutate protected Formal Fresh dates.
+              if ymd>='20261001' and (p.parent.parent/'data/formal_predictions'/p.name).exists():
+                  continue
+              candidates[p.stem]={
+                  'key':p.stem,'ymd':ymd,'jcd':jcd,'rno':int(rno),
+                  'target':target,'old':old,'kind':'historical_missing'
+              }
+              historical_candidates+=1
+
           # 2) Historical confirmed results since 10/7 with payout missing.
           for p in sorted(out.glob('*.json')):
               m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',p.name)
@@ -219,7 +254,7 @@ jobs:
           rows=list(candidates.values())
           if __import__('os').environ.get('GITHUB_EVENT_NAME')=='schedule':
               current=[x for x in rows if x['kind']=='current']
-              historical=[x for x in rows if x['kind']=='historical'][:36]
+              historical=[x for x in rows if x['kind']!='current'][:36]
               rows=current+historical
 
           def worker(item):
