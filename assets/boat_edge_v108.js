@@ -1029,6 +1029,22 @@ async function be181VerifiedPreDeadlineFinal(key,deadline,nowMs=Date.now()){
     const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',raw));
     const digest=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
     const saved=Date.parse(snapshot.saved_at),first=Date.parse(snapshot.first_saved_at);
+    // V125 can include an explicit UNSETTLED sentinel. It has NO result data.
+    // Preserve the PRE_RESULT guard, but never treat this sentinel as scoring.
+    // Any result-bearing/extra settlement field remains a hard stop.
+    const settlement=audit?.settlement;
+    const explicitlyUnsettled=settlement&&typeof settlement==='object'&&
+      !Array.isArray(settlement)&&
+      Object.keys(settlement).length===5&&
+      ['available','winning_combo','hit_any','mode_hits','payout']
+        .every(k=>Object.prototype.hasOwnProperty.call(settlement,k))&&
+      settlement.available===false&&settlement.winning_combo===null&&
+      settlement.hit_any===null&&settlement.payout===null&&
+      settlement.mode_hits&&typeof settlement.mode_hits==='object'&&
+      !Array.isArray(settlement.mode_hits)&&
+      Object.keys(settlement.mode_hits).length===0;
+    const hasOnlyUnsettledAudit=!Object.prototype.hasOwnProperty.call(audit,'settlement')||
+      explicitlyUnsettled;
     if(!be181ValidFinal(snapshot,key)||snapshot.prediction_kind!=='SITE_REFERENCE_V122'||
        snapshot.deadline!==deadline||snapshot.guards?.results_seen!==false||
        snapshot.guards?.unlock!==false||snapshot.guards?.scoring!==false||
@@ -1036,7 +1052,7 @@ async function be181VerifiedPreDeadlineFinal(key,deadline,nowMs=Date.now()){
        saved>nowMs+60000||first>=due||saved>=due||
        due-first<120000||due-first>600000||
        audit.race_key!==key||audit.pass!==true||audit.latest_snapshot_sha256!==digest||
-       Object.prototype.hasOwnProperty.call(audit,'settlement')||
+       !hasOnlyUnsettledAudit||
        proof.race_key!==key||proof.snapshot_sha256!==digest||
        proof.schema!=='BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1'||
        proof.scope!=='SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS'||
