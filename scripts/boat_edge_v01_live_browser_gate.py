@@ -73,7 +73,7 @@ def valid(saved, audit, receipt, blob, key, now, first_add):
     # 2-10m when frozen; 2-15m still left for real browser installation.
     if not (2 * 60 <= (due-first).total_seconds() <= 10 * 60
             and 2 * 60 <= (due-now).total_seconds() <= 15 * 60
-            and first <= at <= first_add < due):
+            and first <= at <= first_add <= now < due):
         return False
     digest = hashlib.sha256(blob).hexdigest()
     modes = saved.get("modes") or {}
