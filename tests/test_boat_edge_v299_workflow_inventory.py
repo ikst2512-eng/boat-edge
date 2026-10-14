@@ -24,6 +24,20 @@ class WorkflowInventoryTests(unittest.TestCase):
         for retired in RETIRED:
             self.assertNotIn(retired, result["scheduled_contents_writers"])
 
+    def test_v239_retired_and_manual_only_replays_original_site_cohorts(self):
+        workflow = ROOT / ".github/workflows/v239.yml"
+        source = workflow.read_text(encoding="utf-8")
+        from scripts.boat_edge_v299_workflow_inventory import event_block
+        events = event_block(source)
+        self.assertIn("  workflow_dispatch:", events)
+        self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
+        self.assertNotIn("scripts/boat_edge_v239_second_tail.py freeze", source)
+        self.assertIn("scripts/boat_edge_v239_second_tail.py score", source)
+        self.assertNotIn("V239_FROZEN_GIT_ATTESTED", source)
+        result = audit(ROOT / ".github/workflows")
+        self.assertNotIn("v239.yml", result["scheduled_contents_writers"])
+        verify_retired(result)
+
     def test_v240_research_retired_without_dropping_original_audit(self):
         workflow = ROOT / ".github/workflows/v240.yml"
         contents = workflow.read_text(encoding="utf-8")
@@ -105,7 +119,6 @@ class WorkflowInventoryTests(unittest.TestCase):
         """Cut Pages build churn without slowing prospective unseen freezes."""
         targets = (
             ("v236.yml", 3, "3,18,33,48", "boat_edge_v236_hit_rate.py"),
-            ("v239.yml", 4, "9,24,39,54", "boat_edge_v239_second_tail.py"),
             # V240 was retired after checking all 61 frozen same-Top7 tickets.
             ("v254-third-tail-shadow.yml", 3, "13,28,43,58",
              "boat_edge_v254_third_tail.py"),
