@@ -231,3 +231,32 @@ const loadFixture=(path='data/races/20261014-14-03.json',venue='14')=>
  assert.equal(guardContext.rendered.length,0,'unexpected file path must stop');
  console.log('BOAT_EDGE_03_SELECTED_RACE_SOURCE_IDENTITY_FAIL_CLOSED_PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
+
+// 03: index.html pct() already formats world values with %.
+// 0.5% is NOT 50%, and missing readings remain unverified.
+const worldSrc=fs.readFileSync('assets/boat_edge_final_v48.js','utf8');
+const normStart=worldSrc.indexOf('function normPct(v){');
+const normEnd=worldSrc.indexOf('function renderRacers(d){',normStart);
+assert(normStart>0&&normEnd>normStart);
+const examples=['99.5%','0.5%','0.2%','1%','0%','－','未取得','-5%','105%'];
+const fakeWorlds=examples.map(original=>{
+ const prob={textContent:original},title={textContent:''};
+ return {prob,title,querySelector:s=>s==='h3'?title:s==='.world-prob'?prob:null,
+   querySelectorAll:()=>[],classList:{add(){}}};
+});
+const pctCtx=vm.createContext({
+ Number,String,Math,
+ qa:s=>s==='#worlds .world'?fakeWorlds:[],
+ lane:n=>'艇'+n,
+ document:{createElement:()=>({})}
+});
+vm.runInContext(worldSrc.slice(normStart,normEnd),pctCtx);
+vm.runInContext('decorateWorlds()',pctCtx);
+assert.deepEqual(fakeWorlds.map(w=>w.prob.textContent),examples,
+ 'sub-1% percentages must not be multiplied by 100');
+assert.equal(fakeWorlds[1].title.textContent,'イン逃げ不成立');
+assert.equal(vm.runInContext('normPct(0.5)',pctCtx),0.5);
+assert.equal(vm.runInContext('normPct(null)',pctCtx),null);
+assert.equal(vm.runInContext('normPct("")',pctCtx),null);
+assert.equal(vm.runInContext('normPct(105)',pctCtx),null);
+console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');

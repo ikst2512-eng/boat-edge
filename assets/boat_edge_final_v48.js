@@ -6,14 +6,23 @@ const laneNo=(r,i)=>Number(r?.lane??(i+1));
 const lane=l=>`<span class="be48-lane l${l}">${l}</span>`;
 function S(){try{return typeof state!=="undefined"?state:null}catch(_){return null}}
 function rawRace(){return S()?.race||null}
-function normPct(v){const n=Number(v);if(!Number.isFinite(n))return null;return n>=0&&n<=1?n*100:n}
+/* Source .world-prob already contains percent units. 0.5 means 0.5%, not 50%. */
+function normPct(v){
+ if(v===null||v===undefined||String(v).trim()==='')return null;
+ const n=Number(v);
+ return Number.isFinite(n)&&n>=0&&n<=100?n:null;
+}
 function decorateWorlds(){
   qa("#worlds .world").forEach((w,wi)=>{
     const key=wi===0?"A":"B";
     const h=w.querySelector("h3"); if(h)h.textContent=key==="A"?"イン逃げ成立":"イン逃げ不成立";
     w.querySelectorAll(".badge").forEach(x=>x.style.display="none");
     const pr=w.querySelector(".world-prob");
-    if(pr){const m=pr.textContent.match(/-?\d+(?:\.\d+)?/);if(m){const n=normPct(m[0]);if(n!==null)pr.textContent=`${Math.max(0,Math.min(100,n)).toFixed(n%1?1:0)}%`;}}
+    if(pr){
+      // Never interpret an already-formatted percent as a fractional probability.
+      const m=String(pr.textContent||'').trim().match(/^(\d+(?:\.\d+)?)%$/);
+      if(m){const n=normPct(m[1]);if(n!==null)pr.textContent=`${n.toFixed(n%1?1:0)}%`;}
+    }
     const tickets=[...w.querySelectorAll(".ticket")];
     tickets.forEach((t,i)=>{
       const c=t.querySelector(".combo"); if(c&&!c.dataset.be48){const parts=c.textContent.trim().split(/[-–—>＞\s]+/).filter(x=>/^[1-6]$/.test(x));if(parts.length===3)c.innerHTML=parts.map(x=>lane(Number(x))).join('<span class="be48-sep">–</span>');c.dataset.be48="1";}
