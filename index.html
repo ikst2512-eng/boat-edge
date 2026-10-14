@@ -1558,14 +1558,11 @@ function statusBadge(kind, text){
   const cls = kind || "gray";
   return `<span class="badge ${cls}">${text}</span>`;
 }
-function minutesToDeadline(deadline){
-  if(!deadline) return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(deadline);
-  if(!m) return null;
-  const now = new Date();
-  const target = new Date(now);
-  target.setHours(Number(m[1]), Number(m[2]), 0, 0);
-  return Math.floor((target - now)/60000);
+/* 03: home / venue countdown must use the SAME JST race-day deadline
+ * as the race detail. Never interpret 10:40 as 10:40 in the device timezone. */
+function minutesToDeadline(deadline,raceDate){
+  const seconds=deadlineDeltaSeconds(deadline,raceDate);
+  return seconds===null?null:Math.floor(seconds/60);
 }
 function formatUpdated(ts){
   if(!ts) return "－";
@@ -2034,7 +2031,7 @@ function collectRaces(){
   const rows = [];
   (state.today?.venues || []).forEach(v=>{
     (v.races || []).forEach(r=>{
-      rows.push({...r, venue:v.venue, event:v.event, jcd:v.jcd, mins:minutesToDeadline(r.deadline)});
+      rows.push({...r, venue:v.venue, event:v.event, jcd:v.jcd, mins:minutesToDeadline(r.deadline,state.today?.date)});
     });
   });
   rows.sort((a,b)=>{
@@ -2149,7 +2146,7 @@ function renderVenues(){
         </div>
       </div>
       ${v ? `<div class="racechips">${(v.races||[]).map(r=>{
-        const mins = minutesToDeadline(r.deadline);
+        const mins = minutesToDeadline(r.deadline,state.today?.date);
         const extra = mins!==null && mins>=0 ? `${mins}分後` : f(r.deadline);
         const urgentCls=mins!==null&&mins>=0&&mins<=2?"hot-soon":(mins!==null&&mins<=5&&mins>=0?"warn-soon":"");
         return `<button class="racechip ${r.beforeinfo_status==="ok"?"before":"ready"} ${urgentCls}" data-file="${r.file}" data-jcd="${code}">
