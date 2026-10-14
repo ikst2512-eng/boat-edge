@@ -151,6 +151,11 @@ def audit(day, files):
     counts["venue_aware_preview_timestamps_eligible_unverified"] = len(
         edogawa_core | non_edogawa_four
     )
+    counts["edogawa_race_card_rows"] = sum(k[8:10] == "03" for k in baseline)
+    counts["non_edogawa_race_card_rows"] = sum(k[8:10] != "03" for k in baseline)
+    counts["venue_aware_missing_or_ineligible"] = (
+        len(baseline) - counts["venue_aware_preview_timestamps_eligible_unverified"]
+    )
     counts["non_edogawa_missing_original_exhibition"] = sum(
         key[8:10] != "03" and key not in source_rows.get("original_exhibition", {})
         for key in baseline
