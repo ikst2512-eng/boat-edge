@@ -9,6 +9,31 @@ const validate=window.BoatEdgeV253.validated;
 const data=JSON.parse(fs.readFileSync('data/site_autopilot/v253_miss_diagnostics_current.json','utf8'));
 const valid=validate(data);
 assert(valid,'V253 data contract failed');
+// The prospectively predeclared V236 V2/V3 comparator adds headsecond10
+// to those frozen rows only. Older V1 rows and the four display modes stay fixed.
+const v1Policy='PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST';
+const v2Policy='PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER';
+const firstV1=data.lanes.v236.races.findIndex(r=>r.candidate_policy===v1Policy);
+assert(firstV1>=0,'fixture needs a V1 row to simulate the forward V2 transition');
+const future=JSON.parse(JSON.stringify(data));
+const row=future.lanes.v236.races[firstV1];
+const existingHit10=row.categories.hit10;
+row.candidate_policy=v2Policy;
+row.categories.headsecond10='hit';
+const newPolicy=future.lanes.v236.headsecond_by_frozen_policy[v2Policy];
+newPolicy.matched_races++;
+newPolicy.miss_categories.hit10[existingHit10]++;
+newPolicy.miss_categories.headsecond10.hit++;
+assert(validate(future),'V2 provenance-tagged row should pass when aggregate matches');
+const changedPolicy=JSON.parse(JSON.stringify(future));
+changedPolicy.lanes.v236.headsecond_by_frozen_policy[v2Policy].matched_races++;
+assert.equal(validate(changedPolicy),null,'misreported forward cohort total must fail closed');
+const missingExtra=JSON.parse(JSON.stringify(future));
+delete missingExtra.lanes.v236.races[firstV1].categories.headsecond10;
+assert.equal(validate(missingExtra),null,'missing V2 comparator must fail closed');
+const illegalLegacy=JSON.parse(JSON.stringify(data));
+illegalLegacy.lanes.v236.races[firstV1].categories.headsecond10='hit';
+assert.equal(validate(illegalLegacy),null,'V1 cannot retroactively gain a comparator');
 for(const lane of ['v236','v240']){
  assert(valid[lane].races_verified>0);
  for(const [k,counts] of Object.entries(valid[lane].miss_categories)){
