@@ -242,16 +242,76 @@ def _save_race_input(root, key, raw, filename="race_input.json"):
             raise ValueError("IMMUTABLE_RACE_INPUT_SNAPSHOT_MISMATCH")
 
 
+# V332 is a SITE-only runner: a race on any live Formal target date must
+# never be opened, even if the protected cohort has not yet been frozen.
+# This static denylist is a backstop, not a substitute for current status.
+_KNOWN_FORMAL_DAYS = frozenset(("20261001", "20261005", "20261013"))
+
+
+def _nonformal_target_preflight(root, race_key, now):
+    """Inspect *metadata only* before any SITE race file or network access.
+
+    Formal-status timestamps are repository claims, not independently attested
+    server receipts. Fail closed on missing/stale/malformed or unlocked status.
+    Neither Formal outcomes nor prediction content are opened.
+    """
+    if race_key[:8] in _KNOWN_FORMAL_DAYS:
+        raise ValueError("FORMAL_FRESH_TARGET_EXCLUDED")
+    status_path = root / "data/formal_status.json"
+    if status_path.is_symlink() or not status_path.is_file():
+        raise ValueError("FORMAL_STATUS_METADATA_REQUIRED")
+    try:
+        if status_path.stat().st_size > 131072:
+            raise ValueError("FORMAL_STATUS_METADATA_TOO_LARGE")
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("FORMAL_STATUS_METADATA_INVALID") from exc
+    if (not isinstance(status, dict) or
+            status.get("schema_version") != "boat-edge-formal-status-v2"):
+        raise ValueError("FORMAL_STATUS_METADATA_SCHEMA_INVALID")
+    guards = status.get("guards")
+    races = (status.get("formalFirst100") or {}).get("races")
+    if (not isinstance(guards, dict) or
+            any(guards.get(k) is not False
+                for k in ("results_seen", "unlock", "scoring")) or
+            guards.get("RESULT_UNLOCK_TOKEN", False) is not None or
+            type(races) is not int or races != 0):
+        raise ValueError("FORMAL_FRESH_MUST_REMAIN_LOCKED")
+    try:
+        updated = datetime.fromisoformat(status["asOf"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("FORMAL_STATUS_ASOF_INVALID") from exc
+    if (updated.tzinfo is None or updated.utcoffset() != timedelta(hours=9)
+            or updated.strftime("%Y%m%d") != race_key[:8] or updated > now):
+        raise ValueError("FORMAL_STATUS_NOT_CURRENT_PREDEADLINE")
+    target = status.get("target_date")
+    last = status.get("last_cohort")
+    dates = [target]
+    if last is not None:
+        if not isinstance(last, dict):
+            raise ValueError("FORMAL_LAST_COHORT_INVALID")
+        dates.append(last.get("date"))
+    for value in dates:
+        try:
+            day = datetime.strptime(value, "%Y-%m-%d").strftime("%Y%m%d")
+        except (TypeError, ValueError) as exc:
+            raise ValueError("FORMAL_PROTECTED_DATE_METADATA_INVALID") from exc
+        if day == race_key[:8]:
+            raise ValueError("FORMAL_FRESH_TARGET_EXCLUDED")
+    protected_prediction = root / "data/formal_predictions" / (race_key + ".json")
+    if protected_prediction.is_symlink() or protected_prediction.exists():
+        # Path presence only. Protected prediction contents are NEVER opened.
+        raise ValueError("FORMAL_PREDICTION_PATH_EXCLUDED")
+
+
 def live_local_freeze(root, race_key, source_urls=None, capture=False,
                       fetcher=real_fetch, clock=None):
     """One live race. Optional opt-in fetch of missing pages; never overwrite."""
     if not isinstance(race_key, str) or KEY.fullmatch(race_key) is None:
         raise ValueError("INVALID_RACE_KEY")
-    # The untouched 2026-10-01 Formal Fresh target is never a SITE fixture.
-    if race_key.startswith("20261001-"):
-        raise ValueError("FORMAL_FRESH_TARGET_EXCLUDED")
     root = Path(root).resolve()
     now = _now(clock)
+    _nonformal_target_preflight(root, race_key, now)
     candidate, deadline, race, race_raw, official_start_raw = _eligible_race(root, race_key, now)
     output = root / "data/research_local_v332" / race_key[:8] / (race_key + ".json")
     if output.exists() or output.is_symlink():
