@@ -290,6 +290,60 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  vm.runInContext('hide()',showContext);
  clickTop(10);
  assert.equal(box.lines.children.length,0,'Hidden preview must not be reintroduced by its previous tab listener');
+ // 03: the existing selected race must recover when a previously unpublished
+ // PRE_RESULT-only V392 preview appears without a changed race-card JSON.
+ // Run the production render() and tick(), never a reimplementation.
+ const retryStart=js.indexOf('async function render(r){');
+ const retryEnd=js.indexOf('function init(){',retryStart);
+ assert(retryStart>0&&retryEnd>retryStart);
+ let clock=NOW,fetchCount=0,published=false,visibleRace=true,visible=true,active=KEY;
+ const retryBox={dataset:{raceKey:KEY,ready:'false'}};
+ const fakeClock=class extends Date{static now(){return clock;}};
+ const retryContext=vm.createContext({
+   Date:fakeClock,Promise,
+   serial:0,activeKey:KEY,lastPreviewAttemptAt:0,
+   document:{get hidden(){return !visible;}},
+   state:{race},ensure:()=>retryBox,style:()=>{},
+   cardSafety:r=>({ok:r?.race_key===KEY}),previewSafety:()=>({ok:true}),
+   finalFor:()=>false,hide:()=>{retryBox.dataset.ready='false';},
+   showStatus:(r,reason)=>{retryBox.dataset.ready='status';retryBox.dataset.raceKey=r.race_key;retryBox.reason=reason;},
+   showPreview:(r,p)=>{retryBox.dataset.ready='true';retryBox.dataset.raceKey=r.race_key;retryBox.preview=p;},
+   $:s=>s==='#be392EarlyPreview'?retryBox:
+     s==='#raceView'?{classList:{contains:()=>visibleRace}}:null,
+   fetch:async()=>{fetchCount++;return published?
+     {ok:true,json:async()=>preview}:{ok:false,status:404};}
+ });
+ vm.runInContext(js.slice(retryStart,retryEnd),retryContext);
+ retryContext.race=race;
+ await vm.runInContext('render(race)',retryContext);
+ assert.equal(fetchCount,1);
+ assert.equal(retryBox.dataset.ready,'status');
+ assert.match(retryBox.reason,/まだ公開されていません/);
+ published=true;clock+=30000;
+ await vm.runInContext('tick()',retryContext);
+ assert.equal(fetchCount,1,'do not retry repeatedly inside one minute');
+ clock+=30001;visibleRace=false;
+ await vm.runInContext('tick()',retryContext);
+ assert.equal(fetchCount,1,'do not poll when race view is inactive');
+ visibleRace=true;visible=false;
+ await vm.runInContext('tick()',retryContext);
+ assert.equal(fetchCount,1,'do not poll while tab is hidden');
+ visible=true;
+ await vm.runInContext('tick()',retryContext);
+ assert.equal(fetchCount,2,'retry after the bounded interval');
+ assert.equal(retryBox.dataset.ready,'true');
+ assert.equal(retryBox.preview.race_key,KEY);
+ clock+=90000;
+ await vm.runInContext('tick()',retryContext);
+ assert.equal(fetchCount,2,'a published preview must not keep polling');
+ active='20261015-14-02';
+ retryContext.state.race={race_key:active};
+ await vm.runInContext('tick()',retryContext);
+ assert.equal(retryBox.dataset.ready,'false','selected race switch must hide stale preview');
+ console.log('BOAT_EDGE_03_V392_DELAYED_PREVIEW_VISIBLE_RACE_RETRY_PASS');
+ assert.match(js,/\.be392-tabs button\{[^\n]*min-height:44px/);
+ console.log('BOAT_EDGE_03_V392_MOBILE_TOPK_TAP_TARGET_PASS');
+
  console.log('BOAT_EDGE_03_EARLY_PREVIEW_TOPK_CURRENT_RACE_REFRESH_PASS');
  console.log('V392_SITE_FINAL_SHA_AUDIT_HANDOFF_FIXTURE_PASS');
  console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
