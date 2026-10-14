@@ -63,6 +63,12 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v01_collector_scratch.py' -v
           python3 -m py_compile scripts/boat_edge_v01_collector_scratch.py
+      - name: Reject false green published mobile TopK after V229 first Git-add
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_01_live_final_browser_acceptance.py' -v
+          python3 -m py_compile scripts/boat_edge_01_live_final_browser_acceptance.py
       - name: Re-attest exact V228 live SITE model blob and no-result extraction
         env:
           PYTHONPATH: scripts
