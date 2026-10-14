@@ -158,7 +158,7 @@ class V257SourceTrigger(unittest.TestCase):
             return set(minutes)
         primary_slots=minute_slot(primary,allow_0820_prewarm=True)
         tail_slots=minute_slot(shadow,split_research=True)
-        backup_slots=minute_slot(fallback)
+        backup_slots=minute_slot(fallback,split_research=True)
         self.assertEqual(primary_slots,set(range(2,60,5)))
         self.assertEqual(tail_slots,set(range(3,60,5)))
         self.assertEqual(backup_slots,set(range(4,60,5)))
