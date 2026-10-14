@@ -21,6 +21,8 @@ KEY=re.compile(r'^20\d{6}-\d{2}-\d{2}$')
 COMBO=re.compile(r'^[1-6]-[1-6]-[1-6]$')
 SCHEMA='BOAT_EDGE_V236_HITRATE_FORWARD_SHADOW_V1'
 SCORE_SCHEMA='BOAT_EDGE_V236_HITRATE_SCORE_V1'
+POLICY_V1='PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST'
+POLICY_V2='PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER'
 PATH='data/site_autopilot'
 
 
@@ -99,8 +101,37 @@ def unique_extend(seed,extra,count):
     return out[:count]
 
 
-def prepare(root,path,now):
-    """Build fixed, same-budget coverage alternatives only from frozen ticket identities."""
+def head_second_coverage10(hit,hole):
+    """One predeclared TopK head/second alternative from existing frozen modes.
+
+    This changes ticket membership and Top3/Top5 positions, unlike the old
+    seven-fixed-plus-three-tail experiment. Hole-mode input may itself be
+    odds-aware; this algorithm does NOT add any new multiplier or train on
+    outcomes. Research-only; promotion remains forbidden.
+    """
+    if len(hit)!=10 or not hole:return None
+    out=[]
+    def add(combo):
+        if combo not in out and len(out)<10:out.append(combo)
+    add(hit[0]);add(hit[1])
+    lead_head=hit[0].split('-')[0]
+    # Head omission is a measurable failure mode; use only an already
+    # predeadline frozen alternative rather than a guessed head probability.
+    alt=next((x for x in hole if x.split('-')[0]!=lead_head and x not in out),None)
+    if alt:add(alt)
+    add(hit[2])
+    # Earliest predeclared different head+second prefix, before rank 5.
+    used={(t.split('-')[0],t.split('-')[1]) for t in out}
+    alt2=next((x for x in hole if (x.split('-')[0],x.split('-')[1]) not in used
+               and x not in out),None)
+    if alt2:add(alt2)
+    for x in hit:add(x)
+    for x in hole:add(x)
+    return out if len(out)==10 else None
+
+
+def prepare(root,path,now,policy='legacy'):
+    """Build fixed, same-budget comparators only from immutable mode tickets."""
     formal_closed(root)
     cohort=load(path) or {}
     key=path.stem
@@ -132,14 +163,23 @@ def prepare(root,path,now):
     challenger=unique_extend(hit[:7],hole,10)
     expanded=unique_extend(hit,hole,15)
     if len(challenger)!=10:return None,'challenger_not_ten'
+    comparators={'hit10':hit,'balance10':balance,'scenario7plus3':challenger,
+          'coverage15':expanded}
+    comparison_policy=POLICY_V1
+    if policy=='headsecond':
+        proposed=head_second_coverage10(hit,hole)
+        if proposed is None:return None,'head_second_not_ten'
+        comparators['headsecond10']=proposed
+        comparison_policy=POLICY_V2
+    elif policy!='legacy':
+        return None,'unsupported_research_policy'
     return {'schema':SCHEMA,'scope':'PROSPECTIVE_SITE_SHADOW_NOT_FORMAL_FRESH',
       'race_key':key,'deadline_jst':cohort['deadline_jst'],
       'snapshot_saved_at':cohort['snapshot_saved_at'],'frozen_at':now.isoformat(),
       'v232_cohort_sha256':sha(path),'v232_first_git_commit':original['commit'],
       'v232_first_git_committed_at':original['at'].isoformat(),
-      'comparators':{'hit10':hit,'balance10':balance,'scenario7plus3':challenger,
-          'coverage15':expanded},
-      'comparison_policy':'PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST',
+      'comparators':comparators,
+      'comparison_policy':comparison_policy,
       'actual_or_paper_purchase':False,'production_model_changed':False,
       'result_seen_at_freeze':False,'proven_improvement':False},None
 
@@ -151,14 +191,14 @@ def freeze(root,now):
     for p in sorted((root/PATH/'v232_cohort').glob(day+'-??-??.json')):
         out=dest/p.name
         if out.exists():continue
-        seen+=1;obj,reason=prepare(root,p,now)
+        seen+=1;obj,reason=prepare(root,p,now,policy='headsecond')
         if obj:
             save_once(out,obj);n+=1
         else:excluded[reason]=excluded.get(reason,0)+1
     all_paths=list(dest.glob(day+'-??-??.json')) if dest.exists() else []
     s={'schema':'BOAT_EDGE_V236_HITRATE_PRE_RESULT_SUMMARY_V1','day_jst':day,
        'frozen_today':len(all_paths),'new_frozen_this_run':n,'rejected_current_window':excluded,
-       'comparators':['hit10','balance10','scenario7plus3','coverage15'],
+       'comparators':['hit10','balance10','scenario7plus3','coverage15','headsecond10'],
        'target':'TOP10_HIT_RATE_NOT_10_TO_20X_PRICE_BAND',
        'production_model_changed':False,'real_or_paper_purchases':0,'accuracy_improvement_proven':False}
     saved=save_changed(root/PATH/'v236_pre_current.json',s,['day_jst','frozen_today','rejected_current_window'])
@@ -214,11 +254,16 @@ def score_row(root,path,now):
     if (not frozen_at or frozen_at>=deadline or
             frozen_at>frozen_commit['at']+dt.timedelta(seconds=1)):
         return None,'candidate_freeze_time_invalid'
-    expected,reason=prepare(root,cohort_path,frozen_at)
+    policy=row.get('comparison_policy')
+    if policy not in (POLICY_V1,POLICY_V2):return None,'unknown_prospective_research_policy'
+    expected,reason=prepare(root,cohort_path,frozen_at,
+        policy='headsecond' if policy==POLICY_V2 else 'legacy')
     if reason or any(row.get(k)!=v for k,v in expected.items()):
         return None,'candidate_not_matching_predeclared_source'
     lists=row.get('comparators') or {}
-    if set(lists)!=set(['hit10','balance10','scenario7plus3','coverage15']):return None,'candidate_schema_modified'
+    names={'hit10','balance10','scenario7plus3','coverage15'}
+    if policy==POLICY_V2:names.add('headsecond10')
+    if not isinstance(lists,dict) or set(lists)!=names:return None,'candidate_schema_modified'
     if any(not isinstance(v,list) or len(v)<10 or len(v)>15 or any(not combo_ok(x) for x in v) or len(set(v))!=len(v) for v in lists.values()):
         return None,'candidate_ticket_invalid'
     result=load(root/'data/site_results'/path.name)
@@ -248,17 +293,32 @@ def score(root,now):
     settled=[load(p) for p in sorted(dest.glob('20??????-??-??.json'))] if dest.exists() else []
     settled=[x for x in settled if x and x.get('schema')==SCORE_SCHEMA]
     fields=['hit10','balance10','scenario7plus3','coverage15']
+    # Earlier first-Git-frozen four-mode rows retain their original schema,
+    # denominators and exact bytes. New V2 candidate is scored ONLY on
+    # prospective rows actually frozen with its fifth comparator.
+    future=[x for x in settled if 'headsecond10' in x.get('outcomes',{})]
+    gains=sum(x['outcomes']['headsecond10'] and not x['outcomes']['hit10'] for x in future)
+    losses=sum(not x['outcomes']['headsecond10'] and x['outcomes']['hit10'] for x in future)
+    discord=gains+losses
+    paired_p=(min(1.,2*sum(math.comb(discord,j) for j in range(min(gains,losses)+1))/(2**discord))
+              if discord else None)
     s={'schema':'BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1',
        'scope':'POST_RESULT_SAME_COHORT_COMPARISON_NOT_FORMAL_FRESH',
        'scored_total':len(settled),'new_scored_this_run':count,
        'comparisons':{m:{'hit':sum(x['outcomes'][m] for x in settled),'races':len(settled),
           'hit_rate_percent':round(sum(x['outcomes'][m] for x in settled)/len(settled)*100,2) if settled else None,
           'avg_points':round(sum(x['ticket_counts'][m] for x in settled)/len(settled),2) if settled else None} for m in fields},
+       'headsecond10_matched_prospective_only':{
+         'races':len(future),'current_hit10_hits':sum(x['outcomes']['hit10'] for x in future),
+         'candidate_hit10_hits':sum(x['outcomes']['headsecond10'] for x in future),
+         'gains':gains,'losses':losses,'paired_exact_p_two_sided':paired_p,
+         'top3_top5_requires_separate_frozen_ranked_scoring':True,
+         'promotion_authorized':False},
        'rejected_or_pending_this_run':excluded,'production_model_changed':False,
        'promotion_authorized':False,'real_or_paper_purchase':False,
        'status':'DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION',
        'examples':[{'race_key':x['race_key'],'winning':x['official_result'],'outcomes':x['outcomes']} for x in settled[-25:]]}
-    changed=save_changed(root/PATH/'v236_score_current.json',s,['scored_total','comparisons','rejected_or_pending_this_run'])
+    changed=save_changed(root/PATH/'v236_score_current.json',s,['scored_total','comparisons','headsecond10_matched_prospective_only','rejected_or_pending_this_run'])
     print('V236_SITE_RESULT_PAIRED_HITRATE',json.dumps({'new':count,'total':len(settled),'comparisons':s['comparisons'],'pending':excluded,'state_written':changed},ensure_ascii=False,sort_keys=True))
     return s
 
