@@ -40,7 +40,7 @@ jobs:
           cat > "$RUNNER_TEMP/v236_install.py" <<'PY_V236_INSTALL'
           import hashlib
           from pathlib import Path
-          source_pins = {'scripts/boat_edge_v236_hit_rate.py': 'f8d5a70f79313c675ef904f1737d863434f442b0a2f1a731786a7c1bb87939b6', 'tests/test_boat_edge_v236_hit_rate.py': '559f5d3741caa91a9ea2a6fb735341158f4d68d3f5b2372b6583ac5e92dad735'}
+          source_pins = {'scripts/boat_edge_v236_hit_rate.py': 'f29cf602835b9aa545dfc8bf1a5c3631cc60ae7e79b44b94a571f265e02aa018', 'tests/test_boat_edge_v236_hit_rate.py': 'd4aa95c7656d295547e3da063406d76a8375132a1519356930a30e405ba1da44'}
           for name, expected in source_pins.items():
               path = Path(name)
               if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
@@ -91,7 +91,12 @@ jobs:
       # Previous Git-attested SITE cohorts can be scored later; never delay
       # the five-minute, result-unseen prospective freeze above.
       - name: Score only previously Git-committed cohorts against confirmed SITE results
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '3,18,33,48 0-14,23 * * *') }}
+        # Existing five-minute freeze runs are not duplicated. Ordinary SITE
+        # settlement remains fifteen-minute staggered; a first-Git frozen V2/V3
+        # candidate with a confirmed official SITE result may score sooner.
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'schedule' }}
+        env:
+          V236_SCHEDULED_TICK: ${{ github.event.schedule }}
         shell: bash
         run: |
           set -euo pipefail
@@ -107,6 +112,27 @@ jobs:
             # Do not trust the job-start embedded pin after git reset --hard.
             python3 scripts/verify_workflow_source_pins.py
             PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v236_hit_rate.py' -q
+            # Never accelerate the ordinary retrospective score/PAGES churn.
+            # Extra existing 5-minute ticks may score ONLY newly confirmed
+            # V2/V3 first-Git-frozen headsecond candidates, if any. Formal
+            # results are not opened; the strict SITE official-result and first
+            # predeadline Git checks are repeated by the actual score script.
+            if [[ "$GITHUB_EVENT_NAME" == 'schedule' && "$V236_SCHEDULED_TICK" != '3,18,33,48 0-14,23 * * *' ]]; then
+              fast_score_gate="$(PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY_V236_FAST_SCORE_GATE'
+          from pathlib import Path
+          from scripts.boat_edge_v236_hit_rate import pending_confirmed_prospective_score
+          ready=pending_confirmed_prospective_score(Path('.'))
+          print('V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE' if ready
+                else 'V236_NO_CONFIRMED_PROSPECTIVE_SCORE')
+          PY_V236_FAST_SCORE_GATE
+              )"
+              if [[ "$fast_score_gate" != 'V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE' ]]; then
+                echo "$fast_score_gate"
+                success=true
+                break
+              fi
+              echo V236_ACCELERATE_ONLY_VERIFIED_PROSPECTIVE_CANDIDATE
+            fi
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v236_hit_rate.py score
             if test -f data/site_autopilot/v236_score_current.json; then git add -- data/site_autopilot/v236_score_current.json; fi
             if test -d data/site_autopilot/v236_scored; then git add -A -- data/site_autopilot/v236_scored; fi
