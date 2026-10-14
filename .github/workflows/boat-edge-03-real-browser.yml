@@ -112,16 +112,37 @@ jobs:
         run: python tests/browser/test_boat_edge_03_real_site.py --engine webkit
 
       - name: Published Pages - Chromium live navigation
+        shell: bash
         run: |
+          set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine chromium \
-            --site-url https://ikst2512-eng.github.io/boat-edge/index.html
+            --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
+            | tee "$RUNNER_TEMP/pages-chromium-live-final.log"
 
       - name: Published Pages - WebKit iPhone-sized live navigation
+        shell: bash
         run: |
+          set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine webkit \
-            --site-url https://ikst2512-eng.github.io/boat-edge/index.html
+            --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
+            | tee "$RUNNER_TEMP/pages-webkit-live-final.log"
+
+      # On a V229 workflow_run, the existing 01 cheap preflight already proved
+      # SHA bytes + FIRST Git add before the official race deadline. Passing
+      # generic browser navigation is NOT proof that saved FINAL TopK rendered.
+      # Only the real published SHA-audited final with exact selected-mode
+      # Top3/5/10 parity in BOTH browsers may complete this acceptance gate.
+      - name: Require published saved FINAL Top3 Top5 Top10 in both real browsers
+        if: github.event_name == 'workflow_run'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_01_live_final_browser_acceptance.py \
+            --chromium "$RUNNER_TEMP/pages-chromium-live-final.log" \
+            --webkit "$RUNNER_TEMP/pages-webkit-live-final.log"
+          echo 'Published saved FINAL Top3/5/10: SHA parity in Chromium + iPhone-sized WebKit PASS' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload actual screenshots (including failures)
         # No recurring artifact-storage buildup from twice-daily read-only probes.
