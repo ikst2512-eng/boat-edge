@@ -31,12 +31,63 @@ function renderRacers(d){
       const n=Number(x);return Number.isFinite(n)?`${n.toFixed(1)}%`:'—'};
     return `<article class="be48-racer">${lane(l)}<div class="be48-rmain"><b>${esc(value(r.name))}</b><span>${esc(value(r.class))} / 平均ST ${esc(value(r.avg_st))}</span><span>全国 ${esc(value(n.win_rate))}　当地 ${esc(value(loc.win_rate))}</span></div><div class="be48-rside"><span>M2<b>${p(m.quinella_rate)}</b></span><span>B2<b>${p(b.quinella_rate)}</b></span></div></article>`}).join("")||'<div class="be48-empty">選手データがありません</div>';
 }
-function beforeMaps(d){const bf=d?.beforeinfo||{},starts=new Map(),actual=new Map();(bf.start_exhibition||[]).forEach((x,i)=>starts.set(Number(x.lane??(i+1)),x.st??x.start_timing??x.start));(d?.actual_entry||[]).forEach((x,i)=>{if(typeof x==="number")actual.set(i+1,x);else actual.set(Number(x?.lane??(i+1)),x?.course??x?.actual_course??x?.entry_course)});return{bf,starts,actual}}
+/* UI-only source boundary: no result, odds, or post-deadline field is inferred. */
+function sourceReady(d,kind){
+ const key=String(d?.race_key||''),m=d?.meta||{},a=d?.source_audit?.[kind];
+ if(!/^20\d{6}-(?:0[1-9]|1\d|2[0-4])-(?:0[1-9]|1[0-2])$/.test(key)||
+    m.phase!=='PRE_RESULT'||m.results_seen!==false||m.unlock!==false||m.scoring!==false||
+    m.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8)||
+    String(m.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
+    Number(m.race_no)!==Number(key.slice(12,14))||
+    !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(m.deadline||''))||
+    a?.status!=='ok'||!/^[a-f0-9]{64}$/i.test(String(a.sha256||'')))return false;
+ const due=Date.parse(m.date+'T'+m.deadline+':00+09:00'),fetched=Date.parse(a.fetched_at||'');
+ return Number.isFinite(due)&&Number.isFinite(fetched)&&fetched<=due&&fetched<=Date.now()+60000;
+}
+function uniqueBeforeLanes(items){
+ const found=new Map(),duplicates=new Set();
+ for(const item of Array.isArray(items)?items:[]){
+  const lane=Number(item?.lane);
+  if(!Number.isInteger(lane)||lane<1||lane>6||typeof item?.lane==='boolean')continue;
+  if(found.has(lane))duplicates.add(lane);else found.set(lane,item);
+ }
+ for(const lane of duplicates)found.delete(lane);
+ return found;
+}
+function beforeMaps(d){
+ const official=sourceReady(d,'beforeinfo'),sttReady=sourceReady(d,'stt');
+ const bf=official?d.beforeinfo||{}:{};
+ const starts=official?uniqueBeforeLanes(bf.start_exhibition):new Map();
+ const by=official?uniqueBeforeLanes(bf.racers):new Map();
+ const stt=sttReady?uniqueBeforeLanes(d.actual_entry):new Map();
+ const actual=new Map(),entryCounts=new Map();
+ for(let l=1;l<=6;l++){
+  const s=starts.get(l),t=stt.get(l);
+  const raw=s?.course??t?.course??t?.actual_course??t?.entry_course;
+  if(raw===null||raw===undefined||typeof raw==='boolean'||String(raw).trim()==='')continue;
+  const course=Number(raw);
+  if(Number.isInteger(course)&&course>=1&&course<=6){
+   actual.set(l,course);entryCounts.set(course,(entryCounts.get(course)||0)+1);
+  }
+ }
+ // Duplicate exhibition positions are ambiguous; never label either as confirmed.
+ for(const [lane,course] of actual)if(entryCounts.get(course)>1)actual.delete(lane);
+ return {bf,starts,by,stt,actual,official,sttReady};
+}
 function renderBeforeCompact(d){
-  const host=q("#be48Before");if(!host)return;const {bf,starts,actual}=beforeMaps(d),names=new Map((d?.racers||[]).map((r,i)=>[laneNo(r,i),r.name])),by=new Map((bf.racers||[]).map((r,i)=>[Number(r.lane??(i+1)),r]));
-  const en=[...actual.entries()].sort((a,b)=>a[0]-b[0]);let s=`<div class="be48-entry"><span>実進入</span><b>${esc(en.length?en.map(([l,c])=>`${l}→${value(c)}`).join("　"):"—")}</b></div><div class="be48-bhead"><span>艇</span><span>選手</span><span>展示ST</span><span>展示タイム</span><span>チルト</span></div>`;
-  for(let l=1;l<=6;l++){const r=by.get(l)||{};s+=`<div class="be48-brow">${lane(l)}<b>${esc(value(names.get(l)))}</b><span>${esc(value(starts.get(l)))}</span><span>${esc(value(r.exhibition_time))}</span><span>${esc(value(r.tilt))}</span></div>`}
-  host.innerHTML=s+'<div class="be48-note">未取得値は補完せず「—」で表示</div>';
+ const host=q("#be48Before");if(!host)return;
+ const {starts,by,stt,actual,official,sttReady}=beforeMaps(d);
+ const names=uniqueBeforeLanes(d?.racers);
+ const en=[...actual.entries()].sort((a,b)=>a[0]-b[0]);
+ let s=`<div class="be48-entry"><span>展示進入（枠→コース・保存値）</span><b>${esc(en.length?en.map(([l,c])=>`${l}→${c}`).join("　"):"—")}</b></div><div class="be48-bhead"><span>艇</span><span>選手</span><span>展示ST</span><span>展示タイム</span><span>チルト</span></div>`;
+ for(let l=1;l<=6;l++){
+  const row=by.get(l)||{},start=starts.get(l)||{},fallback=stt.get(l)||{};
+  const rawSt=start.st??start.start_timing??start.start??fallback.exhibition_st_raw??fallback.exhibition_st;
+  s+=`<div class="be48-brow">${lane(l)}<b>${esc(value(names.get(l)?.name))}</b><span>${esc(value(rawSt))}</span><span>${esc(value(row.exhibition_time))}</span><span>${esc(value(row.tilt))}</span></div>`;
+ }
+ host.innerHTML=s+'<div class="be48-note">'+
+   (official||sttReady?'締切前の取得証跡を照合した保存値のみ表示。':'直前情報の締切前取得・SHA証跡が未確認のため数値を非表示。')+
+   ' 未取得・進入不一致・艇番重複は「—」。展示進入は本番進入とは異なります。</div>';
 }
 function compactDetails(d){
   const card=q("#tab-card .section"),before=q("#tab-before .section");
