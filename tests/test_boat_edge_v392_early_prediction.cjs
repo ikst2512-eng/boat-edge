@@ -237,6 +237,60 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  vm.runInContext("actionBar({race_key:'20261014-14-02'})",actionContext);
  assert.equal(actionNode.dataset.be48TicketState,'stopped');
  console.log('BOAT_EDGE_03_STOPPED_ACTION_BAR_FAIL_CLOSED_REGRESSION_PASS');
+
+ // 03: a same-race card refresh must replace Top3/5/10 click source, not
+ // resurrect the prior immutable PRE_RESULT preview through an old closure.
+ const showStart=js.indexOf('function drawRows(box,p){');
+ const showEnd=js.indexOf('async function render(r){',showStart);
+ assert.ok(showStart>=0&&showEnd>showStart);
+ const fakeList={children:[],replaceChildren(){this.children=[];},append(el){this.children.push(el);}};
+ const fakeMeta={textContent:''};
+ const fakeTabs={handler:null,addEventListener(event,fn){assert.equal(event,'click');this.handler=fn;}};
+ const buttons=[3,5,10].map(n=>({dataset:{count:String(n)},setAttribute(key,v){this[key]=v;}}));
+ const box={
+   dataset:{},tab:null,meta:fakeMeta,lines:fakeList,
+   replaceChildren(){this.tab=null;this.lines.replaceChildren();},
+   removeAttribute(){},setAttribute(){},
+   set innerHTML(markup){if(markup.includes('class="be392-tabs"'))this.tab=fakeTabs;},
+   querySelector(sel){if(sel==='.be392-tabs')return this.tab;
+     if(sel==='.be392-lines')return this.tab?this.lines:null;
+     if(sel==='.be392-meta')return this.meta;return null;},
+   querySelectorAll(sel){return sel==='.be392-tabs button[data-count]'&&this.tab?buttons:[];}
+ };
+ const makeNode=()=>({children:[],textContent:'',append(...els){this.children.push(...els);}});
+ const showContext=vm.createContext({
+   activeKey:KEY,currentPreview:null,shown:10,
+   ensure:()=>box,finalFor:()=>false,
+   $:(sel,root)=>root?root.querySelector(sel):null,
+   text:(el,value)=>{if(el)el.textContent=String(value??'');},
+   document:{createElement:makeNode,querySelector:()=>box},
+   Date
+ });
+ vm.runInContext(js.slice(showStart,showEnd),showContext);
+ const clickTop=n=>fakeTabs.handler({target:{closest:()=>buttons.find(b=>Number(b.dataset.count)===n)}});
+ const firstTicket=()=>box.lines.children[0]?.children[1]?.textContent;
+ showContext.r=race;showContext.p=preview;
+ vm.runInContext('showPreview(r,p)',showContext);
+ // Use the same context so the lexical currentPreview and shown are shared.
+ const previewB={...preview,ranked_120:rows.slice().reverse().map((x,i)=>({
+   ...x,rank:i+1,relative_score:120-i
+ })),head_candidate:6};
+ showContext.r=race;showContext.p=previewB;
+ vm.runInContext('showPreview(r,p)',showContext);
+ clickTop(3);
+ assert.equal(box.lines.children.length,3);
+ assert.equal(firstTicket(),combos[119],'Top3 must use latest source rather than initial click closure');
+ clickTop(5);
+ assert.equal(box.lines.children.length,5);
+ assert.equal(firstTicket(),combos[119]);
+ showContext.activeKey='20261015-14-02';
+ const beforeSwitch=box.lines.children.length;
+ clickTop(10);
+ assert.equal(box.lines.children.length,beforeSwitch,'Old race tabs must not render after selection moved');
+ vm.runInContext('hide()',showContext);
+ clickTop(10);
+ assert.equal(box.lines.children.length,0,'Hidden preview must not be reintroduced by its previous tab listener');
+ console.log('BOAT_EDGE_03_EARLY_PREVIEW_TOPK_CURRENT_RACE_REFRESH_PASS');
  console.log('V392_SITE_FINAL_SHA_AUDIT_HANDOFF_FIXTURE_PASS');
  console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
 })().catch(error=>{console.error(error);process.exitCode=1});
