@@ -23,23 +23,6 @@
      seen.add(r.race_key);raceDays.add(r.race_key.slice(0,8));
    }
    const days=[...raceDays].sort();if(!days.length)return null;
-   if(lane==='v236'){
-     const summaries=p.headsecond_by_frozen_policy;
-     if(!summaries||Object.keys(summaries).length!==forwardPolicies.length)return null;
-     for(const policy of forwardPolicies){
-       const matched=p.races.filter(r=>r.candidate_policy===policy);
-       const entry=summaries[policy];
-       if(!entry||entry.matched_races!==matched.length||
-          !entry.miss_categories||Object.keys(entry.miss_categories).length!==2)return null;
-       for(const mode of ['hit10','headsecond10']){
-         const counts=entry.miss_categories[mode];
-         if(!counts||Object.keys(counts).length!==cats.length||
-            cats.some(k=>!int(counts[k]))||
-            cats.reduce((n,k)=>n+counts[k],0)!==matched.length||
-            cats.some(k=>matched.filter(r=>r.categories[mode]===k).length!==counts[k]))return null;
-       }
-     }
-   }
    const output=[];
    for(const k of keys){
      const x=d.comparisons[k];
@@ -90,6 +73,23 @@
         !r.categories||Object.keys(r.categories).length!==expected.length||
         expected.some(k=>!cats.includes(r.categories[k])))return null;
      seen.add(r.race_key);days.add(r.date_jst);
+   }
+   if(lane==='v236'){
+     const summaries=p.headsecond_by_frozen_policy;
+     if(!summaries||Object.keys(summaries).length!==forwardPolicies.length)return null;
+     for(const policy of forwardPolicies){
+       const matched=p.races.filter(r=>r.candidate_policy===policy);
+       const entry=summaries[policy];
+       if(!entry||entry.matched_races!==matched.length||
+          !entry.miss_categories||Object.keys(entry.miss_categories).length!==2)return null;
+       for(const mode of ['hit10','headsecond10']){
+         const counts=entry.miss_categories[mode];
+         if(!counts||Object.keys(counts).length!==cats.length||
+            cats.some(k=>!int(counts[k]))||
+            cats.reduce((n,k)=>n+counts[k],0)!==matched.length||
+            cats.some(k=>matched.filter(r=>r.categories[mode]===k).length!==counts[k]))return null;
+       }
+     }
    }
    const output=[];
    for(const k of keys){
