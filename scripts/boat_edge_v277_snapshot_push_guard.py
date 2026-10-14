@@ -112,9 +112,28 @@ def audit(root: Path) -> dict:
 
 
 if __name__ == "__main__":
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
     try:
-        report = audit(Path(sys.argv[1]) if len(sys.argv) > 1 else Path("."))
+        report = audit(root)
     except GuardFailure as exc:
-        print(str(exc), file=sys.stderr)
-        raise SystemExit(1)
+        # Only the official collector opts into conservative, per-race
+        # pruning AFTER remote V235/V232 freezing. Never alter a model or
+        # protected source, and always repeat the unchanged safety audit.
+        import os
+        if (str(exc).startswith("V277_FROZEN_RACE_SOURCE_MUTATION_BLOCKED_")
+                and os.environ.get("BOAT_EDGE_V277_COLLECTOR_PRUNE_FROZEN") == "1"):
+            try:
+                if str(root.resolve()) not in sys.path:
+                    sys.path.insert(0, str(root.resolve()))
+                from scripts.boat_edge_v01_prune_frozen_collector import filter_newly_frozen
+                filtered = filter_newly_frozen(root)
+                print("V277_REMOTE_FROZEN_SOURCE_PRESERVED " +
+                      json.dumps(filtered, sort_keys=True))
+                report = audit(root)
+            except (GuardFailure, OSError, ValueError) as prune_error:
+                print(str(prune_error), file=sys.stderr)
+                raise SystemExit(1)
+        else:
+            print(str(exc), file=sys.stderr)
+            raise SystemExit(1)
     print("V277_COLLECTOR_PUSH_FROZEN_SOURCE_GUARD_PASS " + json.dumps(report, sort_keys=True))
