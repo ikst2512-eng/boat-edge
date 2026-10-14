@@ -126,7 +126,10 @@ def prove(root: Path, key: str, now: datetime):
         data = f.read_bytes()
         if hashlib.sha256(data).hexdigest() != row["sha256"]:
             return None, role + "_raw_sha_mismatch"
-        evidence[role] = data.decode("utf-8", errors="replace")
+        # Official race pages may be UTF-8 or Japanese Windows-31J. Check
+        # both readings so a correctly encoded withdrawal marker is not lost.
+        evidence[role] = (data.decode("utf-8", errors="replace") + "\\n"
+                          + data.decode("cp932", errors="replace"))
     # Require six real labelled exhibition observations, not an incomplete CSV.
     if not complete_beforeinfo(race):
         return None, "six_boat_exhibition_unverified"
