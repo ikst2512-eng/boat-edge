@@ -26,12 +26,12 @@
   // only same-race, hashed, pre-deadline PRE_RESULT data can supply visible numbers.
   function displayProof(r,k,now=Date.now()){
     const key=String(r?.race_key||''),m=r?.meta||{},s=r?.source_audit?.[k];
-    if(!/^20\\d{6}-(?:0[1-9]|1\\d|2[0-4])-(?:0[1-9]|1[0-2])$/.test(key)||
+    if(!/^20\d{6}-(?:0[1-9]|1\d|2[0-4])-(?:0[1-9]|1[0-2])$/.test(key)||
        m.phase!=='PRE_RESULT'||m.results_seen!==false||m.unlock!==false||m.scoring!==false||
        m.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8)||
        String(m.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
        Number(m.race_no)!==Number(key.slice(12,14))||
-       !/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(String(m.deadline||''))||
+       !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(m.deadline||''))||
        s?.status!=='ok'||!/^[a-f0-9]{64}$/i.test(String(s.sha256||''))||
        (s.race_key&&s.race_key!==key))return false;
     const fetched=Date.parse(s.fetched_at||''),due=deadline(r);
