@@ -211,6 +211,10 @@ jobs:
               meta=doc.get('meta') or {}
               if not isinstance(meta,dict):
                   continue
+              # Missing event and deadline indicate a placeholder card, not
+              # evidence of a race that needs a result. Exclude from retries.
+              if not meta.get('deadline') and meta.get('event')=='データがありません。':
+                  continue
               # File naming is the canonical site race identity; do not require
               # optional card metadata to use a particular serialization.
               target=out/p.name
@@ -253,6 +257,10 @@ jobs:
           for card in races.glob('*.json'):
               m=re.fullmatch(r'(\d{8})-(\d{2})-(\d{2})\.json',card.name)
               if not m or not (START<=m.group(1)<today):
+                  continue
+              card_doc=read_json(card)
+              card_meta=(card_doc or {}).get('meta') or {}
+              if not card_meta.get('deadline') and card_meta.get('event')=='データがありません。':
                   continue
               existing=read_json(out/card.name)
               coverage_total+=1
