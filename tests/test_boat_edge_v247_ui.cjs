@@ -60,6 +60,15 @@ assert(resultJs.includes("data-verification"));
 const resultHtml=fs.readFileSync('results.html','utf8');
 for(const word of ['検証済み的中','検証済み不的中','結果待ち','検証対象外'])assert(resultHtml.includes(word));
 assert(!resultJs.includes('data/formal_'));
+/* 03: first-selection failure is visible even before entering raceView. */
+const homeRaceHTML=fs.readFileSync('index.html','utf8');
+assert(homeRaceHTML.includes('[document.getElementById("homeView"),"be03HomeRaceLoadNotice"]'));
+assert(homeRaceHTML.includes('button.textContent="このレースを再取得"'));
+assert(homeRaceHTML.includes('button.addEventListener("click",()=>loadRace(file,venue))'));
+assert(homeRaceHTML.includes('const canRetry=Boolean(isError&&match&&venue===match[1].slice(9,11))'));
+assert(homeRaceHTML.includes('true,{file,jcd})'));
+assert(homeRaceHTML.includes('.be03-load-notice .be03-retry-button'));
+console.log('BOAT_EDGE_03_HOME_ERROR_RETRY_VISIBLE_SOURCE_BOUND_PASS');
 const nav=fs.readFileSync('assets/boat_edge_v166_refresh.js','utf8');
 assert(nav.includes("b.textContent='↻ 更新'"));
 assert(nav.includes("aria-label','現在のページのデータを更新"));

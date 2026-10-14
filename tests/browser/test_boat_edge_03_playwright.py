@@ -308,6 +308,8 @@ class MobilePredictionBrowser(unittest.TestCase):
                 try:
                     page.set_content("""<!doctype html><meta name="viewport"
                      content="width=device-width,initial-scale=1">
+                     <style>.view:not(.active){display:none}.be03-retry-button{min-height:44px}</style>
+                     <main id="homeView" class="view"></main>
                      <div id="raceView" class="view active">
                      <div class="race-summary"><div class="summary-top" id="raceTitle">以前のレース</div></div>
                      <div id="be207Top">以前のレースの買い目</div></div>
@@ -331,9 +333,11 @@ class MobilePredictionBrowser(unittest.TestCase):
                         const file=String(url);
                         const delay=file.includes('20261014-14-01.json')?230:15;
                         setTimeout(()=>{
-                          if(file.includes('20261014-14-03.json'))resolve({ok:false,status:404});
+                          if(file.includes('20261014-14-03.json') &&
+                             !window.__allowHomeRetry)resolve({ok:false,status:404});
                           else{
-                            const n=file.includes('20261014-14-01.json')?1:2;
+                            const n=file.includes('20261014-14-01.json')?1:
+                              file.includes('20261014-14-03.json')?3:2;
                             resolve({ok:true,json:async()=>({
                               race_key:'20261014-14-0'+n,
                               meta:{date:'2026-10-14',venue_code:'14',race_no:n,
@@ -385,6 +389,44 @@ class MobilePredictionBrowser(unittest.TestCase):
                     self.assertEqual(mismatch["role"], "alert")
                     self.assertIn("一致しません", mismatch["message"])
                     self.assertEqual(page.locator("#raceTitle").inner_text(), "2R")
+                    # First selection while only HOME is visible must
+                    # keep the error visible, actionable, and race-scoped.
+                    home_fail = page.evaluate("""async () => {
+                      document.getElementById('raceView').classList.remove('active');
+                      document.getElementById('homeView').classList.add('active');
+                      await loadRace('data/races/20261014-14-03.json','14');
+                      const note=document.getElementById('be03HomeRaceLoadNotice');
+                      return {role:note?.getAttribute('role'),
+                        message:note?.textContent||'',
+                        visible:!!note&&getComputedStyle(note).display!=='none',
+                        retry:note?.querySelector('button')?.textContent||'',
+                        key:state.race.race_key};
+                    }""")
+                    self.assertEqual(home_fail["role"], "alert")
+                    self.assertTrue(home_fail["visible"])
+                    self.assertIn("404", home_fail["message"])
+                    self.assertIn("再取得", home_fail["retry"])
+                    self.assertEqual(home_fail["key"], "20261014-14-02")
+                    button = page.locator('#be03HomeRaceLoadNotice .be03-retry-button')
+                    self.assertTrue(button.is_visible())
+                    self.assertGreaterEqual(button.bounding_box()["height"], 44)
+                    page.evaluate("window.__allowHomeRetry=true")
+                    button.tap()
+                    page.wait_for_function(
+                        """() => state.race.race_key === '20261014-14-03' &&
+                            !document.querySelector('#be03HomeRaceLoadNotice') &&
+                            !document.querySelector('#be03RaceLoadNotice')""",
+                        timeout=12000
+                    )
+                    self.assertEqual(page.locator("#raceTitle").inner_text(), "3R")
+                    # Mismatched venue/code must not create a retry control.
+                    page.evaluate("""() => {
+                      be03RaceLoadNotice('出走表取得に失敗',true,
+                        {file:'data/races/20261014-14-01.json',jcd:'24'});
+                    }""")
+                    self.assertEqual(page.locator('#be03HomeRaceLoadNotice button').count(), 0)
+                    page.evaluate("() => be03RaceLoadNotice('')")
+                    self.assertEqual(page.locator('#be03HomeRaceLoadNotice').count(), 0)
                     screenshot_dir = os.getenv("BOAT_EDGE_SCREENSHOT_DIR")
                     if screenshot_dir:
                         dest = Path(screenshot_dir)
