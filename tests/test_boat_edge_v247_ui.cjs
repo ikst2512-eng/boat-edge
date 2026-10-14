@@ -377,6 +377,44 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  console.log('BOAT_EDGE_03_JST_LIVE_DEADLINE_COUNTDOWN_PASS');
 })();
 
+/* 03: the home deadline and race-detail deadline must share one JST instant. */
+(()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ const a=html.indexOf('function minutesToDeadline(deadline,raceDate){');
+ const b=html.indexOf('function formatUpdated(',a);
+ const c=html.indexOf('function parseDeadlineToday(deadline,raceDate){');
+ const d=html.indexOf('function formatCountdown(',c);
+ const e=html.indexOf('function collectRaces(){');
+ const f=html.indexOf('function raceReadinessScore(',e);
+ assert(a>0&&b>a&&c>0&&d>c&&e>0&&f>e);
+ const fixed=Date.parse('2026-10-15T10:30:00+09:00');
+ class Clock extends Date{static now(){return fixed;}}
+ const ctx=vm.createContext({
+  Date:Clock,Number,String,JSON,RegExp,Math,Array,Promise,
+  state:{today:{date:'2026-10-15',
+    venues:[{jcd:'02',venue:'戸田',races:[
+     {race_key:'20261015-02-01',race_no:1,deadline:'10:40'},
+     {race_key:'20261015-02-02',race_no:2,deadline:'10:25'},
+     {race_key:'20261015-02-03',race_no:3,deadline:'11:10'}]}]}}
+ });
+ vm.runInContext(html.slice(a,b)+'\n'+html.slice(c,d)+'\n'+html.slice(e,f),ctx);
+ const get=(time,date)=>vm.runInContext('minutesToDeadline('+JSON.stringify(time)+','+JSON.stringify(date)+')',ctx);
+ assert.equal(get('10:40','2026-10-15'),10,'10 minutes remaining JST');
+ assert.equal(get('10:25','2026-10-15'),-5,'finished race stays finished JST');
+ assert.equal(get('11:10','2026-10-15'),40);
+ assert.equal(get('10:40','2026-10-14'),-1430,'prior date not treated as today');
+ assert.equal(get('10:40','2026-10-16'),1450,'future date remains future');
+ assert.equal(get('25:90','2026-10-15'),null,'invalid clock must stay unknown');
+ assert.equal(get('10:40','2026-02-31'),null,'invalid day must stay unknown');
+ const rows=vm.runInContext('collectRaces()',ctx);
+ assert.deepEqual(Array.from(rows,x=>x.mins),[10,40,-5]);
+ assert.equal(rows[0].race_key,'20261015-02-01');
+ assert.equal(rows[1].race_key,'20261015-02-03');
+ assert(html.includes('mins:minutesToDeadline(r.deadline,state.today?.date)'));
+ assert(html.includes('const mins = minutesToDeadline(r.deadline,state.today?.date);'));
+ console.log('BOAT_EDGE_03_JST_HOME_VENUE_DEADLINE_MATCH_RACE_DETAIL_PASS');
+})();
+
 /* 03: midnight fail-closed race catalog. Exercise actual UI source, no network. */
 (async()=>{
  const html=fs.readFileSync('index.html','utf8');

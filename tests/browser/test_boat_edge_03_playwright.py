@@ -506,6 +506,53 @@ class MobilePredictionBrowser(unittest.TestCase):
                     context.close()
 
 
+    def test_home_deadline_jst_independent_of_device_timezone(self):
+        """Production home countdown agrees with race-detail JST on iPhone-size WebKit."""
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        a = html.index("function minutesToDeadline(deadline,raceDate){")
+        b = html.index("function formatUpdated(", a)
+        c = html.index("function parseDeadlineToday(deadline,raceDate){")
+        d = html.index("function formatCountdown(", c)
+        e = html.index("function collectRaces(){")
+        f = html.index("function raceReadinessScore(", e)
+        script = html[a:b] + "\n" + html[c:d] + "\n" + html[e:f]
+        for kind, browser in self.browsers.items():
+            for zone in ("Asia/Tokyo", "UTC", "America/Los_Angeles"):
+                with self.subTest(browser=kind, timezone=zone):
+                    context = browser.new_context(
+                        viewport={"width": 390, "height": 844},
+                        device_scale_factor=2, is_mobile=True, has_touch=True,
+                        locale="ja-JP", timezone_id=zone)
+                    page = context.new_page()
+                    try:
+                        page.set_content(
+                            '<!doctype html><html><body>'
+                            '<output id="homeRemaining"></output></body></html>')
+                        page.evaluate("""() => {
+                          Date.now=()=>Date.parse('2026-10-15T10:30:00+09:00');
+                          window.state={today:{date:'2026-10-15',
+                            venues:[{venue:'戸田',jcd:'02',races:[
+                              {race_key:'20261015-02-01',race_no:1,deadline:'10:40'},
+                              {race_key:'20261015-02-02',race_no:2,deadline:'10:25'}
+                            ]}]}};
+                        }""")
+                        page.add_script_tag(content=script)
+                        remaining = page.evaluate("""() => {
+                          const rows=collectRaces();
+                          document.querySelector('#homeRemaining').textContent=
+                            rows[0].mins+'分後';
+                          return {mins:rows.map(r=>r.mins),
+                            sec:deadlineDeltaSeconds('10:40','2026-10-15'),
+                            prior:minutesToDeadline('10:40','2026-10-14')};
+                        }""")
+                        self.assertEqual(remaining["mins"], [10, -5])
+                        self.assertEqual(remaining["sec"], 600)
+                        self.assertEqual(remaining["prior"], -1430)
+                        self.assertEqual(page.locator("#homeRemaining").inner_text(),
+                                         "10分後")
+                    finally:
+                        context.close()
+
     def test_midnight_catalog_guard_hides_prior_day_home_races(self):
         """Real Chromium/WebKit, same production guard, result-unseen synthetic."""
         html = (ROOT / "index.html").read_text(encoding="utf-8")
