@@ -90,8 +90,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(scored['scored_total'],1)
         self.assertEqual(scored['comparisons']['scenario7plus3']['hit'],1)
         self.assertEqual(scored['headsecond10_matched_prospective_only']['races'],0)
+        self.assertEqual(scored['headsecond10_matched_prospective_only']['ranked_top3_top5_top10']['3']['races'],0)
         stored=m.load(self.root/m.PATH/'v236_scored'/f'{KEY}.json')
         self.assertNotIn('headsecond10',stored['outcomes'])
+        self.assertNotIn('prefix_outcomes',stored)
 
     def test_headsecond_scores_only_new_predeadline_candidate(self):
         m.freeze(self.root,self.frozen)
@@ -109,6 +111,19 @@ class Tests(unittest.TestCase):
         self.assertEqual((pair['gains'],pair['losses']),(1,0))
         self.assertEqual(pair['paired_exact_p_two_sided'],1.0)
         self.assertFalse(pair['promotion_authorized'])
+        topk=pair['ranked_top3_top5_top10']
+        self.assertEqual(set(topk),{'3','5','10'})
+        self.assertEqual([(topk[str(k)]['races']) for k in (3,5,10)],[1,1,1])
+        self.assertEqual([topk[str(k)]['candidate_hits'] for k in (3,5,10)],[1,1,1])
+        self.assertEqual([topk[str(k)]['current_hits'] for k in (3,5,10)],[0,0,0])
+        self.assertEqual([topk[str(k)]['gains'] for k in (3,5,10)],[1,1,1])
+        self.assertTrue(all(topk[str(k)]['paired_exact_p_two_sided']==1.0
+                            for k in (3,5,10)))
+        stored=m.load(self.root/m.PATH/'v236_scored'/f'{KEY}.json')
+        self.assertEqual(stored['prefix_outcomes']['headsecond10'],
+                         {'3':True,'5':True,'10':True})
+        self.assertEqual(stored['prefix_outcomes']['hit10'],
+                         {'3':False,'5':False,'10':False})
         again=m.score(self.root,m.parse(RESULT_TIME))
         self.assertEqual(again['new_scored_this_run'],0)
         self.assertEqual(again['headsecond10_matched_prospective_only'],pair)
