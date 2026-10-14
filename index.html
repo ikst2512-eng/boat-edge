@@ -3296,12 +3296,21 @@ async function be162RefreshVisibleRace(){
     const response=await fetch(`./data/races/${key}.json?live=${Date.now()}`,{cache:"no-store"});
     if(!response.ok)return;
     const race=await response.json();
-    if(race.race_key!==key)return;
-    if(race.meta?.results_seen!==false || race.meta?.unlock!==false || race.meta?.scoring!==false)return;
-    const signature=r=>JSON.stringify([r.meta?.updated_at,r.beforeinfo,r.actual_entry,r.original_exhibition,r.source_audit?.beforeinfo?.status]);
+    // A source-only update may leave meta.updated_at and the measurement
+    // values unchanged. Verify the refreshed file identity and result-unseen
+    // state before any subsequent scratch/overlay/render work.
+    if(!be03RaceSourceIdentity('./data/races/'+key+'.json',original?.meta?.venue_code,race))return;
+    if(race.meta?.phase!=='PRE_RESULT'||race.meta?.results_seen!==false||
+       race.meta?.unlock!==false||race.meta?.scoring!==false)return;
+    // Race-specific source SHA/time, six racer rows, odds, and prediction
+    // material can change independently. Preserve the verified UI evidence
+    // instead of freezing stale labels until the user manually switches races.
+    const signature=r=>JSON.stringify([
+      r.meta,r.racers,r.beforeinfo,r.actual_entry,r.original_exhibition,
+      r.source_audit,r.derived,r.odds,r.odds_audit,r.scratch_audit
+    ]);
     const audited=await be182FetchScratch(race);
-    if(signature(audited)===signature(original)&&
-       JSON.stringify(audited.scratch_audit||null)===JSON.stringify(original?.scratch_audit||null))return;
+    if(signature(audited)===signature(original))return;
     const overlay=await loadFormalOverlay(key);
     if(state.race?.race_key!==key)return;
     renderRace(mergeFormalOverlay(audited,overlay),{silent:true});
