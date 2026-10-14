@@ -61,6 +61,29 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertNotIn("v240.yml", report["scheduled_contents_writers"])
         verify_retired(report)
 
+    def test_v183_historic_scorer_cannot_resume_scheduled_or_source_writing(self):
+        retired = ROOT / ".github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml"
+        source = retired.read_text(encoding="utf-8")
+        from scripts.boat_edge_v299_workflow_inventory import event_block
+        events = event_block(source)
+        self.assertIn("  workflow_dispatch:", events)
+        self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
+        self.assertNotIn("contents: write", source)
+        self.assertNotIn("git push", source)
+        self.assertNotIn("git add", source)
+        self.assertNotIn("gzip.decompress", source)
+        self.assertNotIn("base64.b64decode", source)
+        self.assertIn("V183_RETIRED_V190_IS_ONLY_SCHEDULED_SCORE_OWNER", source)
+        successor=(ROOT/".github/workflows/BOAT_EDGE_V190.yml").read_text(encoding="utf-8")
+        self.assertIn("scripts/site_v183_audit.py", successor)
+        self.assertIn("scripts/site_v184_integrity.py", successor)
+        self.assertIn("V190_OLD_V183_SCHEDULE_DISABLED_VERIFIED", successor)
+        self.assertIn("git add -- scripts/site_v183_audit.py data/site_tail_shadow_v180/evaluation_v183.json",successor)
+        report = audit(ROOT / ".github/workflows")
+        self.assertNotIn("BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml",
+                         report["scheduled_contents_writers"])
+        verify_retired(report)
+
     def test_v221_cleanup_is_manual_only(self):
         report = audit(ROOT / ".github" / "workflows")
         entries = {x["workflow"]: x for x in report["workflows"]}
