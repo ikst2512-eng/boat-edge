@@ -125,6 +125,26 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.assertFalse(any(v["improvement_proven"] for v in cross.values()))
         self.assertEqual(report["within_study"]["v240"]
                          ["equal_ten_point_modes"]["second_coverage10"]["paired_gain"], 1)
+        self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk_by_day"]
+                         ["scenario7plus3"]["20261013"]["top10"]["candidate_only_hits"], 1)
+        self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk"]
+                         ["scenario7plus3"]["top10"]["candidate_only_hits"], 1)
+        self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk"]
+                         ["scenario7plus3"]["top3"]["candidate_only_hits"], 0)
+        self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk"]
+                         ["scenario7plus3"]["top10"]["exact_mcnemar_two_sided_p"], 1.0)
+        self.assertEqual(report["within_study"]["v236"]["candidate_topk"]
+                         ["scenario7plus3"]["top10"]["hits"], 1)
+        self.assertEqual(report["within_study"]["v236"]["candidate_topk"]
+                         ["scenario7plus3"]["top3"]["hits"], 0)
+        self.assertEqual(report["same_race_cross_study"]["v236_vs_v240"]
+                         ["shared_candidate_topk"]["v240:second_coverage10"]["top10"]["hits"], 1)
+        self.assertEqual(report["same_race_cross_study"]["v236_vs_v240"]
+                         ["shared_candidate_topk"]["v236:scenario7plus3"]["top5"]["hits"], 0)
+        self.assertEqual(report["within_study"]["v236"]["baseline_topk"]["top3"]["hits"], 0)
+        self.assertEqual(report["within_study"]["v236"]["baseline_topk"]["top5"]["races"], 1)
+        self.assertEqual(report["same_race_cross_study"]["v236_vs_v240"]
+                         ["shared_baseline_topk"]["top10"]["hits"], 0)
         self.assertEqual(report["within_study"]["v236"]
                          ["coverage15_separate_point_budget"]["points"], 15)
         self.assertNotIn("coverage15", report["within_study"]["v236"]

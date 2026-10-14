@@ -201,7 +201,7 @@ def checked_row(root, study, path, attest=first_added):
     if study == "v254" and scored.get("result_precommitted_sha256") != frozen.get(parent_sha_field):
         raise EvidenceError("V254_PARENT_RESULT_IDENTITY_" + key)
     return {"key": key, "day": key[:8], "winning": winning,
-            "baseline": lists["hit10"], "outcomes": outcomes,
+            "baseline": lists["hit10"], "ranked_comparators": lists, "outcomes": outcomes,
             "modes": {m: len(lists[m]) for m in names}}
 
 
@@ -221,6 +221,57 @@ def paired(rows, mode):
             "paired_gain": gain, "paired_loss": loss, "paired_discordant": discordant,
             "exact_mcnemar_two_sided_p": p,
             "accuracy_improvement_proven": False, "promotion_authorized": False}
+
+
+def comparator_topk(rows, mode):
+    """Ranked hit rates for the same verified race cohort and candidate."""
+    return {
+        f"top{k}": {
+            "hits": sum(r["winning"] in r["ranked_comparators"][mode][:k] for r in rows),
+            "races": len(rows),
+            "hit_rate": (sum(r["winning"] in r["ranked_comparators"][mode][:k]
+                             for r in rows) / len(rows)) if rows else None,
+        }
+        for k in (3, 5, 10)
+    }
+
+
+def paired_ranked_topk(rows, mode):
+    """Same-race same-k predeadline ranking comparison; never auto-promote."""
+    result = {}
+    for k in (3, 5, 10):
+        gain = sum(r["winning"] in r["ranked_comparators"][mode][:k]
+                   and r["winning"] not in r["baseline"][:k] for r in rows)
+        loss = sum(r["winning"] in r["baseline"][:k]
+                   and r["winning"] not in r["ranked_comparators"][mode][:k] for r in rows)
+        n = gain + loss
+        p = (min(1.0, 2 * sum(math.comb(n, i) for i in range(min(gain, loss) + 1))
+                 / (2 ** n)) if n else None)
+        result[f"top{k}"] = {"races": len(rows), "candidate_only_hits": gain,
+                              "baseline_only_hits": loss, "discordant_pairs": n,
+                              "exact_mcnemar_two_sided_p": p,
+                              "improvement_proven": False}
+    return result
+
+
+def paired_topk_by_day(rows, mode):
+    """Day-separated directional evidence; never infer day independence."""
+    days = sorted({r["day"] for r in rows})
+    return {day: paired_ranked_topk([r for r in rows if r["day"] == day], mode)
+            for day in days}
+
+
+def baseline_topk(rows):
+    """Rank-sensitive baseline hits from already verified frozen predictions."""
+    return {
+        f"top{k}": {
+            "hits": sum(r["winning"] in r["baseline"][:k] for r in rows),
+            "races": len(rows),
+            "hit_rate": (sum(r["winning"] in r["baseline"][:k] for r in rows) / len(rows))
+                        if rows else None,
+        }
+        for k in (3, 5, 10)
+    }
 
 
 def misses(rows):
@@ -264,6 +315,53 @@ def compare_10point_modes(left, right, left_mode, right_mode):
             "improvement_proven": False, "model_promotion_authorized": False}
 
 
+def cross_study_ranked_topk(left, right, left_mode, right_mode):
+    """Exact TopK comparison restricted to shared, already attested races."""
+    if len(left) != len(right):
+        raise EvidenceError("CROSS_STUDY_TOPK_LENGTH_MISMATCH")
+    result = {}
+    for k in (3, 5, 10):
+        gain = loss = left_hits = right_hits = 0
+        for a, b in zip(left, right):
+            if a["key"] != b["key"] or a["winning"] != b["winning"]:
+                raise EvidenceError("CROSS_STUDY_TOPK_RACE_MISMATCH")
+            x = a["winning"] in (a["baseline"] if left_mode == "hit10" else
+                                  a["ranked_comparators"][left_mode])[:k]
+            y = b["winning"] in (b["baseline"] if right_mode == "hit10" else
+                                  b["ranked_comparators"][right_mode])[:k]
+            left_hits += x
+            right_hits += y
+            gain += y and not x
+            loss += x and not y
+        n = gain + loss
+        p = min(1.0, 2 * sum(math.comb(n, i) for i in range(min(gain, loss) + 1))
+                / 2**n) if n else None
+        result[f"top{k}"] = {"races": len(left), "left_hits": left_hits,
+                              "right_hits": right_hits, "right_only_hits": gain,
+                              "left_only_hits": loss, "discordant_pairs": n,
+                              "exact_mcnemar_two_sided_p": p,
+                              "improvement_proven": False}
+    return result
+
+
+def cross_study_ranked_topk_by_day(left, right, left_mode, right_mode):
+    """Expose day concentration without pooling or reselecting winning dates."""
+    if len(left) != len(right):
+        raise EvidenceError("CROSS_STUDY_TOPK_LENGTH_MISMATCH")
+    days = sorted({row["day"] for row in left})
+    if days != sorted({row["day"] for row in right}):
+        raise EvidenceError("CROSS_STUDY_TOPK_DAY_MISMATCH")
+    output = {}
+    for day in days:
+        lrows = [row for row in left if row["day"] == day]
+        rrows = [row for row in right if row["day"] == day]
+        if [row["key"] for row in lrows] != [row["key"] for row in rrows]:
+            raise EvidenceError("CROSS_STUDY_TOPK_DAY_RACE_MISMATCH")
+        output[day] = cross_study_ranked_topk(
+            lrows, rrows, left_mode, right_mode)
+    return output
+
+
 def audit(root, attest=first_added):
     root = Path(root).resolve()
     formal_lock(root)
@@ -281,6 +379,15 @@ def audit(root, attest=first_added):
         rows = list(items.values())
         within[study] = {
             "sample_races": len(rows), "sample_days": len({r["day"] for r in rows}),
+            "baseline_topk": baseline_topk(rows),
+            "candidate_topk": {mode: comparator_topk(rows, mode) for mode in CONFIG[study][7]
+                               if mode != "hit10" and mode != "coverage15"},
+            "paired_ranked_topk": {mode: paired_ranked_topk(rows, mode)
+                                  for mode in CONFIG[study][7]
+                                  if mode not in ("hit10", "coverage15")},
+            "paired_ranked_topk_by_day": {mode: paired_topk_by_day(rows, mode)
+                                         for mode in CONFIG[study][7]
+                                         if mode not in ("hit10", "coverage15")},
             "baseline_miss_slots": misses(rows),
             "equal_ten_point_modes": {m: paired(rows, m) for m in CONFIG[study][7]
                                       if m != "hit10" and m != "coverage15"},
@@ -312,7 +419,27 @@ def audit(root, attest=first_added):
             between[left + "_vs_" + right] = {
                 "identical_race_baseline_matches": len(shared),
                 "sample_days": len({key[:8] for key in shared}),
+                "shared_baseline_topk": baseline_topk(left_rows),
+                "shared_candidate_topk": {
+                    left + ":" + mode: comparator_topk(left_rows, mode)
+                    for mode in CONFIG[left][7] if mode not in ("hit10", "coverage15")
+                } | {
+                    right + ":" + mode: comparator_topk(right_rows, mode)
+                    for mode in CONFIG[right][7] if mode not in ("hit10", "coverage15")
+                },
                 "equal_ten_ticket_head_to_head_only": mode_pairs,
+                "ranked_topk_head_to_head_by_day": {
+                    l_mode + "_vs_" + r_mode: cross_study_ranked_topk_by_day(
+                        left_rows, right_rows, l_mode, r_mode)
+                    for l_mode in CONFIG[left][7] if l_mode != "coverage15"
+                    for r_mode in CONFIG[right][7] if r_mode != "coverage15"
+                },
+                "ranked_topk_head_to_head": {
+                    l_mode + "_vs_" + r_mode: cross_study_ranked_topk(
+                        left_rows, right_rows, l_mode, r_mode)
+                    for l_mode in CONFIG[left][7] if l_mode != "coverage15"
+                    for r_mode in CONFIG[right][7] if r_mode != "coverage15"
+                },
                 "separate_cohorts_must_not_be_pooled": True,
                 "cross_study_superiority_proven": False,
             }

@@ -12,6 +12,37 @@ concurrency:
   group: boat-edge-development-ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  research-paired-evidence:
+    if: github.event_name == 'pull_request' && github.head_ref == '02/v400-five-year-history-research-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate strict SITE-only Git-first-added paired accuracy evidence
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v236_v301_paired.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v301_topk_research.py' -v
+          python3 scripts/boat_edge_v301_paired_evidence.py --root . > /tmp/boat-edge-v301-paired.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/boat-edge-v301-paired.json',encoding='utf-8'))
+          assert p['formal_results_read'] is False
+          assert p['production_model_changed'] is False
+          assert p['promotion_authorized'] is False
+          print(json.dumps({'within_study':p['within_study'],
+                            'same_race_cross_study':p['same_race_cross_study']},
+                           ensure_ascii=False,sort_keys=True))
+          PY
   fixture-only-regressions:
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -133,5 +164,46 @@ jobs:
             test_boat_edge_v254_third_tail.ProspectiveThirdTail.test_bad_formal_guard_blocks_even_research
       - name: Test JST rollover and virtual balance display
         run: node --test tests/test_boat_edge_v271_health.cjs
+      - name: V400 five-year fixture-only research regressions
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v400_five_year_history_research.py' -v
+      - name: V401 offline staged K bridge fixture regressions
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v401_staged_k_bridge.py' -v
+      - name: V402 historical program result reconciliation fixtures
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v402_offline_b_k_reconciliation.py' -v
+      - name: V403 five-year coverage fixture regressions
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v403_five_year_coverage_audit.py' -v
+      - name: V404 as-of history fixture-only regression
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v404_asof_history_features.py' -v
+      - name: V405 batch/single parity and chronological regressions
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v405_batch_asof_history_features.py' -v
+      - name: V406 licensed offline day-package and historical handoff fixtures
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v406_offline_history_packager.py' -v
+      - name: V407 locally parsed K-to-V401 adapter synthetic regressions
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          printf '%s\n' 'boatrace-lzh==0.1.0 --hash=sha256:cb3846711cf0b7ba8bdf40db85e7df9e220409cde873dac7dd4f683aa5248333' |
+            python3 -m pip install --disable-pip-version-check --no-deps --require-hashes -r /dev/stdin
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v407_local_performance_bridge.py' -v
+      - name: V408 local B parser and K bridge synthetic regressions
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v408_local_b_program_bridge.py' -v
+      - name: V409 BoatraceCSV offline as-of join synthetic regressions
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v409_boatracecsv_offline_asof_audit.py' -v
       - name: Check live odds invalidation without fetching results
         run: node tests/test_boat_edge_v222_live_odds.cjs assets/boat_edge_v222_live_odds.js
