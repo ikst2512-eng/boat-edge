@@ -107,37 +107,46 @@ jobs:
            if git push origin HEAD:main; then echo 'V216_COMMITTED_PAPER_SELECT'; break; fi
            if [ "$attempt" -eq 8 ]; then exit 1; fi
           done
-      - name: Grade only earlier committed shadow records AFTER freeze
+      # Both settle commands operate ONLY on past-committed SITE-only shadow/
+      # paper ledgers. PRE_RESULT readiness, shadow freeze, and paper selection
+      # were already pushed above; never combine prospective decisions with
+      # result-consuming settlement in one commit.
+      - name: Settle earlier frozen shadow and paper ledgers in one Git commit
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3 4 5 6 7 8; do
-           git fetch --no-tags origin main
-           git reset --hard origin/main
-           python3 scripts/boat_edge_v214_shadow.py settle
-           git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
-           if git diff --cached --quiet; then echo 'V216_NO_CHANGE_SHADOW_SETTLE'; break; fi
-           git commit -m 'V216 Grade only earlier committed shadow records AFTER freeze'
-           if git push origin HEAD:main; then echo 'V216_COMMITTED_SHADOW_SETTLE'; break; fi
-           if [ "$attempt" -eq 8 ]; then exit 1; fi
-          done
-      - name: Settle only previously committed paper records
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          for attempt in 1 2 3 4 5 6 7 8; do
-           git fetch --no-tags origin main
-           git reset --hard origin/main
-           python3 scripts/boat_edge_v211_paper_sim.py settle
-           git add -- data/site_paper_sim/current.json data/site_paper_sim/ledger.json
-           if git diff --cached --quiet; then echo 'V216_NO_CHANGE_PAPER_SETTLE'; break; fi
-           git commit -m 'V216 Settle only previously committed paper records'
-           if git push origin HEAD:main; then echo 'V216_COMMITTED_PAPER_SETTLE'; break; fi
-           if [ "$attempt" -eq 8 ]; then exit 1; fi
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 - <<'PY_V216_SETTLED_GUARD'
+          import json
+          from pathlib import Path
+          doc=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=doc.get('guards') or {}
+          if not all(guards.get(k) is False for k in ('results_seen','unlock','scoring')) or guards.get('RESULT_UNLOCK_TOKEN') is not None:
+              raise SystemExit('V216_SETTLE_FORMAL_FRESH_GUARD_BLOCKED')
+          if (doc.get('formalFirst100') or {}).get('races') != 0:
+              raise SystemExit('V216_SETTLE_FORMAL_FIRST100_GUARD_BLOCKED')
+          print('V216_SETTLE_FORMAL_RESULT_UNSEEN_GUARD_PASS')
+          PY_V216_SETTLED_GUARD
+            python3 scripts/boat_edge_v214_shadow.py settle
+            python3 scripts/boat_edge_v211_paper_sim.py settle
+            git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json data/site_paper_sim/current.json data/site_paper_sim/ledger.json
+            python3 - <<'PY_V216_SETTLED_PATHS'
+          import subprocess
+          staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          allowed={'data/site_paper_sim/shadow_v213_current.json','data/site_paper_sim/shadow_v213_ledger.json','data/site_paper_sim/current.json','data/site_paper_sim/ledger.json'}
+          if not staged.issubset(allowed):
+              raise SystemExit('V216_SETTLEMENT_FORBIDDEN_STAGED_FILES_'+str(staged-allowed))
+          print('V216_SETTLEMENT_SITE_ONLY_STAGED_FILES_PASS',len(staged))
+          PY_V216_SETTLED_PATHS
+            git diff --cached --check
+            if git diff --cached --quiet; then echo 'V216_NO_CHANGE_SETTLEMENT'; break; fi
+            git commit -m 'V216 settle earlier frozen SITE shadow and paper in one write'
+            if git push origin HEAD:main; then echo 'V216_POST_FREEZE_SETTLEMENT_ATOMIC_PUBLISHED'; break; fi
+            if [ "$attempt" -eq 8 ]; then exit 1; fi
           done
       - name: Disable replaced V215 scheduler after successful V216 audit
         if: success()
