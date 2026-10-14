@@ -57,7 +57,20 @@ class NoPinnedRollback(unittest.TestCase):
         self.assertEqual(self.src.count("git commit -m"),3)
 
     def test_schedule_and_formal_lock_retained(self):
-        self.assertIn("cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'",self.src)
+        # Three disjoint cron groups preserve every 5m pre-result window.
+        import re
+        crons=re.findall(r"^\\s+- cron: '([^']+)'$",self.src,re.MULTILINE)
+        self.assertEqual(len(crons),3)
+        minutes=[]
+        for cron in crons:
+            fields=cron.split()
+            self.assertEqual(fields[1:],["*","*","*","*"])
+            minutes.extend(int(m) for m in fields[0].split(","))
+        self.assertEqual(sorted(minutes),list(range(4,60,5)))
+        self.assertEqual(len(minutes),len(set(minutes)))
+        settle=self.src.split("      - name: Settle earlier frozen shadow and paper ledgers in one Git commit",1)[1]
+        self.assertIn("github.event.schedule == '14,29,44,59 * * * *'",settle)
+        self.assertIn("github.event_name != 'schedule'",settle)
         self.assertIn("'results_seen','unlock','scoring'",self.src)
         self.assertIn("g['RESULT_UNLOCK_TOKEN'] is None",self.src)
         self.assertIn('node --check assets/boat_edge_v215_readiness.js',self.src)
