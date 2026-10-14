@@ -5,12 +5,10 @@ on:
     branches: [main]
     paths: ['.github/workflows/site-v134.yml']
   workflow_dispatch:
-  workflow_run:
-    workflows: ['BOAT EDGE V133 Balance10 Wave18 FIXED']
-    types: [completed]
+  # V133 runs every 5 minutes for live FINAL15M history, but its completion
+  # is not a reason to commit TODO text repeatedly. Reconcile hourly instead:
+  # reference analytics are not the source of any PRE_RESULT predictions.
   schedule:
-    # V133 workflow_run remains the primary event-driven refresh; schedule is an hourly recovery fallback.
-    # Avoid a second scheduled reconcile every ten minutes while V133 is already active.
     - cron: '38 * * * *'
 
 permissions:
