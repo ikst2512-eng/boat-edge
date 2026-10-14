@@ -23,14 +23,14 @@ ORDER = [2, 1, 3, 4, 5, 6]
 ST = {1: ".13", 2: "F.04", 3: ".16", 4: ".17", 5: ".09", 6: ".11"}
 
 
-def labelled_html(order=ORDER, st=ST):
+def labelled_html(order=ORDER, st=ST, day="20261013"):
     # Synthetic version of the actual 12-race official selected-tab and
     # displayed deadline structure. Its contents are NOT provider evidence.
     nav = ["<html><body><div class='table1 h-mt10'><table><thead><tr><th>レース</th>"]
     for rno in range(1, 13):
         css = "" if rno == 12 else " class='is-thColor3'"
         nav.append(f"<th{css}><a href='/owpc/pc/race/beforeinfo?"
-                   f"rno={rno}&jcd=22&hd=20261013'>{rno}R</a></th>")
+                   f"rno={rno}&jcd=22&hd={day}'>{rno}R</a></th>")
     nav.append("</tr></thead><tbody><tr><td>締切予定時刻</td>")
     for rno in range(1, 13):
         css = " class='is-activeColor1'" if rno == 12 else ""
@@ -55,7 +55,7 @@ def labelled_html(order=ORDER, st=ST):
 
 def fixture(root):
     prepare(root)
-    raw = labelled_html()
+    raw = labelled_html(day=KEY[:8])
     path = root / "data/races" / (KEY + ".json")
     record = json.loads(path.read_bytes())
     for row in record["beforeinfo"]["start_exhibition"]:
@@ -105,7 +105,7 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
             # current mutable input and main's raw html are no longer present.
             path.unlink()
             html_file.unlink()
-            result = verify(root, report(digest=freeze["sha256"]))
+            result = verify(root, report(key=KEY, digest=freeze["sha256"]))
             self.assertTrue(result["all_supplied_full_120_verified"])
             self.assertTrue(result["rows"][0]["archived_official_start_course_source_replayed"])
             self.assertFalse(result["results_read"])
@@ -139,7 +139,7 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
                 parse_proven_course_rows(
                     raw.replace("コース".encode(), "艇番".encode()), race)
             with self.assertRaisesRegex(ValueError, "DUPLICATE_BOAT"):
-                parse_proven_course_rows(labelled_html([1, 1, 3, 4, 5, 6]), race)
+                parse_proven_course_rows(labelled_html([1, 1, 3, 4, 5, 6], day=KEY[:8]), race)
             race["beforeinfo"]["start_exhibition"][0]["st"] = ".30"
             with self.assertRaisesRegex(ValueError, "ST_VS_RACE_MISMATCH"):
                 parse_proven_course_rows(raw, race)
@@ -156,7 +156,7 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
                     raw.replace(b"jcd=22", b"jcd=21", 1), race)
             with self.assertRaisesRegex(ValueError, "DATE_VENUE_MISMATCH"):
                 parse_proven_course_rows(
-                    raw.replace(b"hd=20261013", b"hd=20261012", 1), race)
+                    raw.replace(b"hd=20261015", b"hd=20261012", 1), race)
             # Active race designation cannot silently point to 11R or two tabs.
             moved = raw.replace(
                 b"<th class='is-thColor3'><a href='/owpc/pc/race/beforeinfo?rno=11",
@@ -210,7 +210,7 @@ class V362LabelledOfficialStartCourse(unittest.TestCase):
             archive = root / "data/source_captures" / KEY[:8] / KEY / "official_start_beforeinfo.html"
             archive.write_bytes(raw + b"tamper")
             with self.assertRaisesRegex(ValueError, "ARCHIVED_OFFICIAL_START_SOURCE_SHA_MISMATCH"):
-                verify(root, report(digest=frozen["sha256"]))
+                verify(root, report(key=KEY, digest=frozen["sha256"]))
 
     def test_auxiliary_source_symlink_denied_without_network_or_freeze(self):
         with tempfile.TemporaryDirectory() as d:

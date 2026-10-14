@@ -21,7 +21,7 @@ class V344EvidenceGate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
             ra, rb = Path(a), Path(b)
             first = make(ra)
-            prepare(rb, key="20261013-22-11")
+            prepare(rb, key="20261015-22-11")
             second = run(rb, capture=True, clock=lambda: NOW, fetcher=fake_fetch)
             result = check([{"root": ra, "report": first}, {"root": rb, "report": second}])
             self.assertTrue(result["all_supplied_local_evidence_checks_passed"])
@@ -68,7 +68,7 @@ class V344EvidenceGate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             report = make(root)
-            path = root / f"data/source_captures/20261013/{KEY}/boaters.html"
+            path = root / f"data/source_captures/20261015/{KEY}/boaters.html"
             path.write_bytes(path.read_bytes() + b"modified")
             result = check([{"root": root, "report": report}])
             self.assertFalse(result["all_supplied_local_evidence_checks_passed"])
@@ -98,7 +98,7 @@ class V344EvidenceGate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             report = make(root)
-            (root / f"data/source_captures/20261013/{KEY}/race_input.json").unlink()
+            (root / f"data/source_captures/20261015/{KEY}/race_input.json").unlink()
             result = check([{"root": root, "report": report}])
             self.assertFalse(result["all_supplied_local_evidence_checks_passed"])
             self.assertEqual(result["rejected"][0]["stage"], "CANDIDATE_REPLAY")
@@ -106,7 +106,7 @@ class V344EvidenceGate(unittest.TestCase):
     def test_unreported_selected_race_rejected_before_artifacts(self):
         with tempfile.TemporaryDirectory() as d:
             report = make(Path(d))
-            report["window"]["candidates"].append({"race_key": "20261013-22-11"})
+            report["window"]["candidates"].append({"race_key": "20261015-22-11"})
             report["window"]["coverage"]["selected"] = 2
             with self.assertRaisesRegex(ValueError, "UNACCOUNTED_SELECTED_RACES"):
                 check([{"root": "/missing", "report": report}])
@@ -115,9 +115,9 @@ class V344EvidenceGate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             report = make(root)
-            report["window"]["candidates"].append({"race_key": "20261013-22-11"})
+            report["window"]["candidates"].append({"race_key": "20261015-22-11"})
             report["window"]["coverage"]["selected"] = 2
-            report["failures"].append({"race_key": "20261013-22-11", "reason": "SOURCE_NOT_READY"})
+            report["failures"].append({"race_key": "20261015-22-11", "reason": "SOURCE_NOT_READY"})
             result = check([{"root": root, "report": report}])
             self.assertFalse(result["all_supplied_local_evidence_checks_passed"])
             self.assertEqual(result["reported_capture_failures"], 1)

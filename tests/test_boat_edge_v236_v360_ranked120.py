@@ -23,7 +23,7 @@ def fixture(root):
     prepare(root)
     freeze = live_local_freeze(root, KEY, capture=True,
                                fetcher=mock_page, clock=lambda: PRE)
-    report_doc = report(digest=freeze["sha256"])
+    report_doc = report(key=KEY, digest=freeze["sha256"])
     frozen_path = root / freeze["path"]
     input_path = (root / "data/source_captures" / KEY[:8] / KEY / "race_input.json")
     return report_doc, frozen_path, input_path

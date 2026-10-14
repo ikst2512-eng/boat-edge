@@ -13,7 +13,7 @@ from test_boat_edge_v236_v334_live_batch import prepare, fake_fetch, NOW
 from boat_edge_v334_live_batch_runner import run
 from boat_edge_v340_artifact_integrity import audit
 
-KEY = "20261013-22-12"
+KEY = "20261015-22-12"
 
 
 def make(root):
@@ -57,7 +57,7 @@ class V340ArtifactIntegrity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             report = make(root)
-            raw = root / f"data/source_captures/20261013/{KEY}/boaters.html"
+            raw = root / f"data/source_captures/20261015/{KEY}/boaters.html"
             raw.write_bytes(raw.read_bytes() + b"tamper")
             result = audit(root, report)
             self.assertEqual(result["local_artifacts_verified"], 0)
@@ -67,9 +67,9 @@ class V340ArtifactIntegrity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             report = make(root)
-            path = root / f"data/source_captures/20261013/{KEY}/official.receipt.json"
+            path = root / f"data/source_captures/20261015/{KEY}/official.receipt.json"
             obj = json.loads(path.read_text())
-            obj["captured_at_jst"] = "2026-10-13T16:25:00+09:00"
+            obj["captured_at_jst"] = "2026-10-15T16:25:00+09:00"
             path.write_text(json.dumps(obj))
             result = audit(root, report)
             self.assertEqual(result["local_artifacts_verified"], 0)
@@ -79,7 +79,7 @@ class V340ArtifactIntegrity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             report = make(root)
-            path = root / f"data/source_captures/20261013/{KEY}/official.html"
+            path = root / f"data/source_captures/20261015/{KEY}/official.html"
             original = path.read_bytes()
             path.unlink()
             outside = root / "other.html"
@@ -111,7 +111,7 @@ class V340ArtifactIntegrity(unittest.TestCase):
                 ("RESULT_FLAG", lambda p: p.update(results_read=True)),
                 ("FAKE_SHA", lambda p: p["completed"][0].update(sha256="deadbeef")),
                 ("MODEL_SUBSET", lambda p: p["completed"][0].update(modes=["national_only"])),
-                ("FUTURE_RACE", lambda p: p["completed"][0].update(race_key="20261013-22-11")),
+                ("FUTURE_RACE", lambda p: p["completed"][0].update(race_key="20261015-22-11")),
             ]
             for reason, edit in cases:
                 with self.subTest(reason=reason):
