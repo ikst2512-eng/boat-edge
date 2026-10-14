@@ -12,9 +12,17 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import sys
 import time
 import unicodedata
 from urllib.parse import urlencode,urlsplit,parse_qs
+
+# Scheduled V235 runs this file as a script with PYTHONPATH=scripts.
+# Keep the repository package imports available in that supported entrypoint
+# without weakening the shared V288 deadline/immutable-site lock.
+_REPO_ROOT=str(Path(__file__).resolve().parents[1])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0,_REPO_ROOT)
 from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
 
 JST=timezone(timedelta(hours=9))

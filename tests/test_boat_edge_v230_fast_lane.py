@@ -2,6 +2,9 @@ from __future__ import annotations
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch, Mock
@@ -55,6 +58,17 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.target_diagnostic(self.root,self.now+timedelta(minutes=6))['outside_2_to_19_min_window'],1)
         self.assertEqual(m.targets(self.root,self.now),[KEY])
         self.assertEqual(m.target_diagnostic(self.root,self.now.replace(day=12))['today_mismatch'],1)
+
+    def test_v230_scheduled_pythonpath_scripts_cli_loads_shared_lock(self):
+        # Reproduces the exact V235 import mode, without network/source write.
+        repo=Path(__file__).resolve().parents[1]
+        env=dict(os.environ)
+        env['PYTHONPATH']='scripts'
+        done=subprocess.run([sys.executable,'scripts/boat_edge_v230_fast_lane.py','--help'],
+                            cwd=repo,env=env,stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,text=True,timeout=15)
+        self.assertEqual(done.returncode,0,done.stderr)
+        self.assertIn('--retry-imminent',done.stdout)
 
     def test_v230_inflight_v232_freeze_prevents_source_mutation(self):
         # A selection made before the freeze is not authority to rewrite
