@@ -128,7 +128,8 @@ class WorkflowInventoryTests(unittest.TestCase):
                         '"$V236_SCHEDULED_TICK" != '
                         "'3,18,33,48 0-14,23 * * *' ]]",
                         src)
-                    self.assertIn('success=true\\n                break', src)
+                    self.assertIn("V236_ACCELERATE_ONLY_VERIFIED_PROSPECTIVE_CANDIDATE",src)
+                    self.assertIn("success=true",src)
                     # The fixed prior 15-minute schedule is still present.
                     self.assertIn(f"'{score_slot} 0-14,23 * * *'", src)
                 else:
