@@ -117,6 +117,18 @@ class V409Tests(unittest.TestCase):
         self.assertEqual(a["counts"]["three_preview_deadline_conflicts"],1)
         self.assertEqual(a["counts"]["venue_aware_preview_timestamps_eligible_unverified"],0)
 
+    def test_venue_aware_denominator_is_explicit(self):
+        a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in
+                ("stt","tkz","sui","original_exhibition")}})
+        self.assertEqual(a["counts"]["non_edogawa_race_card_rows"],1)
+        self.assertEqual(a["counts"]["edogawa_race_card_rows"],0)
+        self.assertEqual(a["counts"]["venue_aware_missing_or_ineligible"],0)
+
+    def test_venue_aware_denominator_includes_rejections(self):
+        a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in
+                ("stt","tkz","sui")}})
+        self.assertEqual(a["counts"]["venue_aware_missing_or_ineligible"],1)
+
     def test_four_sources_all_same_race(self):
         a=audit(DAY,{"race_cards":cards(),**{s:preview() for s in
                     ("stt","tkz","sui","original_exhibition")}})
