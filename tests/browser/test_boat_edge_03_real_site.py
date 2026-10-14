@@ -114,6 +114,11 @@ def probe_site_snapshot_evidence(context, target, key, deadline):
             "snapshot_sha256": sha, "first_saved_at": snap["first_saved_at"],
             "saved_at": snap["saved_at"], "saved_top3": top10[:3],
             "saved_top5": top10[:5], "saved_top10": top10,
+            "saved_top10_by_mode": {
+                name: [item.get("combo") for item in (mode.get("tickets") or [])[:10]]
+                for name, mode in (snap.get("modes") or {}).items()
+                if isinstance(mode, dict)
+            },
             "first_git_commit_verified": False}
 
 
@@ -258,6 +263,22 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                 " && document.querySelector('#be207Top.ready')",
                 arg=key, timeout=35000
             )
+            # A race switch can paint the source list asynchronously after
+            # V207 becomes ready. Wait for either an explicit stop or ten
+            # uniquely formatted source tickets; do not parse a transient list.
+            live.wait_for_function(
+                """() => {
+                  const t=document.querySelector('#be207Top.ready');
+                  if(!t)return false;
+                  if(t.querySelector('.be207-stop'))return true;
+                  const b=[...document.querySelectorAll(
+                    '#be108PredictionModes .be108-ticket-list > .be108-ticket b.be257-ticket-combo')];
+                  return b.length>=10 && b.every(node => {
+                    const m=/([1-6]-[1-6]-[1-6])/.exec(node.textContent||'');
+                    return m && new Set(m[1].split('-')).size===3;
+                  });
+                }""", timeout=10000
+            )
             top = live.locator("#be207Top")
             if top.locator(".be207-stop").count():
                 stopped_reasons.append({
@@ -269,7 +290,7 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
                 continue
             # These come from the actual original ranked DOM, not a fixture.
             raw = live.locator(
-                "#be108PredictionModes .be108-ticket-list > .be108-ticket b"
+                "#be108PredictionModes .be108-ticket-list > .be108-ticket b.be257-ticket-combo"
             ).all_text_contents()
             expected = []
             for value in raw:
@@ -315,16 +336,32 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             live.screenshot(
                 path=str(shots / ("live-topk-%s.png" % engine)), full_page=True
             )
+            selected_mode = live.locator(
+                "#be108PredictionModes .be108-mode-tabs .on"
+            ).first.get_attribute("data-be108-mode")
+            saved_mode_rows = saved_evidence.get(
+                "saved_top10_by_mode", {}
+            ).get(selected_mode)
+            verified_site_final = live.locator(
+                '.be181-freeze-banner[data-be181-source="final"]'
+                '[data-be181-verification="site-sha-audit"]'
+            ).count() > 0
+            same_mode_parity = (
+                expected[:10] == saved_mode_rows if saved_mode_rows is not None else None
+            )
+            if verified_site_final and saved_mode_rows is not None:
+                assert same_mode_parity, (
+                    "Verified final Top10 diverged from immutable same-mode snapshot: "
+                    + key + " mode=" + str(selected_mode)
+                )
             return {
                 "status": "VERIFIED_TOP3_TOP5_TOP10_SOURCE_ORDER",
                 "race": key, "venue": venue["venue"], "ticket_count": len(expected),
                 "deadline_jst": race["deadline"], "browser_errors": browser_errors,
                 "saved_prediction": saved_evidence,
-                "displayed_matches_saved_hit10": (
-                    expected[:10] == saved_evidence.get("saved_top10")
-                    if saved_evidence["status"] ==
-                    "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED" else None
-                )
+                "displayed_mode": selected_mode,
+                "verified_site_final": verified_site_final,
+                "displayed_matches_saved_selected_mode": same_mode_parity
             }
         finally:
             live.close()
