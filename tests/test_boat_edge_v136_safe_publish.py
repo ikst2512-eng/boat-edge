@@ -42,6 +42,24 @@ class V136PublishContract(unittest.TestCase):
                         score.index("python3 scripts/site_accuracy_v136.py"))
         self.assertIn("V136_MAIN_REFRESH_SCORE_PROOF_PASS", score)
 
+    def test_site_accuracy_scores_only_on_staggered_schedule_or_explicit_changes(self):
+        """V133 history is not a trigger to republish the SITE-only result report."""
+        workflow = (ROOT / ".github/workflows/site-v136.yml").read_text()
+        import re
+        triggers = workflow.split("permissions:", 1)[0]
+        self.assertNotIn("workflow_run:", triggers)
+        self.assertNotIn("BOAT EDGE V133 Balance10 Wave18 FIXED", triggers)
+        self.assertIn('cron: "7,22,37,52 * * * *"', triggers)
+        self.assertIn("workflow_dispatch:", triggers)
+        self.assertIn("  push:", triggers)
+        score = workflow.split("  score:", 1)[1]
+        self.assertNotIn("github.event_name == 'workflow_run'", score)
+        self.assertIn("github.event_name == 'schedule'", score)
+        self.assertIn("github.event_name == 'workflow_dispatch'", score)
+        self.assertIn("github.event_name == 'push'", score)
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_accuracy_v136.py", score)
+        self.assertIn("SITE_REFERENCE_POST_SETTLEMENT_ONLY_NOT_FORMAL_FRESH", score)
+
     def test_formal_and_model_gates_remain_closed(self):
         workflow = (ROOT / ".github/workflows/site-v136.yml").read_text()
         publisher = workflow.split(

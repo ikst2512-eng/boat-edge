@@ -5,10 +5,6 @@ on:
     paths:
       - ".github/workflows/site-v136.yml"
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "BOAT EDGE V133 Balance10 Wave18 FIXED"
-    types: [completed]
   schedule:
     - cron: "7,22,37,52 * * * *"
 
@@ -122,7 +118,9 @@ jobs:
           git push
   score:
     needs: [install]
-    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    # V133's frequent history completion is not a new PRE_RESULT obligation:
+    # post-settlement SITE-only V136 scoring is refreshed by the 15m schedule.
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
