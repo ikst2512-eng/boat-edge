@@ -96,7 +96,7 @@ class WorkflowInventoryTests(unittest.TestCase):
             with self.subTest(workflow=filename):
                 src = (ROOT / ".github/workflows" / filename).read_text(encoding="utf-8")
                 import re
-                crons = re.findall(r"^\\s+- cron: '([^']+)'$", src, re.MULTILINE)
+                crons = re.findall(r"^\s+- cron: '([^']+)'$", src, re.MULTILINE)
                 self.assertEqual(len(crons), 3)
                 minutes = []
                 for cron in crons:
