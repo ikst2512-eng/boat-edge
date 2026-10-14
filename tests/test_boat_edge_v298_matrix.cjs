@@ -65,6 +65,23 @@ if(fs.existsSync('index.html')){
  assert(index.includes('boat_edge_v206_quickview.js?v=328'));
  assert(index.includes('boat_edge_v206_quickview.css?v=328'));
 }
+/* The count is six distinct lane measurements, not six array items. */
+const audit={status:'ok',fetched_at:'2026-10-14T09:22:00+09:00',sha256:'a'.repeat(64)};
+const evidence={race_key:'20261014-14-03',meta:{phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false,deadline:'09:35'},
+ source_audit:{beforeinfo:audit,original_exhibition:audit},
+ beforeinfo:{racers:rows.map(x=>({lane:x.lane,exhibition_time:x.time}))},
+ original_exhibition:{boats:rows.map(x=>({lane:x.lane,values:[x.lap,x.turn]}))}};
+assert.match(api.completeness(evidence),/展示タイム 6\/6艇/);
+assert.match(api.completeness(evidence),/オリ展 6\/6艇/);
+const duplicates={...evidence,beforeinfo:{racers:[...evidence.beforeinfo.racers.slice(0,5),{lane:1,exhibition_time:6.9}]}};
+assert.match(api.completeness(duplicates),/展示タイム 4\/6艇/,'duplicated lane 1 must not be counted as 1 and 6');
+const dupOE={...evidence,original_exhibition:{boats:[...evidence.original_exhibition.boats.slice(0,5),{lane:1,values:[38]}]}};
+assert.match(api.completeness(dupOE),/オリ展 4\/6艇/,'duplicated lane must be excluded from completeness');
+const missing={...evidence,beforeinfo:{racers:evidence.beforeinfo.racers.map((r,i)=>i===0?{...r,exhibition_time:false}:r)},
+ original_exhibition:{boats:evidence.original_exhibition.boats.map((r,i)=>i===1?{...r,values:[[],true]}:r)}};
+assert.match(api.completeness(missing),/展示タイム 5\/6艇/);
+assert.match(api.completeness(missing),/オリ展 5\/6艇/);
+console.log('BOAT_EDGE_03_SIX_DISTINCT_LANE_COMPLETENESS_PASS');
 console.log('V298_SIX_LANE_MATRIX_STRICT_HIGHLIGHT_SYNTHETIC_PASS');
 
 /* V328 race transition must hide prior tickets and head picks until a new list mounts. */
