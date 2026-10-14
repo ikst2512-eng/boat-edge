@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 9,
     "deadline": "12:43",
-    "updated_at": "2026-10-14T09:03:13+09:00",
+    "updated_at": "2026-10-14T10:51:18+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=21&rno=9",
-      "fetched_at": "2026-10-14T09:04:36+09:00",
-      "sha256": "966e7037610d7e82364055ecd8cf6020984b8463db0770e990950aa95d043775",
+      "fetched_at": "2026-10-14T10:52:54+09:00",
+      "sha256": "2f86898fb0305075949cb2044b716a5ebed8966c591d6fa3ac20379c7fbadacd",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=21&rno=9",
+      "fetched_at": "2026-10-14T10:52:24+09:00",
+      "sha256": "8da16c4fe7f78f1c23a96f298a1eddfd16c86e1de856cb2c9f9cb41300d7c489",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "ba4f1f617b7e67774c7b080c17bf2d4102656b613be626522333ea7f353a2894"
+      "sha256": "aee134a63f3e61f1154b5924fc5ab3206286022c9aedd279f22242bc6a079123"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "4af464283880f16b6296a6e2fb413da308edeee54dc8c8055b1a1692f3803e43"
+      "sha256": "69df2f1d415c8375eb31e3725ebfd5513a52d6152429e3a75376b5b7516c8a69"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "cef2cae566af145ad9c416c2827d9b3489e980d963507468ffdf0dafbd4af8d5"
+      "sha256": "f1a85b84d7e155e47287ad0aa54e51c0514db40da077344371ba37be024a6725"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "2995936654429637bd73a708ca028d99f5dda1ee5eadd056900e2600a5979447"
+      "sha256": "ac5f470d3aa53006d6fbbc3e5317d24b599c7d7ea6b6039d56d56d5dc9eaf9ff"
     }
   },
   "racers": [
@@ -89,9 +95,11 @@
         "quinella_rate": 37.93,
         "trio_rate": 54.31
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "3"
+      ],
       "early_race": 3,
-      "raw_text": "1 4575 / A2 戸塚 邦好 東京/東京 38歳/52.0kg F0 L0 0.16 5.94 42.59 54.63 6.27 45.45 63.64 36 33.86 51.97 149 37.93 54.31 3R"
+      "raw_text": "1 4575 / A2 戸塚 邦好 東京/東京 38歳/52.0kg F0 L0 0.16 5.94 42.59 54.63 6.27 45.45 63.64 36 33.86 51.97 149 37.93 54.31 3 3R"
     },
     {
       "lane": 2,
@@ -125,9 +133,11 @@
         "quinella_rate": 27.71,
         "trio_rate": 48.19
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "2"
+      ],
       "early_race": 2,
-      "raw_text": "2 3708 / B1 岡部 貴司 岡山/岡山 52歳/54.2kg F0 L0 0.16 5.31 32.67 50.50 4.41 20.37 37.04 18 23.93 40.17 142 27.71 48.19 2R"
+      "raw_text": "2 3708 / B1 岡部 貴司 岡山/岡山 52歳/54.2kg F0 L0 0.16 5.31 32.67 50.50 4.41 20.37 37.04 18 23.93 40.17 142 27.71 48.19 2 2R"
     },
     {
       "lane": 3,
@@ -276,7 +286,53 @@
       "raw_text": "6 4402 / A2 乙藤 智史 福岡/福岡 41歳/55.3kg F0 L0 0.17 6.10 44.83 59.48 5.51 37.31 55.22 37 33.90 56.78 139 31.86 49.56"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 戸塚 邦好 52.0kg R 3"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 岡部 貴司 54.2kg R 2"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 中谷 朋子 45.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 樋口 範政 54.3kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 三浦 裕貴 54.3kg R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 乙藤 智史 55.3kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 4.0,
+      "wave_cm": 4.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
