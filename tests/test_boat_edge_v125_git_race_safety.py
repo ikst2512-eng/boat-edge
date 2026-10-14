@@ -1,6 +1,7 @@
 """V125 revision audit must recompute from latest main instead of rebasing stale data."""
 import ast
 import re
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -18,7 +19,7 @@ class V125GitRaceSafety(unittest.TestCase):
         capture = 'cat > "$RUNNER_TEMP/v125_audit_once.py" <<\'PY\''
         self.assertIn(capture, src)
         audit = src.split(capture, 1)[1].split("\n          PY", 1)[0]
-        ast.parse(audit)
+        ast.parse(textwrap.dedent(audit))
         self.assertIn('SNAPS.glob(f"{TODAY}-??-??.json")', audit)
         self.assertIn("snapshot_sha256", audit)
         self.assertIn("first_audited_at", audit)
