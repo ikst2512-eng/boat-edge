@@ -62,6 +62,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v01_scratch_rebase_guard.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v270_pre_result_merge.py' -v
           python3 -m py_compile scripts/boat_edge_v01_scratch_rebase_guard.py
       - name: Verify same-run official scratch evidence (synthetic HTML only)
         env:
