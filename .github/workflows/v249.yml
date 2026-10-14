@@ -1,12 +1,10 @@
 name: BOAT EDGE V249 - Mobile Race Navigation and Six Boat Readability
 
+# Legacy V249 packaged assets are no longer byte-identical to the improved
+# production UI. Its fail-closed installer is retained for deliberate manual
+# legacy inspection only. Never schedule an old installer to rewrite new CSS.
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/v249.yml']
   workflow_dispatch:
-  schedule:
-    - cron: '37 0,3,6,9,12 * * *'
 
 permissions:
   contents: write
