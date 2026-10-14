@@ -39,21 +39,21 @@ assert(!stage.some(x=>/\d+(?:\.\d+)?%/.test(x.value)));
 const keys=['results.html','assets/boat_edge_v241_results.js','assets/boat_edge_v241_results.css'];
 const worker=fs.readFileSync('.github/workflows/v241.yml','utf8');
 for(const path of keys)assert(worker.includes("'"+path+"'"));
-assert(worker.includes('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'));
-/* T02 regression: legacy V241 scheduled package must not clobber V360's
- * source-verified home 🎯 renderer; bundled scorer/tests remain strict. */
-const allowStart=worker.indexOf("if name in ('index.html'");
-const allowEnd=worker.indexOf(":\n                          print('V241_PRESERVE_INDEPENDENTLY_UPDATED_PUBLIC_UI'",allowStart);
-assert(allowStart>=0&&allowEnd>allowStart,'V241 explicit public UI exemption must exist');
-const allow=worker.slice(allowStart,allowEnd);
-assert(allow.includes("'assets/boat_edge_v241_home.js'"),'current verified home UI must be preserved');
-assert(worker.includes('V241_PUBLIC_HOME_JS_MISSING_NO_LEGACY_REINSTALL'),'missing current JS must not install stale V241 copy');
-for(const sensitive of ['scripts/boat_edge_v241_results.py','scripts/boat_edge_v241_patch_home.py',
-                        'tests/test_boat_edge_v241_results.py'])
-  assert(!allow.includes("'"+sensitive+"'"),'scorer and source-bound regression code must remain fail-closed');
-assert(worker.includes("raise SystemExit('V241_PACKAGED_BYTES_INVALID_'+name)"));
-assert(worker.includes("raise SystemExit('V241_EXISTING_RESOURCE_MODIFIED_FAIL_CLOSED_'+name)"));
-console.log('V241_LEGACY_PACKAGED_UI_PRESERVE_SCORER_FAIL_CLOSED_PASS');
+/* T02 replaced: V241 no longer installs historic packaged UI/source.
+ * Main's tracked files are authoritative; only site results summary is staged. */
+assert(worker.includes('V241_TRACKED_SITE_ONLY_NO_LEGACY_REINSTALL_PASS'));
+assert(worker.includes('V241_RESULTS_REPORT_ONLY_STAGE_PASS'));
+assert(worker.includes('git add -- data/site_autopilot/v241_results_current.json'));
+assert(worker.includes('V241_REPORT_UNCHANGED_NO_UI_REWRITE'));
+assert(!worker.includes('base64.b64decode'));
+assert(!worker.includes('gzip.decompress'));
+assert(!worker.includes('v241_install.py'));
+assert(!worker.includes('git add -- results.html index.html'));
+assert(!worker.includes('python3 scripts/boat_edge_v241_patch_home.py\n'));
+for(const file of ['results.html','index.html','assets/boat_edge_v241_home.js',
+                   'scripts/boat_edge_v241_results.py','tests/test_boat_edge_v241_results.py'])
+  assert(fs.existsSync(file),'tracked V241 owner must keep '+file);
+console.log('V241_NO_OBSOLETE_UI_REINSTALL_SINGLE_REPORT_WRITER_PASS');
 const resultJs=fs.readFileSync('assets/boat_edge_v241_results.js','utf8');
 assert(resultJs.includes('!o.rows.every(verifiedRow)'));
 assert(resultJs.includes("data-verification"));
