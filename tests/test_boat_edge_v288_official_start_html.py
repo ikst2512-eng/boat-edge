@@ -108,3 +108,73 @@ m['start_exhibition']=[x for x in p['start_exhibition'] if x['lane']!=6]
 assert gate(m)['six_boat_complete'] is False
 assert "'results_seen':False" not in parsing or 'race/result' not in parsing
 print('V288_OFFICIAL_ARCHIVED_PRE_RESULT_HTML_START_ST_SIX_BOAT_PASS')
+
+
+# Predeadline official evidence must survive a partial CSV in the NEXT
+# workflow stage. Execute the actual inline merge logic, not a copy of it.
+import math
+from copy import deepcopy
+
+start=source.index('              before=doc.setdefault("beforeinfo",{})')
+end=source.index('\n              if sui:',start)
+merge_src='\n'.join(line[14:] for line in source[start:end].splitlines())
+ast.parse(merge_src)
+s0=source.index('          def st_parse(v):')
+s1=source.index('\n          def row_get(row,*names):',s0)
+st_src='\n'.join(line[10:] for line in source[s0:s1].splitlines())
+ast.parse(st_src)
+st_scope={}
+exec(compile(st_src,'<existing_csv_st_parser>','exec'),st_scope,st_scope)
+
+def merge_existing(official,preview,actual):
+    env={'doc':{'beforeinfo':deepcopy(official)},
+         'preview_boats':deepcopy(preview),'actual':deepcopy(actual),
+         'math':math,'st_parse':st_scope['st_parse']}
+    exec(compile(merge_src,'<existing_live_source_merge>','exec'),env,env)
+    return env['doc']['beforeinfo']
+
+real=deepcopy(p)
+assert len(real['racers'])==6 and len(real['start_exhibition'])==6
+# Sparse tkz with null measurements must not erase the official six times.
+sparse=[{'lane':i,'exhibition_time':None,'tilt':None,
+         'weight_kg':None,'adjustment_kg':None} for i in range(1,7)]
+sparse[0]['exhibition_time']=6.2 # contradicts published official lane 1
+sparse[1]['weight_kg']=53.4 # new measured, non-overlapping field
+poor_stt=[{'lane':i,'course':None,'exhibition_st_raw':None,
+           'exhibition_f':False} for i in range(1,7)]
+after=merge_existing(real,sparse,poor_stt)
+assert [r['exhibition_time'] for r in after['racers']]==[
+    r['exhibition_time'] for r in real['racers']]
+assert after['racers'][1]['weight_kg']==53.4
+assert after['racers'][0]['raw_text']==real['racers'][0]['raw_text']
+assert after['start_exhibition']==real['start_exhibition']
+
+# A real six-course exhibition permutation may fill course labels, but no
+# missing final actual-entry outcome, no invented ST and no changed official ST.
+observed=[{'lane':i,'course':7-i,'exhibition_st_raw':None,
+           'exhibition_f':False} for i in range(1,7)]
+with_course=merge_existing(real,sparse,observed)
+assert [r['course'] for r in with_course['start_exhibition']]==[6,5,4,3,2,1]
+assert [r['st'] for r in with_course['start_exhibition']]==[
+    r['st'] for r in real['start_exhibition']]
+assert with_course['start_exhibition'][3]['exhibition_f'] is True
+
+# When the official page has not yet published exhibition, accept only
+# actual observed complete CSV records, without making up missing lanes.
+missing={'racers':[{'lane':i,'exhibition_time':None} for i in range(1,7)],
+         'start_exhibition':[]}
+fresh_preview=[{'lane':i,'exhibition_time':6.9+i*.01,
+                'tilt':.0} for i in range(1,7)]
+fresh_st=[{'lane':i,'course':i,'exhibition_st_raw':'.02',
+           'exhibition_f':False} for i in range(1,7)]
+filled=merge_existing(missing,fresh_preview,fresh_st)
+assert len(filled['start_exhibition'])==6
+assert all(6.0<=r['exhibition_time']<=8.5 for r in filled['racers'])
+assert [r['course'] for r in filled['start_exhibition']]==list(range(1,7))
+incomplete=deepcopy(fresh_st)
+incomplete[-1]['course']=5 # duplicate non-permutation, never assign course
+partial=merge_existing(missing,fresh_preview,incomplete)
+assert partial['start_exhibition']==[]
+assert len(partial['racers'])==6
+
+print('BOAT_EDGE_OFFICIAL_EXHIBITION_SURVIVES_PARTIAL_CSV_MERGE_PASS')
