@@ -71,3 +71,19 @@ require('./test_boat_edge_v357_card_source_integrity.cjs');
 require('./test_boat_edge_v360_home_result_safety.cjs');
 // V361: enforce list-side result proof and official-link safety in V307 UI CI.
 require('./test_boat_edge_v361_results_list_integrity.cjs');
+
+// 03: selected mobile race content precedes lengthy GLOBAL operations proof.
+// The health warning and its verification link must remain visible/accesssible.
+const mobileRaceCss=fs.readFileSync('assets/boat_edge_v371_simple_ui.css','utf8');
+const opsCss=mobileRaceCss.slice(mobileRaceCss.indexOf('/* 03 mobile race-first:'));
+assert(opsCss.includes('body.be48-race-active #be220Ops #be259OpsProof'));
+assert(opsCss.includes('body.be48-race-active #be220Ops #be220Info'));
+assert(opsCss.includes('display:none!important'));
+assert(opsCss.includes('#be220Ops #be220Status'));
+assert(opsCss.includes('#be220Ops .be220-line a'));
+assert(opsCss.includes('min-height:44px'));
+assert(!opsCss.includes('body.be48-race-active #be220Ops{display:none'));
+const opsJs=fs.readFileSync('assets/boat_edge_v220_site_ops.js','utf8');
+assert(opsJs.includes('id="be220Status"'));
+assert(opsJs.includes('aria-label="AI仮想運用と未見検証を見る"'));
+console.log('BOAT_EDGE_03_MOBILE_RACE_FIRST_OPS_STATUS_PRESERVED_PASS');
