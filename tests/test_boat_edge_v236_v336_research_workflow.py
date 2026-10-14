@@ -16,7 +16,7 @@ class V336WorkflowSafety(unittest.TestCase):
         # Periodic diagnostics cannot create authorized source captures or
         # immutable predictions. Keep the manual research route without
         # launching up to 288 redundant runners/day.
-        events = s.split("on:\\n",1)[1].split("\\npermissions:",1)[0]
+        events = s.split("on:", 1)[1].split("permissions:", 1)[0]
         self.assertNotIn("  schedule:", events)
         self.assertNotIn("  workflow_run:", events)
         self.assertNotIn("  push:", events)
