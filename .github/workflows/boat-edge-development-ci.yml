@@ -123,6 +123,15 @@ jobs:
               'candidates_with_unresolved_staging': a['candidates_with_unresolved_staging'],
           }, sort_keys=True))
           PY_V343
+      - name: Verify forward-only provisional best-ten selection matches frozen V254
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_02_site_provisional_adoption.py' -v
+          node tests/test_boat_edge_02_site_provisional_adoption.cjs
+          node --check assets/boat_edge_v108.js
+          python3 -m py_compile scripts/site_final_history_v133.py
       - name: Guard V254 site-only research with synthetic formal-cohort fixtures
         env:
           PYTHONDONTWRITEBYTECODE: '1'
