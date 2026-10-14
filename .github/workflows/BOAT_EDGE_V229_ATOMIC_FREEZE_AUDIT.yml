@@ -40,41 +40,37 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Pin predecessor engine and restore site-only atomic validator
+      - name: Verify current tracked pre-result engine by exact Git blob SHA
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY_V229_INSTALL'
+          # V229 previously restored an obsolete embedded validator and pinned
+          # V133 source from before the current approved V228 model migration.
+          # Never reinstall old code or silently accept a new predictor. Check
+          # the exact reviewed Git blobs already tracked in this checkout.
+          python3 - <<'PY_V229_CURRENT_SOURCE'
           from pathlib import Path
-          import hashlib,gzip,base64,subprocess,ast
-          locked={
-            'scripts/site_final_history_v133.py':'9cde465969c887f48e7943c925b4f9becc702806',
-            'scripts/boat_edge_v228_freeze_only.py':'964b35bc7636ceb68fb1f4d5b36977c49a376dbe3d1d71193571bd957c2ff313',
+          import re, subprocess
+          expected = {
+              'scripts/site_final_history_v133.py': '7b2916df307fcb2783cfc6ddc38ff73903d56da5',
+              'scripts/boat_edge_v228_freeze_only.py': 'cd71bc51b943b485f08d9610e305a3a7cefb220e',
+              'scripts/boat_edge_v229_atomic_freeze.py': '23246495c6296177f8d95a93eeabc0a832c633a4',
+              'tests/test_boat_edge_v229_atomic_freeze.py': 'f6478da4da2af52195d1982397e9e74c8d491335',
           }
-          for fname,expected in locked.items():
-              path=Path(fname)
-              if not path.is_file():raise SystemExit('V229_DEPENDENCY_MISSING_'+fname)
-              if fname.endswith('site_final_history_v133.py'):
-                  actual=subprocess.check_output(['git','hash-object',fname],text=True).strip()
-              else:
-                  actual=hashlib.sha256(path.read_bytes()).hexdigest()
-              if actual!=expected:raise SystemExit('V229_PIN_DRIFT_REFUSE_DEPLOY_'+fname)
-          objects={
-            'scripts/boat_edge_v229_atomic_freeze.py': ('1b2810b6d72bb6a37594c0097ae0a333ce1c46f099980e6b809a3db18d2644d8', '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'),
-            'tests/test_boat_edge_v229_atomic_freeze.py': ('1bd1b38489d2739daea04a768c29a1952d60967cabb0f774c756481e0cb404aa', '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'),
-          }
-          for fname,(expected,b64) in objects.items():
-              raw=gzip.decompress(base64.b64decode(b64,validate=True))
-              if hashlib.sha256(raw).hexdigest()!=expected:
-                  raise SystemExit('V229_EMBEDDED_BYTES_SHA_FAIL_'+fname)
-              p=Path(fname)
-              if p.is_file() and p.read_bytes()!=raw:
-                  raise SystemExit('V229_EXISTING_SOURCE_DRIFT_DO_NOT_OVERWRITE_'+fname)
-              p.parent.mkdir(parents=True,exist_ok=True)
-              p.write_bytes(raw)
-              ast.parse(raw.decode('utf8'))
-          print('V229_DEPENDENCIES_PINNED_AND_SCRIPT_SHA_PASS')
-          PY_V229_INSTALL
+          for name, sha in expected.items():
+              path = Path(name)
+              if not path.is_file() or path.is_symlink():
+                  raise SystemExit('V229_TRACKED_SOURCE_MISSING_' + name)
+              actual = subprocess.check_output(
+                  ['git', 'hash-object', '--', name], text=True).strip()
+              if actual != sha:
+                  raise SystemExit('V229_TRACKED_SOURCE_PIN_DRIFT_' + name)
+          model = Path('scripts/boat_edge_v228_freeze_only.py').read_text(encoding='utf-8')
+          declaration = re.search(r"(?m)^MODEL_SHA\s*=\s*['\"]([0-9a-f]{40})['\"]\s*$", model)
+          if not declaration or declaration.group(1) != expected['scripts/site_final_history_v133.py']:
+              raise SystemExit('V229_V228_MODEL_PIN_NOT_CURRENT_V133')
+          print('V229_TRACKED_SOURCE_PINS_PASS', len(expected))
+          PY_V229_CURRENT_SOURCE
       - name: Run deterministic fail-closed regression tests
         shell: bash
         run: |
