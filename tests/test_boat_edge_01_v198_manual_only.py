@@ -1,7 +1,7 @@
 """V198 is a retrospective, source-verified SITE research report, not a live freezer.
 
-Guard its single daily trigger and first-Git-freeze-before-outcome check without
-reading any actual result data. Keep a manual rerun for the 02 research owner.
+After the original pre-deadline Git proof failed in run 38635773633,
+retain manual research without automated failures. No result data is opened.
 """
 from pathlib import Path
 import re
@@ -11,19 +11,23 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/BOAT_EDGE_V198_ROLE_DIAGNOSTIC.yml"
 
 
-class V198RetrospectiveSchedule(unittest.TestCase):
+class V198QuarantinedManualResearch(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = WORKFLOW.read_text(encoding="utf-8")
         cls.events = cls.source.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
 
-    def test_one_daily_report_and_manual_override_only(self):
+    def test_unsafe_repeated_research_is_manual_only(self):
         self.assertIn("  workflow_dispatch:", self.events)
-        self.assertIn("  schedule:", self.events)
-        crons = re.findall(r"(?m)^\s+- cron: '([^']+)'", self.events)
-        self.assertEqual(crons, ["20 1 * * *"])
+        self.assertNotIn("  schedule:", self.events)
+        self.assertNotIn("  push:", self.events)
         self.assertNotIn("  workflow_run:", self.events)
+        self.assertEqual(re.findall(r"(?m)^\s+- cron:", self.events), [])
         self.assertIn("github.ref == 'refs/heads/main'", self.source)
+        self.assertIn("20261013-12-07", self.source)
+        self.assertIn("38635773633", self.source)
+        self.assertIn("V198_INVALID_SOURCE_NO_REPORT_PUBLISH", self.source)
+        self.assertIn("raise SystemExit(3)", self.source)
 
     def test_snapshot_sha_and_first_git_commit_still_precede_site_outcomes(self):
         source = self.source
