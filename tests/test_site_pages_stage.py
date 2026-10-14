@@ -1,4 +1,5 @@
 """Fixture-only protection of the existing site's controlled Pages packaging."""
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -49,6 +50,28 @@ class SitePagesStageTest(unittest.TestCase):
             "data/raw", "data/formal_predictions", "scripts", ".github"
         ):
             self.assertFalse((out / hidden).exists(), hidden)
+
+    def test_published_release_manifest_binds_main_sha_to_staged_bytes(self):
+        source_sha = "a" * 40
+        copy_public_tree(self.root, self.root / "_pages_site", source_sha)
+        path = self.root / "_pages_site/data/site_release_manifest.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["schema"], "BOAT_EDGE_PAGES_SOURCE_MANIFEST_V1")
+        self.assertEqual(manifest["source_commit_sha"], source_sha)
+        self.assertFalse((self.root / "data/site_release_manifest.json").exists())
+        self.assertEqual(set(manifest["published_file_sha256"]), {
+            "index.html", "assets/boat_edge_v108.js", "data/today.json",
+            "data/formal_status.json"})
+        for name, digest in manifest["published_file_sha256"].items():
+            self.assertEqual(digest, hashlib.sha256(
+                (self.root / "_pages_site" / name).read_bytes()).hexdigest())
+        # The manifest must not include or read formal outcome bytes.
+        self.assertNotIn("formal_predictions", json.dumps(manifest))
+
+    def test_bad_source_sha_fails_closed_before_staging(self):
+        with self.assertRaisesRegex(ValueError, "source commit"):
+            copy_public_tree(self.root, self.root / "_pages_site", "not-a-commit")
+        self.assertFalse((self.root / "_pages_site").exists())
 
     def test_missing_mandatory_feed_fails_closed(self):
         (self.root / "data/today.json").unlink()

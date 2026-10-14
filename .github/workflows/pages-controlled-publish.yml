@@ -63,10 +63,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site --source-sha "$(git rev-parse HEAD)"
           cmp index.html _pages_site/index.html
           cmp data/today.json _pages_site/data/today.json
           cmp data/formal_status.json _pages_site/data/formal_status.json
+          test -s _pages_site/data/site_release_manifest.json
           test ! -e _pages_site/data/raw
           test ! -e _pages_site/data/formal_predictions
           test ! -e _pages_site/scripts
@@ -131,7 +132,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/site_pages_stage.py --repo . --dest _pages_site --source-sha "$(git rev-parse HEAD)"
+          python3 - <<'PY_RELEASE_SHA'
+          import hashlib, json, subprocess
+          from pathlib import Path
+          out = Path('_pages_site')
+          manifest = json.loads((out / 'data/site_release_manifest.json').read_text())
+          source_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert manifest['source_commit_sha'] == source_sha
+          for name, digest in manifest['published_file_sha256'].items():
+              assert hashlib.sha256((out / name).read_bytes()).hexdigest() == digest
+          print('PAGES_SOURCE_SHA_AND_PUBLISHED_ASSET_BYTES_PASS', source_sha)
+          PY_RELEASE_SHA
           echo "Pages source main SHA: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload the static site artifact for direct Pages deployment
         uses: actions/upload-pages-artifact@v4

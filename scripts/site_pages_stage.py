@@ -8,7 +8,9 @@ This script never modifies predictions, Git history, results or publication sett
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -36,11 +38,13 @@ REQUIRED = (
 )
 
 
-def copy_public_tree(source: Path, destination: Path) -> int:
+def copy_public_tree(source: Path, destination: Path, source_commit_sha: str | None = None) -> int:
     source = Path(source).resolve(strict=True)
     destination = Path(destination).absolute()
     if destination.parent != source or destination.name != "_pages_site":
         raise ValueError("Output must be the repository's _pages_site directory")
+    if source_commit_sha is not None and not re.fullmatch(r"[0-9a-f]{40}", source_commit_sha):
+        raise ValueError("A published source commit must be exactly 40 lowercase hex characters")
     if destination.is_symlink():
         raise ValueError("Refusing symlink destination")
     for item in REQUIRED:
@@ -88,6 +92,25 @@ def copy_public_tree(source: Path, destination: Path) -> int:
         raise AssertionError("Staged site incomplete")
     if (destination / "data/raw").exists() or (destination / "data/formal_predictions").exists():
         raise AssertionError("Restricted data entered the Pages artifact")
+    if source_commit_sha is not None:
+        # The manifest is generated inside the deploy artifact, never in main.
+        # These digests describe published bytes, not a prediction freeze or
+        # proof that a particular race was committed before its deadline.
+        attest_paths = ("index.html", "assets/boat_edge_v108.js",
+                        "data/today.json", "data/formal_status.json")
+        manifest = {
+            "schema": "BOAT_EDGE_PAGES_SOURCE_MANIFEST_V1",
+            "source_commit_sha": source_commit_sha,
+            "published_file_sha256": {
+                p: hashlib.sha256((destination / p).read_bytes()).hexdigest()
+                for p in attest_paths
+            },
+        }
+        (destination / "data/site_release_manifest.json").write_text(
+            json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        count += 1
     return count
 
 
@@ -95,8 +118,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=".")
     parser.add_argument("--dest", default="_pages_site")
+    parser.add_argument("--source-sha", default=None)
     args = parser.parse_args()
-    total = copy_public_tree(Path(args.repo), Path(args.repo) / args.dest)
+    total = copy_public_tree(Path(args.repo), Path(args.repo) / args.dest, args.source_sha)
     print("PAGES_STAGED_PUBLIC_FILES", total)
     return 0
 
