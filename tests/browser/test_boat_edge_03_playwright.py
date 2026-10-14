@@ -240,6 +240,7 @@ class MobilePredictionBrowser(unittest.TestCase):
                 try:
                     page.evaluate("""() => {
                       window.state.race.race_key='20261014-06-02';
+                      window.state.race.meta.race_no=2;
                       window.BoatEdgeV207.render();
                     }""")
                     self.assertEqual(page.locator("#be207Top .be207-ticket").count(), 0)
