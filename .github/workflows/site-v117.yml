@@ -1,12 +1,9 @@
 name: BOAT EDGE V117 Official Course Stats
 
 on:
-  push:
-    paths:
-      - ".github/workflows/site-v117.yml"
   workflow_dispatch:
   # Legacy V117 installer may rewrite index.html and V108 assets.
-  # Manual recovery only; never schedule a rollback of the modern site UI.
+  # manual recovery ONLY; no automatic push/schedule rollback of modern site UI.
 
 permissions:
   contents: write
