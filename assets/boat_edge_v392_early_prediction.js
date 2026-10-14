@@ -121,6 +121,7 @@ function drawRows(box,p){
   btn.setAttribute('aria-pressed',String(Number(btn.dataset.count)===shown));
 }
 function showStatus(r,reason){
+ if(finalFor(r?.race_key)){hide();return;}
  const box=ensure();if(!box)return;
  box.replaceChildren();
  box.dataset.ready='status';
@@ -131,7 +132,12 @@ function showStatus(r,reason){
   '<div class="be392-note">締切前の正式予想・購入配分・的中判定とは別です。</div>';
  text($('.be392-meta',box),reason);
 }
+function finalFor(key){
+ const banner=$('.be181-freeze-banner[data-be181-source="final"][data-be181-verification="site-sha-audit"]');
+ return Boolean(banner&&banner.dataset?.be181RaceKey===key);
+}
 function showPreview(r,p){
+ if(finalFor(r.race_key)){hide();return;}
  const box=ensure();if(!box)return;
  box.dataset.ready='true';box.dataset.raceKey=r.race_key;box.removeAttribute('role');
  if(!$('.be392-tabs',box)){
@@ -159,6 +165,7 @@ function hide(){
 }
 async function render(r){
  const ticket=++serial,key=String(r?.race_key||'');activeKey=key;
+ if(finalFor(key)){hide();return;}
  const guard=cardSafety(r);
  if(!guard.ok){
   if(keyOK(key)&&r?.meta?.phase==='PRE_RESULT'&&guard.reason!=='締切済み（後付け暫定予想なし）'){
@@ -179,6 +186,7 @@ async function render(r){
   if(ticket!==serial||activeKey!==key)return;
   const checked=previewSafety(r,p);
   if(!checked.ok){showStatus(r,checked.reason);return;}
+  if(finalFor(key)){hide();return;}
   showPreview(r,p);
  }catch(e){
   if(ticket!==serial||activeKey!==key)return;
@@ -192,9 +200,9 @@ function tick(){
  const box=$('#be392EarlyPreview');if(!box||!['true','status'].includes(box.dataset.ready))return;
  const key=box.dataset.raceKey;
  const r=(()=>{try{return typeof state!=='undefined'?state?.race:null;}catch(_){return null;}})();
- if(key!==r?.race_key||!cardSafety(r).ok)hide();
+ if(key!==r?.race_key||!cardSafety(r).ok||finalFor(key))hide();
 }
 function init(){style();setInterval(tick,30000);}
-window.BoatEdgeV392={render,cardSafety,previewSafety,hide,version:'V392-CARD-ONLY-UNFROZEN'};
+window.BoatEdgeV392={render,cardSafety,previewSafety,finalFor,hide,version:'V392-CARD-ONLY-UNFROZEN'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

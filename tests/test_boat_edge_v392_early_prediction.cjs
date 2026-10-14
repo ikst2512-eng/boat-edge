@@ -74,4 +74,96 @@ assert.match(nightly,/boat_edge_v392_card_preview\.py --mode today/);
 assert.match(nightly,/push:\s*\n\s*branches: \[main\]/);
 assert.match(nightly,/schedule:/);
 assert.doesNotMatch(js,/site_results\/|formal_predictions\/|race\/result|race\/pay|fetch\(.+odds/);
-console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
+/* Synthetic PRE_RESULT-only contract. No past or future results are read. */
+document.querySelector = sel => sel.includes('data-be181-verification="site-sha-audit"')
+  ? {dataset:{be181RaceKey:KEY}} : null;
+assert.equal(api.finalFor(KEY),true);
+assert.equal(api.finalFor('20261015-14-02'),false);
+document.querySelector=()=>null;
+assert.equal(api.finalFor(KEY),false);
+assert.match(home,/be181VerifiedPreDeadlineFinal\(key,race\?\.meta\?\.deadline\)/);
+assert.match(home,/window\.BoatEdgeV392\?\.hide\?\.\(\)/);
+assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
+
+(async()=>{
+ const crypto=require('node:crypto');
+ const start=home.indexOf('async function be181VerifiedPreDeadlineFinal(');
+ const end=home.indexOf('function be181InstallStyle()',start);
+ const valStart=home.indexOf('function be181ValidFinal(');
+ const valEnd=home.indexOf('async function be181ServerFinal(',valStart);
+ assert.ok(start>0 && end>start && valStart>0 && valEnd>valStart);
+ const ticketStart=home.indexOf('const be181TicketValid=t=>');
+ const ticketEnd=home.indexOf('function be181First(',ticketStart);
+ assert.ok(ticketStart>0&&ticketEnd>ticketStart);
+ const code=home.slice(ticketStart,ticketEnd)+'\n'+home.slice(valStart,valEnd)+'\n'+home.slice(start,end);
+ const due='2026-10-15T08:35:00+09:00';
+ const at=Date.parse('2026-10-15T08:33:00+09:00');
+ const record={
+  race_key:KEY,prediction_kind:'SITE_REFERENCE_V122',
+  snapshot_window:'FINAL_15M',deadline:'08:35',minutes_to_deadline:3.9,
+  first_saved_at:'2026-10-15T08:31:01+09:00',
+  saved_at:'2026-10-15T08:31:02+09:00',
+  guards:{results_seen:false,unlock:false,scoring:false},
+  modes:Object.fromEntries(['hit','balance','hole','narrow'].map(mode=>
+   [mode,{tickets:[{combo:'1-2-3',p:20,stake_yen:1000},{combo:'1-3-2',p:10,stake_yen:1000}]}]))
+ };
+ const bytes=Buffer.from(JSON.stringify(record));
+ const sha=crypto.createHash('sha256').update(bytes).digest('hex');
+ const audit={race_key:KEY,pass:true,latest_snapshot_sha256:sha};
+ const proof={
+  schema:'BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1',
+  scope:'SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS',
+  race_key:KEY,snapshot_sha256:sha,new_snapshot_created_this_run:true,
+  results_seen:false,formal_fresh_unlock:false,scoring:false,
+  snapshot_saved_at:record.saved_at
+ };
+ let frames=[bytes,audit,proof],broken=null;
+ const fetch=async url=>{
+  const i=/site_prediction_snapshots/.test(url)?0:
+    /site_prediction_audit/.test(url)?1:2;
+  if(i===broken)return {ok:false};
+  return {ok:true,arrayBuffer:async()=>Uint8Array.from(frames[0]).buffer,
+   json:async()=>frames[i]};
+ };
+ const context=vm.createContext({
+  fetch,crypto:crypto.webcrypto,TextDecoder,Uint8Array,Date,Number,Array,
+  Object,String,Set,JSON,
+  be181KeyValid:key=>/^20\d{6}-\d{2}-\d{2}$/.test(key)
+ });
+ vm.runInContext(code,context);
+ const verify=()=>vm.runInContext('be181VerifiedPreDeadlineFinal('+
+   JSON.stringify(KEY)+','+JSON.stringify('08:35')+','+at+')',context);
+ const pass=await verify();
+ if(!pass){
+   // Debug a fixture-only rejection without changing the production fail-closed contract.
+   const diagnostic=code.replace('       return null;','       throw Error("CONTRACT_REJECTED");')
+     .replace('}catch(_){return null;}','}catch(e){throw e;}');
+   vm.runInContext(diagnostic,context);
+   await verify();
+ }
+ assert.equal(pass.race_key,KEY,'Verified snapshot must match selected race');
+ assert.equal((await vm.runInContext('be181VerifiedPreDeadlineFinal('+
+   JSON.stringify(KEY)+','+JSON.stringify('08:35')+','+
+   Date.parse(due)+')',context)),null,'At/after deadline cannot newly promote');
+ const makeChoice=flag=>vm.runInContext('be181ShowChoice('+
+   JSON.stringify(KEY)+',2,false,'+JSON.stringify(pass)+',null,'+
+   JSON.stringify({hit:[{combo:'4-5-6',p:1}]})+',"hit",'+flag+')',context);
+ const selected=makeChoice('true');
+ assert.equal(selected.source,'final');
+ assert.equal(selected.rows[0].combo,'1-2-3');
+ assert.equal(makeChoice('false').source,'latest');
+ frames=[bytes,{...audit,latest_snapshot_sha256:'0'.repeat(64)},proof];
+ assert.equal(await verify(),null,'Mismatched V125 SHA rejects final');
+ frames=[bytes,{...audit,settlement:{}},proof];
+ assert.equal(await verify(),null,'Result-bearing audit cannot be read as PRE_RESULT proof');
+ frames=[bytes,audit,{...proof,snapshot_sha256:'a'.repeat(64)}];
+ assert.equal(await verify(),null,'Mismatched V229 SHA rejects final');
+ frames=[bytes,audit,{...proof,results_seen:true}];
+ assert.equal(await verify(),null,'Result seen rejects final');
+ frames=[bytes,audit,proof];broken=1;
+ assert.equal(await verify(),null,'Missing audit rejects final');
+ broken=null;
+ assert.equal(await verify()!==null,true,'Valid verified final recovered');
+ console.log('V392_SITE_FINAL_SHA_AUDIT_HANDOFF_FIXTURE_PASS');
+ console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
+})().catch(error=>{console.error(error);process.exitCode=1});
