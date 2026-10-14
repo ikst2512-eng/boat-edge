@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_v301_paired_evidence import baseline_topk, cross_study_ranked_topk, EvidenceError
+from boat_edge_v301_paired_evidence import baseline_topk, cross_study_ranked_topk, cross_study_ranked_topk_by_day, EvidenceError
 
 
 class BaselineTopKTests(unittest.TestCase):
@@ -52,6 +52,22 @@ class CrossStudyTopKTests(unittest.TestCase):
         self.assertEqual(result["top10"]["left_only_hits"], 0)
         self.assertEqual(result["top10"]["exact_mcnemar_two_sided_p"], 1.0)
         self.assertFalse(result["top10"]["improvement_proven"])
+
+    def test_by_day_prevents_concealed_day_concentration(self):
+        base = ["1-2-3", "1-2-4", "1-3-2", "1-3-4", "1-4-2",
+                "1-4-3", "2-1-3", "2-1-4", "2-3-1", "2-3-4"]
+        alt = base[:9] + ["1-4-6"]
+        left = [{"key": "20261012-04-10", "day": "20261012",
+                 "winning": "1-4-6", "baseline": base,
+                 "ranked_comparators": {"hit10": base}},
+                {"key": "20261013-04-10", "day": "20261013",
+                 "winning": "2-3-4", "baseline": base,
+                 "ranked_comparators": {"hit10": base}}]
+        right = [{**row, "ranked_comparators": {"third_tail10": alt}} for row in left]
+        out = cross_study_ranked_topk_by_day(left, right, "hit10", "third_tail10")
+        self.assertEqual(out["20261012"]["top10"]["right_only_hits"], 1)
+        self.assertEqual(out["20261013"]["top10"]["left_only_hits"], 1)
+        self.assertFalse(out["20261012"]["top10"]["improvement_proven"])
 
     def test_cross_study_mismatched_race_rejected(self):
         left = [{"key": "20261013-04-10", "winning": "1-2-3"}]
