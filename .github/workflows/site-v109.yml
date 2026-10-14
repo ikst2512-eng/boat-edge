@@ -445,7 +445,7 @@ jobs:
 
           idx=json.loads(Path('data/site_results/index.json').read_text(encoding='utf-8'))
           assert idx['schema_version']=='boat-edge-site-results-index-v109'
-          assert idx['complete_rule']=='confirmed + trifecta + payout non-null'
+          assert idx['complete_rule']=='confirmed + trifecta + payout OR trifecta_not_established'
           print(idx)
 
           sample=Path('data/site_results/20261007-01-12.json')
