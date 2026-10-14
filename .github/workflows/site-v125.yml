@@ -52,7 +52,10 @@ jobs:
       - name: Audit V123 snapshots with revision history
         shell: bash
         run: |
-          python - <<'PY'
+          set -euo pipefail
+          # Persist the exact original auditor for conflict-safe recomputation.
+          # The script reads current SITE snapshots only, never formal outcomes.
+          cat > "$RUNNER_TEMP/v125_audit_once.py" <<'PY'
 
           from __future__ import annotations
           import json, hashlib, re
@@ -238,6 +241,7 @@ jobs:
               raise SystemExit("intrinsic_audit_failed")
 
           PY
+          python "$RUNNER_TEMP/v125_audit_once.py"
 
       - name: Validate V125
         shell: bash
@@ -264,7 +268,8 @@ jobs:
         if: github.event_name != 'schedule' && github.event_name != 'workflow_run'
         shell: bash
         run: |
-          python - <<'PY'
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/v125_todo_once.py" <<'PY'
           from pathlib import Path
           p=Path("BOAT_EDGE_CURRENT_TODO.md")
           s=p.read_text(encoding="utf-8") if p.exists() else "# BOAT EDGE CURRENT TODO\n"
@@ -282,18 +287,49 @@ jobs:
                   s=s.replace(marker,line+"\n\n"+marker,1) if marker in s else s+"\n"+line+"\n"
           p.write_text(s,encoding="utf-8")
           PY
+          python "$RUNNER_TEMP/v125_todo_once.py"
 
-      - name: Save V125 audit
+      - name: Recompute and publish V125 audit from the latest main
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_prediction_audit BOAT_EDGE_CURRENT_TODO.md
-          git diff --cached --quiet && exit 0
-          git commit -m "Make FINAL15M audit revision-safe V125"
-          for n in 1 2 3; do
-            git push && exit 0
-            git pull --rebase origin main
+          # NEVER rebase an unpushed audit snapshot onto newer site data:
+          # that would attach stale V123 revisions to a different main head.
+          # Abort an attempted push on conflict, discard its local commit
+          # and regenerate all audit hashes, revisions and timestamps afresh.
+          for attempt in 1 2 3 4 5; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_prediction_audit/
+            python "$RUNNER_TEMP/v125_audit_once.py"
+            if [[ "${GITHUB_EVENT_NAME}" != "schedule" && "${GITHUB_EVENT_NAME}" != "workflow_run" ]]; then
+              python "$RUNNER_TEMP/v125_todo_once.py"
+            fi
+            # The replay can see different saved SITE revisions. Validate
+            # the complete new evidence rather than the older first-pass index.
+            python - <<'PYCHECK'
+          import json
+          from pathlib import Path
+          audit=json.loads(Path("data/site_prediction_audit/index.json").read_text(encoding="utf-8"))
+          assert audit["schema_version"]=="boat-edge-final15m-audit-index-v125"
+          assert audit["source_snapshot_schema"]=="boat-edge-server-site-final-v123"
+          assert not audit.get("errors"), audit.get("errors")
+          print("V125_FRESH_MAIN_RECALCULATED_NO_FORMAL_RESULT",len(audit.get("audited",{})))
+          PYCHECK
+            git add -A -- data/site_prediction_audit/ BOAT_EDGE_CURRENT_TODO.md
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo V125_NO_NEW_REVISION_OR_RESULT_AUDIT_CHANGES
+              exit 0
+            fi
+            git commit -m "Make FINAL15M audit revision-safe V125"
+            if git push origin HEAD:main; then
+              echo V125_FRESH_MAIN_AUDIT_PUBLISHED
+              exit 0
+            fi
+            echo "V125_MAIN_MOVED_DISCARD_LOCAL_AUDIT_AND_RECHECK_${attempt}"
           done
-          git push
+          echo V125_PUBLISH_CONFLICT_FAILED_CLOSED
+          exit 1
