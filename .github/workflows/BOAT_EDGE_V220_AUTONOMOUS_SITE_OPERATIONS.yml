@@ -13,8 +13,8 @@ on:
   schedule:
     - cron: '11,26,41,56 * * * *'
   # When GitHub delays the primary collector cron, the already scheduled V216
-  # source-readiness pass can nudge the EXISTING V220 recovery logic. No new
-  # collector, no new schedule, and no new prediction or model writer.
+  # source-readiness pass can nudge EXISTING V220 recovery logic. No new
+  # collector, cron, engine, model writer, or after-deadline replay.
   workflow_run:
     workflows:
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
@@ -49,8 +49,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
       - name: Verify current versioned site-operations code without overwriting main
-        # Event recovery reuses the already-tested V220 plan and only dispatches
-        # absent sources; no expensive report run and no extra main/Pages write.
+        # Event recovery reuses the V220 plan: needed source collection or
+        # strict evidence-ready missed V229; no extra main/Pages writer.
         if: github.event_name != 'workflow_run'
         shell: bash
         run: |
@@ -115,10 +115,11 @@ jobs:
           done
           test "$saved" = 1
 
-      - name: Retry missed PRE_RESULT collector workflows only if no recent runs
-        # Exact same existing --recovery-plan + 15-minute cool-down for both
-        # quarter-hour scheduler and V216 completion; never dispatch V229/V235
-        # directly, never bypass source-rights, deadline or Formal Fresh guards.
+      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs
+        # Existing 15-minute collector cooldown is unchanged; V229 is allowed
+        # only for source-complete uncommitted FINAL in its actual 2-10m window.
+        # A 2-minute V229 cooldown lets genuine cron gaps recover while
+        # suppressing duplicate queued/running execution and rapid retries.
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -129,13 +130,26 @@ jobs:
           cat /tmp/v220_recovery_plan.json
           if ! command -v gh >/dev/null || ! command -v jq >/dev/null; then echo 'V220_RECOVERY_CLI_UNAVAILABLE_FAIL_CLOSED'; exit 0; fi
           for wf in $(jq -r '.workflows[]?' /tmp/v220_recovery_plan.json); do
-            case "$wf" in auto-update.yml|site-odds.yml) ;; *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1;; esac
+            case "$wf" in
+              auto-update.yml|site-odds.yml) cooldown=900 ;;
+              BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120 ;;
+              *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1 ;;
+            esac
+            # Source readiness was checked on latest main in --recovery-plan;
+            # every V229 invocation performs its own independent PRE_RESULT,
+            # official source, 120-odds and Git-first-add fail-closed checks.
             if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=12" 2>/dev/null); then
                echo "V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE $wf"; continue
             fi
             current=$(date -u +%s)
-            # If the job has run within 15 min, even if it silently failed, don't create a storm.
-            if echo "$runs" | jq -e --argjson t "$current" '[.workflow_runs[]? | select(.created_at != null) | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < 900)] | length > 0' >/dev/null; then
+            # Never dispatch if a V229 instance is pending/running, regardless
+            # of start time; keep original 15-min cooldown for collectors.
+            if [[ "$wf" == BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml ]]; then
+               if echo "$runs" | jq -e '[.workflow_runs[]? | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length > 0' >/dev/null; then
+                  echo "V220_V229_ALREADY_ACTIVE_NO_DUPLICATE"; continue
+               fi
+            fi
+            if echo "$runs" | jq -e --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null) | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
                echo "V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE $wf"; continue
             fi
             if gh workflow run "$wf" --ref main; then

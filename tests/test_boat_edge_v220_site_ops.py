@@ -274,15 +274,77 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
                  'Generate observed pre-result site-operations report'):
         body=wf.split('      - name: '+step,1)[1].split('      - name:',1)[0]
         assert "if: github.event_name != 'workflow_run'" in body, step
-    recovery=wf.split('      - name: Retry missed PRE_RESULT collector workflows only if no recent runs',1)[1]
+    recovery=wf.split('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs',1)[1]
     assert "--recovery-plan" in recovery
     assert 'auto-update.yml|site-odds.yml' in recovery
-    assert "900" in recovery, "15-minute dispatch cooldown required"
+    assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120' in recovery
+    assert 'auto-update.yml|site-odds.yml) cooldown=900' in recovery
+    assert 'V220_V229_ALREADY_ACTIVE_NO_DUPLICATE' in recovery
+    assert '.status == "in_progress"' in recovery
     assert 'gh workflow run "$wf" --ref main' in recovery
-    assert 'gh workflow run V229' not in recovery
     assert 'gh workflow run V235' not in recovery
     assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
     print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
+
+def test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m():
+    # Synthetic PRE_RESULT only: no real-race outcome, network or engine dispatch.
+    name='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        now=NOW+timedelta(minutes=25)  # 08:30, deadline 08:35
+        stamp='2026-10-11T08:29:00+09:00'
+        card={'status':'ok','fetched_at':stamp}
+        race={'race_key':KEY,
+              'meta':{'phase':'PRE_RESULT','results_seen':False,
+                      'unlock':False,'scoring':False},
+              'racers':[{}]*6,
+              'source_audit':{'race_card':card,'beforeinfo':card}}
+        put(root,f'data/races/{KEY}.json',race)
+        scratch={'race_key':KEY,'blocked':False,'checked_at':stamp,
+                 'race_card_source_status':'ok','official_beforeinfo_source_status':'ok'}
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
+                for b in range(1,7) for c in range(1,7)
+                if len({a,b,c})==3}
+        odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':stamp,
+              'results_seen':False,'scoring':False,'available_count':120,
+              'verified_official_dom_v167':True,'trifecta_odds':combos}
+        put(root,f'data/site_odds/{KEY}.json',odds)
+        ready=mod.compute(root,now)
+        assert ready['recovery_dispatch_candidates']==[name],ready
+        assert ready['current_windows'][0]['missing_evidence']==['frozen_prediction_missing_or_invalid']
+        assert name not in mod.compute(root,NOW+timedelta(minutes=19))['recovery_dispatch_candidates']
+        assert name not in mod.compute(root,NOW+timedelta(minutes=28,seconds=30))['recovery_dispatch_candidates']
+        assert name not in mod.compute(root,NOW+timedelta(minutes=31))['recovery_dispatch_candidates']
+        # No repair/overwrite of an existing frozen file, even if unusable.
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',{'race_key':KEY,'invalid':True})
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        (root/f'data/site_prediction_snapshots/{KEY}.json').unlink()
+        # A single missing independently confirmed source must block V229.
+        put(root,f'data/races/{KEY}.json',{**race,'source_audit':{'race_card':card,
+                             'beforeinfo':{'status':'published_wait','fetched_at':stamp}}})
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        put(root,f'data/races/{KEY}.json',race)
+        put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'blocked':True})
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        put(root,f'data/site_odds/{KEY}.json',{**odds,'verified_official_dom_v167':False})
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        put(root,f'data/site_odds/{KEY}.json',odds)
+        # Formal lock must fail closed even if every site source is ready.
+        formal={'guards':{'results_seen':True,'unlock':False,
+                          'scoring':False,'RESULT_UNLOCK_TOKEN':None},
+                'formalFirst100':{'races':0}}
+        put(root,'data/formal_status.json',formal)
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        formal['guards']['results_seen']=False
+        formal['formalFirst100']['races']=1
+        put(root,'data/formal_status.json',formal)
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        formal['formalFirst100']['races']=0
+        put(root,'data/formal_status.json',formal)
+        assert name in mod.compute(root,now)['recovery_dispatch_candidates']
+    print('V410_ONLY_STRICT_EVIDENCE_READY_2_TO_10M_MISSED_V229_RECOVERY_PASS')
 
 if __name__=='__main__':
     test_all()
@@ -291,3 +353,4 @@ if __name__=='__main__':
     test_v284_freeze_coverage_not_early_false_miss()
     test_v290_missing_source_vs_freeze_window()
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
+    test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
