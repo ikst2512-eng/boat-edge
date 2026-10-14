@@ -866,6 +866,11 @@ function saveFinalSnapshot(key,race,pred,modes,mins){
     }))
   };
   if(capture){snap.stake_plan_version="V141-10000-PROSPECTIVE";snap.stake_saved_at=savedAt;}
+  if(pred?.mode!=='formal'&&modes?.tail?.length===10&&key.slice(0,8)>='20261014'){
+    snap.default_display_mode='tail';
+    snap.adopted_ticket_policy='PROVISIONAL_V254_THIRD_TAIL10_FROM_PREDECLARED_FROZEN_MODES';
+    snap.statistical_significance_claim=false;
+  }
   writeLocal(snapKey(key),snap);
   return snap;
 }
