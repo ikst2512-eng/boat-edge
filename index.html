@@ -3163,6 +3163,17 @@ function be03RaceLoadNotice(message,isError=false){
   notice.dataset.error=String(isError);
   notice.setAttribute("role",isError?"alert":"status");
 }
+/* UI source boundary: the fetched card must be the one the user selected. */
+function be03RaceSourceIdentity(file,jcd,race){
+  const match=/^(?:\.\/)?data\/races\/(20\d{6}-(?:0[1-9]|1\d|2[0-4])-(?:0[1-9]|1[0-2]))\.json$/.exec(String(file||""));
+  if(!match)return false;
+  const key=match[1],meta=race?.meta||{};
+  return race?.race_key===key &&
+    String(jcd||"").padStart(2,"0")===key.slice(9,11) &&
+    meta.date===key.slice(0,4)+"-"+key.slice(4,6)+"-"+key.slice(6,8) &&
+    String(meta.venue_code||"").padStart(2,"0")===key.slice(9,11) &&
+    Number(meta.race_no)===Number(key.slice(12,14));
+}
 async function loadRace(file, jcd){
   const request=++be03RaceRequestSerial;
   const previousVenue=state.currentVenue;
@@ -3179,6 +3190,7 @@ async function loadRace(file, jcd){
     if(request!==be03RaceRequestSerial)return;
     if(!/^\d{8}-\d{2}-\d{2}$/.test(String(race?.race_key||"")))
       throw new Error("INVALID_RACE_ID");
+    if(!be03RaceSourceIdentity(file,jcd,race))throw new Error("RACE_SOURCE_MISMATCH");
     race=await be182FetchScratch(race);
     if(request!==be03RaceRequestSerial)return;
     await refreshFormalStatus();
@@ -3198,6 +3210,8 @@ async function loadRace(file, jcd){
       ?"レース画面の表示に失敗しました。更新して再試行してください。"
       :/HTTP 404/.test(detail)
         ?"選択したレースの出走表がサイトに未公開です（404）。更新後に再選択してください。"
+        :/RACE_SOURCE_MISMATCH/.test(detail)
+          ?"選択したレースと取得した出走表が一致しません。誤った予想を表示せず停止しました。公開データを確認してください。"
         :/INVALID_RACE_ID/.test(detail)
           ?"レースIDが不正です。出走表の公開データを確認してください。"
           :"レースデータを取得できませんでした。通信状況を確認して、更新後に再選択してください。";
