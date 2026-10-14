@@ -123,12 +123,16 @@ jobs:
               combo=None
               payout=None
               row_debug=None
+              not_established=False
 
               for tr in soup.find_all('tr'):
                   row=clean(tr.get_text(' ',strip=True))
                   if '3連単' not in row:
                       continue
                   row_debug=row[:500]
+                  if '不成立' in row:
+                      not_established=True
+                      break
                   m=re.search(r'([1-6])\s*[-－ー]\s*([1-6])\s*[-－ー]\s*([1-6])',row)
                   if m:
                       combo='-'.join(m.groups())
@@ -136,7 +140,7 @@ jobs:
                   if combo:
                       break
 
-              if not combo and len(order)>=3:
+              if not not_established and not combo and len(order)>=3:
                   combo='-'.join(map(str,order[:3]))
 
               if combo and len(order)<3:
@@ -146,7 +150,8 @@ jobs:
                   'combo':combo,
                   'order':order[:3],
                   'payout':payout,
-                  'row_debug':row_debug
+                  'row_debug':row_debug,
+                  'not_established':not_established
               }
 
           def read_json(path):
@@ -184,7 +189,7 @@ jobs:
                   and old.get('trifecta')
                   and old.get('trifecta_payout_yen_per_100') is not None
               )
-              if complete:
+              if complete or (old and old.get('status')=='trifecta_not_established'):
                   continue
 
               jcd=str(meta.get('venue_code') or key.split('-')[1]).zfill(2)
@@ -219,7 +224,8 @@ jobs:
               # optional card metadata to use a particular serialization.
               target=out/p.name
               old=read_json(target) if target.exists() else None
-              if old and old.get('status')=='confirmed' and old.get('trifecta') and old.get('trifecta_payout_yen_per_100') is not None:
+              if old and (old.get('status')=='trifecta_not_established' or (old.get('status')=='confirmed' and old.get('trifecta') and old.get('trifecta_payout_yen_per_100') is not None)):
+                  continue
                   continue
               # Site-only results must never unlock or score Formal Fresh.
               # The protected 2026-10-01 date is excluded explicitly.
@@ -264,7 +270,7 @@ jobs:
                   continue
               existing=read_json(out/card.name)
               coverage_total+=1
-              if existing and existing.get('status')=='confirmed' and existing.get('trifecta') and existing.get('trifecta_payout_yen_per_100') is not None:
+              if existing and (existing.get('status')=='trifecta_not_established' or (existing.get('status')=='confirmed' and existing.get('trifecta') and existing.get('trifecta_payout_yen_per_100') is not None)):
                   coverage_complete+=1
 
           # During scheduled runs, limit historical repairs to avoid needless load.
