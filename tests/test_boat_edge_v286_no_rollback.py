@@ -59,7 +59,7 @@ class NoPinnedRollback(unittest.TestCase):
     def test_schedule_and_formal_lock_retained(self):
         # Three disjoint cron groups preserve every 5m pre-result window.
         import re
-        crons=re.findall(r"^\\s+- cron: '([^']+)'$",self.src,re.MULTILINE)
+        crons=re.findall(r"^\s+- cron: '([^']+)'$",self.src,re.MULTILINE)
         self.assertEqual(len(crons),3)
         minutes=[]
         for cron in crons:
