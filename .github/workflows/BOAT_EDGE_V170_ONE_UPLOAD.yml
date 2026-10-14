@@ -56,35 +56,31 @@ jobs:
           set -euo pipefail
           python3 scripts/site_mode_venue_v170.py
 
-      - name: Install display-only UI bindings without changing prediction engine
+      - name: Validate tracked V170 venue imports without UI mutations
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PYUI'
+          python3 - <<'PY_V170_IMPORTS'
           from pathlib import Path
-          p=Path('index.html')
-          data=p.read_text(encoding='utf-8')
-          css='<link rel="stylesheet" href="./assets/boat_edge_v170_venue_accuracy.css?v=170">'
-          js='<script src="./assets/boat_edge_v170_venue_accuracy.js?v=170"></script>'
-          if data.count('</head>')!=1 or data.count('</body>')!=1:
-              raise RuntimeError('Unexpected site structure; no UI files committed')
-          if css not in data:
-              data=data.replace('</head>',css+'\n</head>')
-          if js not in data:
-              data=data.replace('</body>',js+'\n</body>')
-          if data.count(css)!=1 or data.count(js)!=1:
-              raise RuntimeError('Duplicate UI binding')
-          p.write_text(data,encoding='utf-8')
-          print('UI_BINDINGS_PASS',css,js)
-          PYUI
-
+          html=Path('index.html').read_text(encoding='utf-8')
+          for resource in (
+              './assets/boat_edge_v170_venue_accuracy.css?v=170',
+              './assets/boat_edge_v170_venue_accuracy.js?v=170',
+          ):
+              if html.count(resource)!=1:
+                  raise SystemExit('V170_TRACKED_SITE_IMPORT_NOT_UNIQUE_'+resource)
+          print('V170_TRACKED_SITE_IMPORTS_READ_ONLY_PASS')
+          PY_V170_IMPORTS
       - name: Commit only descriptive venue statistics and display UI
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add scripts/site_mode_venue_v170.py tests/test_site_mode_venue_v170.py assets/boat_edge_v170_venue_accuracy.js assets/boat_edge_v170_venue_accuracy.css data/site_learning/mode_venue_accuracy_v170.json index.html
+          # Venue facts are the sole automated output. UI sources and
+          # index.html are controlled by reviewed track 03 changes.
+          git diff --exit-code -- index.html scripts/site_mode_venue_v170.py tests/test_site_mode_venue_v170.py assets/boat_edge_v170_venue_accuracy.js assets/boat_edge_v170_venue_accuracy.css
+          git add -- data/site_learning/mode_venue_accuracy_v170.json
           if git diff --cached --quiet; then
             echo 'NO_CHANGE'
             exit 0
