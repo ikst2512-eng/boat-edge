@@ -161,6 +161,18 @@ jobs:
 
               old=read_json(audit_path) or {}
               revisions=old.get("revisions") or []
+              # V229 writes an immutable pre-result atomic proof to this same
+              # per-race audit file. V125 owns later revision/settlement checks.
+              # Do not erase the V229 proof when a matching revision is replayed.
+              atomic_revision=next(
+                  (x for x in revisions
+                   if x.get("snapshot_sha256")==snapshot_sha
+                   and isinstance(x.get("atomic_pre_result_proof_sha256"),str)),
+                  None
+              )
+              if atomic_revision is not None:
+                  revision["atomic_pre_result_proof_sha256"]=atomic_revision[
+                      "atomic_pre_result_proof_sha256"]
               if not any(x.get("snapshot_sha256")==snapshot_sha for x in revisions):
                   revisions.append(revision)
               else:
@@ -197,6 +209,18 @@ jobs:
                       "payout":settlement.get("payout")
                   }
               }
+              # V229 pre-result provenance is a property of its precise
+              # frozen bytes. Carry its reference forward ONLY while the same
+              # latest snapshot SHA is being audited. If another revision
+              # becomes latest, the historical proof stays on that revision,
+              # never incorrectly upgraded to proof of the newer prediction.
+              if (old.get("atomic_pre_result_audit") is True
+                      and old.get("latest_snapshot_sha256")==snapshot_sha
+                      and atomic_revision is not None):
+                  for field in ("atomic_pre_result_audit", "scope",
+                                "source_evidence_file"):
+                      if field in old:
+                          doc[field]=old[field]
               # V269: last_audited_at tracks a material audit change, not every
               # five-minute read. Preserve the existing timestamp when every
               # source hash, revision, settlement and safety flag is identical.
