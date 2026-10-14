@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_v301_paired_evidence import baseline_topk, cross_study_ranked_topk, cross_study_ranked_topk_by_day, EvidenceError
+from boat_edge_v301_paired_evidence import baseline_topk, cross_study_ranked_topk, cross_study_ranked_topk_by_day, compare_10point_modes, EvidenceError
 
 
 class BaselineTopKTests(unittest.TestCase):
@@ -78,6 +78,41 @@ class CrossStudyTopKTests(unittest.TestCase):
     def test_cross_study_unequal_length_rejected(self):
         with self.assertRaises(EvidenceError):
             cross_study_ranked_topk([{"key": "20261013-04-10"}], [], "hit10", "hit10")
+
+
+
+class PairedTenIdentityTests(unittest.TestCase):
+    def row(self):
+        return {"key": "20261014-04-01", "day": "20261014",
+                "winning": "1-2-3",
+                "outcomes": {"hit10": True, "third_tail10": False},
+                "modes": {"hit10": 10, "third_tail10": 10}}
+
+    def test_same_race_ten_points_works_without_promotion(self):
+        a, b = self.row(), self.row()
+        out = compare_10point_modes([a], [b], "hit10", "third_tail10")
+        self.assertEqual(out["races"], 1)
+        self.assertEqual((out["left_hits"], out["right_hits"]), (1, 0))
+        self.assertFalse(out["improvement_proven"])
+
+    def test_mismatch_key_outcome_day_or_ticket_budget_rejected(self):
+        for field, value, reason in (
+                ("key", "20261014-04-02", "RACE_OR_OUTCOME"),
+                ("winning", "1-3-2", "RACE_OR_OUTCOME"),
+                ("day", "20261013", "RACE_OR_OUTCOME")):
+            with self.subTest(field=field):
+                a, b = self.row(), self.row()
+                b[field] = value
+                with self.assertRaisesRegex(EvidenceError, reason):
+                    compare_10point_modes([a], [b], "hit10", "third_tail10")
+        a, b = self.row(), self.row()
+        b["modes"]["third_tail10"] = 9
+        with self.assertRaisesRegex(EvidenceError, "EXACT_TEN"):
+            compare_10point_modes([a], [b], "hit10", "third_tail10")
+
+    def test_unequal_race_counts_rejected(self):
+        with self.assertRaisesRegex(EvidenceError, "RACE_COUNT_MISMATCH"):
+            compare_10point_modes([self.row()], [], "hit10", "hit10")
 
 
 if __name__ == "__main__":
