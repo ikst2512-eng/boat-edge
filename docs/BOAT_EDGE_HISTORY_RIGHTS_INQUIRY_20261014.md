@@ -217,3 +217,19 @@ GitHub main の既存V301 `scripts/boat_edge_v301_paired_evidence.py` を再確�
 **重要:** 9/23〜30の1,200Rは「CSV取得日時ベースの会場別直前データ候補」であって、「既存モデルの締切前予想が凍結済みの1,200R」ではない。したがって現時点でこの1,200RのTop3/5/10的中率を採点・改善主張しない。過去に凍結していない予想を後付け生成して未見検証と呼ぶことも禁止。
 
 最短の実働経路: (1) V301の既存SITE前締切freeze/score群の全ファイル集合を取得し、初回Git追加日時と凍結SHAを独立照合、(2) 同一レース・同一点数の既存比較を実行、(3) 今後の新規prospective候補は結果未見の時点でV360の120通りを保存し、将来の独立結果確認後のみ採点。第三者データの利用条件確定前は学習・再配布しない。
+
+
+## 2026-10-14 Git-first-added prospective SITE paired evidence (CI run 38507069405)
+
+Full-history checkout in the draft research PR ran the existing V301 fail-closed scorer successfully. These are **separate SITE research cohorts**, not Formal Fresh, and must not be pooled as if independent races.
+
+| Study | Git-attested races | Baseline Top3 | Baseline Top5 | Baseline Top10 | Candidate Top10 | Paired gain/loss | Exact McNemar p |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| v236 balance10/scenario7plus3 | 97 (3 days) | 23 | 28 | 37 | 38 | 2/1 | 1.0 |
+| v240 second_coverage10 | 54 (3 days) | 12 | 15 | 21 | 21 | 3/3 | 1.0 |
+| v240 pair_coverage10 | 54 (3 days) | 12 | 15 | 21 | 21 | 2/2 | 1.0 |
+| v254 third_tail10 | 72 (3 days) | 17 | 22 | 29 | 31 | 3/1 | 0.625 |
+
+The candidate Top3/Top5 hit counts equal baseline for these comparisons. The v240-v254 same-race intersection is 32 races across 2 days: baseline Top3=7, Top5=10, Top10=13; v240 second_coverage10 Top10=14 and v254 third_tail10 Top10=14. These are **descriptive, not proof of superiority**. Coverage15 has a different point budget and is excluded from equal-10 comparisons.
+
+Source: [GitHub Actions research-paired-evidence run 38507069405](https://github.com/ikst2512-eng/boat-edge/actions/runs/38507069405). No model promotion; Formal Fresh guards remain closed.
