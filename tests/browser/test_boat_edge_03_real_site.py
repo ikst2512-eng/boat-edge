@@ -907,6 +907,62 @@ def exercise(engine: str, url: str, shots: Path):
                 assert second_panel.locator(".be207-condition").inner_text().strip()
                 assert second_panel.locator(".be207-budget").inner_text().strip()
                 assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
+                # 03: exercise the actual public/checkout 30s refresh handler.
+                # Route only this selected race's ?live= request, never an
+                # outcome endpoint. This is an injected UI failure/recovery
+                # scenario, NOT proof of the site's upstream data freshness.
+                assert page.evaluate("""() => typeof be162RefreshVisibleRace === 'function'""")
+                cached = page.evaluate("""() => {
+                    const r=state.race;
+                    if(!r || r.meta?.phase!=='PRE_RESULT' ||
+                       r.meta?.results_seen!==false ||
+                       r.meta?.unlock!==false || r.meta?.scoring!==false)
+                      throw Error('NO_PRE_RESULT_RACE_TO_REPLAY');
+                    return JSON.parse(JSON.stringify(r));
+                }""")
+                live_pattern = ("**/data/races/" + second["race_key"] +
+                                ".json?live=*")
+                intercepted = {"missing": 0, "replayed": 0}
+
+                def injected_404(route):
+                    intercepted["missing"] += 1
+                    route.fulfill(status=404, content_type="application/json",
+                                  body='{"status":"synthetic_404_ui_test"}')
+
+                page.route(live_pattern, injected_404)
+                page.wait_for_function("() => !be162RefreshBusy")
+                page.evaluate("async () => await be162RefreshVisibleRace()")
+                page.unroute(live_pattern, injected_404)
+                assert intercepted["missing"] >= 1, (
+                    "Actual passive refresh did not reach intercepted race JSON")
+                notice = page.locator("#be03PassiveRefreshNotice")
+                assert notice.is_visible(), "404 leaves stale race silently presented as current"
+                assert notice.get_attribute("role") == "status"
+                assert notice.get_attribute("data-race-key") == second["race_key"]
+                assert "前回取得時点" in notice.inner_text()
+                assert "404" in notice.inner_text()
+                assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
+
+                # Replay the already selected, explicitly PRE_RESULT card
+                # without reaching an outcome source or manufacturing a pick.
+                # A successful same-content response must clear the warning.
+                def replay_pre_result_card(route):
+                    intercepted["replayed"] += 1
+                    route.fulfill(status=200, content_type="application/json",
+                                  body=json.dumps(cached, ensure_ascii=False))
+
+                page.route(live_pattern, replay_pre_result_card)
+                page.evaluate("async () => await be162RefreshVisibleRace()")
+                page.unroute(live_pattern, replay_pre_result_card)
+                assert intercepted["replayed"] >= 1
+                page.wait_for_function(
+                    "() => !document.querySelector('#be03PassiveRefreshNotice')",
+                    timeout=12000)
+                assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
+                assert not errors, "JS errors in 404/recovery UI path: " + repr(errors)
+                report["passive_refresh_browser_404_and_recovery"] = (
+                    "SYNTHETIC_HTTP_FAILURE_REAL_UI_HANDLER_PASS")
+
                 # Even during asynchronous redraw, never leave previous-race tickets
                 # displayed as if they belonged to the newly selected race.
                 race_waiting = page.locator("html.be306-race-await").count() > 0
