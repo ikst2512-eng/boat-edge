@@ -54,37 +54,42 @@ jobs:
           PYV286
           PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v265_readiness_sources.py
           node --check assets/boat_edge_v215_readiness.js
-      - name: Audit upcoming races and persist actual pre-result source deficits
+      # The diagnostics and new shadow decisions are both PRE_RESULT-only.
+      # Commit their evidence together BEFORE the paper-selection and settled-result
+      # phases; one successful push is the first Git freeze receipt for both.
+      - name: Freeze PRE_RESULT diagnostics and shadow evidence in one Git commit
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3 4 5 6 7 8; do
-           git fetch --no-tags origin main
-           git reset --hard origin/main
-           python3 scripts/boat_edge_v215_readiness.py
-           git add -- data/site_paper_sim/readiness_v215_current.json data/site_paper_sim/readiness_history_v215/
-           if git diff --cached --quiet; then echo 'V216_NO_CHANGE_READINESS'; break; fi
-           git commit -m 'V216 Audit upcoming races and persist actual pre-result source deficits'
-           if git push origin HEAD:main; then echo 'V216_COMMITTED_READINESS'; break; fi
-           if [ "$attempt" -eq 8 ]; then exit 1; fi
-          done
-      - name: Freeze eligible V214 odds-proof shadow BEFORE results
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          for attempt in 1 2 3 4 5 6 7 8; do
-           git fetch --no-tags origin main
-           git reset --hard origin/main
-           python3 scripts/boat_edge_v214_shadow.py freeze
-           git add -- data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
-           if git diff --cached --quiet; then echo 'V216_NO_CHANGE_SHADOW_FREEZE'; break; fi
-           git commit -m 'V216 Freeze eligible V214 odds-proof shadow BEFORE results'
-           if git push origin HEAD:main; then echo 'V216_COMMITTED_SHADOW_FREEZE'; break; fi
-           if [ "$attempt" -eq 8 ]; then exit 1; fi
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            python3 scripts/boat_edge_v215_readiness.py
+            python3 scripts/boat_edge_v214_shadow.py freeze
+            git add -- data/site_paper_sim/readiness_v215_current.json data/site_paper_sim/readiness_history_v215/ data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
+            python3 - <<'PY_V216_PRE_RESULT'
+          import json,subprocess
+          from pathlib import Path
+          status=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=status.get('guards') or {}
+          if not all(guards.get(k) is False for k in ('results_seen','unlock','scoring')) or guards.get('RESULT_UNLOCK_TOKEN') is not None:
+              raise SystemExit('V216_FORMAL_RESULT_UNSEEN_GUARD_BLOCKED')
+          if (status.get('formalFirst100') or {}).get('races') != 0:
+              raise SystemExit('V216_FORMAL_FIRST100_GUARD_BLOCKED')
+          staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          allowed={'data/site_paper_sim/readiness_v215_current.json','data/site_paper_sim/shadow_v213_current.json','data/site_paper_sim/shadow_v213_ledger.json'}
+          for path in staged:
+              if path not in allowed and not path.startswith('data/site_paper_sim/readiness_history_v215/'):
+                  raise SystemExit('V216_UNEXPECTED_FROZEN_EVIDENCE_FILE_'+path)
+          print('V216_PRE_RESULT_ONLY_ATOMIC_STAGING_PASS',len(staged))
+          PY_V216_PRE_RESULT
+            git diff --cached --check
+            if git diff --cached --quiet; then echo 'V216_NO_NEW_PRE_RESULT_EVIDENCE'; break; fi
+            git commit -m 'V216 Freeze eligible pre-result source gaps and shadow evidence atomically'
+            if git push origin HEAD:main; then echo 'V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED'; break; fi
+            if [ "$attempt" -eq 8 ]; then exit 1; fi
           done
       - name: Continue approved-only daily 50000 yen paper selection BEFORE results
         shell: bash
