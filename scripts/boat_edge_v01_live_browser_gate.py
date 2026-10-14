@@ -95,9 +95,20 @@ def valid(saved, audit, receipt, blob, key, now, first_add):
             or audit.get("race_key") != key or audit.get("pass") is not True
             or audit.get("latest_snapshot_sha256") != digest):
         return False
-    # A populated settlement is not PRE_RESULT evidence; do not inspect it.
+    # V125 can add an explicitly empty, PRE_RESULT-only sentinel before the
+    # race. Any populated, malformed or additional settlement field is unsafe.
     if "settlement" in audit:
-        return False
+        settlement = audit["settlement"]
+        if (not isinstance(settlement, dict)
+                or set(settlement) != {
+                    "available", "winning_combo", "hit_any", "mode_hits", "payout"
+                }
+                or settlement.get("available") is not False
+                or settlement.get("winning_combo") is not None
+                or settlement.get("hit_any") is not None
+                or settlement.get("mode_hits") != {}
+                or settlement.get("payout") is not None):
+            return False
     return True
 
 
@@ -139,6 +150,13 @@ if __name__ == "__main__":
     if output:
         with open(output, "a", encoding="utf-8") as f:
             f.write("live_candidate=" + ("true" if checked else "false") + "\n")
+            # Same immutable SHA identity must be proven again by BOTH public
+            # browsers. A different saved race must never borrow this Git
+            # first-add proof, even if its own SITE audit superficially passes.
+            f.write("first_add_proofs=" + ",".join(
+                item["race_key"] + ":" + item["snapshot_sha256"]
+                for item in checked
+            ) + "\n")
     print("V01_LIVE_BROWSER_ACTUAL_PREDEADLINE_GATE " +
           json.dumps({"eligible_count": len(checked),
                       "eligible": checked[:4],
