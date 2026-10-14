@@ -41,6 +41,10 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_01_v226_recovery_owner.py' -v
       - name: Validate tracked source pins
         run: python3 scripts/verify_workflow_source_pins.py
+      - name: Reject V229 source-pin drift before a change reaches main
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_01_v229_pin_premerge.py' -v
       - name: Check V229 live browser trigger needs real Git-first-add and SHA
         env:
           PYTHONDONTWRITEBYTECODE: '1'
