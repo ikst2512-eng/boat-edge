@@ -60,7 +60,7 @@ class Tests(unittest.TestCase):
                                  for c in spy.call_args_list))
         p=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
         row=m.load(p);cs=row['comparators']
-        self.assertEqual(row['comparison_policy'],m.POLICY_V2)
+        self.assertEqual(row['comparison_policy'],m.POLICY_V3)
         self.assertEqual(len(cs['headsecond10']),10)
         self.assertEqual(len(set(cs['headsecond10'])),10)
         self.assertEqual(cs['headsecond10'][0],cs['hit10'][0])
@@ -104,8 +104,9 @@ class Tests(unittest.TestCase):
             'trifecta_payout_yen_per_100':3140,
             'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
         scored=m.score(self.root,m.parse(RESULT_TIME))
-        pair=scored['headsecond10_matched_prospective_only']
+        pair=scored['headsecond10_distinct_matched_prospective_only']
         self.assertEqual(pair['races'],1)
+        self.assertEqual(scored['headsecond10_matched_prospective_only']['races'],0)
         self.assertEqual(pair['current_hit10_hits'],0)
         self.assertEqual(pair['candidate_hit10_hits'],1)
         self.assertEqual((pair['gains'],pair['losses']),(1,0))
@@ -126,12 +127,69 @@ class Tests(unittest.TestCase):
                          {'3':False,'5':False,'10':False})
         again=m.score(self.root,m.parse(RESULT_TIME))
         self.assertEqual(again['new_scored_this_run'],0)
-        self.assertEqual(again['headsecond10_matched_prospective_only'],pair)
+        self.assertEqual(again['headsecond10_distinct_matched_prospective_only'],pair)
 
     def test_freeze_idempotent(self):
         m.freeze(self.root,self.frozen)
         x=m.freeze(self.root,self.frozen+dt.timedelta(seconds=10))
         self.assertEqual(x['new_frozen_this_run'],0)
+    def test_distinct_candidate_changes_actual_10_ticket_membership(self):
+        # Previous V2 often shuffled ten identical tickets (zero ability to
+        # improve Top10 hit rate). V3 must use a different observed ticket.
+        hit=self.c['top10']
+        balance=[x['combo'] for x in self.c['frozen_mode_tickets']['balance']]
+        hole=[x['combo'] for x in self.c['frozen_mode_tickets']['hole']]
+        old=m.head_second_coverage10(hit,hole)
+        new=m.head_second_distinct_coverage10(hit,balance,hole)
+        self.assertEqual(len(old),10)
+        self.assertEqual(len(new),10)
+        self.assertEqual(len(set(new)),10)
+        self.assertNotEqual(set(new),set(hit))
+        self.assertNotEqual(new[:3],hit[:3])
+        self.assertNotEqual(new[:5],hit[:5])
+        self.assertEqual(new[:2],hit[:2])
+        self.assertIn('2-4-1',new)
+
+    def test_distinct_policy_skips_missing_external_ticket_and_no_result_reads(self):
+        # No new observable ticket from frozen modes => do NOT pretend a
+        # re-order can improve Top10. V2 remains unchanged/reproducible.
+        self.c['frozen_mode_tickets']['balance']=[{'combo':x} for x in self.c['top10']]
+        self.c['frozen_mode_tickets']['hole']=[{'combo':x} for x in self.c['top10']]
+        write(self.cp,self.c);self.original['sha256']=m.sha(self.cp)
+        with patch.object(m,'load',wraps=m.load) as spy:
+            obj,why=m.prepare(self.root,self.cp,self.frozen,policy='headsecond_distinct')
+        self.assertIsNone(obj)
+        self.assertEqual(why,'distinct_outside_current_top10_not_observed')
+        self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+
+    def test_old_v2_frozen_scores_as_v2_not_v3(self):
+        # A policy introduced later never changes the already-Git-frozen V2
+        # historical record or silently adds it to the V3 denominator.
+        original,why=m.prepare(self.root,self.cp,self.frozen,policy='headsecond')
+        self.assertIsNone(why)
+        self.assertEqual(original['comparison_policy'],m.POLICY_V2)
+        path=self.root/m.PATH/'v236_frozen'/f'{KEY}.json'
+        write(path,original)
+        write(self.root/'data/site_results'/f'{KEY}.json',{
+            'schema_version':'boat-edge-site-result-v109',
+            'race_key':KEY,'status':'confirmed','fetched_at':RESULT_TIME,
+            'trifecta':'2-4-1','finish_order':[2,4,1],
+            'trifecta_payout_yen_per_100':3140,
+            'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
+        scored=m.score(self.root,m.parse(RESULT_TIME))
+        self.assertEqual(scored['headsecond10_matched_prospective_only']['races'],1)
+        self.assertEqual(scored['headsecond10_distinct_matched_prospective_only']['races'],0)
+        self.assertEqual(m.load(self.root/m.PATH/'v236_scored'/f'{KEY}.json')['candidate_policy'],m.POLICY_V2)
+
+    def test_missing_formal_token_field_fails_closed_before_result_access(self):
+        doc=m.load(self.root/'data/formal_status.json')
+        del doc['guards']['RESULT_UNLOCK_TOKEN']
+        write(self.root/'data/formal_status.json',doc)
+        with patch.object(m,'load',wraps=m.load) as spy:
+            with self.assertRaisesRegex(RuntimeError,'FORMAL_GATE'):
+                m.score(self.root,m.parse(RESULT_TIME))
+            self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+
     def test_no_backfill_after_deadline(self):
         x=m.freeze(self.root,m.parse('2026-10-12T06:08:00+00:00'))
         self.assertEqual(x['frozen_today'],0)
