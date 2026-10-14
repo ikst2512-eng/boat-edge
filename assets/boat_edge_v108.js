@@ -1184,9 +1184,19 @@ async function renderPredictionModes(race,pred){
   const win=settled?.winning_combo||null;
   const officialResult=resultConfirmed?normalizeCombo(result?.trifecta||result?.finish_order):null;
 
+  const frozenTail=effectiveSnap?.modes?.tail?.tickets;
+  const expectedTail=be254SelectedThirdTail10(
+    effectiveSnap?.modes?.hit?.tickets||[],
+    effectiveSnap?.modes?.hole?.tickets||[]);
   const selectedTail=pred.mode!=='formal'&&
     effectiveSnap?.modes?.tail?.tickets?.length===10&&
     effectiveSnap?.default_display_mode==='tail'&&
+    effectiveSnap?.adopted_ticket_policy===
+      'PROVISIONAL_V254_THIRD_TAIL10_FROM_PREDECLARED_FROZEN_MODES'&&
+    effectiveSnap?.statistical_significance_claim===false&&
+    expectedTail!==null&&
+    JSON.stringify(expectedTail.map(x=>x.combo))===
+      JSON.stringify((frozenTail||[]).map(x=>x?.combo))&&
     key.slice(0,8)>='20261014';
   const perRaceModeKey='boatEdgeProvisionalSiteMode:'+key;
   const localChoice=readLocal(perRaceModeKey,null);
