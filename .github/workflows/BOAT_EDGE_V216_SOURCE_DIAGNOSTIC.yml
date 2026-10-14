@@ -6,7 +6,12 @@ on:
       - '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
   workflow_dispatch:
   schedule:
-    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'
+    # All 12 original five-minute PRE_RESULT windows are preserved. The
+    # three non-overlapping cron identities only throttle past-frozen SITE
+    # settlement to one quarter-hour window.
+    - cron: '4,19,34,49 * * * *'
+    - cron: '9,24,39,54 * * * *'
+    - cron: '14,29,44,59 * * * *'
 permissions:
   contents: write
   actions: write
@@ -112,6 +117,10 @@ jobs:
       # were already pushed above; never combine prospective decisions with
       # result-consuming settlement in one commit.
       - name: Settle earlier frozen shadow and paper ledgers in one Git commit
+        # Already Git-frozen SITE-only decisions may be reconciled later;
+        # pre-result readiness, shadow freeze and paper select still run on
+        # ALL twelve original five-minute source windows above.
+        if: ${{ github.event_name != 'schedule' || github.event.schedule == '14,29,44,59 * * * *' }}
         shell: bash
         run: |
           set -euo pipefail
