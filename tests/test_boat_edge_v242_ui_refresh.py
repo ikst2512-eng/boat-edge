@@ -36,19 +36,26 @@ class TestV242SiteRefresh(unittest.TestCase):
         self.assertIn("p.both_hit", h)
         self.assertNotIn("data/formal_", h)
 
-    def test_existing_workers_still_pin_python_sources(self):
-        for worker, html, token in (
-            (".github/workflows/v238.yml", "tail-diagnostics.html", "V238_EXISTING_SOURCE_DRIFT_FAIL_CLOSED_"),
-        ):
-            code = self.source(worker)
-            self.assertIn(token, code)
-            self.assertIn(f"if { 'file' if html == 'health.html' else 'name' } == '{html}'", code)
-            self.assertIn("hashlib.sha256(data).hexdigest()", code)
-            self.assertIn("if git push origin HEAD:main", code)
-        code = self.source('.github/workflows/v237.yml')
-        self.assertIn('V237_TRACKED_SOURCE_PIN_MISMATCH_', code)
-        self.assertIn('scripts/boat_edge_v237_health.py', code)
-        self.assertIn('tests/test_boat_edge_v237_health.py', code)
+    def test_existing_workers_keep_source_and_ui_provenance_guards(self):
+        # V238 no longer pins an old gzip bundle to tracked production code.
+        # The runtime must verify current main instead of reinstalling old UI.
+        report=self.source('.github/workflows/v238.yml')
+        self.assertIn('V238_TRACKED_CURRENT_SOURCE_NO_REINSTALL_PASS', report)
+        self.assertIn('git ls-files --error-unmatch', report)
+        self.assertIn('git diff --exit-code -- scripts/boat_edge_v238_tail_diagnostic.py', report)
+        self.assertIn('git add -- data/site_autopilot/v238_current.json', report)
+        self.assertIn("allowed={'data/site_autopilot/v238_current.json'}", report)
+        self.assertIn("if git push origin HEAD:main", report)
+        self.assertNotIn('V238_EXISTING_SOURCE_DRIFT_FAIL_CLOSED_', report)
+        self.assertNotIn('base64.b64decode', report)
+        self.assertNotIn('gzip.decompress', report)
+
+        # V237 remains a separate guarded health owner; do not loosen its
+        # source checks or the independent tracked pins in this V242 update.
+        health=self.source('.github/workflows/v237.yml')
+        self.assertIn('V237_TRACKED_SOURCE_PIN_MISMATCH_', health)
+        self.assertIn('scripts/boat_edge_v237_health.py', health)
+        self.assertIn('tests/test_boat_edge_v237_health.py', health)
         from scripts.verify_workflow_source_pins import verify
         verify(ROOT)
 
