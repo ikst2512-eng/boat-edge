@@ -336,6 +336,54 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
 
 
+/* 03: midnight fail-closed race catalog. Exercise actual UI source, no network. */
+(async()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ const a=html.indexOf('function be03UsableTodayCatalog(data){');
+ const b=html.indexOf('async function refreshModel(){',a);
+ assert(a>0&&b>a);
+ const nodes={live:{innerHTML:''},homeView:{dataset:{},firstChild:null,
+   insertBefore(node){nodes.be03TodayCatalogNotice=node;}}};
+ let catalog=null, renders=0, routeError=false;
+ const ctx=vm.createContext({
+  Date,Number,String,JSON,Array,RegExp,Promise,
+  document:{getElementById:id=>nodes[id]||null,
+    createElement:()=>({dataset:{},setAttribute(){},
+      remove(){delete nodes.be03TodayCatalogNotice;}})},
+  state:{today:null},
+  fetch:async()=>{if(routeError)throw Error('network');return {ok:true,json:async()=>catalog}},
+  renderHome:()=>{renders++},updateSystemBanner:()=>{}
+ });
+ vm.runInContext(html.slice(a,b),ctx);
+ const today=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+ const old=new Date(Date.now()+9*3600000-86400000).toISOString().slice(0,10);
+ const make=date=>({date,phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false,
+  venues:[{jcd:'02',races:[{race_key:date.replaceAll('-')+'-02-01',race_no:1,
+    file:'data/races/'+date.replaceAll('-')+'-02-01.json'}]}]});
+ const tick=()=>vm.runInContext('refreshToday()',ctx);
+ catalog=make(old);await tick();
+ assert.equal(ctx.state.today,null,'never expose prior-day catalog');
+ assert.equal(nodes.homeView.dataset.be03Catalog,'blocked');
+ assert.match(nodes.be03TodayCatalogNotice.textContent,/レース選択は確認できるまで停止/);
+ assert.match(nodes.live.innerHTML,/当日データ待ち/);
+ catalog=make(today);await tick();
+ assert.equal(ctx.state.today.date,today,'valid same-day PRE_RESULT recovers');
+ assert.equal(nodes.homeView.dataset.be03Catalog,undefined);
+ assert.equal(nodes.be03TodayCatalogNotice,undefined);
+ catalog={...make(today),venues:[{jcd:'02',races:[{race_key:today.replaceAll('-')+'-02-01',
+  race_no:1,file:'data/races/'+today.replaceAll('-')+'-03-01.json'}]}]};
+ await tick();
+ assert.equal(ctx.state.today.date,today,'retain previous same-day verified source');
+ assert.equal(nodes.homeView.dataset.be03Catalog,'stale');
+ catalog={...make(today),results_seen:true};await tick();
+ assert.equal(nodes.homeView.dataset.be03Catalog,'stale','result-open catalog cannot replace verified data');
+ routeError=true;await tick();assert.equal(nodes.homeView.dataset.be03Catalog,'stale');
+ ctx.state.today=make(old);await tick();assert.equal(ctx.state.today,null);
+ assert.equal(nodes.homeView.dataset.be03Catalog,'blocked');
+ assert(renders>=3,'UI receives updated/blocked states');
+ console.log('BOAT_EDGE_03_MIDNIGHT_CATALOG_FAIL_CLOSED_PASS');
+})().catch(e=>{console.error(e);process.exitCode=1});
+
 /* 03: exercise actual passive-refresh UI on bounded synthetic PRE_RESULT. */
 (async()=>{
  const html=fs.readFileSync('index.html','utf8');
