@@ -93,7 +93,8 @@ class SourceMerge(unittest.TestCase):
         put(self.collector,'data/races/20261012-03-01.json','NEW_DISJOINT_PRE_RESULT\n')
         process=self.execute()
         self.assertEqual(process.returncode,0,process.stdout[-2500:]+process.stderr[-2500:])
-        self.assertIn('V270_PRESERVE_PUBLISHED_SOURCE_ON_CONFLICT',process.stdout)
+        self.assertIn('V270_CHECK_REMOTE_PRESERVATION_ON_CONFLICT',process.stdout)
+        self.assertIn('V01_REMOTE_SCRATCH_CONFLICT_SAFELY_PRESERVED',process.stdout)
         git(self.collector,'fetch','origin','main')
         def source(path):
             return git(self.collector,'show','origin/main:'+path).stdout.strip()
