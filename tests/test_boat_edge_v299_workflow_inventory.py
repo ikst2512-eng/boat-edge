@@ -129,6 +129,33 @@ class WorkflowInventoryTests(unittest.TestCase):
                 self.assertIsNotNone(re.search(r"(?m)^  schedule:", events))
                 self.assertIn("workflow_dispatch:", events)
 
+    def test_v234_original_5m_future_freezes_and_staggered_result_scoring(self):
+        """Protect 12 prospective freezes; delay only retrospective SITE scoring."""
+        import re
+        workflow = (ROOT / ".github/workflows/V234.yml").read_text(encoding="utf-8")
+        slots = re.findall(r"^\\s+- cron: '([^']+)'$", workflow, re.MULTILINE)
+        self.assertEqual(len(slots), 3)
+        minutes = []
+        for slot in slots:
+            minute, hour, day, month, weekday = slot.split()
+            self.assertEqual((hour, day, month, weekday),
+                             ("0-14,23", "*", "*", "*"))
+            minutes.extend(map(int, minute.split(",")))
+        self.assertEqual(sorted(minutes), list(range(4, 60, 5)))
+        self.assertEqual(len(minutes), len(set(minutes)))
+        self.assertIn("github.event.schedule == '4,19,34,49 0-14,23 * * *'",
+                      workflow)
+        freeze = workflow.index("      - name: Immutable pre-result source prediction cohort")
+        future = workflow.index("      - name: V275 immediately freeze qualifying V254")
+        scored = workflow.index("      - name: Only after pre-result commit - score already confirmed SITE results")
+        self.assertLess(freeze, future)
+        self.assertLess(future, scored)
+        self.assertNotIn("data/site_results/", workflow[freeze:future])
+        self.assertNotIn("data/site_results/", workflow[future:scored])
+        score = workflow[scored:]
+        self.assertIn("python3 scripts/boat_edge_v234_settle.py", score)
+        self.assertIn("git commit -m 'V234 score confirmed post-result", score)
+
     def test_v216_one_git_receipt_for_pre_result_readiness_and_shadow(self):
         """Avoid two Pages-invalidating commits while keeping settled phases separate."""
         workflow = (ROOT / ".github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml").read_text(encoding="utf-8")
