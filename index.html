@@ -133,7 +133,22 @@ button{cursor:pointer}
 .racechip.before{background:#ebfff7;border-color:#c6f1e2}
 .be03-load-notice{margin:8px 0;padding:11px 13px;border:1px solid #adc9ee;border-radius:10px;background:#edf5ff;color:#173d6a;font-size:13px;line-height:1.6;font-weight:700}
 .be03-load-notice[data-error="true"]{border-color:#f2c2bf;background:#fff2f0;color:#94332b}
-.be03-race-loading #be207Top,.be03-race-loading #be392EarlyPreview,.be03-race-loading #decision,.be03-race-loading #buyBoard,.be03-race-loading #worlds{display:none!important}
+/* 03: keep all previous-race panels hidden until the selected race replaces them.
+   The in-summary loading/error notice and race selector remain accessible. */
+.be03-race-loading #be207Top,
+.be03-race-loading #be392EarlyPreview,
+.be03-race-loading #be206Quick,
+.be03-race-loading #be108PredictionModes,
+.be03-race-loading #be251Outcome,
+.be03-race-loading #be48Action,
+.be03-race-loading #be48Racers,
+.be03-race-loading #be48Before,
+.be03-race-loading #be204Overview,
+.be03-race-loading #scenarioHero,
+.be03-race-loading .race-summary .summary-top,
+.be03-race-loading #decision,
+.be03-race-loading #buyBoard,
+.be03-race-loading #worlds{display:none!important}
 .view{display:none}
 .view.active{display:block}
 .race-head{position:sticky;top:63px;z-index:50;background:rgba(243,248,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
@@ -3217,7 +3232,7 @@ async function loadRace(file, jcd){
           :"レースデータを取得できませんでした。通信状況を確認して、更新後に再選択してください。";
     const live=document.getElementById("live");
     if(live){live.textContent="レース取得エラー";live.setAttribute("title",message);}
-    be03RaceLoadNotice(message,true);
+    be03RaceLoadNotice(previousRace?message+" 前に表示していたレースを維持しています。":message,true);
     // No blocking native alert on iPhone. Keep the last valid race intact.
     if(typeof showToast==="function")showToast(message,5000);
     console.warn("BOAT_EDGE_RACE_LOAD_FAILED",stage,String(file),detail);
