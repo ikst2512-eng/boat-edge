@@ -130,6 +130,35 @@ def audit(day, files):
     counts["all_four_preview_timestamps_eligible_unverified"] = len(
         eligible_all_four - deadline_conflicts
     )
+    # Venue 03 (Edogawa) has no original-exhibition feed by source design.
+    # A missing original-exhibition row is not a missing required field there.
+    core = ("stt", "tkz", "sui")
+    core_keys = set.intersection(*(eligible_by_source[name] for name in core))
+    core_deadline_conflicts = {
+        key for key in core_keys
+        if len({deadlines_by_source[name][key] for name in core}) != 1
+    }
+    eligible_core = core_keys - core_deadline_conflicts
+    edogawa_core = {key for key in eligible_core if key[8:10] == "03"}
+    non_edogawa_four = {
+        key for key in eligible_all_four - deadline_conflicts
+        if key[8:10] != "03"
+    }
+    counts["three_preview_deadline_conflicts"] = len(core_deadline_conflicts)
+    counts["three_preview_timestamps_eligible_unverified"] = len(eligible_core)
+    counts["edogawa_three_preview_timestamps_eligible_unverified"] = len(edogawa_core)
+    counts["non_edogawa_four_preview_timestamps_eligible_unverified"] = len(non_edogawa_four)
+    counts["venue_aware_preview_timestamps_eligible_unverified"] = len(
+        edogawa_core | non_edogawa_four
+    )
+    counts["non_edogawa_missing_original_exhibition"] = sum(
+        key[8:10] != "03" and key not in source_rows.get("original_exhibition", {})
+        for key in baseline
+    )
+    counts["edogawa_original_exhibition_unexpected"] = sum(
+        key[8:10] == "03" for key in source_rows.get("original_exhibition", {})
+        if key in baseline
+    )
     # Never label timestamps as independently verified as-of proof.
     return {
         "schema": SCHEMA,
