@@ -48,6 +48,8 @@ RETIRED = (
     # V240 was an exact-Top7 research-only second-leg shadow.
     # Its new freezes were 0/61 capable of changing Top3 or Top5.
     "v240.yml",
+    # The 54 observed V239 frozen races preserved reference ranks 1-7.
+    "v239.yml",
 )
 LIVE = "V235.yml"
 
