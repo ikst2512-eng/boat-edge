@@ -217,7 +217,21 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertEqual(later.count("git push origin HEAD:main"),1)
         self.assertIn("V216_SETTLE_FORMAL_FRESH_GUARD_BLOCKED",later)
         self.assertIn("V216_SETTLEMENT_FORBIDDEN_STAGED_FILES_",later)
-        self.assertIn("cron: '4,9,14,19,24,29,34,39,44,49,54,59 * * * *'", workflow)
+        # V216 preserves the original five-minute PRE_RESULT freeze and
+        # paper selection slots while staggering only retrospective settlement.
+        import re
+        slots = re.findall(r"^\s+- cron: '([^']+)'$", workflow, re.MULTILINE)
+        self.assertEqual(len(slots), 3)
+        minutes = []
+        for cron in slots:
+            fields = cron.split()
+            self.assertEqual(fields[1:], ["*", "*", "*", "*"])
+            minutes.extend(int(m) for m in fields[0].split(","))
+        self.assertEqual(sorted(minutes), list(range(4, 60, 5)))
+        self.assertEqual(len(set(minutes)), 12)
+        self.assertIn("if: ${{ github.event_name != 'schedule' || github.event.schedule == '14,29,44,59 * * * *' }}", later)
+        self.assertLess(later.index("github.event.schedule"),
+                        later.index("scripts/boat_edge_v214_shadow.py settle"))
 
 
 if __name__ == "__main__":
