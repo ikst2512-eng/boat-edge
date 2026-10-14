@@ -238,6 +238,30 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.assertTrue(all(r["races"] == 0 and r["exact_mcnemar_two_sided_p"] is None
                             for r in cross.values()))
 
+    def test_git_frozen_within_study_all_topk_and_unequal_budget_excluded(self):
+        self.add("v236", winning=EXTRA[0], improve=True)
+        self.add("v254", winning=EXTRA[0], improve=True)
+        self.add("v240", winning=EXTRA[0], improve=True)
+        report = m.audit(self.root, attest=self.proof)["within_study"]
+        rank236 = report["v236"]["ranked_top3_top5_top10"]
+        self.assertEqual(rank236["hit10"]["3"], {
+            "races": 1, "hits": 0, "hit_rate_percent": 0.0})
+        self.assertEqual(rank236["scenario7plus3"]["10"]["hits"], 1)
+        self.assertNotIn("coverage15", rank236)
+        self.assertNotIn("headsecond10", rank236)
+        self.assertEqual(report["v254"]["ranked_top3_top5_top10"]
+                         ["third_tail10"]["10"]["hits"], 1)
+        self.assertEqual(report["v240"]["ranked_top3_top5_top10"]
+                         ["second_coverage10"]["10"]["hits"], 1)
+        row = {"winning": EXTRA[0], "modes": {"test10": 10},
+               "frozen_ticket_lists": {"test10": HIT[:9] + [EXTRA[0]]}}
+        summary = m.within_study_ranked_prefixes([row], ["test10"])
+        self.assertEqual(summary["test10"]["3"]["hits"], 0)
+        self.assertEqual(summary["test10"]["10"]["hits"], 1)
+        row["modes"]["test10"] = 15
+        with self.assertRaisesRegex(m.EvidenceError, "EXACT_TEN_TICKETS_REQUIRED"):
+            m.within_study_ranked_prefixes([row], ["test10"])
+
     def test_v236_v254_ranked_topk_cross_study_stratified_and_fail_closed(self):
         v2 = "PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER"
         v3 = "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES"
