@@ -12,6 +12,37 @@ concurrency:
   group: boat-edge-development-ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  research-paired-evidence:
+    if: github.event_name == 'pull_request' && github.head_ref == '02/v400-five-year-history-research-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate strict SITE-only Git-first-added paired accuracy evidence
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v236_v301_paired.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v301_topk_research.py' -v
+          python3 scripts/boat_edge_v301_paired_evidence.py --root . > /tmp/boat-edge-v301-paired.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/boat-edge-v301-paired.json',encoding='utf-8'))
+          assert p['formal_results_read'] is False
+          assert p['production_model_changed'] is False
+          assert p['promotion_authorized'] is False
+          print(json.dumps({'within_study':p['within_study'],
+                            'same_race_cross_study':p['same_race_cross_study']},
+                           ensure_ascii=False,sort_keys=True))
+          PY
   fixture-only-regressions:
     runs-on: ubuntu-latest
     timeout-minutes: 8
