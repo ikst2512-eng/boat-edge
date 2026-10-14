@@ -40,13 +40,18 @@ concurrency:
 
 jobs:
   stage-regression:
-    # workflow_run can originate from other refs: accept only a successful
-    # first-freeze run on this repository's main. Never run on forks.
+    needs: verify-source
+    # PR fixtures run regardless of the live Pages mode; on main, run the
+    # expensive stage check ONLY if GitHub Pages is in Actions publish mode.
+    # always() allows PR tests even though verify-source is skipped on PR.
     if: >-
-      github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main' &&
-       github.event.workflow_run.head_repository.full_name == github.repository)
+      always() &&
+      (github.event_name == 'pull_request' ||
+       needs.verify-source.outputs.enabled == 'true') &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -75,7 +80,8 @@ jobs:
           echo CONTROLLED_PAGES_ACTUAL_MAIN_SITE_STAGE_PASS
 
   verify-source:
-    needs: stage-regression
+    # Cheap Pages mode preflight comes before the expensive stage checks.
+    # Legacy branch publishing must not start a second unused pipeline.
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name != 'pull_request' &&
@@ -116,8 +122,10 @@ jobs:
           esac
 
   build:
-    needs: verify-source
-    if: needs.verify-source.outputs.enabled == 'true'
+    needs: [verify-source, stage-regression]
+    if: >-
+      needs.verify-source.outputs.enabled == 'true' &&
+      needs.stage-regression.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
