@@ -12,7 +12,11 @@ on:
     types: [completed]
     branches: [main]
   schedule:
-    - cron: '*/5 0-14,23 * * *' # JST 08:00-23:59; future-only before-deadline research
+    # Exactly the original 00,05,...55 minute UTC freeze opportunities.
+    # SITE-only retrospective scores are deferred to the first 15m subset.
+    - cron: '0,15,30,45 0-14,23 * * *'
+    - cron: '5,20,35,50 0-14,23 * * *'
+    - cron: '10,25,40,55 0-14,23 * * *'
 
 permissions:
   contents: write
@@ -307,6 +311,7 @@ jobs:
           done
 
       - name: Independently replay first Git addition before optional site-only result scoring
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '0,15,30,45 0-14,23 * * *') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -328,6 +333,7 @@ jobs:
           PYAUDIT
 
       - name: Save only research evidence with safe concurrent-write retry
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '0,15,30,45 0-14,23 * * *') }}
         shell: bash
         run: |
           set -euo pipefail
