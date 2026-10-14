@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-14T03:14:57.852331+00:00",
+  "checked_at": "2026-10-14T03:55:53.107976+00:00",
   "day_jst": "20261014",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -33,31 +33,31 @@
     "site_v185_candidate_top": {},
     "site_v185_evaluated_races": 0,
     "site_v199_10_20x_settled_races": 26,
-    "site_v199_evaluated_races": 114,
+    "site_v199_evaluated_races": 115,
     "site_v199_head_top": {
       "top10": {
         "candidate_hits": 48,
-        "candidate_rate_percent": 42.11,
+        "candidate_rate_percent": 41.74,
         "control_hits": 48,
-        "control_rate_percent": 42.11,
+        "control_rate_percent": 41.74,
         "difference": 0,
         "paired_gains": 0,
         "paired_losses": 0
       },
       "top3": {
         "candidate_hits": 17,
-        "candidate_rate_percent": 14.91,
+        "candidate_rate_percent": 14.78,
         "control_hits": 17,
-        "control_rate_percent": 14.91,
+        "control_rate_percent": 14.78,
         "difference": 0,
         "paired_gains": 2,
         "paired_losses": 2
       },
       "top5": {
         "candidate_hits": 35,
-        "candidate_rate_percent": 30.7,
+        "candidate_rate_percent": 30.43,
         "control_hits": 33,
-        "control_rate_percent": 28.95,
+        "control_rate_percent": 28.7,
         "difference": 2,
         "paired_gains": 2,
         "paired_losses": 0
@@ -68,41 +68,71 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
+    "collector_health_issues": [
+      "collector_index_stale",
+      "predeadline_incomplete"
+    ],
     "current_window": [
       {
-        "deadline_jst": "12:15",
-        "issues": [],
-        "minutes_left": 0.0,
-        "race_key": "20261014-06-03",
-        "venue": "浜名湖"
-      },
-      {
-        "deadline_jst": "12:19",
-        "issues": [],
-        "minutes_left": 4.0,
-        "race_key": "20261014-14-09",
+        "deadline_jst": "12:58",
+        "issues": [
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "最新オッズ120通り未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 2.1,
+        "race_key": "20261014-14-10",
         "venue": "鳴門"
       },
       {
-        "deadline_jst": "12:23",
-        "issues": [],
-        "minutes_left": 8.0,
-        "race_key": "20261014-04-05",
-        "venue": "平和島"
+        "deadline_jst": "13:01",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 5.1,
+        "race_key": "20261014-13-06",
+        "venue": "尼崎"
+      },
+      {
+        "deadline_jst": "13:04",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 8.1,
+        "race_key": "20261014-22-05",
+        "venue": "福岡"
+      },
+      {
+        "deadline_jst": "13:07",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 11.1,
+        "race_key": "20261014-18-10",
+        "venue": "徳山"
       }
     ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 31,
+    "readiness_observed_races": 42,
     "readiness_reasons": {
       "no_raw_ev_candidate_8_25x": 1,
-      "snapshot_missing": 7,
-      "verified_shadow_ready": 23
+      "snapshot_missing": 13,
+      "verified_shadow_ready": 28
     },
-    "readiness_shadow_verified_races": 23,
+    "readiness_shadow_verified_races": 28,
     "schedule_today": true,
-    "snapshot_files_today": 27,
-    "status": "MONITORING_PREDEADLINE",
+    "snapshot_files_today": 33,
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
