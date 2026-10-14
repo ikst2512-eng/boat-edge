@@ -39,6 +39,22 @@ for hp in sorted(HIST.glob("*.json")):
 '''
 
 class FreezeTests(unittest.TestCase):
+    def test_current_live_model_pin_preserves_v254_and_strips_all_outcomes(self):
+        # Guard the actual checkout, not merely a synthetic V133 lookalike.
+        root=Path(__file__).resolve().parents[1]
+        actual=(root/'scripts/site_final_history_v133.py').read_text(encoding='utf-8')
+        self.assertEqual(f.git_blob(actual.encode('utf-8')),f.MODEL_SHA)
+        # The source SHA must have been explicitly reapproved at adoption.
+        self.assertIn('PROVISIONAL_V254_THIRD_TAIL10_FIXED_TOP7',actual)
+        output=f.build_frozen_source(actual)
+        self.assertIn('PROVISIONAL_V254_THIRD_TAIL10_FIXED_TOP7',output)
+        self.assertIn('V228_SITE_ONLY_FIRST_FREEZE_NO_RESULT_INPUT',output)
+        self.assertNotIn('read_json(RESULTS',output)
+        self.assertNotIn('race=merge_formal(race,key)',output)
+        self.assertNotIn('for hp in sorted(HIST.glob(',output)
+        with self.assertRaisesRegex(AssertionError,'SOURCE_BLOB_SHA_DRIFT'):
+            f.build_frozen_source(actual+'\\n')
+
     def test_exact_cut_and_forbidden_read_removed(self):
         raw=src()
         out=f.build_frozen_source(raw,f.git_blob(raw.encode()))
