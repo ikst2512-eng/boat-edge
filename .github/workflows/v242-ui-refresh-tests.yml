@@ -1,6 +1,15 @@
 name: BOAT EDGE V242 - Read Only Refresh Regression
 
 on:
+  # Catch stale source-contract tests in the PR, not only after main merge.
+  pull_request:
+    paths:
+      - 'health.html'
+      - 'tail-diagnostics.html'
+      - '.github/workflows/v237.yml'
+      - '.github/workflows/v238.yml'
+      - '.github/workflows/v242-ui-refresh-tests.yml'
+      - 'tests/test_boat_edge_v242_ui_refresh.py'
   push:
     branches:
       - main
