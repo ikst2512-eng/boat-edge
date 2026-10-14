@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_v301_paired_evidence import baseline_topk
+from boat_edge_v301_paired_evidence import baseline_topk, cross_study_ranked_topk, EvidenceError
 
 
 class BaselineTopKTests(unittest.TestCase):
@@ -32,6 +32,36 @@ class BaselineTopKTests(unittest.TestCase):
             self.assertEqual(r[f"top{k}"]["races"], 0)
             self.assertEqual(r[f"top{k}"]["hits"], 0)
             self.assertIsNone(r[f"top{k}"]["hit_rate"])
+
+
+
+class CrossStudyTopKTests(unittest.TestCase):
+    def test_same_race_ranked_topk_changes_only_top10(self):
+        baseline = ["1-2-3", "1-2-4", "1-3-2", "1-3-4", "1-4-2",
+                    "1-4-3", "2-1-3", "2-1-4", "2-3-1", "2-3-4"]
+        candidate = baseline[:9] + ["1-4-6"]
+        left = [{"key": "20261013-04-10", "winning": "1-4-6",
+                 "baseline": baseline, "ranked_comparators": {"hit10": baseline}}]
+        right = [{"key": "20261013-04-10", "winning": "1-4-6",
+                  "baseline": baseline,
+                  "ranked_comparators": {"third_tail10": candidate}}]
+        result = cross_study_ranked_topk(left, right, "hit10", "third_tail10")
+        self.assertEqual(result["top3"]["right_only_hits"], 0)
+        self.assertEqual(result["top5"]["right_only_hits"], 0)
+        self.assertEqual(result["top10"]["right_only_hits"], 1)
+        self.assertEqual(result["top10"]["left_only_hits"], 0)
+        self.assertEqual(result["top10"]["exact_mcnemar_two_sided_p"], 1.0)
+        self.assertFalse(result["top10"]["improvement_proven"])
+
+    def test_cross_study_mismatched_race_rejected(self):
+        left = [{"key": "20261013-04-10", "winning": "1-2-3"}]
+        right = [{"key": "20261013-04-11", "winning": "1-2-3"}]
+        with self.assertRaises(EvidenceError):
+            cross_study_ranked_topk(left, right, "hit10", "hit10")
+
+    def test_cross_study_unequal_length_rejected(self):
+        with self.assertRaises(EvidenceError):
+            cross_study_ranked_topk([{"key": "20261013-04-10"}], [], "hit10", "hit10")
 
 
 if __name__ == "__main__":
