@@ -351,6 +351,33 @@ def compare_ranked_10point_modes(left, right, left_mode, right_mode):
             "improvement_proven": False, "model_promotion_authorized": False}
 
 
+def within_study_ranked_prefixes(rows, names):
+    """Frozen Top3/5/10 rates for each same-cohort *ten-ticket* mode only.
+
+    Unlike the older standalone TopK draft this requires checked_row's exact
+    source/Git evidence and does not add a new scorer, workflow or result read.
+    Fifteen-ticket coverage is intentionally excluded from ten-point rankings.
+    """
+    report = {}
+    for mode in names:
+        if any(row["modes"].get(mode) != 10 for row in rows):
+            raise EvidenceError("WITHIN_STUDY_EXACT_TEN_TICKETS_REQUIRED_" + mode)
+        topk = {}
+        for k in (3, 5, 10):
+            outcomes = []
+            for row in rows:
+                picks = row["frozen_ticket_lists"].get(mode)
+                if not isinstance(picks, list) or len(picks) != 10:
+                    raise EvidenceError("WITHIN_STUDY_FROZEN_RANKS_MISSING_" + mode)
+                outcomes.append(row["winning"] in picks[:k])
+            topk[str(k)] = {"races": len(rows), "hits": sum(outcomes),
+                             "hit_rate_percent": (
+                                 round(100 * sum(outcomes) / len(rows), 2)
+                                 if rows else None)}
+        report[mode] = topk
+    return report
+
+
 def v236_prefix_comparison(rows):
     # V2/V3 are independent prospective hypotheses; never pool their rows.
     result = {"races": len(rows), "days": len({r["day"] for r in rows}),
@@ -394,6 +421,8 @@ def audit(root, attest=first_added):
         within[study] = {
             "sample_races": len(rows), "sample_days": len({r["day"] for r in rows}),
             "baseline_miss_slots": misses(rows),
+            "ranked_top3_top5_top10": within_study_ranked_prefixes(
+                rows, [mode for mode in CONFIG[study][7] if mode != "coverage15"]),
             "equal_ten_point_modes": {m: paired(rows, m) for m in CONFIG[study][7]
                                       if m != "hit10" and m != "coverage15"},
             "coverage15_separate_point_budget": (
