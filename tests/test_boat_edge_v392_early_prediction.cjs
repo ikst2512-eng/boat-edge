@@ -164,6 +164,45 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  assert.equal(await verify(),null,'Missing audit rejects final');
  broken=null;
  assert.equal(await verify()!==null,true,'Valid verified final recovered');
+ // 03 UI: a slow prior race lookup cannot restore stale race links.
+ const navStart=home.indexOf('function enhanceRaceNav(race){');
+ const navEnd=home.indexOf('/* ---------- prediction helpers ---------- */',navStart);
+ assert.ok(navStart>=0&&navEnd>navStart,'UI race-nav source must exist');
+ const navHost={innerHTML:'',replaceChildren(){this.innerHTML='';}};
+ const backButton={};
+ let selectedRace='20261014-14-01';
+ const pendingDays=[];
+ const navContext=vm.createContext({
+   raceOf:()=>({race_key:selectedRace}),
+   loadArchiveDay:()=>new Promise(resolve=>pendingDays.push(resolve)),
+   selectedDate:null,selectedVenue:null,saveSelection(){},
+   $:selector=>selector==='#be108RaceNav'?navHost:
+      selector==='.race-summary'?{}:selector==='#be108BackPlace'?backButton:null,
+   $:()=>[],esc:s=>s,dateLabel:s=>s,raceStrip:(_venue,key)=>'<race>'+key+'</race>',
+   showInternal(){},renderHomeHub:async()=>{},requestAnimationFrame(){},
+   window:{},document:{}
+ });
+ vm.runInContext(home.slice(navStart,navEnd),navContext);
+ const showNav=key=>{
+   selectedRace=key;
+   vm.runInContext('enhanceRaceNav({race_key:'+JSON.stringify(key)+
+      ',meta:{venue_code:"14"}})',navContext);
+ };
+ const fixtureDay={venues:[{jcd:'14',venue:'鳴門',event:'fixture'}]};
+ showNav('20261014-14-01');
+ pendingDays[0](fixtureDay);
+ await Promise.resolve();
+ assert.match(navHost.innerHTML,/20261014-14-01/);
+ showNav('20261014-14-02');
+ assert.equal(navHost.innerHTML,'','Old race must disappear while new venue links load');
+ showNav('20261014-14-03');
+ pendingDays[2](fixtureDay);
+ await Promise.resolve();
+ assert.match(navHost.innerHTML,/20261014-14-03/);
+ pendingDays[1](fixtureDay);
+ await Promise.resolve();
+ assert.match(navHost.innerHTML,/20261014-14-03/,'Slow prior race must not repaint selection');
+ console.log('BOAT_EDGE_03_ASYNC_RACE_NAV_STALE_SELECTION_REGRESSION_PASS');
  console.log('V392_SITE_FINAL_SHA_AUDIT_HANDOFF_FIXTURE_PASS');
  console.log('V392_NEXTDAY_CARD_PREVIEW_TOP3_TOP5_TOP10_SOURCE_BOUND_PASS');
 })().catch(error=>{console.error(error);process.exitCode=1});
