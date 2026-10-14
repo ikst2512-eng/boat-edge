@@ -377,12 +377,39 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             code = str(venue["jcd"]).zfill(2)
             live.locator('#be108Hub [data-be108-venue="%s"]' % code).click(timeout=40000)
             live.locator('#be108Hub [data-be108-file="%s"]' % path).first.click(timeout=20000)
-            live.wait_for_function(
-                "(key) => document.querySelector('#raceView.active')"
-                " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key"
-                " && document.querySelector('#be207Top.ready')",
-                arg=key, timeout=35000
-            )
+            try:
+                live.wait_for_function(
+                    "(key) => document.querySelector('#raceView.active')"
+                    " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key"
+                    " && document.querySelector('#be207Top.ready')",
+                    arg=key, timeout=35000
+                )
+            except Exception:
+                # Leave an actionable, read-only trace; a saved FINAL that
+                # cannot load is a failure, not a fictitious browser PASS.
+                try:
+                    dom = live.evaluate("""() => ({
+                        location:location.pathname,
+                        selected:typeof state==='undefined'?null:state?.race?.race_key,
+                        race_view:!!document.querySelector('#raceView.active'),
+                        top_present:!!document.querySelector('#be207Top'),
+                        top_ready:!!document.querySelector('#be207Top.ready'),
+                        top_stop:!!document.querySelector('#be207Top .be207-stop'),
+                        title:document.querySelector('#raceTitle')?.textContent,
+                        wait:document.querySelector('#be391PredictionWait')?.textContent?.slice(0,200),
+                        race_loading:document.documentElement.className
+                    })""")
+                    live.screenshot(
+                        path=str(shots / ("live-select-timeout-%s.png" % engine)),
+                        full_page=True, timeout=4000
+                    )
+                except Exception as diagnostics_error:
+                    dom = {"diagnostics_error": str(diagnostics_error)[:180]}
+                print("BOAT_EDGE_03_LIVE_SELECTION_TIMEOUT " +
+                      json.dumps({"key": key, "saved_evidence": saved_evidence["status"],
+                                  "dom": dom, "browser_errors": browser_errors},
+                                 ensure_ascii=False), flush=True)
+                raise
             # A race switch can paint the source list asynchronously after
             # V207 becomes ready. Wait for either an explicit stop or ten
             # uniquely formatted source tickets; do not parse a transient list.
