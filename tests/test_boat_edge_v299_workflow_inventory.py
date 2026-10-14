@@ -111,7 +111,28 @@ class WorkflowInventoryTests(unittest.TestCase):
                                 src.index(f"scripts/{script} score"))
                 guard = ("github.event_name == 'schedule' && "
                          f"github.event.schedule == '{score_slot} 0-14,23 * * *'")
-                self.assertEqual(src.count(guard), 1)
+                if filename == "v236.yml":
+                    # Ordinary SITE results remain staggered. A fast existing
+                    # five-minute tick can run the same score command ONLY
+                    # for an independently first-Git-frozen V2/V3 research
+                    # candidate with an already confirmed SITE official result.
+                    # This must not add any scheduled workflows or permit the
+                    # whole retrospective cohort to push every five minutes.
+                    self.assertIn("V236_SCHEDULED_TICK", src)
+                    self.assertIn("pending_confirmed_prospective_score", src)
+                    self.assertIn("V236_NO_CONFIRMED_PROSPECTIVE_SCORE", src)
+                    self.assertIn("V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE", src)
+                    self.assertIn("github.event_name == 'schedule'", src)
+                    self.assertIn(
+                        'if [[ "$GITHUB_EVENT_NAME" == \'schedule\' && '
+                        '"$V236_SCHEDULED_TICK" != '
+                        "'3,18,33,48 0-14,23 * * *' ]]",
+                        src)
+                    self.assertIn('success=true\\n                break', src)
+                    # The fixed prior 15-minute schedule is still present.
+                    self.assertIn(f"'{score_slot} 0-14,23 * * *'", src)
+                else:
+                    self.assertEqual(src.count(guard), 1)
                 self.assertIn("github.event_name == 'workflow_dispatch'", src)
                 self.assertIn("github.event_name == 'push'", src)
                 # Freeze still runs on all twelve distinct five-minute
