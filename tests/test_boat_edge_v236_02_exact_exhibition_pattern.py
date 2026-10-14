@@ -26,6 +26,7 @@ from boat_edge_02_entry_marginalized_topk_research import (
 )
 from boat_edge_02_joint_entry_permutation_research import digest
 from boat_edge_02_matched_ten_pre_result import prepare_matched_ten
+from test_boat_edge_v236_02_matched_ten_pre_result import FORMAL_STATUS
 from test_boat_edge_v236_02_entry_marginalized_topk import NOW
 
 
@@ -144,7 +145,7 @@ class ExactPatternTransitions(unittest.TestCase):
             parent_training_end="20261013",
             candidate_training_end="20261013",
             no_target_outcome=True,no_formal_fresh=True)
-        m=prepare_matched_ten(evidence,b,candidate,NOW)
+        m=prepare_matched_ten(evidence,b,candidate,NOW,FORMAL_STATUS)
         self.assertEqual(m["same_ticket_count_each"],10)
         self.assertEqual(m["parent_top10"],out["baseline_top10"])
         self.assertEqual(m["candidate_top10"],out["candidate_top10"])
