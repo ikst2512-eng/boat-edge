@@ -7,7 +7,9 @@ on:
   schedule:
     # V287: stagger the safe legacy fallback from V235 (minute 02+5n)
     # and V254 research (minute 03+5n). V234 runs at minute 04+5n.
-    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 0-14,23 * * *'
+    - cron: '4,19,34,49 0-14,23 * * *'
+    - cron: '9,24,39,54 0-14,23 * * *'
+    - cron: '14,29,44,59 0-14,23 * * *'
 permissions:
   contents: write
   actions: write
@@ -191,7 +193,11 @@ jobs:
           echo V275_NO_PUBLISHED_SHADOW_CONFLICT_SAFE_RETRY_NEXT_RUN
           # The optional research lane cannot block primary frozen prediction
           # or its separate source-verified retrospective scoring.
+      # SITE result settlement is retrospective and can wait; PRE_RESULT
+      # capture/V275 freeze above keep their original five-minute cadence.
+      # This avoids an extra Pages-invalidating main push on 8 of 12 ticks.
       - name: Only after pre-result commit - score already confirmed SITE results
+        if: ${{ github.event_name != 'schedule' || github.event.schedule == '4,19,34,49 0-14,23 * * *' }}
         shell: bash
         run: |
           set -euo pipefail
