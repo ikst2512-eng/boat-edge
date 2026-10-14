@@ -883,6 +883,53 @@ def exercise(engine: str, url: str, shots: Path):
                     )
                     assert page.locator("#be391PredictionWait").is_visible()
                     assert second_panel.locator(".be207-ticket").count() == 0
+                # 03: production CSS must never reveal an old race's six-boat
+                # comparison, head picks, result panel or sticky ticket strip
+                # while a new race card is still loading. Exercise real
+                # deployed index styles in the running browser without mocks
+                # of any forecast, outcome, or race data.
+                loading_visual = page.evaluate("""() => {
+                    const rv=document.querySelector('#raceView');
+                    if(!rv)throw Error('NO_RACE_VIEW');
+                    const targets=['#be207Top','#be206Quick','#be108PredictionModes',
+                        '#be251Outcome','#be48Action','#be48Racers',
+                        '#be48Before','#be204Overview','#scenarioHero',
+                        '.race-summary .summary-top'];
+                    const created=[];
+                    for(const selector of targets) {
+                        if(rv.querySelector(selector))continue;
+                        const el=document.createElement('div');
+                        if(selector.startsWith('#'))el.id=selector.slice(1);
+                        else el.className='summary-top';
+                        rv.appendChild(el);created.push(el);
+                    }
+                    let n=rv.querySelector('#be03RaceLoadNotice');
+                    if(!n) {
+                        n=document.createElement('div');
+                        n.id='be03RaceLoadNotice';
+                        n.className='be03-load-notice';
+                        n.textContent='新しいレースを読み込み中';
+                        rv.querySelector('.race-summary')?.appendChild(n);
+                        created.push(n);
+                    }
+                    rv.classList.add('be03-race-loading');
+                    const hidden=Object.fromEntries(targets.map(s=>{
+                      const node=rv.querySelector(s);
+                      return [s,node?getComputedStyle(node).display==='none':false];
+                    }));
+                    const noticeVisible=getComputedStyle(n).display!=='none';
+                    const nav=rv.querySelector('#be108RaceNav');
+                    const navVisible=!nav||getComputedStyle(nav).display!=='none';
+                    rv.classList.remove('be03-race-loading');
+                    const restored=getComputedStyle(rv.querySelector('.race-summary .summary-top')).display!=='none';
+                    created.forEach(el=>el.remove());
+                    return {hidden,noticeVisible,navVisible,restored};
+                }""")
+                assert all(loading_visual["hidden"].values()), (
+                    "Old race content remains visible while new card loads: %r" % loading_visual)
+                assert loading_visual["noticeVisible"] and loading_visual["navVisible"]
+                assert loading_visual["restored"], "Race title must be restored after loading"
+                report["previous_race_panels_during_load"] = "HIDDEN_AND_RESTORED_PASS"
                 historical_display = probe_historical_snapshot_render_fixture(
                     context, target, engine
                 )
