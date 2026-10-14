@@ -221,8 +221,8 @@ jobs:
               old=read_json(target) if target.exists() else None
               if old and old.get('status')=='confirmed' and old.get('trifecta') and old.get('trifecta_payout_yen_per_100') is not None:
                   continue
-              # Do not read or mutate protected Formal Fresh dates.
-              if ymd>='20261001' and (p.parent.parent/'data/formal_predictions'/p.name).exists():
+              # Historical recovery never touches the Formal Fresh evaluation window.
+              if ymd>='20261001':
                   continue
               candidates[p.stem]={
                   'key':p.stem,'ymd':ymd,'jcd':jcd,'rno':int(rno),
