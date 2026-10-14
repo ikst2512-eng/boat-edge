@@ -326,6 +326,7 @@ def audit(root, attest=first_added):
             between[left + "_vs_" + right] = {
                 "identical_race_baseline_matches": len(shared),
                 "sample_days": len({key[:8] for key in shared}),
+                "shared_baseline_topk": baseline_topk(left_rows),
                 "equal_ten_ticket_head_to_head_only": mode_pairs,
                 "separate_cohorts_must_not_be_pooled": True,
                 "cross_study_superiority_proven": False,
