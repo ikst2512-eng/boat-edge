@@ -1,4 +1,5 @@
 """Fixture-only protection of the existing site's controlled Pages packaging."""
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -18,7 +19,7 @@ class SitePagesStageTest(unittest.TestCase):
             "assets/boat_edge_v108.js": b"script",
             "assets/extra.css": b"css",
             "data/today.json": b"today",
-            "data/formal_status.json": b"closed formal status only",
+            "data/formal_status.json": json.dumps({"guards": {"results_seen": False, "unlock": False, "scoring": False, "RESULT_UNLOCK_TOKEN": None}, "formalFirst100": {"races": 0}}).encode(),
             "data/races/20261014-01-01.json": b"pre-result race fixture",
             "data/site_results/20261013-01-01.json": b"site-only confirmed fixture",
             "data/site_prediction_snapshots/a.json": b"site source first-add fixture",
@@ -52,6 +53,23 @@ class SitePagesStageTest(unittest.TestCase):
     def test_missing_mandatory_feed_fails_closed(self):
         (self.root / "data/today.json").unlink()
         with self.assertRaisesRegex(ValueError, "Missing"):
+            copy_public_tree(self.root, self.root / "_pages_site")
+
+    def test_formal_unlock_fails_before_results_are_staged(self):
+        path = self.root / "data/formal_status.json"
+        formal = json.loads(path.read_text())
+        formal["guards"]["results_seen"] = True
+        path.write_text(json.dumps(formal))
+        with self.assertRaisesRegex(ValueError, "Formal Fresh lock"):
+            copy_public_tree(self.root, self.root / "_pages_site")
+        self.assertFalse((self.root / "_pages_site").exists())
+
+    def test_formal_cohort_nonzero_also_fails_closed(self):
+        path = self.root / "data/formal_status.json"
+        formal = json.loads(path.read_text())
+        formal["formalFirst100"]["races"] = 1
+        path.write_text(json.dumps(formal))
+        with self.assertRaisesRegex(ValueError, "Formal Fresh lock"):
             copy_public_tree(self.root, self.root / "_pages_site")
 
     def test_symlink_in_public_assets_fails_closed(self):
