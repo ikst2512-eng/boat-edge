@@ -119,31 +119,10 @@ jobs:
             # predeadline Git checks are repeated by the actual score script.
             if [[ "$GITHUB_EVENT_NAME" == 'schedule' && "$V236_SCHEDULED_TICK" != '3,18,33,48 0-14,23 * * *' ]]; then
               fast_score_gate="$(PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY_V236_FAST_SCORE_GATE'
-          import datetime as dt
           from pathlib import Path
-          from scripts.boat_edge_v236_hit_rate import (
-              JST, PATH, POLICY_V2, POLICY_V3, confirmed_result,
-              due, formal_closed, load,
-          )
-          root = Path('.').resolve()
-          # Reject missing/active formal state BEFORE any outcome-bearing read.
-          formal_closed(root)
-          frozen = root / PATH / 'v236_frozen'
-          scored = root / PATH / 'v236_scored'
-          now = dt.datetime.now(dt.timezone.utc)
-          eligible = False
-          for path in sorted(frozen.glob('20??????-??-??.json')):
-              if (scored / path.name).exists():
-                  continue
-              obj = load(path)
-              if not obj or obj.get('comparison_policy') not in (POLICY_V2, POLICY_V3):
-                  continue
-              deadline = due(path.stem, obj.get('deadline_jst'))
-              official = load(root / 'data/site_results' / path.name)
-              if deadline and confirmed_result(official, path.stem, deadline, now):
-                  eligible = True
-                  break
-          print('V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE' if eligible
+          from scripts.boat_edge_v236_hit_rate import pending_confirmed_prospective_score
+          ready=pending_confirmed_prospective_score(Path('.'))
+          print('V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE' if ready
                 else 'V236_NO_CONFIRMED_PROSPECTIVE_SCORE')
           PY_V236_FAST_SCORE_GATE
               )"
