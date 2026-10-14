@@ -20,8 +20,25 @@ class V343StagingClassification(unittest.TestCase):
         self.assertTrue(doc["classification_is_only_candidate_not_verified_duplicate"])
         records = {r["workflow"]: r for r in v341_audit()["scheduled_candidate_records"]}
         self.assertNotIn("v336-site-research-live-freeze.yml", records)
+        # The historical fixture captured V134 when it still had a cron.
+        # Retirement must remove it from scheduled candidates, never make
+        # the old overlap reappear just to satisfy this pinned history.
+        from scripts.boat_edge_v299_workflow_inventory import event_block
+        retired = "site-v134.yml"
+        retired_events = event_block((ROOT / ".github/workflows" / retired).read_text(encoding="utf-8"))
+        self.assertIn("  workflow_dispatch:", retired_events)
+        self.assertNotIn("  schedule:", retired_events)
+        self.assertNotIn("  workflow_run:", retired_events)
+        self.assertNotIn(retired, records)
         for item in doc["pinned_actual_workflow_cases"]:
             with self.subTest(pair=(item["left"], item["right"])):
+                if retired in (item["left"], item["right"]):
+                    # Historical collision is no longer a current scheduled
+                    # writer collision after the owner was retired.
+                    live_side = item["right"] if item["left"] == retired else item["left"]
+                    self.assertIn(live_side, records)
+                    self.assertNotIn(retired, records)
+                    continue
                 self.assertIn(item["left"], records)
                 self.assertIn(item["right"], records)
                 pair = classify_pair(records[item["left"]]["staged_literals"],
