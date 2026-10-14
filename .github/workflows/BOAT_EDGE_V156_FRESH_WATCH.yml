@@ -200,6 +200,34 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # V156 is a derived, retrospective observer of immutable V155.
+          # Its generated_at_utc changes on each execution even with exactly
+          # the same source evidence; do not create a new main/Pages commit for
+          # this timestamp-only heartbeat. GitHub Actions records the run.
+          python3 - <<'PY_V156_NO_TIMESTAMP_CHURN'
+          import json, subprocess
+          from pathlib import Path
+          p=Path('data/site_racer_actual_course/v156_watch/audit.json')
+          try:
+              existing=subprocess.check_output(
+                  ['git','show','HEAD:'+p.as_posix()],
+                  stderr=subprocess.DEVNULL)
+              previous=json.loads(existing)
+              proposed=json.loads(p.read_bytes())
+          except (subprocess.CalledProcessError, OSError, ValueError, UnicodeError):
+              print('V156_NO_PREVIOUS_COMPARABLE_EVIDENCE_KEEP_NEW')
+          else:
+              def evidence(doc):
+                  if not isinstance(doc,dict):
+                      return doc
+                  return {k:v for k,v in doc.items() if k!='generated_at_utc'}
+              if evidence(previous)==evidence(proposed):
+                  # Keep identical bytes, not a freshly formatted fake update.
+                  p.write_bytes(existing)
+                  print('V156_TIMESTAMP_ONLY_UNCHANGED_NO_PAGES_COMMIT')
+              else:
+                  print('V156_MEANINGFUL_EVIDENCE_CHANGED_PUBLISH')
+          PY_V156_NO_TIMESTAMP_CHURN
           git add data/site_racer_actual_course/v156_watch/audit.json
           git diff --cached --quiet && exit 0
           git commit -m 'V156: audit immutable pre-result V155 evidence only'
