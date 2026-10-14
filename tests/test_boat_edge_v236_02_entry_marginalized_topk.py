@@ -10,6 +10,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
 from boat_edge_02_entry_marginalized_topk_research import prepare_entry_topk_ablation
 from boat_edge_02_joint_entry_permutation_research import digest
 from boat_edge_02_matched_ten_pre_result import prepare_matched_ten
+from test_boat_edge_v236_02_matched_ten_pre_result import FORMAL_STATUS
 
 KEY = "20261014-12-01"
 JST = timezone(timedelta(hours=9))
@@ -104,7 +105,7 @@ class EntryMarginalizationAblation(unittest.TestCase):
             "no_target_outcome":True, "no_formal_fresh":True,
         }
         x=prepare_matched_ten(pair,out["baseline_ranking_document"],
-                              out["candidate_ranking_document"],NOW)
+                              out["candidate_ranking_document"],NOW,FORMAL_STATUS)
         self.assertEqual(x["same_ticket_count_each"],10)
         self.assertEqual(x["per_model_virtual_budget_yen"],10000)
         self.assertEqual(x["parent_top10"],out["baseline_top10"])
@@ -131,7 +132,7 @@ class EntryMarginalizationAblation(unittest.TestCase):
             ctx=dict(common,
                      parent_model_id=docs[first]["model_id"],
                      candidate_model_id=docs[second]["model_id"])
-            pair=prepare_matched_ten(ctx,docs[first],docs[second],NOW)
+            pair=prepare_matched_ten(ctx,docs[first],docs[second],NOW,FORMAL_STATUS)
             self.assertEqual(pair["same_ticket_count_each"],10)
             self.assertEqual(pair["per_model_virtual_budget_yen"],10000)
             self.assertEqual(pair["parent_top10"],
