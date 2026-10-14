@@ -358,8 +358,8 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  const today=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
  const old=new Date(Date.now()+9*3600000-86400000).toISOString().slice(0,10);
  const make=date=>({date,phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false,
-  venues:[{jcd:'02',races:[{race_key:date.replaceAll('-')+'-02-01',race_no:1,
-    file:'data/races/'+date.replaceAll('-')+'-02-01.json'}]}]});
+  venues:[{jcd:'02',races:[{race_key:date.replaceAll('-','')+'-02-01',race_no:1,
+    file:'data/races/'+date.replaceAll('-','')+'-02-01.json'}]}]});
  const tick=()=>vm.runInContext('refreshToday()',ctx);
  catalog=make(old);await tick();
  assert.equal(ctx.state.today,null,'never expose prior-day catalog');
