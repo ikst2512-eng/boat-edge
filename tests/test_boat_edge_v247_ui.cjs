@@ -291,7 +291,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
    Date:Clock,Promise,Number,String,JSON,
    state:{race:original},
    document:{visibilityState:'visible',
-     getElementById:()=>({classList:{contains:()=>true}})},
+     getElementById:()=>({classList:{contains:name=>name==='active'}})},
    fetch:async()=>({ok:true,json:async()=>published}),
    be182FetchScratch:async r=>{scratches++;return r;},
    loadFormalOverlay:async()=>{overlays++;return null;},
