@@ -181,6 +181,77 @@ class V332LiveE2E(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
                 live_local_freeze(pathlib.Path(d), "20261001-22-12", clock=lambda: PRE)
 
+    def test_known_formal_cohorts_blocked_without_any_metadata_or_race_read(self):
+        with tempfile.TemporaryDirectory() as d:
+            for day in ("20261001", "20261005", "20261013"):
+                with self.subTest(day=day), self.assertRaisesRegex(
+                        ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
+                    live_local_freeze(pathlib.Path(d), day + "-22-12",
+                                      capture=True, clock=lambda: PRE)
+
+    def test_current_formal_target_blocks_before_race_or_network(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            prepare(root)
+            status_path = root / "data/formal_status.json"
+            status = json.loads(status_path.read_text())
+            status["target_date"] = "2026-10-15"
+            status_path.write_text(json.dumps(status))
+            (root / "data/races" / (KEY + ".json")).write_text(
+                "RACE_DOCUMENT_MUST_NOT_BE_READ")
+            def forbidden_fetch(_):
+                raise AssertionError("NETWORK_MUST_NOT_BE_USED")
+            with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
+                live_local_freeze(root, KEY, capture=True,
+                                  fetcher=forbidden_fetch, clock=lambda: PRE)
+            self.assertFalse((root / "data/source_captures").exists())
+
+    def test_last_formal_cohort_and_prediction_presence_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            prepare(root)
+            path = root / "data/formal_status.json"
+            status = json.loads(path.read_text())
+            status["last_cohort"]["date"] = "2026-10-15"
+            path.write_text(json.dumps(status))
+            with self.assertRaisesRegex(ValueError, "FORMAL_FRESH_TARGET_EXCLUDED"):
+                live_local_freeze(root, KEY, clock=lambda: PRE)
+            status["last_cohort"]["date"] = "2026-10-05"
+            path.write_text(json.dumps(status))
+            protected = root / "data/formal_predictions"
+            protected.mkdir(parents=True)
+            (protected / (KEY + ".json")).write_text("RESULTS_MUST_NOT_BE_READ")
+            with self.assertRaisesRegex(ValueError, "FORMAL_PREDICTION_PATH_EXCLUDED"):
+                live_local_freeze(root, KEY, clock=lambda: PRE)
+
+    def test_missing_stale_malformed_or_unlocked_status_fail_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            prepare(root)
+            path = root / "data/formal_status.json"
+            original = json.loads(path.read_text())
+            cases = [
+                ("missing", None, "FORMAL_STATUS_METADATA_REQUIRED"),
+                ("garbled", "NOT_VALID_JSON", "FORMAL_STATUS_METADATA_INVALID"),
+                ("stale", {**original, "asOf": "2026-10-14T16:19:00+09:00"},
+                 "FORMAL_STATUS_NOT_CURRENT_PREDEADLINE"),
+                ("future", {**original, "asOf": "2026-10-15T16:30:00+09:00"},
+                 "FORMAL_STATUS_NOT_CURRENT_PREDEADLINE"),
+                ("unlocked", {**original, "guards": {**original["guards"],
+                              "unlock": True}}, "FORMAL_FRESH_MUST_REMAIN_LOCKED"),
+                ("nonempty", {**original, "formalFirst100": {"races": 1}},
+                 "FORMAL_FRESH_MUST_REMAIN_LOCKED"),
+            ]
+            for label, value, error in cases:
+                with self.subTest(label=label):
+                    if value is None:
+                        path.unlink(missing_ok=True)
+                    else:
+                        path.write_text(value if isinstance(value, str) else json.dumps(value))
+                    with self.assertRaisesRegex(ValueError, error):
+                        live_local_freeze(root, KEY, clock=lambda: PRE)
+            self.assertFalse((root / "data/source_captures").exists())
+
     def test_official_source_url_wrong_race_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)
