@@ -100,6 +100,7 @@ def validate_entry(root,lane,key,site):
     if not pre or not post:return None
     fields=MODES[lane]
     if pre.get("race_key")!=key or post.get("race_key")!=key:return None
+    if not isinstance(pre.get("comparators"),dict):return None
     policy=pre.get("comparison_policy") if lane=="v236" else None
     if lane=="v236":
         if policy not in V236_POLICIES:return None
@@ -117,8 +118,10 @@ def validate_entry(root,lane,key,site):
                 if (not isinstance(vals,dict) or set(vals)!=set(("3","5","10"))):
                     return None
                 for count in (3,5,10):
+                    original=pre["comparators"].get(mode)
+                    if not isinstance(original,list):return None
                     if type(vals[str(count)]) is not bool or vals[str(count)]!=(
-                            site["winning_combo"] in pre.get("comparators",{}).get(mode,[])[:count]):
+                            site["winning_combo"] in original[:count]):
                         return None
         elif post.get("candidate_policy") is not None or post.get("prefix_outcomes") is not None:
             return None
