@@ -56,6 +56,50 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.targets(self.root,self.now),[KEY])
         self.assertEqual(m.target_diagnostic(self.root,self.now.replace(day=12))['today_mismatch'],1)
 
+    def test_v230_inflight_v232_freeze_prevents_source_mutation(self):
+        # A selection made before the freeze is not authority to rewrite
+        # evidence after another job creates the immutable V232 record.
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
+        self.assertEqual(m.targets(self.root,self.now),[KEY])
+        race_path=self.root/'data/races'/f'{KEY}.json'
+        original=race_path.read_bytes()
+        evidence=self.root/'data/site_autopilot/v232_cohort'/f'{KEY}.json'
+        evidence.parent.mkdir(parents=True,exist_ok=True)
+        evidence.write_bytes(b'IMMUTABLE EVEN IF NOT JSON')
+        self.assertEqual(m.targets(self.root,self.now),[])
+        self.assertEqual(m.target_diagnostic(self.root,self.now)['snapshot_exists'],1)
+        self.assertEqual(m.update_one(self.root,KEY,self.data(),self.now),'source_locked')
+        self.assertEqual(race_path.read_bytes(),original)
+        self.assertEqual(evidence.read_bytes(),b'IMMUTABLE EVEN IF NOT JSON')
+        self.assertFalse((self.root/'data/raw/20261011/06_08_beforeinfo.html').exists())
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],{KEY:'odds_incomplete'},self.now),[])
+
+    def test_v230_source_received_at_deadline_cannot_be_backfilled(self):
+        race_path=self.root/'data/races'/f'{KEY}.json'
+        original=race_path.read_bytes()
+        d=self.data()
+        rb,text,_=d['beforeinfo']
+        d['beforeinfo']=(rb,text,self.now+timedelta(minutes=7))
+        self.assertEqual(m.update_one(self.root,KEY,d,self.now),'source_locked')
+        self.assertEqual(race_path.read_bytes(),original)
+        self.assertFalse((self.root/'data/raw/20261011/06_08_beforeinfo.html').exists())
+
+    def test_v230_freeze_created_after_validation_blocks_raw_and_race_rewrite(self):
+        race_path=self.root/'data/races'/f'{KEY}.json'
+        original=race_path.read_bytes()
+        frozen=self.root/'data/site_prediction_snapshots'/f'{KEY}.json'
+        def other_job_freezes(*args):
+            frozen.parent.mkdir(parents=True,exist_ok=True)
+            frozen.write_bytes(b'CONCURRENT IMMUTABLE FIRST FREEZE')
+            return [],[],[]
+        with patch.object(m,'extract_blocked',side_effect=other_job_freezes):
+            self.assertEqual(m.update_one(self.root,KEY,self.data(),self.now),'source_locked')
+        self.assertEqual(race_path.read_bytes(),original)
+        self.assertFalse((self.root/'data/raw/20261011/06_08_beforeinfo.html').exists())
+        self.assertEqual(frozen.read_bytes(),b'CONCURRENT IMMUTABLE FIRST FREEZE')
+
     def test_naruto_20261014_0820_preflight_and_strict_freeze_window(self):
         # Exact priority race: source collection starts before the 2-10 minute
         # V229 freeze window. This only verifies scheduling/identity, not a
