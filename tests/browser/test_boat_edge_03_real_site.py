@@ -95,10 +95,25 @@ def probe_site_snapshot_evidence(context, target, key, deadline):
         audit, proof = audit_res.json(), evidence_res.json()
     except (ValueError, TypeError):
         return {"status": "SNAPSHOT_AUDIT_INVALID_JSON", "first_git_commit_verified": False}
-    # An outcome embedded in audit is not valid PRE_RESULT evidence.
+    # V125 normally includes an explicit UNSETTLED sentinel even before a
+    # race starts. An empty-result sentinel is not an observed outcome.
+    # Reject any other shape/content fail-closed: this probe must never treat
+    # a post-result or noncanonical audit as PRE_RESULT freeze evidence.
     if "settlement" in audit:
-        return {"status": "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT",
-                "first_git_commit_verified": False}
+        settlement = audit["settlement"]
+        allowed = {"available", "winning_combo", "hit_any", "mode_hits", "payout"}
+        valid_unsettled = (
+            isinstance(settlement, dict)
+            and set(settlement) == allowed
+            and settlement.get("available") is False
+            and settlement.get("winning_combo") is None
+            and settlement.get("hit_any") is None
+            and settlement.get("mode_hits") == {}
+            and settlement.get("payout") is None
+        )
+        if not valid_unsettled:
+            return {"status": "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT",
+                    "first_git_commit_verified": False}
     if (audit.get("pass") is not True or audit.get("race_key") != key or
         audit.get("latest_snapshot_sha256") != sha or
         proof.get("race_key") != key or proof.get("snapshot_sha256") != sha or
