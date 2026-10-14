@@ -268,7 +268,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  const html=fs.readFileSync('index.html','utf8');
  const identityStart=html.indexOf('function be03RaceSourceIdentity(file,jcd,race){');
  const identityEnd=html.indexOf('async function loadRace(file, jcd){',identityStart);
- const start=html.indexOf('let be162RefreshBusy=false;');
+ const start=html.indexOf('function be03PassiveRefreshNotice(key,reason){');
  const end=html.indexOf('async function refreshAll(force=false){',start);
  assert(identityStart>0&&identityEnd>identityStart&&start>0&&end>start);
  const raceKey='20261014-14-09';
