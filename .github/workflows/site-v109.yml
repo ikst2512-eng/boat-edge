@@ -318,6 +318,22 @@ jobs:
                       payout=parsed.get('payout')
                       order=parsed.get('order') or []
 
+                      if parsed.get('not_established'):
+                          payload={
+                              'schema_version':'boat-edge-site-result-v109',
+                              'race_key':key,
+                              'status':'trifecta_not_established',
+                              'fetched_at':iso,
+                              'source':url,
+                              'finish_order':order,
+                              'trifecta':None,
+                              'trifecta_payout_yen_per_100':None
+                          }
+                          if old.get('status')!='trifecta_not_established':
+                              item['target'].write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8')
+                              updated+=1
+                          continue
+
                       if not combo:
                           # Preserve old confirmed data; otherwise pending.
                           if old.get('status')=='confirmed':
