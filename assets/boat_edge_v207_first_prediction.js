@@ -74,6 +74,7 @@ function skeleton(){
  if(!box){
   box=document.createElement('section');box.id='be207Top';box.className='be207-top';box.setAttribute('aria-label','3連単予想・買い目');
   box.innerHTML=`<div class="be207-topline"><div><span class="be207-eyebrow">BOAT EDGE</span><strong>3連単の予想</strong></div><span class="be207-version">画面 V306</span></div>
+   <div class="be207-display-phase" role="status"><strong></strong><span></span></div>
    <div class="be207-condition" role="status"><strong></strong><span></span></div>
    <section class="be305-evidence" aria-label="選択レースの直前データ取得状況">
     <div class="be305-evidence-head"><strong>直前データの取得状況</strong><button type="button" data-be207="before">直前情報を詳しく見る →</button></div>
@@ -99,6 +100,33 @@ function skeleton(){
   if(first)first.insertAdjacentElement('afterend',box);else host.prepend(box);
  }
  return box;
+}
+/* Presentation-only: label the selected source and deadline, never
+ * infer a final freeze or result from a numerical score. */
+function predictionDisplayPhase(r,source,blocked,settled,now=Date.now()){
+ const key=String(r?.race_key||''),time=String(r?.meta?.deadline||'');
+ const clock=/^([01]\\d|2[0-3]):([0-5]\\d)$/.exec(time);
+ if(!valid(key)||!clock||String(r?.meta?.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
+    Number(r?.meta?.race_no)!==Number(key.slice(12,14))||
+    r?.meta?.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8))
+  return {phase:'unverified',title:'日時・出走表を照合待ち',
+    detail:'選択レースと締切時刻を確認できません'};
+ const day=r.meta.date;
+ const due=Date.parse(day+'T'+time+':00+09:00');
+ if(!Number.isFinite(due))return {phase:'unverified',title:'締切時刻を照合待ち',
+   detail:'確認できない締切を推定しません'};
+ if(settled||now>=due)
+  return {phase:'closed',title:'締切済み',
+   detail:blocked?'買い目非表示・保存状態を確認中':
+     '表示している買い目は保存元の内容です。新しい予想ではありません'};
+ if(blocked)return {phase:'waiting',title:'予想表示待ち',
+   detail:'欠場・直前情報・保存証跡の照合が未完了'};
+ if(source==='final')return {phase:'final-source',title:'最終保存元の買い目',
+   detail:'保存元がFINAL。締切前の不変保存を独立に確認したという意味ではありません'};
+ if(source==='first'||source==='latest')return {phase:'provisional',title:'暫定・参考予想',
+   detail:'保存元 '+source.toUpperCase()+'。最終予想・校正済み的中確率ではありません'};
+ return {phase:'waiting',title:'予想表示待ち',
+   detail:'買い目の保存種別を確認できません'};
 }
 /* Presentation only: never infer a prediction, verified source or freeze. */
 function predictionWindowNotice(r,now=Date.now()){
@@ -204,11 +232,19 @@ function render(){
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
  const stop=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
+ const displayPhase=predictionDisplayPhase(r,provenance,stop,settled);
  showPredictionWait(r,stop); // Refresh across the deadline even when the ticket signature stays unchanged.
- if(sig===lastSig&&box.classList.contains('ready'))return;
+ if(sig===lastSig&&box.classList.contains('ready')&&
+     box.querySelector('.be207-display-phase')?.dataset.phase===displayPhase.phase)return;
  rendering=true;
  try{
   box.classList.add('ready');box.dataset.status=st.kind;
+  const phaseNode=$('.be207-display-phase',box);
+  if(phaseNode){
+   phaseNode.dataset.phase=displayPhase.phase;
+   text($('strong',phaseNode),displayPhase.title);
+   text($('span',phaseNode),displayPhase.detail);
+  }
   text($('.be207-condition strong',box),st.title||'欠場・取消確認待ち');
   text($('.be207-condition span',box),st.detail||'出走可否未確定');
   const evidenceList=$('.be305-evidence-items',box);
@@ -288,6 +324,6 @@ function init(){if(once)return;once=true;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
  render();
 }
-window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace,predictionWindowNotice};
+window.BoatEdgeV207={render,displayOnly:true,version:'V306-DISPLAY-ONLY',ticketClarity,extractCombo,shownStake,validTickets,evidenceFor,holdPreviousRace,predictionWindowNotice,predictionDisplayPhase};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

@@ -148,6 +148,51 @@ class MobilePredictionBrowser(unittest.TestCase):
                 finally:
                     context.close()
 
+    def test_prediction_display_state_from_source_and_deadline(self):
+        """Display-only waiting/provisional/final/closed statuses in real mobile browsers."""
+        for kind, browser in self.browsers.items():
+            with self.subTest(browser=kind):
+                context, page = self.boot(browser, 390)
+                try:
+                    states = page.evaluate("""() => {
+                      const date=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+                      const key=date.replaceAll('-','')+'-06-01';
+                      const d={race_key:key,meta:{date,venue_code:'06',race_no:1,deadline:'23:59'}};
+                      const f=window.BoatEdgeV207.predictionDisplayPhase;
+                      const before=Date.parse(date+'T12:00:00+09:00');
+                      const after=Date.parse(date+'T23:59:05+09:00');
+                      return [
+                        f(d,'first',true,false,before),
+                        f(d,'first',false,false,before),
+                        f(d,'final',false,false,before),
+                        f(d,'final',false,false,after),
+                        f(d,'first',true,false,after),
+                        f({...d,meta:{...d.meta,venue_code:'02'}},'final',false,false,before)
+                      ];
+                    }""")
+                    self.assertEqual([x["phase"] for x in states],
+                        ["waiting","provisional","final-source","closed","closed","unverified"])
+                    self.assertIn("暫定",states[1]["title"])
+                    self.assertIn("最終",states[2]["title"])
+                    self.assertIn("独立",states[2]["detail"])
+                    self.assertIn("保存",states[3]["detail"])
+                    self.assertIn("非表示",states[4]["detail"])
+                    page.evaluate("""() => {
+                      const date=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+                      window.state.race={race_key:date.replaceAll('-','')+'-06-01',
+                         meta:{date,venue_code:'06',race_no:1,deadline:'23:59'}};
+                      window.BoatEdgeV207.render();
+                    }""")
+                    phase = page.locator("#be207Top .be207-display-phase")
+                    self.assertTrue(phase.is_visible())
+                    self.assertEqual(phase.get_attribute("role"),"status")
+                    self.assertIn(phase.get_attribute("data-phase"),
+                        ("provisional","closed"))
+                    self.assertTrue(phase.locator("strong").inner_text().strip())
+                    self.assertEqual(page.locator("#be207Top .be207-ticket").count(),3)
+                finally:
+                    context.close()
+
     def test_blocked_tickets_hide_amounts_and_odds(self):
         for kind, browser in self.browsers.items():
             with self.subTest(browser=kind):
