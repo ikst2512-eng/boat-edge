@@ -42,7 +42,7 @@ function validated(v){
     if(!v236Policies.includes(r?.candidate_policy))return null;
     if(v236HeadSecondPolicies.includes(r.candidate_policy))expected.push('headsecond10');
    }
-   if(!/^20\\d{6}-\\d{2}-\\d{2}$/.test(r?.race_key||'')||seen.has(r.race_key)||
+   if(!/^20\d{6}-\d{2}-\d{2}$/.test(r?.race_key||'')||seen.has(r.race_key)||
       !/^[1-6]-[1-6]-[1-6]$/.test(r.winning_combo||'')||
       new Set(r.winning_combo.split('-')).size!==3||r.date_jst!==r.race_key.slice(0,8)||
       !r.categories||Object.keys(r.categories).length!==expected.length||
