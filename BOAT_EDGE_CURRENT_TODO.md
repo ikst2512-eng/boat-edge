@@ -13,22 +13,6 @@ V134 repaired: SITE_REFERENCE 2026-10-09+ exact per-race SHA audit; never read f
 - Formal state recorded as of: 2026-10-08 (may be stale).
 - Formal guards (recorded): results_seen=False, unlock=False, scoring=False.
 
-## PRODUCT COMPLETION GATES — USER PRIORITY (2026-10-15)
-These ten acceptance gates take precedence over version-number, audit-count, or storage-count growth. A merged PR alone is not production PASS. Preserve existing detailed research tasks below.
-
-1. [ ] Pages公開方式を確認し、制御された配信を本番で安定化（①担当／最新SHA公開・連続運用確認）
-2. [ ] 締切前の予想保存漏れを原因別に修正（①担当／取得可能レースの凍結成功率改善）
-3. [ ] 古いworkflow・競合する保存処理を整理（①担当／旧コード復元や競合更新を停止）
-4. [ ] 予想Top3/5/10の本番一致検証（①③担当／Git初回保存SHAとブラウザの完全一致）
-5. [ ] 過去レース画面・iPhone Safariを仕上げる（③担当／実機操作・結果画面PASS）
-6. [ ] 5年分の履歴データの利用条件と取得を完了（②担当／実データ投入・検証可能）
-7. [ ] 新しい特徴量と120通りモデルを比較（②担当／同一10点の未見比較）
-8. [ ] 正式Freshの実行系・100R事前凍結を完成（正式担当／独立Run1/2・SHA一致）
-9. [ ] 改善実証モデルを本番へ統合（②①担当／本番と検証のモデルID一致）
-10. [ ] 実データ・画面・自動更新を最終受入（①③担当／複数日の本番運用PASS）
-
-Progress evidence: PR #358 restored daily site archive generation; PR #360 added archive navigation. These are partial progress toward gates 5 and 10, not acceptance PASS. Formal Fresh must remain locked until its exact pre-result gates PASS.
-
 ## ACTIVE TODO — priority order
 1. [ ] FINAL_15M予想の個別監査SHAと保存時刻を確認する。
 2. [ ] Safariで🎯的中・不的中・判定対象外を実機確認（コード検査だけではPASSにしない）。
