@@ -125,6 +125,8 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.assertFalse(any(v["improvement_proven"] for v in cross.values()))
         self.assertEqual(report["within_study"]["v240"]
                          ["equal_ten_point_modes"]["second_coverage10"]["paired_gain"], 1)
+        self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk_by_day"]
+                         ["scenario7plus3"]["20261013"]["top10"]["candidate_only_hits"], 1)
         self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk"]
                          ["scenario7plus3"]["top10"]["candidate_only_hits"], 1)
         self.assertEqual(report["within_study"]["v236"]["paired_ranked_topk"]
