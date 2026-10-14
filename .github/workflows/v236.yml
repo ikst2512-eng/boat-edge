@@ -91,7 +91,12 @@ jobs:
       # Previous Git-attested SITE cohorts can be scored later; never delay
       # the five-minute, result-unseen prospective freeze above.
       - name: Score only previously Git-committed cohorts against confirmed SITE results
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '3,18,33,48 0-14,23 * * *') }}
+        # Existing five-minute freeze runs are not duplicated. Ordinary SITE
+        # settlement remains fifteen-minute staggered; a first-Git frozen V2/V3
+        # candidate with a confirmed official SITE result may score sooner.
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'schedule' }}
+        env:
+          V236_SCHEDULED_TICK: ${{ github.event.schedule }}
         shell: bash
         run: |
           set -euo pipefail
@@ -107,6 +112,48 @@ jobs:
             # Do not trust the job-start embedded pin after git reset --hard.
             python3 scripts/verify_workflow_source_pins.py
             PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v236_hit_rate.py' -q
+            # Never accelerate the ordinary retrospective score/PAGES churn.
+            # Extra existing 5-minute ticks may score ONLY newly confirmed
+            # V2/V3 first-Git-frozen headsecond candidates, if any. Formal
+            # results are not opened; the strict SITE official-result and first
+            # predeadline Git checks are repeated by the actual score script.
+            if [[ "$GITHUB_EVENT_NAME" == 'schedule' && "$V236_SCHEDULED_TICK" != '3,18,33,48 0-14,23 * * *' ]]; then
+              fast_score_gate="$(PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY_V236_FAST_SCORE_GATE'
+          import datetime as dt
+          from pathlib import Path
+          from scripts.boat_edge_v236_hit_rate import (
+              JST, PATH, POLICY_V2, POLICY_V3, confirmed_result,
+              due, formal_closed, load,
+          )
+          root = Path('.').resolve()
+          # Reject missing/active formal state BEFORE any outcome-bearing read.
+          formal_closed(root)
+          frozen = root / PATH / 'v236_frozen'
+          scored = root / PATH / 'v236_scored'
+          now = dt.datetime.now(dt.timezone.utc)
+          eligible = False
+          for path in sorted(frozen.glob('20??????-??-??.json')):
+              if (scored / path.name).exists():
+                  continue
+              obj = load(path)
+              if not obj or obj.get('comparison_policy') not in (POLICY_V2, POLICY_V3):
+                  continue
+              deadline = due(path.stem, obj.get('deadline_jst'))
+              official = load(root / 'data/site_results' / path.name)
+              if deadline and confirmed_result(official, path.stem, deadline, now):
+                  eligible = True
+                  break
+          print('V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE' if eligible
+                else 'V236_NO_CONFIRMED_PROSPECTIVE_SCORE')
+          PY_V236_FAST_SCORE_GATE
+              )"
+              if [[ "$fast_score_gate" != 'V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE' ]]; then
+                echo "$fast_score_gate"
+                success=true
+                break
+              fi
+              echo V236_ACCELERATE_ONLY_VERIFIED_PROSPECTIVE_CANDIDATE
+            fi
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v236_hit_rate.py score
             if test -f data/site_autopilot/v236_score_current.json; then git add -- data/site_autopilot/v236_score_current.json; fi
             if test -d data/site_autopilot/v236_scored; then git add -A -- data/site_autopilot/v236_scored; fi
