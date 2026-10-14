@@ -268,7 +268,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  const html=fs.readFileSync('index.html','utf8');
  const identityStart=html.indexOf('function be03RaceSourceIdentity(file,jcd,race){');
  const identityEnd=html.indexOf('async function loadRace(file, jcd){',identityStart);
- const start=html.indexOf('let be162RefreshBusy=false;');
+ const start=html.indexOf('function be03PassiveRefreshNotice(key,reason){');
  const end=html.indexOf('async function refreshAll(force=false){',start);
  assert(identityStart>0&&identityEnd>identityStart&&start>0&&end>start);
  const raceKey='20261014-14-09';
@@ -291,7 +291,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
    Date:Clock,Promise,Number,String,JSON,
    state:{race:original},
    document:{visibilityState:'visible',
-     getElementById:()=>({classList:{contains:()=>true}})},
+     getElementById:()=>({classList:{contains:name=>name==='active'}})},
    fetch:async()=>({ok:true,json:async()=>published}),
    be182FetchScratch:async r=>{scratches++;return r;},
    loadFormalOverlay:async()=>{overlays++;return null;},
@@ -324,4 +324,56 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  assert.equal(scratches,5,'invalid identity and result-open data do not trigger scratch fetch');
  assert.equal(overlays,4,'unchanged source and unsafe sources never trigger overlay');
  console.log('BOAT_EDGE_03_LIVE_PRE_RESULT_SOURCE_RECEIPT_AND_PREDICTION_REFRESH_PASS');
+})().catch(e=>{console.error(e);process.exitCode=1});
+
+
+/* 03: exercise actual passive-refresh UI on bounded synthetic PRE_RESULT. */
+(async()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ const a=html.indexOf('function be03RaceSourceIdentity(file,jcd,race){');
+ const b=html.indexOf('async function loadRace(file, jcd){',a);
+ const c=html.indexOf('function be03PassiveRefreshNotice(key,reason){');
+ const d=html.indexOf('async function refreshAll(force=false){',c);
+ assert(a>0&&b>a&&c>0&&d>c);
+ let note=null,reply=null,redraw=0,scratch=0,overlay=0;
+ const key='20261014-14-09';
+ const race={race_key:key,meta:{date:'2026-10-14',venue_code:'14',race_no:9,
+  phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false},
+  racers:Array.from({length:6},(_,i)=>({lane:i+1}))};
+ const host={firstChild:null,querySelector:s=>s==='#be03PassiveRefreshNotice'?note:null,
+  insertBefore:el=>{note=el;}};
+ const view={classList:{contains:s=>s==='active'},querySelector:s=>s==='.race-summary'?host:null};
+ class Clock extends Date{static now(){return Date.parse('2026-10-14T16:20:00+09:00');}}
+ const ctx=vm.createContext({
+  Date:Clock,Promise,String,JSON,Number,state:{race},
+  document:{visibilityState:'visible',getElementById:s=>s==='raceView'?view:null,
+   createElement:()=>({dataset:{},setAttribute(){},remove(){note=null;}})},
+  fetch:async()=>reply(),
+  be182FetchScratch:async r=>{scratch++;return r;},
+  loadFormalOverlay:async()=>{overlay++;return null;},
+  mergeFormalOverlay:r=>r,renderRace:()=>{redraw++;}
+ });
+ vm.runInContext(html.slice(a,b)+'\n'+html.slice(c,d),ctx);
+ const refresh=()=>vm.runInContext('be162RefreshVisibleRace()',ctx);
+ reply=()=>({ok:false,status:404});await refresh();
+ assert.match(note?.textContent||'',/公開待ち（404）/);
+ assert.match(note?.textContent||'',/前回取得時点/);
+ assert.equal(note?.dataset.raceKey,key);
+ assert.equal(redraw,0);assert.equal(scratch,0);assert.equal(overlay,0);
+ const old=note;await refresh();assert.strictEqual(note,old,'do not duplicate status');
+ reply=()=>{throw Error('offline');};await refresh();
+ assert.match(note.textContent,/再取得でエラー/);
+ reply=()=>({ok:true,json:async()=>({...race,race_key:'20261014-14-08'})});
+ await refresh();assert.match(note.textContent,/照合が一致しません/);
+ assert.equal(scratch,0,'do not process mismatched or missing source');
+ reply=()=>({ok:true,json:async()=>({...race,meta:{...race.meta,results_seen:true}})});
+ await refresh();assert.match(note.textContent,/安全条件/);
+ assert.equal(scratch,0,'do not process result-open source');
+ reply=()=>({ok:true,json:async()=>race});
+ await refresh();assert.equal(note,null,'successful unchanged source clears stale state');
+ assert.equal(redraw,0);assert.equal(scratch,1);assert.equal(overlay,0);
+ reply=async()=>{ctx.state.race={...race,race_key:'20261014-14-10'};
+  return {ok:false,status:404};};
+ await refresh();assert.equal(note,null,'stale request cannot affect new selected race');
+ console.log('BOAT_EDGE_03_PASSIVE_REFRESH_STALE_DATA_NOTICE_PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});

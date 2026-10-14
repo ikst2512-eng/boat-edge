@@ -3195,6 +3195,7 @@ async function loadRace(file, jcd){
   const previousRace=state.race;
   const raceView=document.getElementById("raceView");
   raceView?.classList.add("be03-race-loading");
+  document.getElementById("be03PassiveRefreshNotice")?.remove();
   be03RaceLoadNotice("選択したレースの出走表と予想を読み込み中です。");
   let stage="fetch";
   try{
@@ -3282,10 +3283,31 @@ function updateGlobalDataViews(){
     `rc ${sourceCounts.race_cards ?? "－"} / stt ${sourceCounts.stt ?? "－"} / tkz ${sourceCounts.tkz ?? "－"} / sui ${sourceCounts.sui ?? "－"} / oe ${sourceCounts.original_exhibition ?? "－"}` :
     "読込後反映";
 }
+/* 03: show a race-specific stale-source notice when passive refresh fails.
+ * The previous visible card is retained; it is NOT evidence of a new freeze. */
+function be03PassiveRefreshNotice(key,reason){
+  const view=document.getElementById("raceView");
+  if(state.race?.race_key!==key||!view?.classList?.contains("active")||
+     view.classList.contains("be03-race-loading"))return;
+  const host=view.querySelector?.(".race-summary");
+  if(!host)return;
+  let note=host.querySelector("#be03PassiveRefreshNotice");
+  if(!reason){note?.remove();return;}
+  if(!note){
+    note=document.createElement("div");
+    note.id="be03PassiveRefreshNotice";
+    note.className="be03-load-notice";
+    note.setAttribute("role","status");
+    host.insertBefore(note,host.firstChild);
+  }
+  note.dataset.raceKey=key;
+  note.textContent="前回取得時点の情報を表示中｜"+reason+"。自動更新で再確認します。";
+}
 let be162RefreshBusy=false;
 async function be162RefreshVisibleRace(){
   if(be162RefreshBusy || document.visibilityState!=="visible")return;
-  if(!document.getElementById("raceView")?.classList.contains("active"))return;
+  const view=document.getElementById("raceView");
+  if(!view?.classList.contains("active")||view.classList.contains("be03-race-loading"))return;
   const original=state.race;
   const key=String(original?.race_key||"");
   if(!/^\d{8}-\d{2}-\d{2}$/.test(key))return;
@@ -3294,14 +3316,24 @@ async function be162RefreshVisibleRace(){
   be162RefreshBusy=true;
   try{
     const response=await fetch(`./data/races/${key}.json?live=${Date.now()}`,{cache:"no-store"});
-    if(!response.ok)return;
+    if(!response.ok){
+      be03PassiveRefreshNotice(key,response.status===404?
+        "最新レースデータが公開待ち（404）":"最新レースデータを取得できませんでした");
+      return;
+    }
     const race=await response.json();
     // A source-only update may leave meta.updated_at and the measurement
     // values unchanged. Verify the refreshed file identity and result-unseen
     // state before any subsequent scratch/overlay/render work.
-    if(!be03RaceSourceIdentity('./data/races/'+key+'.json',original?.meta?.venue_code,race))return;
+    if(!be03RaceSourceIdentity('./data/races/'+key+'.json',original?.meta?.venue_code,race)){
+      be03PassiveRefreshNotice(key,"選択レースと更新元の照合が一致しません");
+      return;
+    }
     if(race.meta?.phase!=='PRE_RESULT'||race.meta?.results_seen!==false||
-       race.meta?.unlock!==false||race.meta?.scoring!==false)return;
+       race.meta?.unlock!==false||race.meta?.scoring!==false){
+      be03PassiveRefreshNotice(key,"結果未見の安全条件が変わったため更新を停止");
+      return;
+    }
     // Race-specific source SHA/time, six racer rows, odds, and prediction
     // material can change independently. Preserve the verified UI evidence
     // instead of freezing stale labels until the user manually switches races.
@@ -3310,11 +3342,16 @@ async function be162RefreshVisibleRace(){
       r.source_audit,r.derived,r.odds,r.odds_audit,r.scratch_audit
     ]);
     const audited=await be182FetchScratch(race);
-    if(signature(audited)===signature(original))return;
+    if(state.race?.race_key!==key)return;
+    if(signature(audited)===signature(original)){
+      be03PassiveRefreshNotice(key,null);
+      return;
+    }
     const overlay=await loadFormalOverlay(key);
     if(state.race?.race_key!==key)return;
     renderRace(mergeFormalOverlay(audited,overlay),{silent:true});
-  }catch(_){/* retain last successfully loaded race; show stale status through source time */}
+    be03PassiveRefreshNotice(key,null);
+  }catch(_){be03PassiveRefreshNotice(key,"最新レースデータの再取得でエラー");}
   finally{be162RefreshBusy=false;}
 }
 async function refreshAll(force=false){
