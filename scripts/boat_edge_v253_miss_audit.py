@@ -19,6 +19,10 @@ COMBO=re.compile(r"^[1-6]-[1-6]-[1-6]$")
 SHA=re.compile(r"^[a-f0-9]{64}$")
 V236_PRE="BOAT_EDGE_V236_HITRATE_FORWARD_SHADOW_V1"
 V236_POST="BOAT_EDGE_V236_HITRATE_SCORE_V1"
+V236_V1="PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST"
+V236_V2="PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER"
+V236_V3="PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES"
+V236_POLICIES=(V236_V1,V236_V2,V236_V3)
 V240_PRE="BOAT_EDGE_V240_INDEPENDENT_SECOND_COVERAGE_PRE_V1"
 V240_POST="BOAT_EDGE_V240_INDEPENDENT_SECOND_COVERAGE_SCORE_V1"
 V241="BOAT_EDGE_V241_VERIFIED_SITE_RESULTS_V1"
@@ -61,7 +65,7 @@ def guard(root):
     g=obj.get("guards") or {}
     assert all(g.get(k) is False for k in ("results_seen","unlock","scoring")), "V253_FORMAL_RESULT_LOCK"
     assert g.get("RESULT_UNLOCK_TOKEN") is None, "V253_FORMAL_UNLOCK_TOKEN"
-    assert (obj.get("formalFirst100") or {}).get("races",0)==0, "V253_FORMAL_COHORT_ACTIVE"
+    assert type((obj.get("formalFirst100") or {}).get("races")) is int and (obj.get("formalFirst100") or {}).get("races")==0, "V253_FORMAL_COHORT_ACTIVE"
 
 def verified_site_rows(root):
     doc=read(root/BASE/"v241_results_current.json")
@@ -96,6 +100,28 @@ def validate_entry(root,lane,key,site):
     if not pre or not post:return None
     fields=MODES[lane]
     if pre.get("race_key")!=key or post.get("race_key")!=key:return None
+    policy=pre.get("comparison_policy") if lane=="v236" else None
+    if lane=="v236":
+        if policy not in V236_POLICIES:return None
+        if policy in (V236_V2,V236_V3):
+            fields=fields+("headsecond10",)
+            # Older V2 score rows may omit candidate_policy; V3 must be
+            # explicitly tagged. No V1 record can gain a candidate later.
+            tag=post.get("candidate_policy",V236_V2 if policy==V236_V2 else None)
+            if tag!=policy:return None
+            prefixes=post.get("prefix_outcomes")
+            if not isinstance(prefixes,dict) or set(prefixes)!=set(("hit10","headsecond10")):
+                return None
+            for mode in ("hit10","headsecond10"):
+                vals=prefixes.get(mode)
+                if (not isinstance(vals,dict) or set(vals)!=set(("3","5","10"))):
+                    return None
+                for count in (3,5,10):
+                    if type(vals[str(count)]) is not bool or vals[str(count)]!=(
+                            site["winning_combo"] in pre.get("comparators",{}).get(mode,[])[:count]):
+                        return None
+        elif post.get("candidate_policy") is not None or post.get("prefix_outcomes") is not None:
+            return None
     if not isinstance(pre.get("comparators"),dict) or set(pre["comparators"])!=set(fields):return None
     winning=site["winning_combo"]
     deadline=time(pre.get("deadline_jst"))
@@ -151,7 +177,7 @@ def validate_entry(root,lane,key,site):
         classified[mode]=category(arr,winning)
     return {"race_key":key,"date_jst":key[:8],"winning_combo":winning,
             "actual_head":winning[0],"reported_head_hit":site["head_hit"],
-            "categories":classified}
+            "categories":classified,"candidate_policy":policy}
 
 def build(root):
     root=Path(root).resolve()
@@ -179,6 +205,21 @@ def build(root):
         output[lane]={"races_verified":len(rows),"miss_categories":counts,
           "excluded":dict(sorted(excluded.items())),
           "races":rows}
+        if lane=="v236":
+            # A different model/ranking policy is a different experiment.
+            # Never pool V2 and V3 candidates or apply to old V1 results.
+            by_policy={}
+            for tag in (V236_V2,V236_V3):
+                candidates=[r for r in rows if r["candidate_policy"]==tag]
+                by_policy[tag]={
+                  "matched_races":len(candidates),
+                  "miss_categories":{
+                    mode:{c:sum(r["categories"][mode]==c for r in candidates)
+                          for c in CATEGORIES}
+                    for mode in ("hit10","headsecond10")
+                  },
+                }
+            output[lane]["headsecond_by_frozen_policy"]=by_policy
     result={"schema":"BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1",
       "scope":"POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS",
       "formal_result_access":False,"production_model_changed":False,
