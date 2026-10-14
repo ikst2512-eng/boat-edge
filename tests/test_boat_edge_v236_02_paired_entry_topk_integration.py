@@ -17,6 +17,7 @@ from test_boat_edge_v236_02_exhibition_to_actual_entry import (
 from boat_edge_02_entry_marginalized_topk_research import prepare_entry_topk_ablation
 from boat_edge_02_joint_entry_permutation_research import digest
 from boat_edge_02_matched_ten_pre_result import prepare_matched_ten
+from test_boat_edge_v236_02_matched_ten_pre_result import FORMAL_STATUS
 
 
 def proof(config=None):
@@ -78,7 +79,7 @@ class PairedEntryTopK(unittest.TestCase):
             parent_training_end="20261013",
             candidate_training_end="20261013",
             no_target_outcome=True,no_formal_fresh=True)
-        result=prepare_matched_ten(scope,parent,candidate,NOW)
+        result=prepare_matched_ten(scope,parent,candidate,NOW,FORMAL_STATUS)
         self.assertEqual(result["same_ticket_count_each"],10)
         self.assertEqual(result["parent_top10"],out["baseline_top10"])
         self.assertEqual(result["candidate_top10"],out["candidate_top10"])
