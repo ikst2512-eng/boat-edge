@@ -196,6 +196,28 @@ def test_snapshot_evidence_contract_without_network():
     assert check({**data, "site_prediction_audit/" + key + ".json":
                   {**audit, "settlement": {}}}
                  )["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT"
+    # V125 writes this unset sentinel before a race settles; it is not an outcome.
+    sentinel = {"available": False, "winning_combo": None, "hit_any": None,
+                "mode_hits": {}, "payout": None}
+    fresh_audit = {**audit, "settlement": sentinel}
+    still_pre = check({**data, "site_prediction_audit/" + key + ".json": fresh_audit})
+    assert still_pre["status"] == "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+    assert still_pre["first_git_commit_verified"] is False
+    # Reject any observed payout, result, unsupported field or unknown shape.
+    for contaminated in (
+        {**sentinel, "available": True},
+        {**sentinel, "winning_combo": "1-2-3"},
+        {**sentinel, "hit_any": False},
+        {**sentinel, "mode_hits": {"hit": False}},
+        {**sentinel, "payout": 0},
+        {**sentinel, "unexpected": None},
+        {"available": False},
+        None,
+        {},
+    ):
+        blocked = check({**data, "site_prediction_audit/" + key + ".json":
+                         {**audit, "settlement": contaminated}})
+        assert blocked["status"] == "AUDIT_CONTAINS_OUTCOME_NOT_PRE_RESULT", contaminated
     print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
 
 
