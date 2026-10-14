@@ -23,6 +23,7 @@ SCHEMA='BOAT_EDGE_V236_HITRATE_FORWARD_SHADOW_V1'
 SCORE_SCHEMA='BOAT_EDGE_V236_HITRATE_SCORE_V1'
 POLICY_V1='PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST'
 POLICY_V2='PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER'
+POLICY_V3='PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES'
 PATH='data/site_autopilot'
 
 
@@ -86,7 +87,9 @@ def git_first(root,path):
 def formal_closed(root):
     status=load(root/'data/formal_status.json') or {}
     g=status.get('guards') or {}
-    if any(g.get(k) is not False for k in ('results_seen','unlock','scoring')) or g.get('RESULT_UNLOCK_TOKEN') is not None:
+    if ('RESULT_UNLOCK_TOKEN' not in g or
+            any(g.get(k) is not False for k in ('results_seen','unlock','scoring'))
+            or g['RESULT_UNLOCK_TOKEN'] is not None):
         raise RuntimeError('V236_FORMAL_GATE_MUST_BE_CLOSED')
     races=(status.get('formalFirst100') or {}).get('races')
     if type(races) is not int or races!=0:
@@ -130,6 +133,33 @@ def head_second_coverage10(hit,hole):
     return out if len(out)==10 else None
 
 
+def head_second_distinct_coverage10(hit,balance,hole):
+    """Result-unseen TopK hypothesis with a verifiably different ten-ticket set.
+
+    No learned weights or same-day outcomes: only first-Git-frozen candidate
+    ranks. Prefer a different head from the balance list, then hole; reject
+    races with no observed distinct candidate rather than fabricate a tail.
+    Existing V1/V2 frozen-policy functions remain byte-for-byte unchanged.
+    """
+    if len(hit)!=10 or len(balance)!=10 or len(hole)<10:return None
+    lead=hit[0].split('-')[0]
+    alternatives=list(dict.fromkeys(balance+hole))
+    first=next((x for x in alternatives if x not in hit and x[0]!=lead),None)
+    if first is None:return None
+    out=[]
+    def add(v):
+        if v not in out and len(out)<10:out.append(v)
+    add(hit[0]);add(hit[1]);add(first);add(hit[2])
+    seen_pairs={tuple(c.split('-')[:2]) for c in out}
+    second=next((x for x in alternatives if x not in hit and x not in out
+                 and tuple(x.split('-')[:2]) not in seen_pairs),None)
+    if second is not None:add(second)
+    for x in hit:add(x)
+    for x in alternatives:add(x)
+    return out if (len(out)==10 and set(out)!=set(hit)
+                   and out[:3]!=hit[:3] and out[:5]!=hit[:5]) else None
+
+
 def prepare(root,path,now,policy='legacy'):
     """Build fixed, same-budget comparators only from immutable mode tickets."""
     formal_closed(root)
@@ -171,6 +201,11 @@ def prepare(root,path,now,policy='legacy'):
         if proposed is None:return None,'head_second_not_ten'
         comparators['headsecond10']=proposed
         comparison_policy=POLICY_V2
+    elif policy=='headsecond_distinct':
+        proposed=head_second_distinct_coverage10(hit,balance,hole)
+        if proposed is None:return None,'distinct_outside_current_top10_not_observed'
+        comparators['headsecond10']=proposed
+        comparison_policy=POLICY_V3
     elif policy!='legacy':
         return None,'unsupported_research_policy'
     return {'schema':SCHEMA,'scope':'PROSPECTIVE_SITE_SHADOW_NOT_FORMAL_FRESH',
@@ -191,7 +226,7 @@ def freeze(root,now):
     for p in sorted((root/PATH/'v232_cohort').glob(day+'-??-??.json')):
         out=dest/p.name
         if out.exists():continue
-        seen+=1;obj,reason=prepare(root,p,now,policy='headsecond')
+        seen+=1;obj,reason=prepare(root,p,now,policy='headsecond_distinct')
         if obj:
             save_once(out,obj);n+=1
         else:excluded[reason]=excluded.get(reason,0)+1
@@ -255,14 +290,15 @@ def score_row(root,path,now):
             frozen_at>frozen_commit['at']+dt.timedelta(seconds=1)):
         return None,'candidate_freeze_time_invalid'
     policy=row.get('comparison_policy')
-    if policy not in (POLICY_V1,POLICY_V2):return None,'unknown_prospective_research_policy'
-    expected,reason=prepare(root,cohort_path,frozen_at,
-        policy='headsecond' if policy==POLICY_V2 else 'legacy')
+    if policy not in (POLICY_V1,POLICY_V2,POLICY_V3):return None,'unknown_prospective_research_policy'
+    strategy=('headsecond' if policy==POLICY_V2 else
+              'headsecond_distinct' if policy==POLICY_V3 else 'legacy')
+    expected,reason=prepare(root,cohort_path,frozen_at,policy=strategy)
     if reason or any(row.get(k)!=v for k,v in expected.items()):
         return None,'candidate_not_matching_predeclared_source'
     lists=row.get('comparators') or {}
     names={'hit10','balance10','scenario7plus3','coverage15'}
-    if policy==POLICY_V2:names.add('headsecond10')
+    if policy in (POLICY_V2,POLICY_V3):names.add('headsecond10')
     if not isinstance(lists,dict) or set(lists)!=names:return None,'candidate_schema_modified'
     if any(not isinstance(v,list) or len(v)<10 or len(v)>15 or any(not combo_ok(x) for x in v) or len(set(v))!=len(v) for v in lists.values()):
         return None,'candidate_ticket_invalid'
@@ -278,7 +314,8 @@ def score_row(root,path,now):
       'outcomes':hits,'ticket_counts':{x:len(v) for x,v in lists.items()},
       'production_accuracy_improvement_proven':False,
       'real_or_paper_purchase':False,'model_promotion_authorized':False}
-    if policy==POLICY_V2:
+    if policy in (POLICY_V2,POLICY_V3):
+        record['candidate_policy']=policy
         # The first 3/5/10 predictions were ranked and frozen BEFORE results.
         # Scoring those frozen prefixes uses no fitted/post-result re-ranking.
         record['prefix_outcomes']={
@@ -300,48 +337,51 @@ def score(root,now):
     settled=[load(p) for p in sorted(dest.glob('20??????-??-??.json'))] if dest.exists() else []
     settled=[x for x in settled if x and x.get('schema')==SCORE_SCHEMA]
     fields=['hit10','balance10','scenario7plus3','coverage15']
-    # Earlier first-Git-frozen four-mode rows retain their original schema,
-    # denominators and exact bytes. New V2 candidate is scored ONLY on
-    # prospective rows actually frozen with its fifth comparator.
-    future=[x for x in settled if 'headsecond10' in x.get('outcomes',{})]
-    gains=sum(x['outcomes']['headsecond10'] and not x['outcomes']['hit10'] for x in future)
-    losses=sum(not x['outcomes']['headsecond10'] and x['outcomes']['hit10'] for x in future)
-    discord=gains+losses
-    paired_p=(min(1.,2*sum(math.comb(discord,j) for j in range(min(gains,losses)+1))/(2**discord))
-              if discord else None)
-    topk={}
-    for k in (3,5,10):
-        value=str(k)
-        pairs=[(x['prefix_outcomes']['hit10'][value],
-                x['prefix_outcomes']['headsecond10'][value])
-               for x in future]
-        plus=sum(c and not b for b,c in pairs)
-        minus=sum(b and not c for b,c in pairs)
-        n=plus+minus
-        p=(min(1.,2*sum(math.comb(n,j) for j in range(min(plus,minus)+1))/(2**n))
-           if n else None)
-        topk[value]={
-          'races':len(pairs),'current_hits':sum(b for b,c in pairs),
-          'candidate_hits':sum(c for b,c in pairs),
-          'gains':plus,'losses':minus,'paired_exact_p_two_sided':p,
-        }
+    # Distinct policies must NEVER be pooled as if they were one candidate.
+    # Old scored V2 rows may lack candidate_policy; their stored frozen policy
+    # is V2 and is preserved by treating this legacy tag as V2 only.
+    def paired_summary(rows):
+        gains=sum(x['outcomes']['headsecond10'] and not x['outcomes']['hit10'] for x in rows)
+        losses=sum(not x['outcomes']['headsecond10'] and x['outcomes']['hit10'] for x in rows)
+        discord=gains+losses
+        paired_p=(min(1.,2*sum(math.comb(discord,j) for j in range(min(gains,losses)+1))/(2**discord))
+                  if discord else None)
+        topk={}
+        for k in (3,5,10):
+            value=str(k)
+            pairs=[(x['prefix_outcomes']['hit10'][value],
+                    x['prefix_outcomes']['headsecond10'][value]) for x in rows]
+            plus=sum(c and not b for b,c in pairs)
+            minus=sum(b and not c for b,c in pairs)
+            n=plus+minus
+            p=(min(1.,2*sum(math.comb(n,j) for j in range(min(plus,minus)+1))/(2**n))
+               if n else None)
+            topk[value]={'races':len(pairs),'current_hits':sum(b for b,c in pairs),
+                'candidate_hits':sum(c for b,c in pairs),'gains':plus,'losses':minus,
+                'paired_exact_p_two_sided':p}
+        return {'races':len(rows),'current_hit10_hits':sum(x['outcomes']['hit10'] for x in rows),
+                'candidate_hit10_hits':sum(x['outcomes']['headsecond10'] for x in rows),
+                'gains':gains,'losses':losses,'paired_exact_p_two_sided':paired_p,
+                'ranked_top3_top5_top10':topk,'promotion_authorized':False}
+    v2=[x for x in settled if 'headsecond10' in x.get('outcomes',{})
+        and x.get('candidate_policy',POLICY_V2)==POLICY_V2]
+    v3=[x for x in settled if x.get('candidate_policy')==POLICY_V3
+        and 'headsecond10' in x.get('outcomes',{})]
+    v2_summary=paired_summary(v2)
+    v3_summary=paired_summary(v3)
     s={'schema':'BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1',
        'scope':'POST_RESULT_SAME_COHORT_COMPARISON_NOT_FORMAL_FRESH',
        'scored_total':len(settled),'new_scored_this_run':count,
        'comparisons':{m:{'hit':sum(x['outcomes'][m] for x in settled),'races':len(settled),
           'hit_rate_percent':round(sum(x['outcomes'][m] for x in settled)/len(settled)*100,2) if settled else None,
           'avg_points':round(sum(x['ticket_counts'][m] for x in settled)/len(settled),2) if settled else None} for m in fields},
-       'headsecond10_matched_prospective_only':{
-         'races':len(future),'current_hit10_hits':sum(x['outcomes']['hit10'] for x in future),
-         'candidate_hit10_hits':sum(x['outcomes']['headsecond10'] for x in future),
-         'gains':gains,'losses':losses,'paired_exact_p_two_sided':paired_p,
-         'ranked_top3_top5_top10':topk,
-         'promotion_authorized':False},
+       'headsecond10_matched_prospective_only':v2_summary,
+       'headsecond10_distinct_matched_prospective_only':v3_summary,
        'rejected_or_pending_this_run':excluded,'production_model_changed':False,
        'promotion_authorized':False,'real_or_paper_purchase':False,
        'status':'DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION',
        'examples':[{'race_key':x['race_key'],'winning':x['official_result'],'outcomes':x['outcomes']} for x in settled[-25:]]}
-    changed=save_changed(root/PATH/'v236_score_current.json',s,['scored_total','comparisons','headsecond10_matched_prospective_only','rejected_or_pending_this_run'])
+    changed=save_changed(root/PATH/'v236_score_current.json',s,['scored_total','comparisons','headsecond10_matched_prospective_only','headsecond10_distinct_matched_prospective_only','rejected_or_pending_this_run'])
     print('V236_SITE_RESULT_PAIRED_HITRATE',json.dumps({'new':count,'total':len(settled),'comparisons':s['comparisons'],'pending':excluded,'state_written':changed},ensure_ascii=False,sort_keys=True))
     return s
 
