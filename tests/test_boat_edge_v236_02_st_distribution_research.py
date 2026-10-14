@@ -5,7 +5,8 @@ import math
 import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
-from boat_edge_02_st_distribution_research import derive_st_signals
+from boat_edge_02_st_distribution_research import (derive_st_signals,
+    official_exhibition_st_value, official_start_rows_to_exhibition_map)
 
 KEY="20261014-12-01"
 SCOPE=dict(schema="BE02_RESEARCH_AGGREGATE_SCOPE_V1",race_key=KEY,
@@ -37,6 +38,56 @@ def history():
     return {i:row() for i in range(1,7)}
 
 class STDistributionResearch(unittest.TestCase):
+    def test_actual_official_string_tokens_feed_st_research_without_flying_boost(self):
+        e=deepcopy(EVIDENCE)
+        # Same source string tokens as the official beforeinfo parser produces.
+        e["race_exhibition_by_boat"]={1:".06",2:"F.02",3:"-.03",
+                                       4:"+.04",5:"0.12",6:None}
+        result=derive_st_signals(KEY,SCOPE,e,history())
+        measures={r["boat"]:r["observed_official_exhibition_st"]
+                  for r in result["st_signals"]}
+        self.assertEqual(measures,{1:.06,2:None,3:None,4:.04,5:.12,6:None})
+        for boat in (2,3,6):
+            self.assertIsNone(result["st_signals"][boat-1]["conditional_exhibition_st_correction_candidate"])
+        self.assertFalse(result["improvement_proven"])
+        self.assertFalse(result["production_eligible"])
+
+    def test_six_boat_official_start_adapter_rejects_partial_course_and_fake_values(self):
+        rows=[{"lane":i,"st":".0"+str(i),"course":7-i} for i in range(1,7)]
+        rows[1]["st"]="F.02"
+        rows[4]["st"]="-.03"
+        rows[5]["exhibition_f"]=True
+        out=official_start_rows_to_exhibition_map(rows)
+        self.assertEqual(out,{1:.01,2:None,3:.03,4:.04,5:None,6:None})
+        self.assertNotIn("course",out)
+        # Missing, duplicate, malformed lane lists NEVER become six-boat
+        # observations just because a few official tokens look plausible.
+        for invalid in (rows[:5],rows+[rows[0]],
+                        [*rows[:5],dict(rows[0])],
+                        [{**rows[0],"lane":1.0},*rows[1:]]):
+            with self.subTest(invalid=invalid):
+                with self.assertRaisesRegex(ValueError,"SIX_BOAT_EXHIBITION"):
+                    official_start_rows_to_exhibition_map(invalid)
+        bad=deepcopy(rows)
+        bad[0]["st"]="0.90"
+        with self.assertRaisesRegex(ValueError,"INVALID_PRE_RESULT"):
+            official_start_rows_to_exhibition_map(bad)
+        bad=deepcopy(rows)
+        bad[0]["exhibition_f"]="False"
+        with self.assertRaisesRegex(ValueError,"INVALID_PRE_RESULT"):
+            official_start_rows_to_exhibition_map(bad)
+
+    def test_no_faked_numeric_f_st_from_bad_official_tokens(self):
+        self.assertIsNone(official_exhibition_st_value("F.09"))
+        self.assertIsNone(official_exhibition_st_value("-0.02"))
+        self.assertAlmostEqual(official_exhibition_st_value(".00"),0.)
+        self.assertAlmostEqual(official_exhibition_st_value("+.17"),.17)
+        for invalid in (True,False,-.02,1.,float("nan"),float("inf"),
+                        "F.123","-1.0","0.7","--",".","unknown",""):
+            with self.subTest(invalid=invalid):
+                with self.assertRaisesRegex(ValueError,"INVALID_PRE_RESULT"):
+                    official_exhibition_st_value(invalid)
+
     def test_six_sample_distributions_and_deterministic_regression(self):
         one=derive_st_signals(KEY,SCOPE,EVIDENCE,history())
         self.assertEqual(one,derive_st_signals(KEY,SCOPE,EVIDENCE,history()))
