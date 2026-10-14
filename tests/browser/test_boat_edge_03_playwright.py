@@ -99,7 +99,8 @@ class MobilePredictionBrowser(unittest.TestCase):
             "(node, rows) => { node.innerHTML = rows; }", rows
         )
         page.evaluate("""() => {
-          window.state = {race:{race_key:'20261014-06-01'}};
+          window.state = {race:{race_key:'20261014-06-01',meta:{
+            date:'2026-10-14',venue_code:'06',race_no:1,deadline:'23:59'}}};
           window.boatEdgeTestKind = 'partial';
           window.BoatEdgeV205 = {sourceStatus:()=>({
             kind:window.boatEdgeTestKind,
@@ -190,6 +191,28 @@ class MobilePredictionBrowser(unittest.TestCase):
                     self.assertIn(phase.get_attribute("data-phase"),
                         ("provisional","closed"))
                     self.assertTrue(phase.locator("strong").inner_text().strip())
+                    self.assertEqual(page.locator("#be207Top .be207-ticket").count(),3)
+                finally:
+                    context.close()
+
+    def test_missing_deadline_never_displays_saved_looking_tickets(self):
+        for kind, browser in self.browsers.items():
+            with self.subTest(browser=kind):
+                context, page = self.boot(browser)
+                try:
+                    page.evaluate("""() => {
+                      window.state.race.meta.deadline='';
+                      window.BoatEdgeV207.render();
+                    }""")
+                    self.assertEqual(page.locator("#be207Top .be207-ticket").count(),0)
+                    self.assertEqual(
+                        page.locator("#be207Top .be207-display-phase")
+                        .get_attribute("data-phase"),"unverified")
+                    self.assertIn("非表示",page.locator("#be207Top .be207-budget").inner_text())
+                    page.evaluate("""() => {
+                      window.state.race.meta.deadline='23:59';
+                      window.BoatEdgeV207.render();
+                    }""")
                     self.assertEqual(page.locator("#be207Top .be207-ticket").count(),3)
                 finally:
                     context.close()
