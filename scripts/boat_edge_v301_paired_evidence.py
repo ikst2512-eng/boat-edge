@@ -44,6 +44,12 @@ CONFIG = {
              "parent_v232_sha256", "parent_first_git_commit"),
 }
 
+V236_POLICIES = {
+    "PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST": False,
+    "PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER": True,
+    "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES": True,
+}
+
 class EvidenceError(ValueError):
     """Fail closed, rather than silently shrinking a comparative denominator."""
 
@@ -118,6 +124,21 @@ def checked_row(root, study, path, attest=first_added):
     parent_path = root / BASE / "v232_cohort" / path.name
     frozen = read(freeze_path)
     parent = read(parent_path)
+    v236_policy = None
+    if study == "v236":
+        v236_policy = frozen.get("comparison_policy")
+        if v236_policy not in V236_POLICIES:
+            raise EvidenceError("UNKNOWN_V236_FROZEN_POLICY_" + key)
+        if V236_POLICIES[v236_policy]:
+            names += ("headsecond10",)
+            # Historical V2 scored records may lack the tag; V3 cannot.
+            tag = scored.get("candidate_policy")
+            if tag != v236_policy and not (
+                    tag is None and v236_policy ==
+                    "PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER"):
+                raise EvidenceError("V236_SCORED_POLICY_MISMATCH_" + key)
+        elif "candidate_policy" in scored or "prefix_outcomes" in scored:
+            raise EvidenceError("V236_V1_POSTHOC_CANDIDATE_REFUSED_" + key)
     if (scored.get("schema") != s_schema or scored.get("scope") != s_scope
             or frozen.get("schema") != f_schema or frozen.get("scope") != f_scope
             or scored.get("race_key") != key or frozen.get("race_key") != key
@@ -192,6 +213,18 @@ def checked_row(root, study, path, attest=first_added):
     outcomes = {m: winning in lists[m] for m in names}
     if any(scored["outcomes"].get(m) is not outcomes[m] for m in names):
         raise EvidenceError("SCORED_VERSUS_FROZEN_TICKET_MISMATCH_" + key)
+    if study == "v236" and V236_POLICIES[v236_policy]:
+        prefixes = scored.get("prefix_outcomes")
+        if not isinstance(prefixes, dict) or set(prefixes) != {"hit10", "headsecond10"}:
+            raise EvidenceError("V236_PREFIX_OUTCOMES_MISSING_" + key)
+        for mode in ("hit10", "headsecond10"):
+            values = prefixes.get(mode)
+            if not isinstance(values, dict) or set(values) != {"3", "5", "10"}:
+                raise EvidenceError("V236_PREFIX_SCHEMA_INVALID_" + key)
+            for k in (3, 5, 10):
+                v = values[str(k)]
+                if type(v) is not bool or v != (winning in lists[mode][:k]):
+                    raise EvidenceError("V236_PREFIX_OUTCOME_CHANGED_" + key)
     if study == "v236" and scored.get("ticket_counts") != {m: len(lists[m]) for m in names}:
         raise EvidenceError("SAVED_POINTS_MISMATCH_" + key)
     if study == "v254" and scored.get("novel_tickets") != len(set(lists["third_tail10"]) - set(lists["hit10"])):
@@ -202,7 +235,10 @@ def checked_row(root, study, path, attest=first_added):
         raise EvidenceError("V254_PARENT_RESULT_IDENTITY_" + key)
     return {"key": key, "day": key[:8], "winning": winning,
             "baseline": lists["hit10"], "outcomes": outcomes,
-            "modes": {m: len(lists[m]) for m in names}}
+            "modes": {m: len(lists[m]) for m in names},
+            "policy": v236_policy,
+            "prefixes": scored.get("prefix_outcomes") if study == "v236" and
+            V236_POLICIES[v236_policy] else None}
 
 
 def paired(rows, mode):
@@ -273,6 +309,31 @@ def compare_10point_modes(left, right, left_mode, right_mode):
             "improvement_proven": False, "model_promotion_authorized": False}
 
 
+def v236_prefix_comparison(rows):
+    # V2/V3 are independent prospective hypotheses; never pool their rows.
+    result = {"races": len(rows), "days": len({r["day"] for r in rows}),
+              "top10": paired(rows, "headsecond10"), "ranked_top3_top5_top10": {}}
+    for k in (3, 5, 10):
+        pairs = []
+        for row in rows:
+            winning = row["winning"]
+            # Exact prefix of pre-validated immutable ten-ticket sequences.
+            # Actual frozen prefixes are reverified in checked_row().
+            left = row["prefixes"]["hit10"][str(k)]
+            right = row["prefixes"]["headsecond10"][str(k)]
+            pairs.append((left, right))
+        plus = sum(not a and b for a, b in pairs)
+        minus = sum(a and not b for a, b in pairs)
+        n = plus + minus
+        p = (min(1.0, 2 * sum(math.comb(n, i)
+             for i in range(min(plus, minus) + 1)) / (2 ** n)) if n else None)
+        result["ranked_top3_top5_top10"][str(k)] = {
+            "races": len(rows), "baseline_hits": sum(a for a, b in pairs),
+            "candidate_hits": sum(b for a, b in pairs),
+            "gain": plus, "loss": minus, "exact_mcnemar_two_sided_p": p}
+    return result
+
+
 def audit(root, attest=first_added):
     root = Path(root).resolve()
     formal_lock(root)
@@ -299,6 +360,13 @@ def audit(root, attest=first_added):
                  "not_same_ten_point_comparison": True}
                 if study == "v236" else None),
         }
+    # Only V236 V2/V3 can contain headsecond10; their independent frozen
+    # policies must not be pooled or retroactively appended to V1.
+    within["v236"]["headsecond10_by_frozen_policy"] = {
+        policy: v236_prefix_comparison([
+            row for row in available["v236"].values() if row["policy"] == policy])
+        for policy, has_alt in V236_POLICIES.items() if has_alt
+    }
     between = {}
     studies = list(CONFIG)
     for i, left in enumerate(studies):
