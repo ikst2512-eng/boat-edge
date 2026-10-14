@@ -40,6 +40,10 @@ class V409Tests(unittest.TestCase):
     def test_wrong_day_capture_rejected(self):
         a=audit(DAY,{"race_cards":cards(),"stt":preview("2026-09-29T08:25:00+09:00")})
         self.assertEqual(a["preview_status"]["stt"]["capture_wrong_day"],1)
+    def test_invalid_deadline_hour_is_rejected(self):
+        a=audit(DAY,{"race_cards":cards(),"stt":preview(deadline="25:35")})
+        self.assertEqual(a["preview_status"]["stt"]["invalid_timestamp"],1)
+
     def test_naive_time_rejected(self):
         a=audit(DAY,{"race_cards":cards(),"stt":preview("2026-09-30T08:25:00")})
         self.assertEqual(a["preview_status"]["stt"]["invalid_timestamp"],1)
