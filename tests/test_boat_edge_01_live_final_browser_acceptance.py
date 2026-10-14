@@ -5,18 +5,23 @@ import tempfile
 import unittest
 
 from scripts.boat_edge_01_live_final_browser_acceptance import (
-    GateError, PAGES, CERTIFIED, verify_browser_log, verify_both,
+    GateError, PAGES, CERTIFIED, verify_browser_log, verify_both, parse_first_add_proofs,
 )
 
+SHA = "a" * 64
+PROOFS = "20261014-15-10:" + SHA
 
-def report(engine, race="20261014-15-10", status=CERTIFIED):
+
+def report(engine, race="20261014-15-10", status=CERTIFIED, digest=SHA):
     return {
         "browser": engine, "target": PAGES,
         "live_topk": {
             "status": status, "race": race,
             "verified_site_final": True,
             "displayed_matches_saved_selected_mode": True,
-            "saved_prediction": {"first_git_commit_verified": False},
+            "saved_prediction": {"first_git_commit_verified": False,
+                                 "status": "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED",
+                                 "snapshot_sha256": digest},
         },
         "physical_iphone_safari_verified": False,
         "result_requests_allowed": 0,
@@ -41,7 +46,7 @@ class SavedFinalPagesGate(unittest.TestCase):
     def test_actual_two_engines_saved_sha_parity_for_same_race(self):
         chromium = self.make("chromium", report("chromium"))
         webkit = self.make("webkit", report("webkit"))
-        self.assertEqual(verify_both(chromium, webkit), "20261014-15-10")
+        self.assertEqual(verify_both(chromium, webkit, PROOFS), "20261014-15-10")
 
     def test_stopped_but_navigation_pass_never_certifies(self):
         stopped = report("chromium", status="NOT_CERTIFIED_ALL_ELIGIBLE_SOURCE_STOPPED")
@@ -55,7 +60,40 @@ class SavedFinalPagesGate(unittest.TestCase):
         chromium = self.make("c", report("chromium"))
         webkit = self.make("w", report("webkit", race="20261014-20-07"))
         with self.assertRaisesRegex(GateError, "DIFFERENT_SAVED_FINAL_RACES"):
-            verify_both(chromium, webkit)
+            verify_both(chromium, webkit, PROOFS)
+
+    def test_a_different_first_add_race_cannot_certify_this_saved_final(self):
+        chromium = self.make("c", report("chromium"))
+        webkit = self.make("w", report("webkit"))
+        other = "20261014-20-07:" + SHA
+        with self.assertRaisesRegex(GateError, "NOT_SAME_RACE_SHA"):
+            verify_both(chromium, webkit, other)
+
+    def test_changed_snapshot_sha_never_borrows_an_old_first_add(self):
+        chromium = self.make("c", report("chromium"))
+        webkit = self.make("w", report("webkit", digest="b" * 64))
+        with self.assertRaisesRegex(GateError, "DIFFERENT_SAVED_FINAL_SHA"):
+            verify_both(chromium, webkit, PROOFS)
+        webkit = self.make("w", report("webkit", digest="b" * 64))
+        chromium = self.make("c", report("chromium", digest="b" * 64))
+        with self.assertRaisesRegex(GateError, "NOT_SAME_RACE_SHA"):
+            verify_both(chromium, webkit, PROOFS)
+
+    def test_missing_forged_duplicate_and_invalid_first_add_receipts_fail(self):
+        for value in ("", "20261014-15-10:xyz", PROOFS + "," + PROOFS,
+                      "20261014-15-10:" + SHA + ",../data/formal:" + SHA):
+            with self.assertRaises(GateError):
+                parse_first_add_proofs(value)
+
+    def test_browser_claim_without_exact_snapshot_sha_not_certified(self):
+        bad = report("webkit")
+        bad["live_topk"]["saved_prediction"].pop("snapshot_sha256")
+        with self.assertRaisesRegex(GateError, "NOT_CERTIFIED"):
+            verify_browser_log(self.make("missingdigest", bad), "webkit")
+        bad = report("webkit")
+        bad["live_topk"]["saved_prediction"].pop("status")
+        with self.assertRaisesRegex(GateError, "NOT_CERTIFIED"):
+            verify_browser_log(self.make("missingstatus", bad), "webkit")
 
     def test_missing_or_untrusted_and_outcome_access_never_passes(self):
         with self.assertRaisesRegex(GateError, "LOG_MISSING"):

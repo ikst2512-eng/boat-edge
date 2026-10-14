@@ -75,6 +75,22 @@ class FirstAddBrowserGate(unittest.TestCase):
         self.assertFalse(valid(s, a, e, blob, KEY, NOW,
                                datetime(2026, 10, 14, 19, 28, tzinfo=JST)))
 
+    def test_only_exact_empty_v125_settlement_sentinel_is_pre_result(self):
+        s, a, e, blob = fixture()
+        sentinel = {"available": False, "winning_combo": None, "hit_any": None,
+                    "mode_hits": {}, "payout": None}
+        a["settlement"] = sentinel
+        self.assertTrue(valid(s, a, e, blob, KEY, NOW, ADD))
+        for bad in ({**sentinel, "available": True},
+                    {**sentinel, "hit_any": False},
+                    {**sentinel, "payout": 0},
+                    {**sentinel, "winning_combo": "1-2-3"},
+                    {**sentinel, "mode_hits": {"hit": True}},
+                    {**sentinel, "extra": None},
+                    {}, None):
+            a["settlement"] = bad
+            self.assertFalse(valid(s, a, e, blob, KEY, NOW, ADD))
+
     def test_post_result_audit_never_triggers_live(self):
         s, a, e, blob = fixture()
         a["settlement"] = {"available": True}
