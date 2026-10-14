@@ -14,6 +14,14 @@ const modes={
  v236:{hit10:'現行10点',balance10:'バランス10点',scenario7plus3:'展開別10点',coverage15:'広め15点'},
  v240:{hit10:'現行10点',pair_coverage10:'2着組合せ10点',second_coverage10:'2着候補10点'}
 };
+/* V236 V2/V3 freezes contain a separately predeclared headsecond10 comparator.
+   It is not a replacement for the four historical displayed modes. */
+const v236Policies=[
+ 'PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST',
+ 'PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER',
+ 'PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES'
+];
+const v236HeadSecondPolicies=v236Policies.slice(1);
 function validated(v){
  if(v?.schema!==schema||v?.scope!==scope||v?.formal_result_access!==false||
     v?.production_model_changed!==false||v?.accuracy_improvement_proven!==false||
@@ -29,11 +37,16 @@ function validated(v){
   if(Object.keys(x.miss_categories).length!==Object.keys(m).length)return null;
   const seen=new Set();
   for(const r of x.races){
+   const expected=Object.keys(m);
+   if(lane==='v236'){
+    if(!v236Policies.includes(r?.candidate_policy))return null;
+    if(v236HeadSecondPolicies.includes(r.candidate_policy))expected.push('headsecond10');
+   }
    if(!/^20\d{6}-\d{2}-\d{2}$/.test(r?.race_key||'')||seen.has(r.race_key)||
       !/^[1-6]-[1-6]-[1-6]$/.test(r.winning_combo||'')||
       new Set(r.winning_combo.split('-')).size!==3||r.date_jst!==r.race_key.slice(0,8)||
-      !r.categories||Object.keys(r.categories).length!==Object.keys(m).length||
-      !Object.keys(m).every(k=>keys.includes(r.categories[k])))return null;
+      !r.categories||Object.keys(r.categories).length!==expected.length||
+      !expected.every(k=>keys.includes(r.categories[k])))return null;
    seen.add(r.race_key);
   }
   for(const name of Object.keys(m)){
@@ -43,6 +56,23 @@ function validated(v){
       keys.reduce((n,k)=>n+counts[k],0)!==x.races_verified||
       keys.some(k=>x.races.filter(r=>r.categories[name]===k).length!==counts[k]))
       return null;
+  }
+  if(lane==='v236'){
+   const summaries=x.headsecond_by_frozen_policy;
+   if(!summaries||Object.keys(summaries).length!==v236HeadSecondPolicies.length)return null;
+   for(const policy of v236HeadSecondPolicies){
+    const rowSet=x.races.filter(r=>r.candidate_policy===policy);
+    const summary=summaries[policy];
+    if(!summary||summary.matched_races!==rowSet.length||
+       !summary.miss_categories||Object.keys(summary.miss_categories).length!==2)return null;
+    for(const name of ['hit10','headsecond10']){
+     const counts=summary.miss_categories[name];
+     if(!counts||Object.keys(counts).length!==keys.length||
+        keys.some(k=>!Number.isSafeInteger(counts[k])||counts[k]<0)||
+        keys.reduce((n,k)=>n+counts[k],0)!==rowSet.length||
+        keys.some(k=>rowSet.filter(r=>r.categories[name]===k).length!==counts[k]))return null;
+    }
+   }
   }
   result[lane]=x;
  }
