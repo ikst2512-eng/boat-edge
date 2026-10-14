@@ -178,9 +178,10 @@ class MobilePredictionBrowser(unittest.TestCase):
                     self.assertIn("保存",states[3]["detail"])
                     self.assertIn("非表示",states[4]["detail"])
                     page.evaluate("""() => {
-                      const date=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
-                      window.state.race={race_key:date.replaceAll('-','')+'-06-01',
-                         meta:{date,venue_code:'06',race_no:1,deadline:'23:59'}};
+                      const key=window.state.race.race_key;
+                      const date=key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8);
+                      window.state.race.meta={date,venue_code:'06',race_no:1,
+                        deadline:'23:59'};
                       window.BoatEdgeV207.render();
                     }""")
                     phase = page.locator("#be207Top .be207-display-phase")
