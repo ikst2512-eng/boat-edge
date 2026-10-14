@@ -86,7 +86,50 @@ def _validate_ranking(doc, context, label):
     return [r["boat_combo"] for r in rows[:10]]
 
 
-def prepare_matched_ten(context, parent, candidate, now):
+def _check_current_formal_status(status, race_key, now):
+    """Validate caller-supplied live Formal metadata, NEVER Formal outcomes.
+
+    Like V332's existing preflight, this is a pure consistency check, not a
+    trusted independent Git/server receipt or permission to read results.
+    """
+    if (not isinstance(status, dict) or
+            status.get("schema_version") != "boat-edge-formal-status-v2"):
+        raise ValueError("CURRENT_FORMAL_STATUS_REQUIRED")
+    guards = status.get("guards")
+    first = status.get("formalFirst100")
+    if (not isinstance(guards, dict) or
+            any(guards.get(k) is not False for k in
+                ("results_seen", "unlock", "scoring")) or
+            guards.get("RESULT_UNLOCK_TOKEN", False) is not None or
+            not isinstance(first, dict) or
+            type(first.get("races")) is not int or first["races"] != 0):
+        raise ValueError("FORMAL_LOCK_NOT_CONFIRMED")
+    try:
+        seen = datetime.fromisoformat(status["asOf"])
+    except (KeyError, ValueError, TypeError) as exc:
+        raise ValueError("CURRENT_FORMAL_STATUS_ASOF_INVALID") from exc
+    if (seen.tzinfo is None or seen.utcoffset() != timedelta(hours=9)
+            or seen.date() != now.date() or seen > now):
+        raise ValueError("CURRENT_FORMAL_STATUS_NOT_ASOF_TARGET_DAY")
+    protected = [status.get("target_date")]
+    last = status.get("last_cohort")
+    if last is not None:
+        if not isinstance(last, dict):
+            raise ValueError("CURRENT_FORMAL_PROTECTED_DATES_INVALID")
+        protected.append(last.get("date"))
+    for raw in protected:
+        try:
+            if not isinstance(raw, str) or not re.fullmatch(r"20\\d{2}-\\d{2}-\\d{2}", raw):
+                raise ValueError("invalid date")
+            day = date.fromisoformat(raw).strftime("%Y%m%d")
+        except ValueError as exc:
+            raise ValueError("CURRENT_FORMAL_PROTECTED_DATES_INVALID") from exc
+        if day == race_key[:8]:
+            raise ValueError("CURRENT_FORMAL_TARGET_DATE_EXCLUDED")
+    return True
+
+
+def prepare_matched_ten(context, parent, candidate, now, formal_status):
     """Return a *research-only*, same-race equal-ten shadow pairing.
 
     Operator must separately archive original input bytes and prove actual
@@ -127,6 +170,7 @@ def prepare_matched_ten(context, parent, candidate, now):
             now.date() != target_day or
             not 120 <= (deadline - now).total_seconds() <= 900):
         raise ValueError("NO_LIVE_FINAL_WINDOW_OR_TRUSTED_CLOCK")
+    _check_current_formal_status(formal_status, key, now)
     parent10 = _validate_ranking(parent, context, "parent")
     candidate10 = _validate_ranking(candidate, context, "candidate")
     return {
@@ -156,6 +200,8 @@ def prepare_matched_ten(context, parent, candidate, now):
         "per_model_virtual_budget_yen": 10000,
         "odds_used_for_ranking": False,
         "local_clock_and_provenance_claims_not_independently_attested": True,
+        "formal_status_metadata_is_caller_supplied_not_independently_attested": True,
+        "current_formal_target_and_last_cohort_dates_checked": True,
         "source_rights_verified_by_code": False,
         "first_git_commit_time_independently_verified": False,
         "actual_entry_independently_verified": False,
