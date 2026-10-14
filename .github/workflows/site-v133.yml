@@ -23,7 +23,11 @@ concurrency:
 
 jobs:
   install:
-    if: github.event_name != 'schedule'
+    # The legacy installer replays V130->V131->V132 source migrations and
+    # now fails (V130 wave anchor missing). V133's exact production engine
+    # is already tracked and SHA-checked independently by V229. Do not run
+    # a stale source rewrite on workflow push or manual dispatch.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
 
@@ -438,7 +442,7 @@ jobs:
 
   history:
     needs: [install]
-    if: always() && (github.event_name == 'schedule' || needs.install.result == 'success')
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
