@@ -359,6 +359,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  assert.match(note?.textContent||'',/公開待ち（404）/);
  assert.match(note?.textContent||'',/前回取得時点/);
  assert.equal(note?.dataset.raceKey,key);
+ assert.equal(note?.dataset.stale,'true','stale warning must have visible warning styling');
  assert.equal(redraw,0);assert.equal(scratch,0);assert.equal(overlay,0);
  const old=note;await refresh();assert.strictEqual(note,old,'do not duplicate status');
  reply=()=>{throw Error('offline');};await refresh();

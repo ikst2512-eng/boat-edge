@@ -133,6 +133,8 @@ button{cursor:pointer}
 .racechip.before{background:#ebfff7;border-color:#c6f1e2}
 .be03-load-notice{margin:8px 0;padding:11px 13px;border:1px solid #adc9ee;border-radius:10px;background:#edf5ff;color:#173d6a;font-size:13px;line-height:1.6;font-weight:700}
 .be03-load-notice[data-error="true"]{border-color:#f2c2bf;background:#fff2f0;color:#94332b}
+/* Stale cards are warnings, not successful blue loading receipts. */
+#be03PassiveRefreshNotice[data-stale="true"]{border-color:#efb76c;background:#fff7e5;color:#7f490d;overflow-wrap:anywhere}
 /* 03: keep all previous-race panels hidden until the selected race replaces them.
    The in-summary loading/error notice and race selector remain accessible. */
 .be03-race-loading #be207Top,
@@ -3301,6 +3303,7 @@ function be03PassiveRefreshNotice(key,reason){
     host.insertBefore(note,host.firstChild);
   }
   note.dataset.raceKey=key;
+  note.dataset.stale="true";
   note.textContent="前回取得時点の情報を表示中｜"+reason+"。自動更新で再確認します。";
 }
 let be162RefreshBusy=false;
