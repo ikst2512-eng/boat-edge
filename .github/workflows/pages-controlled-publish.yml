@@ -10,7 +10,9 @@ on:
       - 'tests/test_site_pages_stage.py'
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'
+    # Reduce redundant release checks while retaining manual dispatch.
+    # This workflow only deploys when Pages source is GitHub Actions.
+    - cron: '*/15 * * * *'
 
 permissions:
   contents: read
