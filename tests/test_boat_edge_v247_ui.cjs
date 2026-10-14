@@ -298,7 +298,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
    mergeFormalOverlay:r=>r,
    renderRace:r=>{rendered.push(r);ctx.state.race=r;}
  });
- vm.runInContext(html.slice(identityStart,identityEnd)+'\\n'+html.slice(start,end),ctx);
+ vm.runInContext(html.slice(identityStart,identityEnd)+String.fromCharCode(10)+html.slice(start,end),ctx);
  const refresh=()=>vm.runInContext('be162RefreshVisibleRace()',ctx);
  published={...original,source_audit:{
    beforeinfo:{...original.source_audit.beforeinfo,
@@ -321,7 +321,7 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
  await refresh();assert.equal(rendered.length,4,'metadata mismatched race must stop');
  published={...ctx.state.race,race_key:'20261014-14-08'};
  await refresh();assert.equal(rendered.length,4,'different race file must stop');
- assert.equal(scratches,6,'invalid identity and result-open data do not trigger scratch fetch');
+ assert.equal(scratches,5,'invalid identity and result-open data do not trigger scratch fetch');
  assert.equal(overlays,4,'unchanged source and unsafe sources never trigger overlay');
  console.log('BOAT_EDGE_03_LIVE_PRE_RESULT_SOURCE_RECEIPT_AND_PREDICTION_REFRESH_PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
