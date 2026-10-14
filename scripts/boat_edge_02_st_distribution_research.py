@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
 import math
+import re
 
 from boat_edge_02_hierarchical_conditional_research import _check_scope
 
@@ -22,6 +23,59 @@ BOATS = set(range(1, 7))
 SHRINK_PAIRS = 50.0
 TOP_RATE_PRIOR_N = 12.0
 TOP_RATE_PRIOR = 1 / 6
+# Observed official ST HTML has literal strings such as ".06", "+.03",
+# "F.02" and "-.02". A flying-start token is missing *positive*
+# exhibition-ST evidence, NEVER a fast negative start.
+OFFICIAL_ST_TOKEN = re.compile(r"^(F|[+-])?(0?\.\d{1,2})$")
+
+
+def official_exhibition_st_value(raw):
+    """Parse only observed official START-display tokens; never infer final ST."""
+    if raw is None:
+        return None
+    if type(raw) in (int, float):
+        if not math.isfinite(raw) or not 0 <= raw <= .5:
+            raise ValueError("INVALID_PRE_RESULT_EXHIBITION_ST")
+        return float(raw)
+    if not isinstance(raw, str):
+        raise ValueError("INVALID_PRE_RESULT_EXHIBITION_ST")
+    token = raw.strip()
+    match = OFFICIAL_ST_TOKEN.fullmatch(token)
+    if match is None:
+        raise ValueError("INVALID_PRE_RESULT_EXHIBITION_ST")
+    prefix, digits = match.groups()
+    if prefix in ("F", "-"):
+        return None
+    value = float(digits)
+    if not 0 <= value <= .5:
+        raise ValueError("INVALID_PRE_RESULT_EXHIBITION_ST")
+    return value
+
+
+def official_start_rows_to_exhibition_map(rows):
+    """Convert a six-boat official START table to the research input mapping.
+
+    The caller remains responsible for independent first-Git/rights/source
+    timing evidence. This function does not read files or results. 'course'
+    is deliberately ignored: exhibition entry != verified actual race entry.
+    """
+    if not isinstance(rows, list) or len(rows) != 6:
+        raise ValueError("SIX_BOAT_EXHIBITION_FIELDS_REQUIRED")
+    out = {}
+    for row in rows:
+        if not isinstance(row, dict) or type(row.get("lane")) is not int:
+            raise ValueError("SIX_BOAT_EXHIBITION_FIELDS_REQUIRED")
+        lane = row["lane"]
+        if lane not in BOATS or lane in out:
+            raise ValueError("SIX_BOAT_EXHIBITION_FIELDS_REQUIRED")
+        flagged = row.get("exhibition_f")
+        if flagged is not None and type(flagged) is not bool:
+            raise ValueError("INVALID_PRE_RESULT_EXHIBITION_ST")
+        observed = official_exhibition_st_value(row.get("st"))
+        out[lane] = None if flagged is True else observed
+    if set(out) != BOATS:
+        raise ValueError("SIX_BOAT_EXHIBITION_FIELDS_REQUIRED")
+    return out
 
 
 def _moment_variance(sum_x, sq_x, n):
@@ -89,10 +143,7 @@ def derive_st_signals(race_key, scope, evidence, history):
                 raise ValueError("INCONSISTENT_ST_COVARIANCE")
         else:
             var_ex = var_fin = cov = None
-        ex = exhibition[boat]
-        if ex is not None and (type(ex) not in (int,float) or
-                               not math.isfinite(ex) or not 0 <= ex <= 0.5):
-            raise ValueError("INVALID_PRE_RESULT_EXHIBITION_ST")
+        ex = official_exhibition_st_value(exhibition[boat])
         # With too few *paired* samples or no actual exhibition observation,
         # do NOT invent an ST measurement or a regression coefficient.
         beta = (m / (m + SHRINK_PAIRS) * cov / var_ex
