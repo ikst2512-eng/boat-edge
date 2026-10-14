@@ -236,6 +236,24 @@ def comparator_topk(rows, mode):
     }
 
 
+def paired_ranked_topk(rows, mode):
+    """Same-race same-k predeadline ranking comparison; never auto-promote."""
+    result = {}
+    for k in (3, 5, 10):
+        gain = sum(r["winning"] in r["ranked_comparators"][mode][:k]
+                   and r["winning"] not in r["baseline"][:k] for r in rows)
+        loss = sum(r["winning"] in r["baseline"][:k]
+                   and r["winning"] not in r["ranked_comparators"][mode][:k] for r in rows)
+        n = gain + loss
+        p = (min(1.0, 2 * sum(math.comb(n, i) for i in range(min(gain, loss) + 1))
+                 / (2 ** n)) if n else None)
+        result[f"top{k}"] = {"races": len(rows), "candidate_only_hits": gain,
+                              "baseline_only_hits": loss, "discordant_pairs": n,
+                              "exact_mcnemar_two_sided_p": p,
+                              "improvement_proven": False}
+    return result
+
+
 def baseline_topk(rows):
     """Rank-sensitive baseline hits from already verified frozen predictions."""
     return {
@@ -310,6 +328,9 @@ def audit(root, attest=first_added):
             "baseline_topk": baseline_topk(rows),
             "candidate_topk": {mode: comparator_topk(rows, mode) for mode in CONFIG[study][7]
                                if mode != "hit10" and mode != "coverage15"},
+            "paired_ranked_topk": {mode: paired_ranked_topk(rows, mode)
+                                  for mode in CONFIG[study][7]
+                                  if mode not in ("hit10", "coverage15")},
             "baseline_miss_slots": misses(rows),
             "equal_ten_point_modes": {m: paired(rows, m) for m in CONFIG[study][7]
                                       if m != "hit10" and m != "coverage15"},
