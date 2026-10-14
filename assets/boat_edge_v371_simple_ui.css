@@ -89,12 +89,17 @@ html,body{background:#f6f7f9;color:var(--be371-ink)}
 #raceView #be206Quick [data-be206-head-close]{min-height:44px;min-width:44px}
 #raceView #be207Top .be208-detail-actions button{min-height:44px}
 #raceView #be207Top .be305-evidence-head button{min-height:44px}
+/* Keep TopK semantics visible even in compact mode: a ranking range is not
+   a calibrated hit probability. Only secondary diagnostic clutter is collapsed. */
+#raceView #be207Top .be259-disclaimer{
+ display:block;margin:7px 0 0;font-size:11px;line-height:1.5;
+ color:#50677b;overflow-wrap:anywhere
+}
 /* Hide repetition, not the evidence. The existing detail button restores it. */
 html:not(.be208-details-on) #raceView #be207Top .be305-evidence-items,
 html:not(.be208-details-on) #raceView #be207Top .be305-evidence>small,
 html:not(.be208-details-on) #raceView #be207Top .be259-confidence,
 html:not(.be208-details-on) #raceView #be207Top .be259-metric,
-html:not(.be208-details-on) #raceView #be207Top .be259-disclaimer,
 html:not(.be208-details-on) #raceView #be207Top .be207-prob,
 html:not(.be208-details-on) #raceView #be206Quick .be206-table-help,
 html:not(.be208-details-on) #raceView #be206Quick .be206-swipe-help,

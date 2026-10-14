@@ -62,7 +62,7 @@ FIXTURE = """<!doctype html><html lang="ja"><head><meta name="viewport" content=
    <div class="be207-explain"><strong>展開</strong><span>先頭艇の攻防</span></div>
    <section class="be259-head-coverage"><div class="be259-head-row"><small>Top1の1着</small><strong>1号艇</strong></div>
     <div class="be259-top-grid"><span>Top3 1-2-3</span><span>Top5</span><span>Top10</span></div>
-    <div class="be259-confidence">未校正値の詳細</div><div class="be259-disclaimer">長い注意書き</div></section>
+    <div class="be259-confidence">未校正値の詳細</div><div class="be259-disclaimer">Top3/5/10は買い目の順位別範囲。頭の1着確率・3連単的中率とは別。</div></section>
    <div class="be207-bets"><div class="be207-ticket"><span class="be207-rank">1</span>
       <span class="be207-combo"><b class="be207-lane">1</b><b class="be207-lane">2</b><b class="be207-lane">3</b></span>
       <span class="be207-multi">10.0倍</span><div class="be207-moneys">参考配分 1,000円</div><span class="be207-prob">相対重み</span></div></div>
@@ -118,6 +118,11 @@ async def check(engine, shot_dir=None):
             assert actual_cols == expected_cols, f"responsive venue grid {actual_cols} != {expected_cols}"
             assert await page.locator("#raceView #be207Top .be207-condition").is_visible(), "scratch stop hidden"
             assert await page.locator("#raceView #be207Top .be207-budget").is_visible(), "allocation hidden"
+            # Compact iPhone UI must not suppress the one note distinguishing
+            # ranking ranges from probabilities; repeated details may collapse.
+            semantics = page.locator("#raceView #be207Top .be259-disclaimer")
+            assert await semantics.is_visible(), "TopK/probability distinction hidden"
+            assert "3連単的中率とは別" in await semantics.inner_text()
             assert await page.locator("#raceView #be207Top .be207-odds").is_visible(), "odds verification state hidden"
             assert await page.locator("#raceView #be206Quick .be206-table").is_visible(), "six boats hidden"
             assert await page.locator("#raceView #be206Quick .be206-table tbody tr").count() == 6, "six racer rows missing"
