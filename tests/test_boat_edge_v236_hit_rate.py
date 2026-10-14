@@ -193,6 +193,23 @@ class Tests(unittest.TestCase):
     def test_no_backfill_after_deadline(self):
         x=m.freeze(self.root,m.parse('2026-10-12T06:08:00+00:00'))
         self.assertEqual(x['frozen_today'],0)
+    def test_v236_restart_pins_recheck_latest_main_with_current_tests(self):
+        # A previous in-flight V236 job failed at scoring when a safe main
+        # merge changed source SHA after the job-start immutable pin check.
+        # Only checked-out current main can authorize current code; never
+        # skip SHA verification or execute stale untested research.
+        text=(Path(__file__).resolve().parents[1]/
+              '.github/workflows/v236.yml').read_text(encoding='utf-8')
+        current='python3 scripts/verify_workflow_source_pins.py'
+        suite=("PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 "
+               "python3 -m unittest discover -s tests "
+               "-p 'test_boat_edge_v236_hit_rate.py' -q")
+        self.assertEqual(text.count(current),2)
+        self.assertGreaterEqual(text.count(suite),3)
+        self.assertEqual(text.count('python3 "$RUNNER_TEMP/v236_install.py"'),1)
+        self.assertEqual(text.count('git reset --hard origin/main'),2)
+        self.assertIn('source_pins = ',text)
+
     def test_formal_guard_blocks_freeze(self):
         write(self.root/'data/formal_status.json',{'guards':{'results_seen':True,'unlock':False,'scoring':False,'RESULT_UNLOCK_TOKEN':None}})
         with self.assertRaisesRegex(RuntimeError,'FORMAL_GATE'):

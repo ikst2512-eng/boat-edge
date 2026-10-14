@@ -40,7 +40,7 @@ jobs:
           cat > "$RUNNER_TEMP/v236_install.py" <<'PY_V236_INSTALL'
           import hashlib
           from pathlib import Path
-          source_pins = {'scripts/boat_edge_v236_hit_rate.py': 'f8d5a70f79313c675ef904f1737d863434f442b0a2f1a731786a7c1bb87939b6', 'tests/test_boat_edge_v236_hit_rate.py': 'd1f5f32ea4369d3cadf90dcc1fd5f44694ba3b818f1162728d64823a770c088d'}
+          source_pins = {'scripts/boat_edge_v236_hit_rate.py': 'f8d5a70f79313c675ef904f1737d863434f442b0a2f1a731786a7c1bb87939b6', 'tests/test_boat_edge_v236_hit_rate.py': '559f5d3741caa91a9ea2a6fb735341158f4d68d3f5b2372b6583ac5e92dad735'}
           for name, expected in source_pins.items():
               path = Path(name)
               if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
@@ -62,7 +62,11 @@ jobs:
             git fetch --no-tags origin main
             git reset --hard origin/main
             git clean -fd -- data/site_autopilot/v236_frozen data/site_autopilot/v236_scored data/site_autopilot/v236_pre_current.json data/site_autopilot/v236_score_current.json scripts/boat_edge_v236_hit_rate.py tests/test_boat_edge_v236_hit_rate.py hit-rate.html
-            python3 "$RUNNER_TEMP/v236_install.py"
+            # Fresh main may have moved since job startup. Verify the exact
+            # code AND declared pin from this checkout, then rerun unit tests.
+            # Do not trust the job-start embedded pin after git reset --hard.
+            python3 scripts/verify_workflow_source_pins.py
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v236_hit_rate.py' -q
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v236_hit_rate.py freeze
             git add -- scripts/boat_edge_v236_hit_rate.py tests/test_boat_edge_v236_hit_rate.py hit-rate.html
             if test -f data/site_autopilot/v236_pre_current.json; then git add -- data/site_autopilot/v236_pre_current.json; fi
@@ -98,7 +102,11 @@ jobs:
             git fetch --no-tags origin main
             git reset --hard origin/main
             git clean -fd -- data/site_autopilot/v236_scored data/site_autopilot/v236_score_current.json
-            python3 "$RUNNER_TEMP/v236_install.py"
+            # Fresh main may have moved since job startup. Verify the exact
+            # code AND declared pin from this checkout, then rerun unit tests.
+            # Do not trust the job-start embedded pin after git reset --hard.
+            python3 scripts/verify_workflow_source_pins.py
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v236_hit_rate.py' -q
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v236_hit_rate.py score
             if test -f data/site_autopilot/v236_score_current.json; then git add -- data/site_autopilot/v236_score_current.json; fi
             if test -d data/site_autopilot/v236_scored; then git add -A -- data/site_autopilot/v236_scored; fi
