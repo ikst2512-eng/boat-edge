@@ -107,6 +107,7 @@ def audit(day, files):
             except ValueError:
                 counters[source]["invalid_timestamp"] += 1
                 continue
+            deadlines_by_source[source][key] = deadline
             if capture.date() != day:
                 counters[source]["capture_wrong_day"] += 1
             elif not capture < deadline:
@@ -117,9 +118,16 @@ def audit(day, files):
     for source, rows in source_rows.items():
         counts[source + "_rows"] = len(rows)
         counts[source + "_outside_race_cards"] = len(set(rows) - set(baseline))
-    counts["all_four_preview_timestamps_eligible_unverified"] = len(set.intersection(
-        *(eligible_by_source[name] for name in PREVIEWS)
-    ))
+    eligible_all_four = set.intersection(*(eligible_by_source[name] for name in PREVIEWS))
+    complete_deadlines = set.intersection(*(set(deadlines_by_source[name]) for name in PREVIEWS))
+    deadline_conflicts = {
+        key for key in complete_deadlines
+        if len({deadlines_by_source[name][key] for name in PREVIEWS}) != 1
+    }
+    counts["all_four_preview_deadline_conflicts"] = len(deadline_conflicts)
+    counts["all_four_preview_timestamps_eligible_unverified"] = len(
+        eligible_all_four - deadline_conflicts
+    )
     # Never label timestamps as independently verified as-of proof.
     return {
         "schema": SCHEMA,
