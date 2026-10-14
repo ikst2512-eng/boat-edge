@@ -2,6 +2,7 @@ name: BOAT EDGE V125 Revision Safe FINAL15M Audit
 
 on:
   push:
+    branches: [main]
     paths:
       - ".github/workflows/site-v125.yml"
   workflow_dispatch:
@@ -23,6 +24,14 @@ concurrency:
 
 jobs:
   audit:
+    # The workflow uses checkout ref: main and holds contents:write. Never
+    # let a branch push or an unrelated/failed V123 workflow_run mutate main.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
