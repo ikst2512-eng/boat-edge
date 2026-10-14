@@ -8,7 +8,7 @@
     "event": "開設72周年記念トーキョー・ベイ・カップ",
     "race_no": 7,
     "deadline": "13:24",
-    "updated_at": "2026-10-14T10:51:18+09:00",
+    "updated_at": "2026-10-14T11:16:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=04&rno=7",
-      "fetched_at": "2026-10-14T10:53:20+09:00",
-      "sha256": "8cd83ac03ef87ac7b278abe6d27264d69d0a7384d766b10a21f962ad1fe56eee",
+      "fetched_at": "2026-10-14T11:19:57+09:00",
+      "sha256": "d7444e09b2e69cac01da411e53f4a188cfe8d9a65c8664b1e73ae0ab9c624afe",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=04&rno=7",
+      "fetched_at": "2026-10-14T11:17:51+09:00",
+      "sha256": "758d747bdca6b69e6d2f56929415065f8a6986cd341e393c7b46ed5c79869c51",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "aee134a63f3e61f1154b5924fc5ab3206286022c9aedd279f22242bc6a079123"
+      "sha256": "84a70d87cd86934215224bb330945be8809e2a47830f4978efa9b90882a03361"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "69df2f1d415c8375eb31e3725ebfd5513a52d6152429e3a75376b5b7516c8a69"
+      "sha256": "e2f8ec880429466c28e3a1b65aa818df3c17d5b6a794b6c074ef3c226837b60d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "f1a85b84d7e155e47287ad0aa54e51c0514db40da077344371ba37be024a6725"
+      "sha256": "fed42de38acc4046c439c8c777cc352d80661f8f8c9d9c59c4a69b0055c85341"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "ac5f470d3aa53006d6fbbc3e5317d24b599c7d7ea6b6039d56d56d5dc9eaf9ff"
+      "sha256": "82dbf9ab7be4254226547da1152bc00212bc47492a1e50b9ac588c36a64d7578"
     }
   },
   "racers": [
@@ -168,10 +174,11 @@
         "trio_rate": 60.26
       },
       "series_tokens": [
-        "12"
+        "12",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "3 3783 / A1 瓜生 正義 福岡/福岡 50歳/52.2kg F0 L0 0.15 6.61 37.90 55.65 6.33 50.00 55.56 53 36.84 55.26 71 42.31 60.26 12 2R"
+      "raw_text": "3 3783 / A1 瓜生 正義 福岡/福岡 50歳/52.2kg F0 L0 0.15 6.61 37.90 55.65 6.33 50.00 55.56 53 36.84 55.26 71 42.31 60.26 12 2 2R"
     },
     {
       "lane": 4,
@@ -289,7 +296,53 @@
       "raw_text": "6 3716 / A1 石渡 鉄兵 東京/千葉 51歳/52.6kg F0 L0 0.12 6.70 41.18 60.78 6.40 39.62 62.26 51 34.92 46.03 33 37.97 50.63 8 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 萩原 秀人 53.1kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 寺田 祥 52.2kg R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 瓜生 正義 52.2kg R 2"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 吉田 裕平 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 大池 佑来 51.5kg ピストン×1 シャフト R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 石渡 鉄兵 52.6kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

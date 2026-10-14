@@ -8,7 +8,7 @@
     "event": "トライアングルカップ",
     "race_no": 11,
     "deadline": "13:42",
-    "updated_at": "2026-10-14T10:51:18+09:00",
+    "updated_at": "2026-10-14T11:16:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=18&rno=11",
-      "fetched_at": "2026-10-14T10:53:02+09:00",
-      "sha256": "31de98225adb5650d2dba1708c97da4f5a0974524fc027cb792b31aecf7f8464",
+      "fetched_at": "2026-10-14T11:18:26+09:00",
+      "sha256": "d696a796f54426bf66a0f84e271b1c32b89cd9f8dd255d920a3bce434c0e6e28",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=18&rno=11",
+      "fetched_at": "2026-10-14T11:17:56+09:00",
+      "sha256": "beeefb7771006ca0cd536bf496cbfa9bb8c87fdb262e0cd4e6e4aade7733b8e6",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "aee134a63f3e61f1154b5924fc5ab3206286022c9aedd279f22242bc6a079123"
+      "sha256": "84a70d87cd86934215224bb330945be8809e2a47830f4978efa9b90882a03361"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "69df2f1d415c8375eb31e3725ebfd5513a52d6152429e3a75376b5b7516c8a69"
+      "sha256": "e2f8ec880429466c28e3a1b65aa818df3c17d5b6a794b6c074ef3c226837b60d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "f1a85b84d7e155e47287ad0aa54e51c0514db40da077344371ba37be024a6725"
+      "sha256": "fed42de38acc4046c439c8c777cc352d80661f8f8c9d9c59c4a69b0055c85341"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "ac5f470d3aa53006d6fbbc3e5317d24b599c7d7ea6b6039d56d56d5dc9eaf9ff"
+      "sha256": "82dbf9ab7be4254226547da1152bc00212bc47492a1e50b9ac588c36a64d7578"
     }
   },
   "racers": [
@@ -326,7 +332,53 @@
       "raw_text": "6 4520 / A2 高倉 孝太 福井/石川 39歳/51.5kg F1 L0 0.13 5.59 33.94 53.21 5.52 40.74 51.85 68 47.17 60.38 15 37.95 58.48 2 7 9 1 7 2 12 4 4R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 吉田 拡郎 53.2kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 大井 清貴 54.5kg R 5"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 鳥飼 眞 49.5kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 渡辺 千草 47.5kg R 3"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 尾嶋 一広 54.3kg R 5"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 高倉 孝太 51.5kg R 4"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 5.0,
+      "wave_cm": 5.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
