@@ -7,6 +7,7 @@ import argparse
 from collections import Counter
 import hashlib
 import json
+import math
 import re
 from datetime import datetime
 from pathlib import Path
@@ -50,7 +51,35 @@ def rank_head_diversified(hit10, k, keep):
     return list(dict.fromkeys(seed + alt + fallback))[:k]
 
 
+def require_formal_closed(root: Path):
+    """No outcome-bearing SITE read unless the dynamic Formal cohort is empty/locked."""
+    try:
+        status = json.loads((root / "data/formal_status.json").read_text(encoding="utf-8"))
+        guards = status["guards"]
+        cohort = status["formalFirst100"]
+        valid = (
+            isinstance(guards, dict) and isinstance(cohort, dict)
+            and all(guards.get(k) is False for k in ("results_seen", "unlock", "scoring"))
+            and guards.get("RESULT_UNLOCK_TOKEN", "NOT_DECLARED") is None
+            and type(cohort.get("races")) is int and cohort["races"] == 0
+        )
+    except (OSError, ValueError, TypeError, KeyError):
+        valid = False
+    if not valid:
+        raise RuntimeError("SITE_ONLY_PAIRED_FORMAL_GATE_CLOSED_EMPTY_REQUIRED")
+
+
+def paired_exact_p(gain, loss):
+    """Two-sided exact discordant-pair sign test; descriptive, not promotion."""
+    n = gain + loss
+    if not n:
+        return None
+    tail = sum(math.comb(n, j) for j in range(min(gain, loss) + 1))
+    return round(min(1.0, 2 * tail / (2 ** n)), 12)
+
+
 def evaluate(root: Path):
+    require_formal_closed(root)
     base = root / "data/site_autopilot"
     scores = base / "v236_scored"
     frozen = base / "v236_frozen"
@@ -134,6 +163,8 @@ def evaluate(root: Path):
             row["races"] = included
             row["hit_rate_percent"] = round(100 * row["hits"] / included, 2) if included else None
             row["net_gain"] = row["gain"] - row["loss"]
+            row["discordant_pairs"] = row["gain"] + row["loss"]
+            row["paired_exact_p_two_sided"] = paired_exact_p(row["gain"], row["loss"])
     for row in exploratory.values():
         row["races"] = included
         row["hit_rate_percent"] = round(100 * row["hits"] / included, 2) if included else None
@@ -154,7 +185,7 @@ def evaluate(root: Path):
                 "per_day": dict(sorted(per_day.items())),
             },
             "promotion_authorized": False, "production_model_changed": False,
-            "note": "Descriptive paired comparison; no statistical promotion or formal Fresh claim."}
+            "note": "Descriptive paired comparison only. Exact paired p is not a multi-day untouched Fresh acceptance or proof of model improvement."}
 
 def main():
     parser = argparse.ArgumentParser()
