@@ -1,11 +1,20 @@
 {
   "schema_version": "boat-edge-site-odds-index-v71",
-  "updated_at": "2026-10-14T10:44:18+09:00",
+  "updated_at": "2026-10-14T11:11:20+09:00",
   "date": "2026-10-14",
-  "checked": 12,
-  "updated": 12,
-  "rejected_no_bet": 0,
-  "errors": [],
+  "checked": 14,
+  "updated": 13,
+  "rejected_no_bet": 1,
+  "errors": [
+    {
+      "race_key": "20261014-22-02",
+      "error": "ValueError('valid_odds_too_few=117')",
+      "url": "https://www.boatrace.jp/owpc/pc/race/odds3t?hd=20261014&jcd=22&rno=2",
+      "odds_validation": "REJECTED_NO_BET",
+      "observed_numeric_count": 117,
+      "scratch_status": "UNVERIFIED"
+    }
+  ],
   "window": "deadline -45min to +5min",
   "source": "official odds3t only",
   "prediction_logic_uses_odds": false
