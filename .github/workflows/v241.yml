@@ -5,9 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/v241.yml']
   workflow_dispatch:
-  workflow_run:
-    workflows: ['BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring']
-    types: [completed]
+  # V109 remains the five-minute result owner. Preserve this hourly UI/report
+  # refresh, but avoid replaying the legacy home patch on every V235 run.
   schedule:
     - cron: '25 0-14,23 * * *'
 
@@ -20,7 +19,7 @@ concurrency:
 
 jobs:
   verified-results-and-home:
-    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

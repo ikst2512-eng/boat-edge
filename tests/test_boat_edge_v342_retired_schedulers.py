@@ -52,6 +52,32 @@ class RetiredSchedulerTests(unittest.TestCase):
         self.assertNotIn("gzip.decompress", text)
         self.assertNotIn("base64.b64decode", text)
 
+    def test_secondary_reports_do_not_fan_out_on_every_v235_run(self):
+        # V235 is the live source; secondary diagnostics retain a bounded
+        # hourly schedule and manual recovery, without a workflow_run fanout.
+        for name in ("v238.yml", "v241.yml"):
+            with self.subTest(name=name):
+                text = (WORKFLOWS / name).read_text(encoding="utf-8")
+                events = event_block(text)
+                self.assertIn("  schedule:", events)
+                self.assertIn("  workflow_dispatch:", events)
+                self.assertNotRegex(events, r"^  workflow_run:",)
+                self.assertIn("if: github.ref == 'refs/heads/main'", text)
+
+    def test_result_collector_does_not_write_audit_todo(self):
+        results = (WORKFLOWS / "site-v109.yml").read_text(encoding="utf-8")
+        audit = (WORKFLOWS / "site-v125.yml").read_text(encoding="utf-8")
+        self.assertIn("git restore -- BOAT_EDGE_CURRENT_TODO.md", results)
+        self.assertIn("git add data/site_results data/site_archive", results)
+        self.assertNotIn(
+            "git add data/site_results data/site_archive BOAT_EDGE_CURRENT_TODO.md",
+            results,
+        )
+        self.assertIn(
+            "git add -A -- data/site_prediction_audit/ BOAT_EDGE_CURRENT_TODO.md",
+            audit,
+        )
+
     def test_retirement_reduces_scheduled_writer_inventory(self):
         report = audit(WORKFLOWS)
         scheduled = set(report["scheduled_contents_writers"])
