@@ -42,7 +42,7 @@ class SiteTrackedVenueSourceContracts(unittest.TestCase):
 
     def test_v170_research_only_bounded_daily_fallback(self):
         source=(WORKFLOWS/'BOAT_EDGE_V170_ONE_UPLOAD.yml').read_text(encoding='utf-8')
-        events=source.split('\\non:\\n',1)[1].split('\\npermissions:',1)[0]
+        events=source.split('on:',1)[1].split('permissions:',1)[0]
         self.assertIn("cron: '13 0,13 * * *'", events)
         self.assertEqual(events.count('cron:'),1)
         self.assertIn("data/site_learning/mode_accuracy_v136.json", events)
