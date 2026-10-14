@@ -7,6 +7,8 @@ on:
       - '.github/workflows/v303-ranked-topk-readiness.yml'
       - 'scripts/boat_edge_v306_v360_ranked_gate.py'
       - 'tests/test_boat_edge_v306_v360_ranked_gate.py'
+      - 'scripts/boat_edge_02_st_distribution_research.py'
+      - 'tests/test_boat_edge_v236_02_st_distribution_research.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,5 +33,10 @@ jobs:
           PYTHONPATH: .
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v306_v360_ranked_gate.py' -v
+      - name: Verify actual official six-boat START tokens in ST research
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v236_02_st_distribution_research.py' -v
       - name: Audit only PRE_RESULT ranked cohort availability
         run: python3 scripts/boat_edge_v303_ranked_topk_gate.py
