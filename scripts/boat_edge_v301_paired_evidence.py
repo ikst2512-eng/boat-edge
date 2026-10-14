@@ -254,6 +254,13 @@ def paired_ranked_topk(rows, mode):
     return result
 
 
+def paired_topk_by_day(rows, mode):
+    """Day-separated directional evidence; never infer day independence."""
+    days = sorted({r["day"] for r in rows})
+    return {day: paired_ranked_topk([r for r in rows if r["day"] == day], mode)
+            for day in days}
+
+
 def baseline_topk(rows):
     """Rank-sensitive baseline hits from already verified frozen predictions."""
     return {
@@ -331,6 +338,9 @@ def audit(root, attest=first_added):
             "paired_ranked_topk": {mode: paired_ranked_topk(rows, mode)
                                   for mode in CONFIG[study][7]
                                   if mode not in ("hit10", "coverage15")},
+            "paired_ranked_topk_by_day": {mode: paired_topk_by_day(rows, mode)
+                                         for mode in CONFIG[study][7]
+                                         if mode not in ("hit10", "coverage15")},
             "baseline_miss_slots": misses(rows),
             "equal_ten_point_modes": {m: paired(rows, m) for m in CONFIG[study][7]
                                       if m != "hit10" and m != "coverage15"},
