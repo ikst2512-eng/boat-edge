@@ -68,7 +68,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py
+          PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py
           git diff --check
           python3 - <<'PY_V230_REPORT'
           from pathlib import Path
