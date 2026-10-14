@@ -980,8 +980,8 @@ jobs:
             fi
             for file in "${conflicts[@]}"; do
               case "$file" in
-                data/races/20??????-??-??.json|data/raw/20??????/??_??_*.html)
-                  echo "V270_PRESERVE_PUBLISHED_SOURCE_ON_CONFLICT $file"
+                data/races/20??????-??-??.json|data/raw/20??????/??_??_*.html|data/site_scratches_v182/20??????-??-??.json)
+                  echo "V270_CHECK_REMOTE_PRESERVATION_ON_CONFLICT $file"
                   ;;
                 *)
                   echo "V270_UNSAFE_CONFLICT_FAIL_CLOSED $file"
@@ -990,6 +990,15 @@ jobs:
                   ;;
               esac
             done
+            # Git rebase --ours is origin/main. Keep verified newer remote
+            # scratch evidence instead of overwriting it with this collector's
+            # possibly older observation. Never hide a locally detected scratch.
+            # Only the exact staged index conflict blobs are examined.
+            if ! PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v01_scratch_rebase_guard.py "${conflicts[@]}"; then
+              git rebase --abort || true
+              echo V270_SCRATCH_CONFLICT_UNSAFE_NO_PUBLISH >&2
+              exit 1
+            fi
             for file in "${conflicts[@]}"; do
               git checkout --ours -- "$file"
               git add -- "$file"
