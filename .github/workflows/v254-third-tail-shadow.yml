@@ -28,7 +28,11 @@ on:
       - 'BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort'
     types: [completed]
   schedule:
-    - cron: '3,8,13,18,23,28,33,38,43,48,53,58 0-14,23 * * *'
+    # Keep the five-minute PRE_RESULT freeze cadence; score older SITE-only
+    # frozen cohorts on one staggered 15-minute tick to reduce Pages churn.
+    - cron: '3,18,33,48 0-14,23 * * *'
+    - cron: '8,23,38,53 0-14,23 * * *'
+    - cron: '13,28,43,58 0-14,23 * * *'
 
 permissions:
   contents: write
@@ -108,7 +112,9 @@ jobs:
           if test "$success" != true; then echo V254_PRE_RESULT_PUBLISH_CONFLICT;exit 1;fi
 
   score-only-prior-frozen-after-deadline:
-    if: github.ref == 'refs/heads/main'
+    # Readonly tests and source-first freeze still run on every trigger.
+    # Results are scored only in this deliberately staggered research window.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '13,28,43,58 0-14,23 * * *'))
     needs: freeze-forward-candidates
     runs-on: ubuntu-latest
     timeout-minutes: 12
