@@ -106,9 +106,15 @@ jobs:
           PY
 
       - name: Real checkout - Chromium venue to race to prediction
+        # V229 saved FINAL has only minutes to go; test actual Pages first.
+        # Offline/local navigation is already checked on PRs and schedules.
+        if: github.event_name != 'workflow_run'
         run: python tests/browser/test_boat_edge_03_real_site.py --engine chromium
 
       - name: Real checkout - WebKit iPhone-sized venue to prediction
+        # V229 saved FINAL has only minutes to go; test actual Pages first.
+        # Offline/local navigation is already checked on PRs and schedules.
+        if: github.event_name != 'workflow_run'
         run: python tests/browser/test_boat_edge_03_real_site.py --engine webkit
 
       - name: Published Pages - Chromium live navigation
