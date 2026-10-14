@@ -27,7 +27,8 @@ function decorateWorlds(){
 function renderRacers(d){
   const host=q("#be48Racers");if(!host)return;
   host.innerHTML=(d?.racers||[]).map((r,i)=>{const l=laneNo(r,i),n=r.national||{},loc=r.local||{},m=r.motor||{},b=r.boat||{};
-    const p=x=>{const n=Number(x);return Number.isFinite(n)?`${n.toFixed(1)}%`:"—"};
+    const p=x=>{if(x===null||x===undefined||String(x).trim()==='')return '—';
+      const n=Number(x);return Number.isFinite(n)?`${n.toFixed(1)}%`:'—'};
     return `<article class="be48-racer">${lane(l)}<div class="be48-rmain"><b>${esc(value(r.name))}</b><span>${esc(value(r.class))} / 平均ST ${esc(value(r.avg_st))}</span><span>全国 ${esc(value(n.win_rate))}　当地 ${esc(value(loc.win_rate))}</span></div><div class="be48-rside"><span>M2<b>${p(m.quinella_rate)}</b></span><span>B2<b>${p(b.quinella_rate)}</b></span></div></article>`}).join("")||'<div class="be48-empty">選手データがありません</div>';
 }
 function beforeMaps(d){const bf=d?.beforeinfo||{},starts=new Map(),actual=new Map();(bf.start_exhibition||[]).forEach((x,i)=>starts.set(Number(x.lane??(i+1)),x.st??x.start_timing??x.start));(d?.actual_entry||[]).forEach((x,i)=>{if(typeof x==="number")actual.set(i+1,x);else actual.set(Number(x?.lane??(i+1)),x?.course??x?.actual_course??x?.entry_course)});return{bf,starts,actual}}
