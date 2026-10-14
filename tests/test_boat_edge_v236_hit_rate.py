@@ -193,6 +193,56 @@ class Tests(unittest.TestCase):
     def test_no_backfill_after_deadline(self):
         x=m.freeze(self.root,m.parse('2026-10-12T06:08:00+00:00'))
         self.assertEqual(x['frozen_today'],0)
+    def test_fast_score_only_for_first_git_frozen_new_candidate_and_confirmed_site(self):
+        self.assertFalse(m.pending_confirmed_prospective_score(self.root,self.frozen))
+        m.freeze(self.root,self.frozen)
+        self.assertFalse(m.pending_confirmed_prospective_score(self.root,m.parse(RESULT_TIME)))
+        result=self.root/'data/site_results'/f'{KEY}.json'
+        write(result,{'schema_version':'boat-edge-site-result-v109','race_key':KEY,
+          'status':'confirmed','fetched_at':RESULT_TIME,'trifecta':'2-4-1',
+          'finish_order':[2,4,1],'trifecta_payout_yen_per_100':3140,
+          'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
+        self.assertTrue(m.pending_confirmed_prospective_score(self.root,m.parse(RESULT_TIME)))
+        # This predicate schedules the EXISTING scorer, never makes a
+        # candidate eligible retrospectively or alters its frozen tickets.
+        row=m.load(self.root/m.PATH/'v236_frozen'/f'{KEY}.json')
+        self.assertEqual(row['comparison_policy'],m.POLICY_V3)
+        self.assertFalse(row['result_seen_at_freeze'])
+        m.score(self.root,m.parse(RESULT_TIME))
+        self.assertFalse(m.pending_confirmed_prospective_score(self.root,m.parse(RESULT_TIME)))
+
+    def test_fast_score_rejects_late_or_mutated_freeze_before_site_result_read(self):
+        m.freeze(self.root,self.frozen)
+        outcome=self.root/'data/site_results'/f'{KEY}.json'
+        write(outcome,{'schema_version':'boat-edge-site-result-v109','race_key':KEY,
+          'status':'confirmed','fetched_at':RESULT_TIME,'trifecta':'2-4-1',
+          'finish_order':[2,4,1],'trifecta_payout_yen_per_100':3140,
+          'source':'https://www.boatrace.jp/owpc/pc/race/raceresult?hd=20261012&jcd=09&rno=10'})
+        late={'commit':'b'*40,'at':m.parse('2026-10-12T06:08:00+00:00'),
+              'sha256':m.sha(self.root/m.PATH/'v236_frozen'/f'{KEY}.json')}
+        def first_late(root,path):
+            if 'v236_frozen' in str(path):return late
+            return dict(self.original)
+        with patch.object(m,'git_first',side_effect=first_late),patch.object(m,'load',wraps=m.load) as spy:
+            self.assertFalse(m.pending_confirmed_prospective_score(self.root,m.parse(RESULT_TIME)))
+            self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+        with patch.object(m,'load',wraps=m.load) as spy:
+            doc=m.load(self.root/'data/formal_status.json')
+            doc['guards']['results_seen']=True
+            write(self.root/'data/formal_status.json',doc)
+            with self.assertRaisesRegex(RuntimeError,'FORMAL_GATE'):
+                m.pending_confirmed_prospective_score(self.root,m.parse(RESULT_TIME))
+            self.assertFalse(any('site_results' in str(c.args[0]) for c in spy.call_args_list))
+
+    def test_no_new_workflow_and_staggered_non_candidate_scoring(self):
+        source=(Path(__file__).resolve().parents[1]/'.github/workflows/v236.yml').read_text()
+        self.assertIn("V236_SCHEDULED_TICK",source)
+        self.assertIn("V236_PENDING_CONFIRMED_PROSPECTIVE_SCORE",source)
+        self.assertIn("pending_confirmed_prospective_score",source)
+        self.assertIn("V236_NO_CONFIRMED_PROSPECTIVE_SCORE",source)
+        self.assertIn("3,18,33,48 0-14,23 * * *",source)
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v236_hit_rate.py score",source)
+
     def test_v236_restart_pins_recheck_latest_main_with_current_tests(self):
         # A previous in-flight V236 job failed at scoring when a safe main
         # merge changed source SHA after the job-start immutable pin check.
