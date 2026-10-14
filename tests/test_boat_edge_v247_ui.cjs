@@ -260,3 +260,68 @@ assert.equal(vm.runInContext('normPct(null)',pctCtx),null);
 assert.equal(vm.runInContext('normPct("")',pctCtx),null);
 assert.equal(vm.runInContext('normPct(105)',pctCtx),null);
 console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
+
+
+// 03 live-refresh regression: source audit SHA, racer and prediction changes
+// must be reflected without a new race selection or post-result access.
+(async()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ const identityStart=html.indexOf('function be03RaceSourceIdentity(file,jcd,race){');
+ const identityEnd=html.indexOf('async function loadRace(file, jcd){',identityStart);
+ const start=html.indexOf('let be162RefreshBusy=false;');
+ const end=html.indexOf('async function refreshAll(force=false){',start);
+ assert(identityStart>0&&identityEnd>identityStart&&start>0&&end>start);
+ const raceKey='20261014-14-09';
+ const original={
+   race_key:raceKey,
+   meta:{date:'2026-10-14',venue_code:'14',race_no:9,
+      phase:'PRE_RESULT',results_seen:false,unlock:false,scoring:false,
+      updated_at:'2026-10-14T15:30:00+09:00'},
+   racers:Array.from({length:6},(_,i)=>({lane:i+1,name:'選手'+(i+1)})),
+   beforeinfo:{racers:[],start_exhibition:[]},
+   actual_entry:[],original_exhibition:{boats:[]},
+   source_audit:{beforeinfo:{status:'ok',sha256:'a'.repeat(64),
+       fetched_at:'2026-10-14T15:25:00+09:00'}},
+   derived:{top10:['1-2-3']}, odds:{}
+ };
+ let published=original,rendered=[],scratches=0,overlays=0;
+ const fixed=Date.parse('2026-10-14T16:21:00+09:00');
+ class Clock extends Date{static now(){return fixed;}}
+ const ctx=vm.createContext({
+   Date:Clock,Promise,Number,String,JSON,
+   state:{race:original},
+   document:{visibilityState:'visible',
+     getElementById:()=>({classList:{contains:()=>true}})},
+   fetch:async()=>({ok:true,json:async()=>published}),
+   be182FetchScratch:async r=>{scratches++;return r;},
+   loadFormalOverlay:async()=>{overlays++;return null;},
+   mergeFormalOverlay:r=>r,
+   renderRace:r=>{rendered.push(r);ctx.state.race=r;}
+ });
+ vm.runInContext(html.slice(identityStart,identityEnd)+String.fromCharCode(10)+html.slice(start,end),ctx);
+ const refresh=()=>vm.runInContext('be162RefreshVisibleRace()',ctx);
+ published={...original,source_audit:{
+   beforeinfo:{...original.source_audit.beforeinfo,
+     fetched_at:'2026-10-14T15:31:00+09:00',sha256:'b'.repeat(64)}}};
+ await refresh();
+ assert.equal(rendered.length,1,'SHA-only update must redraw selected race');
+ assert.equal(ctx.state.race.source_audit.beforeinfo.sha256,'b'.repeat(64));
+ await refresh();assert.equal(rendered.length,1,'identical source must not redraw');
+ published={...ctx.state.race,derived:{top10:['1-2-4']}};
+ await refresh();assert.equal(rendered.length,2,'forecast-only update must redraw');
+ published={...ctx.state.race,racers:original.racers.map((r,i)=>
+    i===0?{...r,name:'更新された選手'}:r)};
+ await refresh();assert.equal(rendered.length,3,'six-boat card-only change must redraw');
+ published={...ctx.state.race,source_audit:{
+   ...ctx.state.race.source_audit,stt:{status:'ok',sha256:'c'.repeat(64)}}};
+ await refresh();assert.equal(rendered.length,4,'STT receipt-only change must redraw');
+ published={...ctx.state.race,meta:{...ctx.state.race.meta,phase:'RESULT'}};
+ await refresh();assert.equal(rendered.length,4,'non-PRE_RESULT source must not redraw');
+ published={...ctx.state.race,meta:{...ctx.state.race.meta,race_no:8}};
+ await refresh();assert.equal(rendered.length,4,'metadata mismatched race must stop');
+ published={...ctx.state.race,race_key:'20261014-14-08'};
+ await refresh();assert.equal(rendered.length,4,'different race file must stop');
+ assert.equal(scratches,5,'invalid identity and result-open data do not trigger scratch fetch');
+ assert.equal(overlays,4,'unchanged source and unsafe sources never trigger overlay');
+ console.log('BOAT_EDGE_03_LIVE_PRE_RESULT_SOURCE_RECEIPT_AND_PREDICTION_REFRESH_PASS');
+})().catch(e=>{console.error(e);process.exitCode=1});
