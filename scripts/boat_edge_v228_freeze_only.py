@@ -12,7 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 
-MODEL_SHA = '9cde465969c887f48e7943c925b4f9becc702806'
+MODEL_SHA = '7b2916df307fcb2783cfc6ddc38ff73903d56da5'
 SOURCE = Path('scripts/site_final_history_v133.py')
 CUT = 'for sp in sorted(SNAPS.glob("????????-??-??.json")):\n'
 RESULT_ANCHOR = ('    result=read_json(RESULTS/f"{key}.json")\n'
