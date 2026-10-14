@@ -28,9 +28,16 @@ class V251PublishRecovery(unittest.TestCase):
         r[0].update(conclusion='success')
         self.assertEqual(decision(p,c,r,now=NOW),'CURRENT_COMMIT_PUBLISHED')
 
-    def test_recent_success_is_not_an_outage(self):
+    def test_older_sha_success_cannot_hide_unpublished_main_for_seven_minutes(self):
         p,c,r = normal()
         r[1]['updated_at'] = iso(-7)
+        self.assertNotEqual(r[1]['head_sha'], c['sha'])
+        self.assertEqual(decision(p,c,r,now=NOW),'REQUEST_LEGACY_PAGES_BUILD')
+
+    def test_very_recent_other_sha_success_still_gets_brief_grace(self):
+        p,c,r = normal()
+        r[1]['updated_at'] = iso(-2)
+        self.assertNotEqual(r[1]['head_sha'], c['sha'])
         self.assertEqual(decision(p,c,r,now=NOW),'RECENT_PAGES_SUCCESS_GRACE')
 
     def test_active_pages_skip(self):
