@@ -264,6 +264,36 @@ def confirmed_result(result,key,deadline,now=None):
     return True
 
 
+def pending_confirmed_prospective_score(root,now=None):
+    """Fast-tick SITE-only gate; ordinary 15-minute score stays unchanged.
+
+    Reading any SITE official outcome requires a closed Formal gate first.
+    New V2/V3 candidates must already be first-Git-committed, unmodified
+    and predeadline frozen. This gate NEVER validates/promotes a model;
+    score_row independently repeats all source, policy and result checks.
+    """
+    root=Path(root).resolve()
+    formal_closed(root)
+    now=now or dt.datetime.now(UTC)
+    frozen=root/PATH/'v236_frozen'
+    scored=root/PATH/'v236_scored'
+    for path in sorted(frozen.glob('20??????-??-??.json')):
+        if (scored/path.name).exists():continue
+        row=load(path) or {}
+        if row.get('comparison_policy') not in (POLICY_V2,POLICY_V3):continue
+        deadline=due(path.stem,row.get('deadline_jst'))
+        at=parse(row.get('frozen_at'))
+        if not deadline or not at or not at<deadline<=now:continue
+        first=git_first(root,path)
+        if (not first or not first['at'] or not first['at']<deadline
+                or first['sha256']!=sha(path)
+                or at>first['at']+dt.timedelta(seconds=1)):
+            continue
+        site=load(root/'data/site_results'/path.name)
+        if confirmed_result(site,path.stem,deadline,now):return True
+    return False
+
+
 def score_row(root,path,now):
     formal_closed(root)
     row=load(path) or {};key=path.stem
