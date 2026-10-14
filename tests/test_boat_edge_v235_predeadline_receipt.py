@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -143,6 +144,33 @@ class V235Proof(unittest.TestCase):
             result = receipt(root, datetime(2026, 10, 14, 8, 31, tzinfo=JST))
             self.assertEqual(result["status"], "SNAPSHOT_OR_V229_AUDIT_UNVERIFIED")
             self.assertFalse(result["prediction_saved_proven"])
+
+    def test_v230_script_mode_requires_repo_root_pythonpath(self):
+        # -m unittest from cwd implicitly sees the repo root, but executing
+        # scripts/boat_edge_v230_fast_lane.py directly does not. Keep the
+        # original safety-lock import resolvable in both V235 and V230 owners.
+        root = Path(__file__).resolve().parents[1]
+        commands = {
+            ".github/workflows/V235.yml":
+                "PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 "
+                "scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent",
+            ".github/workflows/BOAT_EDGE_V230_FAST_OFFICIAL_PREDEADLINE.yml":
+                "PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 "
+                "scripts/boat_edge_v230_fast_lane.py",
+        }
+        for path, command in commands.items():
+            text = (root / path).read_text(encoding="utf-8")
+            self.assertIn(command, text)
+        env = dict(os.environ)
+        env["PYTHONPATH"] = ".:scripts"
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        result = subprocess.run(
+            [sys.executable, "scripts/boat_edge_v230_fast_lane.py", "--help"],
+            cwd=root, env=env, capture_output=True, text=True, timeout=15,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--retry-imminent", result.stdout)
 
     def test_workflow_has_0820_jst_owner_without_duplicate_writers(self):
         text = (Path(__file__).resolve().parents[1] /
