@@ -238,6 +238,48 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.assertTrue(all(r["races"] == 0 and r["exact_mcnemar_two_sided_p"] is None
                             for r in cross.values()))
 
+    def test_v236_v254_ranked_topk_cross_study_stratified_and_fail_closed(self):
+        v2 = "PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER"
+        v3 = "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES"
+        self.add("v236", KEY1, policy=v3)
+        self.add("v254", KEY1)
+        self.add("v236", KEY2, policy=v2)  # Not in V254; never borrow KEY1.
+        report = m.audit(self.root, attest=self.proof)
+        cross = report["same_race_cross_study"]["v236_vs_v254"]
+        separate = cross["ranked_headsecond_vs_third_tail10_by_v236_policy"]
+        self.assertEqual(cross["identical_race_baseline_matches"], 1)
+        self.assertEqual(separate[v2]["races"], 0)
+        self.assertEqual(separate[v3]["races"], 1)
+        self.assertEqual(separate[v3]["ranked_top3_top5_top10"]["3"]["races"], 1)
+        self.assertEqual(separate[v3]["ranked_top3_top5_top10"]["10"]["left_hits"], 1)
+        self.assertEqual(separate[v3]["ranked_top3_top5_top10"]["10"]["right_hits"], 1)
+        self.assertFalse(separate[v3]["model_promotion_authorized"])
+
+        def row(mode, tickets):
+            return {"key": KEY1, "day": KEY1[:8], "winning": EXTRA[0],
+                    "modes": {mode: 10}, "outcomes": {mode: True},
+                    "frozen_ticket_lists": {mode: tickets}}
+        left = row("headsecond10", [EXTRA[0]] + HIT[:9])
+        right = row("third_tail10", HIT[:9] + [EXTRA[0]])
+        ranked = m.compare_ranked_10point_modes(
+            [left], [right], "headsecond10", "third_tail10")
+        self.assertEqual(ranked["ranked_top3_top5_top10"]["3"]["left_hits"], 1)
+        self.assertEqual(ranked["ranked_top3_top5_top10"]["3"]["right_hits"], 0)
+        self.assertEqual(ranked["ranked_top3_top5_top10"]["10"]["left_hits"], 1)
+        self.assertEqual(ranked["ranked_top3_top5_top10"]["10"]["right_hits"], 1)
+        with self.assertRaisesRegex(m.EvidenceError, "RACE_OR_OUTCOME_MISMATCH"):
+            m.compare_ranked_10point_modes(
+                [left], [dict(right, key=KEY2)], "headsecond10", "third_tail10")
+        bad_tickets = dict(right)
+        bad_tickets["frozen_ticket_lists"] = {"third_tail10": HIT[:9] + [HIT[8]]}
+        with self.assertRaisesRegex(m.EvidenceError, "EXACT_TEN_FROZEN_TICKETS"):
+            m.compare_ranked_10point_modes(
+                [left], [bad_tickets], "headsecond10", "third_tail10")
+        forged = dict(right, outcomes={"third_tail10": False})
+        with self.assertRaisesRegex(m.EvidenceError, "OUTCOME_NOT_FROZEN"):
+            m.compare_ranked_10point_modes(
+                [left], [forged], "headsecond10", "third_tail10")
+
     def test_corrupted_score_cannot_silently_shrink_sample(self):
         path = self.add("v254")
         row = m.read(path)
