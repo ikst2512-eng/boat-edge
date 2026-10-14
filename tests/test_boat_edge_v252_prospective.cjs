@@ -94,6 +94,27 @@ assert(crossDay&&crossDay.day===allDays[0]+'〜'+nextDay);
 // summaries clip examples to their latest 25/20 rows.
 const fullSource=JSON.parse(fs.readFileSync('data/site_autopilot/v253_miss_diagnostics_current.json','utf8'));
 const full=api.fromFullMissProof(fullSource);
+// V236 policy-specific headsecond10 is legal only on prospectively frozen V2/V3.
+const v2Policy='PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER';
+const v1='PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST';
+const v1Index=fullSource.lanes.v236.races.findIndex(r=>r.candidate_policy===v1);
+assert(v1Index>=0);
+const forwardProof=mutate(fullSource,d=>{
+ const lane=d.lanes.v236,row=lane.races[v1Index];
+ const hit10=row.categories.hit10;
+ row.candidate_policy=v2Policy;row.categories.headsecond10='hit';
+ const summary=lane.headsecond_by_frozen_policy[v2Policy];
+ summary.matched_races++;
+ summary.miss_categories.hit10[hit10]++;
+ summary.miss_categories.headsecond10.hit++;
+});
+assert(api.fromFullMissProof(forwardProof),'Full cohort V2 row should remain displayable');
+assert.equal(api.fromFullMissProof(mutate(forwardProof,d=>{
+ d.lanes.v236.headsecond_by_frozen_policy[v2Policy].matched_races++;
+})),null,'Corrupted V2 by-policy count must fail closed');
+assert.equal(api.fromFullMissProof(mutate(fullSource,d=>{
+ d.lanes.v236.races[v1Index].categories.headsecond10='hit';
+})),null,'Legacy V1 mode cannot gain a post-hoc comparator');
 assert(fullSource.lanes.v236.races_verified<=v236.scored_total);
 assert(fullSource.lanes.v240.races_verified<=v240.scored_total);
 assert(full?.a&&full?.b,'Need complete V253 provenance-backed cohort');
