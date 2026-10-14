@@ -186,7 +186,7 @@ const identityStart=selectedRaceHtml.indexOf('function be03RaceSourceIdentity(fi
 const identityEnd=selectedRaceHtml.indexOf('async function refreshFormalStatus(){',identityStart);
 assert(identityStart>0&&identityEnd>identityStart);
 const guardContext=vm.createContext({
-  Date,Set,Map,Promise,
+  Date,Set,Map,Promise,be03RaceRequestSerial:0,be03RaceLoadNotice:()=>{},
   state:{currentVenue:'14',race:{race_key:'20261014-14-01'}},
   document:{
     querySelector:()=>null,
