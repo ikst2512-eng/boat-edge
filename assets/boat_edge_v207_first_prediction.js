@@ -231,8 +231,10 @@ function render(){
   str('#be204Budget [data-be204="total"]',p),str('.be166-odds-status',p),stage,freeze,
   rows.map(x=>[str('b',x),str('em',x),str('small',x),str('.be140-ticket-money',x),str('.be204-ticket-finance',x)])]);
  const box=skeleton();if(!box)return;
- const stop=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
- const displayPhase=predictionDisplayPhase(r,provenance,stop,settled);
+ const sourceBlocked=st.kind==='stop'||pendingScratch||!ticketViewSynced||!rowOK||!['first','final','latest'].includes(provenance);
+ const displayPhase=predictionDisplayPhase(r,provenance,sourceBlocked,settled);
+ // A metadata-invalid card must never display even a source-looking TopK list.
+ const stop=sourceBlocked||displayPhase.phase==='unverified';
  showPredictionWait(r,stop); // Refresh across the deadline even when the ticket signature stays unchanged.
  if(sig===lastSig&&box.classList.contains('ready')&&
      box.querySelector('.be207-display-phase')?.dataset.phase===displayPhase.phase)return;
