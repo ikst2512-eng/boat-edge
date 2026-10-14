@@ -23,8 +23,8 @@ on:
         required: false
         type: boolean
         default: false
-  schedule:
-    - cron: '30 18 * * *'
+  # All 37 owner-approved tasks are checked off. No speculative daily runner;
+  # preserve explicit manual opt-in and the PR/push fixture-only guard.
 
 permissions:
   contents: write
