@@ -154,7 +154,24 @@ assert.match(js,/if\(finalFor\(r\.race_key\)\)\{hide\(\);return;\}/);
  assert.equal(makeChoice('false').source,'latest');
  frames=[bytes,{...audit,latest_snapshot_sha256:'0'.repeat(64)},proof];
  assert.equal(await verify(),null,'Mismatched V125 SHA rejects final');
- frames=[bytes,{...audit,settlement:{}},proof];
+ frames=[bytes,{...audit,settlement:{
+   available:false,winning_combo:null,hit_any:null,mode_hits:{},payout:null
+ }},proof];
+ assert.notEqual(await verify(),null,'Empty V125 UNSETTLED marker is safe PRE_RESULT evidence');
+ frames=[bytes,{...audit,settlement:{
+   available:true,winning_combo:null,hit_any:null,mode_hits:{},payout:null
+ }},proof];
+ assert.equal(await verify(),null,'A flagged settlement is not PRE_RESULT');
+ frames=[bytes,{...audit,settlement:{
+   available:false,winning_combo:null,hit_any:null,mode_hits:{},payout:null,
+   unverified_extra:'result'
+ }},proof];
+ assert.equal(await verify(),null,'An extra settlement field is not an explicit empty sentinel');
+ frames=[bytes,{...audit,settlement:{
+   available:false,winning_combo:null,hit_any:null,mode_hits:{hit:1},payout:null
+ }},proof];
+ assert.equal(await verify(),null,'Mode outcomes always invalidate the UNSETTLED sentinel');
+  frames=[bytes,{...audit,settlement:{}},proof];
  assert.equal(await verify(),null,'Result-bearing audit cannot be read as PRE_RESULT proof');
  frames=[bytes,audit,{...proof,snapshot_sha256:'a'.repeat(64)}];
  assert.equal(await verify(),null,'Mismatched V229 SHA rejects final');
