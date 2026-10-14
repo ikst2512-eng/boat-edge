@@ -7,7 +7,11 @@ on:
       - '.github/workflows/BOAT_EDGE_V198_ROLE_DIAGNOSTIC.yml'
   workflow_dispatch:
   schedule:
-    - cron: '20,50 0-14,23 * * *' # twice/hour in JST 08:00-23:59, research scoring only
+    # Retrospective-only V198 result attribution has no live pre-deadline
+    # freeze or public-site reader. Refresh the completed prior-day cohort
+    # once after the daily result collection, instead of 32 Git jobs/day.
+    # 01:20 UTC = 10:20 JST. Manual reruns are still supported.
+    - cron: '20 1 * * *'
 
 permissions:
   contents: write
