@@ -325,7 +325,11 @@ function enhanceRaceNav(race){
   const key=race?.race_key;if(!key)return;
   const ymd=String(key).slice(0,8),jcd=String(race.meta?.venue_code||"").padStart(2,"0");
   selectedDate=ymd;selectedVenue=jcd;saveSelection();
+  // A pending day lookup must never leave the previous race's links actionable.
+  $("#be108RaceNav")?.replaceChildren();
   loadArchiveDay(ymd).then(day=>{
+    // A slower response for race A must not overwrite race B's navigation.
+    if(raceOf()?.race_key!==key)return;
     const v=(day?.venues||[]).find(x=>String(x.jcd)===jcd);if(!v)return;
     const summary=$(".race-summary");if(!summary)return;
     let nav=$("#be108RaceNav");
