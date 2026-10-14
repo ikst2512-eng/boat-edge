@@ -77,10 +77,10 @@ const duplicates={...evidence,beforeinfo:{racers:[...evidence.beforeinfo.racers.
 assert.match(api.completeness(duplicates),/展示タイム 4\/6艇/,'duplicated lane 1 must not be counted as 1 and 6');
 const dupOE={...evidence,original_exhibition:{boats:[...evidence.original_exhibition.boats.slice(0,5),{lane:1,values:[38]}]}};
 assert.match(api.completeness(dupOE),/オリ展 4\/6艇/,'duplicated lane must be excluded from completeness');
-const missing={...evidence,beforeinfo:{racers:evidence.beforeinfo.racers.map((r,i)=>i===0?{...r,exhibition_time:false}:r)},
+const missingEvidence={...evidence,beforeinfo:{racers:evidence.beforeinfo.racers.map((r,i)=>i===0?{...r,exhibition_time:false}:r)},
  original_exhibition:{boats:evidence.original_exhibition.boats.map((r,i)=>i===1?{...r,values:[[],true]}:r)}};
-assert.match(api.completeness(missing),/展示タイム 5\/6艇/);
-assert.match(api.completeness(missing),/オリ展 5\/6艇/);
+assert.match(api.completeness(missingEvidence),/展示タイム 5\/6艇/);
+assert.match(api.completeness(missingEvidence),/オリ展 5\/6艇/);
 console.log('BOAT_EDGE_03_SIX_DISTINCT_LANE_COMPLETENESS_PASS');
 console.log('V298_SIX_LANE_MATRIX_STRICT_HIGHLIGHT_SYNTHETIC_PASS');
 
