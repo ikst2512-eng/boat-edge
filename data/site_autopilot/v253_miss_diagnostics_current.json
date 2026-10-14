@@ -6,19 +6,19 @@
       "excluded": {},
       "headsecond_by_frozen_policy": {
         "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES": {
-          "matched_races": 4,
+          "matched_races": 6,
           "miss_categories": {
             "headsecond10": {
               "head_absent": 1,
               "hit": 2,
-              "second_absent_given_head": 0,
-              "third_absent_given_head_second": 1
+              "second_absent_given_head": 1,
+              "third_absent_given_head_second": 2
             },
             "hit10": {
               "head_absent": 1,
               "hit": 2,
-              "second_absent_given_head": 0,
-              "third_absent_given_head_second": 1
+              "second_absent_given_head": 1,
+              "third_absent_given_head_second": 2
             }
           }
         },
@@ -44,26 +44,26 @@
         "balance10": {
           "head_absent": 13,
           "hit": 45,
-          "second_absent_given_head": 17,
-          "third_absent_given_head_second": 37
+          "second_absent_given_head": 18,
+          "third_absent_given_head_second": 38
         },
         "coverage15": {
           "head_absent": 9,
-          "hit": 55,
+          "hit": 56,
           "second_absent_given_head": 13,
-          "third_absent_given_head_second": 35
+          "third_absent_given_head_second": 36
         },
         "hit10": {
           "head_absent": 13,
           "hit": 43,
-          "second_absent_given_head": 21,
-          "third_absent_given_head_second": 35
+          "second_absent_given_head": 22,
+          "third_absent_given_head_second": 36
         },
         "scenario7plus3": {
           "head_absent": 13,
           "hit": 44,
-          "second_absent_given_head": 21,
-          "third_absent_given_head_second": 34
+          "second_absent_given_head": 22,
+          "third_absent_given_head_second": 35
         }
       },
       "races": [
@@ -1358,6 +1358,21 @@
           "winning_combo": "1-3-2"
         },
         {
+          "actual_head": "5",
+          "candidate_policy": "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES",
+          "categories": {
+            "balance10": "second_absent_given_head",
+            "coverage15": "hit",
+            "headsecond10": "second_absent_given_head",
+            "hit10": "second_absent_given_head",
+            "scenario7plus3": "second_absent_given_head"
+          },
+          "date_jst": "20261014",
+          "race_key": "20261014-12-01",
+          "reported_head_hit": false,
+          "winning_combo": "5-4-3"
+        },
+        {
           "actual_head": "1",
           "candidate_policy": "PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST",
           "categories": {
@@ -1426,6 +1441,21 @@
           "race_key": "20261014-14-09",
           "reported_head_hit": false,
           "winning_combo": "4-3-1"
+        },
+        {
+          "actual_head": "1",
+          "candidate_policy": "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES",
+          "categories": {
+            "balance10": "third_absent_given_head_second",
+            "coverage15": "third_absent_given_head_second",
+            "headsecond10": "third_absent_given_head_second",
+            "hit10": "third_absent_given_head_second",
+            "scenario7plus3": "third_absent_given_head_second"
+          },
+          "date_jst": "20261014",
+          "race_key": "20261014-15-01",
+          "reported_head_hit": true,
+          "winning_combo": "1-3-4"
         },
         {
           "actual_head": "1",
@@ -1642,7 +1672,7 @@
           "winning_combo": "1-3-2"
         }
       ],
-      "races_verified": 112
+      "races_verified": 114
     },
     "v240": {
       "excluded": {},
@@ -2445,5 +2475,5 @@
   "real_or_paper_wagers_placed": 0,
   "schema": "BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1",
   "scope": "POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS",
-  "site_verified_reference_races": 146
+  "site_verified_reference_races": 152
 }
