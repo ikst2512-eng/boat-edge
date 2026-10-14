@@ -1,254 +1,79 @@
 name: BOAT EDGE V226 - Guarded Pre-result Freeze and Isolated Odds Audit
 
+# Manual recovery only. This workflow previously failed every hour while
+# trying to overwrite the reviewed V133 prediction source from an obsolete
+# pinned base (V226_INSTALLED_SOURCE_BASE_DRIFT_FAIL_CLOSED).
+# V229/V235 own production pre-deadline freezing and V167 owns the real
+# official-odds DOM audit. Running a second installer/auditor cannot improve
+# live source freshness and must not race current production owners.
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/BOAT_EDGE_V226_SAFE_RECOVERY.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '18 0-14 * * *'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: boat-edge-v226-site-only-safe-recovery
   cancel-in-progress: false
 
 jobs:
-  pinned-server-repair:
+  verify-current-source-without-installing-older-code:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
-      - name: Read current main without rewriting other workflows
+      - name: Read latest main (read only)
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-      - name: Apply strictly pinned source-only V226 guard
+          persist-credentials: false
+
+      - name: Require closed formal gate and verify current approved SITE code
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          published=0
-          for attempt in 1 2 3 4; do
-            git fetch --no-tags origin main
-            git checkout -B main origin/main
-            python3 - <<'PY_V226_SERVER'
-          from __future__ import annotations
-          import ast
-          import hashlib
+          PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+          import json
           import subprocess
           from pathlib import Path
 
-          PATH = Path('scripts/site_final_history_v133.py')
-          PIN = '3173487604095f3b615f6d29acfbb189df809c8f'
-          ANCHOR_KEY = '    key=race.get("race_key") or race_path.stem\n'
-          ANCHOR_SCRATCH = '    scratches=read_json(ROOT/"data/site_scratches_v182"/f"{key}.json") or {}\n'
-          ANCHOR_WINDOW = '    if not (0<=mins<=15.999):\n        continue\n'
-          ANCHOR_ODDS = '    odds_doc,_v218_odds_blob,_v218_odds_sha=be218_read_odds_once(ODDS/f"{key}.json")\n'
-          OLD_V225 = '    # V224_FIRST_SERVER_FINAL15_FREEZE: once saved, never rewrite existing prospective evidence.\n    if (SNAPS/f"{key}.json").is_file():\n        continue\n'
-          G1 = '    # V226_IMMUTABLE_ORIGINAL_SNAPSHOT: first pre-result record remains byte-for-byte unchanged.\n    if (SNAPS/f"{key}.json").is_file():\n        continue\n'
-          G2 = '''    # V226_SOURCE_GUARD: require a newly verified official scratch check, not absence of a flag.
-              if (scratches.get('race_key')!=key or scratches.get('blocked') is not False
-                      or scratches.get('race_card_source_status')!='ok'
-                      or scratches.get('official_beforeinfo_source_status')!='ok'):
-                  continue
-              try:
-                  _v226_sc_at=datetime.fromisoformat(str(scratches.get('checked_at')))
-                  if _v226_sc_at.tzinfo is None or not 0 <= (NOW-_v226_sc_at).total_seconds() <= 900:
-                      continue
-              except (TypeError, ValueError, OverflowError):
-                  continue
-          '''
-          G3 = '''    # V226_DECISION_WINDOW: align first freeze with the ten-minute V214 source freshness contract.
-              if not (0<mins<=10):
-                  continue
-          '''
-          G4 = '''    # V226_ODDS_GUARD: never first-freeze a missing, partial, late or stale 120-combo board.
-              _v226_rows=odds_doc.get('trifecta_odds') or {}
-              if (_v218_odds_blob is None or not _v218_odds_sha
-                      or odds_doc.get('race_key')!=key or odds_doc.get('phase')!='PRE_RESULT_PURCHASE_ONLY'
-                      or len(_v226_rows)!=120):
-                  continue
-              _v226_exact_combos={f'{a}-{b}-{c}' for a in range(1,7) for b in range(1,7) for c in range(1,7)
-                                 if a!=b and a!=c and b!=c}
-              if set(_v226_rows)!=_v226_exact_combos:
-                  continue
-              try:
-                  _v226_at=datetime.fromisoformat(str(odds_doc.get('fetched_at')))
-                  if _v226_at.tzinfo is None or not 0 <= (NOW-_v226_at).total_seconds() <= 900:
-                      continue
-              except (TypeError, ValueError, OverflowError):
-                  continue
-              if any(not isinstance(x,(float,int)) or isinstance(x,bool) or not math.isfinite(x) or x<=0
-                      for x in _v226_rows.values()):
-                  continue
-          '''
+          formal=json.loads(Path('data/formal_status.json').read_text(encoding='utf-8'))
+          guards=formal.get('guards') or {}
+          if (any(guards.get(k) is not False for k in ('results_seen','unlock','scoring'))
+                  or guards.get('RESULT_UNLOCK_TOKEN') is not None
+                  or (formal.get('formalFirst100') or {}).get('races') != 0):
+              raise SystemExit('V226_FORMAL_FRESH_LOCK_NOT_CLOSED')
 
-          def gitblob(data):
-              b=data.encode('utf-8')
-              return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          path=Path('scripts/site_final_history_v133.py')
+          expected='7b2916df307fcb2783cfc6ddc38ff73903d56da5'
+          actual=subprocess.check_output(['git','hash-object','--',str(path)],text=True).strip()
+          if actual != expected:
+              raise SystemExit('V226_CURRENT_REVIEWED_SITE_MODEL_PIN_DRIFT')
+          contents=path.read_text(encoding='utf-8')
+          markers=(
+              'V226_IMMUTABLE_ORIGINAL_SNAPSHOT',
+              'V226_SOURCE_GUARD',
+              'V226_DECISION_WINDOW',
+              'V226_ODDS_GUARD',
+          )
+          if any(contents.count(s) != 1 for s in markers):
+              raise SystemExit('V226_CURRENT_PRODUCTION_GUARDS_MISSING')
+          if not all(Path(p).is_file() for p in (
+              '.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml',
+              '.github/workflows/V235.yml',
+              '.github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml')):
+              raise SystemExit('V226_ACTIVE_SOURCE_OWNERS_NOT_PRESENT')
+          print('V226_CURRENT_SOURCE_VERIFIED_NO_OLD_INSTALL_OR_DUPLICATE_COLLECTION')
+          PY
 
-          def transform(src, expected_sha=PIN):
-              parts=(G1,G2,G3,G4)
-              marks=('V226_IMMUTABLE_ORIGINAL_SNAPSHOT','V226_SOURCE_GUARD','V226_DECISION_WINDOW','V226_ODDS_GUARD')
-              present=[p in src for p in parts]
-              if any(present):
-                  if not all(present) or any(src.count(mark)!=1 for mark in marks):
-                      raise AssertionError('V226_PARTIAL_OR_CONFLICTING_INSTALL_FAIL_CLOSED')
-                  recovered=src
-                  for g in parts:recovered=recovered.replace(g,'')
-                  recovered=recovered.replace(G3,ANCHOR_WINDOW) if G3 in recovered else recovered
-                  # G3 replaces rather than follows the old window: restore before pin verification.
-                  recovered=src.replace(G1,'').replace(G2,'').replace(G3,ANCHOR_WINDOW).replace(G4,'')
-                  if gitblob(recovered)!=expected_sha:
-                      raise AssertionError('V226_INSTALLED_SOURCE_BASE_DRIFT_FAIL_CLOSED')
-                  return src,False
-              pre=src.replace(OLD_V225,'') if OLD_V225 in src else src
-              if src.count('V224_FIRST_SERVER_FINAL15_FREEZE')>1 or (OLD_V225 not in src and 'V224_FIRST_SERVER_FINAL15_FREEZE' in src):
-                  raise AssertionError('V226_V225_OLD_GUARD_PARTIAL_FAIL_CLOSED')
-              if gitblob(pre)!=expected_sha:
-                  raise AssertionError('V226_PINNED_SOURCE_SHA_DRIFT_FAIL_CLOSED')
-              for anchor in (ANCHOR_KEY,ANCHOR_SCRATCH,ANCHOR_WINDOW,ANCHOR_ODDS):
-                  if pre.count(anchor)!=1:raise AssertionError('V226_EXPECTED_ANCHOR_MISMATCH')
-              if pre.count('V218_SINGLE_READ_ODDS_PROVENANCE')!=1 or pre.count('if write_if_changed(SNAPS/f"{key}.json",snap):')!=1:
-                  raise AssertionError('V226_PREDECESSOR_LOCK_NOT_FOUND')
-              patched=pre.replace(ANCHOR_KEY,ANCHOR_KEY+G1).replace(ANCHOR_SCRATCH,ANCHOR_SCRATCH+G2).replace(ANCHOR_WINDOW,G3).replace(ANCHOR_ODDS,ANCHOR_ODDS+G4)
-              if patched.index(G1)>patched.index(G2) or patched.index(G2)>patched.index(G3) or patched.index(G3)>patched.index(G4):
-                  raise AssertionError('V226_UNEXPECTED_ORDER')
-              ast.parse(patched)
-              return patched,True
-
-          def main():
-              source=PATH.read_text(encoding='utf-8')
-              patched,changed=transform(source)
-              if changed:
-                  PATH.write_text(patched,encoding='utf-8')
-                  assert PATH.read_text(encoding='utf-8')==patched
-                  assert transform(patched)==(patched,False)
-              print('V226_PINNED_STATIC_REPAIR_REGRESSION_PASS', 'INSTALLED' if changed else 'ALREADY_CURRENT')
-
-          if __name__=='__main__':main()
-          PY_V226_SERVER
-            git diff --check
-            changed=$(git diff --name-only)
-            if [[ -n "$changed" && "$changed" != 'scripts/site_final_history_v133.py' ]]; then
-              echo "V226_UNEXPECTED_CHANGED_FILE: $changed" >&2; exit 1
-            fi
-            git add -- scripts/site_final_history_v133.py
-            if git diff --cached --quiet; then
-              echo 'V226_SERVER_ALREADY_CURRENT'
-              published=1;break
-            fi
-            git commit -m 'V226 guard first FINAL15 freeze by verified scratch and source-time odds'
-            if git push origin HEAD:main; then
-              echo 'V226_SERVER_SOURCE_ONLY_COMMIT_PUSH_SUCCEEDED'
-              published=1;break
-            fi
-            if [ "$attempt" = 4 ]; then
-              echo 'V226_PUSH_BLOCKED_NO_DEPLOYMENT_CLAIM' >&2;exit 1
-            fi
-            sleep 2
-          done
-          test "$published" = 1
-      - name: Verify remote main matches guarded server source
+      - name: Confirm workflow did not touch tracked files or formal state
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags origin main
-          git show origin/main:scripts/site_final_history_v133.py > /tmp/boat_edge_v226_published.py
-          python3 - <<'PY_V226_VERIFY'
-          from pathlib import Path
-          import ast
-          s=Path('/tmp/boat_edge_v226_published.py').read_text(encoding='utf-8')
-          for marker in ('V226_IMMUTABLE_ORIGINAL_SNAPSHOT','V226_SOURCE_GUARD','V226_DECISION_WINDOW','V226_ODDS_GUARD'):
-              assert s.count(marker)==1, 'V226_SOURCE_GUARD_NOT_PUBLISHED'
-          ast.parse(s)
-          print('V226_REMOTE_MAIN_SERVER_GUARDS_PRESENT_NO_WORKFLOW_WRITE')
-          PY_V226_VERIFY
-
-  isolated-v167-audit:
-    if: github.event_name != 'schedule' && github.ref == 'refs/heads/main'
-    needs: [pinned-server-repair]
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - name: Checkout pinned original V167 audit
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-      - name: Install original audit dependencies
-        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
-      - name: Restore V167 SHA-verified verifier WITHOUT changing workflow definitions
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY_V226_V167'
-          from pathlib import Path
-          import subprocess, textwrap
-          p=Path('.github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml')
-          expected='edc11a79485643a9de63af544598b4b8a5120886'
-          sha=subprocess.check_output(['git','hash-object',str(p)],text=True).strip()
-          assert sha==expected, 'V226_V167_WORKFLOW_PIN_CHANGED_STOP'
-          raw=p.read_text(encoding='utf-8')
-          anchor="          python3 - <<'PYIN'\n"
-          assert raw.count(anchor)==1
-          tail=raw.index(anchor)+len(anchor)
-          stop=raw.index('\n          PYIN',tail)
-          code=textwrap.dedent(raw[tail:stop])
-          assert 'scripts/site_odds_v167_dom_verifier.py' in code
-          assert 'scripts/site_odds_v167_live_audit.py' in code
-          assert 'sha256(content).hexdigest()==expected' in code
-          exec(compile(code,'V167_PINNED_RESTORATION','exec'),{'__name__':'__main__'})
-          print('V226_V167_VERIFIER_RESTORED_USING_ORIGINAL_PINNED_BYTES')
-          PY_V226_V167
-      - name: Run independent V167 regression and LIVE parity audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m unittest discover -s tests -p 'test_site_odds_v167*.py' -v
-          python3 -m py_compile scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py
-          PYTHONPATH=. python3 scripts/site_odds_v167_live_audit.py
-      - name: Keep ONLY verified audit outputs, never modify a workflow
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          # The V167 verifier can propose a collector-workflow change, but that is not approved here.
-          git restore -- .github/workflows/site-odds.yml
-          git diff --check
-          changed=$(git diff --name-only)
-          while IFS= read -r file; do
-            [[ -z "$file" ]] && continue
-            case "$file" in
-              scripts/site_odds_v167_dom_verifier.py|scripts/site_odds_v167_live_audit.py|tests/test_site_odds_v167.py|tests/test_site_odds_v167_runner.py|data/site_odds/verification_v167.json) ;;
-              *) echo "V226_UNEXPECTED_AUDIT_FILE: $file" >&2;exit 1;;
-            esac
-          done <<< "$changed"
-          git add -- scripts/site_odds_v167_dom_verifier.py scripts/site_odds_v167_live_audit.py tests/test_site_odds_v167.py tests/test_site_odds_v167_runner.py data/site_odds/verification_v167.json
-          staged=$(git diff --cached --name-only)
-          while IFS= read -r file; do
-            [[ -z "$file" ]] && continue
-            case "$file" in
-              scripts/site_odds_v167_dom_verifier.py|scripts/site_odds_v167_live_audit.py|tests/test_site_odds_v167.py|tests/test_site_odds_v167_runner.py|data/site_odds/verification_v167.json) ;;
-              *) echo "V226_UNAPPROVED_STAGED_PATH: $file" >&2;exit 1;;
-            esac
-          done <<< "$staged"
-          if git diff --cached --quiet; then
-            echo 'V226_V167_VERIFIED_NO_CHANGED_OUTPUT';exit 0
-          fi
-          git commit -m 'V226 preserve V167 independently verified parity evidence only'
-          for attempt in 1 2 3 4; do
-            git pull --rebase origin main
-            if git push origin HEAD:main; then
-              echo 'V226_V167_AUDIT_ONLY_COMMITTED_NO_COLLECTOR_PROMOTION';exit 0
-            fi
-            sleep 2
-          done
-          echo 'V226_V167_AUDIT_PUSH_NOT_CONFIRMED' >&2;exit 1
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo V226_MANUAL_RECOVERY_READ_ONLY_PASS
