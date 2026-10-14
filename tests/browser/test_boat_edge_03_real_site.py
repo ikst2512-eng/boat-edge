@@ -201,9 +201,11 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             if race.get("racers_ready") is not True:
                 readiness["not_ready"] += 1
                 continue
+            # Catalog status is an early publication hint, not the authority
+            # for final live exhibition. V235 updates the race-specific source
+            # receipt after the collector last published data/today.json.
             if race.get("beforeinfo_status") != "ok":
                 readiness["beforeinfo_missing"] += 1
-                continue
             path = str(race.get("file") or "")
             key = str(race.get("race_key") or "")
             if (not re.fullmatch(r"data/races/\d{8}-\d{2}-\d{2}\.json", path)
@@ -229,7 +231,11 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
         return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE",
                 "eligible_count": 0, "readiness": readiness}
     stopped_reasons = []
-    for _, venue, race in choices[:5]:
+    source_ready_checked = 0
+    # Check up to 36 *same-day, future PRE_RESULT* race receipts. A stale
+    # catalog must not hide a verified live source; browser navigations remain
+    # capped at five to avoid delaying predeadline attestations.
+    for _, venue, race in choices[:36]:
         path = race["file"]
         key = race["race_key"]
         # Additional source audit: only this explicitly allowlisted PRE_RESULT
@@ -241,10 +247,18 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
         assert receipt.status == 200, "Selected live PRE_RESULT receipt missing: " + key
         payload = receipt.json()
         assert payload.get("race_key") == key, "Cross-race live receipt mismatch"
+        meta = payload.get("meta") or {}
         audit = (payload.get("source_audit") or {}).get("beforeinfo") or {}
+        if (meta.get("phase") != "PRE_RESULT" or
+                any(meta.get(k) is not False for k in
+                    ("results_seen", "unlock", "scoring")) or
+                str(meta.get("deadline")) != str(race["deadline"])):
+            stopped_reasons.append({"race": key, "reason": "race_phase_or_deadline_unsafe"})
+            continue
         if audit.get("status") != "ok" or len(payload.get("racers") or []) != 6:
             stopped_reasons.append({"race": key, "reason": "source_audit_not_ready"})
             continue
+        source_ready_checked += 1
         saved_evidence = probe_site_snapshot_evidence(
             context, target, key, race["deadline"]
         )
@@ -365,10 +379,13 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             }
         finally:
             live.close()
+        if source_ready_checked >= 5:
+            break
     return {
         "status": "NOT_CERTIFIED_ALL_ELIGIBLE_SOURCE_STOPPED",
-        "eligible_count": len(choices), "checked": stopped_reasons,
-        "readiness": readiness
+        "eligible_count": len(choices),
+        "source_ready_browser_checked": source_ready_checked,
+        "checked": stopped_reasons, "readiness": readiness
     }
 
 
