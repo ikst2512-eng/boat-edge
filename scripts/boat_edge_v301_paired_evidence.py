@@ -409,8 +409,12 @@ def audit(root, attest=first_added):
     available = {}
     for study in CONFIG:
         folder = root / BASE / (study + "_scored")
+        # Missing data is an evidence blocker, never an implicit zero-race
+        # cohort. Historical PR #192 discovered this bug; port only the fix.
+        if not folder.is_dir():
+            raise EvidenceError("SCORED_COHORT_DIRECTORY_MISSING_" + study)
         items = {}
-        for path in sorted(folder.glob("*.json")) if folder.exists() else []:
+        for path in sorted(folder.glob("*.json")):
             if not KEY.fullmatch(path.stem):
                 raise EvidenceError("NON_RACE_SCORED_PATH_" + path.name)
             items[path.stem] = checked_row(root, study, path, attest)

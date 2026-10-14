@@ -32,6 +32,9 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
+        # Valid empty cohorts must be explicit; a missing cohort is not zero.
+        for study in m.CONFIG:
+            (self.root / m.BASE / (study + "_scored")).mkdir(parents=True)
         write(self.root / "data/formal_status.json",
               {"guards": {"results_seen": False, "unlock": False,
                           "scoring": False, "RESULT_UNLOCK_TOKEN": None},
@@ -117,6 +120,21 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
         scored_path = base / (study + "_scored") / (key + ".json")
         write(scored_path, scored)
         return scored_path
+
+    def test_missing_site_cohort_cannot_pass_as_zero_scored_races(self):
+        self.add("v236")
+        self.add("v254")
+        # A missing v240 directory is a broken data supply, not a measured
+        # 0/0 or evidence of no paired improvements.
+        missing = self.root / m.BASE / "v240_scored"
+        missing.rmdir()
+        with self.assertRaisesRegex(
+                m.EvidenceError, "SCORED_COHORT_DIRECTORY_MISSING_v240"):
+            m.audit(self.root, attest=self.proof)
+        missing.mkdir()
+        report = m.audit(self.root, attest=self.proof)
+        self.assertEqual(report["within_study"]["v240"]["sample_races"], 0)
+        self.assertEqual(report["within_study"]["v236"]["sample_races"], 1)
 
     def test_matched_safely_and_fifteen_points_never_pooled(self):
         for study in m.CONFIG:
