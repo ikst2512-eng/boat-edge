@@ -8,7 +8,7 @@
     "event": "ヴィーナスS15戦マクール杯ナイトプリンセスカップ",
     "race_no": 8,
     "deadline": "18:46",
-    "updated_at": "2026-10-14T16:09:19+09:00",
+    "updated_at": "2026-10-14T16:45:47+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261014&jcd=20&rno=8",
-      "fetched_at": "2026-10-14T16:10:48+09:00",
-      "sha256": "adaa0a6216cadaf0a72f6766c9d4cc1f77b808599c0b8cee8d8d3a4accf3641b",
+      "fetched_at": "2026-10-14T16:47:15+09:00",
+      "sha256": "40984eb050c79c28f1253ed55de48a5d6fc7ad56ef81b6300db3d8ddea983463",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261014&jcd=20&rno=8",
+      "fetched_at": "2026-10-14T16:46:44+09:00",
+      "sha256": "ea3a8319cdb07e83b9653d29b9e63eb4718ebd4b6d4ccd612c347ed96a925ec4",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "063caedea2f1b559fec1e9e967281986019ab612d6fda38b2b75bcfec8ef5d98"
+      "sha256": "5e4946caa04c7cbdcf9725600f7cc028e1ad25bf7e8becd7b75786e38d2ee222"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "b462834777c34299f968be5db0d8addf03a659f61080e997f7451d95d7590bc7"
+      "sha256": "6c2009176bdb62baa2261ed94ca2bc9f7eb079184c44da810379e03c388a5ee1"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "b96592890555b774024e960e82ec4c3277d4631e14aed4c1beb98d260658d8f1"
+      "sha256": "b554ed07f0e255334666fe8d2b8e97723cf65b3bafc5eae766da71d0400988de"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/14.csv",
       "fetched_at": null,
-      "sha256": "189eb61dea6ea2642035df3fa7f69de213f7f5e1e66bc5683e548ffcc9e1bf27"
+      "sha256": "65f0f5699f881af19fe4b37b9e82af5ed3a6c477259530b00a71d192881b6611"
     }
   },
   "racers": [
@@ -207,10 +213,11 @@
         "trio_rate": 53.09
       },
       "series_tokens": [
-        "8"
+        "8",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "4 4765 / B1 野田部 宏子 福岡/福岡 36歳/51.6kg F2 L0 0.13 3.81 16.95 30.51 5.43 36.21 55.17 8 28.57 46.80 73 32.10 53.09 8 3R"
+      "raw_text": "4 4765 / B1 野田部 宏子 福岡/福岡 36歳/51.6kg F2 L0 0.13 3.81 16.95 30.51 5.43 36.21 55.17 8 28.57 46.80 73 32.10 53.09 8 3 3R"
     },
     {
       "lane": 5,
@@ -290,7 +297,53 @@
       "raw_text": "6 4900 / B1 中田 夕貴 埼玉/埼玉 34歳/47.0kg F0 L1 0.19 5.27 32.58 52.81 6.33 38.10 76.19 23 37.95 56.41 34 45.59 61.76 2 10"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 野田 彩加 50.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 堀之内紀代子 46.5kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 森田 梨湖 47.0kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 野田部 宏子 51.6kg R 3"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 中川 海虹 43.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中田 夕貴 47.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
