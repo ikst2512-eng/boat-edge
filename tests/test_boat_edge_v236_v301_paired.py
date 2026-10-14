@@ -44,7 +44,7 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
                 "at": m.time(PARENT_AT if parent else FREEZE_AT),
                 "sha256": m.digest(path)}
 
-    def add(self, study, key=KEY1, winning="1-5-6", improve=True):
+    def add(self, study, key=KEY1, winning="1-5-6", improve=True, policy=None):
         cohort = {"schema": "BOAT_EDGE_V232_SITE_PROSPECTIVE_ACCURACY_COHORT_V1",
                   "scope": "SITE_REFERENCE_UNSEEN_PRE_RESULT_ONLY_NOT_FORMAL_FRESH",
                   "race_key": key, "top10": HIT,
@@ -64,6 +64,11 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
             "v254": {"hit10": HIT,
                      "third_tail10": HIT[:9] + ([EXTRA[0]] if improve else [HIT[9]])}
         }[study]
+        if study == "v236":
+            policy = policy or "PREDECLARED_HEAD_TAIL_COVERAGE_NO_ODDS_MULTIPLIER_BOOST"
+            if m.V236_POLICIES[policy]:
+                # A frozen separate ten-point strategy, not recomputed after score.
+                candidates["headsecond10"] = HIT[:9] + [EXTRA[0]]
         names = m.CONFIG[study]
         frozen = {"schema": names[2], "scope": names[3], "race_key": key,
                   "deadline_jst": DUE, "frozen_at": FREEZE,
@@ -79,6 +84,7 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
             frozen["result_seen_at_freeze"] = False
             frozen["proven_improvement"] = False
             frozen["actual_or_paper_purchase"] = False
+            frozen["comparison_policy"] = policy
         else:
             frozen["formal_result_access"] = False
         freeze_path = base / (study + "_frozen") / (key + ".json")
@@ -94,6 +100,11 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
             scored.update({"ticket_counts": {k: len(v) for k, v in candidates.items()},
                            "production_accuracy_improvement_proven": False,
                            "real_or_paper_purchase": False})
+            if m.V236_POLICIES[policy]:
+                scored["candidate_policy"] = policy
+                scored["prefix_outcomes"] = {
+                    mode: {str(k): winning in candidates[mode][:k] for k in (3, 5, 10)}
+                    for mode in ("hit10", "headsecond10")}
         elif study == "v240":
             scored.update({"novelty": {k: len(set(v)-set(HIT)) for k, v in candidates.items()},
                            "real_or_paper_purchase": False})
@@ -158,6 +169,57 @@ class SiteOnlyPairedEvidence(unittest.TestCase):
                 with self.assertRaisesRegex(m.EvidenceError, "PRODUCTION_OR_FREEZE_GUARD"):
                     m.checked_row(self.root, "v236", path, self.proof)
         write(frozen_path, frozen)
+
+    def test_v236_policy_scoped_headsecond_prefixes_and_corruption_guards(self):
+        v2 = "PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER"
+        v3 = "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES"
+        scored_v2 = self.add("v236", KEY1, policy=v2)
+        scored_v3 = self.add("v236", KEY2, policy=v3)
+        report = m.audit(self.root, attest=self.proof)
+        groups = report["within_study"]["v236"]["headsecond10_by_frozen_policy"]
+        self.assertEqual(groups[v2]["races"], 1)
+        self.assertEqual(groups[v3]["races"], 1)
+        self.assertEqual(groups[v2]["ranked_top3_top5_top10"]["10"]["candidate_hits"], 1)
+        self.assertEqual(groups[v3]["ranked_top3_top5_top10"]["10"]["candidate_hits"], 1)
+        self.assertEqual(report["within_study"]["v236"]["sample_races"], 2)
+        self.assertEqual(report["within_study"]["v236"]["equal_ten_point_modes"]["balance10"]["races"], 2)
+        # Legacy V2 missing candidate_policy is allowed, but V3 must be tagged.
+        original = m.read(scored_v2)
+        tagged = dict(original)
+        tagged.pop("candidate_policy")
+        write(scored_v2, tagged)
+        self.assertEqual(m.audit(self.root, attest=self.proof)["within_study"]
+                         ["v236"]["headsecond10_by_frozen_policy"][v2]["races"], 1)
+        write(scored_v2, original)
+        v3_saved = m.read(scored_v3)
+        wrong = dict(v3_saved)
+        wrong["prefix_outcomes"] = {mode: dict(kv) for mode, kv in
+                                    wrong["prefix_outcomes"].items()}
+        wrong["prefix_outcomes"]["headsecond10"]["10"] = False
+        write(scored_v3, wrong)
+        with self.assertRaisesRegex(m.EvidenceError, "V236_PREFIX_OUTCOME_CHANGED"):
+            m.audit(self.root, attest=self.proof)
+        write(scored_v3, v3_saved)
+        wrong = dict(v3_saved)
+        wrong.pop("candidate_policy")
+        write(scored_v3, wrong)
+        with self.assertRaisesRegex(m.EvidenceError, "V236_SCORED_POLICY_MISMATCH"):
+            m.audit(self.root, attest=self.proof)
+        write(scored_v3, v3_saved)
+        frozen_v2 = self.root / m.BASE / "v236_frozen" / scored_v2.name
+        freeze = m.read(frozen_v2)
+        freeze["comparison_policy"] = "NEW_UNDECLARED_POLICY"
+        write(frozen_v2, freeze)
+        with self.assertRaisesRegex(m.EvidenceError, "UNKNOWN_V236_FROZEN_POLICY"):
+            m.audit(self.root, attest=self.proof)
+
+    def test_v236_v1_cannot_gain_posthoc_headsecond(self):
+        path = self.add("v236")
+        scored = m.read(path)
+        scored["candidate_policy"] = "PREDECLARED_HEAD_SECOND_COVERAGE_FROM_EXISTING_FROZEN_MODES_NO_NEW_ODDS_MULTIPLIER"
+        write(path, scored)
+        with self.assertRaisesRegex(m.EvidenceError, "V236_V1_POSTHOC_CANDIDATE_REFUSED"):
+            m.audit(self.root, attest=self.proof)
 
     def test_nonoverlapping_cohorts_never_pooled_or_compared(self):
         self.add("v236", KEY1)
