@@ -575,6 +575,59 @@ class MobilePredictionBrowser(unittest.TestCase):
                 finally:
                     context.close()
 
+    def test_selected_race_countdown_updates_across_jst_deadline(self):
+        """Real Chromium/WebKit; injected clock only; no result or network access."""
+        html=(ROOT/"index.html").read_text(encoding="utf-8")
+        a=html.index("function parseDeadlineToday(deadline,raceDate){")
+        b=html.index("function renderFreshness(d){",a)
+        source=html[a:b]
+        for kind, browser in self.browsers.items():
+            for tz in ("Asia/Tokyo","America/Los_Angeles"):
+                with self.subTest(browser=kind,timezone=tz):
+                    context=browser.new_context(
+                        viewport={"width":390,"height":844},device_scale_factor=2,
+                        is_mobile=True,has_touch=True,timezone_id=tz,locale="ja-JP")
+                    page=context.new_page()
+                    try:
+                        page.set_content("""<!doctype html><meta name="viewport"
+                            content="width=device-width,initial-scale=1">
+                            <div id="raceView" class="active">
+                            <div id="urgencyRibbon" class="urgency-ribbon">
+                            <span class="u-main">前の表示</span>
+                            <span class="u-time">5分</span></div>
+                            <div id="directMode"><span class="direct-count"></span></div>
+                            </div>""")
+                        page.evaluate("""() => {
+                            window.state={race:{race_key:'20261015-02-01',
+                              meta:{date:'2026-10-15',deadline:'09:00'}}};
+                        }""")
+                        page.add_script_tag(content=source)
+                        def at(stamp):
+                            return page.evaluate("""s => {
+                                Date.now=()=>Date.parse(s);
+                                be03RefreshVisibleDeadline();
+                                const box=document.querySelector('#urgencyRibbon');
+                                return {main:box.querySelector('.u-main').textContent,
+                                  time:box.querySelector('.u-time').textContent,
+                                  css:box.className,
+                                  direct:document.querySelector('.direct-count').textContent,
+                                  key:state.race.race_key};
+                            }""",stamp)
+                        before=at("2026-10-15T08:54:59+09:00")
+                        self.assertEqual(before["main"],"締切まで余裕あり")
+                        self.assertEqual(before["time"],"5分01秒")
+                        close=at("2026-10-15T08:58:01+09:00")
+                        self.assertEqual(close["main"],"締切2分前")
+                        after=at("2026-10-15T09:00:01+09:00")
+                        self.assertEqual(after["time"],"締切済")
+                        self.assertEqual(after["direct"],"締切済")
+                        self.assertIn("closed",after["css"])
+                        overnight=at("2026-10-16T00:00:01+09:00")
+                        self.assertEqual(overnight["main"],"締切済")
+                        self.assertEqual(overnight["key"],"20261015-02-01")
+                    finally:
+                        context.close()
+
     def test_early_card_real_renderer_mobile_status_and_race_switch(self):
         """Run the production V392 UI with synthetic, result-free data in both engines."""
         for kind, browser in self.browsers.items():

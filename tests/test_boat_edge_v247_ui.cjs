@@ -336,6 +336,47 @@ console.log('BOAT_EDGE_03_WORLD_PERCENT_BELOW_ONE_DISPLAY_PRESERVED_PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
 
 
+/* 03: JST date-correct second-level countdown and unchanged race identity. */
+(()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ const a=html.indexOf('function parseDeadlineToday(deadline,raceDate){');
+ const b=html.indexOf('function renderFreshness(d){',a);
+ assert(a>0&&b>a);
+ const status={time:'',main:''};
+ const ribbon={className:'',querySelector:s=>
+  s==='.u-time'?{set textContent(v){status.time=v;}}:
+  s==='.u-main'?{set textContent(v){status.main=v;}}:null};
+ const direct={textContent:''};
+ const view={classList:{contains:s=>s==='active'}};
+ const key='20261015-02-01';
+ const race={race_key:key,meta:{date:'2026-10-15',deadline:'09:00'}};
+ const ctx=vm.createContext({Date,Number,String,JSON,Promise,
+  state:{race},be162BeforeCoverage:()=>({ready:false}),
+  document:{getElementById:id=>id==='raceView'?view:
+   id==='urgencyRibbon'?ribbon:null,
+   querySelector:s=>s==='#directMode .direct-count'?direct:null}});
+ vm.runInContext(html.slice(a,b),ctx);
+ const jst=stamp=>Date.parse(stamp+'+09:00');
+ const set=stamp=>{ctx.Date=class extends Date{static now(){return jst(stamp);}}};
+ set('2026-10-15T08:54:59');
+ vm.runInContext('be03RefreshVisibleDeadline()',ctx);
+ assert.equal(status.main,'締切まで余裕あり');
+ assert.equal(status.time,'5分01秒');
+ set('2026-10-15T08:55:00');vm.runInContext('be03RefreshVisibleDeadline()',ctx);
+ assert.equal(status.main,'締切5分前');
+ set('2026-10-15T08:58:00');vm.runInContext('be03RefreshVisibleDeadline()',ctx);
+ assert.equal(status.main,'締切2分前');
+ set('2026-10-15T09:00:01');vm.runInContext('be03RefreshVisibleDeadline()',ctx);
+ assert.equal(status.main,'締切済');assert.equal(status.time,'締切済');
+ assert.equal(direct.textContent,'締切済');assert.match(ribbon.className,/closed/);
+ set('2026-10-16T00:00:01');vm.runInContext('be03RefreshVisibleDeadline()',ctx);
+ assert.equal(status.main,'締切済','yesterday may not show as upcoming');
+ assert.equal(vm.runInContext("deadlineDeltaSeconds('25:00','2026-10-15')",ctx),null);
+ assert.equal(vm.runInContext("deadlineDeltaSeconds('09:00','2026-02-31')",ctx),null);
+ assert.equal(ctx.state.race.race_key,key,'counter never changes selected race');
+ console.log('BOAT_EDGE_03_JST_LIVE_DEADLINE_COUNTDOWN_PASS');
+})();
+
 /* 03: midnight fail-closed race catalog. Exercise actual UI source, no network. */
 (async()=>{
  const html=fs.readFileSync('index.html','utf8');
