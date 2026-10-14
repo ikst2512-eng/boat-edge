@@ -18,7 +18,7 @@ from test_boat_edge_v236_v339_cross_run_audit import report
 def bundle(root, fetcher=mock_page):
     prepare(root)
     frozen = live_local_freeze(root, KEY, capture=True, fetcher=fetcher, clock=lambda: PRE)
-    r = report(digest=frozen["sha256"])
+    r = report(key=KEY, digest=frozen["sha256"])
     return r, root / frozen["path"], root / f"data/source_captures/{KEY[:8]}/{KEY}/race_input.json"
 
 
@@ -59,7 +59,7 @@ class V343ExactInputReplay(unittest.TestCase):
             frozen = live_local_freeze(root, KEY, capture=True, fetcher=changing_page, clock=lambda: PRE)
             snapshot = root / f"data/source_captures/{KEY[:8]}/{KEY}/race_input.json"
             self.assertEqual(snapshot.read_bytes(), original)
-            self.assertTrue(verify(root, report(digest=frozen["sha256"]))[
+            self.assertTrue(verify(root, report(key=KEY, digest=frozen["sha256"]))[
                 "candidate_replay_verified_within_supplied_report"])
 
     def test_missing_old_snapshot_cannot_be_reconstructed_from_live_card(self):
