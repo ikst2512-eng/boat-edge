@@ -20,7 +20,7 @@ function decorateWorlds(){
     const pr=w.querySelector(".world-prob");
     if(pr){
       // Never interpret an already-formatted percent as a fractional probability.
-      const m=String(pr.textContent||'').trim().match(/^(\\d+(?:\\.\\d+)?)%$/);
+      const m=String(pr.textContent||'').trim().match(/^(\d+(?:\.\d+)?)%$/);
       if(m){const n=normPct(m[1]);if(n!==null)pr.textContent=`${n.toFixed(n%1?1:0)}%`;}
     }
     const tickets=[...w.querySelectorAll(".ticket")];
