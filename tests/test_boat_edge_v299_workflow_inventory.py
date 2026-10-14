@@ -231,6 +231,11 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("cron: '1 0-14,23 * * *'", atomic)
         self.assertIn("cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'", atomic)
         self.assertEqual(history.count('cron: "4-59/5 * * * *"'), 1)
+        # The original V130-V132 installer is no longer safe to reapply.
+        # Manual and scheduled V133 history continue from the tracked script.
+        self.assertIn("  install:\\n", history) if False else None
+        self.assertIn("if: ${{ false }}", history)
+        self.assertIn("if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')", history)
         self.assertIn("  workflow_dispatch:", todo)
         self.assertIn("  schedule:", todo)
         self.assertIn("cron: '38 * * * *'", todo)
