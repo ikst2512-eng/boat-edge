@@ -118,6 +118,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v125_git_race_safety.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_01_v125_preserve_v229_proof.py' -v
           python3 -m unittest discover -s tests -p 'test_boat_edge_v299_workflow_inventory.py' -v
           python3 -m unittest discover -s tests -p 'test_boat_edge_v342_retired_schedulers.py' -v
           python3 scripts/boat_edge_v299_workflow_inventory.py
