@@ -35,6 +35,12 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
       - name: Validate tracked source pins
         run: python3 scripts/verify_workflow_source_pins.py
+      - name: Verify same-run official scratch evidence (synthetic HTML only)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v01_collector_scratch.py' -v
+          python3 -m py_compile scripts/boat_edge_v01_collector_scratch.py
       - name: Re-attest exact V228 live SITE model blob and no-result extraction
         env:
           PYTHONPATH: scripts
