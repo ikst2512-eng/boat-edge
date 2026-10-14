@@ -174,8 +174,8 @@ htmlBefore=withRace({beforeinfo:{...bRace.beforeinfo,
  racers:[...bRace.beforeinfo.racers,{lane:2,exhibition_time:1.11,tilt:9}]
 }});
 assert(!htmlBefore.includes('.99')&&!htmlBefore.includes('1.11'));
-const duplicates=htmlBefore.match(/<div class="be48-brow">[\\s\\S]*?<\\/div>/g)||[];
+const duplicates=htmlBefore.split('<div class="be48-brow">').slice(1).map(x=>x.split('</div>')[0]);
 assert.equal(duplicates.length,6);
 assert(duplicates[0].includes('<span>—</span>'),'duplicate start lane must be missing');
-assert(duplicates[1].includes('<span>—</span></div>'),'duplicate racer time/tilt must be missing');
+assert(duplicates[1].includes('<span>F.02</span><span>—</span><span>—</span>'),'duplicate racer time/tilt must be missing');
 console.log('BOAT_EDGE_03_BEFOREINFO_SOURCE_BOUND_PRE_RESULT_COMPACT_PASS');
