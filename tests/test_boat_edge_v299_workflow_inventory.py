@@ -220,9 +220,17 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertNotIn("  push:", old_ui)
         self.assertIn("V249_VERIFIED_UI_RESOURCE_DRIFT_", old_ui)
         self.assertIn("assets/boat_edge_v249_focus.css", old_ui)
-        # The user-facing V133 FINAL15M history keeps its 5-minute cadence,
-        # while the TODO documentation no longer republishes on every run.
-        self.assertIn('cron: "*/5 * * * *"', history)
+        # Keep V133's 5-minute fallback, but start it at minute 04,09,...
+        # after the independent V229 01,06,... and V235 02,07,... source
+        # freeze slots. This does not guarantee actual Actions execution
+        # ordering and never upgrades unverified site reference predictions.
+        self.assertIn('cron: "4-59/5 * * * *"', history)
+        primary = (root / "V235.yml").read_text(encoding="utf-8")
+        atomic = (root / "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
+        self.assertIn("cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'", primary)
+        self.assertIn("cron: '1 0-14,23 * * *'", atomic)
+        self.assertIn("cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'", atomic)
+        self.assertEqual(history.count('cron: "4-59/5 * * * *"'), 1)
         self.assertIn("  workflow_dispatch:", todo)
         self.assertIn("  schedule:", todo)
         self.assertIn("cron: '38 * * * *'", todo)
