@@ -189,6 +189,21 @@ def test_snapshot_evidence_contract_without_network():
     assert accepted["saved_top3"] == combos[:3]
     assert accepted["saved_top10"] == combos
     assert accepted["first_git_commit_verified"] is False
+    assert unpublished_live_receipt_reason(200, {}) is None
+    assert (unpublished_live_receipt_reason(404, {
+        "status": "NO_SITE_PREDEADLINE_SNAPSHOT"
+    }) == "RACE_FILE_NOT_PUBLISHED_HTTP_404")
+    for status, evidence in [
+        (404, {"status": "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"}),
+        (500, {"status": "NO_SITE_PREDEADLINE_SNAPSHOT"}),
+        (403, {}),
+    ]:
+        try:
+            unpublished_live_receipt_reason(status, evidence)
+            raise AssertionError("Unexpected HTTP / proved final cannot pass")
+        except AssertionError as err:
+            assert "receipt unavailable HTTP" in str(err)
+
     assert check({})["status"] == "NO_SITE_PREDEADLINE_SNAPSHOT"
     assert check({**data, "site_prediction_audit/" + key + ".json":
                   {**audit, "latest_snapshot_sha256": "0" * 64}}
@@ -309,6 +324,25 @@ def prioritize_saved_final_candidates(choices, verified_keys):
     ))
 
 
+def unpublished_live_receipt_reason(http_status, saved_evidence):
+    """Fail closed: 404 without a verified FINAL is an unavailable source, not TopK PASS.
+
+    Missing a race file from an independently refreshed catalog can happen
+    during Pages deployment. Any stronger published proof, or unexpected HTTP
+    error, is still a true integrity/test failure.
+    """
+    if http_status == 200:
+        return None
+    verified = (saved_evidence or {}).get("status") == (
+        "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED")
+    if http_status == 404 and not verified:
+        return "RACE_FILE_NOT_PUBLISHED_HTTP_404"
+    raise AssertionError(
+        f"Selected live PRE_RESULT receipt unavailable HTTP {http_status}"
+        + (" despite verified saved FINAL" if verified else "")
+    )
+
+
 def probe_verified_live_topk(context, target, catalog, shots, engine):
     """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
 
@@ -350,7 +384,14 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
             target.rsplit("/", 1)[0] + "/" + path,
             headers={"Cache-Control": "no-store"}, timeout=15000
         )
-        assert receipt.status == 200, "Selected live PRE_RESULT receipt missing: " + key
+        reason = unpublished_live_receipt_reason(
+            receipt.status, verified_saved.get(key))
+        if reason is not None:
+            # Keep testing other still-future races. A missing published
+            # receipt is NOT a certified live forecast or a fake successful
+            # UI test; preserve its precise fail-closed reason.
+            stopped_reasons.append({"race": key, "reason": reason})
+            continue
         payload = receipt.json()
         assert payload.get("race_key") == key, "Cross-race live receipt mismatch"
         meta = payload.get("meta") or {}
