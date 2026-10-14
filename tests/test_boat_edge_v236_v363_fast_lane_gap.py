@@ -10,13 +10,13 @@ from boat_edge_v334_live_batch_runner import run
 from boat_edge_v363_fast_lane_gap_diagnostic import classify
 from test_boat_edge_v236_v334_live_batch import NOW, prepare
 
-KEY = "20261013-22-12"
+KEY = "20261015-22-12"
 
 
 def stale_card(root):
     path = root / "data/races" / (KEY + ".json")
     record = json.loads(path.read_bytes())
-    record["source_audit"]["race_card"]["fetched_at"] = "2026-10-13T16:00:00+09:00"
+    record["source_audit"]["race_card"]["fetched_at"] = "2026-10-15T16:00:00+09:00"
     path.write_text(json.dumps(record), encoding="utf-8")
 
 
