@@ -14,7 +14,10 @@ import urllib.request
 
 PAGE_PATH = "dynamic/pages/pages-build-deployment"
 WAIT_SECONDS = 180
-PUBLISH_GRACE_SECONDS = 720
+# A successful Pages deploy for an OLDER head is not proof the current
+# SITE PRE_RESULT prediction is available. Give GitHub a short settling
+# window, then permit a narrowly gated recovery of the still-unpublished head.
+PUBLISH_GRACE_SECONDS = 240
 
 
 def parse_time(s: str | None):
@@ -64,6 +67,9 @@ def decision(pages, commit, runs, now=None):
     if last_ok:
         latest_success = parse_time(last_ok.get("updated_at") or last_ok.get("created_at"))
         if latest_success and (now - latest_success).total_seconds() < PUBLISH_GRACE_SECONDS:
+            # This success was for a *different* head (exact match already
+            # returned above). Do not suppress current PRE_RESULT publication
+            # for the former twelve-minute grace interval.
             return "RECENT_PAGES_SUCCESS_GRACE"
     last_build = parse_time(latest.get("created_at"))
     if last_build and (now - last_build).total_seconds() < WAIT_SECONDS:
