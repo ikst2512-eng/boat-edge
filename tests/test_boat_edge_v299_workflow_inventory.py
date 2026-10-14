@@ -14,6 +14,10 @@ class WorkflowInventoryTests(unittest.TestCase):
         for name in RETIRED:
             self.assertEqual(items[name]["triggers"], ["workflow_dispatch"])
             self.assertEqual(items[name]["crons"], [])
+        # Copies with suffix ' 2' were byte-identical inert placeholders.
+        # The canonical disabled stubs remain to keep old entrypoints sealed.
+        for duplicate in ("auto-update-5min 2.yml", "auto-update-v10 2.yml"):
+            self.assertFalse((ROOT / ".github/workflows" / duplicate).exists(), duplicate)
         self.assertIn("schedule", items[LIVE]["triggers"])
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
@@ -268,9 +272,12 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("if: ${{ false }}", history)
         self.assertIn("if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')", history)
         self.assertIn("  workflow_dispatch:", todo)
-        self.assertIn("  schedule:", todo)
-        self.assertIn("cron: '38 * * * *'", todo)
+        # V134 was deliberately retired from hourly writes: keep a manual
+        # recovery entrypoint, but reject any resumed TODO cron or relay.
+        self.assertNotIn("  schedule:", todo)
+        self.assertNotIn("cron: '38 * * * *'", todo)
         self.assertNotIn("  workflow_run:", todo)
+        self.assertIn("    paths: ['.github/workflows/site-v134.yml']", todo)
         self.assertIn("git add -- BOAT_EDGE_CURRENT_TODO.md", todo)
         # V134's fix cannot disable or backdate the prediction source freeze.
         primary = (root / "V235.yml").read_text(encoding="utf-8")
