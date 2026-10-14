@@ -251,9 +251,43 @@ def test_v290_missing_source_vs_freeze_window():
         assert summary['site_prediction_freeze_observation']['today']==out
     print('V290_MISSING_FREEZE_CAUSE_AND_LAST_OBSERVATION_WINDOW_PASS')
 
+def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
+    # Synthetic contract only: no live dispatch, outcome or formal access.
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
+    header=wf.split('permissions:',1)[0]
+    assert header.count('  schedule:')==1
+    assert "- cron: '11,26,41,56 * * * *'" in header
+    assert '  workflow_run:' in header
+    assert "'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" in header
+    assert '    types: [completed]' in header
+    assert '    branches: [main]' in header
+    job=wf.split('  site-operations:',1)[1].split('    runs-on:',1)[0]
+    for marker in (
+        "github.ref == 'refs/heads/main'",
+        "github.event_name != 'workflow_run'",
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.head_branch == 'main'",
+        "github.event.workflow_run.head_repository.full_name == github.repository",
+    ):
+        assert marker in job, marker
+    for step in ('Verify current versioned site-operations code',
+                 'Generate observed pre-result site-operations report'):
+        body=wf.split('      - name: '+step,1)[1].split('      - name:',1)[0]
+        assert "if: github.event_name != 'workflow_run'" in body, step
+    recovery=wf.split('      - name: Retry missed PRE_RESULT collector workflows only if no recent runs',1)[1]
+    assert "--recovery-plan" in recovery
+    assert 'auto-update.yml|site-odds.yml' in recovery
+    assert "900" in recovery, "15-minute dispatch cooldown required"
+    assert 'gh workflow run "$wf" --ref main' in recovery
+    assert 'gh workflow run V229' not in recovery
+    assert 'gh workflow run V235' not in recovery
+    assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
+    print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
     test_v272_source_change_trigger()
     test_v284_freeze_coverage_not_early_false_miss()
     test_v290_missing_source_vs_freeze_window()
+    test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
