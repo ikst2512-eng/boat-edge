@@ -22,6 +22,22 @@
     const t=Date.parse(s.fetched_at),due=deadline(r);
     return time(s.fetched_at)+'取得'+(Number.isFinite(due)?(t>=due?'（締切後・予想には不使用）':'（締切前・予測使用は未確認）'):'（締切照合不可）');
   };
+  // The six-boat metrics are stricter than the historical acquisition label:
+  // only same-race, hashed, pre-deadline PRE_RESULT data can supply visible numbers.
+  function displayProof(r,k,now=Date.now()){
+    const key=String(r?.race_key||''),m=r?.meta||{},s=r?.source_audit?.[k];
+    if(!/^20\d{6}-(?:0[1-9]|1\d|2[0-4])-(?:0[1-9]|1[0-2])$/.test(key)||
+       m.phase!=='PRE_RESULT'||m.results_seen!==false||m.unlock!==false||m.scoring!==false||
+       m.date!==key.slice(0,4)+'-'+key.slice(4,6)+'-'+key.slice(6,8)||
+       String(m.venue_code||'').padStart(2,'0')!==key.slice(9,11)||
+       Number(m.race_no)!==Number(key.slice(12,14))||
+       !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(m.deadline||''))||
+       s?.status!=='ok'||!/^[a-f0-9]{64}$/i.test(String(s.sha256||''))||
+       (s.race_key&&s.race_key!==key))return false;
+    const fetched=Date.parse(s.fetched_at||''),due=deadline(r);
+    return Number.isFinite(fetched)&&Number.isFinite(due)&&
+      fetched<due&&fetched<=now+60000;
+  }
   let selectedKey='',scratch=null,scratchError='',fullStats=true,fullTable=false,observer=null,inDraw=false,lastSig='';
   function scratchHint(r){
     const notice=$('#be182ScratchStop');
@@ -52,7 +68,7 @@
   }
   function getRows(r){
     const racers=Array.isArray(r?.racers)?r.racers:[];
-    const ex=src(r,'beforeinfo'),stt=src(r,'stt'),ori=src(r,'original_exhibition');
+    const ex=displayProof(r,'beforeinfo'),stt=displayProof(r,'stt'),ori=displayProof(r,'original_exhibition');
     const before=uniqueLaneRows(r?.beforeinfo?.racers);
     const starts=uniqueLaneRows(r?.beforeinfo?.start_exhibition);
     const entries=uniqueLaneRows(r?.actual_entry);
@@ -134,7 +150,7 @@
     };
   }
   function header(r){
-    const s=scratchHint(r),ex=src(r,'beforeinfo'),stt=src(r,'stt'),ori=src(r,'original_exhibition'),w=ex?r.beforeinfo?.weather||{}:{};
+    const s=scratchHint(r),ex=displayProof(r,'beforeinfo'),stt=displayProof(r,'stt'),ori=displayProof(r,'original_exhibition'),w=ex?r.beforeinfo?.weather||{}:{};
     const water=[['風',n(w.wind_speed_ms)!==null?val(w.wind_speed_ms,1)+'m/s':'－'],['波',n(w.wave_cm)!==null?val(w.wave_cm,0)+'cm':'－']];
     const badges=[['展示タイム',ex,'beforeinfo'],['展示ST・進入',ex||stt,ex?'beforeinfo':'stt'],['オリ展CSV',ori,'original_exhibition']];
     return `<div class="be203-health be203-${s.type}" role="status"><strong>${esc(s.label)}</strong><span>${esc(s.description)}</span></div>`+
