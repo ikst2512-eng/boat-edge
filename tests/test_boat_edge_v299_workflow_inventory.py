@@ -14,6 +14,11 @@ class WorkflowInventoryTests(unittest.TestCase):
         for name in RETIRED:
             self.assertEqual(items[name]["triggers"], ["workflow_dispatch"])
             self.assertEqual(items[name]["crons"], [])
+        # Two redundant copies had exactly the same inert 245-byte payload.
+        # Deleting them must never reactivate a producer or affect the retained
+        # canonical disabled tombstones; refuse accidental re-introduction.
+        for duplicate in ("auto-update-5min 2.yml", "auto-update-v10 2.yml"):
+            self.assertFalse((ROOT / ".github/workflows" / duplicate).exists(), duplicate)
         self.assertIn("schedule", items[LIVE]["triggers"])
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
