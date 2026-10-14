@@ -119,7 +119,7 @@ def _check_current_formal_status(status, race_key, now):
         protected.append(last.get("date"))
     for raw in protected:
         try:
-            if not isinstance(raw, str) or not re.fullmatch(r"20\\d{2}-\\d{2}-\\d{2}", raw):
+            if not isinstance(raw, str) or not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", raw):
                 raise ValueError("invalid date")
             day = date.fromisoformat(raw).strftime("%Y%m%d")
         except ValueError as exc:
