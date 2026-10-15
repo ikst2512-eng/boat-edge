@@ -29,14 +29,15 @@ class ProspectiveReady(unittest.TestCase):
         raw='a'*64
         self.race={
             'race_key':KEY,
-            'meta':{'deadline':'08:35','phase':'PRE_RESULT','results_seen':False,
+            'meta':{'date':'2026-10-16','venue_code':'14','race_no':1,
+                    'deadline':'08:35','phase':'PRE_RESULT','results_seen':False,
                     'unlock':False,'scoring':False},
             'racers':[{}]*6,
             'source_audit':{
               'race_card':{'status':'ok','fetched_at':stamp,
-                           'sha256':raw,'source':'https://www.boatrace.jp/owpc/pc/race/racelist'},
+                           'sha256':raw,'source':'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=1'},
               'beforeinfo':{'status':'ok','fetched_at':stamp,'sha256':raw,
-                    'source':'https://www.boatrace.jp/owpc/pc/race/beforeinfo',
+                    'source':'https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=14&rno=1',
                     'six_boat_coverage':{'six_boat_complete':True}},
             }}
         self.scratch={'race_key':KEY,'blocked':False,'checked_at':stamp,
@@ -100,6 +101,42 @@ class ProspectiveReady(unittest.TestCase):
         self.odds['verified_official_dom_v167']=True
         self.race['source_audit']['beforeinfo']['source']='https://evil.example/beforeinfo'
         check_failure()
+
+    def test_original_official_source_uri_must_identify_this_race(self):
+        """Even an official URL for a different real race cannot count."""
+        check=lambda: self.assertIsNone(gate.valid(
+            self.root,KEY,gate.expected_deadline(KEY,'08:35'),AT))
+        card=self.race['source_audit']['race_card']
+        before=self.race['source_audit']['beforeinfo']
+        self.assertIsNotNone(gate.valid(
+            self.root,KEY,gate.expected_deadline(KEY,'08:35'),AT))
+        base=card['source']
+        for invalid in (
+            'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=2',
+            'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=14&rno=1',
+            'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=02&rno=1',
+            'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=1&rno=2',
+            'https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=14&rno=1',
+            'https://www.boatrace.jp.evil.invalid/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=1',
+        ):
+            card['source']=invalid
+            self.sources();check()
+        card['source']=base
+        correct=before['source']
+        before['source']=correct.replace('rno=1','rno=2')
+        self.sources();check()
+        before['source']=correct
+        for change in ({'race_key':'20261016-14-02'},
+                       {'meta':{**self.race['meta'],'date':'2026-10-15'}},
+                       {'meta':{**self.race['meta'],'venue_code':'02'}},
+                       {'meta':{**self.race['meta'],'race_no':2}}):
+            old={k:self.race.get(k) for k in change}
+            self.race.update(change)
+            self.sources();check()
+            self.race.update(old)
+        self.sources()
+        self.assertIsNotNone(gate.valid(
+            self.root,KEY,gate.expected_deadline(KEY,'08:35'),AT))
 
     def test_deadline_bounds_fail_closed(self):
         for offset in (10*60+1,119,60,0,-2):
