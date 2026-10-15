@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 6,
     "deadline": "13:01",
-    "updated_at": "2026-10-15T10:16:34+09:00",
+    "updated_at": "2026-10-15T11:17:03+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=13&rno=6",
-      "fetched_at": "2026-10-15T10:20:04+09:00",
-      "sha256": "b3a4216929d2c2bfda842940dc679493ecee591535e69bda2d58b45ebefc2b3d",
+      "fetched_at": "2026-10-15T11:19:33+09:00",
+      "sha256": "de883f12a3612a3e5da9c26874746b1e319ca07519952f341f7e848afde3f780",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=13&rno=6",
+      "fetched_at": "2026-10-15T11:18:12+09:00",
+      "sha256": "06ebacf7b27b91bdf065659c4bdd213fd9165c5a7cae936af64d52bbb781e484",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "ed97947cb0e2a8ecc11431a446353908b67e7440cc81a0a9c256e440e7ff0dcd"
+      "sha256": "57e032fcf370e9c265c2080a52d46cdb85835290d23657c340c496ff027b4fc3"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "fdb3382e6d4ee73a522dc54ce262d2cafc39f46f3a76d11b3a00029c41aefb0f"
+      "sha256": "73274fbb014c02c1952b66c00e3d43d5b0fd7f890251c6b7e50934780d347145"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "9c35eb5c36141ae8454ce46df289990e52a36586c0f154db6b63f8a2ea1d9ea5"
+      "sha256": "ff77d42d94038c2cd7cf9f00e363bcc0937aec060e2ca1deaf9a92291993bd61"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "972df49a17658a93ca5c178ac424f6717bbf615f9d22d1fbfd884d796855aea2"
+      "sha256": "7aa4a9ec9c9034faabc522efbc61779fb49577f5e7b5d8ea26fb7c67bd569b47"
     }
   },
   "racers": [
@@ -252,10 +258,11 @@
       },
       "series_tokens": [
         "3",
-        "10"
+        "10",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "5 3293 / B1 宮内 由紀英 東京/東京 61歳/52.0kg F0 L0 0.20 3.67 13.95 29.07 4.00 14.29 28.57 9 38.30 58.16 11 28.24 54.96 3 10 1R"
+      "raw_text": "5 3293 / B1 宮内 由紀英 東京/東京 61歳/52.0kg F0 L0 0.20 3.67 13.95 29.07 4.00 14.29 28.57 9 38.30 58.16 11 28.24 54.96 3 10 1 1R"
     },
     {
       "lane": 6,
@@ -298,7 +305,53 @@
       "raw_text": "6 4173 / B1 岡谷 健吾 広島/広島 44歳/55.6kg F0 L0 0.17 5.30 33.03 49.54 5.38 31.25 62.50 40 39.44 55.63 72 38.35 57.14 7 3 12"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 岡村 仁 54.7kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 明石 正之 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 上村 宏太 53.3kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 大野 芳顕 53.6kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 宮内 由紀英 52.0kg R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 岡谷 健吾 55.6kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

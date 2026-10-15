@@ -8,7 +8,7 @@
     "event": "第15回マスターズVSルーキーズ",
     "race_no": 6,
     "deadline": "13:14",
-    "updated_at": "2026-10-15T10:16:34+09:00",
+    "updated_at": "2026-10-15T11:17:03+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=02&rno=6",
-      "fetched_at": "2026-10-15T10:19:56+09:00",
-      "sha256": "3c496a87a314e8aadd57044ab6eae4af82e1a0d5e0c712fc1d6c0358323de0d7",
+      "fetched_at": "2026-10-15T11:18:56+09:00",
+      "sha256": "c61b8f8f5c1209a737c0d2b4b0f2db03af33089d1dcf13ee2ea702b97cdc327c",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=02&rno=6",
+      "fetched_at": "2026-10-15T11:18:19+09:00",
+      "sha256": "5fb05334778ba8ca716d866c0b2bd368f9065578819f933f1c31e8ff06415490",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "ed97947cb0e2a8ecc11431a446353908b67e7440cc81a0a9c256e440e7ff0dcd"
+      "sha256": "57e032fcf370e9c265c2080a52d46cdb85835290d23657c340c496ff027b4fc3"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "fdb3382e6d4ee73a522dc54ce262d2cafc39f46f3a76d11b3a00029c41aefb0f"
+      "sha256": "73274fbb014c02c1952b66c00e3d43d5b0fd7f890251c6b7e50934780d347145"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "9c35eb5c36141ae8454ce46df289990e52a36586c0f154db6b63f8a2ea1d9ea5"
+      "sha256": "ff77d42d94038c2cd7cf9f00e363bcc0937aec060e2ca1deaf9a92291993bd61"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "972df49a17658a93ca5c178ac424f6717bbf615f9d22d1fbfd884d796855aea2"
+      "sha256": "7aa4a9ec9c9034faabc522efbc61779fb49577f5e7b5d8ea26fb7c67bd569b47"
     }
   },
   "racers": [
@@ -197,9 +203,11 @@
         "quinella_rate": 31.71,
         "trio_rate": 51.22
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "1"
+      ],
       "early_race": 1,
-      "raw_text": "4 3793 / B1 高橋 真吾 埼玉/東京 53歳/56.5kg F0 L0 0.16 4.87 35.96 47.19 4.16 25.00 43.18 17 30.61 36.73 63 31.71 51.22 1R"
+      "raw_text": "4 3793 / B1 高橋 真吾 埼玉/東京 53歳/56.5kg F0 L0 0.16 4.87 35.96 47.19 4.16 25.00 43.18 17 30.61 36.73 63 31.71 51.22 1 1R"
     },
     {
       "lane": 5,
@@ -274,7 +282,53 @@
       "raw_text": "6 5016 / A1 宮田 龍馬 兵庫/兵庫 28歳/52.1kg F0 L0 0.14 7.02 47.17 72.64 7.20 60.00 76.00 40 15.22 34.78 64 21.62 32.43 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 一色 颯輝 53.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 杉田 篤光 52.9kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 篠原 晟弥 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 高橋 真吾 56.5kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 杉山 貴博 53.4kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 宮田 龍馬 52.1kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
