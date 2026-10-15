@@ -304,6 +304,7 @@ def update_one(root,key,data,now):
     if not due or not 2<=(due-now).total_seconds()/60<=19:return 'window_passed'
     if m.get('phase')!='PRE_RESULT' or any(m.get(f) is not False for f in ('results_seen','unlock','scoring')):return 'pre_result_unverified'
     if not source_write_allowed(root/'data',key,m.get('deadline'),now):return 'source_locked'
+    if known_explicit_scratch(root,key):return 'source_blocked'
     rb,rtext,rt=data['racelist'];bb,btext,bt=data['beforeinfo']
     odds_response=data['odds']
     ob,otext,ot=odds_response if odds_response is not None else (None,None,None)
@@ -344,6 +345,7 @@ def update_one(root,key,data,now):
     # Recheck existence-only immutable freeze immediately before source writes.
     # A V232 freeze created after targets() must win over this async refresh.
     if not source_write_allowed(root/'data',key,m.get('deadline'),latest):return 'source_locked'
+    if known_explicit_scratch(root,key):return 'source_blocked'
     # Stage HTML + parsed source + scratch check for the very same official bytes.
     write_bytes_exact(raw/f'{vv}_{rr}_racelist.html',rb)
     write_bytes_exact(raw/f'{vv}_{rr}_beforeinfo.html',bb)
@@ -379,6 +381,17 @@ def update_one(root,key,data,now):
     if reasons:return 'source_blocked'
     return 'fresh_verified' if odds is not None else 'odds_incomplete'
 
+def known_explicit_scratch(root, key):
+    """Preserve independent PRE_RESULT evidence of a withdrawn/cancelled racer.
+
+    Missing exhibition alone is retryable; named lanes or official withdrawal
+    flags are not. Only exact race-bound V182 evidence can veto a source update.
+    """
+    scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
+    return (scratch.get('race_key')==key and scratch.get('blocked') is True
+            and bool(scratch.get('suspect_lanes') or scratch.get('official_raw_flags')))
+
+
 def imminent_retry_targets(root, keys, outcomes, now):
     """Retry only incomplete live sources, never an explicit scratch or a frozen race.
 
@@ -398,7 +411,12 @@ def imminent_retry_targets(root, keys, outcomes, now):
             continue
         outcome=outcomes.get(key)
         if outcome=='odds_incomplete':
-            eligible.append(key)
+            # A newer V182 check can discover a withdrawal AFTER we marked
+            # odds incomplete. Never retry and overwrite that evidence.
+            scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
+            if not (scratch.get('blocked') is True or
+                    (scratch and scratch.get('race_key')!=key)):
+                eligible.append(key)
         elif isinstance(outcome,str) and re.match(
                 r'^fetch_failed:(?:Timeout|ReadTimeout|ConnectTimeout|ConnectionError): ',
                 outcome):
@@ -408,7 +426,8 @@ def imminent_retry_targets(root, keys, outcomes, now):
             # Redirects, wrong-source identities and all other failures are
             # deliberately excluded. A retry is NOT an eligibility proof.
             scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
-            if not (scratch.get('race_key')==key and scratch.get('blocked') is True):
+            if not (scratch.get('blocked') is True or
+                    (scratch and scratch.get('race_key')!=key)):
                 eligible.append(key)
         elif outcome=='source_blocked':
             scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}

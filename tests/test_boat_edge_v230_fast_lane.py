@@ -207,6 +207,62 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.imminent_retry_targets(
             self.root,[KEY],{KEY:'fresh_verified'},self.now),[])
 
+    def test_odds_incomplete_retry_respects_newly_recorded_scratch(self):
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
+        outcome={KEY:'odds_incomplete'}
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],outcome,self.now),[KEY])
+        scratch={'race_key':KEY,'blocked':True,'suspect_lanes':[3],
+                 'official_raw_flags':['racelist'],
+                 'reason':'公式HTMLに欠場・取消の表記あり'}
+        m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],outcome,self.now),[])
+        # The same guard runs again after the 20s retry wait.
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],outcome,self.now+timedelta(seconds=20)),[])
+        scratch['blocked']=False
+        scratch['suspect_lanes']=[]
+        scratch['official_raw_flags']=[]
+        m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],outcome,self.now),[KEY])
+        scratch['race_key']='20261011-06-09'
+        m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],outcome,self.now),[])
+
+    def test_update_does_not_erase_independent_explicit_withdrawal(self):
+        scratch={'race_key':KEY,'blocked':True,'suspect_lanes':[4],
+                 'official_raw_flags':['beforeinfo'],
+                 'reason':'公式HTMLに欠場・取消の表記あり'}
+        m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
+        path=self.root/'data/races'/f'{KEY}.json'
+        before=path.read_bytes()
+        with patch.object(m,'verified_odds',side_effect=AssertionError(
+                'a known withdrawal must block source update before odds verification')):
+            self.assertEqual(m.update_one(self.root,KEY,self.data(),self.now),
+                             'source_blocked')
+        self.assertEqual(path.read_bytes(),before)
+        self.assertEqual(m.load(self.root/'data/site_scratches_v182'/f'{KEY}.json'),scratch)
+        self.assertFalse((self.root/'data/site_odds'/f'{KEY}.json').exists())
+        self.assertFalse((self.root/'data/raw/20261011/06_08_beforeinfo.html').exists())
+
+    def test_update_rechecks_withdrawal_just_before_source_writes(self):
+        scratch={'race_key':KEY,'blocked':True,'suspect_lanes':[2],
+                 'official_raw_flags':['racelist']}
+        old=(self.root/'data/races'/f'{KEY}.json').read_bytes()
+        def concurrent_scratch(*args):
+            m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
+            return ([],[],[])
+        with patch.object(m,'extract_blocked',side_effect=concurrent_scratch):
+            self.assertEqual(m.update_one(self.root,KEY,self.data(),self.now),
+                             'source_blocked')
+        self.assertEqual((self.root/'data/races'/f'{KEY}.json').read_bytes(),old)
+        self.assertEqual(m.load(self.root/'data/site_scratches_v182'/f'{KEY}.json'),scratch)
+        self.assertFalse((self.root/'data/raw/20261011/06_08_beforeinfo.html').exists())
+
     def test_transient_transport_second_chance_rejects_redirect_and_known_scratch(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
             'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
