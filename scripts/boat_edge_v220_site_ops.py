@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 
 JST=timezone(timedelta(hours=9))
 SCHEMA='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'
@@ -88,6 +89,21 @@ def source_status(root,key,now):
     if snap.get('race_key')!=key or snap.get('snapshot_window')!='FINAL_15M' or not snap.get('odds_sha256'):
         issues.append('frozen_prediction_missing_or_invalid')
     return sorted(set(issues))
+
+def verified_v229_recovery_source(root,key,now):
+    """Do not waste the V229 recovery window on a source that V229 will reject.
+
+    Reuse the existing 1C PRE_RESULT original official HTML / V182 scratch /
+    official 120-odds verifier; V220 status labels alone are not readiness.
+    Read only. No result, payout, formal prediction, or source modification.
+    """
+    scripts=str(Path(__file__).resolve().parent)
+    if scripts not in sys.path:sys.path.insert(0,scripts)
+    from boat_edge_01_gate1c_source_ready import valid
+    race=load(root/'data/races'/f'{key}.json') or {}
+    due=expected_deadline(key,(race.get('meta') or {}).get('deadline'))
+    return due is not None and valid(root,key,due,now) is not None
+
 
 def freeze_coverage(root,day,now):
     """Site-only, observed-window coverage; never query a race result.
@@ -290,6 +306,7 @@ def compute(root,now):
     # EXISTING guarded V229 workflow only with complete currently saved
     # source evidence. Readiness observations alone never authorize a freeze.
     # No retrospective runs or writes into already-present/invalid snapshots.
+    # A UI all-clear is not enough: require source-bound PRE_RESULT proof.
     formal_locked=(
         all(formal_guard.get(k) is False for k in ('results_seen','unlock','scoring'))
         and formal_guard.get('RESULT_UNLOCK_TOKEN') is None
@@ -298,6 +315,7 @@ def compute(root,now):
         2<=r['minutes_left']<=10
         and r['missing_evidence']==['frozen_prediction_missing_or_invalid']
         and not (root/'data/site_prediction_snapshots'/f"{r['key']}.json").exists()
+        and verified_v229_recovery_source(root,r['key'],now)
         for r in urgent
     ):
         recover.append('BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml')

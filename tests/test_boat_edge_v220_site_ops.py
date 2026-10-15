@@ -1,4 +1,5 @@
 from __future__ import annotations
+import hashlib
 import importlib.util
 import json
 import sys
@@ -286,30 +287,53 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
     print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
 
+def fully_proven_pre_result_fixture(root, now):
+    """Synthetic source with matching original official HTML bytes and V182 SHA."""
+    stamp=(now-timedelta(minutes=1)).isoformat()
+    audit={}; hashes={}
+    for role,suffix in [('race_card','racelist'),('beforeinfo','beforeinfo')]:
+        data=f'<html>official {KEY} {suffix} evidence</html>'.encode()
+        raw=root/f'data/raw/{DAY}/23_01_{suffix}.html'
+        raw.parent.mkdir(parents=True,exist_ok=True)
+        raw.write_bytes(data)
+        hashes[role]=hashlib.sha256(data).hexdigest()
+        audit[role]={
+            'status':'ok','fetched_at':stamp,'sha256':hashes[role],
+            'source':f'https://www.boatrace.jp/owpc/pc/race/{suffix}?hd={DAY}&jcd=23&rno=1'}
+    audit['beforeinfo']['six_boat_coverage']={'six_boat_complete':True}
+    race={'race_key':KEY,
+          'meta':{'date':'2026-10-11','deadline':'08:35',
+                  'venue_code':'23','race_no':1,'phase':'PRE_RESULT',
+                  'results_seen':False,'unlock':False,'scoring':False},
+          'racers':[{'lane':lane} for lane in range(1,7)],
+          'source_audit':audit}
+    scratch={'race_key':KEY,'schema_version':'boat-edge-v182-scratch-evidence-v1',
+             'source_date':DAY,'blocked':False,'checked_at':stamp,
+             'race_card_source_status':'ok','official_beforeinfo_source_status':'ok',
+             'official_beforeinfo_six_boat_complete':True,
+             'suspect_lanes':[],'official_raw_flags':[],
+             'race_card_sha256':hashes['race_card'],
+             'beforeinfo_sha256':hashes['beforeinfo']}
+    combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
+            for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}
+    odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':stamp,
+          'results_seen':False,'scoring':False,'available_count':120,
+          'verified_official_dom_v167':True,'trifecta_odds':combos}
+    put(root,f'data/races/{KEY}.json',race)
+    put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+    put(root,f'data/site_odds/{KEY}.json',odds)
+    return race,scratch,odds
+
+
 def test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m():
     # Synthetic PRE_RESULT only: no real-race outcome, network or engine dispatch.
     name='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp);sample(root)
         now=NOW+timedelta(minutes=25)  # 08:30, deadline 08:35
-        stamp='2026-10-11T08:29:00+09:00'
-        card={'status':'ok','fetched_at':stamp}
-        race={'race_key':KEY,
-              'meta':{'phase':'PRE_RESULT','results_seen':False,
-                      'unlock':False,'scoring':False},
-              'racers':[{}]*6,
-              'source_audit':{'race_card':card,'beforeinfo':card}}
-        put(root,f'data/races/{KEY}.json',race)
-        scratch={'race_key':KEY,'blocked':False,'checked_at':stamp,
-                 'race_card_source_status':'ok','official_beforeinfo_source_status':'ok'}
-        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
-        combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
-                for b in range(1,7) for c in range(1,7)
-                if len({a,b,c})==3}
-        odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':stamp,
-              'results_seen':False,'scoring':False,'available_count':120,
-              'verified_official_dom_v167':True,'trifecta_odds':combos}
-        put(root,f'data/site_odds/{KEY}.json',odds)
+        race,scratch,odds=fully_proven_pre_result_fixture(root,now)
+        card=race['source_audit']['race_card']
+        stamp=card['fetched_at']
         ready=mod.compute(root,now)
         assert ready['recovery_dispatch_candidates']==[name],ready
         assert ready['current_windows'][0]['missing_evidence']==['frozen_prediction_missing_or_invalid']
@@ -320,6 +344,31 @@ def test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m():
         put(root,f'data/site_prediction_snapshots/{KEY}.json',{'race_key':KEY,'invalid':True})
         assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
         (root/f'data/site_prediction_snapshots/{KEY}.json').unlink()
+        # Previously V220 woke V229 even for these source-invalid snapshots:
+        # every status/120-count looked green but V229's raw/SHA would veto.
+        for field in ('race_card_sha256','beforeinfo_sha256'):
+            weak={**scratch}
+            weak.pop(field)
+            put(root,f'data/site_scratches_v182/{KEY}.json',weak)
+            report=mod.compute(root,now)
+            assert report['current_windows'][0]['missing_evidence']==['frozen_prediction_missing_or_invalid']
+            assert name not in report['recovery_dispatch_candidates']
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        card_good=race['source_audit']['race_card']
+        put(root,f'data/races/{KEY}.json',{**race,'source_audit':{
+            **race['source_audit'],'race_card':{**card_good,'sha256':'a'*64}}})
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        put(root,f'data/races/{KEY}.json',race)
+        raw_path=root/f'data/raw/{DAY}/23_01_beforeinfo.html'
+        official_raw=raw_path.read_bytes()
+        raw_path.write_bytes(official_raw+b'changed')
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        raw_path.write_bytes(official_raw)
+        put(root,f'data/site_scratches_v182/{KEY}.json',{
+            **scratch,'official_beforeinfo_six_boat_complete':False})
+        assert name not in mod.compute(root,now)['recovery_dispatch_candidates']
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        assert name in mod.compute(root,now)['recovery_dispatch_candidates']
         # A single missing independently confirmed source must block V229.
         put(root,f'data/races/{KEY}.json',{**race,'source_audit':{'race_card':card,
                              'beforeinfo':{'status':'published_wait','fetched_at':stamp}}})
@@ -351,24 +400,14 @@ def test_recovery_freshness_matches_independent_freeze_boundaries():
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp);sample(root)
         now=NOW+timedelta(minutes=20)  # 10 minutes before synthetic deadline
-        fresh={'status':'ok','fetched_at':now.isoformat()}
-        race={'race_key':KEY,
-              'meta':{'phase':'PRE_RESULT','results_seen':False,'unlock':False,'scoring':False},
-              'racers':[{}]*6,'source_audit':{'race_card':fresh,'beforeinfo':fresh}}
-        scratch={'race_key':KEY,'blocked':False,'checked_at':now.isoformat(),
-                 'race_card_source_status':'ok','official_beforeinfo_source_status':'ok'}
-        odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':now.isoformat(),
-              'results_seen':False,'scoring':False,'available_count':120,
-              'verified_official_dom_v167':True,
-              'trifecta_odds':{f'{a}-{b}-{c}':12.3 for a in range(1,7)
-                               for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}}
-        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
-        put(root,f'data/site_odds/{KEY}.json',odds)
+        race,scratch,odds=fully_proven_pre_result_fixture(root,now)
+        fresh=race['source_audit']['race_card']
+        before_fresh=race['source_audit']['beforeinfo']
         freeze='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
         for age,stale in ((960,False),(961,True),(1020,True),(1200,True)):
             card={**fresh,'fetched_at':(now-timedelta(seconds=age)).isoformat()}
             put(root,f'data/races/{KEY}.json',
-                {**race,'source_audit':{'race_card':card,'beforeinfo':fresh}})
+                {**race,'source_audit':{'race_card':card,'beforeinfo':before_fresh}})
             report=mod.compute(root,now)
             assert ('race_card_stale' in report['current_windows'][0]['missing_evidence']) is stale, age
             assert ('auto-update.yml' in report['recovery_dispatch_candidates']) is stale, age
@@ -379,7 +418,7 @@ def test_recovery_freshness_matches_independent_freeze_boundaries():
             stamp=(now-timedelta(seconds=age)).isoformat()
             put(root,f'data/races/{KEY}.json',
                 {**race,'source_audit':{'race_card':fresh,
-                                      'beforeinfo':{**fresh,'fetched_at':stamp}}})
+                                      'beforeinfo':{**before_fresh,'fetched_at':stamp}}})
             put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'checked_at':stamp})
             put(root,f'data/site_odds/{KEY}.json',{**odds,'fetched_at':stamp})
             report=mod.compute(root,now)
