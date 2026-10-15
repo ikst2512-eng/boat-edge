@@ -4,7 +4,7 @@ import hashlib
 import json
 import unittest
 
-from scripts.boat_edge_v01_live_browser_gate import valid
+from scripts.boat_edge_v01_live_browser_gate import valid, selected_live_race
 
 JST = timezone(timedelta(hours=9))
 NOW = datetime(2026, 10, 14, 19, 30, tzinfo=JST)
@@ -43,6 +43,19 @@ def fixture():
 
 
 class FirstAddBrowserGate(unittest.TestCase):
+    def test_both_browsers_use_one_deterministic_longest_lived_proof(self):
+        records = [
+            {"race_key": "20261015-11-11", "deadline": "15:14"},
+            {"race_key": "20261015-12-01", "deadline": "15:16"},
+            {"race_key": "20261015-02-10", "deadline": "15:18"},
+        ]
+        self.assertEqual(selected_live_race(records), "20261015-02-10")
+        self.assertEqual(selected_live_race(list(reversed(records))),
+                         "20261015-02-10")
+        self.assertIsNone(selected_live_race([]))
+        self.assertEqual(selected_live_race([records[0]]),
+                         "20261015-11-11")
+
     def test_real_proven_frozen_input_triggers_before_deadline(self):
         self.assertTrue(valid(*fixture(), KEY, NOW, ADD))
 

@@ -48,6 +48,7 @@ jobs:
     outputs:
       live_candidate: ${{ steps.probe.outputs.live_candidate }}
       first_add_proofs: ${{ steps.probe.outputs.first_add_proofs }}
+      selected_race: ${{ steps.probe.outputs.selected_race }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -120,20 +121,26 @@ jobs:
 
       - name: Published Pages - Chromium live navigation
         shell: bash
+        env:
+          V01_SELECTED_RACE: ${{ needs.v229-source-first-add.outputs.selected_race }}
         run: |
           set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine chromium \
             --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
+            ${V01_SELECTED_RACE:+--expected-final-race "$V01_SELECTED_RACE"} \
             | tee "$RUNNER_TEMP/pages-chromium-live-final.log"
 
       - name: Published Pages - WebKit iPhone-sized live navigation
         shell: bash
+        env:
+          V01_SELECTED_RACE: ${{ needs.v229-source-first-add.outputs.selected_race }}
         run: |
           set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine webkit \
             --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
+            ${V01_SELECTED_RACE:+--expected-final-race "$V01_SELECTED_RACE"} \
             | tee "$RUNNER_TEMP/pages-webkit-live-final.log"
 
       # On a V229 workflow_run, the existing 01 cheap preflight already proved

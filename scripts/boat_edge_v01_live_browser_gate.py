@@ -150,13 +150,29 @@ def candidates(root, now):
     return eligible
 
 
+def selected_live_race(checked):
+    """Choose ONE proven race with the most live time left for both browsers.
+
+    Do not re-rank predictions; only choose the read-only E2E subject. Both
+    engines MUST receive this same predeclared race, even if racing progresses.
+    """
+    if not checked:
+        return None
+    return max(checked, key=lambda item: (
+        item["race_key"][:8] + item["deadline"].replace(":", ""),
+        item["race_key"],
+    ))["race_key"]
+
+
 if __name__ == "__main__":
     now = datetime.now(timezone.utc)
     checked = candidates(Path("."), now)
+    selected = selected_live_race(checked)
     output = os.environ.get("GITHUB_OUTPUT")
     if output:
         with open(output, "a", encoding="utf-8") as f:
-            f.write("live_candidate=" + ("true" if checked else "false") + "\n")
+            f.write("live_candidate=" + ("true" if selected else "false") + "\n")
+            f.write("selected_race=" + (selected or "") + "\n")
             # Same immutable SHA identity must be proven again by BOTH public
             # browsers. A different saved race must never borrow this Git
             # first-add proof, even if its own SITE audit superficially passes.
@@ -166,6 +182,7 @@ if __name__ == "__main__":
             ) + "\n")
     print("V01_LIVE_BROWSER_ACTUAL_PREDEADLINE_GATE " +
           json.dumps({"eligible_count": len(checked),
+                      "selected_race": selected,
                       "eligible": checked[:4],
                       "browser_pass_claimed": False,
                       "formal_fresh_untouched": True},
