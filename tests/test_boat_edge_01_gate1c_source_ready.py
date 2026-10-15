@@ -48,7 +48,11 @@ class ProspectiveReady(unittest.TestCase):
                     'source':'https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=14&rno=1',
                     'six_boat_coverage':{'six_boat_complete':True}},
             }}
-        self.scratch={'race_key':KEY,'blocked':False,'checked_at':stamp,
+        self.scratch={'schema_version':'boat-edge-v182-scratch-evidence-v1',
+            'race_key':KEY,'source_date':KEY[:8],
+            'race_card_sha256':self.raw_content['racelist'],
+            'beforeinfo_sha256':self.raw_content['beforeinfo'],
+            'blocked':False,'checked_at':stamp,
             'race_card_source_status':'ok','official_beforeinfo_source_status':'ok',
             'official_beforeinfo_six_boat_complete':True,
             'suspect_lanes':[],'official_raw_flags':[]}
@@ -160,6 +164,40 @@ class ProspectiveReady(unittest.TestCase):
             self.assertEqual(gate.run(self.root,AT)['created'],[])
             p.unlink();p.write_bytes(original)
         self.assertEqual(gate.run(self.root,AT)['created'],[KEY])
+
+    def test_scratch_source_identity_and_exact_raw_sha_required(self):
+        """An apparently good withdrawal check from another source is unknown.
+
+        Positive eligibility cannot be based on stale/foreign scratch flags
+        even when all three source JSON files exist and timestamps are fresh.
+        """
+        def reject():
+            self.sources()
+            self.assertIsNone(gate.valid(
+                self.root,KEY,gate.expected_deadline(KEY,'08:35'),AT))
+            self.assertFalse((self.root/gate.OUT/f'{KEY}.json').exists())
+        self.assertIsNotNone(gate.valid(
+            self.root,KEY,gate.expected_deadline(KEY,'08:35'),AT))
+        for field,invalid in (
+            ('schema_version','fake-scratch-v1'),
+            ('source_date','20261015'),
+            ('race_key','20261016-14-02'),
+            ('race_card_sha256','a'*64),
+            ('beforeinfo_sha256','b'*64),
+            ('suspect_lanes',None),
+            ('official_raw_flags',None),
+        ):
+            original=self.scratch[field]
+            self.scratch[field]=invalid
+            reject()
+            self.scratch[field]=original
+        self.sources()
+        self.assertEqual(gate.run(self.root,AT)['created'],[KEY])
+        receipt=json.loads((self.root/gate.OUT/f'{KEY}.json').read_text())
+        self.assertEqual(receipt['official_race_card_sha256'],
+                         self.scratch['race_card_sha256'])
+        self.assertEqual(receipt['official_beforeinfo_sha256'],
+                         self.scratch['beforeinfo_sha256'])
 
     def test_deadline_bounds_fail_closed(self):
         for offset in (10*60+1,119,60,0,-2):

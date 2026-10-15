@@ -95,10 +95,19 @@ def valid(root,key,deadline,now):
                 return None
         except OSError:
             return None
-    if (scratch.get('official_beforeinfo_six_boat_complete') is not True
+    # A fresh 'no scratches' flag is insufficient if it was certified
+    # against DIFFERENT official HTML bytes from the currently published
+    # race/exhibition source. Only the V01 source-bound scratch receipt
+    # proves same-race, same-HTML six-boat participation screening.
+    if (scratch.get('schema_version')!='boat-edge-v182-scratch-evidence-v1'
+        or scratch.get('source_date')!=key[:8]
+        or scratch.get('race_key')!=key
+        or scratch.get('race_card_sha256')!=card['sha256']
+        or scratch.get('beforeinfo_sha256')!=before['sha256']
+        or scratch.get('official_beforeinfo_six_boat_complete') is not True
         or scratch.get('blocked') is not False
-        or scratch.get('suspect_lanes') not in ([],)
-        or scratch.get('official_raw_flags') not in ([],)):
+        or scratch.get('suspect_lanes')!=[]
+        or scratch.get('official_raw_flags')!=[]):
         return None
     if (odds.get('results_seen') is not False or odds.get('scoring') is not False
         or odds.get('verified_official_dom_v167') is not True
