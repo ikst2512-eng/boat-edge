@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 
 from boat_edge_v220_site_ops import expected_deadline, load, source_status
+from boat_edge_v01_collector_scratch import official  # reuse strict role/date/venue/race URI identity
 
 JST=timezone(timedelta(hours=9))
 KEY=re.compile(r'^20\d{6}-\d{2}-\d{2}$')
@@ -63,14 +64,18 @@ def valid(root,key,deadline,now):
     audit=race.get('source_audit') or {}
     card=audit.get('race_card') or {}
     before=audit.get('beforeinfo') or {}
-    if (not isinstance(meta,dict) or meta.get('deadline')!=deadline.astimezone(JST).strftime('%H:%M')
+    if (not isinstance(meta,dict) or race.get('race_key')!=key
+        or meta.get('deadline')!=deadline.astimezone(JST).strftime('%H:%M')
+        or meta.get('date')!=deadline.astimezone(JST).date().isoformat()
+        or meta.get('venue_code')!=key.split('-')[1]
+        or meta.get('race_no')!=int(key.split('-')[2])
         or meta.get('phase')!='PRE_RESULT' or len(race.get('racers') or [])!=6
         or not all(meta.get(g) is False for g in ('results_seen','unlock','scoring'))
-        or card.get('status')!='ok' or before.get('status')!='ok'
-        or not str(card.get('source') or '').startswith('https://www.boatrace.jp/')
-        or not str(before.get('source') or '').startswith('https://www.boatrace.jp/')
-        or not SHA.fullmatch(str(card.get('sha256')))
-        or not SHA.fullmatch(str(before.get('sha256')))
+        # V01 original official-source validator enforces HTTPS exact host,
+        # intended path and unambiguous hd/jcd/rno for THIS race. A valid
+        # official page for a different race is NOT source-ready evidence.
+        or not official(card,'racelist',key)
+        or not official(before,'beforeinfo',key)
         or (before.get('six_boat_coverage') or {}).get('six_boat_complete') is not True):
         return None
     if (scratch.get('official_beforeinfo_six_boat_complete') is not True
