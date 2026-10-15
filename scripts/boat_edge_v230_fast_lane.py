@@ -502,8 +502,74 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     print('V230_FAST_OFFICIAL_PRE_RESULT '+json.dumps({k:v for k,v in status.items() if k!='outcomes'},ensure_ascii=False,sort_keys=True))
     return status
 
+def run_postcommit_incomplete(root, now=None, worker=6):
+    """Retry OTHER incomplete live races only AFTER a real first Git-add push.
+
+    Separate from run(): the initial newly frozen race must be committed before
+    we wait or contact the official site again. This is PRE_RESULT-only.
+    Caller publishes any new snapshot/audit/receipt in a SECOND atomic Git push.
+    """
+    from boat_edge_v228_freeze_only import check_formal_closed
+    from boat_edge_v229_atomic_freeze import run as atomic_freeze
+    from boat_edge_v235_predeadline_receipt import receipt
+    root=Path(root).resolve()
+    now=(now or local_now()).astimezone(JST)
+    check_formal_closed(root)
+    status=load(root/'data/site_autopilot/v230_fast_current.json') or {}
+    report={'schema':'BOAT_EDGE_V230_POSTCOMMIT_INCOMPLETE_RETRY_V1',
+            'first_git_proven':False,'retry_keys':[],'outcomes':{},
+            'new_snapshots_atomic_audited':0}
+    if (status.get('schema')!=SCHEMA or status.get('day_jst')!=now.strftime('%Y%m%d')
+            or type(status.get('new_snapshots_atomic_audited')) is not int
+            or status['new_snapshots_atomic_audited']<1):
+        return report
+    source_keys=status.get('targets')
+    outcomes=status.get('outcomes')
+    if (not isinstance(source_keys,list) or len(source_keys)>12
+            or not isinstance(outcomes,dict)
+            or any(not isinstance(k,str) or not KEY.fullmatch(k) for k in source_keys)):
+        return report
+    # A local V229 candidate, successful script exit, or mutable counter is
+    # NOT proof. Require the exact original snapshot bytes in Git before
+    # recovering another source; no historical/outcome data is read.
+    report['first_git_proven']=any(
+        receipt(root,now=now,requested=k).get('prediction_saved_proven') is True
+        for k in source_keys if outcomes.get(k)=='fresh_verified'
+    )
+    if not report['first_git_proven']:
+        return report
+    retry_keys=imminent_retry_targets(root,source_keys,outcomes,now)
+    if not retry_keys:
+        return report
+    time.sleep(20)
+    retry_keys=imminent_retry_targets(root,retry_keys,outcomes,local_now())
+    report['retry_keys']=retry_keys
+    if not retry_keys:
+        return report
+    with ThreadPoolExecutor(max_workers=min(8,max(1,worker))) as pool:
+        futures=[pool.submit(fetch_one,root,key) for key in retry_keys]
+        for task in as_completed(futures):
+            key,data,err=task.result()
+            if err:
+                report['outcomes'][key]='fetch_failed:'+err
+                continue
+            report['outcomes'][key]=update_one(root,key,data,local_now())
+    report['new_snapshots_atomic_audited']=atomic_freeze(root)
+    return report
+
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--root',default='.');p.add_argument('--workers',type=int,default=6)
     p.add_argument('--priority-race-key',default=None)
     p.add_argument('--retry-imminent',action='store_true',help='one bounded official refresh retry only within the 2-10 minute final window')
-    args=p.parse_args();run(args.root,worker=min(8,max(1,args.workers)),priority_key=args.priority_race_key,retry_imminent=args.retry_imminent)
+    p.add_argument('--postcommit-incomplete',action='store_true',
+                   help='only AFTER initial proven Git publication, retry still-live incomplete OTHER races')
+    p.add_argument('--postcommit-report',default=None,
+                   help='write current invocation report to runner-local file (not published data)')
+    args=p.parse_args()
+    if args.postcommit_incomplete:
+        report=run_postcommit_incomplete(args.root,worker=min(8,max(1,args.workers)))
+        if args.postcommit_report:
+            Path(args.postcommit_report).write_text(json.dumps(report,ensure_ascii=False,sort_keys=True)+'\n',encoding='utf-8')
+        print('V230_POSTCOMMIT_INCOMPLETE_SOURCE_RETRY '+json.dumps(report,ensure_ascii=False,sort_keys=True))
+    else:
+        run(args.root,worker=min(8,max(1,args.workers)),priority_key=args.priority_race_key,retry_imminent=args.retry_imminent)
