@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 4,
     "deadline": "09:53",
-    "updated_at": "2026-10-16T05:34:29+09:00",
+    "updated_at": "2026-10-16T07:57:49+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=4",
-      "fetched_at": "2026-10-16T05:36:04+09:00",
-      "sha256": "4de06c61d688b9251a82a6df90c676da9bc6e91c2efbb287e010a83f540fa1eb",
+      "fetched_at": "2026-10-16T07:59:17+09:00",
+      "sha256": "dc55852674aab6e35dc009755ee442a87efc63144a6bfca88c5749450704f1b3",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=14&rno=4",
+      "fetched_at": "2026-10-16T07:58:38+09:00",
+      "sha256": "ea5a0bcf30ad91729e9ebcad96e3fc681e9d00a34bee96747dd5ce27bb57b657",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/16.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/16.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/16.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/16.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -257,7 +287,7 @@
       "name": "荒木 颯斗",
       "class": "A2",
       "age": 24,
-      "weight_kg": 52.4,
+      "weight_kg": 52.0,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 0,
@@ -293,12 +323,72 @@
         "8"
       ],
       "early_race": null,
-      "raw_text": "6 5252 / A2 荒木 颯斗 愛知/愛知 24歳/52.4kg F0 L0 0.14 6.06 41.53 60.17 5.30 37.04 48.15 53 34.83 47.19 67 35.29 50.98 11 3 10 5 12 2 8"
+      "raw_text": "6 5252 / A2 荒木 颯斗 愛知/愛知 24歳/52.0kg F0 L0 0.14 6.06 41.53 60.17 5.30 37.04 48.15 53 34.83 47.19 67 35.29 50.98 11 3 10 5 12 2 8"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 藤森 陸斗 52.9kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 豊田 祥生 50.5kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 山下 心一 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 渡邊 雄斗 51.5kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 鈴木 雄登 48.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 荒木 颯斗 52.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
