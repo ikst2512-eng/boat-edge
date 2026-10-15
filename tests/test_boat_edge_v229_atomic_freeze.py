@@ -26,13 +26,25 @@ def write(path,x):
     path.write_text(json.dumps(x,ensure_ascii=False),encoding='utf8')
 def fixture(root):
     cards={}
+    hashes={}
     for role,min_age in [('race_card',5),('beforeinfo',1)]:
-        cards[role]={'status':'ok','fetched_at':iso(SAVED-timedelta(minutes=min_age))}
+        suffix='racelist' if role=='race_card' else 'beforeinfo'
+        raw=root/'data/raw'/KEY[:8]/f'{KEY[9:11]}_{KEY[12:14]}_{suffix}.html'
+        raw.parent.mkdir(parents=True,exist_ok=True)
+        raw.write_bytes(('<html>'+suffix+' original official bytes</html>').encode())
+        hashes[role]=hashlib.sha256(raw.read_bytes()).hexdigest()
+        cards[role]={'status':'ok','fetched_at':iso(SAVED-timedelta(minutes=min_age)),
+                     'sha256':hashes[role]}
     race={'meta':{'phase':'PRE_RESULT','results_seen':False,'unlock':False,'scoring':False},
           'racers':[{'lane':i} for i in range(1,7)],'source_audit':cards}
     rp=root/'data/races'/f'{KEY}.json';write(rp,race)
-    scratch={'race_key':KEY,'blocked':False,'race_card_source_status':'ok',
-             'official_beforeinfo_source_status':'ok',
+    scratch={'race_key':KEY,'schema_version':'boat-edge-v182-scratch-evidence-v1',
+             'source_date':KEY[:8],'blocked':False,
+             'race_card_source_status':'ok','official_beforeinfo_source_status':'ok',
+             'official_beforeinfo_six_boat_complete':True,
+             'suspect_lanes':[],'official_raw_flags':[],
+             'race_card_sha256':hashes['race_card'],
+             'beforeinfo_sha256':hashes['beforeinfo'],
              'checked_at':iso(SAVED-timedelta(seconds=30))}
     write(root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
     odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY',
@@ -145,6 +157,43 @@ class AtomicFreezeTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError,'SCRATCH_NOT_VERIFIED'):
             v.validate(self.root,KEY,NOW)
 
+    def test_refuse_official_sha_unbound_scratch_before_evidence(self):
+        """A same-race fresh scratch check must be tied to both raw originals."""
+        p=self.root/'data/site_scratches_v182'/f'{KEY}.json'
+        initial=v.read_obj(p)
+        for field,bad in (
+                ('schema_version','obsolete-check'),
+                ('source_date','20261010'),
+                ('official_beforeinfo_six_boat_complete',False),
+                ('suspect_lanes',None),
+                ('official_raw_flags',None),
+                ('race_card_sha256','a'*64),
+                ('beforeinfo_sha256','b'*64)):
+            current={**initial,field:bad}
+            write(p,current)
+            with self.assertRaisesRegex(AssertionError,'SOURCE_BOUND|HTML_SHA_MISMATCH'):
+                v.validate(self.root,KEY,NOW)
+        write(p,initial)
+        for suffix in ('racelist','beforeinfo'):
+            raw=self.root/'data/raw'/KEY[:8]/f'{KEY[9:11]}_{KEY[12:14]}_{suffix}.html'
+            original=raw.read_bytes()
+            raw.write_bytes(original+b'tampered')
+            with self.assertRaisesRegex(AssertionError,'HTML_SHA_MISMATCH'):
+                v.validate(self.root,KEY,NOW)
+            raw.write_bytes(original)
+        self.assertEqual(v.validate(self.root,KEY,NOW)['odds_combinations'],120)
+
+    def test_runner_source_never_emits_mismatched_snapshot(self):
+        """The injected veto must run BEFORE V133's snapshot construction."""
+        import ast
+        source=(Path(__file__).resolve().parents[1]/
+                'scripts/site_final_history_v133.py').read_text(encoding='utf8')
+        built=v.runner_source(v.build_frozen_source(source))
+        self.assertIn('V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE',built)
+        self.assertLess(built.index('V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE'),
+                        built.index('if (scratches.get(\'race_key\')!=key'))
+        ast.parse(built)
+
     def test_refuse_odds_byte_modification(self):
         self.op.write_bytes(self.op.read_bytes()+b' ')
         with self.assertRaisesRegex(AssertionError,'SIDECAR_NOT_IMMUTABLE'):
@@ -178,6 +227,7 @@ for race_path in []:
 '''+v.ANCHOR+v.WINDOW
         code=v.runner_source(good)
         self.assertIn('V229_FRESH_CARD_BEFORE_FREEZE',code)
+        self.assertIn('V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE',code)
         self.assertIn('2<=mins<=10',code)
         with self.assertRaisesRegex(AssertionError,'ANCHOR_DRIFT'):
             v.runner_source(good.replace(v.WINDOW,''))
