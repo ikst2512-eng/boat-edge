@@ -71,9 +71,16 @@ def valid(saved, audit, receipt, blob, key, now, first_add):
     if not first or not at or not first_add:
         return False
     # 2-10m when frozen; 2-15m still left for real browser installation.
+    # Git %cI is SECOND precision whereas the frozen saved_at is often
+    # microsecond precision. A first Git commit at 14:29:45 and a snapshot
+    # saved at 14:29:45.646 are in the SAME recorded Git second, not evidence
+    # that the commit preceded the snapshot. Compare at Git's precision,
+    # while still rejecting a commit from a whole second earlier and any
+    # commit at or after the exact deadline.
+    git_precision_saved_at = at.replace(microsecond=0)
     if not (2 * 60 <= (due-first).total_seconds() <= 10 * 60
             and 2 * 60 <= (due-now).total_seconds() <= 15 * 60
-            and first <= at <= first_add <= now < due):
+            and first <= at and git_precision_saved_at <= first_add <= now < due):
         return False
     digest = hashlib.sha256(blob).hexdigest()
     modes = saved.get("modes") or {}
