@@ -664,6 +664,13 @@ class FastLaneTests(unittest.TestCase):
         s=m.load(self.root/'data/site_scratches_v182'/f'{KEY}.json')
         self.assertIs(s['blocked'],False)
         self.assertEqual(s['official_beforeinfo_source_status'],'ok')
+        self.assertEqual(s['schema_version'],'boat-edge-v182-scratch-evidence-v1')
+        self.assertEqual(s['source_date'],KEY[:8])
+        for role,audit_role in (('racelist','race_card'),('beforeinfo','beforeinfo')):
+            raw=(self.root/f'data/raw/20261011/06_08_{role}.html').read_bytes()
+            receipt_field='race_card_sha256' if role=='racelist' else 'beforeinfo_sha256'
+            self.assertEqual(s[receipt_field],m.sha(raw))
+            self.assertEqual(s[receipt_field],r['source_audit'][audit_role]['sha256'])
     def test_scratch_blocks_even_when_odds_pass(self):
         prices={f'{a}-{b}-{c}':10.0 for a in range(1,7) for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}
         with patch.object(m,'verified_odds',return_value=prices):
