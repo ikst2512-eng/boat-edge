@@ -3,6 +3,7 @@
 Never accesses result endpoints, external network, or formal target history.
 """
 import json
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -13,6 +14,9 @@ YAML=(ROOT/'.github/workflows/auto-update.yml').read_text(encoding='utf-8')
 
 def shell():
     tail=YAML.split('      - name: 更新内容を保存\n',1)[1].split('        run: |\n',1)[1]
+    # The publish shell ends at the NEXT workflow step. Reading to EOF
+    # accidentally parses its YAML metadata (if: / name:) as shell.
+    tail=re.split(r'(?m)^      (?=- name:|#)',tail,maxsplit=1)[0]
     return '\n'.join(x[10:] if x.startswith('          ') else x for x in tail.splitlines())+'\n'
 
 def run(cmd,cwd=None,input=None,ok=True):
