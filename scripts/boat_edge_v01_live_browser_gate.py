@@ -37,20 +37,35 @@ def read(path):
         return None
 
 
-def first_git_add(root, path):
+def first_git_add_proof(root, path):
+    """Read Git's first-add timestamp AND original bytes, not current HEAD bytes.
+
+    A later commit could replace the saved snapshot and update its audit/receipt
+    consistently. SHA parity among those mutable HEAD files does not establish
+    that the SAME bytes existed at the first predeadline Git addition.
+    """
     relative = path.relative_to(root).as_posix()
-    # This queries the first-add commit of ONE specific pre-result file,
-    # not the latest result, a predicted first_saved_at or the current HEAD.
-    p = subprocess.run(
-        ["git", "log", "--diff-filter=A", "--format=%cI", "--", relative],
+    history = subprocess.run(
+        ["git", "log", "--diff-filter=A", "--format=%H%x09%cI", "--", relative],
         cwd=root, capture_output=True, text=True, check=False,
     )
-    if p.returncode:
+    if history.returncode:
         return None
-    dates = [instant(x) for x in p.stdout.splitlines()]
-    if not dates or any(x is None for x in dates):
+    rows = [line.split("\t") for line in history.stdout.splitlines()]
+    if not rows or any(
+            len(row) != 2 or not re.fullmatch(r"[0-9a-f]{40}", row[0])
+            or instant(row[1]) is None for row in rows):
         return None
-    return min(dates)
+    # Git log emits newest first; oldest first-add wins even if a later
+    # commit has an incorrectly set author/committer clock.
+    original_commit, timestamp = rows[-1]
+    original = subprocess.run(
+        ["git", "show", original_commit + ":" + relative],
+        cwd=root, capture_output=True, check=False,
+    )
+    if original.returncode:
+        return None
+    return instant(timestamp), hashlib.sha256(original.stdout).hexdigest(), original_commit
 
 
 def valid(saved, audit, receipt, blob, key, now, first_add):
@@ -142,11 +157,20 @@ def candidates(root, now):
         raw = snapshot_path.read_bytes()
         snapshot = read(snapshot_path)
         audit, receipt = read(audit_path), read(receipt_path)
-        commit_at = first_git_add(root, snapshot_path)
+        proof = first_git_add_proof(root, snapshot_path)
+        if proof is None:
+            continue
+        commit_at, original_digest, original_commit = proof
+        current_digest = hashlib.sha256(raw).hexdigest()
+        # The same race's first Git ADD must contain the exact bytes
+        # currently displayed. Self-consistent rewritten audits cannot pass.
+        if original_digest != current_digest:
+            continue
         if valid(snapshot, audit, receipt, raw, key, now, commit_at):
             eligible.append({"race_key": key, "deadline": snapshot["deadline"],
                              "first_git_add_utc": commit_at.isoformat(),
-                             "snapshot_sha256": hashlib.sha256(raw).hexdigest()})
+                             "first_git_commit_sha": original_commit,
+                             "snapshot_sha256": current_digest})
     return eligible
 
 

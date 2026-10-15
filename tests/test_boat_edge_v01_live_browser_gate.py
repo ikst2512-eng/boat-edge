@@ -2,9 +2,15 @@
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
-from scripts.boat_edge_v01_live_browser_gate import valid, selected_live_race
+from scripts.boat_edge_v01_live_browser_gate import (
+    candidates, first_git_add_proof, valid, selected_live_race,
+)
 
 JST = timezone(timedelta(hours=9))
 NOW = datetime(2026, 10, 14, 19, 30, tzinfo=JST)
@@ -55,6 +61,61 @@ class FirstAddBrowserGate(unittest.TestCase):
         self.assertIsNone(selected_live_race([]))
         self.assertEqual(selected_live_race([records[0]]),
                          "20261015-11-11")
+
+    def test_first_git_add_bytes_not_current_audit_determine_browser_certification(self):
+        # Only synthetic PRE_RESULT files; no result endpoints or historical
+        # predictions. The first Git ADD is before the 19:36 deadline.
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            def write(relative, value):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(value, sort_keys=True), encoding="utf-8")
+            def git(*args, when="2026-10-14T10:29:37+00:00"):
+                env = dict(os.environ, GIT_AUTHOR_DATE=when,
+                           GIT_COMMITTER_DATE=when)
+                return subprocess.run(["git", *args], cwd=root, env=env,
+                                      capture_output=True, text=True, check=True)
+            git("init", "-q")
+            git("config", "user.name", "Fixture")
+            git("config", "user.email", "fixture@example.invalid")
+            snapshot, audit, receipt, _ = fixture()
+            snap_path = f"data/site_prediction_snapshots/{KEY}.json"
+            audit_path = f"data/site_prediction_audit/{KEY}.json"
+            receipt_path = f"data/site_autopilot/v229_evidence/{KEY}.json"
+            write(snap_path, snapshot)
+            git("add", "--", snap_path)
+            git("commit", "-qm", "First predeadline frozen snapshot")
+            def same_sha_receipts():
+                digest = hashlib.sha256((root / snap_path).read_bytes()).hexdigest()
+                audit["latest_snapshot_sha256"] = digest
+                receipt["snapshot_sha256"] = digest
+                write(audit_path, audit)
+                write(receipt_path, receipt)
+            same_sha_receipts()
+            write("data/formal_status.json", {
+                "guards": {"results_seen": False, "unlock": False,
+                           "scoring": False, "RESULT_UNLOCK_TOKEN": None},
+                "formalFirst100": {"races": 0},
+            })
+            proof = first_git_add_proof(root, root / snap_path)
+            self.assertIsNotNone(proof)
+            self.assertEqual(proof[1], hashlib.sha256((root / snap_path).read_bytes()).hexdigest())
+            self.assertEqual(len(candidates(root, NOW)), 1)
+
+            # Simulate an illicit later snapshot edit with its current audit and
+            # receipt both rewritten to match. This must NEVER borrow first-add.
+            snapshot["selection_policy"] = "REPLACED_AFTER_FIRST_GIT_ADD"
+            write(snap_path, snapshot)
+            same_sha_receipts()
+            git("add", "--", snap_path, audit_path, receipt_path)
+            git("commit", "-qm", "Later consistent HEAD rewrite",
+                when="2026-10-14T10:29:48+00:00")
+            self.assertEqual(candidates(root, NOW), [])
+            original = first_git_add_proof(root, root / snap_path)
+            self.assertEqual(original[0], proof[0])
+            self.assertEqual(original[1], proof[1])
+            self.assertEqual(original[2], proof[2])
 
     def test_real_proven_frozen_input_triggers_before_deadline(self):
         self.assertTrue(valid(*fixture(), KEY, NOW, ADD))
