@@ -99,7 +99,12 @@ jobs:
             # V295: keep the upstream V230 max worker cap (8), reducing the
             # second network batch for 7-8 imminent races without changing
             # source identity, six-boat exhibition or odds verification.
-            PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent --priority-race-key 20261016-14-01
+            # Recompute the earliest eligible PRE_RESULT race on every retry,
+            # including future event days. V230 independently rejects an absent,
+            # stale, wrong-date, later-deadline or outside-2-to-10m priority.
+            # A live-day priority must never be pinned to the 2026-10-16 1R.
+            priority_key="$(PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 -c 'from pathlib import Path; from boat_edge_v230_fast_lane import targets,local_now; candidates=targets(Path("."),local_now()); print(candidates[0] if candidates else "")')"
+            PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent --priority-race-key "$priority_key"
             # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
             # so Git reset/clean and repeated main conflicts cannot rewrite
             # an earlier attestation or backfill a race after deadline.
