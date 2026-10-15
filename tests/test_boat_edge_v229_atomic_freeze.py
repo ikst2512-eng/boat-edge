@@ -48,6 +48,7 @@ def fixture(root):
              'checked_at':iso(SAVED-timedelta(seconds=30))}
     write(root/'data/site_scratches_v182'/f'{KEY}.json',scratch)
     odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY',
+          'verified_official_dom_v167':True,'available_count':120,
           'fetched_at':iso(SAVED-timedelta(minutes=1)),
           'trifecta_odds':{key:12.5 for key in sorted(v.COMBOS)}}
     data=json.dumps(odds,ensure_ascii=False).encode()
@@ -194,6 +195,36 @@ class AtomicFreezeTests(unittest.TestCase):
                         built.index('if (scratches.get(\'race_key\')!=key'))
         ast.parse(built)
 
+    def test_refuse_unverified_official_dom_or_fake_available_120(self):
+        """Even SHA-consistent odds are unsafe without V167 DOM evidence."""
+        path=self.root/'data/site_prediction_snapshots'/f'{KEY}.json'
+        orig=v.read_obj(path)
+        odds=v.read_obj(self.op)
+        for updates in ({'verified_official_dom_v167':False},
+                        {'verified_official_dom_v167':None},
+                        {'available_count':119},
+                        {'available_count':None}):
+            row={**odds,**updates}
+            blob=json.dumps(row,ensure_ascii=False).encode()
+            sha=hashlib.sha256(blob).hexdigest()
+            replacement=self.op.parent/f'{KEY}-{sha}.json'
+            replacement.write_bytes(blob)
+            write(path,{**orig,'odds_sha256':sha})
+            with self.assertRaisesRegex(AssertionError,'V229_ODDS_120_NOT_VALID_AT_SAVE'):
+                v.validate(self.root,KEY,NOW)
+            replacement.unlink()
+        write(path,orig)
+        self.assertEqual(v.validate(self.root,KEY,NOW)['odds_combinations'],120)
+
+    def test_injected_odds_dom_guard_runs_before_any_freeze_write(self):
+        source=(Path(__file__).resolve().parents[1]/
+                'scripts/site_final_history_v133.py').read_text(encoding='utf8')
+        compiled=v.runner_source(v.build_frozen_source(source))
+        marker='V229_OFFICIAL_ODDS_DOM_120_BEFORE_FIRST_FREEZE'
+        self.assertIn(marker,compiled)
+        self.assertLess(compiled.index(marker),
+                        compiled.index('if write_if_changed(SNAPS/f"{key}.json",snap):'))
+
     def test_refuse_odds_byte_modification(self):
         self.op.write_bytes(self.op.read_bytes()+b' ')
         with self.assertRaisesRegex(AssertionError,'SIDECAR_NOT_IMMUTABLE'):
@@ -224,10 +255,11 @@ class AtomicFreezeTests(unittest.TestCase):
 # V228_SITE_REFERENCE_ONLY
 # V226_IMMUTABLE_ORIGINAL_SNAPSHOT
 for race_path in []:
-'''+v.ANCHOR+v.WINDOW
+'''+v.ANCHOR+v.WINDOW+v.ODDS_ANCHOR
         code=v.runner_source(good)
         self.assertIn('V229_FRESH_CARD_BEFORE_FREEZE',code)
         self.assertIn('V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE',code)
+        self.assertIn('V229_OFFICIAL_ODDS_DOM_120_BEFORE_FIRST_FREEZE',code)
         self.assertIn('2<=mins<=10',code)
         with self.assertRaisesRegex(AssertionError,'ANCHOR_DRIFT'):
             v.runner_source(good.replace(v.WINDOW,''))
