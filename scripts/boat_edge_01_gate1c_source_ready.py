@@ -38,11 +38,10 @@ def safe_source(path:Path):
 def valid(root,key,deadline,now):
     if not KEY.fullmatch(key) or not 120<=(deadline-now).total_seconds()<=600:
         return None
-    # source_status delegates every complete-120 odds, fresh-source,
-    # scratch and PRE_RESULT guard to the already-reviewed V220 checker.
-    blockers=source_status(root,key,now)
-    if blockers not in ([],['frozen_prediction_missing_or_invalid']):
-        return None
+    # Check for untrusted symlinks BEFORE calling the existing V220 checker,
+    # whose generic JSON helper does not itself reject symlinked source paths.
+    snap=root/'data/site_prediction_snapshots'/f'{key}.json'
+    if snap.is_symlink():return None
     files={
       'race':root/'data/races'/f'{key}.json',
       'scratch':root/'data/site_scratches_v182'/f'{key}.json',
@@ -53,6 +52,12 @@ def valid(root,key,deadline,now):
         obj,hash_=safe_source(path)
         if obj is None or hash_ is None:return None
         data[label]=obj;digests[label]=hash_
+    # source_status delegates freshness / exactly 120 odds / PRE_RESULT
+    # checks to the already-reviewed V220 implementation. This helper adds
+    # stricter positive official completeness checks below.
+    blockers=source_status(root,key,now)
+    if blockers not in ([],['frozen_prediction_missing_or_invalid']):
+        return None
     race=data['race'];scratch=data['scratch'];odds=data['odds']
     meta=race.get('meta') or {}
     audit=race.get('source_audit') or {}
@@ -104,7 +109,8 @@ def run(root,now):
     guards=(formal or {}).get('guards') or {}
     if (not all(guards.get(g) is False for g in ('results_seen','unlock','scoring'))
         or guards.get('RESULT_UNLOCK_TOKEN') is not None
-        or (formal or {}).get('formalFirst100',{}).get('races')!=0):
+        or not isinstance((formal or {}).get('formalFirst100'),dict)
+        or (formal or {})['formalFirst100'].get('races')!=0):
         raise ValueError('GATE1C_FORMAL_FRESH_FAIL_CLOSED')
     today=now.astimezone(JST).strftime('%Y%m%d')
     plan,_=safe_source(root/'data/today.json')
@@ -127,7 +133,9 @@ def run(root,now):
         if not 120<=(due-now).total_seconds()<=600:continue
         window+=1
         p=root/OUT/f'{key}.json'
-        if p.exists() or p.is_symlink():
+        if p.is_symlink() or any(parent.is_symlink() for parent in p.parents):
+            raise ValueError('GATE1C_PROOF_PATH_SYMLINK')
+        if p.exists():
             # Even a malformed existing receipt must not be overwritten.
             continue
         proof=valid(root,key,due,now)
