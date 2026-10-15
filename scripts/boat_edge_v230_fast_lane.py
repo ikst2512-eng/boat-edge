@@ -478,7 +478,7 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     # and first Git push hostage to their slower network responses.
     # Do not make a past, different or later-deadline race the priority.
     priority_applied=(priority_key is not None
-                      and selected and priority_key==selected[0]
+                      and bool(selected) and priority_key==selected[0]
                       and priority_key.startswith(now.strftime('%Y%m%d')+'-')
                       and 2 <= (due_for(priority_key,
                           (load(root/'data/races'/f'{priority_key}.json') or {}).get('meta',{}).get('deadline')
