@@ -42,6 +42,10 @@ if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_
   echo V01_FIRST_FREEZE_NUDGE_STATUS_UNKNOWN_NO_DISPATCH
   exit 0
 fi
+if ! printf '%s\n' "$runs" | jq -e '(.workflow_runs | type) == "array"' >/dev/null 2>&1; then
+  echo V01_FIRST_FREEZE_NUDGE_STATUS_MALFORMED_NO_DISPATCH
+  exit 0
+fi
 if printf '%s\n' "$runs" | jq -e '
   [.workflow_runs[]? | select(
     .status == "queued" or .status == "in_progress" or
