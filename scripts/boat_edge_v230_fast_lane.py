@@ -399,6 +399,17 @@ def imminent_retry_targets(root, keys, outcomes, now):
         outcome=outcomes.get(key)
         if outcome=='odds_incomplete':
             eligible.append(key)
+        elif isinstance(outcome,str) and re.match(
+                r'^fetch_failed:(?:Timeout|ReadTimeout|ConnectTimeout|ConnectionError): ',
+                outcome):
+            # A transient official transport outage can end a source attempt
+            # before any freshness receipt exists. Retry just once in the
+            # actual predeadline window; never retry an explicit scratch.
+            # Redirects, wrong-source identities and all other failures are
+            # deliberately excluded. A retry is NOT an eligibility proof.
+            scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
+            if not (scratch.get('race_key')==key and scratch.get('blocked') is True):
+                eligible.append(key)
         elif outcome=='source_blocked':
             scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
             # Only an unpublished exhibition is retryable. Known scratches and
