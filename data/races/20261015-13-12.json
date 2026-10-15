@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 12,
     "deadline": "16:03",
-    "updated_at": "2026-10-15T13:27:06+09:00",
+    "updated_at": "2026-10-15T13:59:34+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=13&rno=12",
-      "fetched_at": "2026-10-15T13:29:10+09:00",
-      "sha256": "e340b72487ce6fddfac9c8fab4f493b4c7cc5da0f624082962cdd33e00b018ec",
+      "fetched_at": "2026-10-15T14:01:42+09:00",
+      "sha256": "dcf2aca572249b1c23708fa7272da0f7ea936177e2eb6c49aca312107ec3346e",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=13&rno=12",
+      "fetched_at": "2026-10-15T14:00:50+09:00",
+      "sha256": "c50e91b5b43a7d0c3f1d49405e211dec2905a36df87bc8e3b4fcef8f56fae091",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "0988674f0982872629f2ce23fcb2f12b4f6fcae88fd86cc302fd643f13c2e84d"
+      "sha256": "221389d20e01976cca21331c73962e055fb165ffad7408afb741e650a036f5bb"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "52bab4b0a5ac949db15822ec94aee3afba379d5d7819ae9941a8bb01ffaf864b"
+      "sha256": "2cbd28e7f5be170683b35799578461fd914a6286fddfdac97e901370a0fd0b71"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "3052a152b474bbd9c07b278b6b6941bb070de73e184a02fa9cc52c15b9f2f601"
+      "sha256": "f3496d9489643d3ca3b8e030b0bea6cf325a41d7eb2ad29daf223bc4cc017056"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "ab541e6f7f0047e2230fe3cdd772af08cb1a907ce194f12bfc91742bec9af77a"
+      "sha256": "fb26ac5f4416663bb392bd43089e896a8b36fef4a5f0ee3a3fb5b50718813d73"
     }
   },
   "racers": [
@@ -93,10 +99,11 @@
         "3",
         "12",
         "4",
-        "10"
+        "10",
+        "7"
       ],
       "early_race": 7,
-      "raw_text": "1 4064 / A1 原田 篤志 山口/山口 46歳/52.0kg F0 L0 0.17 6.57 50.34 67.35 5.25 30.00 50.00 45 37.86 53.57 71 34.13 50.00 3 12 4 10 7R"
+      "raw_text": "1 4064 / A1 原田 篤志 山口/山口 46歳/52.0kg F0 L0 0.17 6.57 50.34 67.35 5.25 30.00 50.00 45 37.86 53.57 71 34.13 50.00 3 12 4 10 7 7R"
     },
     {
       "lane": 2,
@@ -305,7 +312,53 @@
       "raw_text": "6 5228 / A2 若林 樹蘭 東京/山梨 24歳/52.5kg F1 L0 0.17 5.83 37.21 55.81 5.40 30.00 60.00 63 40.29 59.71 33 32.82 51.15 6 10 9 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 原田 篤志 52.0kg R 7"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 吉島 祥之 52.3kg R 3"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 向井 美鈴 44.0kg R 5"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 岡村 仁 54.7kg R 6"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 加藤 政彦 52.1kg R 4"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 若林 樹蘭 52.5kg R 2"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
