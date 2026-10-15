@@ -216,6 +216,45 @@ class FastLaneTests(unittest.TestCase):
             self.assertEqual(fetch.call_count,1)
             self.assertEqual(fetch.call_args.args[1],tokuyama)
 
+    def test_20261016_owner_prioritizes_naruto_only_in_actual_freeze_window(self):
+        # This is the next observed production 1R: Naruto 08:35 and Ashiya
+        # 08:43 are BOTH V230 targets at 08:27. Slow Ashiya must not delay
+        # Naruto's first Git-add, but both may be prewarmed before 08:25.
+        naruto='20261016-14-01'
+        ashiya='20261016-21-01'
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-16',
+            'venues':[{'venue':'鳴門','races':[{'race_key':naruto,'deadline':'08:35'}]},
+                      {'venue':'芦屋','races':[{'race_key':ashiya,'deadline':'08:43'}]}]})
+        for key,venue,clock in ((naruto,'14','08:35'),(ashiya,'21','08:43')):
+            race=makerace(clock)
+            race['race_key']=key
+            race['meta'].update(date='2026-10-16',venue_code=venue,race_no=1)
+            m.write_json(self.root/'data/races'/f'{key}.json',race)
+        workflow=(Path(__file__).resolve().parents[1]/
+                  '.github/workflows/V235.yml').read_text(encoding='utf-8')
+        self.assertIn(
+            'boat_edge_v230_fast_lane.py --workers 8 --retry-imminent '
+            '--priority-race-key 20261016-14-01',workflow)
+        at=lambda minute:datetime(2026,10,16,8,minute,tzinfo=JST)
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0),
+              patch.object(m,'fetch_one',side_effect=lambda root,key:(key,{'mock':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified')):
+            early=m.run(self.root,at(24),worker=2,priority_key=naruto)
+            self.assertEqual(early['targets'],[naruto,ashiya])
+            self.assertFalse(early['priority_applied'])
+            self.assertEqual(fetch.call_count,2)
+            fetch.reset_mock()
+            critical=m.run(self.root,at(27),worker=2,priority_key=naruto)
+            self.assertEqual(critical['targets'],[naruto])
+            self.assertTrue(critical['priority_applied'])
+            fetch.assert_called_once_with(self.root,naruto)
+            fetch.reset_mock()
+            moved=m.run(self.root,at(37),worker=2,priority_key=naruto)
+            self.assertEqual(moved['targets'],[ashiya])
+            self.assertFalse(moved['priority_applied'])
+            fetch.assert_called_once_with(self.root,ashiya)
+
     def test_imminent_retry_only_for_incomplete_source_not_explicit_scratch(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
             'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
