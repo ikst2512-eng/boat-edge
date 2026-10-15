@@ -302,6 +302,17 @@ def test_snapshot_evidence_contract_without_network():
     assert [x[2]["race_key"] for x in prioritize_saved_final_candidates(order, {})] == [
         "near-reference", "saved-final", "other-reference"
     ]
+    # An immutable source-SHA V229 FINAL deserves a REAL browser attempt
+    # even after mutable race beforeinfo regresses; an unverified saved card
+    # cannot bypass the fail-closed current-source readiness requirement.
+    verified = {"status": "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"}
+    missing = {"status": "NO_SITE_PREDEADLINE_SNAPSHOT"}
+    assert may_probe_live_ui_with_saved_final(False, verified) is True
+    assert may_probe_live_ui_with_saved_final(True, missing) is True
+    assert may_probe_live_ui_with_saved_final(False, missing) is False
+    assert may_probe_live_ui_with_saved_final(False, None) is False
+    assert may_probe_live_ui_with_saved_final(False, {"status": "SNAPSHOT_SHA_OR_V229_AUDIT_MISMATCH"}) is False
+    assert may_probe_live_ui_with_saved_final(None, verified) is True
     print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
 
 
@@ -390,6 +401,18 @@ def restrict_to_certified_target(choices, expected_race):
     return [item for item in choices if item[2]["race_key"] == expected_race]
 
 
+def may_probe_live_ui_with_saved_final(source_ready, saved_evidence):
+    """A source regression never disproves independently audited frozen bytes.
+
+    The browser still must prove actual published SHA banner and TopK parity.
+    """
+    return source_ready is True or (
+        isinstance(saved_evidence, dict) and
+        saved_evidence.get("status") ==
+        "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"
+    )
+
+
 def probe_verified_live_topk(
         context, target, catalog, shots, engine, expected_final_race=None):
     """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
@@ -472,8 +495,7 @@ def probe_verified_live_topk(
         source_ready = (
             audit.get("status") == "ok" and len(payload.get("racers") or []) == 6
         )
-        if not (source_ready or saved_evidence.get("status") ==
-                "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"):
+        if not may_probe_live_ui_with_saved_final(source_ready, saved_evidence):
             stopped_reasons.append({"race": key, "reason": "source_audit_not_ready",
                                     "saved_evidence": saved_evidence.get("status")})
             continue
