@@ -2,26 +2,28 @@
   "active_window_races": 8,
   "current_windows": [
     {
-      "deadline_jst": "17:22",
-      "key": "20261015-20-05",
+      "deadline_jst": "18:04",
+      "key": "20261015-15-07",
       "missing_evidence": [],
-      "venue": "若松"
+      "venue": "丸亀"
     },
     {
-      "deadline_jst": "17:29",
-      "key": "20261015-12-06",
+      "deadline_jst": "18:11",
+      "key": "20261015-24-07",
       "missing_evidence": [
         "beforeinfo_unavailable",
         "frozen_prediction_missing_or_invalid",
-        "scratch_unverified_or_blocked"
+        "odds_evidence_stale",
+        "race_card_stale",
+        "scratch_stale"
       ],
-      "venue": "住之江"
+      "venue": "大村"
     }
   ],
   "data_sources": {
     "collector_freshness": "CURRENT",
     "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 115,
+    "predeadline_observations": 118,
     "site_autovalidation": "EVIDENCE_BLOCKED_OR_MISSING"
   },
   "day_jst": "20261015",
@@ -32,14 +34,14 @@
     "predeadline_incomplete"
   ],
   "next_race": {
-    "deadline_jst": "17:22",
-    "race_key": "20261015-20-05",
-    "venue": "若松",
-    "watch_from_jst": "17:07"
+    "deadline_jst": "18:04",
+    "race_key": "20261015-15-07",
+    "venue": "丸亀",
+    "watch_from_jst": "17:49"
   },
   "official_beforeinfo_urgent_15m": {
     "error": 0,
-    "health_updated_at": "2026-10-15T17:03:04+09:00",
+    "health_updated_at": "2026-10-15T17:38:59+09:00",
     "ok": 2,
     "partial_six_boat_source": 0,
     "published_wait": 0,
@@ -48,7 +50,8 @@
   },
   "paper_wager_authorized_by_this_runner": false,
   "recovery_dispatch_candidates": [
-    "auto-update.yml"
+    "auto-update.yml",
+    "site-odds.yml"
   ],
   "research_model_production_promotion": false,
   "scheduled_races": 156,
@@ -92,9 +95,9 @@
     },
     "today": {
       "day_jst": "20261015",
-      "early_missing_later_snapshot_present": 69,
+      "early_missing_later_snapshot_present": 71,
       "integrity_note": "A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.",
-      "matured_observed_races": 114,
+      "matured_observed_races": 117,
       "not_found_after_deadline": 22,
       "not_found_last_seen_inside_2_to_10m_window": 14,
       "not_found_last_seen_outside_2_to_10m_window": 8,
@@ -111,18 +114,18 @@
         "scratch_missing_or_blocked": 14,
         "scratch_stale": 8
       },
-      "observed_races": 115,
+      "observed_races": 118,
       "pending_before_deadline": 0,
-      "predeadline_snapshot_with_matching_audit": 92,
+      "predeadline_snapshot_with_matching_audit": 95,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
-      "sha_consistent_predeadline_snapshots": 92,
+      "sha_consistent_predeadline_snapshots": 95,
       "snapshot_or_audit_unverified": 1,
-      "snapshot_present": 93,
+      "snapshot_present": 96,
       "source_changed_after_freeze": 0,
       "source_missing_after_freeze": 0,
       "status": "OBSERVED_WINDOW_COUNTS",
-      "v229_atomic_evidence_matched": 88,
-      "v229_attestation_record_matched": 88
+      "v229_atomic_evidence_matched": 91,
+      "v229_attestation_record_matched": 91
     }
   },
   "status": "NEEDS_ATTENTION"
