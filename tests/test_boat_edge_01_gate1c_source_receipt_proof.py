@@ -92,7 +92,40 @@ class SourceFirstGitProof(unittest.TestCase):
             self.root,DAY,DUE+timedelta(minutes=10),lambda *_:('PASS','commit'))
         self.assertEqual(good['source_ready_with_proven_prediction'],1)
         self.assertEqual(good['source_ready_without_proven_prediction'],0)
+        # Independently valid first Git snapshot != proven same source.
+        self.assertEqual(good['source_ready_with_exact_race_odds_sha'],0)
+        self.assertEqual(good['source_ready_prediction_input_parity_unverified'],1)
+        self.assertEqual(good['source_ready_prediction_input_parity_reasons'],
+                         {'prediction_race_or_odds_source_sha_mismatch':1})
         self.assertIsNone(good['eligible_save_rate_percent'])
+        # A matching race/odds pair with observation BEFORE prediction earns
+        # the separate strict parity count, but still NEVER a 99% rate.
+        snap={'race_key':KEY,'deadline':'08:35',
+              'saved_at':'2026-10-16T08:30:00+09:00',
+              'race_sha256':self.receipt['source_sha256']['race'],
+              'odds_sha256':self.receipt['source_sha256']['odds']}
+        write(self.root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+        matching=monitor.gate1c_source_receipt_summary(
+            self.root,DAY,DUE+timedelta(minutes=10),lambda *_:('PASS','commit'))
+        self.assertEqual(matching['source_ready_with_exact_race_odds_sha'],1)
+        self.assertEqual(matching['source_ready_prediction_input_parity_unverified'],0)
+        self.assertIsNone(matching['independently_source_eligible_denominator'])
+        self.assertFalse(matching['acceptance_99_percent_proven'])
+        snap['odds_sha256']='f'*64
+        write(self.root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+        mismatched=monitor.gate1c_source_receipt_summary(
+            self.root,DAY,DUE+timedelta(minutes=10),lambda *_:('PASS','commit'))
+        self.assertEqual(mismatched['source_ready_with_exact_race_odds_sha'],0)
+        self.assertEqual(mismatched['source_ready_prediction_input_parity_reasons'],
+                         {'prediction_race_or_odds_source_sha_mismatch':1})
+        snap['odds_sha256']=self.receipt['source_sha256']['odds']
+        snap['saved_at']='2026-10-16T08:27:00+09:00'
+        write(self.root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+        observed_later=monitor.gate1c_source_receipt_summary(
+            self.root,DAY,DUE+timedelta(minutes=10),lambda *_:('PASS','commit'))
+        self.assertEqual(observed_later['source_ready_with_exact_race_odds_sha'],0)
+        self.assertEqual(observed_later['source_ready_prediction_input_parity_reasons'],
+                         {'source_ready_observation_after_prediction':1})
 
     def test_changed_first_receipt_bytes_or_source_tree_rejected(self):
         self.receipt['official_odds_combinations']=121
