@@ -5,6 +5,17 @@ on:
     paths:
       - '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
   workflow_dispatch:
+  # GitHub scheduled five-minute runs can be delayed/skipped. Once the
+  # EXISTING primary PRE_RESULT source collector completes successfully,
+  # give this same V216 source-ready observer another chance in the real
+  # 2-10m window. It still checks latest main and runs all source guards.
+  # No new cron, writer, prediction, or feedback listener: the collector
+  # listens only to V71 odds, not to this V216 observation workflow.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE 自動更新'
+    types: [completed]
+    branches: [main]
   schedule:
     # All 12 original five-minute PRE_RESULT windows are preserved. The
     # three non-overlapping cron identities only throttle past-frozen SITE
@@ -20,7 +31,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deadline-audit:
-    if: github.ref == 'refs/heads/main'
+    # Failed / forked / non-main upstream jobs cannot trigger a privileged
+    # site evidence write, paper report, or settlement.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
