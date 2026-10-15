@@ -38,11 +38,8 @@ RETIRED = (
     "site-health.yml",
     "site-recovery.yml",
     "site-v103.yml",
-    # V356: dormant legacy writers and post-V133 V185 relay.
-    "auto-update-5min.yml",
-    "auto-update-v10.yml",
-    "site-v185-trigger.yml",
-    "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
+    # The inert legacy updater/relay tombstones and obsolete V221 dedup
+    # workflow were removed. Any reintroduced workflow is rejected by tests.
     # V240 was an exact-Top7 research-only second-leg shadow.
     # Its new freezes were 0/61 capable of changing Top3 or Top5.
     "v240.yml",

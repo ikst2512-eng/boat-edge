@@ -19,6 +19,18 @@ class WorkflowInventoryTests(unittest.TestCase):
         # canonical disabled tombstones; refuse accidental re-introduction.
         for duplicate in ("auto-update-5min 2.yml", "auto-update-v10 2.yml"):
             self.assertFalse((ROOT / ".github/workflows" / duplicate).exists(), duplicate)
+        for removed in (
+            "auto-update-5min.yml",
+            "auto-update-v10.yml",
+            "site-v185-trigger.yml",
+            "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
+            "BOAT_EDGE_SITE_RESULTS_V58.zip",
+        ):
+            self.assertFalse((ROOT / ".github/workflows" / removed).exists(), removed)
+        self.assertFalse(
+            (ROOT / "scripts/boat_edge_v221_workflow_dedup.py").exists(),
+            "obsolete V221 workflow implementation must not be reintroduced",
+        )
         self.assertIn("schedule", items[LIVE]["triggers"])
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
@@ -84,25 +96,16 @@ class WorkflowInventoryTests(unittest.TestCase):
                          report["scheduled_contents_writers"])
         verify_retired(report)
 
-    def test_v221_cleanup_is_manual_only(self):
+    def test_primary_collector_and_v185_stay_scheduled(self):
+        # The removed workflows are inert; the actual producers must remain.
         report = audit(ROOT / ".github" / "workflows")
         entries = {x["workflow"]: x for x in report["workflows"]}
-        name = "BOAT_EDGE_V221_GUARDED_DEDUP.yml"
-        self.assertEqual(entries[name]["triggers"], ["workflow_dispatch"])
-        self.assertEqual(entries[name]["crons"], [])
-        self.assertNotIn(name, report["scheduled_contents_writers"])
-
-    def test_v356_retired_v185_relay_has_no_dispatch_or_write_permission(self):
-        relay = ROOT / ".github/workflows/site-v185-trigger.yml"
-        src = relay.read_text(encoding="utf-8")
-        self.assertNotIn("workflow_run:", src)
-        self.assertNotIn("actions: write", src)
-        self.assertNotIn("curl ", src)
-        self.assertNotIn("/dispatches", src)
-        report = audit(ROOT / ".github" / "workflows")
-        row = next(x for x in report["workflows"] if x["workflow"] == relay.name)
-        self.assertEqual(row["triggers"], ["workflow_dispatch"])
-        self.assertFalse(row["scheduled_write_candidate"])
+        for name in ("auto-update.yml", "BOAT_EDGE_V185_THIRD_ROLE_FRESH_CHALLENGER.yml"):
+            with self.subTest(name=name):
+                self.assertIn("schedule", entries[name]["triggers"])
+                self.assertIn("workflow_dispatch", entries[name]["triggers"])
+        self.assertNotIn("BOAT_EDGE_V221_GUARDED_DEDUP.yml", entries)
+        self.assertNotIn("site-v185-trigger.yml", entries)
 
     def test_plain_and_quoted_on_keys_are_equivalent(self):
         from tempfile import TemporaryDirectory
