@@ -471,6 +471,12 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
          'source_ready_original_unverified':0,
          'source_ready_unverified_reasons':{},
          'source_ready_with_proven_prediction':0,
+         # The V136 original snapshot is independently genuine but may refer
+         # to DIFFERENT race/odds inputs from the first-ready observation.
+         # Never silently equate two independent Git-proof successes.
+         'source_ready_with_exact_race_odds_sha':0,
+         'source_ready_prediction_input_parity_unverified':0,
+         'source_ready_prediction_input_parity_reasons':{},
          'source_ready_without_proven_prediction':0,
          'source_ready_missing_prediction_keys':[],
          'source_ready_prediction_unverified_reasons':{},
@@ -516,6 +522,26 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
                         proof_code,pred_commit='prediction_original_verifier_failed_closed',None
                     if proof_code=='PASS' and pred_commit:
                         out['source_ready_with_proven_prediction']+=1
+                        # Source-ready receipt has already passed its ORIGINAL
+                        # Git-tree race/odds SHA checks. Compare the same
+                        # hashes in the V136-validated prediction. A later
+                        # source-ready observation is not proof the source
+                        # was ready at the earlier snapshot creation time.
+                        if saved < moment(rec.get('observed_at')):
+                            parity='source_ready_observation_after_prediction'
+                        elif (snap.get('race_sha256') !=
+                              (rec.get('source_sha256') or {}).get('race') or
+                              snap.get('odds_sha256') !=
+                              (rec.get('source_sha256') or {}).get('odds')):
+                            parity='prediction_race_or_odds_source_sha_mismatch'
+                        else:
+                            parity='PASS'
+                        if parity=='PASS':
+                            out['source_ready_with_exact_race_odds_sha']+=1
+                        else:
+                            out['source_ready_prediction_input_parity_unverified']+=1
+                            counter=out['source_ready_prediction_input_parity_reasons']
+                            counter[parity]=counter.get(parity,0)+1
                         continue
                     if proof_code=='PASS':proof_code='prediction_first_git_commit_unverified'
                 else:proof_code='prediction_outside_v229_window'
