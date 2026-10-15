@@ -289,6 +289,56 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(status['source_refreshed'],1)
         self.assertEqual(status['odds_incomplete'],0)
 
+    def test_postcommit_never_recovers_without_first_git_add_proof(self):
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011','targets':[KEY],
+            'outcomes':{KEY:'fresh_verified'},
+            'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':False}) as proof,
+              patch.object(m,'fetch_one') as fetch,
+              patch.object(m.time,'sleep') as sleep):
+            got=m.run_postcommit_incomplete(self.root,now=self.now)
+        self.assertFalse(got['first_git_proven'])
+        self.assertEqual(got['retry_keys'],[])
+        proof.assert_called_once()
+        fetch.assert_not_called()
+        sleep.assert_not_called()
+
+    def test_postcommit_recovers_only_other_incomplete_race_after_git_proof(self):
+        other='20261011-06-09'
+        race=makerace()
+        race['race_key']=other
+        race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{other}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':other,'deadline':'14:43'}]}]})
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011','targets':[KEY,other],
+            'outcomes':{KEY:'fresh_verified',other:'odds_incomplete'},
+            'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}) as proof,
+              patch.object(m,'fetch_one',
+                           return_value=(other,{'mock_source':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified') as update,
+              patch('boat_edge_v229_atomic_freeze.run',return_value=1) as freeze,
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as sleep):
+            got=m.run_postcommit_incomplete(self.root,now=self.now,worker=2)
+        self.assertTrue(got['first_git_proven'])
+        self.assertEqual(got['retry_keys'],[other])
+        self.assertEqual(got['outcomes'][other],'fresh_verified')
+        self.assertEqual(got['new_snapshots_atomic_audited'],1)
+        proof.assert_called_once()
+        fetch.assert_called_once_with(self.root,other)
+        update.assert_called_once()
+        freeze.assert_called_once_with(self.root)
+        sleep.assert_called_once_with(20)
+
     def test_successful_first_freeze_is_never_delayed_by_retry(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
             'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
