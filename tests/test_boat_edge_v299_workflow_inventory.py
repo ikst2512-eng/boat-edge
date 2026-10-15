@@ -32,6 +32,29 @@ class WorkflowInventoryTests(unittest.TestCase):
             "obsolete V221 workflow implementation must not be reintroduced",
         )
         self.assertIn("schedule", items[LIVE]["triggers"])
+    def test_v133_history_cannot_compete_with_v229_first_git_freeze(self):
+        # Live 2026-10-15 V133 add/add collision on a V229 snapshot. This
+        # guard enforces a history-only stage and recomputation after a remote
+        # main advance, rather than rebase of a competing first snapshot.
+        flow=(ROOT/'.github/workflows/site-v133.yml').read_text(encoding='utf-8')
+        stage=flow.split('      - name: Save V133 history',1)[1]
+        self.assertIn('git reset --hard origin/main',stage)
+        self.assertIn('git clean -fd -- data/site_prediction_snapshots/',stage)
+        self.assertIn('git add -A -- data/site_prediction_history/',stage)
+        self.assertIn('V133_HISTORY_ONLY_NO_SNAPSHOT_FIRST_GIT_ADD',stage)
+        self.assertIn('V133_UNSAFE_FIRST_FREEZE_STAGE_BLOCKED',stage)
+        self.assertIn('git push origin HEAD:main',stage)
+        self.assertNotIn('git add data/site_prediction_snapshots',stage)
+        self.assertNotIn('git pull --rebase',stage)
+        self.assertNotIn('git push --force',stage)
+        self.assertNotIn('data/formal_predictions/',stage)
+        # V229 and V235 keep their independent automated freeze roles.
+        inv=audit(ROOT/'.github/workflows')
+        by_name={e['workflow']:e for e in inv['workflows']}
+        for key in ('BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml','V235.yml'):
+            self.assertIn('schedule',by_name[key]['triggers'])
+            self.assertIn('workflow_run',by_name[key]['triggers'])
+
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
         self.assertEqual(audit(root), audit(root))
