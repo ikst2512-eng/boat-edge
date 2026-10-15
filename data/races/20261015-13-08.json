@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 8,
     "deadline": "14:05",
-    "updated_at": "2026-10-15T13:27:06+09:00",
+    "updated_at": "2026-10-15T13:49:58+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,22 +19,22 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=13&rno=8",
-      "fetched_at": "2026-10-15T13:29:05+09:00",
-      "sha256": "43a8f374872ffa96cba1d2bf7579c4ca57ae1429877f9dee6e26e3c2d212a547",
+      "fetched_at": "2026-10-15T13:49:48+09:00",
+      "sha256": "f62c43f72c083b7342d625eebabdf16803cf35daa61e0646185e498c95eafd42",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=13&rno=8",
-      "fetched_at": "2026-10-15T13:27:54+09:00",
-      "sha256": "2740b754880737ad6425f8c772b388e3c8c62f508cb47d29a2cfc1742d891745",
+      "fetched_at": "2026-10-15T13:49:58+09:00",
+      "sha256": "f40d907059cc067128102a3506a040f7ea048591dfeefcdd479971da1a808197",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
@@ -312,46 +312,71 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
+        "exhibition_time": 6.72,
         "tilt": 0.0,
-        "raw_text": "1 柳橋 宏紀 53.0kg 0.0 R"
+        "raw_text": "1 柳橋 宏紀 53.0kg 6.72 0.0 R"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
+        "exhibition_time": 6.84,
         "tilt": -0.5,
-        "raw_text": "2 石川 哲秀 55.8kg -0.5 R 3"
+        "raw_text": "2 石川 哲秀 55.8kg 6.84 -0.5 R 3"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
+        "exhibition_time": 6.88,
         "tilt": -0.5,
-        "raw_text": "3 藤田 竜弘 55.2kg -0.5 R 4"
+        "raw_text": "3 藤田 竜弘 55.2kg 6.88 -0.5 R 4"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
+        "exhibition_time": 6.81,
         "tilt": 0.0,
-        "raw_text": "4 多羅尾 達之 51.0kg 0.0 R"
+        "raw_text": "4 多羅尾 達之 51.0kg 6.81 0.0 R"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
+        "exhibition_time": 6.75,
         "tilt": 0.0,
-        "raw_text": "5 坂口 諒宗 53.2kg 0.0 R 2"
+        "raw_text": "5 坂口 諒宗 53.2kg 6.75 0.0 R 2"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
+        "exhibition_time": 6.76,
         "tilt": -0.5,
-        "raw_text": "6 丸尾 義孝 52.4kg -0.5 R 1"
+        "raw_text": "6 丸尾 義孝 52.4kg 6.76 -0.5 R 1"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".03"
+      },
+      {
+        "lane": 2,
+        "st": ".11"
+      },
+      {
+        "lane": 3,
+        "st": ".11"
+      },
+      {
+        "lane": 4,
+        "st": "F.01"
+      },
+      {
+        "lane": 6,
+        "st": ".01"
+      },
+      {
+        "lane": 5,
+        "st": "F.04"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 4.0,
+      "wind_speed_ms": 3.0,
       "wave_cm": 0.0
     }
   },
