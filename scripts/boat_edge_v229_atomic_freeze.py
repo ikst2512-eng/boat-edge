@@ -71,6 +71,14 @@ SOURCE_BOUND_SCRATCH='''    # V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE: a f
     if not _v229_sources_match:
         continue
 '''
+ODDS_ANCHOR='    odds_doc,_v218_odds_blob,_v218_odds_sha=be218_read_odds_once(ODDS/f"{key}.json")\n'
+OFFICIAL_DOM_120_GUARD='''    # V229_OFFICIAL_ODDS_DOM_120_BEFORE_FIRST_FREEZE: 120 prices alone
+    # do not demonstrate independent official DOM mapping verification.
+    # V216's source-ready eligibility requires this same source evidence.
+    if (odds_doc.get("verified_official_dom_v167") is not True
+            or odds_doc.get("available_count")!=120):
+        continue
+'''
 FORBIDDEN={'site_results','results','result','payout','payouts',
            'formal_predictions','formal'}
 
@@ -97,13 +105,16 @@ def digest(path):
 
 def runner_source(source):
     """Keep V228's SHA-pinned result-free source; add only two pre-result guards."""
-    if source.count(ANCHOR)!=1 or source.count(WINDOW)!=1:
+    if source.count(ANCHOR)!=1 or source.count(WINDOW)!=1 or source.count(ODDS_ANCHOR)!=1:
         raise AssertionError('V229_V228_ANCHOR_DRIFT_FAIL_CLOSED')
-    code=source.replace(ANCHOR,ANCHOR+SOURCE_BOUND_SCRATCH+FRESH_CARD).replace(WINDOW,WINDOW_REPLACEMENT)
+    code=(source.replace(ANCHOR,ANCHOR+SOURCE_BOUND_SCRATCH+FRESH_CARD)
+        .replace(WINDOW,WINDOW_REPLACEMENT)
+        .replace(ODDS_ANCHOR,ODDS_ANCHOR+OFFICIAL_DOM_120_GUARD))
     if any(x not in code for x in ('V228_NO_RESULT_READ','V228_SITE_REFERENCE_ONLY',
                                    'V226_IMMUTABLE_ORIGINAL_SNAPSHOT',
                                    'V229_FRESH_CARD_BEFORE_FREEZE','V229_MINIMUM_DECISION_LEAD',
-                                    'V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE')):
+                                    'V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE',
+                                    'V229_OFFICIAL_ODDS_DOM_120_BEFORE_FIRST_FREEZE')):
         raise AssertionError('V229_PROVENANCE_GUARDS_MISSING')
     ast.parse(code)
     return code
@@ -196,6 +207,8 @@ def validate(root:Path,key:str,now:datetime):
     odds=read_obj(archived) or {}
     rows=odds.get('trifecta_odds') or {}
     if (odds.get('race_key')!=key or odds.get('phase')!='PRE_RESULT_PURCHASE_ONLY'
+            or odds.get('verified_official_dom_v167') is not True
+            or odds.get('available_count')!=120
             or not age(saved,instant(odds.get('fetched_at')),900)
             or set(rows)!=COMBOS or any(not isinstance(v,(int,float)) or isinstance(v,bool)
                                         or not math.isfinite(v) or v<=0 for v in rows.values())):
