@@ -78,6 +78,7 @@ jobs:
             git reset --hard origin/main
             PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py --gate1c-proof
             # V281: coalesce the stale V227 UI status with the existing
             # 15-minute V220 publish, not a second duplicate Pages writer.
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v227_autopilot.py
@@ -99,11 +100,11 @@ jobs:
               raise SystemExit('V281_UI_STATUS_FALSE_CLAIM_BLOCKED')
           print('V281_DATE_BOUND_UI_STATUS_AND_FORMAL_LOCK_PASS',day)
           PY_V281_FRESH_SAFE
-            git add -- data/site_ops_v220/current.json data/site_autopilot/v227_current.json
+            git add -- data/site_ops_v220/current.json data/site_ops_v220/gate1c_current.json data/site_autopilot/v227_current.json
             python3 - <<'PY_V281_STAGED'
           import subprocess
           staged=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
-          allowed={'data/site_ops_v220/current.json','data/site_autopilot/v227_current.json'}
+          allowed={'data/site_ops_v220/current.json','data/site_ops_v220/gate1c_current.json','data/site_autopilot/v227_current.json'}
           if not staged.issubset(allowed):raise SystemExit('V281_FORBIDDEN_MONITOR_STAGE_'+str(staged-allowed))
           print('V281_ONLY_SITE_MONITOR_FILES_STAGED',len(staged))
           PY_V281_STAGED
