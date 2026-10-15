@@ -6,14 +6,16 @@ on:
       - '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
   workflow_dispatch:
   # GitHub scheduled five-minute runs can be delayed/skipped. Once the
-  # EXISTING primary PRE_RESULT source collector completes successfully,
-  # give this same V216 source-ready observer another chance in the real
-  # 2-10m window. It still checks latest main and runs all source guards.
-  # No new cron, writer, prediction, or feedback listener: the collector
-  # listens only to V71 odds, not to this V216 observation workflow.
+  # EXISTING official PRE_RESULT source collector OR independent 120-way
+  # odds publisher completes successfully, give this same V216 source-ready
+  # observer another chance in the real 2-10m window. Either source may
+  # finish last; neither completion proves readiness by itself.
+  # No new cron, writer, prediction, or feedback listener: both producers
+  # never listen to this V216 observation workflow.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
+      - 'BOAT EDGE 3連単オッズ更新 V71'
     types: [completed]
     branches: [main]
   schedule:
