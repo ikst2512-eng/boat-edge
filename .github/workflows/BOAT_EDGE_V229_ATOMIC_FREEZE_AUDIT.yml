@@ -5,13 +5,16 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml']
   workflow_dispatch:
-  # V292: GitHub cron can skip/delay the narrow V229 2-10m source window.
-  # Start a guarded read of main after either independent PRE_RESULT input
-  # producer succeeds. Failed, forked, or non-main runs cannot trigger writes.
+  # GitHub cron and independent collector/odds completion can leave a
+  # 2-10m gap AFTER V235's own V230 fresh source publication. Wake this
+  # EXISTING fail-closed V229 first-Git-save owner on successful V235 too.
+  # V235 does not depend on V229: no self-trigger or writer replacement.
+  # No trigger itself certifies source readiness or changes freeze bounds.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
+      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
     types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
