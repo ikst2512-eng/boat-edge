@@ -461,6 +461,42 @@ def local_now():
     return datetime.now(JST)
 
 
+def process_independent_official_batch(root, keys, worker, outcomes):
+    """Isolate one official race failure without losing other races' safe data.
+
+    Worker exceptions, stale/mismatched race identities and parsing/storage
+    failures are recorded only for that exact race. No successful verdict is
+    fabricated, and V229 remains the sole immutable freeze authority.
+    """
+    with ThreadPoolExecutor(max_workers=worker) as pool:
+        tasks={pool.submit(fetch_one,root,key):key for key in keys}
+        for task in as_completed(tasks):
+            requested=tasks[task]
+            try:
+                received,data,err=task.result()
+            except Exception as exc:
+                outcomes[requested]='fetch_failed:'+type(exc).__name__+': '+str(exc)[:130]
+                continue
+            if received!=requested or not KEY.fullmatch(str(received)):
+                outcomes[requested]='fetch_failed:worker_race_identity_mismatch'
+                continue
+            if err:
+                outcomes[requested]='fetch_failed:'+str(err)[:160]
+                continue
+            if not isinstance(data,dict):
+                outcomes[requested]='fetch_failed:unverified_source_payload'
+                continue
+            try:
+                outcome=update_one(root,requested,data,local_now())
+                # An unexpected return value cannot become a green receipt.
+                if not isinstance(outcome,str):
+                    raise ValueError('V230_UNVERIFIED_UPDATE_STATE')
+            except Exception as exc:
+                outcomes[requested]='update_failed:'+type(exc).__name__+': '+str(exc)[:130]
+                continue
+            outcomes[requested]=outcome
+
+
 def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     from boat_edge_v228_freeze_only import check_formal_closed
     from boat_edge_v229_atomic_freeze import run as atomic_freeze
@@ -480,18 +516,7 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
             'priority_applied':priority_applied,'priority_race_key':priority_key if priority_applied else None,
             'source_refreshed':0,'source_blocked':0,'odds_incomplete':0,'network_error':0,'outcomes':{}}
     if selected:
-        with ThreadPoolExecutor(max_workers=worker) as pool:
-            futures=[pool.submit(fetch_one,root,key) for key in selected]
-            for task in as_completed(futures):
-                key,data,err=task.result()
-                if err:
-                    status['network_error']+=1;status['outcomes'][key]='fetch_failed:'+err
-                    continue
-                state=update_one(root,key,data,datetime.now(JST))
-                if state=='fresh_verified':status['source_refreshed']+=1
-                if state=='source_blocked':status['source_blocked']+=1
-                if state=='odds_incomplete':status['odds_incomplete']+=1
-                status['outcomes'][key]=state
+        process_independent_official_batch(root,selected,worker,status['outcomes'])
     # Existing V229 is the only authority allowed to create the immutable first snapshot.
     # It reads neither historical results nor formal prediction data.
     count=atomic_freeze(root)
@@ -511,15 +536,7 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
             retry_keys=imminent_retry_targets(root,retry_keys,status['outcomes'],local_now())
             status['imminent_retry_targets']=retry_keys
             if retry_keys:
-                with ThreadPoolExecutor(max_workers=worker) as pool:
-                    futures=[pool.submit(fetch_one,root,key) for key in retry_keys]
-                    for task in as_completed(futures):
-                        key,data,err=task.result()
-                        if err:
-                            status['outcomes'][key]='fetch_failed:'+err
-                            continue
-                        state=update_one(root,key,data,local_now())
-                        status['outcomes'][key]=state
+                process_independent_official_batch(root,retry_keys,worker,status['outcomes'])
                 second=atomic_freeze(root)
                 count+=second
                 status['imminent_retry_snapshots']=second
@@ -580,14 +597,8 @@ def run_postcommit_incomplete(root, now=None, worker=6):
     report['retry_keys']=retry_keys
     if not retry_keys:
         return report
-    with ThreadPoolExecutor(max_workers=min(8,max(1,worker))) as pool:
-        futures=[pool.submit(fetch_one,root,key) for key in retry_keys]
-        for task in as_completed(futures):
-            key,data,err=task.result()
-            if err:
-                report['outcomes'][key]='fetch_failed:'+err
-                continue
-            report['outcomes'][key]=update_one(root,key,data,local_now())
+    process_independent_official_batch(
+        root,retry_keys,min(8,max(1,worker)),report['outcomes'])
     report['new_snapshots_atomic_audited']=atomic_freeze(root)
     return report
 
