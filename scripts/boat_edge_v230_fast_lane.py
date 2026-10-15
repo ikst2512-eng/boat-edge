@@ -472,12 +472,17 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     check_formal_closed(root)
     selected=targets(root,now)
     diagnostic=target_diagnostic(root,now)
-    # V235 priority safety: for the explicitly requested 2026-10-14 Naruto 1R,
-    # isolate its network batch from later-deadline races during the live window.
-    # Outside that one verified decision window the normal race queue is intact.
-    priority_applied=(priority_key=='20261014-14-01' and
-                      now.strftime('%Y%m%d')=='20261014' and
-                      priority_key in selected)
+    # The V235 owner may explicitly prioritize the earliest race only during
+    # its actual 2-10 minute freeze window. Before then, prewarm ALL selected
+    # races. Later-deadline official requests must not hold the first freeze
+    # and first Git push hostage to their slower network responses.
+    # Do not make a past, different or later-deadline race the priority.
+    priority_applied=(priority_key is not None
+                      and selected and priority_key==selected[0]
+                      and priority_key.startswith(now.strftime('%Y%m%d')+'-')
+                      and 2 <= (due_for(priority_key,
+                          (load(root/'data/races'/f'{priority_key}.json') or {}).get('meta',{}).get('deadline')
+                          )-now).total_seconds()/60 <= 10)
     if priority_applied:selected=[priority_key]
     status={'schema':SCHEMA,'day_jst':now.strftime('%Y%m%d'),'targets':selected,'target_diagnostic':diagnostic,
             'priority_applied':priority_applied,'priority_race_key':priority_key if priority_applied else None,
