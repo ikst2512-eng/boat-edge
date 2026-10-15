@@ -364,6 +364,15 @@ def gate1c_first_git_summary(root, day, now, verify=None):
             out['missing_after_deadline']+=1
             continue
         out['snapshots_present']+=1
+        audit_path=root/'data/site_prediction_audit'/f'{key}.json'
+        # The reused historical checker reads the audit file directly.
+        # Reject symlink redirection rather than possibly opening a protected
+        # result/formal file through an untrusted checkout.
+        if audit_path.is_symlink():
+            out['original_not_verified']+=1
+            out['unverified_reasons']['audit_symlink_blocked']=(
+                out['unverified_reasons'].get('audit_symlink_blocked',0)+1)
+            continue
         snap=load(p)
         reason='snapshot_invalid'
         if isinstance(snap,dict) and snap.get('race_key')==key and snap.get('deadline')==record.get('deadline'):
