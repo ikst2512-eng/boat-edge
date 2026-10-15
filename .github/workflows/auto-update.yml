@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: boat-edge-current-v17
@@ -1047,3 +1048,15 @@ jobs:
           done
           echo "V270_MAIN_MOVED_SIX_TIMES_FAIL_CLOSED_NEXT_SCHEDULE_RETRY"
           exit 1
+
+      # A producer success can precede a delayed/dropped workflow_run event.
+      # Call only the existing source+deadline guarded V229, never freeze here.
+      - name: Nudge existing V229 from successfully published PRE_RESULT inputs
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
+          bash scripts/boat_edge_v01_first_freeze_nudge.sh
