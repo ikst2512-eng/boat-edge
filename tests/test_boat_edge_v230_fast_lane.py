@@ -252,6 +252,67 @@ class FastLaneTests(unittest.TestCase):
         fetched.assert_called_once()
         paused.assert_not_called()
 
+    def test_odds_timeout_retains_predeadline_official_exhibition_but_not_prices(self):
+        import requests
+        given=self.data()
+        with (patch('requests.Session',return_value=Mock(headers=Mock())),
+              patch.object(m,'fetch',side_effect=[
+                  given['racelist'],given['beforeinfo'],
+                  requests.exceptions.Timeout('odds timeout'),
+                  requests.exceptions.Timeout('odds still unavailable')]) as called,
+              patch('time.sleep') as paused):
+            key,data,error=m.fetch_one(self.root,KEY)
+        self.assertEqual(key,KEY)
+        self.assertIsNone(error)
+        self.assertIsNone(data['odds'])
+        self.assertIn('Timeout',data['odds_fetch_error'])
+        self.assertEqual(called.call_count,4)
+        self.assertEqual(called.call_args_list[2],called.call_args_list[3])
+        paused.assert_called_once_with(0.35)
+        with patch.object(m,'verified_odds',side_effect=AssertionError('no odds verifier call')):
+            state=m.update_one(self.root,KEY,data,self.now)
+        self.assertEqual(state,'odds_incomplete')
+        current=m.load(self.root/'data/races'/f'{KEY}.json')
+        self.assertEqual(current['source_audit']['race_card']['status'],'ok')
+        self.assertEqual(current['source_audit']['beforeinfo']['status'],'ok')
+        self.assertIs(current['source_audit']['beforeinfo']['six_boat_coverage']['six_boat_complete'],True)
+        self.assertEqual((self.root/'data/raw/20261011/06_08_beforeinfo.html').read_bytes(),given['beforeinfo'][0])
+        self.assertFalse((self.root/'data/site_odds'/f'{KEY}.json').exists())
+        self.assertFalse((self.root/'data/site_prediction_snapshots'/f'{KEY}.json').exists())
+
+    def test_odds_redirect_keeps_only_real_official_non_odds_bytes(self):
+        given=self.data()
+        with (patch('requests.Session',return_value=Mock(headers=Mock())),
+              patch.object(m,'fetch',side_effect=[
+                  given['racelist'],given['beforeinfo'],
+                  RuntimeError('V278_REDIRECT_BLOCKED_BEFORE_FOLLOW')]) as called,
+              patch('time.sleep') as paused):
+            key,data,error=m.fetch_one(self.root,KEY)
+        self.assertEqual(key,KEY)
+        self.assertIsNone(error)
+        self.assertIsNone(data['odds'])
+        self.assertIn('REDIRECT_BLOCKED',data['odds_fetch_error'])
+        self.assertEqual(called.call_count,3)
+        paused.assert_not_called()
+        self.assertEqual(m.update_one(self.root,KEY,data,self.now),'odds_incomplete')
+        self.assertFalse((self.root/'data/site_odds'/f'{KEY}.json').exists())
+
+    def test_beforeinfo_timeout_does_not_publish_even_partial_source(self):
+        import requests
+        given=self.data()
+        with (patch('requests.Session',return_value=Mock(headers=Mock())),
+              patch.object(m,'fetch',side_effect=[
+                  given['racelist'],requests.exceptions.Timeout('before 1'),
+                  requests.exceptions.Timeout('before 2')]) as called,
+              patch('time.sleep') as paused):
+            key,data,error=m.fetch_one(self.root,KEY)
+        self.assertEqual(key,KEY)
+        self.assertIsNone(data)
+        self.assertIn('Timeout',error)
+        self.assertEqual(called.call_count,3)
+        paused.assert_called_once_with(0.35)
+        self.assertFalse((self.root/'data/raw/20261011/06_08_racelist.html').exists())
+
     def test_never_rewrites_snapshot(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         p=self.root/'data/site_prediction_snapshots'/f'{KEY}.json';p.parent.mkdir(parents=True);p.write_bytes(b'IMMUTABLE')
@@ -431,67 +492,6 @@ class TransientOfficialFetchRetryTests(unittest.TestCase):
         self.assertIn('/odds3t?',call.call_args_list[2].args[1])
         nap.assert_called_once_with(0.35)
         sess.close.assert_called_once()
-
-    def test_odds_timeout_retains_predeadline_official_exhibition_but_not_prices(self):
-        import requests
-        given=self.data()
-        with (patch('requests.Session',return_value=Mock(headers=Mock())),
-              patch.object(m,'fetch',side_effect=[
-                  given['racelist'],given['beforeinfo'],
-                  requests.exceptions.Timeout('odds timeout'),
-                  requests.exceptions.Timeout('odds still unavailable')]) as called,
-              patch('time.sleep') as paused):
-            key,data,error=m.fetch_one(self.root,KEY)
-        self.assertEqual(key,KEY)
-        self.assertIsNone(error)
-        self.assertIsNone(data['odds'])
-        self.assertIn('Timeout',data['odds_fetch_error'])
-        self.assertEqual(called.call_count,4)
-        self.assertEqual(called.call_args_list[2],called.call_args_list[3])
-        paused.assert_called_once_with(0.35)
-        with patch.object(m,'verified_odds',side_effect=AssertionError('no odds verifier call')):
-            state=m.update_one(self.root,KEY,data,self.now)
-        self.assertEqual(state,'odds_incomplete')
-        current=m.load(self.root/'data/races'/f'{KEY}.json')
-        self.assertEqual(current['source_audit']['race_card']['status'],'ok')
-        self.assertEqual(current['source_audit']['beforeinfo']['status'],'ok')
-        self.assertIs(current['source_audit']['beforeinfo']['six_boat_coverage']['six_boat_complete'],True)
-        self.assertEqual((self.root/'data/raw/20261011/06_08_beforeinfo.html').read_bytes(),given['beforeinfo'][0])
-        self.assertFalse((self.root/'data/site_odds'/f'{KEY}.json').exists())
-        self.assertFalse((self.root/'data/site_prediction_snapshots'/f'{KEY}.json').exists())
-
-    def test_odds_redirect_keeps_only_real_official_non_odds_bytes(self):
-        given=self.data()
-        with (patch('requests.Session',return_value=Mock(headers=Mock())),
-              patch.object(m,'fetch',side_effect=[
-                  given['racelist'],given['beforeinfo'],
-                  RuntimeError('V278_REDIRECT_BLOCKED_BEFORE_FOLLOW')]) as called,
-              patch('time.sleep') as paused):
-            key,data,error=m.fetch_one(self.root,KEY)
-        self.assertEqual(key,KEY)
-        self.assertIsNone(error)
-        self.assertIsNone(data['odds'])
-        self.assertIn('REDIRECT_BLOCKED',data['odds_fetch_error'])
-        self.assertEqual(called.call_count,3)
-        paused.assert_not_called()
-        self.assertEqual(m.update_one(self.root,KEY,data,self.now),'odds_incomplete')
-        self.assertFalse((self.root/'data/site_odds'/f'{KEY}.json').exists())
-
-    def test_beforeinfo_timeout_does_not_publish_even_partial_source(self):
-        import requests
-        given=self.data()
-        with (patch('requests.Session',return_value=Mock(headers=Mock())),
-              patch.object(m,'fetch',side_effect=[
-                  given['racelist'],requests.exceptions.Timeout('before 1'),
-                  requests.exceptions.Timeout('before 2')]) as called,
-              patch('time.sleep') as paused):
-            key,data,error=m.fetch_one(self.root,KEY)
-        self.assertEqual(key,KEY)
-        self.assertIsNone(data)
-        self.assertIn('Timeout',error)
-        self.assertEqual(called.call_count,3)
-        paused.assert_called_once_with(0.35)
-        self.assertFalse((self.root/'data/raw/20261011/06_08_racelist.html').exists())
 
     def test_persistent_timeout_stops_after_two_and_never_forges_source(self):
         import requests
