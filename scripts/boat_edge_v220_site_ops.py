@@ -32,7 +32,9 @@ def age_minutes(s,now):
     x=moment(s)
     if not x:return None
     age=(now-x).total_seconds()/60
-    return round(age,1) if 0<=age<14400 else None
+    # Recovery decisions use the exact same age boundary as the independent
+    # freeze validator. Rounding first could accept a source one second late.
+    return age if 0<=age<14400 else None
 
 def expected_deadline(k,clock):
     if not KEY.fullmatch(str(k)) or not re.fullmatch(r'\d\d:\d\d',str(clock)):return None
@@ -52,7 +54,9 @@ def source_status(root,key,now):
         issues.append('race_pre_result_not_verified')
     if len(race.get('racers') or [])!=6:issues.append('racers_not_six')
     if card.get('status')!='ok' or age_minutes(card.get('fetched_at'),now) is None:issues.append('race_card_missing_or_future')
-    elif age_minutes(card.get('fetched_at'),now)>20:issues.append('race_card_stale')
+    # V229 independently enforces 960 seconds. A looser monitor limit would
+    # dispatch a doomed freeze instead of requesting fresh official sources.
+    elif age_minutes(card.get('fetched_at'),now)>16:issues.append('race_card_stale')
     if before.get('status')!='ok' or age_minutes(before.get('fetched_at'),now) is None:issues.append('beforeinfo_unavailable')
     elif age_minutes(before.get('fetched_at'),now)>15:issues.append('beforeinfo_stale')
     if scratch.get('race_key')!=key or scratch.get('blocked') is not False:

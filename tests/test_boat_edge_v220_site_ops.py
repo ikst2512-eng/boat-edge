@@ -346,6 +346,51 @@ def test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m():
         assert name in mod.compute(root,now)['recovery_dispatch_candidates']
     print('V410_ONLY_STRICT_EVIDENCE_READY_2_TO_10M_MISSED_V229_RECOVERY_PASS')
 
+def test_recovery_freshness_matches_independent_freeze_boundaries():
+    """A 17-minute card needs collection, not a futile V229 invocation."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        now=NOW+timedelta(minutes=20)  # 10 minutes before synthetic deadline
+        fresh={'status':'ok','fetched_at':now.isoformat()}
+        race={'race_key':KEY,
+              'meta':{'phase':'PRE_RESULT','results_seen':False,'unlock':False,'scoring':False},
+              'racers':[{}]*6,'source_audit':{'race_card':fresh,'beforeinfo':fresh}}
+        scratch={'race_key':KEY,'blocked':False,'checked_at':now.isoformat(),
+                 'race_card_source_status':'ok','official_beforeinfo_source_status':'ok'}
+        odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':now.isoformat(),
+              'results_seen':False,'scoring':False,'available_count':120,
+              'verified_official_dom_v167':True,
+              'trifecta_odds':{f'{a}-{b}-{c}':12.3 for a in range(1,7)
+                               for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}}
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        put(root,f'data/site_odds/{KEY}.json',odds)
+        freeze='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
+        for age,stale in ((960,False),(961,True),(1020,True),(1200,True)):
+            card={**fresh,'fetched_at':(now-timedelta(seconds=age)).isoformat()}
+            put(root,f'data/races/{KEY}.json',
+                {**race,'source_audit':{'race_card':card,'beforeinfo':fresh}})
+            report=mod.compute(root,now)
+            assert ('race_card_stale' in report['current_windows'][0]['missing_evidence']) is stale, age
+            assert ('auto-update.yml' in report['recovery_dispatch_candidates']) is stale, age
+            assert (freeze in report['recovery_dispatch_candidates']) is not stale, age
+        # Beforeinfo, scratch and odds all have the independently enforced
+        # 900-second bound. Do not round 901 seconds back into a false PASS.
+        for age,stale in ((900,False),(901,True)):
+            stamp=(now-timedelta(seconds=age)).isoformat()
+            put(root,f'data/races/{KEY}.json',
+                {**race,'source_audit':{'race_card':fresh,
+                                      'beforeinfo':{**fresh,'fetched_at':stamp}}})
+            put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'checked_at':stamp})
+            put(root,f'data/site_odds/{KEY}.json',{**odds,'fetched_at':stamp})
+            report=mod.compute(root,now)
+            gaps=report['current_windows'][0]['missing_evidence']
+            for name in ('beforeinfo_stale','scratch_stale','odds_evidence_stale'):
+                assert (name in gaps) is stale, (age,name)
+            assert (freeze in report['recovery_dispatch_candidates']) is not stale, age
+        assert mod.age_minutes((now+timedelta(seconds=1)).isoformat(),now) is None
+        assert not (root/f'data/site_prediction_snapshots/{KEY}.json').exists()
+    print('V220_RECOVERY_MATCHES_960S_CARD_900S_OTHER_WITHOUT_ROUNDING_PASS')
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
@@ -354,3 +399,4 @@ if __name__=='__main__':
     test_v290_missing_source_vs_freeze_window()
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
+    test_recovery_freshness_matches_independent_freeze_boundaries()
