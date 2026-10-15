@@ -4,6 +4,33 @@ The user authorizes code changes, tests, GitHub commits and Pages verification
 without repeated ZIP downloads/uploads or routine confirmations. Use the existing
 repository and Pages site. Do not create a replacement website.
 
+## Owner priority lock — read before every BOAT EDGE task (2026-10-16)
+
+**Source of truth:** `BOAT_EDGE_EXECUTION_ORDER.md`. Follow its first unchecked
+phase in order: 1) real pre-deadline source/prediction-save reliability,
+2) same-race prospective Top3/5/10 accuracy evidence, 3) the existing 24-venue
+prediction-list website, 4) stable automation and bounded improvement.
+**As of 2026-10-16, gate 1A is first unchecked**: analyze 2026-10-15
+missing snapshots before new research implementations, site embellishments,
+additional models, or unrelated audits. When a checklist item is evidence-backed
+and checked, advance to the next unchecked item in the canonical order; the
+dated example here must not pin work permanently to gate 1A.
+A generic user message such as "進めて" means advance the current gate.
+
+If a request would divert work, **say it conflicts with the owner priority lock
+and redirect to the current gate**; an explicit owner-approved reprioritization
+must first update the order file. Do not silently create unrelated work. Exceptions:
+urgent security/compliance/data-integrity incidents, production outages, and
+a minimal dependency needed to close the current gate, documented with evidence.
+Do not shut down currently operating jobs solely because a phase is paused.
+
+Tick phase items only with reproducible evidence, actual live measurements and
+independent checks; CI success, an added script, or Pages success alone never
+qualifies. Preserve the protected Formal Fresh boundary and the existing
+01/02/03 ownership rules below. Older TODOs are historical/technical references,
+not a license to switch priorities without an owner-approved order change.
+
+
 ## Safety boundary
 
 - Read `data/formal_status.json` before any race-outcome access. Formal Fresh
