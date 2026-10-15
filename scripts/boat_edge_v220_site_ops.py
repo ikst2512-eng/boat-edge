@@ -327,6 +327,80 @@ def compute(root,now):
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover}
 
+def gate1c_first_git_summary(root, day, now, verify=None):
+    """Read-only 1C numerator proof, NOT a source-eligible-race denominator.
+
+    Reuse the existing historical V125/Git-first-add validator. A current
+    snapshot and matching mutable audit are not enough to claim an immutable
+    original. No results, payouts, or Formal Fresh files are ever opened.
+    """
+    if verify is None:
+        from site_v136_historical_proof import check_historical_proof
+        verify = check_historical_proof
+    out={'day_jst':day, 'scope':'OBSERVED_MATURED_RACES_ONLY',
+         'observed_races':0, 'matured_races':0, 'missing_after_deadline':0,
+         'snapshots_present':0, 'first_git_original_sha_proven':0,
+         'original_not_verified':0, 'unverified_reasons':{},
+         # Source release times and all race-specific eligibility guards
+         # cannot be reconstructed from a sampled V215 observation history.
+         'independently_source_eligible_denominator':None,
+         'eligible_save_rate_percent':None,
+         'acceptance_99_percent_proven':False}
+    hist=load(root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json') or {}
+    if hist.get('schema')!='BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1' or hist.get('day_jst')!=day:
+        return out
+    obs=hist.get('observations')
+    if not isinstance(obs,dict):return out
+    for key,record in sorted(obs.items()):
+        if not isinstance(record,dict) or not KEY.fullmatch(str(key)) or not key.startswith(day+'-'):
+            continue
+        due=expected_deadline(key,record.get('deadline'))
+        if due is None:continue
+        out['observed_races']+=1
+        if now<due:continue
+        out['matured_races']+=1
+        p=root/'data/site_prediction_snapshots'/f'{key}.json'
+        if p.is_symlink() or not p.is_file():
+            out['missing_after_deadline']+=1
+            continue
+        out['snapshots_present']+=1
+        snap=load(p)
+        reason='snapshot_invalid'
+        if isinstance(snap,dict) and snap.get('race_key')==key and snap.get('deadline')==record.get('deadline'):
+            saved=moment(snap.get('saved_at'))
+            # Match V229's strict 2–10 minute decision window. A 15-minute
+            # SITE-only record is not silently promoted to a V229 success.
+            if saved is not None and 120 <= (due-saved).total_seconds() <= 600:
+                try:
+                    reason, commit=verify(root,key,snap)
+                except (OSError,ValueError,TypeError,RuntimeError):
+                    reason='first_git_verifier_failed_closed'
+                if reason=='PASS' and commit is not None:
+                    out['first_git_original_sha_proven']+=1
+                    continue
+                if reason=='PASS':reason='first_git_commit_missing'
+            else:
+                reason='outside_v229_decision_window'
+        out['original_not_verified']+=1
+        out['unverified_reasons'][reason]=out['unverified_reasons'].get(reason,0)+1
+    return out
+
+
+def gate1c_read_only_report(root,now,verify=None):
+    now=now.astimezone(timezone.utc)
+    day=now.astimezone(JST).date()
+    return {
+        'schema':'BOAT_EDGE_GATE1C_FIRST_GIT_ORIGINAL_OBSERVATION_V1',
+        'scope':'SITE_ONLY_PRE_RESULT_NO_OUTCOME_OR_FORMAL_INPUT',
+        'today':gate1c_first_git_summary(root,day.strftime('%Y%m%d'),now,verify),
+        'previous_day':gate1c_first_git_summary(
+            root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify),
+        'note':'First Git original SHA is an independently checked numerator, '
+               'not a proven source-eligible denominator. No 99% claim until '
+               'eligibility and exclusions are independently reconciled.'
+    }
+
+
 def write_if_changed(path,doc):
     encoded=json.dumps(doc,sort_keys=True,ensure_ascii=False,indent=2)+'\n'
     if path.exists() and path.read_text(encoding='utf-8')==encoded:return False
@@ -335,11 +409,21 @@ def write_if_changed(path,doc):
     return True
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--root',default='.');parser.add_argument('--at');parser.add_argument('--recovery-plan',action='store_true')
+    parser=argparse.ArgumentParser();parser.add_argument('--root',default='.');parser.add_argument('--at');parser.add_argument('--recovery-plan',action='store_true');parser.add_argument('--gate1c-proof',action='store_true')
     a=parser.parse_args();now=moment(a.at) if a.at else datetime.now(timezone.utc)
     if not now:raise SystemExit('INVALID_CLOCK')
     doc=compute(Path(a.root),now)
-    if a.recovery_plan:
+    if a.gate1c_proof:
+        # The ordinary V220 read-only report owner publishes this alongside
+        # current.json. Recovery dispatch never invokes a Git-history scan.
+        report=gate1c_read_only_report(Path(a.root),now)
+        output=Path(a.root)/'data/site_ops_v220/gate1c_current.json'
+        changed=write_if_changed(output,report)
+        print('V220_GATE1C_FIRST_GIT_COUNTS_ONLY '+json.dumps({
+            'today':report['today']['first_git_original_sha_proven'],
+            'previous_day':report['previous_day']['first_git_original_sha_proven'],
+            'saved':changed, 'rate_proven':False},sort_keys=True))
+    elif a.recovery_plan:
         print(json.dumps({'workflows':doc['recovery_dispatch_candidates']},sort_keys=True))
     else:
         output=Path(a.root)/'data/site_ops_v220/current.json'
