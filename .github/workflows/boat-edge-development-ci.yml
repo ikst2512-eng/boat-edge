@@ -81,6 +81,11 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v228_freeze_only.py' -v
+      - name: Verify V235 other-race postcommit source and Git-index stage before main
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
       - name: Prove V235 08:20 window and source-bound Git first-add SHA (no result access)
         env:
           PYTHONDONTWRITEBYTECODE: '1'
