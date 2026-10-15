@@ -409,7 +409,7 @@ class TransientOfficialFetchRetryTests(unittest.TestCase):
             key,data,error=m.fetch_one(Path('.'),'20261014-14-01')
         self.assertEqual(key,'20261014-14-01')
         self.assertIsNone(error)
-        self.assertEqual(list(data),['racelist','beforeinfo','odds'])
+        self.assertEqual(list(data),['racelist','beforeinfo','odds','odds_fetch_error'])
         self.assertEqual(call.call_count,4)
         self.assertEqual(call.call_args_list[0],call.call_args_list[1])
         self.assertIn('hd=20261014',call.call_args_list[0].args[1])
