@@ -9,6 +9,7 @@ from datetime import datetime, timezone, timedelta
 import json
 from pathlib import Path
 import re
+import subprocess
 
 JST=timezone(timedelta(hours=9))
 SCHEMA='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'
@@ -395,6 +396,137 @@ def gate1c_first_git_summary(root, day, now, verify=None):
     return out
 
 
+def gate1c_source_receipt_first_git_proof(root,key,receipt):
+    """Verify first-added receipt AND source blobs in THAT SAME Git tree.
+
+    Source blobs at current HEAD may change later. Reconstructing eligibility
+    from today's mutable source files is forbidden. A forged/backfilled receipt
+    or a delayed Git addition beyond the decision window cannot be a PASS.
+    """
+    relative=f'data/site_ops_v220/gate1c_source_ready/{key}.json'
+    p=root/relative
+    if (not KEY.fullmatch(str(key)) or p.is_symlink() or not p.is_file()
+            or any(parent.is_symlink() for parent in p.parents)):
+        return 'receipt_path_unverified',None
+    if not isinstance(receipt,dict) or receipt.get('schema')!='BOAT_EDGE_GATE1C_PROSPECTIVE_SOURCE_READY_V1':
+        return 'receipt_schema_unverified',None
+    due=expected_deadline(key,receipt.get('deadline_jst'))
+    observed=moment(receipt.get('observed_at'))
+    if (due is None or observed is None or receipt.get('race_key')!=key
+            or receipt.get('deadline_at')!=due.isoformat()
+            or not 120 <= (due-observed).total_seconds() <= 600
+            or receipt.get('official_odds_combinations')!=120
+            or receipt.get('six_boat_exhibition_complete') is not True
+            or not all(receipt.get(x) is False for x in
+                       ('results_seen','formal_fresh_unlock','scoring'))
+            or receipt.get('first_git_source_commit_independently_proven') is not False
+            or receipt.get('independently_eligible_denominator_established') is not False):
+        return 'receipt_metadata_or_window_unverified',None
+    digests=receipt.get('source_sha256')
+    if (not isinstance(digests,dict) or set(digests)!={'race','scratch','odds'}
+            or any(re.fullmatch(r'[0-9a-f]{64}',str(v)) is None for v in digests.values())):
+        return 'receipt_source_sha_invalid',None
+    try:
+        hist=subprocess.run(['git','log','--diff-filter=A','--format=%H%x09%cI',
+                             '--',relative],cwd=root,capture_output=True,text=True,
+                            timeout=12,check=True).stdout.strip().splitlines()
+        # Any delete/readd creates ambiguous proof even if current HEAD agrees.
+        if len(hist)!=1:
+            return 'receipt_first_git_add_missing_or_ambiguous',None
+        fields=hist[0].split('\t')
+        if len(fields)!=2 or re.fullmatch(r'[0-9a-f]{40}',fields[0]) is None:
+            return 'receipt_first_git_commit_invalid',None
+        commit,committed=fields
+        at=moment(committed)
+        # Git timestamps are seconds; observed_at may have microseconds.
+        if (at is None or at+timedelta(seconds=1)<observed
+                or at>due-timedelta(seconds=120)):
+            return 'receipt_first_git_add_outside_window',None
+        original=subprocess.run(['git','show',f'{commit}:{relative}'],cwd=root,
+                                capture_output=True,timeout=12,check=True).stdout
+        if hashlib.sha256(original).digest()!=hashlib.sha256(p.read_bytes()).digest():
+            return 'receipt_changed_after_first_git_add',None
+        if json.loads(original)!=receipt:
+            return 'receipt_original_metadata_changed',None
+        for label,subdir in (('race','data/races'),('scratch','data/site_scratches_v182'),
+                             ('odds','data/site_odds')):
+            blob=subprocess.run(['git','show',f'{commit}:{subdir}/{key}.json'],
+                                cwd=root,capture_output=True,timeout=12,
+                                check=True).stdout
+            if hashlib.sha256(blob).hexdigest()!=digests[label]:
+                return f'{label}_source_not_in_first_receipt_git_tree',None
+    except (OSError,ValueError,UnicodeError,subprocess.SubprocessError):
+        return 'receipt_original_git_proof_unavailable',None
+    return 'PASS',commit
+
+
+def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
+    """Conservative lower-bound cohort; NEVER infer completeness/99%."""
+    if prediction_verify is None:
+        from site_v136_historical_proof import check_historical_proof
+        prediction_verify=check_historical_proof
+    out={'day_jst':day, 'scope':'SAMPLED_FIRST_GIT_SOURCE_READY_ONLY',
+         'receipts_seen':0, 'receipts_matured':0,
+         'source_ready_first_git_proven':0,
+         'source_ready_original_unverified':0,
+         'source_ready_unverified_reasons':{},
+         'source_ready_with_proven_prediction':0,
+         'source_ready_without_proven_prediction':0,
+         'source_ready_missing_prediction_keys':[],
+         'source_ready_prediction_unverified_reasons':{},
+         'independently_source_eligible_denominator':None,
+         'eligible_save_rate_percent':None, 'acceptance_99_percent_proven':False,
+         'sampling_complete_for_all_scheduled_races':False}
+    base=root/'data/site_ops_v220/gate1c_source_ready'
+    if base.is_symlink() or not base.is_dir():return out
+    for p in sorted(base.glob(f'{day}-??-??.json')):
+        key=p.stem
+        if not KEY.fullmatch(key) or p.is_symlink():continue
+        out['receipts_seen']+=1
+        rec=load(p)
+        deadline=expected_deadline(key,rec.get('deadline_jst')) if isinstance(rec,dict) else None
+        if deadline is None:
+            out['source_ready_original_unverified']+=1
+            code='receipt_deadline_unverified'
+            out['source_ready_unverified_reasons'][code]=out['source_ready_unverified_reasons'].get(code,0)+1
+            continue
+        if now<deadline:continue
+        out['receipts_matured']+=1
+        try:
+            code,original=gate1c_source_receipt_first_git_proof(root,key,rec)
+        except (OSError,ValueError,RuntimeError):
+            code,original='receipt_proof_error_fail_closed',None
+        if code!='PASS' or original is None:
+            out['source_ready_original_unverified']+=1
+            out['source_ready_unverified_reasons'][code]=out['source_ready_unverified_reasons'].get(code,0)+1
+            continue
+        out['source_ready_first_git_proven']+=1
+        snap_path=root/'data/site_prediction_snapshots'/f'{key}.json'
+        audit_path=root/'data/site_prediction_audit'/f'{key}.json'
+        proof_code='snapshot_or_audit_missing'
+        if (not snap_path.is_symlink() and not audit_path.is_symlink()
+                and snap_path.is_file() and audit_path.is_file()):
+            snap=load(snap_path)
+            if isinstance(snap,dict) and snap.get('deadline')==rec.get('deadline_jst'):
+                saved=moment(snap.get('saved_at'))
+                if saved is not None and 120 <= (deadline-saved).total_seconds() <= 600:
+                    try:
+                        proof_code,pred_commit=prediction_verify(root,key,snap)
+                    except (OSError,ValueError,RuntimeError):
+                        proof_code,pred_commit='prediction_original_verifier_failed_closed',None
+                    if proof_code=='PASS' and pred_commit:
+                        out['source_ready_with_proven_prediction']+=1
+                        continue
+                    if proof_code=='PASS':proof_code='prediction_first_git_commit_unverified'
+                else:proof_code='prediction_outside_v229_window'
+            else:proof_code='prediction_snapshot_metadata_unverified'
+        out['source_ready_without_proven_prediction']+=1
+        out['source_ready_missing_prediction_keys'].append(key)
+        out['source_ready_prediction_unverified_reasons'][proof_code]=(
+            out['source_ready_prediction_unverified_reasons'].get(proof_code,0)+1)
+    return out
+
+
 def gate1c_read_only_report(root,now,verify=None):
     now=now.astimezone(timezone.utc)
     day=now.astimezone(JST).date()
@@ -404,6 +536,10 @@ def gate1c_read_only_report(root,now,verify=None):
         'today':gate1c_first_git_summary(root,day.strftime('%Y%m%d'),now,verify),
         'previous_day':gate1c_first_git_summary(
             root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify),
+        'prospective_source_ready':{
+            'today':gate1c_source_receipt_summary(root,day.strftime('%Y%m%d'),now,verify),
+            'previous_day':gate1c_source_receipt_summary(
+                root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify)},
         'note':'First Git original SHA is an independently checked numerator, '
                'not a proven source-eligible denominator. No 99% claim until '
                'eligibility and exclusions are independently reconciled.'
