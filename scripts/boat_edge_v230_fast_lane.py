@@ -244,8 +244,18 @@ def fetch_one(root,key):
     try:
         rb,rtext,rt=retry_transient_only(base+'racelist?'+q)
         bb,btext,bt=retry_transient_only(base+'beforeinfo?'+q)
-        ob,otext,ot=retry_transient_only(base+'odds3t?'+q)
-        return key,{'racelist':(rb,rtext,rt),'beforeinfo':(bb,btext,bt),'odds':(ob,otext,ot)},None
+        try:
+            ob,otext,ot=retry_transient_only(base+'odds3t?'+q)
+            odds_response=(ob,otext,ot)
+            odds_error=None
+        except Exception as exc:
+            # A failed odds request cannot authorize a 120-price freeze, but
+            # must not discard independently verified official race/beforeinfo.
+            # This allows bounded retries without manufacturing odds evidence.
+            odds_response=None
+            odds_error=type(exc).__name__+': '+str(exc)[:130]
+        return key,{'racelist':(rb,rtext,rt),'beforeinfo':(bb,btext,bt),
+                    'odds':odds_response,'odds_fetch_error':odds_error},None
     except Exception as ex:
         return key,None,type(ex).__name__+': '+str(ex)[:130]
     finally:session.close()
@@ -295,14 +305,18 @@ def update_one(root,key,data,now):
     if m.get('phase')!='PRE_RESULT' or any(m.get(f) is not False for f in ('results_seen','unlock','scoring')):return 'pre_result_unverified'
     if not source_write_allowed(root/'data',key,m.get('deadline'),now):return 'source_locked'
     rb,rtext,rt=data['racelist'];bb,btext,bt=data['beforeinfo']
-    ob,otext,ot=data['odds']
+    odds_response=data['odds']
+    ob,otext,ot=odds_response if odds_response is not None else (None,None,None)
     # Reject bytes received at/after cutoff even if a stale caller clock
-    # still points at the pre-deadline selection time.
-    if any(not isinstance(t,datetime) or t.tzinfo is None for t in (rt,bt,ot)):
+    # still points at the pre-deadline selection time. Missing odds have no
+    # synthetic receipt timestamp and are never eligible for frozen odds.
+    received=(rt,bt) if odds_response is None else (rt,bt,ot)
+    if any(not isinstance(t,datetime) or t.tzinfo is None
+           or t.utcoffset() is None for t in received):
         return 'source_timestamp_unverified'
-    latest=max(now,rt,bt,ot)
+    latest=max(now,*received)
     if not source_write_allowed(root/'data',key,m.get('deadline'),latest):return 'source_locked'
-    try: odds=verified_odds(otext)
+    try: odds=verified_odds(otext) if odds_response is not None else None
     except (ValueError,TypeError,OverflowError):odds=None
     stored=[str(x.get('registration_no')) for x in (race.get('racers') or [])]
     actual=parse_regs(rtext)
