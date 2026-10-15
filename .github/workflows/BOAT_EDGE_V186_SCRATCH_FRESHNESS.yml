@@ -81,11 +81,13 @@ jobs:
           from pathlib import Path
           import json, re, subprocess
           from scripts.boat_edge_v288_deadline_source_lock import JST, source_write_allowed
+          from scripts.site_v186_refresh_scratch import source_bound_green
           root=Path('data')
           now=datetime.now(JST)
           day=now.strftime('%Y%m%d')
           staged=[]
           held_explicit=[]
+          held_unbound_green=[]
           for path in sorted((root/'site_scratches_v182').glob(f'{day}-??-??.json')):
               if path.is_symlink() or not re.fullmatch(r'20\d{6}-\d{2}-\d{2}',path.stem):
                   continue
@@ -109,6 +111,13 @@ jobs:
                   continue
               due=datetime.strptime(day+deadline,'%Y%m%d%H:%M').replace(tzinfo=JST)
               if not 0 <= (due-now).total_seconds() <= 26*60:
+                  continue
+              # Gate 1C: V182's old scanner omits official HTML SHA and
+              # exhibition-completeness proof. Never publish an unbound GREEN
+              # that can replace the collector's SHA-bound V01/V230 receipt.
+              # Explicit blocked scratch signals may still be published.
+              if doc.get('blocked') is False and not source_bound_green(root,key,race,doc):
+                  held_unbound_green.append(key)
                   continue
               checked=doc.get('checked_at')
               try:
@@ -142,6 +151,7 @@ jobs:
               raise SystemExit('V186_UNEXPECTED_STAGED_SOURCE_PATH')
           print('V186_SAFE_FUTURE_SCRATCH_ONLY',json.dumps({
               'staged':len(actual),'held_explicit_withdrawal':held_explicit,
+              'held_unbound_legacy_green':held_unbound_green,
               'no_frozen_first_add_rewritten':True},sort_keys=True))
           PY_V186_SAFE_STAGE
             if git diff --cached --quiet; then
