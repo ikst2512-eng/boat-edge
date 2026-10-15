@@ -1,22 +1,138 @@
 {
-  "atomic_pre_result_audit": true,
-  "first_audited_at": "2026-10-15T04:22:12.344726+00:00",
-  "last_audited_at": "2026-10-15T04:22:12.344726+00:00",
-  "latest_snapshot_saved_at": "2026-10-15T04:22:12.341476+00:00",
-  "latest_snapshot_sha256": "00bf9c741b40a8d1523e58be8524e3c59922f8505de7e85817e8e249a636fed0",
-  "pass": true,
+  "schema_version": "boat-edge-final15m-audit-v125",
   "race_key": "20261015-22-06",
+  "first_audited_at": "2026-10-15T04:22:12.344726+00:00",
+  "last_audited_at": "2026-10-15T04:43:52.390223+00:00",
+  "latest_snapshot_sha256": "00bf9c741b40a8d1523e58be8524e3c59922f8505de7e85817e8e249a636fed0",
+  "latest_snapshot_saved_at": "2026-10-15T04:22:12.341476+00:00",
   "revision_count": 1,
   "revisions": [
     {
-      "atomic_pre_result_proof_sha256": "a1147bc4d7b1296b4c4db8e0c97c9f8c1e6d739ec02b229714f6c475af313a08",
-      "odds_sha256_snapshot": "a6e69b4908bd304f65f1a3ebaa00da60025dcaa582d0e33d97e3ceb5fb269f5f",
-      "race_sha256_snapshot": "7e29892e857e4f340ef949974cc2b1b8e254fbc532facf7435bd89092262adfa",
+      "snapshot_sha256": "00bf9c741b40a8d1523e58be8524e3c59922f8505de7e85817e8e249a636fed0",
       "saved_at": "2026-10-15T04:22:12.341476+00:00",
-      "snapshot_sha256": "00bf9c741b40a8d1523e58be8524e3c59922f8505de7e85817e8e249a636fed0"
+      "first_saved_at": "2026-10-15T04:22:12.341468+00:00",
+      "minutes_to_deadline": 9.79,
+      "prediction_kind": "SITE_REFERENCE_V122",
+      "selection_policy": "V122_SCENARIO_AWARE_PROBABILITY_FIRST",
+      "used_inputs": [
+        "当地3か月コース",
+        "展示ST",
+        "展示タイム"
+      ],
+      "race_sha256_snapshot": "7e29892e857e4f340ef949974cc2b1b8e254fbc532facf7435bd89092262adfa",
+      "odds_sha256_snapshot": "a6e69b4908bd304f65f1a3ebaa00da60025dcaa582d0e33d97e3ceb5fb269f5f",
+      "grade": "A",
+      "mode_ticket_counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 12,
+        "narrow": 3,
+        "tail": 10
+      },
+      "hit_mode_top10": [
+        {
+          "rank": 1,
+          "combo": "1-2-3",
+          "p": 16.487722149725048,
+          "odds": 32.6
+        },
+        {
+          "rank": 2,
+          "combo": "1-3-2",
+          "p": 16.443415622263178,
+          "odds": 21.6
+        },
+        {
+          "rank": 3,
+          "combo": "1-3-6",
+          "p": 15.870115713932483,
+          "odds": 66.2
+        },
+        {
+          "rank": 4,
+          "combo": "1-6-3",
+          "p": 15.667128828132459,
+          "odds": 161.2
+        },
+        {
+          "rank": 5,
+          "combo": "1-3-5",
+          "p": 15.28066466454101,
+          "odds": 48.3
+        },
+        {
+          "rank": 6,
+          "combo": "3-1-2",
+          "p": 4.242474340693117,
+          "odds": 66.2
+        },
+        {
+          "rank": 7,
+          "combo": "2-1-3",
+          "p": 4.208185538135279,
+          "odds": 68.1
+        },
+        {
+          "rank": 8,
+          "combo": "3-1-6",
+          "p": 4.082404394525999,
+          "odds": 89.5
+        },
+        {
+          "rank": 9,
+          "combo": "3-2-1",
+          "p": 4.012173788180814,
+          "odds": 127.3
+        },
+        {
+          "rank": 10,
+          "combo": "6-1-3",
+          "p": 3.7057149598706105,
+          "odds": 254.6
+        }
+      ],
+      "intrinsic_flags": {
+        "schema_v123": true,
+        "final_15m": true,
+        "pre_result_guards": true,
+        "race_sha_present": true,
+        "odds_sha_present_or_missing_source": true,
+        "minutes_in_window": true,
+        "ranking_policy_ok": true,
+        "prediction_kind_ok": true,
+        "top10_nonempty": true
+      },
+      "pass": true,
+      "atomic_pre_result_proof_sha256": "a1147bc4d7b1296b4c4db8e0c97c9f8c1e6d739ec02b229714f6c475af313a08"
     }
   ],
-  "schema_version": "boat-edge-final15m-audit-v125",
+  "current_state_info": {
+    "race_sha256_current": "7e29892e857e4f340ef949974cc2b1b8e254fbc532facf7435bd89092262adfa",
+    "odds_sha256_current": "8fdf346c675f1f6decb90e32af7db74b4699346b6133d6341c9596c823c980a5",
+    "race_still_matches_latest_snapshot": true,
+    "odds_still_matches_latest_snapshot": false,
+    "note": "Current-source mismatch after snapshot time is informational only; snapshot-time hashes remain the evidence."
+  },
+  "latest_intrinsic_flags": {
+    "schema_v123": true,
+    "final_15m": true,
+    "pre_result_guards": true,
+    "race_sha_present": true,
+    "odds_sha_present_or_missing_source": true,
+    "minutes_in_window": true,
+    "ranking_policy_ok": true,
+    "prediction_kind_ok": true,
+    "top10_nonempty": true
+  },
+  "pass": true,
+  "settlement": {
+    "available": false,
+    "winning_combo": null,
+    "hit_any": null,
+    "mode_hits": {},
+    "payout": null
+  },
+  "atomic_pre_result_audit": true,
   "scope": "SITE_ONLY_NOT_FORMAL_FRESH",
   "source_evidence_file": "data/site_autopilot/v229_evidence/20261015-22-06.json"
 }
