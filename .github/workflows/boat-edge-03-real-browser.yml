@@ -48,6 +48,7 @@ jobs:
     outputs:
       live_candidate: ${{ steps.probe.outputs.live_candidate }}
       first_add_proofs: ${{ steps.probe.outputs.first_add_proofs }}
+      selected_race: ${{ steps.probe.outputs.selected_race }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,8 +119,12 @@ jobs:
         if: github.event_name != 'workflow_run'
         run: python tests/browser/test_boat_edge_03_real_site.py --engine webkit
 
+      # The browser reads V01_SELECTED_RACE from the verified first-add step.
+      # No shell string evaluation or CLI word-splitting of race identities.
       - name: Published Pages - Chromium live navigation
         shell: bash
+        env:
+          V01_SELECTED_RACE: ${{ needs.v229-source-first-add.outputs.selected_race }}
         run: |
           set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
@@ -129,6 +134,8 @@ jobs:
 
       - name: Published Pages - WebKit iPhone-sized live navigation
         shell: bash
+        env:
+          V01_SELECTED_RACE: ${{ needs.v229-source-first-add.outputs.selected_race }}
         run: |
           set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \

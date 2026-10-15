@@ -264,6 +264,22 @@ def test_snapshot_evidence_contract_without_network():
         (fixed_now + timedelta(minutes=8), None, {"race_key": "saved-final"}),
         (fixed_now + timedelta(minutes=10), None, {"race_key": "other-reference"}),
     ]
+    # A workflow_run must inspect the SAME Git-first-add-proven race in both
+    # browsers. Never substitute another valid saved race when the first target
+    # closes or is missing from the published catalog.
+    pinned = [
+        (fixed_now + timedelta(minutes=8), None, {"race_key": live_key}),
+        (fixed_now + timedelta(minutes=10), None, {"race_key": "20261014-14-06"}),
+    ]
+    assert [x[2]["race_key"] for x in restrict_to_certified_target(
+        pinned, live_key)] == [live_key]
+    assert restrict_to_certified_target(pinned, "20261014-14-03") == []
+    assert restrict_to_certified_target(pinned, None) == pinned
+    try:
+        restrict_to_certified_target(pinned, "../data/site_results/invalid")
+        raise AssertionError("Invalid race key was accepted")
+    except ValueError:
+        pass
     ranked = prioritize_saved_final_candidates(order, {"saved-final": {}})
     assert [x[2]["race_key"] for x in ranked] == [
         "saved-final", "near-reference", "other-reference"
@@ -343,7 +359,18 @@ def unpublished_live_receipt_reason(http_status, saved_evidence):
     )
 
 
-def probe_verified_live_topk(context, target, catalog, shots, engine):
+def restrict_to_certified_target(choices, expected_race):
+    """In a V229 E2E probe, allow only the preflight's immutable race identity."""
+    if expected_race is None:
+        return choices
+    if not isinstance(expected_race, str) or not re.fullmatch(
+            r"20\d{6}-\d{2}-\d{2}", expected_race):
+        raise ValueError("V01_INVALID_EXPECTED_GIT_FIRST_ADD_RACE")
+    return [item for item in choices if item[2]["race_key"] == expected_race]
+
+
+def probe_verified_live_topk(
+        context, target, catalog, shots, engine, expected_final_race=None):
     """Optional REAL PRE_RESULT proof, never a synthetic TopK certification.
 
     Only races with a successful race-specific beforeinfo receipt and a future
@@ -353,6 +380,13 @@ def probe_verified_live_topk(context, target, catalog, shots, engine):
     """
     now = datetime.now(JST)
     choices, readiness = choose_live_receipt_candidates(catalog, now)
+    choices = restrict_to_certified_target(choices, expected_final_race)
+    if expected_final_race is not None and not choices:
+        return {
+            "status": "NOT_CERTIFIED_GIT_FIRST_ADD_RACE_NOT_LIVE_OR_NOT_PUBLISHED",
+            "expected_race": expected_final_race,
+            "eligible_count": 0, "readiness": readiness,
+        }
     if not choices:
         return {"status": "NOT_CERTIFIED_NO_VERIFIED_PREDEADLINE_RACE",
                 "eligible_count": 0, "readiness": readiness}
@@ -748,7 +782,7 @@ def probe_historical_snapshot_render_fixture(context, target, engine):
 
 
 
-def exercise(engine: str, url: str, shots: Path):
+def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
     import functools
     import http.server
     import threading
@@ -1066,7 +1100,9 @@ def exercise(engine: str, url: str, shots: Path):
                 historical_display = probe_historical_snapshot_render_fixture(
                     context, target, engine
                 )
-                live_topk = probe_verified_live_topk(context, target, catalog, shots, engine)
+                live_topk = probe_verified_live_topk(
+                    context, target, catalog, shots, engine, expected_final_race
+                )
                 report.update({
                     "historical_display": historical_display,
                     "live_topk": live_topk,
@@ -1135,6 +1171,11 @@ if __name__ == "__main__":
     parser.add_argument("--engine", choices=("chromium", "webkit"), required=True)
     parser.add_argument("--site-url", default="local", help="local or published Pages index.html")
     parser.add_argument("--screenshots", default="artifacts/boat-edge-03-browser")
+    parser.add_argument("--expected-final-race", default=None,
+                        help="V229 verified first-Git-add race; never fall back to a different race")
     args = parser.parse_args()
     test_snapshot_evidence_contract_without_network()
-    exercise(args.engine, args.site_url, Path(args.screenshots))
+    exercise(args.engine, args.site_url, Path(args.screenshots),
+             expected_final_race=(
+                 args.expected_final_race or os.environ.get("V01_SELECTED_RACE") or None
+             ))
