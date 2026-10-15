@@ -119,6 +119,8 @@ jobs:
         if: github.event_name != 'workflow_run'
         run: python tests/browser/test_boat_edge_03_real_site.py --engine webkit
 
+      # The browser reads V01_SELECTED_RACE from the verified first-add step.
+      # No shell string evaluation or CLI word-splitting of race identities.
       - name: Published Pages - Chromium live navigation
         shell: bash
         env:
@@ -128,7 +130,6 @@ jobs:
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine chromium \
             --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
-            ${V01_SELECTED_RACE:+--expected-final-race "$V01_SELECTED_RACE"} \
             | tee "$RUNNER_TEMP/pages-chromium-live-final.log"
 
       - name: Published Pages - WebKit iPhone-sized live navigation
@@ -140,7 +141,6 @@ jobs:
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine webkit \
             --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
-            ${V01_SELECTED_RACE:+--expected-final-race "$V01_SELECTED_RACE"} \
             | tee "$RUNNER_TEMP/pages-webkit-live-final.log"
 
       # On a V229 workflow_run, the existing 01 cheap preflight already proved

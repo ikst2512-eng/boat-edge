@@ -1176,4 +1176,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     test_snapshot_evidence_contract_without_network()
     exercise(args.engine, args.site_url, Path(args.screenshots),
-             expected_final_race=args.expected_final_race)
+             expected_final_race=(
+                 args.expected_final_race or os.environ.get("V01_SELECTED_RACE") or None
+             ))
