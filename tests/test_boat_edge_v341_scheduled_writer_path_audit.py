@@ -3,10 +3,33 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.boat_edge_v341_scheduled_writer_path_audit import audit, staged_paths
+from scripts.boat_edge_v341_scheduled_writer_path_audit import audit, staged_paths, possible_job_text
 
 
 class V341WriterOverlap(unittest.TestCase):
+    def test_disabled_installers_do_not_masquerade_as_live_writers(self):
+        text = '''jobs:
+  old:
+    if: ${{ false }}
+    steps:
+      - run: git add -- index.html BOAT_EDGE_CURRENT_TODO.md
+  also_old:
+    if: false
+    steps:
+      - run: git add -- data/old
+  uncertain:
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - run: git add -- data/uncertain
+  current:
+    steps:
+      - run: |
+          git add -- data/history
+'''
+        paths, dynamic = staged_paths(possible_job_text(text))
+        self.assertEqual(paths, ['data/history', 'data/uncertain'])
+        self.assertFalse(dynamic)
+
     def test_real_high_level_collector_overlap_is_candidate_only(self):
         root = Path(__file__).resolve().parents[1] / ".github/workflows"
         report = audit(root)
