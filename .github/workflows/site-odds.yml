@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: boat-edge-site-odds-v71
@@ -323,3 +324,15 @@ jobs:
           done
           echo V71_PUBLISH_FAILED_AFTER_RETRIES >&2
           exit 1
+
+      # A producer success can precede a delayed/dropped workflow_run event.
+      # Call only the existing source+deadline guarded V229, never freeze here.
+      - name: Nudge existing V229 from successfully published PRE_RESULT inputs
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
+          bash scripts/boat_edge_v01_first_freeze_nudge.sh
