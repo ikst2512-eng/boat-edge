@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Conservatively remove ONLY in-flight collector changes for newly Git-frozen races.
+"""Discard unpublished source changes for frozen or provably expired races.
 
 The unchanged V277 audit still has final authority. This helper never reads
 snapshot contents, results, payout data or model outputs. It is ONLY invoked
@@ -84,13 +84,14 @@ def filter_newly_frozen(root: Path) -> dict:
         raise GuardFailure("V01_COLLECTOR_HAS_NON_SOURCE_OR_FROZEN_PATH")
     frozen = frozen_keys(root)
     changed_sources = {key for path in diff if (key := race_from_source(path))}
-    keys = sorted(changed_sources & frozen)
-    if not keys:
+    frozen_changed = changed_sources & frozen
+    if not frozen_changed:
         raise GuardFailure("V01_NO_NEWLY_REMOTE_FROZEN_SOURCE_TO_FILTER")
     now = datetime.now(JST)
     # The collector must not publish source bytes after a deadline merely
     # because an earlier run fetched them before the race's deadline.
-    for key in sorted(changed_sources - set(keys)):
+    expired = set()
+    for key in sorted(changed_sources - frozen_changed):
         p = root / "data/races" / (key + ".json")
         try:
             doc = json.loads(p.read_text(encoding="utf8"))
@@ -99,7 +100,19 @@ def filter_newly_frozen(root: Path) -> dict:
         except (OSError, UnicodeError, ValueError, TypeError, KeyError) as ex:
             raise GuardFailure("V01_REMAINING_SOURCE_DEADLINE_UNVERIFIED_" + key) from ex
         if now >= due:
-            raise GuardFailure("V01_REMAINING_SOURCE_DEADLINE_PASSED_" + key)
+            # Do not let one expired collection discard unrelated future
+            # races. Revert its unpublished evidence to an independently
+            # existing remote race; never publish the late local bytes.
+            try:
+                remote = json.loads(git(root, "show", "origin/main:data/races/" + key + ".json"))
+                if (doc.get("race_key") != key or remote.get("race_key") != key
+                        or remote["meta"]["deadline"] != meta["deadline"]):
+                    raise GuardFailure("V01_EXPIRED_REMOTE_IDENTITY_OR_DEADLINE_MISMATCH_" + key)
+            except (ValueError, TypeError, KeyError) as ex:
+                raise GuardFailure("V01_EXPIRED_REMOTE_RACE_UNVERIFIED_" + key) from ex
+            expired.add(key)
+
+    keys = sorted(frozen_changed | expired)
 
     dropped: list[str] = []
     for file in diff:
@@ -110,8 +123,8 @@ def filter_newly_frozen(root: Path) -> dict:
                          preview.group(1) if preview else None)
         if key not in keys:
             continue
-        # Origin is authoritative: a remote snapshot or V232 cohort has already
-        # immutably locked its source, even if source bytes locally look fresher.
+        # Remote frozen evidence remains authoritative. Expired local source
+        # changes are also discarded, never published as on-time evidence.
         if origin_has(root, file):
             checked_run(root, "restore", "--source=origin/main", "--staged", "--worktree", "--", file)
         else:
@@ -167,5 +180,6 @@ def filter_newly_frozen(root: Path) -> dict:
     # One local commit only. Existing V277 audit is then repeated against the
     # newly amended exact Git bytes BEFORE any push. No --force is used.
     checked_run(root, "commit", "--amend", "--no-edit", "--allow-empty")
-    return {"pruned_frozen_races": keys, "dropped_paths": dropped,
+    return {"pruned_frozen_races": sorted(frozen_changed),
+            "pruned_expired_races": sorted(expired), "dropped_paths": dropped,
             "results_seen": False, "remote_evidence_preserved": True}
