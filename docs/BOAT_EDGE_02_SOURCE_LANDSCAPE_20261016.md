@@ -112,3 +112,9 @@ JMAの許可範囲の気象CSV候補を、会場観測とは区別して近接�
 - 既存BOAT_EDGE_EXECUTION_ORDERのゲート1Cを変更しない。研究ノート追加によって、公式取得器・予想保存・Git原本・正式Fresh・本番モデル・UI・workflow・結果アクセスを変更しない。
 
 権利条件: BOATERS https://boaters-boatrace.com/guide/use-on-sns はSNS/HPでの予想・データ利用を原則拒否。ボートレース日和 https://kyoteibiyori.com/terms.html は無断自動取得/AI学習を禁止。公式 https://www.boatrace.jp/owsp/sp/extra/policy.html は著作権・大量アクセス制限を明示。公開閲覧可能なことを取得許可と解釈しない。
+
+## オーナー指示 2026-10-16 — 許諾不要データの継続研究インプット方針
+
+「利用条件が確認でき、追加の個別同意なしで再利用できる有力情報を将来取り込めるように準備し、各特徴量の独立評価と適格な組合せ（サラブレッド）を検証する」。今後のための機械可読・デフォルト拒否の入力候補台帳: [BOAT_EDGE_02_OPEN_DATA_INTAKE_POLICY_20261016.json](BOAT_EDGE_02_OPEN_DATA_INTAKE_POLICY_20261016.json)。JMA登録不要CSV・政府統計ダッシュボード登録不要APIを優先候補とする。GSIは個別データの承認要否を確認し、BOAT RACE公式ダウンロード・民間独自数値の追加利用権限を推定しない。
+
+**状態区分**: 研究用入力契約の準備であり、CSVや外部数値をまだ保存・学習していない。自動HTTP取得・モデル結合・本番有効化はしない。BOAT_EDGE_EXECUTION_ORDER.md の最初の未達ゲート1C→1Dを実測し、ゲート2に入ってから本台帳を再確認。使う際は出典・利用権利・取得/公開時刻・原本SHA・品質フラグ・観測点と会場の違いを必須にし、締切後公開値を予想に使わない。
