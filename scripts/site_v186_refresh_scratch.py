@@ -7,6 +7,7 @@ verification timestamps only when a newly executed V182 scan has just run.
 from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+import hashlib
 import json, re
 
 JST=timezone(timedelta(hours=9))
@@ -17,6 +18,44 @@ def utc(v):
         d=datetime.fromisoformat(str(v).replace('Z','+00:00'))
         return d.astimezone(timezone.utc) if d.tzinfo else None
     except (TypeError,ValueError):return None
+
+def source_bound_green(data:Path, key:str, race:dict, doc:dict)->bool:
+    """Fail closed before V186 stages a non-blocked scratch document.
+
+    Legacy V182 scans have NO original official HTML SHA provenance. V186
+    must not publish such a weak green over a stronger V01/V230 record.
+    This checks only PRE_RESULT source files, never outcomes or formal data.
+    """
+    if (not isinstance(key,str) or not KEY.fullmatch(key)
+            or not isinstance(race,dict) or not isinstance(doc,dict)
+            or race.get('race_key')!=key or doc.get('race_key')!=key
+            or doc.get('schema_version')!='boat-edge-v182-scratch-evidence-v1'
+            or doc.get('source_date')!=key[:8] or doc.get('blocked') is not False
+            or doc.get('suspect_lanes')!=[] or doc.get('official_raw_flags')!=[]
+            or doc.get('official_beforeinfo_six_boat_complete') is not True
+            or doc.get('race_card_source_status')!='ok'
+            or doc.get('official_beforeinfo_source_status')!='ok'):
+        return False
+    source=race.get('source_audit') or {}
+    vv,rr=key.split('-')[1:]
+    for role,suffix,field in (('race_card','racelist','race_card_sha256'),
+                               ('beforeinfo','beforeinfo','beforeinfo_sha256')):
+        row=source.get(role) or {}
+        expected=row.get('sha256')
+        html=data/'raw'/key[:8]/f'{vv}_{rr}_{suffix}.html'
+        if (row.get('status')!='ok' or not isinstance(expected,str)
+                or re.fullmatch(r'[0-9a-f]{64}',expected) is None
+                or doc.get(field)!=expected or html.is_symlink()
+                or any(parent.is_symlink() for parent in html.parents)
+                or not html.is_file()):
+            return False
+        try:
+            if hashlib.sha256(html.read_bytes()).hexdigest()!=expected:
+                return False
+        except OSError:
+            return False
+    return True
+
 
 def refresh(root:Path, now:datetime):
     now=now.astimezone(JST)
