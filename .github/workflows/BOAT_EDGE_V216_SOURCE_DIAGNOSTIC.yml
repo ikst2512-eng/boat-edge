@@ -94,9 +94,9 @@ jobs:
                   and not path.startswith('data/site_paper_sim/readiness_history_v215/')
                   and not (path.startswith('data/site_ops_v220/gate1c_source_ready/')
                       and path.endswith('.json')
-                      and len(Path(path).name)==22)):
+                      and len(Path(path).name)==19)):
                   raise SystemExit('V216_UNEXPECTED_FROZEN_EVIDENCE_FILE_'+path)
-           print('V216_PRE_RESULT_ONLY_ATOMIC_STAGING_PASS',len(staged))
+          print('V216_PRE_RESULT_ONLY_ATOMIC_STAGING_PASS',len(staged))
           PY_V216_PRE_RESULT
             git diff --cached --check
             if git diff --cached --quiet; then echo 'V216_NO_NEW_PRE_RESULT_EVIDENCE'; break; fi
