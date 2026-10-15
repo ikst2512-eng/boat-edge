@@ -207,6 +207,59 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(m.imminent_retry_targets(
             self.root,[KEY],{KEY:'fresh_verified'},self.now),[])
 
+    def test_transient_transport_second_chance_rejects_redirect_and_known_scratch(self):
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
+        for cause in ('Timeout', 'ReadTimeout', 'ConnectTimeout', 'ConnectionError'):
+            with self.subTest(cause=cause):
+                self.assertEqual(m.imminent_retry_targets(
+                    self.root,[KEY],{KEY:'fetch_failed:'+cause+': official timeout'},
+                    self.now),[KEY])
+        for status in ('fetch_failed:RuntimeError: V278_REDIRECT_BLOCKED_BEFORE_FOLLOW',
+                       'fetch_failed:RuntimeError: V278_RESPONSE_RACE_IDENTITY_MISMATCH',
+                       'fetch_failed:HTTPError: 404 not found',
+                       'fetch_failed:ValueError: bad official source',
+                       'fetch_failed:Timeout', 'fresh_verified'):
+            with self.subTest(status=status):
+                self.assertEqual(m.imminent_retry_targets(
+                    self.root,[KEY],{KEY:status},self.now),[])
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],{KEY:'fetch_failed:Timeout: request timeout'},
+            self.now+timedelta(minutes=6)),[])
+        m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',
+                     {'race_key':KEY,'blocked':True,
+                      'suspect_lanes':[2],
+                      'official_raw_flags':['racelist']})
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],{KEY:'fetch_failed:Timeout: request timeout'},self.now),[])
+        m.write_json(self.root/'data/site_scratches_v182'/f'{KEY}.json',
+                     {'race_key':KEY,'blocked':False,'suspect_lanes':[],
+                      'official_raw_flags':[]})
+        self.assertEqual(m.imminent_retry_targets(
+            self.root,[KEY],{KEY:'fetch_failed:Timeout: request timeout'},self.now),[KEY])
+
+    def test_transient_transport_retry_can_recover_without_backfilling(self):
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',side_effect=[0,1]) as frozen,
+              patch.object(m,'fetch_one',side_effect=[
+                  (KEY,None,'Timeout: official beforeinfo timed out'),
+                  (KEY,{'fixture':True},None)]) as fetched,
+              patch.object(m,'update_one',return_value='fresh_verified') as updated,
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as paused):
+            state=m.run(self.root,now=self.now,worker=2,retry_imminent=True)
+        self.assertEqual(state['imminent_retry_targets'],[KEY])
+        self.assertEqual(state['new_snapshots_atomic_audited'],1)
+        self.assertEqual(state['imminent_retry_snapshots'],1)
+        self.assertEqual(state['network_error'],0)
+        self.assertEqual(state['source_refreshed'],1)
+        self.assertEqual(frozen.call_count,2)
+        self.assertEqual(fetched.call_count,2)
+        updated.assert_called_once()
+        paused.assert_called_once_with(20)
+
     def test_imminent_retry_keeps_first_snapshot_immutable(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
             'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
