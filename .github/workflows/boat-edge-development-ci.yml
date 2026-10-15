@@ -35,6 +35,12 @@ jobs:
           node-version: '22'
       - name: Install parser dependencies
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
+      - name: Prove source-commit V229 nudge cannot dispatch on missing or unsafe evidence
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v01_first_freeze_nudge.py' -v
+          bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
       - name: Verify obsolete V226 recovery cannot interrupt active SITE collectors
         env:
           PYTHONDONTWRITEBYTECODE: '1'
