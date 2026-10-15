@@ -569,7 +569,7 @@ if __name__=='__main__':
     if args.postcommit_incomplete:
         report=run_postcommit_incomplete(args.root,worker=min(8,max(1,args.workers)))
         if args.postcommit_report:
-            Path(args.postcommit_report).write_text(json.dumps(report,ensure_ascii=False,sort_keys=True)+'\\n',encoding='utf-8')
+            Path(args.postcommit_report).write_text(json.dumps(report,ensure_ascii=False,sort_keys=True)+'\n',encoding='utf-8')
         print('V230_POSTCOMMIT_INCOMPLETE_SOURCE_RETRY '+json.dumps(report,ensure_ascii=False,sort_keys=True))
     else:
         run(args.root,worker=min(8,max(1,args.workers)),priority_key=args.priority_race_key,retry_imminent=args.retry_imminent)
