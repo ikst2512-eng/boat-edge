@@ -35,6 +35,12 @@ jobs:
           node-version: '22'
       - name: Install parser dependencies
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
+      - name: Verify source-ready first Git receipt and original source tree
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTHONPATH: scripts
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_01_gate1c_source_receipt_proof.py' -v
       - name: Verify prospective source-ready observation in existing V216 only
         env:
           PYTHONDONTWRITEBYTECODE: '1'
