@@ -63,3 +63,9 @@
 - 最重要新規: 日和の超展開、2026-08 スロー・ダッシュ、BOATERS 先頭艇ごと2着円グラフ、ST展示連動の弱さ、蒲郡の周回別計測。
 - 次回優先: 24場オリ展計測差と提供状況、1着×2着の条件付き3着用取得可能項目、許諾に基づく自前時点スナップショットの設計。
 - 本日モデル本番変更・正式Fresh読取り・結果採点: なし。
+
+## 2026-10-16 — 他サイト横断調査へのリンク
+
+- 追加した15分類（公式・場公式・BOATERS・艇国データバンク・ボートとデータ・BOATRACE DATA・BR-STAT・艇脳・BOAT BANK・BOAT LAB・BOATBoy・Team-Nave API・気象庁など）の**出典・利用条件・研究候補N01–N07・feature contract**は [docs/BOAT_EDGE_02_SOURCE_LANDSCAPE_20261016.md](docs/BOAT_EDGE_02_SOURCE_LANDSCAPE_20261016.md) に集約。
+- 特に新規は対戦相手補正Elo、他艇同時条件付き着順、ST四分位/ばらつき、モーター乗り手補正の研究設計。既存R01–R16、PR #192/#253と重複実装しない。
+- **RESEARCH_ONLY / THIRD_PARTY_PERMISSION_UNVERIFIED**。公開サイトの数値を無断コピー/AI学習しない。実データ取込なし、実測改善なし、予想本番重み・Formal Fresh変更なし。
