@@ -471,17 +471,53 @@ jobs:
           print({"history_count":len(d.get("races",{})),"policy":d["selection_policy"]})
           PY
 
-      - name: Save V133 history
+      - name: Save V133 history without competing for first PRE_RESULT freezes
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/site_prediction_snapshots data/site_prediction_history
-          git diff --cached --quiet && exit 0
-          git commit -m "Update V133 FINAL15M history"
-          for n in 1 2 3; do
-            git push && exit 0
-            git pull --rebase origin main
+          # V229/V235 own FIRST Git-add for frozen predictions (SHA+deadline+
+          # same-run audit). Legacy V133 may refresh its independent history,
+          # but must never first-add a same-race snapshot without that proof.
+          # A rebase of concurrently added snapshots fails add/add and risks
+          # turning an older unverified snapshot into the first public record.
+          # Recompute history on current main, with remote evidence winning.
+          for attempt in 1 2 3 4; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            # Clear only local V133 projections; tracked data from origin/main
+            # survives reset. No result, model, audit or Formal files are removed.
+            git clean -fd -- data/site_prediction_snapshots/ data/site_prediction_history/
+            python3 scripts/site_final_history_v133.py
+            python3 - <<'PY_V133_HISTORY_SCHEMA'
+          import json
+          from pathlib import Path
+          doc=json.loads(Path('data/site_prediction_history/index.json').read_text(encoding='utf-8'))
+          assert doc.get('schema_version') == 'boat-edge-server-site-history-index-v123'
+          assert doc.get('selection_policy') == 'MATCH_CURRENT_UI_V133_OR_FORMAL_CURRENT'
+          PY_V133_HISTORY_SCHEMA
+            # Stage only derived history. Snapshot proposals produced by the
+            # legacy source are intentionally NOT published or backfilled.
+            git add -A -- data/site_prediction_history/
+            python3 - <<'PY_V133_HISTORY_STAGE'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          if any(not p.startswith('data/site_prediction_history/') for p in paths):
+              raise SystemExit('V133_UNSAFE_FIRST_FREEZE_STAGE_BLOCKED')
+          print('V133_HISTORY_ONLY_NO_SNAPSHOT_FIRST_GIT_ADD',len(paths))
+          PY_V133_HISTORY_STAGE
+            if git diff --cached --quiet; then
+              echo V133_HISTORY_UNCHANGED
+              exit 0
+            fi
+            git diff --cached --check
+            git commit -m "Update V133 existing SITE history only"
+            if git push origin HEAD:main; then
+              echo V133_HISTORY_ONLY_CONFLICT_SAFE_PUBLISHED
+              exit 0
+            fi
+            echo "V133_HISTORY_MAIN_MOVED_RECOMPUTE_$attempt"
           done
-          git push
+          echo V133_HISTORY_MAIN_MOVED_NO_FROZEN_EVIDENCE_OVERWRITE >&2
+          exit 1
