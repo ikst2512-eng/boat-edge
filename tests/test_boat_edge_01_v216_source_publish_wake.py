@@ -9,6 +9,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 V216=ROOT/'.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
 COLLECTOR=ROOT/'.github/workflows/auto-update.yml'
+ODDS=ROOT/'.github/workflows/site-odds.yml'
 V220=ROOT/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml'
 
 class V216CollectorWake(unittest.TestCase):
@@ -30,6 +31,7 @@ class V216CollectorWake(unittest.TestCase):
         self.assertEqual(wf.count('  schedule:'),1)
         self.assertEqual(wf.count('  workflow_run:'),1)
         self.assertEqual(wf.count("      - 'BOAT EDGE 自動更新'"),1)
+        self.assertEqual(wf.count("      - 'BOAT EDGE 3連単オッズ更新 V71'"),1)
         self.assertNotIn("BOAT EDGE V229 - Atomic",wf)
         self.assertNotIn("git push --force",wf)
 
@@ -51,6 +53,12 @@ class V216CollectorWake(unittest.TestCase):
         collector=COLLECTOR.read_text(encoding='utf8')
         self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'",collector)
         self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",collector)
+        odds=ODDS.read_text(encoding='utf8')
+        self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",odds)
+        # All observation inputs remain pre-result, the collector and odds
+        # producers never recursively listen to this V216 observer.
+        self.assertIn("V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED",odds)
+        self.assertIn("V270_PRE_RESULT_SAFE_PUSH_PASS",collector)
         observer=V220.read_text(encoding='utf8')
         self.assertIn("V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE",observer)
         self.assertIn("cooldown=900",observer)
