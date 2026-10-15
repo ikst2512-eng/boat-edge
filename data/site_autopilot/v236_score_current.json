@@ -2,41 +2,30 @@
   "comparisons": {
     "balance10": {
       "avg_points": 10.0,
-      "hit": 53,
-      "hit_rate_percent": 36.3,
-      "races": 146
+      "hit": 54,
+      "hit_rate_percent": 36.73,
+      "races": 147
     },
     "coverage15": {
       "avg_points": 15.0,
-      "hit": 64,
-      "hit_rate_percent": 43.84,
-      "races": 146
+      "hit": 65,
+      "hit_rate_percent": 44.22,
+      "races": 147
     },
     "hit10": {
       "avg_points": 10.0,
-      "hit": 50,
-      "hit_rate_percent": 34.25,
-      "races": 146
+      "hit": 51,
+      "hit_rate_percent": 34.69,
+      "races": 147
     },
     "scenario7plus3": {
       "avg_points": 10.0,
-      "hit": 52,
-      "hit_rate_percent": 35.62,
-      "races": 146
+      "hit": 53,
+      "hit_rate_percent": 36.05,
+      "races": 147
     }
   },
   "examples": [
-    {
-      "outcomes": {
-        "balance10": true,
-        "coverage15": true,
-        "headsecond10": true,
-        "hit10": true,
-        "scenario7plus3": true
-      },
-      "race_key": "20261015-04-08",
-      "winning": "1-3-4"
-    },
     {
       "outcomes": {
         "balance10": false,
@@ -199,6 +188,17 @@
         "hit10": true,
         "scenario7plus3": true
       },
+      "race_key": "20261015-15-11",
+      "winning": "1-4-3"
+    },
+    {
+      "outcomes": {
+        "balance10": true,
+        "coverage15": true,
+        "headsecond10": true,
+        "hit10": true,
+        "scenario7plus3": true
+      },
       "race_key": "20261015-20-02",
       "winning": "1-2-4"
     },
@@ -303,37 +303,37 @@
     }
   ],
   "headsecond10_distinct_matched_prospective_only": {
-    "candidate_hit10_hits": 9,
-    "current_hit10_hits": 9,
+    "candidate_hit10_hits": 10,
+    "current_hit10_hits": 10,
     "gains": 1,
     "losses": 1,
     "paired_exact_p_two_sided": 1.0,
     "promotion_authorized": false,
-    "races": 38,
+    "races": 39,
     "ranked_top3_top5_top10": {
       "10": {
-        "candidate_hits": 9,
-        "current_hits": 9,
+        "candidate_hits": 10,
+        "current_hits": 10,
         "gains": 1,
         "losses": 1,
         "paired_exact_p_two_sided": 1.0,
-        "races": 38
+        "races": 39
       },
       "3": {
-        "candidate_hits": 5,
-        "current_hits": 4,
+        "candidate_hits": 6,
+        "current_hits": 5,
         "gains": 1,
         "losses": 0,
         "paired_exact_p_two_sided": 1.0,
-        "races": 38
+        "races": 39
       },
       "5": {
-        "candidate_hits": 5,
-        "current_hits": 7,
+        "candidate_hits": 6,
+        "current_hits": 8,
         "gains": 1,
         "losses": 3,
         "paired_exact_p_two_sided": 0.625,
-        "races": 38
+        "races": 39
       }
     }
   },
@@ -376,9 +376,11 @@
   "production_model_changed": false,
   "promotion_authorized": false,
   "real_or_paper_purchase": false,
-  "rejected_or_pending_this_run": {},
+  "rejected_or_pending_this_run": {
+    "race_not_over": 1
+  },
   "schema": "BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1",
   "scope": "POST_RESULT_SAME_COHORT_COMPARISON_NOT_FORMAL_FRESH",
-  "scored_total": 146,
+  "scored_total": 147,
   "status": "DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION"
 }
