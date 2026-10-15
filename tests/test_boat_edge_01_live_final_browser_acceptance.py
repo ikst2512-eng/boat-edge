@@ -66,7 +66,7 @@ class SavedFinalPagesGate(unittest.TestCase):
         chromium = self.make("c", report("chromium"))
         webkit = self.make("w", report("webkit"))
         other = "20261014-20-07:" + SHA
-        with self.assertRaisesRegex(GateError, "NOT_SAME_RACE_SHA"):
+        with self.assertRaisesRegex(GateError, "RACE_NOT_IN_FIRST_GIT_ADD_PROOFS"):
             verify_both(chromium, webkit, other)
 
     def test_changed_snapshot_sha_never_borrows_an_old_first_add(self):

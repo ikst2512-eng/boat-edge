@@ -78,7 +78,12 @@ def verify_both(chromium: Path, webkit: Path, first_add_proofs: str) -> str:
         raise GateError("PUBLISHED_BROWSERS_SHOW_DIFFERENT_SAVED_FINAL_RACES")
     if left["snapshot_sha256"] != right["snapshot_sha256"]:
         raise GateError("PUBLISHED_BROWSERS_SHOW_DIFFERENT_SAVED_FINAL_SHA")
-    if proofs.get(left["race"]) != left["snapshot_sha256"]:
+    if left["race"] not in proofs:
+        # Distinguish missing eligibility from an actual byte-SHA mismatch.
+        # A Pages race can be V229-audited yet absent from the cheap
+        # first-Git-add preflight (e.g., an old subsecond-time bug).
+        raise GateError("PUBLISHED_FINAL_RACE_NOT_IN_FIRST_GIT_ADD_PROOFS")
+    if proofs[left["race"]] != left["snapshot_sha256"]:
         raise GateError("PUBLISHED_FINAL_NOT_SAME_RACE_SHA_AS_FIRST_GIT_ADD")
     return left["race"]
 

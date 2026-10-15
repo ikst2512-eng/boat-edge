@@ -46,6 +46,29 @@ class FirstAddBrowserGate(unittest.TestCase):
     def test_real_proven_frozen_input_triggers_before_deadline(self):
         self.assertTrue(valid(*fixture(), KEY, NOW, ADD))
 
+    def test_subsecond_snapshot_with_same_second_git_first_add(self):
+        # Reproduce the actual V229 clock precision mismatch:
+        # saved_at=14:29:45.646, first Git commit=%cI 14:29:45.
+        s, _, e, _ = fixture()
+        s["first_saved_at"] = "2026-10-14T19:29:37.640+09:00"
+        s["saved_at"] = "2026-10-14T19:29:37.646+09:00"
+        blob = json.dumps(s, sort_keys=True).encode()
+        digest = hashlib.sha256(blob).hexdigest()
+        a = {"race_key": KEY, "pass": True,
+             "latest_snapshot_sha256": digest}
+        e["snapshot_saved_at"] = s["saved_at"]
+        e["snapshot_sha256"] = digest
+        same_second = datetime(2026, 10, 14, 19, 29, 37, tzinfo=JST)
+        self.assertTrue(valid(s, a, e, blob, KEY, NOW, same_second))
+        # Truly earlier Git seconds cannot borrow the snapshot evidence.
+        self.assertFalse(valid(s, a, e, blob, KEY, NOW,
+                               same_second - timedelta(seconds=1)))
+        # The exact-source/audit SHA still cannot be substituted.
+        self.assertFalse(valid(s, a, e, blob + b"changed", KEY, NOW,
+                               same_second))
+        self.assertFalse(valid(s, a, {**e, "snapshot_sha256": "f" * 64},
+                               blob, KEY, NOW, same_second))
+
     def test_no_late_backfill_or_missing_git_first_add(self):
         self.assertFalse(valid(*fixture(), KEY, NOW, None))
         self.assertFalse(valid(*fixture(), KEY,
