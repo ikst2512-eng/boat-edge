@@ -373,6 +373,9 @@ def update_one(root,key,data,now):
            'race_card_source_status':'ok',
            'official_beforeinfo_source_status':audit['beforeinfo']['status'],
            'official_beforeinfo_six_boat_complete':ready,
+           # Bind this withdrawal check to exact original official bytes.
+           'race_card_sha256':sha(rb),
+           'beforeinfo_sha256':sha(bb),
            'limitations':'No scratch signal detected is not certified 6-boat participation; raw collector freshness limits detection.'}
     write_json(root/'data/site_scratches_v182'/f'{key}.json',proof)
     if odds is not None:
