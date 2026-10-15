@@ -55,6 +55,24 @@ class WorkflowInventoryTests(unittest.TestCase):
             self.assertIn('schedule',by_name[key]['triggers'])
             self.assertIn('workflow_run',by_name[key]['triggers'])
 
+    def test_v186_scratch_writer_never_rebases_over_newer_withdrawal_evidence(self):
+        source=(ROOT/'.github/workflows/BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml').read_text(encoding='utf-8')
+        writer=source.split('      - name: Publish only current predeadline unfrozen scratch checks',1)[1]
+        self.assertIn('git reset --hard origin/main',writer)
+        self.assertIn('git clean -fd -- data/site_scratches_v182/',writer)
+        self.assertIn('source_write_allowed(root,key,deadline,now)',writer)
+        self.assertIn("0 <= (due-now).total_seconds() <= 26*60",writer)
+        self.assertIn('held_explicit.append(key)',writer)
+        self.assertIn('V186_UNEXPECTED_STAGED_SOURCE_PATH',writer)
+        self.assertIn('V186_SCRATCH_ONLY_FAST_FORWARD_PUBLISHED',writer)
+        self.assertNotIn('git rebase',writer)
+        self.assertNotIn('git pull --rebase',writer)
+        self.assertNotIn('git add -A -- data/site_scratches_v182/',writer)
+        self.assertNotIn('git add -- index.html',writer)
+        self.assertNotIn('git push --force',writer)
+        by_name={entry['workflow']:entry for entry in audit(ROOT/'.github/workflows')['workflows']}
+        self.assertIn('schedule',by_name['BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml']['triggers'])
+
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
         self.assertEqual(audit(root), audit(root))

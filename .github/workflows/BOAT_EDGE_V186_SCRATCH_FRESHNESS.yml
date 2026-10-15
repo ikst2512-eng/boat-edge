@@ -57,22 +57,104 @@ jobs:
           print('V186_UI_FRESHNESS_AND_V185_MODEL_PRESERVED_PASS')
           PYCHECK
           git diff --check
-      - name: Commit source verification and UI guard without changes to prediction models
+      - name: Publish only current predeadline unfrozen scratch checks conflict-safely
         shell: bash
         run: |
           set -euo pipefail
           export PYTHONDONTWRITEBYTECODE=1
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- index.html scripts/site_v186_refresh_scratch.py scripts/site_v186_patch_ui.py tests/test_v186_refresh.py
-          git add -A -- data/site_scratches_v182/
-          if git diff --cached --quiet; then echo V186_FRESHNESS_NO_CHANGE; exit 0; fi
-          git commit -m 'V186 recheck scratch evidence near deadline and make UI fail closed on stale checks'
-          for attempt in 1 2 3 4 5; do
-            if git push origin HEAD:main; then echo V186_VERIFIED_SCRATCH_FRESHNESS_APPLIED; exit 0; fi
-            git fetch origin main
-            git rebase origin/main
+          for attempt in 1 2 3 4; do
+            # V186 must not rebase stale scratch checks over the V230 collector's
+            # later withdrawal detection or over a race already first-Git-frozen.
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_scratches_v182/
+            python3 scripts/site_v182_scratch_scan.py
+            python3 scripts/site_v186_refresh_scratch.py
+            python3 scripts/site_v186_patch_ui.py
             python3 tests/test_v186_refresh.py
+            # A scratch-only writer must not rewrite separately owned UI/code.
+            git diff --exit-code -- index.html scripts/site_v186_refresh_scratch.py scripts/site_v186_patch_ui.py tests/test_v186_refresh.py
+            python3 - <<'PY_V186_SAFE_STAGE'
+          from datetime import datetime, timedelta
+          from pathlib import Path
+          import json, re, subprocess
+          from scripts.boat_edge_v288_deadline_source_lock import JST, source_write_allowed
+          root=Path('data')
+          now=datetime.now(JST)
+          day=now.strftime('%Y%m%d')
+          staged=[]
+          held_explicit=[]
+          for path in sorted((root/'site_scratches_v182').glob(f'{day}-??-??.json')):
+              if path.is_symlink() or not re.fullmatch(r'20\d{6}-\d{2}-\d{2}',path.stem):
+                  continue
+              key=path.stem
+              race_path=root/'races'/(key+'.json')
+              if race_path.is_symlink() or not race_path.is_file():
+                  continue
+              try:
+                  race=json.loads(race_path.read_text(encoding='utf-8'))
+                  doc=json.loads(path.read_text(encoding='utf-8'))
+              except (OSError,ValueError,UnicodeError):
+                  continue
+              meta=race.get('meta') or {}
+              if (race.get('race_key')!=key or doc.get('race_key')!=key
+                      or doc.get('source_date')!=day
+                      or meta.get('phase')!='PRE_RESULT'
+                      or any(meta.get(x) is not False for x in ('results_seen','unlock','scoring'))):
+                  continue
+              deadline=meta.get('deadline')
+              if not source_write_allowed(root,key,deadline,now):
+                  continue
+              due=datetime.strptime(day+deadline,'%Y%m%d%H:%M').replace(tzinfo=JST)
+              if not 0 <= (due-now).total_seconds() <= 26*60:
+                  continue
+              checked=doc.get('checked_at')
+              try:
+                  at=datetime.fromisoformat(str(checked).replace('Z','+00:00'))
+                  if at.tzinfo is None or not 0 <= (now-at).total_seconds() <= 5*60:
+                      continue
+              except (TypeError,ValueError,OverflowError):
+                  continue
+              # A previously independently observed explicit withdrawal cannot
+              # be downgraded by a less complete V182 scan.
+              previous=subprocess.run(['git','show','HEAD:'+path.as_posix()],
+                                      capture_output=True,text=True,check=False)
+              if previous.returncode==0:
+                  try:
+                      before=json.loads(previous.stdout)
+                  except ValueError:
+                      continue
+                  if (before.get('blocked') is True and
+                      (before.get('suspect_lanes') or before.get('official_raw_flags'))):
+                      if (doc.get('blocked') is not True or
+                          not set(map(str,before.get('suspect_lanes') or [])) <=
+                              set(map(str,doc.get('suspect_lanes') or [])) or
+                          not set(before.get('official_raw_flags') or []) <=
+                              set(doc.get('official_raw_flags') or [])):
+                          held_explicit.append(key)
+                          continue
+              subprocess.check_call(['git','add','--',path.as_posix()])
+              staged.append(path.as_posix())
+          actual=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          if set(actual)!=set(staged):
+              raise SystemExit('V186_UNEXPECTED_STAGED_SOURCE_PATH')
+          print('V186_SAFE_FUTURE_SCRATCH_ONLY',json.dumps({
+              'staged':len(actual),'held_explicit_withdrawal':held_explicit,
+              'no_frozen_first_add_rewritten':True},sort_keys=True))
+          PY_V186_SAFE_STAGE
+            if git diff --cached --quiet; then
+              echo V186_PREDEADLINE_SCRATCH_NO_CHANGE
+              exit 0
+            fi
+            git diff --cached --check
+            git commit -m 'V186 current unfrozen official scratch checks only'
+            if git push origin HEAD:main; then
+              echo V186_SCRATCH_ONLY_FAST_FORWARD_PUBLISHED
+              exit 0
+            fi
+            echo "V186_MAIN_MOVED_RECHECK_OFFICIAL_NOW_$attempt"
           done
-          echo V186_PUSH_RETRY_EXHAUSTED >&2
+          echo V186_CONFLICT_SAFE_RETRY_NEXT_PREDEADLINE_RUN >&2
           exit 1
