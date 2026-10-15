@@ -77,7 +77,12 @@ jobs:
             python3 scripts/boat_edge_v215_readiness.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_01_gate1c_source_ready.py
             python3 scripts/boat_edge_v214_shadow.py freeze
-            git add -- data/site_paper_sim/readiness_v215_current.json data/site_paper_sim/readiness_history_v215/ data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json data/site_ops_v220/gate1c_source_ready/
+            git add -- data/site_paper_sim/readiness_v215_current.json data/site_paper_sim/readiness_history_v215/ data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
+            # Empty first-day receipt directories must not fail an unrelated
+            # pre-result V216 refresh with an unmatched Git pathspec.
+            if compgen -G 'data/site_ops_v220/gate1c_source_ready/*.json' >/dev/null; then
+              git add -- data/site_ops_v220/gate1c_source_ready/*.json
+            fi
             python3 - <<'PY_V216_PRE_RESULT'
           import json,subprocess
           from pathlib import Path
