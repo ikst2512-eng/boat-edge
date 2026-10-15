@@ -37,14 +37,20 @@ class SourceFirstGitProof(unittest.TestCase):
         for label,base in (('race','data/races'),('odds','data/site_odds'),
                            ('scratch','data/site_scratches_v182')):
             src[label]=write(self.root,f'{base}/{KEY}.json',{'race_key':KEY,'label':label})
+        html={}
+        for role in ('racelist','beforeinfo'):
+            path=self.root/f'data/raw/20261016/14_01_{role}.html'
+            path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_bytes(('<html>official '+role+'</html>').encode())
+            html[role]=hashlib.sha256(path.read_bytes()).hexdigest()
         self.receipt={
             'schema':'BOAT_EDGE_GATE1C_PROSPECTIVE_SOURCE_READY_V1',
             'scope':'SITE_PRE_RESULT_SOURCE_OBSERVATION_NO_FORMAL_OR_RESULTS',
             'race_key':KEY,'deadline_jst':'08:35',
             'deadline_at':DUE.astimezone(timezone.utc).isoformat(),
             'observed_at':AT.astimezone(timezone.utc).isoformat(),
-            'source_sha256':src,'official_race_card_sha256':SHA,
-            'official_beforeinfo_sha256':SHA,
+            'source_sha256':src,'official_race_card_sha256':html['racelist'],
+            'official_beforeinfo_sha256':html['beforeinfo'],
             'official_odds_combinations':120,'six_boat_exhibition_complete':True,
             'first_git_source_commit_independently_proven':False,
             'independently_eligible_denominator_established':False,
@@ -137,6 +143,20 @@ class SourceFirstGitProof(unittest.TestCase):
         write(self.root,self.receipt_path,self.receipt)
         self.assertEqual(self.proof()[0],'receipt_changed_after_first_git_add')
 
+    def test_original_official_html_changed_after_first_add_rejected(self):
+        code,_=self.proof()
+        self.assertEqual(code,'PASS')
+        # Keep receipt itself byte-identical and mutate official original
+        # AFTER the Git add: original Git proof still uses the first commit.
+        raw=self.root/'data/raw/20261016/14_01_beforeinfo.html'
+        raw.write_bytes(raw.read_bytes()+b' current changed')
+        self.assertEqual(self.proof()[0],'PASS')
+        # A malicious receipt might claim a raw hash that never existed
+        # at the original commit, even if its three JSON digests are valid.
+        self.receipt['official_beforeinfo_sha256']='f'*64
+        write(self.root,self.receipt_path,self.receipt)
+        self.assertEqual(self.proof()[0],'receipt_changed_after_first_git_add')
+
     def test_missing_source_at_original_commit_rejected(self):
         self.receipt['source_sha256']['race']='b'*64
         write(self.root,self.receipt_path,self.receipt)
@@ -164,6 +184,10 @@ class SourceFirstGitProof(unittest.TestCase):
                 folder.mkdir(parents=True,exist_ok=True)
                 (folder/f'{KEY}.json').write_bytes(
                     (self.root/base/f'{KEY}.json').read_bytes())
+            for role in ('racelist','beforeinfo'):
+                rel=f'data/raw/20261016/14_01_{role}.html'
+                copy=root/rel;copy.parent.mkdir(parents=True,exist_ok=True)
+                copy.write_bytes((self.root/rel).read_bytes())
             p=root/self.receipt_path;p.parent.mkdir(parents=True,exist_ok=True)
             p.write_bytes((self.root/self.receipt_path).read_bytes())
             env={**os.environ,'GIT_AUTHOR_DATE':'2026-10-16T08:34:00+09:00',
