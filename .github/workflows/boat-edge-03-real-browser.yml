@@ -129,7 +129,7 @@ jobs:
           set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine chromium \
-            --site-url https://ikst2512-eng.github.io/boat-edge/index.html
+            --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
             | tee "$RUNNER_TEMP/pages-chromium-live-final.log"
 
       - name: Published Pages - WebKit iPhone-sized live navigation
@@ -140,7 +140,7 @@ jobs:
           set -euo pipefail
           python tests/browser/test_boat_edge_03_real_site.py \
             --engine webkit \
-            --site-url https://ikst2512-eng.github.io/boat-edge/index.html
+            --site-url https://ikst2512-eng.github.io/boat-edge/index.html \
             | tee "$RUNNER_TEMP/pages-webkit-live-final.log"
 
       # On a V229 workflow_run, the existing 01 cheap preflight already proved
