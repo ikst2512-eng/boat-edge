@@ -460,13 +460,24 @@ def probe_verified_live_topk(
                 str(meta.get("deadline")) != str(race["deadline"])):
             stopped_reasons.append({"race": key, "reason": "race_phase_or_deadline_unsafe"})
             continue
-        if audit.get("status") != "ok" or len(payload.get("racers") or []) != 6:
-            stopped_reasons.append({"race": key, "reason": "source_audit_not_ready"})
-            continue
-        source_ready_checked += 1
+        # A V229-audited immutable FINAL may predate a later mutable
+        # data/races refresh. Current beforeinfo can be stale/incomplete even
+        # though the original predeadline source bytes and frozen tickets were
+        # independently SHA-proven. Try the REAL public UI in that case;
+        # the saved-final banner/mode parity must still pass below. Never let
+        # unaudited or missing site evidence borrow this exception.
         saved_evidence = verified_saved.get(key) or probe_site_snapshot_evidence(
             context, target, key, race["deadline"]
         )
+        source_ready = (
+            audit.get("status") == "ok" and len(payload.get("racers") or []) == 6
+        )
+        if not (source_ready or saved_evidence.get("status") ==
+                "SITE_SNAPSHOT_SHA_V229_AUDIT_VERIFIED_GIT_UNCHECKED"):
+            stopped_reasons.append({"race": key, "reason": "source_audit_not_ready",
+                                    "saved_evidence": saved_evidence.get("status")})
+            continue
+        source_ready_checked += 1
         live = context.new_page()
         browser_errors = []
         live.on("pageerror", lambda error: browser_errors.append(str(error)[:180]))
