@@ -10,11 +10,14 @@ repository and Pages site. Do not create a replacement website.
 phase in order: 1) real pre-deadline source/prediction-save reliability,
 2) same-race prospective Top3/5/10 accuracy evidence, 3) the existing 24-venue
 prediction-list website, 4) stable automation and bounded improvement.
-**As of 2026-10-16, gate 1A is first unchecked**: analyze 2026-10-15
-missing snapshots before new research implementations, site embellishments,
-additional models, or unrelated audits. When a checklist item is evidence-backed
-and checked, advance to the next unchecked item in the canonical order; the
-dated example here must not pin work permanently to gate 1A.
+**Determine the current gate from the first unchecked evidence-backed
+item in BOAT_EDGE_EXECUTION_ORDER.md, never from stale prose here.** As of the
+2026-10-16 evidence review, 1A classified the missing 24R and 1B is the
+first unchecked task: repair the already-observed source-ready freeze-window
+wake gap. 1A does NOT prove every external source was actually unpublished.
+Keep 1C live validation and 1D multi-day acceptance pending until observed.
+No new research implementations, site embellishments, additional models, or
+unrelated audits until the current gate's acceptance evidence is recorded.
 A generic user message such as "進めて" means advance the current gate.
 
 If a request would divert work, **say it conflicts with the owner priority lock
