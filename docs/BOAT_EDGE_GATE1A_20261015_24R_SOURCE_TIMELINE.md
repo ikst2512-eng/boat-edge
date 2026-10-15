@@ -81,3 +81,52 @@
 2. 残る16Rは当該レースの締切2–10分におけるV229/V235/V230実行/未実行と、最後のPRE_RESULT原本の状態をrace-key単位で追加照合する。保存されたV230 statusにないことを未実行の証明にしない。
 3. source_blocked6Rの公式展示がいつ公開されたか、次の取得/再試行があったかを調べる。未公表をバグとして解除しない。
 4. 1Aを完了にするのは、24R全件の直接原因または証拠限界/未確定をレース別に固定し、最大の実装ボトルネックとそれを修正すべき理由を明確化してから。**このPRは原因証拠の前進であり1B修正実装ではない。**
+
+
+## 追加照合（2026-10-16）— 全24Rを締切2分前のGitソース原本に揃えて分類
+
+**この節が最新の分類。** 前半の6R「観測時」/16R「未確定」は当時の途中段階であり、最新分類と矛盾しない。各Rの`deadline - 2 minutes`以前にGit mainへ記録された最新コミットSHAから、`data/races/`・`data/site_odds/`・`data/site_scratches_v182/`の3ファイルを同一SHAで読取比較した（正式Fresh・結果は不参照）。
+
+**直接確認できた分類（重複なし）**
+- **9R：締切2分前にrace card/6艇beforeinfo/全120オッズ＋DOM検証/非blocked scratchが揃うが初回予想保存ファイルなし。** うち4Rは2–10分窓のV229/V235 run作成が0件、3Rは実行後に最終source/scratchが整ったが再実行なし、2Rは後続first-freezeが厳格な2分下限より遅かった。SHA/モデル等の全freeze追加ガードを通ることまで事後的に証明したわけではない。
+- **14R：締切2分前Git原本上の`beforeinfo.status=published_wait` / 6艇展示未確認。** 正式な予想生成は拒否されるべき状態。公式サイト自体が最終時点でも未公表だったか、取得ジョブが取り逃したかは未確定であり、実予想を後付け生成しない。
+- **1R：大村8R、締切2分前Git原本ではbeforeinfo等はOKだが、公式3連単オッズの取得時刻が約20.2分前で15分鮮度基準超。** 取得ジョブの遅延か公式未更新かの真因は未確定。
+
+| レース | 締切JST | 結果を含まない当時Git原本 | 証拠上の分類 | 保存ジョブ/欠測の時点観測 |
+|---|---|---|---|---|
+| 20261015-02-03 戸田3R | 11:45 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/4902a21c8a47c8c47b83c25ee26970315dbc1239) | 保存機会/時刻不足 | 初回freeze 11:40:27→最終scratch 11:40:48、後続なし |
+| 20261015-02-05 戸田5R | 12:44 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/c624ebd0f3983960c004a535439cb19900549cab) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-02-07 戸田7R | 13:44 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/e41210b584343c8112bfe0b1282504e83a2c0cb8) | 保存機会/時刻不足 | 窓内V229/V235開始なし（20 run確認） |
+| 20261015-02-08 戸田8R | 14:15 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/66bb16bdb57b2c006074ddad4dc54502991f5764) | 保存機会/時刻不足 | 窓内V229/V235開始なし（17 run確認） |
+| 20261015-04-05 平和島5R | 12:23 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/d0fe9cf6d8bb24cda8f1c1256cdf2b4a5dd316ea) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-10-06 三国6R | 11:08 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/ba4a3ea22ff6faac5cd581499ce3ffc71b4ab9b6) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-10-07 三国7R | 11:38 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/865fb02a67f0242d3781cb2c96fe17d02158fd2a) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-10-11 三国11R | 13:50 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/27bb0cd4d7a990594a5267d7eaa74cd38dc44af7) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-11-04 びわこ4R | 11:43 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/4902a21c8a47c8c47b83c25ee26970315dbc1239) | 保存機会/時刻不足 | 初回freeze 11:40:27→最終scratch 11:40:48、後続なし |
+| 20261015-11-06 びわこ6R | 12:47 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/906de63f8ef2ac0440cd90cea5e89a2c14fdf0af) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-13-01 尼崎1R | 10:39 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/229ec84b0c74d64fcf7bc14c022cde7b141a9aab) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-13-02 尼崎2R | 11:06 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/ba4a3ea22ff6faac5cd581499ce3ffc71b4ab9b6) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-13-03 尼崎3R | 11:36 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/865fb02a67f0242d3781cb2c96fe17d02158fd2a) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-13-06 尼崎6R | 13:01 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/da26b76ecb692dd74e7141e257e8952fd25a28d2) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-13-11 尼崎11R | 15:33 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/b1dc3f4814f454631a39d259c07bdbb34993404e) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-14-02 鳴門2R | 09:01 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/d943689016344a87224042b810f55e768d0100bc) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-14-06 鳴門6R | 10:52 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/7ec14b99f25d03e1b8746b804daddf45f12a9860) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-14-08 鳴門8R | 11:49 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/e555906829602194046a327de8a5202f7bf2362b) | 保存機会/時刻不足 | 初回freeze 11:40:27→最終scratch 11:40:48、後続なし |
+| 20261015-15-05 丸亀5R | 17:08 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/cbc592307a1bf8aecf824cf68042bdd9bd54f55c) | 保存機会/時刻不足 | 窓内V229/V235開始なし（21 run確認） |
+| 20261015-20-10 若松10R | 19:48 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/09e1f41a129aa8803ef20dc67b11768c3a21cb1f) | 保存機会/時刻不足 | 窓内V229/V235開始なし（20 run確認） |
+| 20261015-21-04 芦屋4R | 10:03 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/eabcd1caa81d4f51c3d5b0a2f56f17d4cff510e4) | 締切2分前の公式展示未整備 | beforeinfo=published_wait / 6艇未確認 |
+| 20261015-22-10 福岡10R | 15:36 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/23bdef302ae60be1bb438b8a7420a73b7007f04c) | 保存機会/時刻不足 | V229 freeze 15:34:10、厳格な締切2分下限より後 |
+| 20261015-24-02 大村2R | 15:47 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/21facfc2f8aa16f175cb3f08790c8bee3c8ec434) | 保存機会/時刻不足 | 先行V229は展示未整備、後続V229 15:45:49とV235 15:45:24は2分下限より後 |
+| 20261015-24-08 大村8R | 18:39 | [Git時点SHA](https://github.com/ikst2512-eng/boat-edge/tree/19ca14adf0009b68410608fedc5f6cf577d83420) | 公式オッズ鮮度不足 | 締切2分前、オッズ約20.2分前（15分超） |
+
+### ジョブ時刻と信頼境界
+
+- [V229 38672188465](https://github.com/ikst2512-eng/boat-edge/actions/runs/38672188465) は**11:40:27 JST**にfirst-freezeを実行し、`V229_NO_NEW_ELIGIBLE_SNAPSHOT`。戸田3R・びわこ4R・鳴門8Rの履歴Gitに残るscratch更新は**11:40:48 JST**。従ってこのジョブが最終ソースを参照できず、後続窓内実行も観測されない（各2–10分run区間一覧と照合）。診断でも窓内対象3Rとも`beforeinfo_missing_or_stale`等が報告された。
+- [V229 38693145083](https://github.com/ikst2512-eng/boat-edge/actions/runs/38693145083) は**15:34:10 JST**にfirst-freezeを実行。福岡10R締切15:36から110秒しかなく、V229の`mins >= 2`を満たさない（同runは別3Rを保存したためCIは成功）。
+- [V229 38694278073](https://github.com/ikst2512-eng/boat-edge/actions/runs/38694278073) のfirst-freezeは**15:45:49 JST**、[V235 38694278129](https://github.com/ikst2512-eng/boat-edge/actions/runs/38694278129) はfirst-freeze工程開始15:45:24 JSTで、大村2R締切15:47の2分下限より遅い。先行V229 [38693703998](https://github.com/ikst2512-eng/boat-edge/actions/runs/38693703998) は15:39:42で、診断にソース不足が残る。
+- 丸亀5R・若松10Rの各2–10分窓のActions作成履歴は、それぞれ21件/20件を取得しV229/V235作成0件。**対象窓に作成がなかった証拠であり、過去に開始した別ジョブの全実行行為をゼロと断定するものではない。**
+- **なぜSourceが未完成かは別問題**。これら14Rを公式サイトの未公開と断定できない。収集ジョブと公式応答原本の追加調査余地を残す。保存不能な入力で凍結条件を緩和することは禁止。
+
+### 1A→1B 引き継ぎ：最大の実証済み欠損経路
+
+source-ready 9R中、少なくともソース完成後のV229/V235起動機会が薄く、あるいは厳格な`2<=mins<=10`内に戻ってこないケースが複数確認された。**V235がV230で公式ソースを更新した後に、既存V229を起こす信頼済みworkflow_run信号を追加する**のが小さい修正候補。既存V229のGit初回保存・レース同一性・ソースSHA・欠場・時点・Formal Freshガードを維持する。元のcron遅延そのものを直せるわけではない。結果的な本番改善を実測した場合だけ1Bを完了とする。
