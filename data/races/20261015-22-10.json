@@ -8,7 +8,7 @@
     "event": "日本トーター杯",
     "race_no": 10,
     "deadline": "15:36",
-    "updated_at": "2026-10-15T12:56:58+09:00",
+    "updated_at": "2026-10-15T13:14:23+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=22&rno=10",
-      "fetched_at": "2026-10-15T12:59:42+09:00",
-      "sha256": "531f16f335283009a45199e63a1f9e04fb9b0eff102456249c3fb55d8ced69cf",
+      "fetched_at": "2026-10-15T13:16:01+09:00",
+      "sha256": "dca00f1bd5c4a23daea968167bd9551619ccf79c2d3ec9166328b5b16868774f",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=22&rno=10",
+      "fetched_at": "2026-10-15T13:15:39+09:00",
+      "sha256": "a9d2144f8f45627cf8e440a471db624f49e50cfbbf8c50197878b2ea59c62bc9",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "086794e6073237a66809450ba04cad19a08ecba731540e2c88fa1137b70fff2a"
+      "sha256": "87c84cc99d4f1fb95fc9c64f447fd088f8e7639de8252a082e05a842df975e21"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "9b9393729cd07c6b4f1ca5608a9a678e9a147ab6e4a4172b385811182effa8fd"
+      "sha256": "1f7033d5e646d5811c4b0b539111870d551efaf2851c9af357c22314dad945c7"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "00ebf06093d3c5e7bf6606f55f76d49efbf86014bdab0d9c272f458c55ff03f9"
+      "sha256": "65c1e0af96a8f4b96a8bb02d84deabec8bd99901eaee3e4d667c6b415671b5b5"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "539e8e465561cef05f5822a08ebd70e4bfed52fc57dd6643bc03831b9d24f667"
+      "sha256": "ae07e909f87f574c253ae1fb8cf5564e669a7cd3c4c983f58419f0faa0c5fb8c"
     }
   },
   "racers": [
@@ -333,7 +339,53 @@
       "raw_text": "6 3551 / B1 藤田 美代 福岡/福岡 55歳/45.5kg F0 L0 0.20 3.96 16.90 29.58 5.10 26.67 50.00 58 35.86 51.03 147 24.39 39.84 8 7 1 5 2 8 5 10 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 北中 元樹 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 佐藤 謙史朗 54.0kg R 3"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 佐藤 駿介 52.0kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 前川 守嗣 56.5kg R 4"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 荒川 健太 55.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 藤田 美代 45.5kg R 2"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
