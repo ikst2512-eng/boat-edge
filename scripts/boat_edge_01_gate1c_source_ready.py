@@ -78,6 +78,23 @@ def valid(root,key,deadline,now):
         or not official(before,'beforeinfo',key)
         or (before.get('six_boat_coverage') or {}).get('six_boat_complete') is not True):
         return None
+    # The official document SHA printed by a collector is not an independent
+    # raw-original receipt. Verify both actual stored PRE_RESULT HTML bytes at
+    # THIS observation, and later against the first Git tree (V220).
+    # Never follow symlinks into results, formal or other untrusted paths.
+    raw=root/'data/raw'/key[:8]
+    official_originals=(
+        (raw/f'{key[9:11]}_{key[12:14]}_racelist.html',card['sha256']),
+        (raw/f'{key[9:11]}_{key[12:14]}_beforeinfo.html',before['sha256']))
+    for html,reported_sha in official_originals:
+        if (html.is_symlink() or any(parent.is_symlink() for parent in html.parents)
+                or not html.is_file()):
+            return None
+        try:
+            if hashlib.sha256(html.read_bytes()).hexdigest()!=reported_sha:
+                return None
+        except OSError:
+            return None
     if (scratch.get('official_beforeinfo_six_boat_complete') is not True
         or scratch.get('blocked') is not False
         or scratch.get('suspect_lanes') not in ([],)
