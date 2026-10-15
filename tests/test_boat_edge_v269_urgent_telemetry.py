@@ -21,3 +21,38 @@ for name in ('beforeinfo_urgent_15m_targets','beforeinfo_urgent_15m_ok',
     assert f'"{name}"' in s
 assert 'results_seen":False,"unlock":False,"scoring":False' in s
 print('V269_URGENT_PRE_RESULT_BEFOREINFO_TELEMETRY_PASS')
+
+# The collector's second independent launch signal is NOT a source of trust;
+# its actual upstream run must be verified before granting contents:write.
+collector=Path('.github/workflows/auto-update.yml').read_text(encoding='utf8')
+assert "workflow_run:" in collector
+assert "'BOAT EDGE 3連単オッズ更新 V71'" in collector
+assert "github.event.workflow_run.conclusion == 'success'" in collector
+assert "github.event.workflow_run.head_branch == 'main'" in collector
+assert "github.event.workflow_run.head_repository.full_name == github.repository" in collector
+assert "github.ref == 'refs/heads/main'" in collector
+odds=Path('.github/workflows/site-odds.yml').read_text(encoding='utf8')
+assert "workflow_run:" not in odds.split("permissions:",1)[0], (
+    "Collector and odds producer must never trigger one another cyclically")
+# Urgent status is a single predicate of observed source coverage, not
+# the unrelated success of race-card venue discovery.
+health_source=collector.split('          health={',1)[1].split(
+    '\n          (DATA/"health.json")',1)[0]
+health_expr=ast.parse("x={" + '\n'.join(
+    row[10:] for row in health_source.splitlines()) )
+status_expr=next(value for key,value in zip(
+    health_expr.body[0].value.keys, health_expr.body[0].value.values
+) if isinstance(key,ast.Constant) and key.value=='status')
+readiness_expr=next(value for key,value in zip(
+    health_expr.body[0].value.keys, health_expr.body[0].value.values
+) if isinstance(key,ast.Constant) and key.value=='predeadline_readiness_status')
+def test_status(active,urgent_wait,urgent_error,urgent_keys):
+    vars=locals()
+    return (eval(compile(ast.Expression(status_expr),'<health>', 'eval'),vars),
+            eval(compile(ast.Expression(readiness_expr),'<health>', 'eval'),vars))
+assert test_status({'06'},0,0,['20261015-06-01']) == ('ok','READY_URGENT_SOURCE')
+assert test_status({'06'},0,2,['20261015-06-01']) == ('source_incomplete','INCOMPLETE_URGENT_SOURCE')
+assert test_status({'06'},1,0,['20261015-06-01']) == ('source_incomplete','INCOMPLETE_URGENT_SOURCE')
+assert test_status({'06'},0,0,[]) == ('ok','NO_URGENT_RACES')
+assert test_status(set(),0,0,[]) == ('source_unavailable','NO_URGENT_RACES')
+print('V01_INDEPENDENT_COLLECTOR_TRIGGER_AND_URGENT_HEALTH_PASS')

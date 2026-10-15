@@ -257,6 +257,21 @@ def test_snapshot_evidence_contract_without_network():
     assert reasons["beforeinfo_missing"] == 1
     assert reasons["deadline_invalid_or_too_close"] == 1
     assert reasons["invalid_race"] == 1
+    # Pinned immutable V229 proof is eligible even with under three minutes
+    # remaining; the real navigation below rechecks the EXACT deadline and
+    # refuses certification once it has passed. Unpinned dynamic navigation
+    # retains the original three-minute safety buffer.
+    closing = {**stale, "venues": [{"jcd": "14", "venue": "鳴門",
+        "races": [{**stale["venues"][0]["races"][0],
+                   "deadline": "10:57"}]}]}
+    normal, _ = choose_live_receipt_candidates(closing, fixed_now)
+    pinned_closing, _ = choose_live_receipt_candidates(
+        closing, fixed_now, min_remaining_minutes=0)
+    assert normal == []
+    assert [x[2]["race_key"] for x in pinned_closing] == [live_key]
+    past, _ = choose_live_receipt_candidates(
+        closing, fixed_now + timedelta(minutes=2), min_remaining_minutes=0)
+    assert past == []
     # When a source-verified frozen SITE final is available, it must be
     # preferred over a dynamic reference race during a live browser check.
     order = [
@@ -290,8 +305,14 @@ def test_snapshot_evidence_contract_without_network():
     print("BOAT_EDGE_03_SYNTHETIC_SNAPSHOT_DIAGNOSTIC_REGRESSION_PASS", flush=True)
 
 
-def choose_live_receipt_candidates(catalog, now):
-    """Use same-day race keys and future deadlines; catalog source status is only a hint."""
+def choose_live_receipt_candidates(catalog, now, min_remaining_minutes=3):
+    """Use future same-day races; strict deadline is checked again after DOM tests.
+
+    A first-Git-add-proven pinned FINAL may be checked with no extra 3-minute
+    buffer (it still MUST finish strictly BEFORE the official deadline).
+    """
+    if min_remaining_minutes not in (0, 3):
+        raise ValueError("UNSUPPORTED_LIVE_E2E_MINIMUM_WINDOW")
     choices = []
     readiness = {"not_ready": 0, "beforeinfo_missing": 0,
                  "invalid_race": 0, "deadline_invalid_or_too_close": 0}
@@ -320,7 +341,7 @@ def choose_live_receipt_candidates(catalog, now):
                 readiness["deadline_invalid_or_too_close"] += 1
                 continue
             # Never certify a past-deadline race or a race already closing.
-            if due <= now + timedelta(minutes=3):
+            if due <= now + timedelta(minutes=min_remaining_minutes):
                 readiness["deadline_invalid_or_too_close"] += 1
                 continue
             choices.append((due, venue, race))
@@ -379,7 +400,10 @@ def probe_verified_live_topk(
     stopped prediction or an offline fixture as a successful live TopK test.
     """
     now = datetime.now(JST)
-    choices, readiness = choose_live_receipt_candidates(catalog, now)
+    choices, readiness = choose_live_receipt_candidates(
+        catalog, now,
+        min_remaining_minutes=0 if expected_final_race is not None else 3,
+    )
     choices = restrict_to_certified_target(choices, expected_final_race)
     if expected_final_race is not None and not choices:
         return {
