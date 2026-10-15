@@ -9,6 +9,15 @@ job=s.split('jobs:',1)[1].split('    runs-on:',1)[0]
 assert prefix.count('workflow_run:')==1
 assert "'BOAT EDGE 自動更新'" in prefix
 assert "'BOAT EDGE 3連単オッズ更新 V71'" in prefix
+# Gate 1A: 2026-10-15 source-ready but missed freeze windows. The existing
+# V235 source lane is an additional completion signal; it is not a new writer.
+v235_name="'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'"
+assert prefix.count(v235_name) == 1
+v235=Path('.github/workflows/V235.yml').read_text(encoding='utf8')
+v235_events=v235.split('jobs:',1)[0]
+assert "name: BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring" in v235_events
+assert "'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'" not in v235_events
+assert 'workflow_run:' in v235_events  # existing collector -> V235 -> V229, no cycle
 assert 'types: [completed]' in prefix
 assert "cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'" in prefix
 assert "cron: '1 0-14,23 * * *'" in prefix
