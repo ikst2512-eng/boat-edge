@@ -455,6 +455,19 @@ def gate1c_source_receipt_first_git_proof(root,key,receipt):
                                 check=True).stdout
             if hashlib.sha256(blob).hexdigest()!=digests[label]:
                 return f'{label}_source_not_in_first_receipt_git_tree',None
+        # Source JSON alone could cite an unbacked official-HTML SHA.
+        # Require exact raw HTML bytes in the SAME first Git tree, not
+        # whatever files happen to exist in today's mutable checkout.
+        for role,field in (('racelist','official_race_card_sha256'),
+                           ('beforeinfo','official_beforeinfo_sha256')):
+            expected=receipt.get(field)
+            if not isinstance(expected,str) or re.fullmatch(r'[0-9a-f]{64}',expected) is None:
+                return f'{role}_original_html_sha_unverified',None
+            rel=f'data/raw/{key[:8]}/{key[9:11]}_{key[12:14]}_{role}.html'
+            raw=subprocess.run(['git','show',f'{commit}:{rel}'],cwd=root,
+                               capture_output=True,timeout=12,check=True).stdout
+            if hashlib.sha256(raw).hexdigest()!=expected:
+                return f'{role}_original_html_not_in_first_receipt_git_tree',None
     except (OSError,ValueError,UnicodeError,subprocess.SubprocessError):
         return 'receipt_original_git_proof_unavailable',None
     return 'PASS',commit

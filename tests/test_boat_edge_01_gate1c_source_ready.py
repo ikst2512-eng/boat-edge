@@ -1,6 +1,7 @@
 """Synthetic-only proof tests. Never fetch results, payouts or real races."""
 from __future__ import annotations
 import json
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -26,7 +27,14 @@ class ProspectiveReady(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name)
         stamp=(AT-timedelta(minutes=2)).isoformat()
+        # Genuine raw bytes must back both observed official SHA declarations.
         raw='a'*64
+        self.raw_content={}
+        for role in ('racelist','beforeinfo'):
+            p=self.root/f'data/raw/20261016/14_01_{role}.html'
+            p.parent.mkdir(parents=True,exist_ok=True)
+            p.write_bytes(('<html>'+role+' official source</html>').encode())
+            self.raw_content[role]=hashlib.sha256(p.read_bytes()).hexdigest()
         self.race={
             'race_key':KEY,
             'meta':{'date':'2026-10-16','venue_code':'14','race_no':1,
@@ -35,8 +43,8 @@ class ProspectiveReady(unittest.TestCase):
             'racers':[{}]*6,
             'source_audit':{
               'race_card':{'status':'ok','fetched_at':stamp,
-                           'sha256':raw,'source':'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=1'},
-              'beforeinfo':{'status':'ok','fetched_at':stamp,'sha256':raw,
+                           'sha256':self.raw_content['racelist'],'source':'https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=1'},
+              'beforeinfo':{'status':'ok','fetched_at':stamp,'sha256':self.raw_content['beforeinfo'],
                     'source':'https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=14&rno=1',
                     'six_boat_coverage':{'six_boat_complete':True}},
             }}
@@ -137,6 +145,21 @@ class ProspectiveReady(unittest.TestCase):
         self.sources()
         self.assertIsNotNone(gate.valid(
             self.root,KEY,gate.expected_deadline(KEY,'08:35'),AT))
+
+    def test_official_html_sha_and_symlink_required_before_receipt(self):
+        """A SHA declaration is not evidence without exact raw originals."""
+        for role in ('racelist','beforeinfo'):
+            p=self.root/f'data/raw/20261016/14_01_{role}.html'
+            original=p.read_bytes()
+            p.write_bytes(original+b' modified')
+            self.assertEqual(gate.run(self.root,AT)['created'],[])
+            self.assertFalse((self.root/gate.OUT/f'{KEY}.json').exists())
+            p.write_bytes(original)
+            p.unlink()
+            p.symlink_to(self.root/'data/formal_status.json')
+            self.assertEqual(gate.run(self.root,AT)['created'],[])
+            p.unlink();p.write_bytes(original)
+        self.assertEqual(gate.run(self.root,AT)['created'],[KEY])
 
     def test_deadline_bounds_fail_closed(self):
         for offset in (10*60+1,119,60,0,-2):
