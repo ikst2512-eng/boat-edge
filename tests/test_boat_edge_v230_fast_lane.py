@@ -432,6 +432,54 @@ class FastLaneTests(unittest.TestCase):
         freeze.assert_called_once_with(self.root)
         sleep.assert_called_once_with(20)
 
+    def test_postcommit_stage_accepts_sha_bound_odds_sidecar_not_forgery(self):
+        # Execute the exact shell-embedded second-Git-push stage on a local
+        # isolated Git index. PR #411's previous mock stopped before git add.
+        import hashlib
+        import textwrap
+        source=(Path(__file__).resolve().parents[1]/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        start="python3 - <<'PY_V235_POSTCOMMIT_STAGE'\\n".replace('\\n','\n')
+        end='\n          PY_V235_POSTCOMMIT_STAGE'
+        self.assertEqual(source.count(start),1)
+        self.assertEqual(source.count(end),1)
+        stage=textwrap.dedent(source.split(start,1)[1].split(end,1)[0])
+        for scenario in ('valid','tampered_odds','missing_v229_proof','other_race_sidecar'):
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as d:
+                root=Path(d)
+                subprocess.run(['git','init','-q'],cwd=root,check=True)
+                runner=root/'runner_temp'
+                runner.mkdir()
+                m.write_json(runner/'v235-postcommit-report.json',{
+                    'schema':'BOAT_EDGE_V230_POSTCOMMIT_INCOMPLETE_RETRY_V1',
+                    'retry_keys':[KEY],'new_snapshots_atomic_audited':1})
+                blob=b'{"race_key":"20261011-06-08","trifecta_odds":{"1-2-3":100}}\\n'.replace(b'\\n',b'\n')
+                digest=hashlib.sha256(blob).hexdigest()
+                snapshot=root/'data/site_prediction_snapshots'/f'{KEY}.json'
+                proof=root/'data/site_autopilot/v229_evidence'/f'{KEY}.json'
+                sidecar=root/'data/site_prediction_snapshots/odds_v214'/f'{KEY}-{digest}.json'
+                m.write_json(snapshot,{'race_key':KEY,'odds_sha256':digest})
+                m.write_json(proof,{'race_key':KEY,'odds_sha256':digest,
+                                    'snapshot_sha256':hashlib.sha256(snapshot.read_bytes()).hexdigest()})
+                sidecar.parent.mkdir(parents=True,exist_ok=True)
+                sidecar.write_bytes(blob if scenario!='tampered_odds' else b'TAMPERED')
+                if scenario=='missing_v229_proof':
+                    proof.unlink()
+                if scenario=='other_race_sidecar':
+                    (sidecar.parent/f'20261011-06-07-{digest}.json').write_bytes(blob)
+                done=subprocess.run([sys.executable,'-c',stage],cwd=root,
+                    env={**os.environ,'RUNNER_TEMP':str(runner)},
+                    capture_output=True,text=True,timeout=15)
+                output=done.stdout+done.stderr
+                if scenario=='valid':
+                    self.assertEqual(done.returncode,0,output)
+                    self.assertIn('V235_POSTCOMMIT_SAFE_STAGE',output)
+                    staged=subprocess.check_output(
+                        ['git','diff','--cached','--name-only'],cwd=root,text=True)
+                    self.assertIn(str(sidecar.relative_to(root)),staged)
+                else:
+                    self.assertNotEqual(done.returncode,0,output)
+                    self.assertIn('V235_POSTCOMMIT_',output)
+
     def test_successful_first_freeze_is_never_delayed_by_retry(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
             'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})

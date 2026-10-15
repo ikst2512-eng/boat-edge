@@ -242,7 +242,7 @@ jobs:
               --workers 8 --postcommit-incomplete \
               --postcommit-report "$RUNNER_TEMP/v235-postcommit-report.json"
             python3 - <<'PY_V235_POSTCOMMIT_STAGE'
-          import json,os,re,subprocess
+          import hashlib,json,os,re,subprocess
           from pathlib import Path
           report=json.loads((Path(os.environ['RUNNER_TEMP'])/'v235-postcommit-report.json').read_text(encoding='utf-8'))
           if report.get('schema')!='BOAT_EDGE_V230_POSTCOMMIT_INCOMPLETE_RETRY_V1':
@@ -271,11 +271,36 @@ jobs:
           deleted=subprocess.check_output(['git','diff','--cached','--diff-filter=D','--name-only'],text=True).splitlines()
           if deleted:
               raise SystemExit('V235_POSTCOMMIT_NO_FROZEN_EVIDENCE_DELETE')
+          # V229 mandates the exact V214 odds bytes in every newly frozen
+          # snapshot. They live BELOW snapshots/ and must travel in the same
+          # second Git commit; otherwise the old guard rejected valid recovery.
+          # Accept only a sidecar bound to its own V229 SHA proof.
+          odds_sidecar=re.compile(
+              r'data/site_prediction_snapshots/odds_v214/'
+              r'(20\d{6}-\d{2}-\d{2})-([0-9a-f]{64})\.json')
           for path in staged:
               if path in allowed:
                   continue
               if any(re.fullmatch(re.escape(prefix)+r'/20\d{6}-\d{2}-\d{2}\.json',path)
                      for prefix in evidence):
+                  continue
+              match=odds_sidecar.fullmatch(path)
+              if match:
+                  key,claimed_sha=match.groups()
+                  snapshot=Path(f'data/site_prediction_snapshots/{key}.json')
+                  proof=Path(f'data/site_autopilot/v229_evidence/{key}.json')
+                  sidecar=Path(path)
+                  if any(not p.is_file() or p.is_symlink() for p in (snapshot,proof,sidecar)):
+                      raise SystemExit('V235_POSTCOMMIT_ODDS_SIDECAR_UNVERIFIED_'+path)
+                  snapshot_bytes=snapshot.read_bytes()
+                  snap=json.loads(snapshot_bytes)
+                  attestation=json.loads(proof.read_text(encoding='utf-8'))
+                  if (snap.get('race_key')!=key or attestation.get('race_key')!=key
+                          or snap.get('odds_sha256')!=claimed_sha
+                          or attestation.get('odds_sha256')!=claimed_sha
+                          or attestation.get('snapshot_sha256')!=hashlib.sha256(snapshot_bytes).hexdigest()
+                          or hashlib.sha256(sidecar.read_bytes()).hexdigest()!=claimed_sha):
+                      raise SystemExit('V235_POSTCOMMIT_ODDS_SIDECAR_SHA_MISMATCH_'+path)
                   continue
               raise SystemExit('V235_POSTCOMMIT_UNEXPECTED_STAGED_'+path)
           print('V235_POSTCOMMIT_SAFE_STAGE',json.dumps({
