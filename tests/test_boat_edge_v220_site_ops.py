@@ -402,11 +402,12 @@ def test_recovery_freshness_matches_independent_freeze_boundaries():
         now=NOW+timedelta(minutes=20)  # 10 minutes before synthetic deadline
         race,scratch,odds=fully_proven_pre_result_fixture(root,now)
         fresh=race['source_audit']['race_card']
+        before_fresh=race['source_audit']['beforeinfo']
         freeze='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
         for age,stale in ((960,False),(961,True),(1020,True),(1200,True)):
             card={**fresh,'fetched_at':(now-timedelta(seconds=age)).isoformat()}
             put(root,f'data/races/{KEY}.json',
-                {**race,'source_audit':{'race_card':card,'beforeinfo':fresh}})
+                {**race,'source_audit':{'race_card':card,'beforeinfo':before_fresh}})
             report=mod.compute(root,now)
             assert ('race_card_stale' in report['current_windows'][0]['missing_evidence']) is stale, age
             assert ('auto-update.yml' in report['recovery_dispatch_candidates']) is stale, age
@@ -417,7 +418,7 @@ def test_recovery_freshness_matches_independent_freeze_boundaries():
             stamp=(now-timedelta(seconds=age)).isoformat()
             put(root,f'data/races/{KEY}.json',
                 {**race,'source_audit':{'race_card':fresh,
-                                      'beforeinfo':{**fresh,'fetched_at':stamp}}})
+                                      'beforeinfo':{**before_fresh,'fetched_at':stamp}}})
             put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'checked_at':stamp})
             put(root,f'data/site_odds/{KEY}.json',{**odds,'fetched_at':stamp})
             report=mod.compute(root,now)
