@@ -248,7 +248,7 @@ class AtomicFreezeTests(unittest.TestCase):
             v.validate(self.root,KEY,NOW)
 
     def test_exact_pinned_source_insertion(self):
-        fake='from __future__ import annotations\n'+v.ANCHOR+'\n'+v.WINDOW+'\n'
+        fake='from __future__ import annotations\n'+v.ANCHOR+'\n'+v.WINDOW+v.ODDS_ANCHOR+'\n'
         with self.assertRaisesRegex(AssertionError,'PROVENANCE_GUARDS_MISSING'):
             v.runner_source(fake)
         good='''# V228_NO_RESULT_READ
