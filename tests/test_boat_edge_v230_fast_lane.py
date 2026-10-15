@@ -47,6 +47,43 @@ class FastLaneTests(unittest.TestCase):
     def test_selects_window_only(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         self.assertEqual(m.targets(self.root,self.now),[KEY])
+    def test_duplicate_catalog_rows_do_not_schedule_two_simultaneous_writers(self):
+        race={'race_key':KEY,'deadline':'14:43'}
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[race,race]},{'races':[dict(race)]}]})
+        self.assertEqual(m.targets(self.root,self.now),[KEY])
+        info=m.target_diagnostic(self.root,self.now)
+        self.assertEqual(info['eligible'],1)
+        self.assertEqual(info['duplicate_catalog_race'],2)
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0) as freeze,
+              patch.object(m,'fetch_one',return_value=(KEY,{'fixture':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified') as update):
+            outcome=m.run(self.root,now=self.now,worker=3)
+        self.assertEqual(outcome['targets'],[KEY])
+        self.assertEqual(outcome['source_refreshed'],1)
+        fetch.assert_called_once_with(self.root,KEY)
+        update.assert_called_once()
+        freeze.assert_called_once_with(self.root)
+
+    def test_catalog_clock_cannot_substitute_a_different_race_deadline(self):
+        # The public catalog may be older/newer than data/races during
+        # concurrent collectors; only the exact race-bound clock is accepted.
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:52'}]}]})
+        self.assertEqual(m.targets(self.root,self.now),[])
+        self.assertEqual(m.target_diagnostic(self.root,self.now)['race_identity_mismatch'],1)
+        self.assertEqual(m.target_diagnostic(self.root,self.now)['eligible'],0)
+        # The authoritative same-race clock restores eligibility without
+        # weakening the strictly future two-minute cutoff.
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:52'},
+                                {'race_key':KEY,'deadline':'14:43'}]}]})
+        self.assertEqual(m.targets(self.root,self.now),[KEY])
+        info=m.target_diagnostic(self.root,self.now)
+        self.assertEqual((info['race_identity_mismatch'],info['eligible']),(1,1))
+        self.assertEqual(m.targets(self.root,self.now+timedelta(minutes=6)),[])
+
     def test_refuses_past_and_future(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         self.assertEqual(m.targets(self.root,self.now+timedelta(minutes=6)),[])

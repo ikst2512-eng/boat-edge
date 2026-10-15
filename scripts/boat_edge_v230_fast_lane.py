@@ -137,6 +137,7 @@ def targets(root,now,max_target=12):
     today=now.strftime('%Y%m%d'); summary=load(root/'data/today.json') or {}
     if str(summary.get('date','')).replace('-','')!=today:return []
     selected=[]
+    seen=set()
     for venue in summary.get('venues') or []:
         for row in venue.get('races') or []:
             key=row.get('race_key')
@@ -151,6 +152,12 @@ def targets(root,now,max_target=12):
             if len(race.get('racers') or [])!=6:continue
             if race.get('race_key') not in (None,key):continue
             if str(m.get('venue_code')).zfill(2)!=key.split('-')[1] or int(m.get('race_no') or 0)!=int(key.split('-')[2]):continue
+            # A duplicated catalog row must not start two concurrent official
+            # fetches and writers for ONE race. The individually sourced race
+            # deadline is authoritative; a conflicting catalog clock is not
+            # permission to change the freeze/close window.
+            if due_for(key,m.get('deadline'))!=due or key in seen:continue
+            seen.add(key)
             selected.append((due,key))
     return [key for _,key in sorted(selected)[:max_target]]
 
@@ -161,10 +168,11 @@ def target_diagnostic(root, now):
     counts={'today_mismatch':0,'invalid_deadline_or_key':0,
             'outside_2_to_19_min_window':0,'snapshot_exists':0,
             'race_missing_or_unsafe':0,'racers_not_six':0,
-            'race_identity_mismatch':0,'eligible':0}
+            'race_identity_mismatch':0,'duplicate_catalog_race':0,'eligible':0}
     if str(summary.get('date','')).replace('-','')!=today:
         counts['today_mismatch']=1
         return counts
+    seen=set()
     for venue in summary.get('venues') or []:
         for row in venue.get('races') or []:
             key=row.get('race_key')
@@ -182,8 +190,15 @@ def target_diagnostic(root, now):
                 counts['race_missing_or_unsafe']+=1;continue
             if len(race.get('racers') or [])!=6:
                 counts['racers_not_six']+=1;continue
-            if race.get('race_key') not in (None,key) or str(meta.get('venue_code')).zfill(2)!=key.split('-')[1] or int(meta.get('race_no') or 0)!=int(key.split('-')[2]):
+            if (race.get('race_key') not in (None,key)
+                    or str(meta.get('venue_code')).zfill(2)!=key.split('-')[1]
+                    or int(meta.get('race_no') or 0)!=int(key.split('-')[2]
+                    ) or due_for(key,meta.get('deadline'))!=due):
                 counts['race_identity_mismatch']+=1;continue
+            if key in seen:
+                counts['duplicate_catalog_race']+=1
+                continue
+            seen.add(key)
             counts['eligible']+=1
     return counts
 
