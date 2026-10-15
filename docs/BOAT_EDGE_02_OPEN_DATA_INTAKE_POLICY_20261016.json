@@ -45,7 +45,8 @@
         "preserve CSV quality/missing/homogeneity fields",
         "no observation revised or first available after race deadline may be a prospective predictor",
         "do not treat daily max wind as instant trackside wind",
-        "honor site request limits; no high-frequency scraping"
+        "honor site request limits; no high-frequency scraping",
+        "The JMA historical CSV interactive download explicitly asks users to avoid excessive automated-tool access; do not infer unattended scheduled endpoint permission from a manual CSV license; check distribution method separately."
       ],
       "adoption_priority": "HIGH_FOR_PERMITTED_AUXILIARY_WEATHER"
     },
@@ -172,5 +173,36 @@
     "independently trained head->second and head+second->third interactions",
     "racer opponent-adjusted strength and motor/racer cohort from licensed historical data only"
   ],
-  "acceptance_proof": "No feature is marked useful until time-split and same-cohort held-out Top3/5/10 comparisons improve; no claimed performance improvement as of this manifest."
+  "acceptance_proof": "No feature is marked useful until time-split and same-cohort held-out Top3/5/10 comparisons improve; no claimed performance improvement as of this manifest.",
+  "conditional_auto_activation": {
+    "objective": "After accepted Gate 1D (3 consecutive event days >=99% verified first predeadline saves), automatically prepare/validate approved external-data research ingestion without changing prediction model or Formal Fresh.",
+    "requested_on_jst": "2026-10-16",
+    "activation_state": "QUEUED_REQUIRE_GATE_1D_EVIDENCE",
+    "trigger_requirements": [
+      "Latest main BOAT_EDGE_EXECUTION_ORDER.md Gate 1C & 1D accepted with independent per-day live evidence, not just checked boxes or CI.",
+      "Three consecutive meeting days each have >=99% success among independently eligible R; all excluded/unknown R disclosed.",
+      "Every included R's first immutable Git-add SHA and deadline match; no changed frozen predictions and no unresolved competition.",
+      "Official source/prediction/display stability evidenced; formal results remain locked unless independently authorized.",
+      "Source-specific rights permit the EXACT machine method, rate, storage, AI training, public attribution and reuse for this field; unknown means DENY."
+    ],
+    "automatic_followup_sequence": [
+      "Read current main gate/evidence before acting. Do not create/enable any collector while trigger incomplete.",
+      "After evidence passes, re-check permissions and source API/documentation freshness. Start with a genuine machine-readable low-rate API such as registration-free e-Stat dashboard if data relevance is justified; JMA interactive historical CSV does NOT itself grant scheduled bot access.",
+      "Prefer existing official or locally available lawful source; no duplicate collector or new cron without verifying existing workflow owner and coverage.",
+      "Stage a separate research-lane dry-run ingestion design/PR with request ceiling, exponential backoff, explicit attribution, immutable raw+SHA, publication vs observation timestamps, quality/missing markers, provenance and leakage tests.",
+      "Synthetic CI tests and permission guard checks before any live fetch. Preserve encrypted secrets as needed, but never pay or bypass CAPTCHA/auth.",
+      "On a permitted endpoint, import only to research storage in a bounded monitored run once the required engineering checks pass, with an off-switch. Never auto-merge to main without reviewed gate and successful checks.",
+      "Do not automatically promote any feature to production. Run same-cohort held-out Top3/Top5/Top10 evaluation separately and adopt only supported improvements.",
+      "If evidence or rights fails, record reason and remain disabled, without claiming success."
+    ],
+    "background_watch_requirement": "Separate condition-watch automation checks Gate 1D; it cannot replace a GitHub workflow. Live autonomous ingestion begins only after a real reviewed and deployed collector exists.",
+    "status_words": [
+      "research prepared",
+      "gate verified",
+      "collector reviewed",
+      "enabled",
+      "ingestion observed",
+      "model improvement independently proven"
+    ]
+  }
 }
