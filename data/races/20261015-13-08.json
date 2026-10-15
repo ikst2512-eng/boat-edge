@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 8,
     "deadline": "14:05",
-    "updated_at": "2026-10-15T11:17:03+09:00",
+    "updated_at": "2026-10-15T11:37:25+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261015&jcd=13&rno=8",
-      "fetched_at": "2026-10-15T11:19:33+09:00",
-      "sha256": "fc1fde9a3a2eb5692ddf31b1aee860d9ac8281c99f59d729cd07da7a52a17ccd",
+      "fetched_at": "2026-10-15T11:39:01+09:00",
+      "sha256": "5e035e8a6cf2ea2adcf8d94b82b699151ca346bf41121843dcb36c13d7042a18",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261015&jcd=13&rno=8",
+      "fetched_at": "2026-10-15T11:38:50+09:00",
+      "sha256": "d02c5ec4b52224b4bd6505f69698368770a208f8dbb7934768ba2a2313288594",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "57e032fcf370e9c265c2080a52d46cdb85835290d23657c340c496ff027b4fc3"
+      "sha256": "dfcac6bf8a836d89e9c8a257f0396b9edea25effdd2e5f32fc3726fde163b56b"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "73274fbb014c02c1952b66c00e3d43d5b0fd7f890251c6b7e50934780d347145"
+      "sha256": "546776175f6b44718368d471a6df81560db0acf710fc4eb03c0fe06704bd6540"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "ff77d42d94038c2cd7cf9f00e363bcc0937aec060e2ca1deaf9a92291993bd61"
+      "sha256": "55335dc9b8d60cc84c1da08ed498906b2e7caa644ffc04eb3e82e930333bd66e"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/15.csv",
       "fetched_at": null,
-      "sha256": "7aa4a9ec9c9034faabc522efbc61779fb49577f5e7b5d8ea26fb7c67bd569b47"
+      "sha256": "644b43e57cf872ab698de3bf6187599249c521f50020aba072a0d26b5117867c"
     }
   },
   "racers": [
@@ -251,10 +257,11 @@
       },
       "series_tokens": [
         "1",
-        "5"
+        "5",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "5 5470 / B2 坂口 諒宗 兵庫/兵庫 17歳/52.6kg F1 L0 - 1.63 0.00 3.51 1.38 0.00 0.00 17 37.04 48.89 49 34.59 48.87 1 5 2R"
+      "raw_text": "5 5470 / B2 坂口 諒宗 兵庫/兵庫 17歳/52.6kg F1 L0 - 1.63 0.00 3.51 1.38 0.00 0.00 17 37.04 48.89 49 34.59 48.87 1 5 2 2R"
     },
     {
       "lane": 6,
@@ -299,7 +306,53 @@
       "raw_text": "6 3333 / A1 丸尾 義孝 徳島/徳島 58歳/52.4kg F0 L0 0.15 6.43 47.11 70.25 5.97 40.54 64.86 3 31.50 45.67 56 42.52 53.54 4 12 7 11 1 1R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 柳橋 宏紀 52.6kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 石川 哲秀 55.9kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 藤田 竜弘 55.3kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 多羅尾 達之 51.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 坂口 諒宗 52.6kg R 2"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 丸尾 義孝 52.4kg R 1"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 4.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
