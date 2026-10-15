@@ -4,6 +4,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/5 * * * *"
+  # GitHub's best-effort cron skipped several collector decision windows.
+  # The independently scheduled official-odds producer is a second PRE_RESULT
+  # signal. No feedback loop: site-odds.yml never listens to this workflow.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE 3連単オッズ更新 V71'
+    types: [completed]
 
 permissions:
   contents: write
@@ -14,6 +21,13 @@ concurrency:
 
 jobs:
   update:
+    # Untrusted, forked, non-main and failed upstream runs cannot write data.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 8
 
@@ -494,7 +508,14 @@ jobs:
             "collector_version":"BOAT_EDGE_V18",
             "phase":"PRE_RESULT",
             "results_seen":False,"unlock":False,"scoring":False,
-            "status":"ok" if active else "source_unavailable",
+            # A detected venue does not certify that urgent pre-deadline
+            # exhibition is usable. Distinguish missing official sources from
+            # healthy discovery without inventing any absent six-boat rows.
+            "status":("source_incomplete" if active and (urgent_wait or urgent_error)
+                      else "ok" if active else "source_unavailable"),
+            "predeadline_readiness_status":(
+                "INCOMPLETE_URGENT_SOURCE" if urgent_wait or urgent_error else
+                "READY_URGENT_SOURCE" if urgent_keys else "NO_URGENT_RACES"),
             "discovery_mode":discovery_mode,
             "active_venues":len(active),
             "race_cards_ok":sum(1 for x in race_results.values() if x.get("ok")),
