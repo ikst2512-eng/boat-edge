@@ -391,6 +391,61 @@ def test_recovery_freshness_matches_independent_freeze_boundaries():
         assert not (root/f'data/site_prediction_snapshots/{KEY}.json').exists()
     print('V220_RECOVERY_MATCHES_960S_CARD_900S_OTHER_WITHOUT_ROUNDING_PASS')
 
+
+def test_gate1c_first_git_sha_is_not_the_observed_denominator():
+    """Pre-result V125 first-add proof is stricter than snapshot existence.
+
+    The fixture has no source-eligible denominator. Results and Formal assets
+    intentionally have no bearing on either the proof or the percent claim.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        now=NOW+timedelta(minutes=35)  # synthetic deadline 08:35 has passed
+        observed={'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1','day_jst':DAY,
+                  'observations':{KEY:{'race_key':KEY,'deadline':'08:35',
+                                       'source_gaps_seen':[]}}}
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',observed)
+        empty=mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('PASS','git-id'))
+        assert empty['observed_races']==1 and empty['matured_races']==1
+        assert empty['missing_after_deadline']==1
+        assert empty['first_git_original_sha_proven']==0
+        assert empty['eligible_save_rate_percent'] is None
+        snap={'race_key':KEY,'deadline':'08:35',
+              'saved_at':'2026-10-11T08:27:00+09:00',
+              'guards':{'results_seen':False,'unlock':False,'scoring':False}}
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+        accepted=mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('PASS','git-id'))
+        assert accepted['snapshots_present']==1
+        assert accepted['first_git_original_sha_proven']==1
+        assert accepted['eligible_save_rate_percent'] is None
+        assert accepted['acceptance_99_percent_proven'] is False
+        missing_commit=mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('PASS',None))
+        assert missing_commit['first_git_original_sha_proven']==0
+        assert missing_commit['unverified_reasons']=={'first_git_commit_missing':1}
+        rejected=mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('first_git_snapshot_bytes_mismatch',None))
+        assert rejected['original_not_verified']==1
+        assert rejected['unverified_reasons']=={'first_git_snapshot_bytes_mismatch':1}
+        # An old or late snapshot must never be promoted by a fake PASS.
+        for clock in ('08:24:00','08:34:00'):
+            snap['saved_at']='2026-10-11T'+clock+'+09:00'
+            put(root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+            stale=mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('PASS','git-id'))
+            assert stale['unverified_reasons']=={'outside_v229_decision_window':1}
+        snap['saved_at']='2026-10-11T08:27:00+09:00'
+        snap['deadline']='08:34'
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+        wrong=mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('PASS','git-id'))
+        assert wrong['unverified_reasons']=={'snapshot_invalid':1}
+        put(root,f'data/site_results/{KEY}.json',{'settlement':'DO_NOT_READ'})
+        put(root,f'data/formal_predictions/{KEY}.json',{'formal':'DO_NOT_READ'})
+        assert mod.gate1c_first_git_summary(root,DAY,now,lambda *_: ('PASS','git-id'))==wrong
+        # Pre-deadline observation must not claim a negative or a proof rate.
+        pending=mod.gate1c_first_git_summary(root,DAY,NOW,lambda *_: ('PASS','git-id'))
+        assert pending['matured_races']==0 and pending['snapshots_present']==0
+        assert pending['first_git_original_sha_proven']==0
+    print('GATE1C_ONLY_REAL_FIRST_GIT_ORIGINAL_SHA_NUMERATOR_NO_FALSE_99PASS')
+
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
@@ -400,3 +455,4 @@ if __name__=='__main__':
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
+    test_gate1c_first_git_sha_is_not_the_observed_denominator()
