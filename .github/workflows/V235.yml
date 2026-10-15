@@ -61,7 +61,7 @@ jobs:
           print('V234_SOURCE_HTML_AND_TEST_BYTES_PASS',len(resources))
           PY_V234_INSTALL
           for spec in \
-            'scripts/boat_edge_v230_fast_lane.py:3266ad83fb43d3f9525d1a47db84dfdd1c5876e8' \
+            'scripts/boat_edge_v230_fast_lane.py:560c5ed755ce085b3ac4f5698fa1c360bc6d6e91' \
             'scripts/boat_edge_v232_pre_result_cohort.py:99c69c924de451fe6635961253e9ea61d314366b' \
             'scripts/boat_edge_v215_readiness.py:f74705858e9bffbe28b4ce444d29aa8565ed6497' \
             'scripts/boat_edge_v214_shadow.py:2fafe6932383c0ace68d82d3cc2591591b6affdb' \
@@ -166,6 +166,11 @@ jobs:
           PY_V234_TAKEOVER
               )
               read -r snaps cohorts <<< "$counts"
+              if (( snaps>0 )); then
+                # The original prediction FIRST reached Git successfully.
+                # Only now may another incomplete race be retried.
+                echo 'V235_INITIAL_SNAPSHOT_PUBLISHED=1' >> "$GITHUB_ENV"
+              fi
               if (( snaps>0 && cohorts>0 )); then
                 # New snapshots/cohort prove local creation, NOT a first Git commit
                 # before the deadline. Keep V233 until the next step verifies that.
@@ -220,6 +225,77 @@ jobs:
           print('V235_END_TO_END_SITE_PRE_RESULT_COHORT_VERIFIED')
           PY_V235_TAKEOVER_PROOF
           fi
+      - name: V235 retry other incomplete sources AFTER first immutable Git publication
+        if: env.V235_INITIAL_SNAPSHOT_PUBLISHED == '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            # Never delay/modify the original first Git-add. A concurrent
+            # writer wins; restart only from the actual current main.
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            git clean -fd -- data/site_prediction_snapshots/ data/site_prediction_audit/ data/site_autopilot/v229_evidence/ data/site_odds/ data/site_scratches_v182/ data/races/ data/raw/
+            PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py \
+              --workers 8 --postcommit-incomplete \
+              --postcommit-report "$RUNNER_TEMP/v235-postcommit-report.json"
+            python3 - <<'PY_V235_POSTCOMMIT_STAGE'
+          import json,os,re,subprocess
+          from pathlib import Path
+          report=json.loads((Path(os.environ['RUNNER_TEMP'])/'v235-postcommit-report.json').read_text(encoding='utf-8'))
+          if report.get('schema')!='BOAT_EDGE_V230_POSTCOMMIT_INCOMPLETE_RETRY_V1':
+              raise SystemExit('V235_POSTCOMMIT_REPORT_INVALID')
+          keys=report.get('retry_keys') or []
+          if not isinstance(keys,list) or len(keys)>12 or len(set(keys))!=len(keys):
+              raise SystemExit('V235_POSTCOMMIT_KEYS_INVALID')
+          allowed=set()
+          for key in keys:
+              if not re.fullmatch(r'20\d{6}-\d{2}-\d{2}',key):
+                  raise SystemExit('V235_POSTCOMMIT_INVALID_RACE_KEY')
+              date,venue,rr=key.split('-')
+              allowed.update([f'data/races/{key}.json',f'data/site_scratches_v182/{key}.json',
+                  f'data/site_odds/{key}.json',f'data/raw/{date}/{venue}_{rr}_racelist.html',
+                  f'data/raw/{date}/{venue}_{rr}_beforeinfo.html',
+                  f'data/raw/{date}/{venue}_{rr}_odds3t.html.gz'])
+          for path in sorted(allowed):
+              if Path(path).exists():
+                  subprocess.check_call(['git','add','-A','--',path])
+          evidence=('data/site_prediction_snapshots','data/site_prediction_audit',
+                    'data/site_autopilot/v229_evidence')
+          for name in evidence:
+              if Path(name).is_dir():
+                  subprocess.check_call(['git','add','-A','--',name])
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          deleted=subprocess.check_output(['git','diff','--cached','--diff-filter=D','--name-only'],text=True).splitlines()
+          if deleted:
+              raise SystemExit('V235_POSTCOMMIT_NO_FROZEN_EVIDENCE_DELETE')
+          for path in staged:
+              if path in allowed:
+                  continue
+              if any(re.fullmatch(re.escape(prefix)+r'/20\d{6}-\d{2}-\d{2}\.json',path)
+                     for prefix in evidence):
+                  continue
+              raise SystemExit('V235_POSTCOMMIT_UNEXPECTED_STAGED_'+path)
+          print('V235_POSTCOMMIT_SAFE_STAGE',json.dumps({
+              'retry_keys':keys,'new_snapshots':report.get('new_snapshots_atomic_audited'),
+              'staged_count':len(staged)},sort_keys=True))
+          PY_V235_POSTCOMMIT_STAGE
+            git diff --cached --check -- . ':(exclude)data/raw'
+            if git diff --cached --quiet; then
+              echo V235_POSTCOMMIT_NO_NEW_PRE_RESULT_SOURCE
+              exit 0
+            fi
+            git commit -m 'V235 after-first-Git-commit official PRE_RESULT recovery'
+            if git push origin HEAD:main; then
+              echo V235_POSTCOMMIT_PUBLISHED_SECOND_SAFE_GIT_COMMIT
+              exit 0
+            fi
+            echo "V235_POSTCOMMIT_MAIN_MOVED_RECHECK_$attempt"
+          done
+          echo V235_POSTCOMMIT_CONFLICT_RETRY_NEXT_PROSPECTIVE_RUN_NO_BACKFILL
+
       - name: V274 immediately freeze qualifying V254 site-only tail research before any result scoring
         shell: bash
         run: |
