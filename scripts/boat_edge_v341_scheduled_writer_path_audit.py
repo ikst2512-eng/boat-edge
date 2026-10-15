@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import shlex
+import yaml
 
 try:
     from scripts.boat_edge_v299_workflow_inventory import WORKFLOWS, audit as workflow_audit
@@ -21,6 +22,29 @@ ADD = re.compile(r"(?<![\w-])git[ \t]+add[ \t]+([^\n\r]+)")
 BREAK = {"||", "&&", ";", "|", "fi", "then", "done"}
 FLAGS = {"-A", "--all", "-u", "--update", "--ignore-removal", "--"}
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def possible_job_text(text: str) -> str:
+    """Exclude only jobs unconditionally disabled by literal false.
+
+    BaseLoader preserves GitHub's `on` and expressions as strings. Unknown
+    conditions, manual-only branches and disabled steps remain conservative
+    candidates; this does not evaluate expressions or establish runtime state.
+    """
+    document = yaml.load(text, Loader=yaml.BaseLoader)
+    if not isinstance(document, dict) or not isinstance(document.get("jobs"), dict):
+        return text
+    kept = []
+    for job in document["jobs"].values():
+        if not isinstance(job, dict):
+            return text
+        condition = str(job.get("if", "")).strip()
+        if re.fullmatch(r"(?:false|\$\{\{\s*false\s*\}\})", condition):
+            continue
+        for step in job.get("steps", []):
+            if isinstance(step, dict) and isinstance(step.get("run"), str):
+                kept.append(step["run"])
+    return "\n".join(kept)
 
 
 def _arguments(line: str) -> tuple[list[str], bool]:
@@ -77,7 +101,7 @@ def audit(root: Path = WORKFLOWS) -> dict:
         if not entry["scheduled_write_candidate"]:
             continue
         path = root / entry["workflow"]
-        paths, dynamic = staged_paths(path.read_text(encoding="utf-8"))
+        paths, dynamic = staged_paths(possible_job_text(path.read_text(encoding="utf-8")))
         records.append({
             "workflow": entry["workflow"],
             "crons": entry["crons"],

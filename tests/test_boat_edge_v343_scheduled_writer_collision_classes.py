@@ -43,6 +43,13 @@ class V343StagingClassification(unittest.TestCase):
                 self.assertIn(item["right"], records)
                 pair = classify_pair(records[item["left"]]["staged_literals"],
                                      records[item["right"]]["staged_literals"])
+                if {item["left"], item["right"]} == {"site-v125.yml", "site-v133.yml"}:
+                    # The pinned historical TODO overlap belongs to V133's
+                    # unconditionally disabled installer, not its live history job.
+                    self.assertIsNone(pair)
+                    self.assertNotIn("BOAT_EDGE_CURRENT_TODO.md",
+                                     records["site-v133.yml"]["staged_literals"])
+                    continue
                 self.assertIsNotNone(pair)
                 self.assertEqual(pair["classification"], item["expected_classification"])
                 witness_key = ("exact_path_witnesses_first_12" if
