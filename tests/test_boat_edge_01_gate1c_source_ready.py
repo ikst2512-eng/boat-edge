@@ -115,6 +115,17 @@ class ProspectiveReady(unittest.TestCase):
         # Following runs never recreate an existing first observed record.
         self.assertEqual(gate.run(self.root,AT)['created'],[])
 
+    def test_same_v216_owner_and_strict_stage_allowlist(self):
+        workflow=(Path(__file__).resolve().parents[1]/
+            '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text()
+        self.assertIn("python3 scripts/boat_edge_01_gate1c_source_ready.py",workflow)
+        self.assertIn("data/site_ops_v220/gate1c_source_ready/",workflow)
+        self.assertIn("V216_UNEXPECTED_FROZEN_EVIDENCE_FILE_",workflow)
+        self.assertIn("git clean -fd -- data/site_ops_v220/gate1c_source_ready/",workflow)
+        self.assertIn("if compgen -G 'data/site_ops_v220/gate1c_source_ready/*.json'",workflow)
+        self.assertIn("cron: '4,19,34,49 * * * *'",workflow)
+        self.assertNotIn("git push --force",workflow)
+
     def test_formal_guard_and_symlink_source_fail_closed(self):
         p=self.root/'data/formal_status.json'
         obj=json.loads(p.read_text())
