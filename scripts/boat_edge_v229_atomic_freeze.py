@@ -40,6 +40,37 @@ WINDOW_REPLACEMENT='''    # V229_MINIMUM_DECISION_LEAD: no freezes <2 minutes be
     if not (2<=mins<=10):
         continue
 '''
+SOURCE_BOUND_SCRATCH='''    # V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE: a fresh scratch
+    # flag for DIFFERENT official HTML is not evidence for this race.
+    _v229_audit=race.get("source_audit") or {}
+    if (scratches.get("schema_version")!="boat-edge-v182-scratch-evidence-v1"
+            or scratches.get("source_date")!=key[:8]
+            or scratches.get("official_beforeinfo_six_boat_complete") is not True
+            or scratches.get("suspect_lanes")!=[]
+            or scratches.get("official_raw_flags")!=[]):
+        continue
+    _v229_sources_match=True
+    for _v229_role,_v229_suffix in (("race_card","racelist"),("beforeinfo","beforeinfo")):
+        _v229_row=_v229_audit.get(_v229_role) or {}
+        _v229_sha=_v229_row.get("sha256")
+        _v229_raw=ROOT/"data/raw"/key[:8]/f"{key[9:11]}_{key[12:14]}_{_v229_suffix}.html"
+        if (not isinstance(_v229_sha,str)
+                or not re.fullmatch(r"[0-9a-f]{64}",_v229_sha)
+                or scratches.get(_v229_role+"_sha256" if _v229_role=="race_card" else "beforeinfo_sha256")!=_v229_sha
+                or _v229_raw.is_symlink() or any(x.is_symlink() for x in _v229_raw.parents)
+                or not _v229_raw.is_file()):
+            _v229_sources_match=False
+            break
+        try:
+            if hashlib.sha256(_v229_raw.read_bytes()).hexdigest()!=_v229_sha:
+                _v229_sources_match=False
+                break
+        except OSError:
+            _v229_sources_match=False
+            break
+    if not _v229_sources_match:
+        continue
+'''
 FORBIDDEN={'site_results','results','result','payout','payouts',
            'formal_predictions','formal'}
 
@@ -68,10 +99,11 @@ def runner_source(source):
     """Keep V228's SHA-pinned result-free source; add only two pre-result guards."""
     if source.count(ANCHOR)!=1 or source.count(WINDOW)!=1:
         raise AssertionError('V229_V228_ANCHOR_DRIFT_FAIL_CLOSED')
-    code=source.replace(ANCHOR,ANCHOR+FRESH_CARD).replace(WINDOW,WINDOW_REPLACEMENT)
+    code=source.replace(ANCHOR,ANCHOR+SOURCE_BOUND_SCRATCH+FRESH_CARD).replace(WINDOW,WINDOW_REPLACEMENT)
     if any(x not in code for x in ('V228_NO_RESULT_READ','V228_SITE_REFERENCE_ONLY',
                                    'V226_IMMUTABLE_ORIGINAL_SNAPSHOT',
-                                   'V229_FRESH_CARD_BEFORE_FREEZE','V229_MINIMUM_DECISION_LEAD')):
+                                   'V229_FRESH_CARD_BEFORE_FREEZE','V229_MINIMUM_DECISION_LEAD',
+                                    'V229_SOURCE_BOUND_SCRATCH_BEFORE_FIRST_FREEZE')):
         raise AssertionError('V229_PROVENANCE_GUARDS_MISSING')
     ast.parse(code)
     return code
@@ -120,6 +152,29 @@ def validate(root:Path,key:str,now:datetime):
             or scratch.get('official_beforeinfo_source_status')!='ok'
             or not age(saved,instant(scratch.get('checked_at')),900)):
         raise AssertionError('V229_SCRATCH_NOT_VERIFIED_AT_SAVE')
+    # Post-freeze, independently attest the same official PRE_RESULT bytes
+    # that authorized the scratch check, before ANY evidence is committed.
+    if (scratch.get('schema_version')!='boat-edge-v182-scratch-evidence-v1'
+            or scratch.get('source_date')!=key[:8]
+            or scratch.get('official_beforeinfo_six_boat_complete') is not True
+            or scratch.get('suspect_lanes')!=[]
+            or scratch.get('official_raw_flags')!=[]):
+        raise AssertionError('V229_SCRATCH_SOURCE_BOUND_METADATA_UNVERIFIED')
+    for role,suffix in (('race_card','racelist'),('beforeinfo','beforeinfo')):
+        row=au.get(role) or {}
+        declared=row.get('sha256')
+        scratch_field='race_card_sha256' if role=='race_card' else 'beforeinfo_sha256'
+        html=root/'data/raw'/key[:8]/f'{key[9:11]}_{key[12:14]}_{suffix}.html'
+        if (not isinstance(declared,str) or not re.fullmatch(r'[0-9a-f]{64}',declared)
+                or scratch.get(scratch_field)!=declared
+                or html.is_symlink() or any(parent.is_symlink() for parent in html.parents)
+                or not html.is_file()):
+            raise AssertionError('V229_SCRATCH_OFFICIAL_HTML_SHA_MISMATCH_'+role)
+        try:
+            if digest(html)!=declared:
+                raise AssertionError('V229_SCRATCH_OFFICIAL_HTML_SHA_MISMATCH_'+role)
+        except OSError as exc:
+            raise AssertionError('V229_SCRATCH_OFFICIAL_HTML_UNREADABLE_'+role) from exc
     if doc.get('stake_plan_version')!='V141-10000-PROSPECTIVE':
         raise AssertionError('V229_STAKE_PLAN_UNVERIFIED')
     modes=doc.get('modes') or {}
