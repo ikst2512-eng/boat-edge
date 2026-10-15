@@ -232,9 +232,8 @@ class FastLaneTests(unittest.TestCase):
             m.write_json(self.root/'data/races'/f'{key}.json',race)
         workflow=(Path(__file__).resolve().parents[1]/
                   '.github/workflows/V235.yml').read_text(encoding='utf-8')
-        self.assertIn(
-            'boat_edge_v230_fast_lane.py --workers 8 --retry-imminent '
-            '--priority-race-key 20261016-14-01',workflow)
+        self.assertIn('candidates=targets(Path("."),local_now())',workflow)
+        self.assertIn('boat_edge_v230_fast_lane.py --workers 8 --retry-imminent --priority-race-key "$priority_key"',workflow)
         at=lambda minute:datetime(2026,10,16,8,minute,tzinfo=JST)
         with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
               patch('boat_edge_v229_atomic_freeze.run',return_value=0),
