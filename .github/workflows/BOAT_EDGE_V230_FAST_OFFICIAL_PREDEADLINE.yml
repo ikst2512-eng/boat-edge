@@ -36,7 +36,7 @@ jobs:
           from pathlib import Path
           import subprocess,ast
           repo=Path('.')
-          pins={'scripts/site_final_history_v133.py': '7b2916df307fcb2783cfc6ddc38ff73903d56da5', 'scripts/boat_edge_v228_freeze_only.py': 'cd71bc51b943b485f08d9610e305a3a7cefb220e', 'scripts/boat_edge_v229_atomic_freeze.py': 'eb06cebbe7c310612e09fffb45a3982904ad3022', 'scripts/site_odds_v167_dom_verifier.py': '2b168d83859db2b90ce69cd8d817983a1ee38dd8'}
+          pins={'scripts/site_final_history_v133.py': '7b2916df307fcb2783cfc6ddc38ff73903d56da5', 'scripts/boat_edge_v228_freeze_only.py': 'cd71bc51b943b485f08d9610e305a3a7cefb220e', 'scripts/boat_edge_v229_atomic_freeze.py': 'c77d917ded93dc5584e990f769ced1ba108f8ed4', 'scripts/site_odds_v167_dom_verifier.py': '2b168d83859db2b90ce69cd8d817983a1ee38dd8'}
           for path,expected in pins.items():
               p=repo/path
               if not p.is_file():raise SystemExit('V230_REQUIRED_PREDECESSOR_MISSING_'+path)
