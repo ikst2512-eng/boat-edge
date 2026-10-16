@@ -132,6 +132,21 @@ fi
         self.assertIn("V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED", wf)
         self.assertIn("Nudge existing V229 from successfully published PRE_RESULT inputs", wf)
 
+    def test_v71_only_trusted_main_may_write_odds_or_dispatch(self):
+        # A 2026-10-16 feature-branch push ran V71 and wrote to origin/main,
+        # despite the downstream nudge correctly refusing the branch. Gate
+        # the WHOLE odds job before fetching, resetting or publishing source.
+        wf = (SCRIPT.parents[1] / ".github/workflows/site-odds.yml").read_text(encoding="utf-8")
+        header = wf.split("concurrency:", 1)[0]
+        job = wf.split("jobs:", 1)[1].split("steps:", 1)[0]
+        self.assertIn("    branches: [main]", header)
+        self.assertIn("github.ref == 'refs/heads/main'", job)
+        self.assertIn("github.repository == 'ikst2512-eng/boat-edge'", job)
+        self.assertIn("workflow_dispatch:", header)  # dispatch still needs job guard
+        self.assertIn("git reset --hard origin/main", wf)
+        self.assertIn("git push origin HEAD:main", wf)
+        self.assertIn("Nudge existing V229 from successfully published PRE_RESULT inputs", wf)
+
     def test_shell_and_workflow_contract(self):
         p = subprocess.run(["bash", "-n", str(SCRIPT)], capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stderr)

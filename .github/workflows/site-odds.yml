@@ -2,6 +2,7 @@ name: BOAT EDGE 3連単オッズ更新 V71
 
 on:
   push:
+    branches: [main]
     paths:
       - ".github/workflows/site-odds.yml"
   workflow_dispatch:
@@ -18,6 +19,11 @@ concurrency:
 
 jobs:
   odds:
+    # Guard workflow_dispatch, not just push: feature branches must never
+    # reset their checkout to origin/main and publish official odds there.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'ikst2512-eng/boat-edge'
     runs-on: ubuntu-latest
     timeout-minutes: 6
 
