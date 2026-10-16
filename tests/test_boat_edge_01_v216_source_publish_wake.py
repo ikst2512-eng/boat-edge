@@ -68,8 +68,8 @@ class V216CollectorWake(unittest.TestCase):
         # A V229 triggered by the collector must NEVER wake it again.
         collector = COLLECTOR.read_text(encoding='utf8')
         v229 = (ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
-        event = collector.split('on:\\n', 1)[1].split('\\npermissions:', 1)[0]
-        job = collector.split('  update:\\n', 1)[1].split('    runs-on:', 1)[0]
+        event = collector.split('on:\n', 1)[1].split('\npermissions:', 1)[0]
+        job = collector.split('  update:\n', 1)[1].split('    runs-on:', 1)[0]
         self.assertEqual(event.count('  schedule:'), 1)
         self.assertEqual(event.count('  workflow_run:'), 1)
         self.assertIn('cron: "*/5 * * * *"', event)
