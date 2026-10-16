@@ -634,7 +634,7 @@ class FastLaneTests(unittest.TestCase):
               patch('boat_edge_v235_predeadline_receipt.receipt',
                     return_value={'prediction_saved_proven':True}),
               patch.object(m,'fetch_one') as fetch,
-              patch.object(m,'local_now',return_value=self.now+timedelta(minutes=6))):
+              patch.object(m,'local_now',return_value=self.now+timedelta(minutes=7))):
             got=m.run_postcommit_incomplete(self.root,now=self.now)
         self.assertEqual(got['unattempted_live_targets_seen'],[other])
         self.assertEqual(got['retry_keys'],[])
