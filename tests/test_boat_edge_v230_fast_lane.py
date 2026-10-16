@@ -181,6 +181,81 @@ class FastLaneTests(unittest.TestCase):
         snap=self.root/'data/site_prediction_snapshots'/f'{key}.json'
         self.assertFalse(snap.exists(),'preflight must not write or backfill a prediction')
 
+    def test_priority_blocked_salvages_other_race_in_freeze_window(self):
+        # Same site run: earliest official exhibition unpublished, another
+        # race is ready. The first attempt must finish before any fallback.
+        second='20261011-06-09'
+        race=makerace('14:44')
+        race['race_key']=second
+        race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{second}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':second,'deadline':'14:44'}]}]})
+        order=[]
+        def fetch(root,key):
+            order.append(('fetch',key))
+            return key,{'mock':True},None
+        def updated(root,key,data,now):
+            order.append(('update',key))
+            return 'source_blocked' if key==KEY else 'fresh_verified'
+        def freeze(root):
+            order.append(('freeze',None))
+            return 1 if ('update',second) in order else 0
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',side_effect=freeze),
+              patch.object(m,'fetch_one',side_effect=fetch),
+              patch.object(m,'update_one',side_effect=updated),
+              patch.object(m,'local_now',return_value=self.now)):
+            got=m.run(self.root,now=self.now,priority_key=KEY,worker=2)
+        self.assertTrue(got['priority_applied'])
+        self.assertEqual(got['priority_failure_fallback_targets'],[second])
+        self.assertEqual(got['priority_failure_fallback_snapshots'],1)
+        self.assertEqual(got['new_snapshots_atomic_audited'],1)
+        self.assertEqual(got['targets'],[KEY,second])
+        self.assertEqual(order,[('fetch',KEY),('update',KEY),('freeze',None),
+                                ('fetch',second),('update',second),('freeze',None)])
+
+    def test_priority_blocked_never_fallbacks_to_outside_freeze_window(self):
+        later='20261011-06-09'
+        race=makerace('14:53')
+        race['race_key']=later
+        race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{later}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':later,'deadline':'14:53'}]}]})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0) as freeze,
+              patch.object(m,'fetch_one',return_value=(KEY,{'mock':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='odds_incomplete'),
+              patch.object(m,'local_now',return_value=self.now)):
+            got=m.run(self.root,now=self.now,priority_key=KEY,worker=2)
+        self.assertEqual(got['priority_failure_fallback_targets'],[])
+        self.assertEqual(got['new_snapshots_atomic_audited'],0)
+        fetch.assert_called_once_with(self.root,KEY)
+        freeze.assert_called_once_with(self.root)
+
+    def test_priority_already_freezes_never_waits_for_another_race(self):
+        second='20261011-06-09'
+        race=makerace('14:44')
+        race['race_key']=second
+        race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{second}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':second,'deadline':'14:44'}]}]})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=1) as freeze,
+              patch.object(m,'fetch_one',return_value=(KEY,{'mock':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='source_blocked'),
+              patch.object(m,'local_now',return_value=self.now)):
+            got=m.run(self.root,now=self.now,priority_key=KEY,worker=2)
+        self.assertEqual(got['priority_failure_fallback_targets'],[])
+        self.assertEqual(got['targets'],[KEY])
+        fetch.assert_called_once_with(self.root,KEY)
+        freeze.assert_called_once_with(self.root)
+
     def test_naruto_priority_isolates_source_fetch_only_during_decision_window(self):
         # 08:27: Naruto's deadline is 08:35; Tokuyama 1R at 08:43 is
         # also eligible for V230. Slow Tokuyama requests must not delay the

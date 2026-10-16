@@ -503,6 +503,43 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     # Existing V229 is the only authority allowed to create the immutable first snapshot.
     # It reads neither historical results nor formal prediction data.
     count=atomic_freeze(root)
+    # Gate 1C: V235 deliberately isolates the first deadline so another
+    # official request cannot delay its successful immutable first Git add.
+    # If that FIRST request actually failed and produced no snapshot, however,
+    # the existing one-race isolation must not starve OTHER imminent races.
+    # Make one bounded attempt on up to three still-valid alternative targets;
+    # the formal/result locks, 2-10m first-freeze, 120-odds and scratch gates
+    # are all independently rechecked by existing targets/update_one/V229.
+    status['priority_failure_fallback_targets']=[]
+    status['priority_failure_fallback_snapshots']=0
+    initial_state=status['outcomes'].get(priority_key) if priority_applied else None
+    if (priority_applied and count==0 and
+        (initial_state in ('source_blocked','odds_incomplete') or
+         (isinstance(initial_state,str) and initial_state.startswith('fetch_failed:')))):
+        actual_now=local_now()
+        alternatives=[]
+        for key in targets(root,actual_now):
+            if key==priority_key:continue
+            race=load(root/'data/races'/f'{key}.json') or {}
+            due=due_for(key,(race.get('meta') or {}).get('deadline'))
+            if due and 2 <= (due-actual_now).total_seconds()/60 <= 10:
+                alternatives.append(key)
+            if len(alternatives)>=3:break
+        if alternatives:
+            status['priority_failure_fallback_targets']=alternatives
+            selected.extend(alternatives)
+            status['targets']=selected
+            with ThreadPoolExecutor(max_workers=min(worker,3)) as pool:
+                futures=[pool.submit(fetch_one,root,key) for key in alternatives]
+                for task in as_completed(futures):
+                    key,data,err=task.result()
+                    if err:
+                        status['outcomes'][key]='fetch_failed:'+err
+                        continue
+                    status['outcomes'][key]=update_one(root,key,data,local_now())
+            second=atomic_freeze(root)
+            count+=second
+            status['priority_failure_fallback_snapshots']=second
     # V230: one bounded in-run second chance for an official exhibition/odds
     # page that was incomplete at the first fetch. No extra workflow, no new
     # prediction engine and no relaxation of V229's immutable freeze contract.
