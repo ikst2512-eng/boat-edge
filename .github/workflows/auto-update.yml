@@ -65,6 +65,7 @@ jobs:
           from bs4 import BeautifulSoup
           from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
           from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
+          from scripts.boat_edge_v01_catalog_continuity import should_keep_verified_same_day_catalog
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -500,7 +501,14 @@ jobs:
                     "beforeinfo_status":doc["source_audit"]["beforeinfo"]["status"]})
               summary["venues"].append(venue)
 
-          (DATA/"today.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
+          # When official venue detection temporarily returns no venues,
+          # preserve only recent, independently verified SAME-DAY source bytes.
+          # Do not update the old source timestamp: health below still reports
+          # source_unavailable and V229's strict freshness check stays active.
+          if should_keep_verified_same_day_catalog(DATA/"today.json",summary,now):
+              print("V01_SAME_DAY_CATALOG_PRESERVED_SOURCE_UNAVAILABLE")
+          else:
+              (DATA/"today.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
 
           # V269: operationally observe urgent source availability without
           # reading results, payouts, or estimating unverified exhibition data.
