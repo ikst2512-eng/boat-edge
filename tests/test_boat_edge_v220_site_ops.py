@@ -273,10 +273,15 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
         "github.event.workflow_run.head_repository.full_name == github.repository",
     ):
         assert marker in job, marker
-    for step in ('Verify current versioned site-operations code',
-                 'Generate observed pre-result site-operations report'):
-        body=wf.split('      - name: '+step,1)[1].split('      - name:',1)[0]
-        assert "if: github.event_name != 'workflow_run'" in body, step
+    verify=wf.split('      - name: Verify current versioned site-operations code',1)[1].split('      - name:',1)[0]
+    assert "if: github.event_name != 'workflow_run'" in verify
+    report=wf.split('      - name: Generate observed pre-result site-operations report',1)[1].split('      - name:',1)[0]
+    assert "if: github.event_name != 'workflow_run'" not in report
+    assert 'V220_EVENT_REPORT_FRESH_SKIP' in report
+    assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in report
+    assert 'git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json' in report
+    assert 'report_age < 900' in report
+    assert "git add -- data/site_ops_v220/current.json data/site_ops_v220/gate1c_current.json data/site_autopilot/v227_current.json" in report
     recovery=wf.split('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs',1)[1]
     assert "--recovery-plan" in recovery
     assert 'auto-update.yml|site-odds.yml' in recovery
