@@ -333,15 +333,15 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
                                           capture_output=True,text=True,timeout=8)
                 assert scheduled.returncode==0,scheduled.stderr
                 assert scheduled.stdout.strip()=='',scheduled.stdout
-        # No report commit: the guard cannot treat missing history as fresh.
-        report.unlink()
-        subprocess.run(['git','add','--','data/site_ops_v220/gate1c_current.json'],
-                       cwd=root,check=True)
-        subprocess.run(['git','-c','user.name=Fixture',
-                        '-c','user.email=test@example.invalid','commit','-qm','deleted'],
-                       cwd=root,check=True)
-        # The former Git commit is still provenance and remains discoverable;
-        # direct missing-file check is handled by normal writer regeneration.
+    # Missing report history: do not mistake it for a fresh report.
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        p=subprocess.run(['bash','-c',guard],cwd=root,
+                         env={**os.environ,'GITHUB_EVENT_NAME':'workflow_run'},
+                         capture_output=True,text=True,timeout=8)
+        assert p.returncode==0,p.stderr
+        assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
     print('V220_EVENT_REPORT_GIT_COMMIT_AGE_GATE_REAL_BASH_PASS')
 
 
