@@ -41,3 +41,11 @@ GitHub公式仕様:
 - 停止は `BOAT_EDGE_EXTERNAL_V235_ENABLED=false` に戻す／Cronを停止し、必要ならトークン失効。安全停止しても既存V230/V229の初回Git保存・正式Freshロックには変更なし。Blueprintの再同期は環境変数を `false` に戻し得るので、再同期後は状態を確認。
 - **Renderを接続・課金・デプロイ・Secret保存したという意味ではない。** クラウド側の初回稼働・予想保存改善・2分配送保証は別途実測が必要。
 
+## 2026-10-16 戸田10Rの実Git/Actions欠測再現（設置準備の受入れ証拠）
+
+- 戸田10Rの締切は15:18 JSTで、既存V229が初回予想を凍結できる時間窓は15:08〜15:16（それぞれ締切10〜2分前）。
+- [15:05:52 JSTのPRE_RESULT Git原本](https://github.com/ikst2512-eng/boat-edge/commit/eb815975dcd7eaecc04ff89940007ecc41dcf48c)には6艇の公式出走表・展示原本、公式DOM照合済み3連単120件、欠場確認 `blocked=false` が同じレースのSHAとともに保存されていた。これは当時の入力候補を示すが、モデル全ガードや適格分母の独立証明ではない。
+- 実GitHub ActionsのV235起動は15:03:41の次が15:16:29、V229は15:06:06の次が15:16:52。**保存可能な15:08〜15:16にどちらも起動しておらず**、このレースの予想snapshotは生成されなかった。CI PASSでは救済不可。
+- 既存外部補助起動の `decision()` を合成時刻で再生すると、15:08には直近実行から420秒未満で `V235_RECENT_ACTUAL_RUN`、15:12には残り6分・420秒超・main履歴正常・非activeの場合に `MISSED_V235_RUNTIME_WITH_IMMINENT_RACE` で既存V235起動候補、15:15には残り4分未満で `NO_SAME_DAY_PREWARM_RACE` になる。専用回帰 `test_real_toda10_missed_window_replay_no_early_or_late_dispatch` がこの境界とactive多重起動拒否を固定する。
+- **この再生は外部Cronが稼働したという主張ではない。** `render.yaml` は依然OFF。料金同意・秘密鍵設定・独立実行ログがない限りGitHubへの追加dispatchは0。接続後も実V235 run、初回Git SHA、締切2〜10分証拠を別途照合する。
+- Gate 1Cの全開催分母は未証明。締切済みV215未観測Rを「公式適格保存失敗」に振り替えず、3開催日99%の承認条件を維持する。
