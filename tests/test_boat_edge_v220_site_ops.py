@@ -616,6 +616,9 @@ def test_gate1c_previous_day_catalog_immutable_before_midnight_only():
             return subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
         original=commit('original last 16th calendar','2026-10-16T23:56:00+09:00')
         put(root,'data/today.json',current)
+        put(root,'data/site_paper_sim/readiness_history_v215/20261017.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+            'day_jst':'20261017','observations':{}})
         commit('rollover next-day catalog','2026-10-17T00:04:00+09:00')
         archived,sha=mod.gate1c_previous_day_catalog_from_git(root,day)
         assert archived==previous and sha==original,(archived,sha)
