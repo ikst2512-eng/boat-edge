@@ -586,6 +586,72 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
     print('GATE1C_UNOBSERVED_CATALOG_COVERAGE_NOT_ELIGIBILITY_DENOMINATOR_PASS')
 
 
+def test_gate1c_previous_day_catalog_immutable_before_midnight_only():
+    # Synthesize a complete previous-day catalog and a later rollover in one
+    # Git tree. Git history, not a backfilled mutable current catalog, counts.
+    day='20261016'
+    key1='20261016-24-01'
+    key2='20261016-24-02'
+    today_key='20261017-24-01'
+    previous={'date':'2026-10-16','venues':[{'races':[
+        {'race_key':key1,'deadline':'08:25'},
+        {'race_key':key2,'deadline':'17:15'}]}]}
+    current={'date':'2026-10-17','venues':[{'races':[
+        {'race_key':today_key,'deadline':'08:25'}]}]}
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp)
+        put(root,'data/today.json',previous)
+        put(root,f'data/site_paper_sim/readiness_history_v215/{day}.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+            'day_jst':day,
+            'observations':{key1:{'deadline':'08:25'}}})
+        put(root,f'data/site_prediction_snapshots/{key2}.json',{'race_key':key2})
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        def commit(msg,at):
+            subprocess.run(['git','add','--','data/today.json'],cwd=root,check=True)
+            env={**os.environ,'GIT_AUTHOR_DATE':at,'GIT_COMMITTER_DATE':at}
+            subprocess.run(['git','-c','user.name=Fixture',
+                            '-c','user.email=fixture@example.invalid',
+                            'commit','-qm',msg],cwd=root,env=env,check=True)
+            return subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+        original=commit('original last 16th calendar','2026-10-16T23:56:00+09:00')
+        put(root,'data/today.json',current)
+        put(root,'data/site_paper_sim/readiness_history_v215/20261017.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+            'day_jst':'20261017','observations':{}})
+        commit('rollover next-day catalog','2026-10-17T00:04:00+09:00')
+        archived,sha=mod.gate1c_previous_day_catalog_from_git(root,day)
+        assert archived==previous and sha==original,(archived,sha)
+        now=datetime(2026,10,17,1,2,tzinfo=JST)
+        report=mod.gate1c_read_only_report(root,now,lambda *_:('PASS','fixture'))
+        past=report['previous_day']
+        assert past['archived_catalog_git_commit']==original,past
+        assert past['catalog_matured_races']==2,past
+        assert past['catalog_matured_not_observed']==1,past
+        assert past['catalog_matured_not_observed_saved']==1,past
+        assert past['catalog_matured_without_snapshot']==1,past
+        assert past['catalog_matured_by_hour_jst']=={'08':1,'17':1},past
+        assert past['catalog_matured_not_observed_by_hour_jst']=={'08':0,'17':1},past
+        assert past['independently_source_eligible_denominator'] is None,past
+        assert past['eligible_save_rate_percent'] is None,past
+        assert past['acceptance_99_percent_proven'] is False,past
+        assert report['today']['catalog_matured_races']==0,report['today']
+        # Later source mutations must never rewrite the prior-day denominator.
+        put(root,'data/today.json',{'date':'2026-10-16','venues':[]})
+        assert mod.gate1c_previous_day_catalog_from_git(root,day)==(previous,original)
+        # An invalid source in the last *pre-midnight* Git commit must fail
+        # closed, even if an older correct schedule exists in history.
+        put(root,'data/today.json',{'date':'2026-10-15','venues':[]})
+        commit('bad last prior day','2026-10-16T23:59:00+09:00')
+        assert mod.gate1c_previous_day_catalog_from_git(root,day)==(None,None)
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp)
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        assert mod.gate1c_previous_day_catalog_from_git(root,day)==(None,None)
+        assert mod.gate1c_previous_day_catalog_from_git(root,'../result')==(None,None)
+    print('GATE1C_PREVIOUS_DAY_ORIGINAL_GIT_CATALOG_SAFE_COVERAGE_PASS')
+
+
 def test_gate1c_first_git_sha_is_not_the_observed_denominator():
     """Pre-result V125 first-add proof is stricter than snapshot existence.
 
@@ -796,6 +862,7 @@ if __name__=='__main__':
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
     test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibility()
+    test_gate1c_previous_day_catalog_immutable_before_midnight_only()
     test_gate1c_first_git_sha_is_not_the_observed_denominator()
     test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races()
     test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git()

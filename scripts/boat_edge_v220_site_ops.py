@@ -346,7 +346,40 @@ def compute(root,now):
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover}
 
-def gate1c_first_git_summary(root, day, now, verify=None):
+def gate1c_previous_day_catalog_from_git(root,day):
+    """Last committed schedule BEFORE next JST midnight; diagnostics only.
+
+    Today's mutable catalog has already rolled over. Never use a later
+    catalog to backfill source eligibility or infer that official odds were
+    present before a deadline. A missing/invalid original returns (None,None).
+    """
+    if not isinstance(day,str) or re.fullmatch(r'20\d{6}',day) is None:
+        return None,None
+    try:
+        end=(datetime.strptime(day,'%Y%m%d').replace(tzinfo=JST)
+             +timedelta(days=1)-timedelta(seconds=1)).astimezone(timezone.utc)
+        cutoff=end.isoformat()
+        proc=subprocess.run(
+            ['git','log','-1','--format=%H',f'--before={cutoff}',
+             '--','data/today.json'],
+            cwd=root,check=True,capture_output=True,text=True,timeout=12)
+        sha=proc.stdout.strip()
+        if re.fullmatch(r'[0-9a-f]{40}',sha) is None:
+            return None,None
+        raw=subprocess.run(
+            ['git','show',f'{sha}:data/today.json'],
+            cwd=root,check=True,capture_output=True,timeout=12).stdout
+        if len(raw)>2_000_000:return None,None
+        doc=json.loads(raw)
+        if (not isinstance(doc,dict) or
+                str(doc.get('date','')).replace('-','')!=day):
+            return None,None
+        return doc,sha
+    except (OSError,ValueError,UnicodeError,TypeError,subprocess.SubprocessError):
+        return None,None
+
+
+def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None, archived_catalog_git_commit=None):
     """Read-only 1C numerator proof, NOT a source-eligible-race denominator.
 
     Reuse the existing historical V125/Git-first-add validator. A current
@@ -369,6 +402,7 @@ def gate1c_first_git_summary(root, day, now, verify=None):
          # Count fully validated scheduled deadlines, not source eligibility.
          'catalog_matured_by_hour_jst':None,
          'catalog_matured_not_observed_by_hour_jst':None,
+         'archived_catalog_git_commit':None,
          # Source release times and all race-specific eligibility guards
          # cannot be reconstructed from a sampled V215 observation history.
          'independently_source_eligible_denominator':None,
@@ -425,8 +459,13 @@ def gate1c_first_git_summary(root, day, now, verify=None):
     # Fail closed on stale/malformed/duplicate schedules rather than silently
     # undercounting races not reached by any pre-deadline observer.
     catalog_path=root/'data/today.json'
-    if not catalog_path.is_symlink() and not any(p.is_symlink() for p in catalog_path.parents):
-        catalog=load(catalog_path)
+    # Immutable prior-day Git tree is a source of deadline COVERAGE only;
+    # current-day source continues to reject unsafe filesystem symlinks.
+    catalog_path_safe=(not catalog_path.is_symlink() and
+                       not any(p.is_symlink() for p in catalog_path.parents))
+    if catalog_override is not None or catalog_path_safe:
+        catalog=(catalog_override if catalog_override is not None
+                 else load(catalog_path))
         if (isinstance(catalog,dict)
                 and str(catalog.get('date','')).replace('-','')==day
                 and isinstance(catalog.get('venues'),list)):
@@ -452,6 +491,10 @@ def gate1c_first_git_summary(root, day, now, verify=None):
                 if not valid_catalog:
                     break
             if valid_catalog and races:
+                if (catalog_override is not None and
+                        isinstance(archived_catalog_git_commit,str) and
+                        re.fullmatch(r'[0-9a-f]{40}',archived_catalog_git_commit)):
+                    out['archived_catalog_git_commit']=archived_catalog_git_commit
                 valid_observed={
                     key for key,record in obs.items()
                     if isinstance(key,str) and KEY.fullmatch(key)
@@ -818,14 +861,19 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
 def gate1c_read_only_report(root,now,verify=None):
     now=now.astimezone(timezone.utc)
     day=now.astimezone(JST).date()
+    previous=(day-timedelta(days=1)).strftime('%Y%m%d')
+    # Preserve overnight coverage from the original committed catalog before
+    # it was replaced by today's schedule. Never backfill eligible 99% counts.
+    archived,archived_sha=gate1c_previous_day_catalog_from_git(root,previous)
     return {
         'schema':'BOAT_EDGE_GATE1C_FIRST_GIT_ORIGINAL_OBSERVATION_V1',
         'scope':'SITE_ONLY_PRE_RESULT_NO_OUTCOME_OR_FORMAL_INPUT',
         'today':gate1c_first_git_summary(root,day.strftime('%Y%m%d'),now,verify),
         'all_saved_snapshots_today':gate1c_all_saved_originals(root,day.strftime('%Y%m%d'),now,verify),
-        'all_saved_snapshots_previous_day':gate1c_all_saved_originals(root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify),
+        'all_saved_snapshots_previous_day':gate1c_all_saved_originals(root,previous,now,verify),
         'previous_day':gate1c_first_git_summary(
-            root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify),
+            root,previous,now,verify,catalog_override=archived,
+            archived_catalog_git_commit=archived_sha),
         'prospective_source_ready':{
             'today':gate1c_source_receipt_summary(root,day.strftime('%Y%m%d'),now,verify),
             'previous_day':gate1c_source_receipt_summary(
