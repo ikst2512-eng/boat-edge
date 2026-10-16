@@ -287,6 +287,41 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
     print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
 
+def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
+    """10/16 10:40 skipped V229 must not veto 10:42 source-ready retry."""
+    import shutil
+    import subprocess
+
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
+    line=next((v for v in wf.splitlines() if 'jq -e --arg wf "$wf"' in v),None)
+    assert line is not None
+    assert 'select($wf != "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml" or .conclusion != "skipped")' in line
+    assert 'V220_V229_ALREADY_ACTIVE_NO_DUPLICATE' in wf
+    assert 'auto-update.yml|site-odds.yml) cooldown=900' in wf
+    assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120' in wf
+    # Prefer executing EXACT production jq rather than reimplementing its
+    # filter in Python. A local machine without jq still checks the contract.
+    if shutil.which('jq'):
+        expression=line.split("'",2)[1]
+        now=int(datetime(2026,10,16,1,42,15,tzinfo=timezone.utc).timestamp())
+        def suppressed(wf_name,conclusion):
+            doc={'workflow_runs':[{'created_at':'2026-10-16T01:40:35Z',
+                 'status':'completed','conclusion':conclusion}]}
+            result=subprocess.run(['jq','-e','--arg','wf',wf_name,
+                                   '--argjson','t',str(now),'--argjson','c','120',
+                                   expression],input=json.dumps(doc),text=True,
+                                  capture_output=True,check=False)
+            assert result.returncode in (0,1),result.stderr
+            return result.returncode==0
+        v229='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
+        assert not suppressed(v229,'skipped')
+        assert suppressed(v229,'success')
+        assert suppressed(v229,'failure')
+        # Collector cooldown must not change even for a skipped run.
+        assert suppressed('auto-update.yml','skipped')
+    print('V220_SKIPPED_V229_EXCLUDED_ACTIVE_AND_REAL_COOLDOWN_PRESERVED')
+
+
 def fully_proven_pre_result_fixture(root, now):
     """Synthetic source with matching original official HTML bytes and V182 SHA."""
     stamp=(now-timedelta(minutes=1)).isoformat()
@@ -492,6 +527,7 @@ if __name__=='__main__':
     test_v284_freeze_coverage_not_early_false_miss()
     test_v290_missing_source_vs_freeze_window()
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
+    test_v220_skipped_v229_never_suppresses_source_ready_recovery()
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
     test_gate1c_first_git_sha_is_not_the_observed_denominator()

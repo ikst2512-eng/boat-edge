@@ -150,7 +150,11 @@ jobs:
                   echo "V220_V229_ALREADY_ACTIVE_NO_DUPLICATE"; continue
                fi
             fi
-            if echo "$runs" | jq -e --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null) | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
+            # A completed/skipped V229 run executed ZERO freeze steps. Do not
+            # let a skipped workflow_run event suppress an independently
+            # source-ready recovery for the entire 2-minute cooldown. Other
+            # completed V229 attempts and ALL collector cooldowns stay intact.
+            if echo "$runs" | jq -e --arg wf "$wf" --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null) | select($wf != "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml" or .conclusion != "skipped") | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
                echo "V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE $wf"; continue
             fi
             if gh workflow run "$wf" --ref main; then
