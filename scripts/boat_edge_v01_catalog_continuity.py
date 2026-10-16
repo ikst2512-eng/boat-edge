@@ -36,7 +36,13 @@ def should_keep_verified_same_day_catalog(path:Path,candidate:dict,now:datetime)
         if updated.tzinfo is None or updated.astimezone(now.tzinfo).strftime('%Y-%m-%d')!=iso:
             return False
         age=(now.astimezone(timezone.utc)-updated.astimezone(timezone.utc)).total_seconds()
-        if not 0<=age<=90*60:return False
+        # No 90-minute expiry for a SCHEDULE ONLY fallback: an upstream
+        # zero-venue outage lasting beyond 90m must not destroy an otherwise
+        # verified, same-day, full 12R-per-venue catalog. The original
+        # updated_at stays untouched: source health reports unavailable, and
+        # V229/V235 still require independently fresh official evidence.
+        # Same JST day + actual past timestamp are mandatory (no next-day reuse).
+        if age<0:return False
         venues=doc.get('venues')
         if not isinstance(venues,list) or not 1<=len(venues)<=24:return False
         meta=doc.get('collector')
