@@ -617,14 +617,47 @@ def run_postcommit_incomplete(root, now=None, worker=6):
     )
     if not report['first_git_proven']:
         return report
-    retry_keys=imminent_retry_targets(root,source_keys,outcomes,now)
-    if not retry_keys:
+    incomplete=imminent_retry_targets(root,source_keys,outcomes,now)
+    # The V235 first-Git priority intentionally fetches only ONE imminent race.
+    # Successful publication is not a reason to abandon other live races that
+    # were never attempted. ONLY after the original Git first-add is proven,
+    # take up to 3 more eligible 2-10m races. Never delay the FIRST push.
+    unattempted=[]
+    for key in targets(root,now):
+        if key in source_keys:
+            continue
+        race=load(root/'data/races'/f'{key}.json') or {}
+        deadline=(race.get('meta') or {}).get('deadline')
+        due=due_for(key,deadline)
+        if due and 2 <= (due-now).total_seconds()/60 <= 10:
+            unattempted.append(key)
+        if len(unattempted)>=3:
+            break
+    report['unattempted_live_targets_seen']=unattempted
+    if not incomplete and not unattempted:
         return report
-    time.sleep(20)
-    retry_keys=imminent_retry_targets(root,retry_keys,outcomes,local_now())
-    report['retry_keys']=retry_keys
-    if not retry_keys:
+    # Only a previously incomplete source gets the existing bounded 20s wait.
+    # Untouched live races are fetched immediately after the proven first push.
+    if incomplete:
+        time.sleep(20)
+    actual_now=local_now()
+    retry_keys=imminent_retry_targets(root,incomplete,outcomes,actual_now)
+    current=set(targets(root,actual_now))
+    for key in unattempted:
+        if key not in current or key in retry_keys:
+            continue
+        race=load(root/'data/races'/f'{key}.json') or {}
+        deadline=(race.get('meta') or {}).get('deadline')
+        due=due_for(key,deadline)
+        if (due and 2 <= (due-actual_now).total_seconds()/60 <= 10
+                and source_write_allowed(root/'data',key,deadline,actual_now)):
+            retry_keys.append(key)
+        if len(retry_keys)>=3:
+            break
+    report['retry_keys']=retry_keys[:3]
+    if not report['retry_keys']:
         return report
+    retry_keys=report['retry_keys']
     with ThreadPoolExecutor(max_workers=min(8,max(1,worker))) as pool:
         futures=[pool.submit(fetch_one,root,key) for key in retry_keys]
         for task in as_completed(futures):
