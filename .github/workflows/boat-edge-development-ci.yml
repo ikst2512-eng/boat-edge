@@ -36,11 +36,13 @@ jobs:
           node-version: '22'
       - name: Install parser dependencies
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
-      - name: Verify V216 safe wake after first-party source publish
+      - name: Verify V216 safe wake and same-day catalog continuity
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_01_v216_source_publish_wake.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_v01_catalog_continuity.py' -v
+          python3 -m py_compile scripts/boat_edge_v01_catalog_continuity.py
       - name: Verify source-ready first Git receipt and original source tree
         env:
           PYTHONDONTWRITEBYTECODE: '1'
