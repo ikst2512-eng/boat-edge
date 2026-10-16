@@ -516,6 +516,8 @@ def gate1c_all_saved_originals(root, day, now, verify=None):
     out={'day_jst':day, 'scope':'ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES',
          'snapshot_files_seen':0, 'matured_snapshot_files':0,
          'pending_snapshot_files':0, 'first_git_original_sha_proven':0,
+         'legacy_v229_first_git_proven_separately':0, 'legacy_v229_keys':[],
+         'legacy_v229_unverified_reasons':{},
          'original_not_verified':0, 'unverified_reasons':{},
          'independently_source_eligible_denominator':None,
          'eligible_save_rate_percent':None, 'acceptance_99_percent_proven':False}
@@ -553,6 +555,16 @@ def gate1c_all_saved_originals(root, day, now, verify=None):
                         continue
                     if reason=='PASS':
                         reason='first_git_commit_missing'
+                    # Never promote old V229 to V136 PASS. Store its immutable
+                    # first-Git confirmation in a DISTINCT read-only cohort.
+                    if reason=='historical_v125_revision_mismatch':
+                        legacy,commit_legacy=gate1c_legacy_v229_original(root,key,snap)
+                        if legacy=='LEGACY_V229_FIRST_GIT_PASS' and commit_legacy:
+                            out['legacy_v229_first_git_proven_separately']+=1
+                            out['legacy_v229_keys'].append(key)
+                        else:
+                            failures=out['legacy_v229_unverified_reasons']
+                            failures[legacy]=failures.get(legacy,0)+1
                 else:
                     reason='outside_v229_decision_window'
             out['original_not_verified']+=1
