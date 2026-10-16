@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 9,
     "deadline": "12:38",
-    "updated_at": "2026-10-16T10:06:26+09:00",
+    "updated_at": "2026-10-16T10:32:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=21&rno=9",
-      "fetched_at": "2026-10-16T10:09:53+09:00",
-      "sha256": "aade30ca72a1bed88bdc11d6a99b237894bd0949e09e85f26860b4b338c27e96",
+      "fetched_at": "2026-10-16T10:34:37+09:00",
+      "sha256": "3a6d58a839604a1fa6ba2d8b34eb584b3724a0b69c5b578053096e87f6e382ae",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=21&rno=9",
+      "fetched_at": "2026-10-16T10:33:57+09:00",
+      "sha256": "9a414929818ab682159f95b4020cb2c61698bdb0f9539726c3585147b29433be",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "3c254986874e2074204a8ccc54e3d1c842203630642f75f001d28224d4529496"
+      "sha256": "6a485d38dd113607a1caa1493846221297b1809a9df965d62128a54a68c4293d"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "7531cc1bc75bb137cc1aaa1daaf94af38e9a167fc860df9860a4832b015c32c6"
+      "sha256": "091bc94d1a7455d739395a238cdf0ebc3b2bb5a18cbd69dd5355698505840e5a"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "68a5c3c0e91e475db09eb1a86d541213895d71e501820501331551e0c57166b5"
+      "sha256": "59f4e0b71bea9f07be5035194de873351907a4c9aecafbccf5ffe9154f2b6667"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "9d6be7296eebe51cf1a42e6f6f2074ae01b099ae12b7466ed6b3dfa9bef49f51"
+      "sha256": "cd5628969b5f84fa3b216ee5888f8e58923b952aa47441b04b6ad67060e43d67"
     }
   },
   "racers": [
@@ -134,10 +140,11 @@
         "2",
         "12",
         "6",
-        "11"
+        "11",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "2 4418 / A1 茅原 悠紀 岡山/岡山 39歳/52.9kg F0 L0 0.13 7.63 57.72 75.61 7.52 55.56 81.48 41 41.80 60.66 120 28.57 40.00 2 12 6 11 4R"
+      "raw_text": "2 4418 / A1 茅原 悠紀 岡山/岡山 39歳/52.9kg F0 L0 0.13 7.63 57.72 75.61 7.52 55.56 81.48 41 41.80 60.66 120 28.57 40.00 2 12 6 11 4 4R"
     },
     {
       "lane": 3,
@@ -303,7 +310,53 @@
       "raw_text": "6 4066 / A2 東本 勝利 三重/三重 46歳/53.2kg F0 L0 0.18 6.26 46.55 65.52 6.17 33.33 77.78 42 29.17 45.83 126 41.38 55.17 1 11 3 12"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 新田 洋一 53.3kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 茅原 悠紀 52.9kg R 4"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 来田 衣織 47.0kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 森 竜也 52.9kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 河合 三弘 52.4kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 東本 勝利 53.2kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
