@@ -42,20 +42,26 @@
       "day_jst": "20261016",
       "eligible_save_rate_percent": null,
       "independently_source_eligible_denominator": null,
-      "receipts_matured": 0,
-      "receipts_seen": 0,
+      "receipts_matured": 3,
+      "receipts_seen": 3,
       "sampling_complete_for_all_scheduled_races": false,
       "scope": "SAMPLED_FIRST_GIT_SOURCE_READY_ONLY",
-      "source_ready_first_git_proven": 0,
-      "source_ready_missing_prediction_keys": [],
+      "source_ready_first_git_proven": 3,
+      "source_ready_missing_prediction_keys": [
+        "20261016-02-01"
+      ],
       "source_ready_original_unverified": 0,
-      "source_ready_prediction_input_parity_reasons": {},
-      "source_ready_prediction_input_parity_unverified": 0,
-      "source_ready_prediction_unverified_reasons": {},
+      "source_ready_prediction_input_parity_reasons": {
+        "source_ready_observation_after_prediction": 2
+      },
+      "source_ready_prediction_input_parity_unverified": 2,
+      "source_ready_prediction_unverified_reasons": {
+        "snapshot_or_audit_missing": 1
+      },
       "source_ready_unverified_reasons": {},
       "source_ready_with_exact_race_odds_sha": 0,
-      "source_ready_with_proven_prediction": 0,
-      "source_ready_without_proven_prediction": 0
+      "source_ready_with_proven_prediction": 2,
+      "source_ready_without_proven_prediction": 1
     }
   },
   "schema": "BOAT_EDGE_GATE1C_FIRST_GIT_ORIGINAL_OBSERVATION_V1",
@@ -64,16 +70,14 @@
     "acceptance_99_percent_proven": false,
     "day_jst": "20261016",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 1,
+    "first_git_original_sha_proven": 5,
     "independently_source_eligible_denominator": null,
-    "matured_races": 5,
-    "missing_after_deadline": 3,
-    "observed_races": 5,
-    "original_not_verified": 1,
+    "matured_races": 10,
+    "missing_after_deadline": 5,
+    "observed_races": 10,
+    "original_not_verified": 0,
     "scope": "OBSERVED_MATURED_RACES_ONLY",
-    "snapshots_present": 2,
-    "unverified_reasons": {
-      "historical_v125_revision_mismatch": 1
-    }
+    "snapshots_present": 5,
+    "unverified_reasons": {}
   }
 }
