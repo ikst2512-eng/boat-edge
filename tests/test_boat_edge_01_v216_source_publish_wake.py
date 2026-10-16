@@ -63,6 +63,32 @@ class V216CollectorWake(unittest.TestCase):
         self.assertIn("V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE",observer)
         self.assertIn("cooldown=900",observer)
 
+    def test_existing_v229_schedule_is_free_source_collector_fallback_only(self):
+        # Existing V229 scheduled run is a heartbeat, not source eligibility.
+        # A V229 triggered by the collector must NEVER wake it again.
+        collector = COLLECTOR.read_text(encoding='utf8')
+        v229 = (ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
+        event = collector.split('on:\\n', 1)[1].split('\\npermissions:', 1)[0]
+        job = collector.split('  update:\\n', 1)[1].split('    runs-on:', 1)[0]
+        self.assertEqual(event.count('  schedule:'), 1)
+        self.assertEqual(event.count('  workflow_run:'), 1)
+        self.assertIn('cron: "*/5 * * * *"', event)
+        self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'", event)
+        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", event)
+        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71'", job)
+        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", job)
+        self.assertIn("github.event.workflow_run.event == 'schedule'", job)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", job)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", job)
+        self.assertIn('group: boat-edge-current-v17', collector)
+        self.assertIn('cancel-in-progress: false', collector)
+        self.assertIn("      - 'BOAT EDGE 自動更新'", v229)
+        self.assertIn("cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'", v229)
+        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit',
+                         (ROOT/'.github/workflows/site-odds.yml').read_text(encoding='utf8'))
+        self.assertNotIn('git push --force', collector)
+
     def test_formal_guards_and_first_git_evidence_owner_unmodified(self):
         wf=V216.read_text(encoding='utf8')
         for marker in (
