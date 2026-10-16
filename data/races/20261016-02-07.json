@@ -8,7 +8,7 @@
     "event": "第15回マスターズVSルーキーズ",
     "race_no": 7,
     "deadline": "13:44",
-    "updated_at": "2026-10-16T10:54:55+09:00",
+    "updated_at": "2026-10-16T13:27:26+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=02&rno=7",
-      "fetched_at": "2026-10-16T10:56:31+09:00",
-      "sha256": "ce4632024c2b8edc243be5c0e550fa0f101364d30da992016fad50a23fc66d09",
+      "fetched_at": "2026-10-16T13:28:53+09:00",
+      "sha256": "e4296eed0a10cbbba769c9252d6181cab0dd1a301dd6ed69216fdf4224e53483",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=02&rno=7",
+      "fetched_at": "2026-10-16T13:28:05+09:00",
+      "sha256": "d2b19fe9d616d07775edc437aab8c2293bcfe38bc44584963c4432a02e43bcb8",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "a3d3a4cd429cd9780f628c1479375cde470d04e8d27831fa0462674d8648d75a"
+      "sha256": "f4b531ff59cb8ffdb2d7110a794536d455bc06e0ffcd71c4c1a1f753ef9e6eed"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "9e46d2cb2570271918033c18f0223e0f20d3af394eb2ef83c00cedf364292813"
+      "sha256": "d7e17f35c59c3982e2bf74bbd3df60abaa5b5b9853b42f6397884a74d998a9cf"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "c4f5f039a3bbe610e2b8868dcd1feb73f283dcfcaa26fc631ef572539c1cb2be"
+      "sha256": "00adae543444c912733ffa81f83ddce28b7a12b78f04cd7bd1996cc1f812273b"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "834377328848d90a3c2c762ee6aabdabb77c41feff61a69a17f29a62504d41dc"
+      "sha256": "4cb2f58e32115d4887acc100fccf935aec6c39d53a7e2d5279e461e87a49c89c"
     }
   },
   "racers": [
@@ -90,10 +96,11 @@
         "trio_rate": 60.98
       },
       "series_tokens": [
-        "9"
+        "9",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "1 5308 / B1 藤森 拓海 福岡/福岡 22歳/52.4kg F0 L0 0.17 4.25 22.86 37.14 4.17 16.67 33.33 20 33.33 51.11 74 34.15 60.98 9 4R"
+      "raw_text": "1 5308 / B1 藤森 拓海 福岡/福岡 22歳/52.4kg F0 L0 0.17 4.25 22.86 37.14 4.17 16.67 33.33 20 33.33 51.11 74 34.15 60.98 9 4 4R"
     },
     {
       "lane": 2,
@@ -129,10 +136,11 @@
       },
       "series_tokens": [
         "2",
-        "12"
+        "12",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "2 3349 / A1 吉田 一郎 長崎/長崎 58歳/51.0kg F0 L0 0.17 5.80 38.71 55.91 0.00 0.00 0.00 41 18.92 35.14 28 51.11 62.22 2 12 3R"
+      "raw_text": "2 3349 / A1 吉田 一郎 長崎/長崎 58歳/51.0kg F0 L0 0.17 5.80 38.71 55.91 0.00 0.00 0.00 41 18.92 35.14 28 51.11 62.22 2 12 3 3R"
     },
     {
       "lane": 3,
@@ -283,13 +291,85 @@
         "trio_rate": 46.67
       },
       "series_tokens": [
-        "4"
+        "4",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "6 5240 / B1 高橋 龍治 福岡/福岡 26歳/52.9kg F0 L0 0.17 3.92 20.69 29.89 6.63 50.00 75.00 14 55.32 72.34 56 26.67 46.67 4 2R"
+      "raw_text": "6 5240 / B1 高橋 龍治 福岡/福岡 26歳/52.9kg F0 L0 0.17 3.92 20.69 29.89 6.63 50.00 75.00 14 55.32 72.34 56 26.67 46.67 4 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.72,
+        "tilt": -0.5,
+        "raw_text": "1 藤森 拓海 52.4kg 6.72 -0.5 R 4"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.81,
+        "tilt": -0.5,
+        "raw_text": "2 吉田 一郎 51.0kg 6.81 -0.5 R 3"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.81,
+        "tilt": -0.5,
+        "raw_text": "3 高橋 真吾 56.6kg 6.81 -0.5 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.75,
+        "tilt": -0.5,
+        "raw_text": "4 谷口 健一 54.5kg 6.75 -0.5 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.68,
+        "tilt": 0.0,
+        "raw_text": "5 中村 栄治 52.0kg 6.68 0.0 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.67,
+        "tilt": 0.5,
+        "raw_text": "6 高橋 龍治 52.9kg 6.67 0.5 R 2"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": "F.01"
+      },
+      {
+        "lane": 2,
+        "st": "F.05"
+      },
+      {
+        "lane": 3,
+        "st": "F.02"
+      },
+      {
+        "lane": 4,
+        "st": ".12"
+      },
+      {
+        "lane": 5,
+        "st": ".06"
+      },
+      {
+        "lane": 6,
+        "st": ".22"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
