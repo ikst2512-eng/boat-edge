@@ -131,6 +131,11 @@ def main(argv=None) -> int:
     if args.live and not token:
         print(json.dumps({'dispatch': False, 'reason': 'MISSING_ACTIONS_WRITE_TOKEN'}))
         return 2
+    # A linked paid cron is not permission to dispatch. The owner must
+    # explicitly opt into live operation AFTER dry-run, billing and secret review.
+    if args.live and os.environ.get('BOAT_EDGE_EXTERNAL_V235_ENABLED') != 'true':
+        print(json.dumps({'dispatch': False, 'reason': 'EXTERNAL_V235_NOT_ENABLED'}))
+        return 0
     try:
         schedule = official_schedule(api_json('GET', '/contents/data/today.json?ref=main', token))
         workflow = api_json('GET', f'/actions/workflows/{WORKFLOW}', token)
