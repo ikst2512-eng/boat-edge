@@ -52,6 +52,28 @@ def frozen(root):
 
 
 class V235Proof(unittest.TestCase):
+    def test_free_official_odds_completion_wakes_existing_v235_directly(self):
+        # Free public-repo standard Actions only: reuse the existing V71 run.
+        # No new cron, Render, prediction writer, or weakened freeze window.
+        root = Path(__file__).resolve().parents[1]
+        v235 = (root / '.github/workflows/V235.yml').read_text(encoding='utf-8')
+        preamble = v235.split('\\npermissions:', 1)[0]
+        self.assertIn("      - 'BOAT EDGE 自動更新'", preamble)
+        self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'", preamble)
+        self.assertIn('    types: [completed]', preamble)
+        self.assertEqual(preamble.count('    - cron:'), 2)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", v235)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", v235)
+        self.assertIn('github.event.workflow_run.head_repository.full_name == github.repository', v235)
+        self.assertIn('group: boat-edge-v235-conflict-safe-source-and-scoring', v235)
+        self.assertIn('cancel-in-progress: false', v235)
+        self.assertIn('V235_INITIAL_SNAPSHOT_PUBLISHED', v235)
+        # Downstream V229 must not be listened to by V235 (no cycle).
+        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit', preamble)
+        odds = (root / '.github/workflows/site-odds.yml').read_text(encoding='utf-8')
+        odds_events = odds.split('\\npermissions:', 1)[0]
+        self.assertNotIn('BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring', odds_events)
+
     def test_v235_pinned_fast_lane_matches_main_git_blob(self):
         # Gate1C: Future V230 code changes MUST carry a reviewed V235 pin
         # update or fail PR CI before live pre-result collection/freeze.
