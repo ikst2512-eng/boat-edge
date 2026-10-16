@@ -520,6 +520,77 @@ def test_gate1c_first_git_sha_is_not_the_observed_denominator():
     print('GATE1C_ONLY_REAL_FIRST_GIT_ORIGINAL_SHA_NUMERATOR_NO_FALSE_99PASS')
 
 
+
+def test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races():
+    """Both pre-result snapshot files count even if V215 observed just one."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        observed={'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1','day_jst':DAY,
+                  'observations':{KEY:{'race_key':KEY,'deadline':'08:35',
+                                       'source_gaps_seen':[]}}}
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',observed)
+        other=f'{DAY}-23-02'
+        first={'race_key':KEY,'deadline':'08:35',
+               'saved_at':f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:27:00+09:00',
+               'guards':{'results_seen':False,'unlock':False,'scoring':False}}
+        second={**first,'race_key':other,'deadline':'08:36',
+                'saved_at':f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:28:00+09:00'}
+        for key,snap in ((KEY,first),(other,second)):
+            put(root,f'data/site_prediction_snapshots/{key}.json',snap)
+        at=NOW+timedelta(minutes=35)
+        verify=lambda *_:('PASS','first-git-commit')
+        old=mod.gate1c_first_git_summary(root,DAY,at,verify)
+        full=mod.gate1c_all_saved_originals(root,DAY,at,verify)
+        assert old['first_git_original_sha_proven']==1,old
+        assert full['snapshot_files_seen']==2,full
+        assert full['matured_snapshot_files']==2,full
+        assert full['first_git_original_sha_proven']==2,full
+        assert full['original_not_verified']==0,full
+        assert full['independently_source_eligible_denominator'] is None
+        assert full['eligible_save_rate_percent'] is None
+        assert full['acceptance_99_percent_proven'] is False
+        report=mod.gate1c_read_only_report(root,at,verify)
+        assert report['today']['first_git_original_sha_proven']==1
+        assert report['all_saved_snapshots_today']['first_git_original_sha_proven']==2
+        assert report['all_saved_snapshots_today']['scope']=='ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES'
+        # A malformed or outside-window snapshot must not inflate the count.
+        second['saved_at']=f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:35:30+09:00'
+        put(root,f'data/site_prediction_snapshots/{other}.json',second)
+        invalid=mod.gate1c_all_saved_originals(root,DAY,at,verify)
+        assert invalid['first_git_original_sha_proven']==1,invalid
+        assert invalid['original_not_verified']==1,invalid
+        assert invalid['unverified_reasons']=={'outside_v229_decision_window':1}
+    print('GATE1C_ALL_SAVED_SITE_FIRST_GIT_SEPARATE_FROM_OBSERVED_NO_FALSE_99_PASS')
+
+
+def test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git():
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        base=root/'data/site_prediction_snapshots'
+        base.mkdir(parents=True,exist_ok=True)
+        path=base/f'{KEY}.json'
+        elsewhere=root/'data/site_results/FAKE.json'
+        put(root,'data/site_results/FAKE.json',{'RESULT':'DO_NOT_READ'})
+        path.symlink_to(elsewhere)
+        out=mod.gate1c_all_saved_originals(
+            root,DAY,NOW+timedelta(minutes=35),lambda *_:('PASS','untrusted'))
+        assert out['first_git_original_sha_proven']==0
+        assert out['original_not_verified']==1
+        assert out['unverified_reasons']=={'snapshot_invalid_or_symlink':1}
+        path.unlink()
+        snap={'race_key':KEY,'deadline':'08:35',
+              'saved_at':f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:27:00+09:00'}
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',snap)
+        out=mod.gate1c_all_saved_originals(root,DAY,
+                        NOW+timedelta(minutes=35),lambda *_:('PASS',None))
+        assert out['first_git_original_sha_proven']==0
+        assert out['unverified_reasons']=={'first_git_commit_missing':1}
+        pending=mod.gate1c_all_saved_originals(root,DAY,NOW,lambda *_:('PASS','x'))
+        assert pending['pending_snapshot_files']==1
+        assert pending['first_git_original_sha_proven']==0
+    print('GATE1C_ALL_SAVED_SYMLINK_AND_MISSING_GIT_FAIL_CLOSED_PASS')
+
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
@@ -531,3 +602,5 @@ if __name__=='__main__':
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
     test_gate1c_first_git_sha_is_not_the_observed_denominator()
+    test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races()
+    test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git()
