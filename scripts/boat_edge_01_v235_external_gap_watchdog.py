@@ -134,14 +134,14 @@ def main(argv=None) -> int:
     parser.add_argument('--live', action='store_true', help='dispatch existing V235 (default: dry-run)')
     args = parser.parse_args(argv)
     token = os.environ.get('BOAT_EDGE_GITHUB_ACTIONS_TOKEN', '')
-    if args.live and not token:
-        print(json.dumps({'dispatch': False, 'reason': 'MISSING_ACTIONS_WRITE_TOKEN'}))
-        return 2
-    # A linked paid cron is not permission to dispatch. The owner must
-    # explicitly opt into live operation AFTER dry-run, billing and secret review.
+    # The Blueprint starts OFF with no token. Return cleanly without network IO
+    # or a failed recurring paid job until the owner explicitly enables it.
     if args.live and os.environ.get('BOAT_EDGE_EXTERNAL_V235_ENABLED') != 'true':
         print(json.dumps({'dispatch': False, 'reason': 'EXTERNAL_V235_NOT_ENABLED'}))
         return 0
+    if args.live and not token:
+        print(json.dumps({'dispatch': False, 'reason': 'MISSING_ACTIONS_WRITE_TOKEN'}))
+        return 2
     try:
         schedule = official_schedule(api_json('GET', '/contents/data/today.json?ref=main', token))
         workflow = api_json('GET', f'/actions/workflows/{WORKFLOW}', token)
