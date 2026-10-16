@@ -270,6 +270,46 @@ def write_once(path:Path,object_:dict):
     path.write_text(json.dumps(object_,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf8')
 
 
+
+def v125_revision_from_verified_snapshot(root:Path,key:str,rec:dict):
+    """Forward-only V125 receipt from SAME RUN verified V229 source bytes.
+
+    Historic audits are immutable. Do not reconstruct or rewrite missing
+    metadata for preexisting snapshots, even when their original Git SHA is known.
+    """
+    sp=root/'data/site_prediction_snapshots'/f'{key}.json'
+    snap=read_obj(sp)
+    if not isinstance(snap,dict):
+        raise AssertionError('V229_NEW_SNAPSHOT_FOR_V125_MISSING')
+    original=instant(snap.get('first_saved_at'))
+    saved=instant(snap.get('saved_at'))
+    checks={
+        'v229_new_snapshot_validated':rec.get('new_snapshot_created_this_run') is True,
+        'schema_v123':snap.get('schema_version')=='boat-edge-server-site-final-v123',
+        'final_15m':snap.get('snapshot_window')=='FINAL_15M',
+        'race_identity_verified':snap.get('race_key')==key,
+        'first_save_predeadline_verified':original is not None and saved is not None and original<=saved,
+        'pre_result_guards':snap.get('guards')=={'results_seen':False,'unlock':False,'scoring':False},
+        'snapshot_bytes_verified':digest(sp)==rec.get('snapshot_sha256'),
+        'recorded_save_time_verified':snap.get('saved_at')==rec.get('snapshot_saved_at'),
+        'race_sha_bound':snap.get('race_sha256')==rec.get('race_sha256'),
+        'official_odds_120_bound':rec.get('odds_combinations')==120 and snap.get('odds_sha256')==rec.get('odds_sha256'),
+        'prediction_kind_ok':snap.get('prediction_kind')=='SITE_REFERENCE_V122'
+    }
+    if not all(checks.values()):
+        raise AssertionError('V229_V125_INTRINSIC_RECEIPT_UNVERIFIED '+','.join(k for k,v in checks.items() if not v))
+    return {
+        'snapshot_sha256':rec['snapshot_sha256'],
+        'saved_at':snap['saved_at'],
+        'first_saved_at':snap['first_saved_at'],
+        'prediction_kind':snap['prediction_kind'],
+        'intrinsic_flags':checks,
+        'odds_sha256_snapshot':rec['odds_sha256'],
+        'race_sha256_snapshot':rec['race_sha256'],
+        'atomic_pre_result_proof_sha256':digest(root/'data/site_autopilot/v229_evidence'/f'{key}.json')
+    }
+
+
 def run(root:Path):
     root=root.resolve()
     check_formal_closed(root)
@@ -302,20 +342,17 @@ def run(root:Path):
     evidence={key:validate(root,key,now) for key in new}
     for key,rec in evidence.items():
         write_once(root/'data/site_autopilot/v229_evidence'/f'{key}.json',rec)
-        # V214 / V215 require this exact latest digest. V125 can extend it later.
+        # V136's strict Git-first-add checker requires same-run immutable
+        # first-save, prediction identity and individually verified V125 flags.
+        # Never forge these fields later for earlier historic snapshots.
+        revision=v125_revision_from_verified_snapshot(root,key,rec)
         write_once(root/'data/site_prediction_audit'/f'{key}.json',{
             'schema_version':'boat-edge-final15m-audit-v125',
             'race_key':key,'first_audited_at':now.isoformat(),
             'last_audited_at':now.isoformat(),
             'latest_snapshot_sha256':rec['snapshot_sha256'],
             'latest_snapshot_saved_at':rec['snapshot_saved_at'],
-            'revision_count':1,'revisions':[{
-                'snapshot_sha256':rec['snapshot_sha256'],
-                'saved_at':rec['snapshot_saved_at'],
-                'odds_sha256_snapshot':rec['odds_sha256'],
-                'race_sha256_snapshot':rec['race_sha256'],
-                'atomic_pre_result_proof_sha256':digest(root/'data/site_autopilot/v229_evidence'/f'{key}.json')
-            }],
+            'revision_count':1,'revisions':[revision],
             'pass':True,'atomic_pre_result_audit':True,
             'scope':'SITE_ONLY_NOT_FORMAL_FRESH',
             'source_evidence_file':f'data/site_autopilot/v229_evidence/{key}.json'
