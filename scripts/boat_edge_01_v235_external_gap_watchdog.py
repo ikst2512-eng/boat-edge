@@ -91,9 +91,11 @@ def decision(schedule: dict, workflow: dict, runs: dict, now: datetime) -> dict:
     if not isinstance(entries, list) or not entries:
         return {'dispatch': False, 'reason': 'RUN_HISTORY_NOT_VERIFIED', 'targets': targets}
     newest_executed = None
+    main_runs_verified = 0
     for run in entries:
         if run.get('head_branch') != 'main':
             continue
+        main_runs_verified += 1
         status = run.get('status')
         if status in ACTIVE:
             return {'dispatch': False, 'reason': 'V235_ALREADY_ACTIVE', 'targets': targets}
@@ -112,6 +114,10 @@ def decision(schedule: dict, workflow: dict, runs: dict, now: datetime) -> dict:
             return {'dispatch': False, 'reason': 'CLOCK_AHEAD_OF_GITHUB', 'targets': targets}
         if newest_executed is None or elapsed < newest_executed:
             newest_executed = elapsed
+    # Other branches' runs cannot prove the main workflow is idle. The exact
+    # V235 history query must include at least one verifiable main run.
+    if main_runs_verified == 0:
+        return {'dispatch': False, 'reason': 'NO_MAIN_V235_RUN_HISTORY', 'targets': targets}
     if newest_executed is not None and newest_executed < 420:
         return {'dispatch': False, 'reason': 'V235_RECENT_ACTUAL_RUN',
                 'seconds_since_run': max(0, int(newest_executed)), 'targets': targets}
