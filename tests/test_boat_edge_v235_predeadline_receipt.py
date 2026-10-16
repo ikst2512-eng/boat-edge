@@ -105,6 +105,73 @@ class V235Proof(unittest.TestCase):
         self.assertIn('V235_INITIAL_SNAPSHOT_PUBLISHED', flow)
         self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit', preamble)
 
+    def test_first_three_morning_races_keep_multiple_free_scheduled_wakes(self):
+        # ①-1C: This checks planned wake coverage, NOT actual dispatch,
+        # source readiness, Git-first-save or the independent 99% denominator.
+        # No new paid Cron, replay, result access or prediction writer.
+        from datetime import timedelta, timezone
+        root = Path(__file__).resolve().parents[1]
+        files = {
+            'v235': 'V235.yml',
+            'v229': 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml',
+            'v216': 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml',
+            'collector': 'auto-update.yml',
+            'official_odds': 'site-odds.yml',
+        }
+        expected_cron_counts = {
+            'v235': 2, 'v229': 2, 'v216': 3,
+            'collector': 1, 'official_odds': 1,
+        }
+
+        def field_set(expr, max_value):
+            values = set()
+            for part in expr.split(','):
+                if part == '*':
+                    values.update(range(max_value + 1))
+                elif part.startswith('*/'):
+                    values.update(range(0, max_value + 1, int(part[2:])))
+                elif '-' in part:
+                    left, right = map(int, part.split('-', 1))
+                    values.update(range(left, right + 1))
+                else:
+                    values.add(int(part))
+            return values
+
+        schedules = {}
+        for name, file in files.items():
+            workflow = (root / '.github/workflows' / file).read_text(encoding='utf-8')
+            header = workflow.split('\npermissions:', 1)[0]
+            crons = []
+            for line in header.splitlines():
+                if line.strip().startswith('- cron: '):
+                    crons.append(line.split('cron:', 1)[1].strip().strip("'\""))
+            self.assertEqual(len(crons), expected_cron_counts[name], name)
+            schedules[name] = []
+            for cron in crons:
+                fields = cron.split()
+                self.assertEqual(len(fields), 5, (name, cron))
+                schedules[name].append(
+                    (field_set(fields[0], 59), field_set(fields[1], 23)))
+
+        # Synthetic fixed deadlines mirror the first three real 2026-10-17
+        # races; every comparison is converted to UTC cron clock time.
+        for clock in ('08:35', '08:43', '08:51'):
+            hour, minute = map(int, clock.split(':'))
+            deadline = datetime(2026, 10, 17, hour, minute, tzinfo=JST)
+            covered = {}
+            for name, crons in schedules.items():
+                matches = []
+                for minutes_before in range(10, 1, -1):
+                    instant = (deadline - timedelta(minutes=minutes_before)).astimezone(timezone.utc)
+                    if any(instant.minute in mins and instant.hour in hours
+                           for mins, hours in crons):
+                        matches.append(instant.astimezone(JST).strftime('%H:%M'))
+                covered[name] = matches
+                self.assertTrue(matches, (clock, name, covered))
+            # Independence here means scheduled owners, not guaranteed runs.
+            self.assertTrue(covered['v235'] and covered['v229'] and covered['v216'])
+            self.assertTrue(covered['collector'] and covered['official_odds'])
+
     def test_v235_pinned_fast_lane_matches_main_git_blob(self):
         # Gate1C: Future V230 code changes MUST carry a reviewed V235 pin
         # update or fail PR CI before live pre-result collection/freeze.
