@@ -491,6 +491,15 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         assert report['catalog_matured_not_observed']==1,report
         assert report['catalog_matured_not_observed_saved']==1,report
         assert report['catalog_matured_without_snapshot']==1,report
+        assert report['catalog_matured_by_hour_jst']=={'08':2},report
+        assert report['catalog_matured_not_observed_by_hour_jst']=={'08':1},report
+        # Advance until the previously future 09:10 race matures.
+        later=mod.gate1c_first_git_summary(
+            root,DAY,NOW+timedelta(minutes=70),lambda *_:('PASS','fake'))
+        assert later['catalog_matured_by_hour_jst']=={'08':2,'09':1},later
+        assert later['catalog_matured_not_observed_by_hour_jst']=={'08':1,'09':1},later
+        assert later['eligible_save_rate_percent'] is None
+        assert later['acceptance_99_percent_proven'] is False
         assert report['observed_races']==1 and report['matured_races']==1,report
         assert report['independently_source_eligible_denominator'] is None
         assert report['eligible_save_rate_percent'] is None
@@ -504,15 +513,20 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         repeated=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
         assert repeated['catalog_matured_races'] is None
         assert repeated['catalog_matured_not_observed'] is None
+        assert repeated['catalog_matured_by_hour_jst'] is None
+        assert repeated['catalog_matured_not_observed_by_hour_jst'] is None
         bad['date']='2026-10-10'
         put(root,'data/today.json',bad)
         wrong_day=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
         assert wrong_day['catalog_matured_races'] is None
+        assert wrong_day['catalog_matured_by_hour_jst'] is None
         catalog=root/'data/today.json'
         catalog.unlink()
         catalog.symlink_to(root/'data/site_prediction_snapshots'/f'{key2}.json')
         unsafe=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
         assert unsafe['catalog_matured_races'] is None
+        assert unsafe['catalog_matured_by_hour_jst'] is None
+        assert unsafe['catalog_matured_not_observed_by_hour_jst'] is None
     print('GATE1C_UNOBSERVED_CATALOG_COVERAGE_NOT_ELIGIBILITY_DENOMINATOR_PASS')
 
 

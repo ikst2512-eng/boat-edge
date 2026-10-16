@@ -366,6 +366,9 @@ def gate1c_first_git_summary(root, day, now, verify=None):
          'catalog_matured_not_observed':None,
          'catalog_matured_not_observed_saved':None,
          'catalog_matured_without_snapshot':None,
+         # Count fully validated scheduled deadlines, not source eligibility.
+         'catalog_matured_by_hour_jst':None,
+         'catalog_matured_not_observed_by_hour_jst':None,
          # Source release times and all race-specific eligibility guards
          # cannot be reconstructed from a sampled V215 observation history.
          'independently_source_eligible_denominator':None,
@@ -468,6 +471,18 @@ def gate1c_first_git_summary(root, day, now, verify=None):
                     not (base/f'{key}.json').is_file() or
                     (base/f'{key}.json').is_symlink()
                     for key in matured)
+                # Purely diagnostic time buckets; missing V215 observation
+                # must never be relabeled as official source-ready failure.
+                by_hour={}
+                unobserved_by_hour={}
+                for key in sorted(matured):
+                    hour=races[key].astimezone(JST).strftime('%H')
+                    by_hour[hour]=by_hour.get(hour,0)+1
+                    if key in not_observed:
+                        unobserved_by_hour[hour]=unobserved_by_hour.get(hour,0)+1
+                out['catalog_matured_by_hour_jst']=dict(sorted(by_hour.items()))
+                out['catalog_matured_not_observed_by_hour_jst']={
+                    hour:unobserved_by_hour.get(hour,0) for hour in sorted(by_hour)}
     return out
 
 
