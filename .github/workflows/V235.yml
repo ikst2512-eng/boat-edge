@@ -4,12 +4,14 @@ on:
     branches: [main]
     paths: ['.github/workflows/V235.yml']
   workflow_dispatch:
-  # V288: the official PRE_RESULT collector is the dependable upstream source.
-  # GitHub cron delivery is best-effort; run once on a successful collector
-  # completion as well, without opening results or relaxing formal locks.
+  # V288: GitHub cron delivery is best-effort. Existing PRE_RESULT collector
+  # and independent official 120-odds producer are both trusted wake signals.
+  # Direct V71 completion avoids relying on a longer workflow_run chain;
+  # the existing V230/V229 source and predeadline guards stay mandatory.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
+      - 'BOAT EDGE 3連単オッズ更新 V71'
     types: [completed]
   schedule:
     # 08:20 JST is 23:20 UTC on the previous calendar day.
