@@ -273,10 +273,15 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
         "github.event.workflow_run.head_repository.full_name == github.repository",
     ):
         assert marker in job, marker
-    for step in ('Verify current versioned site-operations code',
-                 'Generate observed pre-result site-operations report'):
-        body=wf.split('      - name: '+step,1)[1].split('      - name:',1)[0]
-        assert "if: github.event_name != 'workflow_run'" in body, step
+    verify=wf.split('      - name: Verify current versioned site-operations code',1)[1].split('      - name:',1)[0]
+    assert "if: github.event_name != 'workflow_run'" in verify
+    report=wf.split('      - name: Generate observed pre-result site-operations report',1)[1].split('      - name:',1)[0]
+    assert "if: github.event_name != 'workflow_run'" not in report
+    assert 'V220_EVENT_REPORT_FRESH_SKIP' in report
+    assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in report
+    assert 'git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json' in report
+    assert 'report_age < 900' in report
+    assert "git add -- data/site_ops_v220/current.json data/site_ops_v220/gate1c_current.json data/site_autopilot/v227_current.json" in report
     recovery=wf.split('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs',1)[1]
     assert "--recovery-plan" in recovery
     assert 'auto-update.yml|site-odds.yml' in recovery
@@ -288,6 +293,57 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert 'gh workflow run V235' not in recovery
     assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
     print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
+
+def test_v220_event_stale_report_gate_uses_original_git_commit_age():
+    """Exercise the REAL V220 shell guard: fresh events skip, stale may reuse writer."""
+    import textwrap
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
+    block=wf.split('      - name: Generate observed pre-result site-operations report',1)[1].split(
+        '      - name: Recover stale collectors',1)[0]
+    guard=textwrap.dedent(block.split('        run: |',1)[1].split(
+        "          git config user.name",1)[0])
+    assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in guard
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        report=root/'data/site_ops_v220/gate1c_current.json'
+        report.parent.mkdir(parents=True)
+        for label,age_min in (('fresh',2),('stale',45)):
+            report.write_text(json.dumps({'fixture':label}),encoding='utf8')
+            subprocess.run(['git','add','--','data/site_ops_v220/gate1c_current.json'],
+                           cwd=root,check=True)
+            at=(datetime.now(timezone.utc)-timedelta(minutes=age_min)).isoformat()
+            env={**os.environ,'GIT_AUTHOR_DATE':at,'GIT_COMMITTER_DATE':at,
+                 'GITHUB_EVENT_NAME':'workflow_run'}
+            subprocess.run(['git','-c','user.name=Fixture',
+                            '-c','user.email=test@example.invalid',
+                            'commit','-qm',label],cwd=root,env=env,check=True)
+            p=subprocess.run(['bash','-c',guard],cwd=root,env=env,
+                             capture_output=True,text=True,timeout=8)
+            assert p.returncode==0,(label,p.stderr)
+            if label=='fresh':
+                assert 'V220_EVENT_REPORT_FRESH_SKIP' in p.stdout,p.stdout
+                assert 'STALE_REFRESH' not in p.stdout,p.stdout
+            else:
+                assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
+                assert 'FRESH_SKIP' not in p.stdout,p.stdout
+            for event in ('schedule','push'):
+                scheduled=subprocess.run(['bash','-c',guard],cwd=root,
+                                          env={**env,'GITHUB_EVENT_NAME':event},
+                                          capture_output=True,text=True,timeout=8)
+                assert scheduled.returncode==0,scheduled.stderr
+                assert scheduled.stdout.strip()=='',scheduled.stdout
+    # Missing report history: do not mistake it for a fresh report.
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        p=subprocess.run(['bash','-c',guard],cwd=root,
+                         env={**os.environ,'GITHUB_EVENT_NAME':'workflow_run'},
+                         capture_output=True,text=True,timeout=8)
+        assert p.returncode==0,p.stderr
+        assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
+    print('V220_EVENT_REPORT_GIT_COMMIT_AGE_GATE_REAL_BASH_PASS')
+
 
 def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
     """10/16 10:40 skipped V229 must not veto 10:42 source-ready retry."""
@@ -735,6 +791,7 @@ if __name__=='__main__':
     test_v284_freeze_coverage_not_early_false_miss()
     test_v290_missing_source_vs_freeze_window()
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
+    test_v220_event_stale_report_gate_uses_original_git_commit_age()
     test_v220_skipped_v229_never_suppresses_source_ready_recovery()
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()

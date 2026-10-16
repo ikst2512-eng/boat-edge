@@ -66,10 +66,26 @@ jobs:
           test -f index.html
 
       - name: Generate observed pre-result site-operations report
-        if: github.event_name != 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
+          # The existing V216 workflow_run recovery previously skipped the
+          # existing V220 monitor writer entirely. If GitHub delays its 15-min
+          # schedule, publish a fresh source-dated report ONLY when the last
+          # report's actual main Git commit is >=15 minutes old. This reuses
+          # the SAME owner and does not add another cron, writer, or trigger.
+          if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_run" ]]; then
+            last_report_commit="$(git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json || true)"
+            if [[ "$last_report_commit" =~ ^[0-9]+$ ]]; then
+              now_epoch="$(date -u +%s)"
+              report_age="$((now_epoch - last_report_commit))"
+              if (( report_age >= 0 && report_age < 900 )); then
+                echo "V220_EVENT_REPORT_FRESH_SKIP age_sec=$report_age"
+                exit 0
+              fi
+            fi
+            echo 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER'
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           saved=0
