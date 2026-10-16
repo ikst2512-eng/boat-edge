@@ -230,5 +230,24 @@ class V235Proof(unittest.TestCase):
             self.assertNotIn(unsafe, text)
 
 
+    def test_workflow_depends_on_current_audited_v229_blob(self):
+        """A safe V229 update must repin V235, not silently disable its SHA gate."""
+        root = Path(__file__).resolve().parents[1]
+        source = "scripts/boat_edge_v229_atomic_freeze.py"
+        workflow = (root / ".github/workflows/V235.yml").read_text(encoding="utf-8")
+        result = subprocess.run(
+            ["git", "hash-object", source], cwd=root,
+            capture_output=True, text=True, check=True,
+        )
+        current_sha = result.stdout.strip()
+        self.assertEqual(len(current_sha), 40)
+        self.assertIn(f"'{source}:{current_sha}'", workflow)
+        self.assertIn("V234_PRE_RESULT_DEPENDENCY_CHANGED_$path", workflow)
+        self.assertNotIn(
+            f"{source}:c77d917ded93dc5584e990f769ced1ba108f8ed4",
+            workflow,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
