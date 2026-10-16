@@ -90,3 +90,31 @@ JMAの許可範囲の気象CSV候補を、会場観測とは区別して近接�
 - **禁止**: API鍵購入/決済、実投票、保護された学習データや結果を見た後に「未見」予測として復元。
 
 次は契約確認と利用可能な一次レース入力の欠測率が満たされた段階で、既存研究レーンの非重複ablationを設計する。単なるソース数や実装ファイル数は成果ではない。
+
+## 2026-10-16 追加調査 — ボートフロンティアと新規5サイト（研究候補のみ）
+
+状態: RESEARCH_ONLY / DATA_IMPORT_DISABLED / PERMISSION_UNVERIFIED / MODEL_CHANGE_NONE / GATE_1C_UNCHANGED。既存R01–R16・N01–N07と重複研究を作らない。公開説明と商用自動取得許諾、性能改善の証明は別。以下は公開情報のメモであり、外部独自数値や会員記事は取り込まない。
+
+| サイト／根拠ページ | 公開情報の価値 | BOAT EDGEへの使い道 | データ利用 |
+| --- | --- | --- | --- |
+| ボートフロンティア https://boatfrontier.jp/blog/?p=424401 | 総合S〜D、伸び・出足1〜6の人手舟足評価。各場1Rの締切3時間前まで更新し、同日2走目に評価変更する場合あり | 出足と伸びの分離、前走→次走の時点変化を独自一次データで評価（既存N04/N06へ） | **未許諾・データ取り込み不可**。独自評価は転記・教師ラベル化しない |
+| 超抜モーター.com https://superboatmotor.com/help | 管理人が節初日にS/A+/A/Wを手動評価。モーター2連率推移と過去成績 | モーター更新境界、節初・直前の気配を混同しない（既存N04/N06） | **未許諾・データ取り込み不可** |
+| ボートレースレイド https://boatraceraid.jp/motorhistory/?base_date=2026-09-09&course_code=14&motor_no=069 | モーター別の使用選手・節・進入・ST・着順の履歴 | 場・機番・更新周期・乗り手・取得時点を結合する独自計算（既存N04） | **未許諾・データ取り込み不可**。https://boatraceraid.jp/terms/ |
+| BOAT FACTOR https://boatfactor.jp/data-policy | 番組T0→展示T1→結果T2を分離、欠測を0扱いしない、月別SHA、独立期間・条件感度を検証 | 出典時点・欠測率・探索/未見分離を既存ゲート2検証チェックへ。Top3/5/10優先、ROIは別評価 | 独自データを取り込まず公開方法論のみを独立適用 |
+| BOATLYZE https://boatlyze.com/analysis-method | 同一レース内の展示同タイムは同順位、期間・対象R/艇・収録率・最低出走数を明示 | 同タイム処理、分母・欠測率・長期/直近の表示品質（既存N03/N07） | 独自データを取り込まず公開方法論のみを独立適用 |
+| マクール https://sp.macour.jp/ | 会場ごとの風向/風速傾向、モーターパワー比較の案内 | 風向×場の仮説（既存N07）のみ | **未許諾・データ取り込み不可** |
+
+### インプットの管理ルール（実装・取込はゲート2以降）
+
+- 今保存可能なのは、出典URL、調査日、公開機能の概要、独自研究仮説、対応する既存R/N-ID、許諾状態、検証項目だけ。
+- 実データ接続は、正式な利用許諾が確認できる一次ソースだけ。既存feature contractで race_key, venue, rno, deadline, first_seen/available_at/observed_at, source/license ID, source SHA, field/unit, racer/motor identity, denominator, lookback window, missing_reason, feature_version を保持する。展示進入と本番実進入は別概念。
+- 採否: 利用許諾の確認 → 締切前source-binding・同一レース六艇・SHA一致 → 欠測・結果リークの検査 → 同一条件のTop3/5/10独立比較 → 02研究判断/01本番審査。権利不明ならDENY継続。
+- 既存BOAT_EDGE_EXECUTION_ORDERのゲート1Cを変更しない。研究ノート追加によって、公式取得器・予想保存・Git原本・正式Fresh・本番モデル・UI・workflow・結果アクセスを変更しない。
+
+権利条件: BOATERS https://boaters-boatrace.com/guide/use-on-sns はSNS/HPでの予想・データ利用を原則拒否。ボートレース日和 https://kyoteibiyori.com/terms.html は無断自動取得/AI学習を禁止。公式 https://www.boatrace.jp/owsp/sp/extra/policy.html は著作権・大量アクセス制限を明示。公開閲覧可能なことを取得許可と解釈しない。
+
+## オーナー指示 2026-10-16 — 許諾不要データの継続研究インプット方針
+
+「利用条件が確認でき、追加の個別同意なしで再利用できる有力情報を将来取り込めるように準備し、各特徴量の独立評価と適格な組合せ（サラブレッド）を検証する」。今後のための機械可読・デフォルト拒否の入力候補台帳: [BOAT_EDGE_02_OPEN_DATA_INTAKE_POLICY_20261016.json](BOAT_EDGE_02_OPEN_DATA_INTAKE_POLICY_20261016.json)。JMA登録不要CSV・政府統計ダッシュボード登録不要APIを優先候補とする。GSIは個別データの承認要否を確認し、BOAT RACE公式ダウンロード・民間独自数値の追加利用権限を推定しない。
+
+**状態区分**: 研究用入力契約の準備であり、CSVや外部数値をまだ保存・学習していない。自動HTTP取得・モデル結合・本番有効化はしない。BOAT_EDGE_EXECUTION_ORDER.md の最初の未達ゲート1C→1Dを実測し、ゲート2に入ってから本台帳を再確認。使う際は出典・利用権利・取得/公開時刻・原本SHA・品質フラグ・観測点と会場の違いを必須にし、締切後公開値を予想に使わない。

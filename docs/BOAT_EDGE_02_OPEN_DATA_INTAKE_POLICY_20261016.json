@@ -1,0 +1,208 @@
+{
+  "schema": "BOAT_EDGE_02_OPEN_DATA_INTAKE_POLICY_V1",
+  "created_jst": "2026-10-16",
+  "objective": "Safely stage individually-permitted inputs for future feature ablation; no live collector/model change while Gate 1C is open.",
+  "status": "RESEARCH_ONLY_NOT_ACTIVE",
+  "non_negotiable": {
+    "current_gate": "1C: live predeadline official source, immutable first prediction and matching Git SHA",
+    "enable_runtime_collection": false,
+    "enable_model_feature_join": false,
+    "enable_model_promotion": false,
+    "enable_formal_fresh_results_access": false,
+    "network_fetch_in_this_change": false,
+    "external_data_copied_in_this_change": false,
+    "default_deny_if_licence_or_access_unknown": true,
+    "no_paid_accounts_no_scraping_no_auth_bypass": true,
+    "do_not_reconstruct_or_overwrite_predeadline_predictions": true
+  },
+  "providers": [
+    {
+      "id": "jma_amedas_open_csv",
+      "publisher": "気象庁",
+      "overview_url": "https://www.data.jma.go.jp/developer/",
+      "rights_url": "https://www.jma.go.jp/jma/kishou/info/coment.html",
+      "format_url": "https://www.data.jma.go.jp/risk/obsdl/top/help3.html",
+      "legal_status": "CONDITIONAL_OPEN_REUSE_WITH_ATTRIBUTION",
+      "basis": "JMA public website content follows PDL 1.0 unless otherwise marked. Third-party rights/content-specific restrictions still apply.",
+      "registration_required": false,
+      "candidate_manual_input": "CSV downloaded from a published JMA download interface",
+      "scheduled_http_access_authorized": false,
+      "offline_manual_import_candidate": true,
+      "candidate_fields": [
+        "station_id",
+        "observed_at_jst",
+        "wind_speed_m_s",
+        "wind_direction",
+        "air_temperature_c",
+        "precipitation_mm",
+        "quality_flag",
+        "homogeneity_flag"
+      ],
+      "required_checks": [
+        "document exact CSV format and data availability lag",
+        "keep JMA station separate from race venue",
+        "retain original CSV bytes SHA256 and attribution",
+        "preserve CSV quality/missing/homogeneity fields",
+        "no observation revised or first available after race deadline may be a prospective predictor",
+        "do not treat daily max wind as instant trackside wind",
+        "honor site request limits; no high-frequency scraping",
+        "The JMA historical CSV interactive download explicitly asks users to avoid excessive automated-tool access; do not infer unattended scheduled endpoint permission from a manual CSV license; check distribution method separately."
+      ],
+      "adoption_priority": "HIGH_FOR_PERMITTED_AUXILIARY_WEATHER"
+    },
+    {
+      "id": "estat_dashboard_api",
+      "publisher": "統計ダッシュボード（政府統計）",
+      "overview_url": "https://dashboard.e-stat.go.jp/static/api",
+      "legal_status": "PUBLIC_REGISTRATION_FREE_API_SUBJECT_TO_SITE_POLICY",
+      "registration_required": false,
+      "scheduled_http_access_authorized": false,
+      "offline_manual_import_candidate": true,
+      "candidate_fields": [
+        "indicator_code",
+        "region_code",
+        "period",
+        "value",
+        "unit",
+        "published_at",
+        "source"
+      ],
+      "required_checks": [
+        "choose specific relevant series first",
+        "retain attribution and required service notice for public API-powered service",
+        "check original dataset rights and geographic meaning",
+        "respect API request limits",
+        "avoid leakage from revised observations and use effective publication date"
+      ],
+      "adoption_priority": "LOW_UNTIL_RACE_LEVEL_PREDICTIVE_VALUE_IS_ESTABLISHED"
+    },
+    {
+      "id": "gsi_geodata",
+      "publisher": "国土地理院",
+      "overview_url": "https://www.gsi.go.jp/LAW/2930-index.html",
+      "rights_url": "https://web1.gsi.go.jp/kikakuchousei/kikakuchousei40182.html",
+      "legal_status": "ASSET_SPECIFIC_CHECK_REQUIRED_NOT_BLANKET_APPROVAL",
+      "registration_required": "varies by data use; surveying approval may be needed",
+      "scheduled_http_access_authorized": false,
+      "offline_manual_import_candidate": false,
+      "candidate_fields": [
+        "venue_location",
+        "coastal_orientation",
+        "geospatial_source_version"
+      ],
+      "required_checks": [
+        "check selected asset for third-party rights",
+        "verify whether survey reproduction/use approval is required",
+        "source citation",
+        "avoid inferring actual race water wind from geography"
+      ],
+      "adoption_priority": "LOW"
+    },
+    {
+      "id": "boatrace_official_downloads",
+      "publisher": "BOAT RACE公式",
+      "overview_url": "https://www.boatrace.jp/owpc/pc/extra/data/download.html",
+      "rights_url": "https://www.boatrace.jp/owsp/sp/extra/policy.html",
+      "legal_status": "DOWNLOAD_PUBLIC_BUT_BULK_TRAINING_COMMERCIAL_REUSE_UNCONFIRMED",
+      "registration_required": "unknown",
+      "scheduled_http_access_authorized": false,
+      "offline_manual_import_candidate": false,
+      "candidate_fields": [
+        "program_B",
+        "historical_race_K",
+        "racer_period"
+      ],
+      "required_checks": [
+        "confirm AI training/commercial redistribution and bulk download rights in writing or explicit terms",
+        "reuse existing 02 offline bridge only after authorization",
+        "no Formal Fresh results read while locked"
+      ],
+      "adoption_priority": "HIGH_IF_LICENSED_NOT_NOW"
+    },
+    {
+      "id": "external_analyst_sites",
+      "publisher": "ボートフロンティア・日和・BOATERS・独自スコア各社",
+      "overview_url": "https://boatfrontier.jp/",
+      "legal_status": "NO_BULK_INGESTION_OR_AI_TRAINING_GRANT_VERIFIED",
+      "registration_required": "varies",
+      "scheduled_http_access_authorized": false,
+      "offline_manual_import_candidate": false,
+      "candidate_fields": [],
+      "required_checks": [
+        "public reading is not blanket ingest permission",
+        "borrow only general analytical ideas and independent definitions",
+        "obtain explicit rights before collecting third-party numerical evaluations"
+      ],
+      "adoption_priority": "METHOD_IDEAS_ONLY"
+    }
+  ],
+  "staged_input_contract": {
+    "source_id": "required, equal to a registry provider id",
+    "rights_review_date": "required",
+    "rights_evidence_url": "required",
+    "source_file_sha256": "required, of exact original bytes",
+    "raw_archive_ref": "required, immutable",
+    "source_observed_at_jst": "required",
+    "publication_or_first_available_at_jst": "required; unknown means not prospective eligible",
+    "ingested_at_jst": "required",
+    "station_id_or_venue_id": "required; venue/station relation separately documented",
+    "race_key": "required only when validated race join exists",
+    "field_name": "required",
+    "value": "missing kept null and never fabricated",
+    "unit": "required",
+    "quality_code": "required when provided",
+    "missing_reason": "required when value missing",
+    "lookback_start_end": "required for aggregated history",
+    "feature_definition_version": "required",
+    "no_results_payout_or_future_state": true
+  },
+  "guard_sequence": [
+    "1) rights and permitted method (manual CSV/API specifics) confirmed",
+    "2) immutable raw bytes and provenance with version/date",
+    "3) normalize with missing/quality metadata without coercion",
+    "4) separate nearby weather station from race venue; audit clocks/publication lag",
+    "5) require publication_or_first_available_at < race deadline before prospective race join",
+    "6) use same-race/same-number-of-tickets Top3/Top5/Top10 ablation only in 02 after Gate 1C/1D",
+    "7) promote only statistically supported changes through 02 research -> 01 production review",
+    "8) keep raw and computed features completely isolated from locked Formal Fresh results"
+  ],
+  "feature_groups_to_compare_independently": [
+    "venue x predeadline wind direction/speed",
+    "venue x temperature/precipitation (only if observation time quality adequate)",
+    "existing official predeadline start/exhibition/motor/entry features",
+    "independently trained head->second and head+second->third interactions",
+    "racer opponent-adjusted strength and motor/racer cohort from licensed historical data only"
+  ],
+  "acceptance_proof": "No feature is marked useful until time-split and same-cohort held-out Top3/5/10 comparisons improve; no claimed performance improvement as of this manifest.",
+  "conditional_auto_activation": {
+    "objective": "After accepted Gate 1D (3 consecutive event days >=99% verified first predeadline saves), automatically prepare/validate approved external-data research ingestion without changing prediction model or Formal Fresh.",
+    "requested_on_jst": "2026-10-16",
+    "activation_state": "QUEUED_REQUIRE_GATE_1D_EVIDENCE",
+    "trigger_requirements": [
+      "Latest main BOAT_EDGE_EXECUTION_ORDER.md Gate 1C & 1D accepted with independent per-day live evidence, not just checked boxes or CI.",
+      "Three consecutive meeting days each have >=99% success among independently eligible R; all excluded/unknown R disclosed.",
+      "Every included R's first immutable Git-add SHA and deadline match; no changed frozen predictions and no unresolved competition.",
+      "Official source/prediction/display stability evidenced; formal results remain locked unless independently authorized.",
+      "Source-specific rights permit the EXACT machine method, rate, storage, AI training, public attribution and reuse for this field; unknown means DENY."
+    ],
+    "automatic_followup_sequence": [
+      "Read current main gate/evidence before acting. Do not create/enable any collector while trigger incomplete.",
+      "After evidence passes, re-check permissions and source API/documentation freshness. Start with a genuine machine-readable low-rate API such as registration-free e-Stat dashboard if data relevance is justified; JMA interactive historical CSV does NOT itself grant scheduled bot access.",
+      "Prefer existing official or locally available lawful source; no duplicate collector or new cron without verifying existing workflow owner and coverage.",
+      "Stage a separate research-lane dry-run ingestion design/PR with request ceiling, exponential backoff, explicit attribution, immutable raw+SHA, publication vs observation timestamps, quality/missing markers, provenance and leakage tests.",
+      "Synthetic CI tests and permission guard checks before any live fetch. Preserve encrypted secrets as needed, but never pay or bypass CAPTCHA/auth.",
+      "On a permitted endpoint, import only to research storage in a bounded monitored run once the required engineering checks pass, with an off-switch. Never auto-merge to main without reviewed gate and successful checks.",
+      "Do not automatically promote any feature to production. Run same-cohort held-out Top3/Top5/Top10 evaluation separately and adopt only supported improvements.",
+      "If evidence or rights fails, record reason and remain disabled, without claiming success."
+    ],
+    "background_watch_requirement": "Separate condition-watch automation checks Gate 1D; it cannot replace a GitHub workflow. Live autonomous ingestion begins only after a real reviewed and deployed collector exists.",
+    "status_words": [
+      "research prepared",
+      "gate verified",
+      "collector reviewed",
+      "enabled",
+      "ingestion observed",
+      "model improvement independently proven"
+    ]
+  }
+}
