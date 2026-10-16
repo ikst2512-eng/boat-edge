@@ -36,7 +36,12 @@ def should_keep_verified_same_day_catalog(path:Path,candidate:dict,now:datetime)
         if updated.tzinfo is None or updated.astimezone(now.tzinfo).strftime('%Y-%m-%d')!=iso:
             return False
         age=(now.astimezone(timezone.utc)-updated.astimezone(timezone.utc)).total_seconds()
-        if not 0<=age<=90*60:return False
+        # The catalog lists SAME-DAY scheduled deadlines; it is not a
+        # certificate that race, beforeinfo, scratch or odds are still fresh.
+        # Keep verified schedule bytes for the remainder of their JST day,
+        # even when official venue discovery fails for more than 90 minutes.
+        # Do NOT advance updated_at; source freshness is checked separately.
+        if not 0<=age<24*60*60:return False
         venues=doc.get('venues')
         if not isinstance(venues,list) or not 1<=len(venues)<=24:return False
         meta=doc.get('collector')
