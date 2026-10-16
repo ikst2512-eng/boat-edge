@@ -501,10 +501,11 @@ jobs:
                     "beforeinfo_status":doc["source_audit"]["beforeinfo"]["status"]})
               summary["venues"].append(venue)
 
-          # When official venue detection temporarily returns no venues,
-          # preserve only recent, independently verified SAME-DAY source bytes.
-          # Do not update the old source timestamp: health below still reports
-          # source_unavailable and V229's strict freshness check stays active.
+          # When official venue detection returns ZERO venues, retain a
+          # fully verified SAME-DAY schedule even if the outage lasts >90m.
+          # This is CATALOG continuity, not new/fresh official evidence.
+          # Never update the old source timestamp: health below still reports
+          # source_unavailable, and V229's strict freshness check stays active.
           if should_keep_verified_same_day_catalog(DATA/"today.json",summary,now):
               print("V01_SAME_DAY_CATALOG_PRESERVED_SOURCE_UNAVAILABLE")
           else:
