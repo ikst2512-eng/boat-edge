@@ -82,6 +82,63 @@ class AtomicFreezeTests(unittest.TestCase):
         self.assertTrue(x['new_snapshot_created_this_run'])
         self.assertFalse(x['model_accuracy_proven'])
 
+    def test_new_v125_receipt_matches_strict_historical_fields(self):
+        rec=v.validate(self.root,KEY,NOW)
+        write(self.root/'data/site_autopilot/v229_evidence'/f'{KEY}.json',rec)
+        receipt=v.v125_revision_from_verified_snapshot(self.root,KEY,rec)
+        snapshot=v.read_obj(self.root/'data/site_prediction_snapshots'/f'{KEY}.json')
+        self.assertEqual(receipt['snapshot_sha256'],rec['snapshot_sha256'])
+        self.assertEqual(receipt['saved_at'],snapshot['saved_at'])
+        self.assertEqual(receipt['first_saved_at'],snapshot['first_saved_at'])
+        self.assertEqual(receipt['prediction_kind'],snapshot['prediction_kind'])
+        self.assertTrue(receipt['intrinsic_flags'])
+        self.assertTrue(all(flag is True for flag in receipt['intrinsic_flags'].values()))
+
+    def test_new_v125_receipt_rejects_unverified_newness_and_metadata_drift(self):
+        rec=v.validate(self.root,KEY,NOW)
+        write(self.root/'data/site_autopilot/v229_evidence'/f'{KEY}.json',rec)
+        with self.assertRaisesRegex(AssertionError,'V229_V125_INTRINSIC_RECEIPT_UNVERIFIED'):
+            v.v125_revision_from_verified_snapshot(self.root,KEY,
+                {**rec,'new_snapshot_created_this_run':False})
+        with self.assertRaisesRegex(AssertionError,'V229_V125_INTRINSIC_RECEIPT_UNVERIFIED'):
+            v.v125_revision_from_verified_snapshot(self.root,KEY,
+                {**rec,'odds_combinations':119})
+        path=self.root/'data/site_prediction_snapshots'/f'{KEY}.json'
+        modified=v.read_obj(path)
+        modified['prediction_kind']='POST_RESULT_SYNTHETIC'
+        write(path,modified)
+        with self.assertRaisesRegex(AssertionError,'V229_V125_INTRINSIC_RECEIPT_UNVERIFIED'):
+            v.v125_revision_from_verified_snapshot(self.root,KEY,rec)
+
+    def test_new_v125_receipt_accepted_by_existing_historical_git_checker(self):
+        import os
+        import subprocess
+        from site_v136_historical_proof import check_historical_proof
+        rec=v.validate(self.root,KEY,NOW)
+        write(self.root/'data/site_autopilot/v229_evidence'/f'{KEY}.json',rec)
+        revision=v.v125_revision_from_verified_snapshot(self.root,KEY,rec)
+        write(self.root/'data/site_prediction_audit'/f'{KEY}.json',{
+            'schema_version':'boat-edge-final15m-audit-v125',
+            'race_key':KEY,'pass':True,
+            'latest_snapshot_sha256':rec['snapshot_sha256'],
+            'latest_snapshot_saved_at':rec['snapshot_saved_at'],
+            'revision_count':1,'revisions':[revision]
+        })
+        subprocess.run(['git','init','-q',str(self.root)],check=True,
+                       capture_output=True)
+        relative=f'data/site_prediction_snapshots/{KEY}.json'
+        subprocess.run(['git','-C',str(self.root),'add','--',relative],
+                       check=True,capture_output=True)
+        env={**os.environ,'GIT_AUTHOR_DATE':'2026-10-11T05:15:01+00:00',
+             'GIT_COMMITTER_DATE':'2026-10-11T05:15:01+00:00'}
+        subprocess.run(['git','-C',str(self.root),'-c','user.name=Gate1CTest',
+                        '-c','user.email=gate1c@example.invalid','commit','-qm','pre-result original'],
+                       env=env,check=True,capture_output=True)
+        reason,sha=check_historical_proof(self.root,KEY,
+                    v.read_obj(self.root/relative))
+        self.assertEqual(reason,'PASS')
+        self.assertEqual(len(sha),40)
+
     def make_adopted_tail_fixture(self):
         from scripts.boat_edge_v254_third_tail import third_tail_candidate
         path=self.root/'data/site_prediction_snapshots'/f'{KEY}.json'
