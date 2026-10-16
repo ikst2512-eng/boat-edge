@@ -4,14 +4,16 @@ on:
     branches: [main]
     paths: ['.github/workflows/V235.yml']
   workflow_dispatch:
-  # V288: GitHub cron delivery is best-effort. Existing PRE_RESULT collector
-  # and independent official 120-odds producer are both trusted wake signals.
-  # Direct V71 completion avoids relying on a longer workflow_run chain;
-  # the existing V230/V229 source and predeadline guards stay mandatory.
+  # Best-effort GitHub cron skipped a source-ready 10:41 JST window
+  # (2026-10-16 Toda 1R). Reuse the EXISTING independent V216 schedule
+  # completion as an extra wake; do not add a cron, workflow or writer.
+  # Only V216's original schedule events (not its collector/odds wakes)
+  # may trigger this job; its own immutable predeadline guards still apply.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
+      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
     types: [completed]
   schedule:
     # 08:20 JST is 23:20 UTC on the previous calendar day.
@@ -31,7 +33,11 @@ jobs:
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.name == 'BOAT EDGE 自動更新' ||
+         github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71' ||
+         (github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' &&
+          github.event.workflow_run.event == 'schedule'))))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
