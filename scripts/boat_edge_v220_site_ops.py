@@ -346,6 +346,50 @@ def compute(root,now):
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover}
 
+def gate1c_previous_day_git_catalog(root, day, now):
+    """Read only the last tracked pre-midnight schedule; never infer eligibility.
+
+    data/today.json rotates at JST midnight. Without a historical Git tree,
+    the previous day's scheduled/unsampled race counts silently become null.
+    Fail closed if Git is absent, the date differs, or the file is malformed.
+    No results, formal, external APIs, new cron, or new writer.
+    """
+    if not re.fullmatch(r'20\d{6}', str(day)):
+        return None, None
+    try:
+        target=datetime.strptime(day, '%Y%m%d').replace(tzinfo=JST)
+    except ValueError:
+        return None, None
+    current=now.astimezone(JST).date()
+    if target.date()!=current-timedelta(days=1):
+        return None, None
+    tracked=root/'data/today.json'
+    if tracked.is_symlink() or any(parent.is_symlink() for parent in tracked.parents):
+        return None, None
+    boundary=(target+timedelta(days=1)).isoformat()
+    try:
+        log=subprocess.run(
+            ['git','log','-1','--format=%H',f'--before={boundary}','--',
+             'data/today.json'],
+            cwd=root,check=True,capture_output=True,text=True,timeout=15)
+        commit=log.stdout.strip()
+        if not re.fullmatch(r'[0-9a-f]{40}',commit):
+            return None, None
+        raw=subprocess.run(
+            ['git','show',f'{commit}:data/today.json'],
+            cwd=root,check=True,capture_output=True,timeout=15).stdout
+        if len(raw)>2_000_000:
+            return None, None
+        catalog=json.loads(raw)
+    except (OSError,UnicodeError,ValueError,TypeError,
+            subprocess.SubprocessError):
+        return None, None
+    if (not isinstance(catalog,dict)
+            or str(catalog.get('date','')).replace('-','')!=day):
+        return None, None
+    return catalog,commit
+
+
 def gate1c_first_git_summary(root, day, now, verify=None):
     """Read-only 1C numerator proof, NOT a source-eligible-race denominator.
 
@@ -427,6 +471,12 @@ def gate1c_first_git_summary(root, day, now, verify=None):
     catalog_path=root/'data/today.json'
     if not catalog_path.is_symlink() and not any(p.is_symlink() for p in catalog_path.parents):
         catalog=load(catalog_path)
+        catalog_commit=None
+        if (not isinstance(catalog,dict)
+                or str(catalog.get('date','')).replace('-','')!=day):
+            # Only the previous day's original Git-bound schedule; this
+            # restores scheduled coverage, never source eligibility.
+            catalog,catalog_commit=gate1c_previous_day_git_catalog(root,day,now)
         if (isinstance(catalog,dict)
                 and str(catalog.get('date','')).replace('-','')==day
                 and isinstance(catalog.get('venues'),list)):
@@ -452,6 +502,9 @@ def gate1c_first_git_summary(root, day, now, verify=None):
                 if not valid_catalog:
                     break
             if valid_catalog and races:
+                if catalog_commit is not None:
+                    out['catalog_source_git_commit']=catalog_commit
+                    out['catalog_source_scope']='PREVIOUS_DAY_SCHEDULE_FROM_PREMIDNIGHT_GIT'
                 valid_observed={
                     key for key,record in obs.items()
                     if isinstance(key,str) and KEY.fullmatch(key)
