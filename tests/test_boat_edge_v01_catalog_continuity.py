@@ -38,6 +38,28 @@ class SameDayContinuity(unittest.TestCase):
             self.assertEqual(path.read_bytes(),before)
             self.assertEqual(json.loads(before)['updated_at'],old['updated_at'])
 
+    def test_same_day_0545_and_0825_retain_schedule_without_forging_freshness(self):
+        # Production 2026-10-17 catalog was last verified at 03:40 JST.
+        # Do not erase 168 scheduled races after the former 90min TTL.
+        with tempfile.TemporaryDirectory() as td:
+            path,old,new=fixtures(Path(td))
+            original=path.read_bytes()
+            for hour,minute in ((5,45),(8,25),(18,45),(23,59)):
+                current=datetime(2026,10,17,hour,minute,tzinfo=JST)
+                self.assertTrue(should_keep_verified_same_day_catalog(path,new,current))
+                self.assertEqual(path.read_bytes(),original)
+                self.assertEqual(json.loads(path.read_bytes())['updated_at'],
+                                 '2026-10-17T03:40:24+09:00')
+            # The same catalog cannot carry forward into another race day.
+            next_day=datetime(2026,10,18,0,1,tzinfo=JST)
+            self.assertFalse(should_keep_verified_same_day_catalog(
+                path,{**new,'date':'2026-10-18'},next_day))
+            # A future-dated or 2+ day-old catalog must not pass.
+            old['updated_at']='2026-10-19T01:00:00+09:00'
+            path.write_text(json.dumps(old),encoding='utf8')
+            self.assertFalse(should_keep_verified_same_day_catalog(
+                path,new,datetime(2026,10,17,5,45,tzinfo=JST)))
+
     def test_real_updated_nonempty_source_is_never_blocked(self):
         with tempfile.TemporaryDirectory() as td:
             path,old,new=fixtures(Path(td))
@@ -50,7 +72,7 @@ class SameDayContinuity(unittest.TestCase):
             path,old,new=fixtures(Path(td))
             for mutation in (
                 {'date':'2026-10-16'},{'results_seen':True},{'scoring':True},
-                {'updated_at':'2026-10-17T02:00:00+09:00'},
+                {'updated_at':'2026-10-16T23:59:00+09:00'},
                 {'updated_at':'2026-10-17T04:02:00+09:00'},
                 {'venues':[]},{'collector':{'active_venues':0}},
             ):
