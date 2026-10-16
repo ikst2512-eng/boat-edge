@@ -52,6 +52,17 @@ def frozen(root):
 
 
 class V235Proof(unittest.TestCase):
+    def test_v235_pinned_fast_lane_matches_main_git_blob(self):
+        # Gate1C: Future V230 code changes MUST carry a reviewed V235 pin
+        # update or fail PR CI before live pre-result collection/freeze.
+        root=Path(__file__).resolve().parents[1]
+        filename='scripts/boat_edge_v230_fast_lane.py'
+        raw=(root/filename).read_bytes()
+        git_blob=hashlib.sha1(b'blob '+str(len(raw)).encode('ascii')+b'\x00'+raw).hexdigest()
+        workflow=(root/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        self.assertIn(f"'{filename}:{git_blob}'",workflow)
+        self.assertIn('test "$(git hash-object "$path")" = "$sha"',workflow)
+
     def test_window_does_not_invent_a_prediction(self):
         with tempfile.TemporaryDirectory() as base:
             root = Path(base)
