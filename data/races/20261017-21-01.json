@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 1,
     "deadline": "08:43",
-    "updated_at": "2026-10-17T03:40:24+09:00",
+    "updated_at": "2026-10-17T06:43:52+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=21&rno=1",
-      "fetched_at": "2026-10-17T03:42:19+09:00",
-      "sha256": "77f27b7a8ca4dda63cc8a58467657a93a214734aa06b6d286d555a62057094c3",
+      "fetched_at": "2026-10-17T06:46:05+09:00",
+      "sha256": "6bb0aa2b70a98b0f31c3dc7dd3ad2b3da1c75a54d8662f5431d7b36296a71e6e",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=21&rno=1",
+      "fetched_at": "2026-10-17T06:44:30+09:00",
+      "sha256": "e14af4cd7c3dcd02df1f94f36bd477a741b9e55794f98d0ba764e9234d1521aa",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -283,7 +289,53 @@
       "raw_text": "6 5440 / B2 薗頭 心 兵庫/兵庫 21歳/47.2kg F0 L0 0.19 1.55 1.52 3.03 1.56 0.00 11.11 51 29.25 49.06 133 33.03 48.62 7 3 10 6 8R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 古澤 光紀 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 杉山 喜一 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 土屋 蘭 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 富永 正人 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 関根 彰人 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 薗頭 心 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
