@@ -414,6 +414,66 @@ def gate1c_first_git_summary(root, day, now, verify=None):
     return out
 
 
+
+def gate1c_all_saved_originals(root, day, now, verify=None):
+    """Audit every saved SITE prediction on disk, not just the V215 sample.
+
+    This is a second, independent NUMERATOR VIEW of tracked candidate files;
+    unlike an eligibility ledger it cannot establish missing official releases,
+    source-ready excluded races or any denominator/99% success rate.
+    Reuse the original V125/first-Git SHA validator without rewriting history.
+    """
+    if verify is None:
+        from site_v136_historical_proof import check_historical_proof
+        verify=check_historical_proof
+    out={'day_jst':day, 'scope':'ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES',
+         'snapshot_files_seen':0, 'matured_snapshot_files':0,
+         'pending_snapshot_files':0, 'first_git_original_sha_proven':0,
+         'original_not_verified':0, 'unverified_reasons':{},
+         'independently_source_eligible_denominator':None,
+         'eligible_save_rate_percent':None, 'acceptance_99_percent_proven':False}
+    base=root/'data/site_prediction_snapshots'
+    if base.is_symlink() or not base.is_dir():
+        return out
+    for p in sorted(base.glob(f'{day}-??-??.json')):
+        out['snapshot_files_seen']+=1
+        key=p.stem
+        reason='snapshot_invalid_or_symlink'
+        if (not KEY.fullmatch(key) or not key.startswith(day+'-')
+                or p.is_symlink() or not p.is_file()):
+            out['original_not_verified']+=1
+        else:
+            snap=load(p)
+            due=expected_deadline(key,snap.get('deadline')) if isinstance(snap,dict) else None
+            if due is not None and now<due:
+                out['pending_snapshot_files']+=1
+                continue
+            out['matured_snapshot_files']+=1
+            audit=root/'data/site_prediction_audit'/f'{key}.json'
+            if audit.is_symlink():
+                reason='audit_symlink_blocked'
+            elif (isinstance(snap,dict) and due is not None
+                  and snap.get('race_key')==key):
+                saved=moment(snap.get('saved_at'))
+                if saved is not None and 120 <= (due-saved).total_seconds() <= 600:
+                    try:
+                        reason,commit=verify(root,key,snap)
+                    except (OSError,ValueError,TypeError,RuntimeError):
+                        reason='first_git_verifier_failed_closed'
+                        commit=None
+                    if reason=='PASS' and commit is not None:
+                        out['first_git_original_sha_proven']+=1
+                        continue
+                    if reason=='PASS':
+                        reason='first_git_commit_missing'
+                else:
+                    reason='outside_v229_decision_window'
+            out['original_not_verified']+=1
+        counts=out['unverified_reasons']
+        counts[reason]=counts.get(reason,0)+1
+    return out
+
+
 def gate1c_source_receipt_first_git_proof(root,key,receipt):
     """Verify first-added receipt AND source blobs in THAT SAME Git tree.
 
@@ -591,6 +651,8 @@ def gate1c_read_only_report(root,now,verify=None):
         'schema':'BOAT_EDGE_GATE1C_FIRST_GIT_ORIGINAL_OBSERVATION_V1',
         'scope':'SITE_ONLY_PRE_RESULT_NO_OUTCOME_OR_FORMAL_INPUT',
         'today':gate1c_first_git_summary(root,day.strftime('%Y%m%d'),now,verify),
+        'all_saved_snapshots_today':gate1c_all_saved_originals(root,day.strftime('%Y%m%d'),now,verify),
+        'all_saved_snapshots_previous_day':gate1c_all_saved_originals(root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify),
         'previous_day':gate1c_first_git_summary(
             root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify),
         'prospective_source_ready':{
