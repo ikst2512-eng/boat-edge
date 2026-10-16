@@ -90,6 +90,37 @@ class WatchdogContract(unittest.TestCase):
             self.assertFalse(mod.decision(
                 fixture(), self.workflow, runs(created=t), NOW)['dispatch'])
 
+    def test_real_toda10_missed_window_replay_no_early_or_late_dispatch(self):
+        # 2026-10-16 JST: original official source/scratch/120 odds were on
+        # main by 15:05:52, but the V235 runs started at 15:03:41 and
+        # 15:16:29, on either side of Toda 10R's 15:08-15:16 freeze window.
+        # This is a SYNTHETIC decision replay, not proof an external host ran.
+        catalog = {'date': '2026-10-16', 'venues': [
+            {'races': [{'race_key': '20261016-02-10', 'deadline': '15:18'}]}]}
+        history = runs(created='2026-10-16T06:03:41Z')
+        def at(clock):
+            return datetime.fromisoformat('2026-10-16T' + clock + '+00:00')
+        # The existing 420s anti-duplicate guard must stay intact.
+        self.assertEqual(
+            mod.decision(catalog, self.workflow, history, at('06:08:00'))['reason'],
+            'V235_RECENT_ACTUAL_RUN')
+        # At 15:12 JST there are six minutes to deadline, the last
+        # V235 was >7m ago, and the already-reviewed watchdog can dispatch.
+        eligible = mod.decision(catalog, self.workflow, history, at('06:12:00'))
+        self.assertTrue(eligible['dispatch'], eligible)
+        self.assertEqual(eligible['reason'], 'MISSED_V235_RUNTIME_WITH_IMMINENT_RACE')
+        self.assertEqual(eligible['targets'], ['20261016-02-10'])
+        # Never stack duplicate jobs, even during an observable gap.
+        active = runs(status='in_progress', conclusion=None,
+                      created='2026-10-16T06:11:00Z')
+        self.assertEqual(
+            mod.decision(catalog, self.workflow, active, at('06:12:00'))['reason'],
+            'V235_ALREADY_ACTIVE')
+        # The external prewarm policy is 4-19m, NOT a late freeze bypass.
+        self.assertEqual(
+            mod.decision(catalog, self.workflow, history, at('06:15:00'))['reason'],
+            'NO_SAME_DAY_PREWARM_RACE')
+
     def test_dry_run_does_not_post_even_when_eligible(self):
         import base64
         import json
