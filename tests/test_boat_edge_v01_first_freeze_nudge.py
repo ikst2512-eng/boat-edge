@@ -100,10 +100,10 @@ fi
         import textwrap
         from datetime import timedelta
         wf = (SCRIPT.parents[1] / ".github/workflows/site-odds.yml").read_text(encoding="utf-8")
-        self.assertEqual(wf.count("          races=[]\\n"), 1)
-        block = wf.split("          races=[]\\n", 1)[1].split(
+        self.assertEqual(wf.count("          races=[]\n"), 1)
+        block = wf.split("          races=[]\n", 1)[1].split(
             "          session=requests.Session()", 1)[0]
-        code = "races=[]\\n" + textwrap.dedent(block)
+        code = "races=[]\n" + textwrap.dedent(block)
         at = datetime(2026, 10, 16, 6, 42, tzinfo=timezone.utc).astimezone(
             timezone(timedelta(hours=9)))
         rows = [
