@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 12,
     "deadline": "16:15",
-    "updated_at": "2026-10-16T13:27:26+09:00",
+    "updated_at": "2026-10-16T14:06:18+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=09&rno=12",
-      "fetched_at": "2026-10-16T13:30:09+09:00",
-      "sha256": "55eaff679c207d4ccbec84c08dcc5b614cf00942fa04722cadca839d779542ea",
+      "fetched_at": "2026-10-16T14:08:13+09:00",
+      "sha256": "84389695672f05ad28c838b361cc1db2f0594266af199df7e9738cc2e31bb3e4",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=09&rno=12",
+      "fetched_at": "2026-10-16T14:07:33+09:00",
+      "sha256": "3e77bbbd99a5dc3d384537eb1a6349ade0cbe029c0c0de755ec73963eeca7921",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "f4b531ff59cb8ffdb2d7110a794536d455bc06e0ffcd71c4c1a1f753ef9e6eed"
+      "sha256": "bbfe5b9ae16ab54166bb6dff16bc93b922ae6717c5c0c913a8e8401a4820bab6"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "d7e17f35c59c3982e2bf74bbd3df60abaa5b5b9853b42f6397884a74d998a9cf"
+      "sha256": "69a1b4a37c836dcd6cc711909ba246144b01defb723da00b4d8b2d31970a97cd"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "00adae543444c912733ffa81f83ddce28b7a12b78f04cd7bd1996cc1f812273b"
+      "sha256": "df47e2a8981b2c29f93ea764675eb88f4f33293adcb1a2d6c308890bb247e89a"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "4cb2f58e32115d4887acc100fccf935aec6c39d53a7e2d5279e461e87a49c89c"
+      "sha256": "69aa1996a87cc3ce26b1c1edba04b4e3f39fa364be903e248da779cc4afe5e41"
     }
   },
   "racers": [
@@ -277,12 +283,60 @@
         "quinella_rate": 37.25,
         "trio_rate": 53.43
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "7"
+      ],
       "early_race": 7,
-      "raw_text": "6 5028 / A1 原田 才一郎 福岡/福岡 29歳/52.0kg F1 L0 0.18 6.99 55.47 70.80 7.55 50.00 80.00 37 37.93 53.45 25 37.25 53.43 7R"
+      "raw_text": "6 5028 / A1 原田 才一郎 福岡/福岡 29歳/52.0kg F1 L0 0.18 6.99 55.47 70.80 7.55 50.00 80.00 37 37.93 53.45 25 37.25 53.43 7 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 竹井 貴史 52.6kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 市川 哲也 52.1kg R 4"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 細川 裕子 47.0kg R 3"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 西橋 奈未 48.2kg R 6"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 馬場 剛 51.5kg R 5"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 原田 才一郎 52.0kg R 7"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
