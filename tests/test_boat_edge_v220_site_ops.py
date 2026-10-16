@@ -628,15 +628,15 @@ def test_gate1c_previous_day_catalog_recovered_from_original_git_only():
         assert report['acceptance_99_percent_proven'] is False
         # A malformed original schedule must not be promoted as a complete
         # full-day catalog even when its Git commit timestamp is valid.
+        # Put a newer pre-midnight synthetic commit on a separate fixture
+        # branch (Git log follows only reachable history).
+        subprocess.run(['git','checkout','-qb','test-corrupt-prev','HEAD~1'],
+                       cwd=root,check=True,capture_output=True)
         put(root,'data/today.json',original|{'venues':[{'races':[
             {'race_key':KEY,'deadline':'08:35'},
             {'race_key':KEY,'deadline':'08:35'}]}]})
         env['GIT_AUTHOR_DATE']='2026-10-11T23:57:00+09:00'
         env['GIT_COMMITTER_DATE']=env['GIT_AUTHOR_DATE']
-        # Put a newer pre-midnight synthetic commit on a separate fixture
-        # branch (Git log follows only reachable history).
-        subprocess.run(['git','checkout','-qb','test-corrupt-prev','HEAD~1'],
-                       cwd=root,check=True,capture_output=True)
         subprocess.run(['git','add','--','data/today.json'],cwd=root,check=True)
         subprocess.run(git+['corrupt prior schedule'],cwd=root,env=env,check=True)
         bad=mod.gate1c_first_git_summary(root,DAY,at,lambda *_:('PASS','fake'))
