@@ -360,6 +360,12 @@ def gate1c_first_git_summary(root, day, now, verify=None):
          'observed_races':0, 'matured_races':0, 'missing_after_deadline':0,
          'snapshots_present':0, 'first_git_original_sha_proven':0,
          'original_not_verified':0, 'unverified_reasons':{},
+         # Catalog counts expose races never reached by V215 sampling.
+         # Neither catalog membership nor no-snapshot proves source eligibility.
+         'catalog_matured_races':None,
+         'catalog_matured_not_observed':None,
+         'catalog_matured_not_observed_saved':None,
+         'catalog_matured_without_snapshot':None,
          # Source release times and all race-specific eligibility guards
          # cannot be reconstructed from a sampled V215 observation history.
          'independently_source_eligible_denominator':None,
@@ -411,6 +417,57 @@ def gate1c_first_git_summary(root, day, now, verify=None):
                 reason='outside_v229_decision_window'
         out['original_not_verified']+=1
         out['unverified_reasons'][reason]=out['unverified_reasons'].get(reason,0)+1
+    # Additional CATALOG COVERAGE view, intentionally separate from the
+    # evidence-backed sample and independent eligibility denominator.
+    # Fail closed on stale/malformed/duplicate schedules rather than silently
+    # undercounting races not reached by any pre-deadline observer.
+    catalog_path=root/'data/today.json'
+    if not catalog_path.is_symlink() and not any(p.is_symlink() for p in catalog_path.parents):
+        catalog=load(catalog_path)
+        if (isinstance(catalog,dict)
+                and str(catalog.get('date','')).replace('-','')==day
+                and isinstance(catalog.get('venues'),list)):
+            races={}
+            valid_catalog=True
+            for venue in catalog['venues']:
+                if not isinstance(venue,dict) or not isinstance(venue.get('races'),list):
+                    valid_catalog=False
+                    break
+                for race in venue['races']:
+                    if not isinstance(race,dict):
+                        valid_catalog=False
+                        break
+                    key=race.get('race_key')
+                    if not isinstance(key,str) or not KEY.fullmatch(key) or not key.startswith(day+'-'):
+                        valid_catalog=False
+                        break
+                    due=expected_deadline(key,race.get('deadline'))
+                    if due is None or key in races:
+                        valid_catalog=False
+                        break
+                    races[key]=due
+                if not valid_catalog:
+                    break
+            if valid_catalog and races:
+                valid_observed={
+                    key for key,record in obs.items()
+                    if isinstance(key,str) and KEY.fullmatch(key)
+                    and key.startswith(day+'-') and isinstance(record,dict)
+                    and expected_deadline(key,record.get('deadline')) is not None
+                }
+                matured={key for key,due in races.items() if now>=due}
+                not_observed=matured-valid_observed
+                base=root/'data/site_prediction_snapshots'
+                out['catalog_matured_races']=len(matured)
+                out['catalog_matured_not_observed']=len(not_observed)
+                out['catalog_matured_not_observed_saved']=sum(
+                    (base/f'{key}.json').is_file() and
+                    not (base/f'{key}.json').is_symlink()
+                    for key in not_observed)
+                out['catalog_matured_without_snapshot']=sum(
+                    not (base/f'{key}.json').is_file() or
+                    (base/f'{key}.json').is_symlink()
+                    for key in matured)
     return out
 
 

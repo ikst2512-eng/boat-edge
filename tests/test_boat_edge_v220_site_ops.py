@@ -468,6 +468,54 @@ def test_recovery_freshness_matches_independent_freeze_boundaries():
     print('V220_RECOVERY_MATCHES_960S_CARD_900S_OTHER_WITHOUT_ROUNDING_PASS')
 
 
+def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibility():
+    """Show unsampled races, but never turn catalog counts into eligible denominator."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        after=NOW+timedelta(minutes=35)  # 08:40 JST; 08:35 and 08:37 matured
+        key2=f'{DAY}-23-02'
+        key3=f'{DAY}-23-03'
+        put(root,'data/today.json',{'date':'2026-10-11','venues':[{'races':[
+            {'race_key':KEY,'deadline':'08:35'},
+            {'race_key':key2,'deadline':'08:37'},
+            {'race_key':key3,'deadline':'09:10'}]}]})
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+            'day_jst':DAY,
+            'observations':{KEY:{'race_key':KEY,'deadline':'08:35'}}})
+        # A saved-but-never-observed candidate must stay OUT of the observed
+        # numerator and independent eligible denominator.
+        put(root,f'data/site_prediction_snapshots/{key2}.json',{'race_key':key2})
+        report=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
+        assert report['catalog_matured_races']==2,report
+        assert report['catalog_matured_not_observed']==1,report
+        assert report['catalog_matured_not_observed_saved']==1,report
+        assert report['catalog_matured_without_snapshot']==1,report
+        assert report['observed_races']==1 and report['matured_races']==1,report
+        assert report['independently_source_eligible_denominator'] is None
+        assert report['eligible_save_rate_percent'] is None
+        assert report['acceptance_99_percent_proven'] is False
+        # Duplicated keys, stale day and unsafe catalog symlinks cannot
+        # manufacture a deceptively small cohort.
+        bad={'date':'2026-10-11','venues':[{'races':[
+            {'race_key':KEY,'deadline':'08:35'},
+            {'race_key':KEY,'deadline':'08:35'}]}]}
+        put(root,'data/today.json',bad)
+        repeated=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
+        assert repeated['catalog_matured_races'] is None
+        assert repeated['catalog_matured_not_observed'] is None
+        bad['date']='2026-10-10'
+        put(root,'data/today.json',bad)
+        wrong_day=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
+        assert wrong_day['catalog_matured_races'] is None
+        catalog=root/'data/today.json'
+        catalog.unlink()
+        catalog.symlink_to(root/'data/site_prediction_snapshots'/f'{key2}.json')
+        unsafe=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
+        assert unsafe['catalog_matured_races'] is None
+    print('GATE1C_UNOBSERVED_CATALOG_COVERAGE_NOT_ELIGIBILITY_DENOMINATOR_PASS')
+
+
 def test_gate1c_first_git_sha_is_not_the_observed_denominator():
     """Pre-result V125 first-add proof is stricter than snapshot existence.
 
@@ -676,6 +724,7 @@ if __name__=='__main__':
     test_v220_skipped_v229_never_suppresses_source_ready_recovery()
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
+    test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibility()
     test_gate1c_first_git_sha_is_not_the_observed_denominator()
     test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races()
     test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git()
