@@ -8,7 +8,7 @@
     "event": "スカパー!・JLC杯ルーキーシリーズ第19戦",
     "race_no": 5,
     "deadline": "10:26",
-    "updated_at": "2026-10-16T08:43:22+09:00",
+    "updated_at": "2026-10-16T10:06:26+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,21 +19,21 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=14&rno=5",
-      "fetched_at": "2026-10-16T08:46:05+09:00",
-      "sha256": "093dd79fc8765a7e62bdceaf3236ecc96153dee5b6b1bb5adcb380fba9f5f43a",
+      "fetched_at": "2026-10-16T10:08:29+09:00",
+      "sha256": "0de43ddab8f5d29c6f4070da732d803deeb98f670cb03df19e1d002b2a7d58bc",
       "error": null
     },
     "beforeinfo": {
       "status": "published_wait",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=14&rno=5",
-      "fetched_at": "2026-10-16T08:44:09+09:00",
-      "sha256": "eea7bcbfabed50ffefccf202c8290375042e252c8aee1661619304226d3a6fe8",
+      "fetched_at": "2026-10-16T10:07:03+09:00",
+      "sha256": "5c578ad413deead4089afaf1a255b93d775fa7c5e0bbb32e7406d4e98cfe1fee",
       "error": null,
       "six_boat_coverage": {
         "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
+        "start_exhibition_lanes": 6,
         "exhibition_complete": false,
-        "start_exhibition_complete": false,
+        "start_exhibition_complete": true,
         "six_boat_complete": false
       }
     },
@@ -41,25 +41,25 @@
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "6c7252c78446d25ee5b3d7eccf559447367cee36b89669045fc4d66c2e493547"
+      "sha256": "3c254986874e2074204a8ccc54e3d1c842203630642f75f001d28224d4529496"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "60c658a2467eae35bdc642004ee0b19d03ac69dd8a06e9aab3933ff8bbda25d9"
+      "sha256": "7531cc1bc75bb137cc1aaa1daaf94af38e9a167fc860df9860a4832b015c32c6"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "d93c1d3b8945a73cce67fa8bdd3cb65ffc6aced45215657cc69993e817a8c9c7"
+      "sha256": "68a5c3c0e91e475db09eb1a86d541213895d71e501820501331551e0c57166b5"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "71bb948d484e89daa02e3af7b512a096f1785fe69a1e986cfc0838cfb4a886b0"
+      "sha256": "9d6be7296eebe51cf1a42e6f6f2074ae01b099ae12b7466ed6b3dfa9bef49f51"
     }
   },
   "racers": [
@@ -329,46 +329,71 @@
       {
         "lane": 1,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 村本 大成 52.0kg R"
+        "tilt": 0.0,
+        "raw_text": "1 村本 大成 52.0kg 0.0 R"
       },
       {
         "lane": 2,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 上野 拓馬 52.8kg R"
+        "tilt": 0.0,
+        "raw_text": "2 上野 拓馬 52.8kg 0.0 R"
       },
       {
         "lane": 3,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 松井 貫太 51.5kg R"
+        "tilt": 0.0,
+        "raw_text": "3 松井 貫太 51.5kg 0.0 R"
       },
       {
         "lane": 4,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 山下 智己 50.5kg R"
+        "tilt": 0.0,
+        "raw_text": "4 山下 智己 50.5kg 0.0 R"
       },
       {
         "lane": 5,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 竹間 隆晟 53.0kg R"
+        "tilt": 0.0,
+        "raw_text": "5 竹間 隆晟 53.0kg 0.0 R"
       },
       {
         "lane": 6,
         "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 品川 二千翔 51.0kg R"
+        "tilt": 0.0,
+        "raw_text": "6 品川 二千翔 51.0kg 0.0 R"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".02"
+      },
+      {
+        "lane": 2,
+        "st": ".12"
+      },
+      {
+        "lane": 3,
+        "st": ".13"
+      },
+      {
+        "lane": 4,
+        "st": "F.02"
+      },
+      {
+        "lane": 5,
+        "st": "F.05"
+      },
+      {
+        "lane": 6,
+        "st": "F.12"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 1.0,
-      "wave_cm": 1.0
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
     }
   },
   "validation": {
