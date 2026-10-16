@@ -100,6 +100,23 @@ jobs:
                           "minutes_to_deadline":round(delta,1)
                       })
 
+          # Gate 1C: source collection is sequential. Prioritize the actual
+          # V229 2-10m first-freeze opportunity over venue/catalog order.
+          # This does not bypass the original 120-odds verification, V229's
+          # independent deadline gate, or the existing Git publisher.
+          def source_priority(item):
+              lead=item["minutes_to_deadline"]
+              if 2 <= lead <= 10:
+                  tier=0
+              elif 10 < lead <= 45:
+                  tier=1
+              elif 0 < lead < 2:
+                  tier=2
+              else:
+                  tier=3  # past deadline: keep V71's existing +5m UI coverage
+              return (tier,lead,item["race_key"])
+          races.sort(key=source_priority)
+
           session=requests.Session()
           session.headers.update({
               "User-Agent":"Mozilla/5.0 (compatible; BOAT-EDGE-SITE-ODDS/1.0)",
