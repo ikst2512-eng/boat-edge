@@ -38,6 +38,32 @@ class SameDayContinuity(unittest.TestCase):
             self.assertEqual(path.read_bytes(),before)
             self.assertEqual(json.loads(before)['updated_at'],old['updated_at'])
 
+    def test_prolonged_zero_venue_outage_keeps_same_day_catalog_without_claiming_freshness(self):
+        # Actual 2026-10-17 source at 03:40 is already >90 minutes old at
+        # 05:45. A second empty discovery must NOT replace 168 scheduled races
+        # with 0. No source timestamp change or source-eligibility promotion.
+        with tempfile.TemporaryDirectory() as td:
+            path,old,empty=fixtures(Path(td))
+            original=path.read_bytes()
+            for at in (datetime(2026,10,17,5,45,tzinfo=JST),
+                       datetime(2026,10,17,8,20,tzinfo=JST),
+                       datetime(2026,10,17,23,50,tzinfo=JST)):
+                self.assertTrue(should_keep_verified_same_day_catalog(path,empty,at),at)
+                self.assertEqual(path.read_bytes(),original)
+                self.assertEqual(json.loads(path.read_bytes())['updated_at'],
+                                 '2026-10-17T03:40:24+09:00')
+            # Next-day candidate, same-day mismatch, and future timestamp:
+            # refuse instead of carrying yesterday's stale catalog forward.
+            tomorrow=datetime(2026,10,18,0,1,tzinfo=JST)
+            self.assertFalse(should_keep_verified_same_day_catalog(
+                path,{**empty,'date':'2026-10-18'},tomorrow))
+            self.assertFalse(should_keep_verified_same_day_catalog(
+                path,empty,tomorrow))
+            future={**old,'updated_at':'2026-10-17T05:46:00+09:00'}
+            path.write_text(json.dumps(future),encoding='utf8')
+            self.assertFalse(should_keep_verified_same_day_catalog(
+                path,empty,datetime(2026,10,17,5,45,tzinfo=JST)))
+
     def test_real_updated_nonempty_source_is_never_blocked(self):
         with tempfile.TemporaryDirectory() as td:
             path,old,new=fixtures(Path(td))
@@ -50,7 +76,7 @@ class SameDayContinuity(unittest.TestCase):
             path,old,new=fixtures(Path(td))
             for mutation in (
                 {'date':'2026-10-16'},{'results_seen':True},{'scoring':True},
-                {'updated_at':'2026-10-17T02:00:00+09:00'},
+                {'updated_at':'2026-10-16T23:59:00+09:00'},
                 {'updated_at':'2026-10-17T04:02:00+09:00'},
                 {'venues':[]},{'collector':{'active_venues':0}},
             ):
