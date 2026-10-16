@@ -68,6 +68,23 @@ class WatchdogContract(unittest.TestCase):
         self.assertFalse(mod.decision(fixture(), self.workflow,
                                       runs(status='mystery'), NOW)['dispatch'])
 
+    def test_only_other_branches_history_never_authorizes_main_dispatch(self):
+        # GitHub's API can return runs but none for main. This is a history
+        # coverage gap, NOT evidence that the main V235 workflow is idle.
+        alien = runs()
+        alien['workflow_runs'][0]['head_branch'] = 'feature/test'
+        d = mod.decision(fixture(), self.workflow, alien, NOW)
+        self.assertFalse(d['dispatch'])
+        self.assertEqual(d['reason'], 'NO_MAIN_V235_RUN_HISTORY')
+
+    def test_skipped_main_record_still_distinct_from_nonmain_history(self):
+        sample = runs(conclusion='skipped', created='2026-10-16T01:39:00Z')
+        other = runs(created='2026-10-16T01:39:00Z')['workflow_runs'][0]
+        other['head_branch'] = 'feature/test'
+        sample['workflow_runs'].append(other)
+        d = mod.decision(fixture(), self.workflow, sample, NOW)
+        self.assertTrue(d['dispatch'])
+
     def test_clock_or_run_time_ambiguity_blocks(self):
         for t in ('2026-10-16T01:45:00Z', 'garbled'):
             self.assertFalse(mod.decision(
