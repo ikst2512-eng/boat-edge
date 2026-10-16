@@ -1,5 +1,7 @@
 from __future__ import annotations
 import hashlib
+import subprocess
+import os
 import importlib.util
 import json
 import sys
@@ -591,6 +593,79 @@ def test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git():
     print('GATE1C_ALL_SAVED_SYMLINK_AND_MISSING_GIT_FAIL_CLOSED_PASS')
 
 
+def test_gate1c_legacy_v229_original_first_git_separate_tier():
+    # Synthetic historical PRE_RESULT first-add. NEVER manufacture a new
+    # V125 intrinsic receipt or retroactively rewrite a real prediction.
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        saved=f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:28:00+09:00'
+        race_sha='a'*64;odds_sha='b'*64
+        snap={'race_key':KEY,'deadline':'08:35','snapshot_window':'FINAL_15M',
+              'prediction_kind':'SITE_REFERENCE_V122',
+              'first_saved_at':saved,'saved_at':saved,
+              'race_sha256':race_sha,'odds_sha256':odds_sha,
+              'guards':{'results_seen':False,'unlock':False,'scoring':False}}
+        snap_path=f'data/site_prediction_snapshots/{KEY}.json'
+        audit_path=f'data/site_prediction_audit/{KEY}.json'
+        proof_path=f'data/site_autopilot/v229_evidence/{KEY}.json'
+        put(root,snap_path,snap)
+        snap_hash=hashlib.sha256((root/snap_path).read_bytes()).hexdigest()
+        audit={'schema_version':'boat-edge-final15m-audit-v125',
+               'scope':'SITE_ONLY_NOT_FORMAL_FRESH','pass':True,
+               'atomic_pre_result_audit':True,'race_key':KEY,'revision_count':1,
+               'latest_snapshot_sha256':snap_hash,'latest_snapshot_saved_at':saved,
+               'source_evidence_file':proof_path,
+               'revisions':[{'atomic_pre_result_proof_sha256':'c'*64,
+                   'odds_sha256_snapshot':odds_sha,'race_sha256_snapshot':race_sha,
+                   'saved_at':saved,'snapshot_sha256':snap_hash}]}
+        receipt={'schema':'BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1',
+                 'scope':'SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS',
+                 'new_snapshot_created_this_run':True,
+                 'race_key':KEY,'results_seen':False,'scoring':False,
+                 'formal_fresh_unlock':False,'odds_combinations':120,
+                 'snapshot_sha256':snap_hash,'snapshot_saved_at':saved,
+                 'race_sha256':race_sha,'odds_sha256':odds_sha,
+                 'evidence_captured_at':f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:28:01+09:00',
+                 'official_beforeinfo_fetched_at':f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:27:57+09:00',
+                 'official_race_card_fetched_at':f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:27:52+09:00',
+                 'odds_fetched_at':saved,'scratch_checked_at':saved}
+        put(root,audit_path,audit);put(root,proof_path,receipt)
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        subprocess.run(['git','add','--',snap_path,audit_path,proof_path],cwd=root,check=True)
+        env=dict(os.environ)
+        env['GIT_AUTHOR_DATE']=f'{DAY[:4]}-{DAY[4:6]}-{DAY[6:]}T08:28:02+09:00'
+        env['GIT_COMMITTER_DATE']=env['GIT_AUTHOR_DATE']
+        subprocess.run(['git','-c','user.name=Fixture','-c','user.email=fixture@example.invalid',
+                        'commit','-qm','synthetic source-only immutable first Git add'],
+                        cwd=root,env=env,check=True)
+        status,sha=mod.gate1c_legacy_v229_original(root,KEY,snap)
+        assert status=='LEGACY_V229_FIRST_GIT_PASS' and len(sha)==40,(status,sha)
+        at=NOW+timedelta(minutes=35)
+        full=mod.gate1c_all_saved_originals(
+            root,DAY,at,lambda *_:('historical_v125_revision_mismatch',None))
+        assert full['first_git_original_sha_proven']==0,full
+        assert full['legacy_v229_first_git_proven_separately']==1,full
+        assert full['legacy_v229_keys']==[KEY],full
+        assert full['original_not_verified']==1,full
+        assert full['unverified_reasons']=={'historical_v125_revision_mismatch':1},full
+        assert full['eligible_save_rate_percent'] is None
+        assert full['acceptance_99_percent_proven'] is False
+        # A later audit alteration, even with a matching edited receipt,
+        # cannot pass because the first Git bytes are immutable.
+        audit['latest_snapshot_sha256']='f'*64
+        put(root,audit_path,audit)
+        changed=mod.gate1c_legacy_v229_original(root,KEY,snap)
+        assert changed==('LEGACY_CHANGED_AFTER_FIRST_ADD',None),changed
+        rejected=mod.gate1c_all_saved_originals(
+            root,DAY,at,lambda *_:('historical_v125_revision_mismatch',None))
+        assert rejected['legacy_v229_first_git_proven_separately']==0,rejected
+        assert rejected['legacy_v229_unverified_reasons']=={'LEGACY_CHANGED_AFTER_FIRST_ADD':1}
+        # And no result/formal source is ever opened, even when present.
+        put(root,f'data/site_results/{KEY}.json',{'result':'NEVER_READ'})
+        assert mod.gate1c_legacy_v229_original(root,KEY,snap)==changed
+    print('GATE1C_LEGACY_FIRST_GIT_DISTINCT_FROM_V125_99_AND_TAMPERING_PASS')
+
+
 if __name__=='__main__':
     test_all()
     test_v271_urgent_health()
@@ -604,3 +679,4 @@ if __name__=='__main__':
     test_gate1c_first_git_sha_is_not_the_observed_denominator()
     test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races()
     test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git()
+    test_gate1c_legacy_v229_original_first_git_separate_tier()

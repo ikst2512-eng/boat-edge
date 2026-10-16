@@ -415,6 +415,93 @@ def gate1c_first_git_summary(root, day, now, verify=None):
 
 
 
+
+def gate1c_legacy_v229_original(root,key,snap):
+    """Read-only LEGACY tier; never V136/V125 PASS or a source eligibility proof."""
+    if not isinstance(key,str) or not KEY.fullmatch(key) or not isinstance(snap,dict):
+        return 'LEGACY_ID_INVALID',None
+    due=expected_deadline(key,snap.get('deadline'))
+    saved=moment(snap.get('saved_at'));first=moment(snap.get('first_saved_at'))
+    if (due is None or saved is None or first is None or not first<=saved<due
+            or not 120<=(due-saved).total_seconds()<=600 or snap.get('race_key')!=key
+            or snap.get('snapshot_window')!='FINAL_15M'
+            or snap.get('guards')!={'results_seen':False,'unlock':False,'scoring':False}):
+        return 'LEGACY_TIME_OR_SNAPSHOT_GUARD_INVALID',None
+    rels=[f'data/site_prediction_snapshots/{key}.json',
+          f'data/site_prediction_audit/{key}.json',
+          f'data/site_autopilot/v229_evidence/{key}.json']
+    original=[];first_add=None
+    try:
+        for rel in rels:
+            p=root/rel
+            if p.is_symlink() or not p.is_file() or any(d.is_symlink() for d in p.parents):
+                return 'LEGACY_PATH_UNSAFE',None
+            entries=subprocess.run(['git','log','--diff-filter=A','--format=%H%x09%cI','--',rel],
+                cwd=root,check=True,capture_output=True,text=True,timeout=12).stdout.strip().splitlines()
+            if len(entries)!=1:return 'LEGACY_FIRST_ADD_AMBIGUOUS',None
+            fields=entries[0].split('\t')
+            if len(fields)!=2 or not re.fullmatch(r'[0-9a-f]{40}',fields[0]):
+                return 'LEGACY_FIRST_COMMIT_INVALID',None
+            if first_add is None:first_add=fields
+            elif first_add!=fields:return 'LEGACY_FIRST_ADD_NOT_SAME_COMMIT',None
+            raw=subprocess.run(['git','show',f'{fields[0]}:{rel}'],
+                cwd=root,check=True,capture_output=True,timeout=12).stdout
+            if hashlib.sha256(raw).digest()!=hashlib.sha256(p.read_bytes()).digest():
+                return 'LEGACY_CHANGED_AFTER_FIRST_ADD',None
+            original.append(json.loads(raw))
+        committed=moment(first_add[1])
+        if (committed is None or committed+timedelta(seconds=1)<first
+                or not 120<=(due-committed).total_seconds()<=600
+                or committed>datetime.now(timezone.utc)+timedelta(seconds=60)):
+            return 'LEGACY_FIRST_ADD_OUTSIDE_WINDOW',None
+    except (OSError,ValueError,TypeError,UnicodeError,subprocess.SubprocessError):
+        return 'LEGACY_GIT_PROVENANCE_UNAVAILABLE',None
+    snapshot,audit,proof=original
+    if snapshot!=snap or not isinstance(audit,dict) or not isinstance(proof,dict):
+        return 'LEGACY_ORIGINAL_JSON_INVALID',None
+    snapsha=hashlib.sha256((root/rels[0]).read_bytes()).hexdigest()
+    if (audit.get('schema_version')!='boat-edge-final15m-audit-v125'
+            or audit.get('scope')!='SITE_ONLY_NOT_FORMAL_FRESH'
+            or audit.get('pass') is not True or audit.get('atomic_pre_result_audit') is not True
+            or audit.get('race_key')!=key or audit.get('revision_count')!=1
+            or audit.get('latest_snapshot_sha256')!=snapsha
+            or audit.get('latest_snapshot_saved_at')!=snap.get('saved_at')
+            or audit.get('source_evidence_file')!=rels[2]):
+        return 'LEGACY_AUDIT_INVALID',None
+    revs=audit.get('revisions')
+    if not isinstance(revs,list) or len(revs)!=1 or not isinstance(revs[0],dict):
+        return 'LEGACY_REVISION_INVALID',None
+    rev=revs[0]
+    if set(rev)!={'atomic_pre_result_proof_sha256','odds_sha256_snapshot',
+                  'race_sha256_snapshot','saved_at','snapshot_sha256'}:
+        return 'LEGACY_NOT_OLD_V229_REVISION',None
+    if (rev['saved_at']!=snap['saved_at'] or rev['snapshot_sha256']!=snapsha
+            or rev['race_sha256_snapshot']!=snap.get('race_sha256')
+            or rev['odds_sha256_snapshot']!=snap.get('odds_sha256')
+            or not re.fullmatch(r'[0-9a-f]{64}',str(rev['atomic_pre_result_proof_sha256']))):
+        return 'LEGACY_AUDIT_SOURCE_MISMATCH',None
+    if (proof.get('schema')!='BOAT_EDGE_V229_ATOMIC_PRE_RESULT_SOURCE_EVIDENCE_V1'
+            or proof.get('scope')!='SITE_REFERENCE_ONLY_NO_FORMAL_OR_RESULT_ACCESS'
+            or proof.get('new_snapshot_created_this_run') is not True
+            or proof.get('race_key')!=key or proof.get('results_seen') is not False
+            or proof.get('scoring') is not False or proof.get('formal_fresh_unlock') is not False
+            or proof.get('odds_combinations')!=120
+            or proof.get('snapshot_sha256')!=snapsha
+            or proof.get('snapshot_saved_at')!=snap['saved_at']
+            or proof.get('race_sha256')!=snap.get('race_sha256')
+            or proof.get('odds_sha256')!=snap.get('odds_sha256')):
+        return 'LEGACY_SOURCE_RECEIPT_INVALID',None
+    captured=moment(proof.get('evidence_captured_at'))
+    if captured is None or not saved<=captured<=committed+timedelta(seconds=1):
+        return 'LEGACY_RECEIPT_TIME_INVALID',None
+    for field in ('official_beforeinfo_fetched_at','official_race_card_fetched_at',
+                  'odds_fetched_at','scratch_checked_at'):
+        timestamp=moment(proof.get(field))
+        if timestamp is None or timestamp>captured or timestamp>saved+timedelta(seconds=1):
+            return 'LEGACY_SOURCE_TIME_INVALID',None
+    return 'LEGACY_V229_FIRST_GIT_PASS',first_add[0]
+
+
 def gate1c_all_saved_originals(root, day, now, verify=None):
     """Audit every saved SITE prediction on disk, not just the V215 sample.
 
@@ -429,6 +516,8 @@ def gate1c_all_saved_originals(root, day, now, verify=None):
     out={'day_jst':day, 'scope':'ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES',
          'snapshot_files_seen':0, 'matured_snapshot_files':0,
          'pending_snapshot_files':0, 'first_git_original_sha_proven':0,
+         'legacy_v229_first_git_proven_separately':0, 'legacy_v229_keys':[],
+         'legacy_v229_unverified_reasons':{},
          'original_not_verified':0, 'unverified_reasons':{},
          'independently_source_eligible_denominator':None,
          'eligible_save_rate_percent':None, 'acceptance_99_percent_proven':False}
@@ -466,6 +555,16 @@ def gate1c_all_saved_originals(root, day, now, verify=None):
                         continue
                     if reason=='PASS':
                         reason='first_git_commit_missing'
+                    # Never promote old V229 to V136 PASS. Store its immutable
+                    # first-Git confirmation in a DISTINCT read-only cohort.
+                    if reason=='historical_v125_revision_mismatch':
+                        legacy,commit_legacy=gate1c_legacy_v229_original(root,key,snap)
+                        if legacy=='LEGACY_V229_FIRST_GIT_PASS' and commit_legacy:
+                            out['legacy_v229_first_git_proven_separately']+=1
+                            out['legacy_v229_keys'].append(key)
+                        else:
+                            failures=out['legacy_v229_unverified_reasons']
+                            failures[legacy]=failures.get(legacy,0)+1
                 else:
                     reason='outside_v229_decision_window'
             out['original_not_verified']+=1
