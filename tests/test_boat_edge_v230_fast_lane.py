@@ -545,6 +545,101 @@ class FastLaneTests(unittest.TestCase):
         freeze.assert_called_once_with(self.root)
         sleep.assert_called_once_with(20)
 
+    def test_postcommit_after_real_first_git_saves_unattempted_live_other(self):
+        # V235 saved its priority already. A different eligible race has not
+        # been fetched at all and must not wait on the next GitHub schedule.
+        other='20261011-06-09'
+        race=makerace('14:44')
+        race['race_key']=other
+        race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{other}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':other,'deadline':'14:44'}]}]})
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011','targets':[KEY],
+            'outcomes':{KEY:'fresh_verified'},'new_snapshots_atomic_audited':1})
+        frozen=self.root/'data/site_prediction_snapshots'/f'{KEY}.json'
+        m.write_json(frozen,{'race_key':KEY,'immutable':True})
+        before=frozen.read_bytes()
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}) as proven,
+              patch.object(m,'fetch_one',return_value=(other,{'verified_fixture':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified') as update,
+              patch('boat_edge_v229_atomic_freeze.run',return_value=1) as freeze,
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as slept):
+            got=m.run_postcommit_incomplete(self.root,now=self.now,worker=2)
+        self.assertTrue(got['first_git_proven'])
+        self.assertEqual(got['unattempted_live_targets_seen'],[other])
+        self.assertEqual(got['retry_keys'],[other])
+        self.assertEqual(got['new_snapshots_atomic_audited'],1)
+        proven.assert_called_once()
+        fetch.assert_called_once_with(self.root,other)
+        update.assert_called_once()
+        freeze.assert_called_once_with(self.root)
+        slept.assert_not_called()
+        self.assertEqual(frozen.read_bytes(),before)
+
+    def test_postcommit_unattempted_requires_actual_first_git_proof(self):
+        other='20261011-06-09'
+        race=makerace('14:44')
+        race['race_key']=other;race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{other}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':other,'deadline':'14:44'}]}]})
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011','targets':[KEY],
+            'outcomes':{KEY:'fresh_verified'},'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':False}),
+              patch.object(m,'fetch_one') as fetch,
+              patch.object(m.time,'sleep') as slept):
+            got=m.run_postcommit_incomplete(self.root,now=self.now)
+        self.assertFalse(got['first_git_proven'])
+        self.assertEqual(got['retry_keys'],[])
+        fetch.assert_not_called()
+        slept.assert_not_called()
+
+    def test_postcommit_unattempted_never_enters_future_or_expired_window(self):
+        other='20261011-06-09'
+        race=makerace('14:53')
+        race['race_key']=other;race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{other}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':other,'deadline':'14:53'}]}]})
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011','targets':[KEY],
+            'outcomes':{KEY:'fresh_verified'},'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}),
+              patch.object(m,'fetch_one') as fetch):
+            got=m.run_postcommit_incomplete(self.root,now=self.now)
+        self.assertEqual(got['retry_keys'],[])
+        self.assertEqual(got['new_snapshots_atomic_audited'],0)
+        fetch.assert_not_called()
+        # Even if it was 7m out at the planning snapshot, 1m out at
+        # actual execution cannot create a first Git add after the cutoff.
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':other,'deadline':'14:44'}]}]})
+        race['meta']['deadline']='14:44'
+        m.write_json(self.root/'data/races'/f'{other}.json',race)
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}),
+              patch.object(m,'fetch_one') as fetch,
+              patch.object(m,'local_now',return_value=self.now+timedelta(minutes=6))):
+            got=m.run_postcommit_incomplete(self.root,now=self.now)
+        self.assertEqual(got['unattempted_live_targets_seen'],[other])
+        self.assertEqual(got['retry_keys'],[])
+        fetch.assert_not_called()
+
     def test_postcommit_stage_accepts_sha_bound_odds_sidecar_not_forgery(self):
         # Execute the exact shell-embedded second-Git-push stage on a local
         # isolated Git index. PR #411's previous mock stopped before git add.
