@@ -8,7 +8,7 @@
     "event": "第15回マスターズVSルーキーズ",
     "race_no": 6,
     "deadline": "13:14",
-    "updated_at": "2026-10-16T10:32:41+09:00",
+    "updated_at": "2026-10-16T10:54:55+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261016&jcd=02&rno=6",
-      "fetched_at": "2026-10-16T10:34:16+09:00",
-      "sha256": "6a70ba1027b210c1afd939b2d212011b8c6e6591857c634ae24fd22da8e52b78",
+      "fetched_at": "2026-10-16T10:56:32+09:00",
+      "sha256": "53de67ee6f3774fd689b01f468789fa9465c8bdcd3445f185beb14861d2134b1",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261016&jcd=02&rno=6",
+      "fetched_at": "2026-10-16T10:56:20+09:00",
+      "sha256": "b9308412c10bee8578b2cda51d63f9b7444df4f3adb328589c9b888da456d9ed",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "6a485d38dd113607a1caa1493846221297b1809a9df965d62128a54a68c4293d"
+      "sha256": "a3d3a4cd429cd9780f628c1479375cde470d04e8d27831fa0462674d8648d75a"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "091bc94d1a7455d739395a238cdf0ebc3b2bb5a18cbd69dd5355698505840e5a"
+      "sha256": "9e46d2cb2570271918033c18f0223e0f20d3af394eb2ef83c00cedf364292813"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "59f4e0b71bea9f07be5035194de873351907a4c9aecafbccf5ffe9154f2b6667"
+      "sha256": "c4f5f039a3bbe610e2b8868dcd1feb73f283dcfcaa26fc631ef572539c1cb2be"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/16.csv",
       "fetched_at": null,
-      "sha256": "cd5628969b5f84fa3b216ee5888f8e58923b952aa47441b04b6ad67060e43d67"
+      "sha256": "834377328848d90a3c2c762ee6aabdabb77c41feff61a69a17f29a62504d41dc"
     }
   },
   "racers": [
@@ -287,7 +293,53 @@
       "raw_text": "6 5206 / B1 梅原 祥平 岡山/鳥取 29歳/52.0kg F1 L0 0.15 4.45 20.24 39.29 3.68 17.65 23.53 43 48.78 70.73 48 40.48 54.76 1"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 宮武 英司 53.4kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 小宮 涼雅 52.3kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 西丸 敦基 52.7kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 古結 宏 52.8kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 奥田 誠 54.7kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 梅原 祥平 52.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
