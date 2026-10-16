@@ -92,6 +92,46 @@ fi
             _, events = self.run_case(**changes)
             self.assertNotIn("dispatch:", events)
 
+    def test_v71_official_odds_prioritizes_live_freeze_window_without_new_writer(self):
+        # Execute only the local race-selection block: no HTTP, Git or dispatch.
+        # The collector produces one final index and retains the original 120
+        # odds validation and publication stage untouched.
+        import re
+        import textwrap
+        from datetime import timedelta
+        wf = (SCRIPT.parents[1] / ".github/workflows/site-odds.yml").read_text(encoding="utf-8")
+        self.assertEqual(wf.count("          races=[]\\n"), 1)
+        block = wf.split("          races=[]\\n", 1)[1].split(
+            "          session=requests.Session()", 1)[0]
+        code = "races=[]\\n" + textwrap.dedent(block)
+        at = datetime(2026, 10, 16, 6, 42, tzinfo=timezone.utc).astimezone(
+            timezone(timedelta(hours=9)))
+        rows = [
+            ("20261016-24-03", 3, "16:21"),  # 39m, original first venue
+            ("20261016-24-02", 2, "15:47"),  # 5m, urgent
+            ("20261016-02-11", 11, "15:51"), # 9m, urgent
+            ("20261016-02-10", 10, "15:41"), # past deadline, still in V71
+            ("20261016-20-03", 3, "15:58"),  # 16m, next-up
+            ("20261016-20-02", 2, "15:43"),  # 1m, outside strict freeze
+        ]
+        catalog = {"venues": [
+            {"jcd": key.split("-")[1], "races": [
+                {"race_key": key, "race_no": no, "deadline": deadline}]}
+            for key, no, deadline in rows
+        ]}
+        namespace = {"today": catalog, "now": at, "re": re}
+        exec(compile(code, "site-odds:race-selector", "exec"), namespace)
+        ordered = [row["race_key"] for row in namespace["races"]]
+        self.assertEqual(ordered, [
+            "20261016-24-02", "20261016-02-11",
+            "20261016-20-03", "20261016-24-03",
+            "20261016-20-02", "20261016-02-10"
+        ])
+        self.assertIn("verify_official_dom_price_mapping(html)", wf)
+        self.assertIn('if len(odds) != 120 or unavailable:', wf)
+        self.assertIn("V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED", wf)
+        self.assertIn("Nudge existing V229 from successfully published PRE_RESULT inputs", wf)
+
     def test_shell_and_workflow_contract(self):
         p = subprocess.run(["bash", "-n", str(SCRIPT)], capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stderr)
