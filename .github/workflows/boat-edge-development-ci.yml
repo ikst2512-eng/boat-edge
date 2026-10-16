@@ -119,6 +119,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_01_v235_external_gap_watchdog.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_01_render_v235_cron.py' -v
           python3 -m py_compile scripts/boat_edge_01_v235_external_gap_watchdog.py
       - name: V392 verify prospective next-day official cards and independent UI TopK
         env:
