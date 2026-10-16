@@ -586,6 +586,65 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
     print('GATE1C_UNOBSERVED_CATALOG_COVERAGE_NOT_ELIGIBILITY_DENOMINATOR_PASS')
 
 
+def test_gate1c_previous_day_catalog_recovered_from_original_git_only():
+    # Day rollover must not erase the previous day's schedule or silently
+    # treat unsampled races as ineligible. All data here is synthetic.
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        k2=f'{DAY}-23-02'
+        original={'date':'2026-10-11','venues':[{'races':[
+            {'race_key':KEY,'deadline':'08:35'},
+            {'race_key':k2,'deadline':'08:37'}]}]}
+        put(root,'data/today.json',original)
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1','day_jst':DAY,
+            'observations':{KEY:{'race_key':KEY,'deadline':'08:35'}}})
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        subprocess.run(['git','add','--','data/today.json'],cwd=root,check=True)
+        env={**os.environ,'GIT_AUTHOR_DATE':'2026-10-11T23:56:00+09:00',
+             'GIT_COMMITTER_DATE':'2026-10-11T23:56:00+09:00'}
+        git=['git','-c','user.name=Fixture',
+             '-c','user.email=fixture@example.invalid','commit','-qm']
+        subprocess.run(git+['previous original schedule'],cwd=root,env=env,check=True)
+        original_commit=subprocess.check_output(
+            ['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+        # The *current* catalog now refers only to the next day.
+        put(root,'data/today.json',{'date':'2026-10-12','venues':[{'races':[
+            {'race_key':'20261012-23-01','deadline':'08:35'}]}]})
+        subprocess.run(['git','add','--','data/today.json'],cwd=root,check=True)
+        env['GIT_AUTHOR_DATE']='2026-10-12T00:25:00+09:00'
+        env['GIT_COMMITTER_DATE']=env['GIT_AUTHOR_DATE']
+        subprocess.run(git+['rotated next-day schedule'],cwd=root,env=env,check=True)
+        at=datetime(2026,10,12,0,35,tzinfo=JST)
+        report=mod.gate1c_first_git_summary(root,DAY,at,lambda *_:('PASS','fake'))
+        assert report['catalog_matured_races']==2,report
+        assert report['catalog_matured_not_observed']==1,report
+        assert report['catalog_matured_without_snapshot']==2,report
+        assert report['catalog_source_git_commit']==original_commit,report
+        assert report['catalog_source_scope']=='PREVIOUS_DAY_SCHEDULE_FROM_PREMIDNIGHT_GIT'
+        assert report['catalog_matured_by_hour_jst']=={'08':2},report
+        assert report['independently_source_eligible_denominator'] is None
+        assert report['eligible_save_rate_percent'] is None
+        assert report['acceptance_99_percent_proven'] is False
+        # A malformed original schedule must not be promoted as a complete
+        # full-day catalog even when its Git commit timestamp is valid.
+        put(root,'data/today.json',original|{'venues':[{'races':[
+            {'race_key':KEY,'deadline':'08:35'},
+            {'race_key':KEY,'deadline':'08:35'}]}]})
+        env['GIT_AUTHOR_DATE']='2026-10-11T23:57:00+09:00'
+        env['GIT_COMMITTER_DATE']=env['GIT_AUTHOR_DATE']
+        # Put a newer pre-midnight synthetic commit on a separate fixture
+        # branch (Git log follows only reachable history).
+        subprocess.run(['git','checkout','-qb','test-corrupt-prev','HEAD~1'],
+                       cwd=root,check=True,capture_output=True)
+        subprocess.run(['git','add','--','data/today.json'],cwd=root,check=True)
+        subprocess.run(git+['corrupt prior schedule'],cwd=root,env=env,check=True)
+        bad=mod.gate1c_first_git_summary(root,DAY,at,lambda *_:('PASS','fake'))
+        assert bad['catalog_matured_races'] is None,bad
+        assert bad['eligible_save_rate_percent'] is None
+    print('GATE1C_PREVIOUS_DAY_ORIGINAL_GIT_CATALOG_NOT_ELIGIBILITY_PASS')
+
+
 def test_gate1c_first_git_sha_is_not_the_observed_denominator():
     """Pre-result V125 first-add proof is stricter than snapshot existence.
 
@@ -796,6 +855,7 @@ if __name__=='__main__':
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
     test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibility()
+    test_gate1c_previous_day_catalog_recovered_from_original_git_only()
     test_gate1c_first_git_sha_is_not_the_observed_denominator()
     test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races()
     test_gate1c_all_saved_original_rejects_symlinks_and_missing_first_git()
