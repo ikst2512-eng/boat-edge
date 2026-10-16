@@ -659,8 +659,9 @@ def gate1c_read_only_report(root,now,verify=None):
             'today':gate1c_source_receipt_summary(root,day.strftime('%Y%m%d'),now,verify),
             'previous_day':gate1c_source_receipt_summary(
                 root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify)},
-        'note':'First Git original SHA is an independently checked numerator, '
-               'not a proven source-eligible denominator. No 99% claim until '
+        'note':'Observed V215 races and all saved SITE snapshots are distinct numerator cohorts. '
+               'Every positive original proof requires V125 receipt and first Git SHA bytes. '
+               'Neither cohort proves a source-eligible denominator; no 99% claim until '
                'eligibility and exclusions are independently reconciled.'
     }
 
