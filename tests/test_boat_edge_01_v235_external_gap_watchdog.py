@@ -139,9 +139,17 @@ class WatchdogContract(unittest.TestCase):
             self.assertEqual(mod.main([]), 0)
 
     def test_live_requires_token_before_any_io(self):
-        with patch.dict(mod.os.environ, {}, clear=True), \
+        with patch.dict(mod.os.environ, {'BOAT_EDGE_EXTERNAL_V235_ENABLED': 'true'}, clear=True), \
              patch.object(mod, 'api_json') as io:
             self.assertEqual(mod.main(['--live']), 2)
+            io.assert_not_called()
+
+    def test_blueprint_off_without_token_is_clean_noop(self):
+        # The new paid Render Cron begins OFF and without any GitHub token.
+        # It must not produce recurring failed runs, call GitHub, or dispatch.
+        with patch.dict(mod.os.environ, {'BOAT_EDGE_EXTERNAL_V235_ENABLED': 'false'}, clear=True), \
+             patch.object(mod, 'api_json') as io:
+            self.assertEqual(mod.main(['--live']), 0)
             io.assert_not_called()
 
     def test_paid_scheduler_live_requires_separate_owner_enable_even_with_token(self):
