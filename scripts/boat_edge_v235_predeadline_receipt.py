@@ -69,6 +69,15 @@ def choose(root, now, requested=None):
             if item[1] == requested:
                 return item
         return None
+    # Report the same live target V230 actually selected for this run.
+    # An already-expired race in the audit grace period must not hide a
+    # prospectively frozen official race; this is read-only receipt routing.
+    fast = load(root / "data/site_autopilot/v230_fast_current.json")
+    if fast.get("day_jst") == date:
+        live_by_key = {item[1]: item for item in found if item[0] > now}
+        for key in fast.get("targets") or []:
+            if key in live_by_key:
+                return live_by_key[key]
     # One-day 1R priority applies only through its near-deadline audit grace.
     # Otherwise the read-only receipt would keep reporting the expired 08:35
     # race all day and hide source/freeze failures in 2R and later races.
@@ -78,8 +87,13 @@ def choose(root, now, requested=None):
             if (item[1] == "20261014-14-01"
                     and item[0] >= now - timedelta(minutes=2)):
                 return item
-    upcoming = [x for x in found if x[0] >= now - timedelta(minutes=2)]
-    return min(upcoming or found, key=lambda x: x[0])
+    # Prefer the next race over an already closed one still in audit grace.
+    # Only use grace when no future race remains in the current-day card.
+    future = [x for x in found if x[0] > now]
+    if future:
+        return min(future, key=lambda x: x[0])
+    recent = [x for x in found if x[0] >= now - timedelta(minutes=2)]
+    return min(recent or found, key=lambda x: x[0])
 
 
 def receipt(root, now=None, requested=None):

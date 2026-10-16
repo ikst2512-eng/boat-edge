@@ -78,6 +78,38 @@ class V235Proof(unittest.TestCase):
             self.assertEqual(choose(root, after)[1], "20261014-14-02")
             self.assertEqual(choose(root, after, requested=KEY)[1], KEY)
 
+    def test_live_v230_target_wins_over_expired_two_minute_grace(self):
+        # 2026-10-16 production regression: 10:30:32 receipt picked expired
+        # Heiwajima 1R while V230 successfully froze Ashiya 5R (10:34).
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            expired = "20261016-04-01"
+            live = "20261016-21-05"
+            save(root, "data/today.json", {
+                "date": "2026-10-16", "venues": [
+                    {"venue": "平和島", "races": [{"race_key": expired, "deadline": "10:30"}]},
+                    {"venue": "芦屋", "races": [{"race_key": live, "deadline": "10:34"}]}
+                ]})
+            save(root, "data/site_autopilot/v230_fast_current.json", {
+                "day_jst": "20261016", "targets": [live],
+                "outcomes": {live: "fresh_verified"}})
+            now = datetime(2026, 10, 16, 10, 30, 32, tzinfo=JST)
+            self.assertEqual(choose(root, now)[1], live)
+            self.assertEqual(receipt(root, now)["race_key"], live)
+            self.assertEqual(choose(root, now, requested=expired)[1], expired)
+
+    def test_no_v230_status_still_prefers_future_over_expired_grace(self):
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            save(root, "data/today.json", {
+                "date": "2026-10-16", "venues": [
+                    {"venue": "平和島", "races": [
+                        {"race_key": "20261016-04-01", "deadline": "10:30"},
+                        {"race_key": "20261016-04-02", "deadline": "10:53"}]}
+                ]})
+            now = datetime(2026, 10, 16, 10, 30, 32, tzinfo=JST)
+            self.assertEqual(choose(root, now)[1], "20261016-04-02")
+
     def test_local_only_not_a_git_commit(self):
         with tempfile.TemporaryDirectory() as base:
             root = Path(base)
