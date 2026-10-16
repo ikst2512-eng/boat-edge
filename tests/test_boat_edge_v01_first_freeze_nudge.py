@@ -137,8 +137,8 @@ fi
         # despite the downstream nudge correctly refusing the branch. Gate
         # the WHOLE odds job before fetching, resetting or publishing source.
         wf = (SCRIPT.parents[1] / ".github/workflows/site-odds.yml").read_text(encoding="utf-8")
-        header = wf.split("\nconcurrency:\\n", 1)[0]
-        job = wf.split("\njobs:\\n", 1)[1].split("\n    steps:\\n", 1)[0]
+        header = wf.split("concurrency:", 1)[0]
+        job = wf.split("jobs:", 1)[1].split("steps:", 1)[0]
         self.assertIn("    branches: [main]", header)
         self.assertIn("github.ref == 'refs/heads/main'", job)
         self.assertIn("github.repository == 'ikst2512-eng/boat-edge'", job)
