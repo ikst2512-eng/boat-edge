@@ -96,6 +96,14 @@ class WatchdogContract(unittest.TestCase):
             self.assertEqual(mod.main(['--live']), 2)
             io.assert_not_called()
 
+    def test_paid_scheduler_live_requires_separate_owner_enable_even_with_token(self):
+        with patch.dict(mod.os.environ,
+                        {'BOAT_EDGE_GITHUB_ACTIONS_TOKEN': 'fixture',
+                         'BOAT_EDGE_EXTERNAL_V235_ENABLED': 'false'}, clear=True), \
+             patch.object(mod, 'api_json') as io:
+            self.assertEqual(mod.main(['--live']), 0)
+            io.assert_not_called()
+
     def test_only_single_exact_dispatch_path(self):
         import base64
         import json
@@ -113,7 +121,8 @@ class WatchdogContract(unittest.TestCase):
             return self.workflow
 
         with patch.dict(mod.os.environ,
-                        {'BOAT_EDGE_GITHUB_ACTIONS_TOKEN': 'fixture'}), \
+                        {'BOAT_EDGE_GITHUB_ACTIONS_TOKEN': 'fixture',
+                         'BOAT_EDGE_EXTERNAL_V235_ENABLED': 'true'}, clear=True), \
              patch.object(mod, 'api_json', side_effect=api), \
              patch.object(mod, 'utc_now', return_value=NOW):
             self.assertEqual(mod.main(['--live']), 0)

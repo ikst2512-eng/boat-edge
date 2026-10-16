@@ -1,0 +1,21 @@
+# BOAT EDGE 01 / Gate 1C: OPTIONAL external scheduler Blueprint.
+# This file alone provisions NOTHING. Paid service creation requires the owner.
+# If provisioned, live GitHub dispatch remains disabled until an explicit
+# BOAT_EDGE_EXTERNAL_V235_ENABLED=true setting AND a minimal-scope token.
+services:
+  - type: cron
+    name: boat-edge-v235-gap-backup
+    runtime: python
+    region: singapore
+    branch: main
+    plan: 0.5c-512mb
+    # Render uses UTC. 23:00-13:59 UTC = 08:00-22:59 Japan time.
+    schedule: '*/2 23,0-13 * * *'
+    autoDeployTrigger: 'off'
+    buildCommand: "python3 -m unittest discover -s tests -p 'test_boat_edge_01_v235_external_gap_watchdog.py' -v"
+    startCommand: "python3 scripts/boat_edge_01_v235_external_gap_watchdog.py --live"
+    envVars:
+      - key: BOAT_EDGE_GITHUB_ACTIONS_TOKEN
+        sync: false
+      - key: BOAT_EDGE_EXTERNAL_V235_ENABLED
+        value: 'false'
