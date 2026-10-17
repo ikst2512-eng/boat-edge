@@ -183,6 +183,34 @@ class V235Proof(unittest.TestCase):
         self.assertIn(f"'{filename}:{git_blob}'",workflow)
         self.assertIn('test "$(git hash-object "$path")" = "$sha"',workflow)
 
+    def test_v235_all_pinned_pre_result_dependencies_match_main_git_blobs(self):
+        """A V215 source-coverage fix must repin V235 or fail before production.
+
+        Keep exact SHA matching fail-closed for all five immutable dependencies.
+        This catches the 2026-10-18 06:07 V235 outage after V215 changed,
+        without removing any strict source-identity guard or reading results.
+        """
+        root=Path(__file__).resolve().parents[1]
+        workflow=(root/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        files=(
+            'scripts/boat_edge_v230_fast_lane.py',
+            'scripts/boat_edge_v232_pre_result_cohort.py',
+            'scripts/boat_edge_v215_readiness.py',
+            'scripts/boat_edge_v214_shadow.py',
+            'scripts/boat_edge_v229_atomic_freeze.py',
+        )
+        for path in files:
+            raw=(root/path).read_bytes()
+            sha=hashlib.sha1(
+                b'blob '+str(len(raw)).encode('ascii')+b'\x00'+raw
+            ).hexdigest()
+            self.assertIn(f"'{path}:{sha}'", workflow, path)
+        self.assertNotIn(
+            "scripts/boat_edge_v215_readiness.py:f74705858e9bffbe28b4ce444d29aa8565ed6497",
+            workflow)
+        self.assertIn('V234_PRE_RESULT_DEPENDENCY_CHANGED_$path',workflow)
+        self.assertIn('test "$(git hash-object "$path")" = "$sha"',workflow)
+
     def test_window_does_not_invent_a_prediction(self):
         with tempfile.TemporaryDirectory() as base:
             root = Path(base)
