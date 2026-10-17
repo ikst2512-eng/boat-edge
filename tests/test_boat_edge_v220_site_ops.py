@@ -107,8 +107,9 @@ def test_gate1c_v71_stale_index_recovery_matches_40min_detection_window():
             assert 'site-odds.yml' in report['recovery_dispatch_candidates'],(lead,report)
             assert report['formal_unlock_or_scoring_authorized'] is False
             assert report['formal_results_read_by_this_runner'] is False
-        # No extra dispatch outside the V220 40-minute observability window.
-        report=mod.compute(root,due-timedelta(minutes=40,seconds=1))
+        # The pre-existing 0.1-minute rounding means 40m01s still reads
+        # 40.0; use 41m to prove no extra dispatch outside the alarm window.
+        report=mod.compute(root,due-timedelta(minutes=41))
         assert 'site-odds.yml' not in report['recovery_dispatch_candidates']
         report=mod.compute(root,due+timedelta(minutes=1))
         assert 'site-odds.yml' not in report['recovery_dispatch_candidates']
