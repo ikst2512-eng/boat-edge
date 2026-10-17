@@ -54,7 +54,16 @@ class V216CollectorWake(unittest.TestCase):
         self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'",collector)
         self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",collector)
         odds=ODDS.read_text(encoding='utf8')
-        self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",odds)
+        # Newer main permits only an original V216 *schedule* wake;
+        # a collector/V71-triggered V216 must never fan out back to V71.
+        if '  workflow_run:' in odds.split('permissions:',1)[0]:
+            self.assertIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'", odds)
+            self.assertIn("github.event.workflow_run.event == 'schedule'", odds)
+            self.assertIn("github.event.workflow_run.conclusion == 'success'", odds)
+            self.assertIn("github.event.workflow_run.head_branch == 'main'", odds)
+            self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", odds)
+        else:
+            self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",odds)
         # All observation inputs remain pre-result, the collector and odds
         # producers never recursively listen to this V216 observer.
         self.assertIn("V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED",odds)
@@ -107,7 +116,16 @@ class V216CollectorWake(unittest.TestCase):
         odds=ODDS.read_text(encoding='utf8')
         event=odds.split('on:\n',1)[1].split('\npermissions:',1)[0]
         self.assertEqual(event.count('  schedule:'),1)
-        self.assertNotIn('  workflow_run:',event)
+        if '  workflow_run:' in event:
+            self.assertEqual(event.count('  workflow_run:'), 1)
+            self.assertIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'", event)
+            self.assertIn("github.event.workflow_run.event == 'schedule'", odds)
+            self.assertIn("github.event.workflow_run.conclusion == 'success'", odds)
+            self.assertIn("github.event.workflow_run.head_branch == 'main'", odds)
+            self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", odds)
+            self.assertNotIn("      - 'BOAT EDGE 自動更新'",event)
+        else:
+            self.assertNotIn('  workflow_run:',event)
         self.assertIn('  workflow_dispatch:',event)
         self.assertIn('branches: [main]',event)
         slots=[]
@@ -126,7 +144,8 @@ class V216CollectorWake(unittest.TestCase):
                             for i in range(12)))
         # No V216/V229 listener: completed/skipped workflow_run feedback
         # events must not cause an accidental recursion or extra writer.
-        self.assertNotIn('BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',event)
+        if '  workflow_run:' not in event:
+            self.assertNotIn('BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',event)
         self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit',event)
         self.assertIn('group: boat-edge-site-odds-v71',odds)
         self.assertIn('cancel-in-progress: false',odds)
