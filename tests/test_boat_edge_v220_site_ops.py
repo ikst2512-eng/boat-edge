@@ -86,6 +86,42 @@ def test_all():
         assert not mod.write_if_changed(state,warn)
         assert 'NOT_FORMAL_FRESH' in warn['scope']
     print('V220_TESTS_PASS waiting, window deficits, fail-closed recovery, ready sources, formal separation, deterministic reports')
+def test_gate1c_v71_stale_index_recovery_matches_40min_detection_window():
+    """Only the existing V71 job recovers stale odds between -40m and -25m.
+
+    This regression covers the 2026-10-17 21:25 JST condition: stale V71
+    index, next official race due at 21:51, previously NO recovery candidate.
+    Run only against synthetic PRE_RESULT files; no results or odds fabrication.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        sample(root)
+        put(root,'data/site_odds/index.json',{
+            'date':'2026-10-11',
+            'updated_at':'2026-10-11T07:20:00+09:00'})
+        due=datetime(2026,10,11,8,35,tzinfo=JST)
+        for lead in (40,39,30,26,25,10):
+            at=due-timedelta(minutes=lead)
+            report=mod.compute(root,at)
+            assert 'odds_index_stale' in report['issues'],(lead,report['issues'])
+            assert 'site-odds.yml' in report['recovery_dispatch_candidates'],(lead,report)
+            assert report['formal_unlock_or_scoring_authorized'] is False
+            assert report['formal_results_read_by_this_runner'] is False
+        # The pre-existing 0.1-minute rounding means 40m01s still reads
+        # 40.0; use 41m to prove no extra dispatch outside the alarm window.
+        report=mod.compute(root,due-timedelta(minutes=41))
+        assert 'site-odds.yml' not in report['recovery_dispatch_candidates']
+        report=mod.compute(root,due+timedelta(minutes=1))
+        assert 'site-odds.yml' not in report['recovery_dispatch_candidates']
+        # The already-fresh index never triggers a redundant V71 dispatch.
+        put(root,'data/site_odds/index.json',{
+            'date':'2026-10-11',
+            'updated_at':'2026-10-11T08:04:00+09:00'})
+        report=mod.compute(root,NOW)
+        assert 'site-odds.yml' not in report['recovery_dispatch_candidates']
+        assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml' not in report['recovery_dispatch_candidates']
+    print('GATE1C_V71_40MIN_STALE_INDEX_EXISTING_RECOVERY_PASS')
+
 def test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector():
     """A valid six-racer card, beforeinfo and verified 120 odds are not
     enough to freeze if the collector scratch is absent or expired.
@@ -959,6 +995,7 @@ def test_gate1c_legacy_v229_original_first_git_separate_tier():
 
 if __name__=='__main__':
     test_all()
+    test_gate1c_v71_stale_index_recovery_matches_40min_detection_window()
     test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector()
     test_v271_urgent_health()
     test_v272_source_change_trigger()
