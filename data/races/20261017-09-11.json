@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 11,
     "deadline": "15:38",
-    "updated_at": "2026-10-17T14:37:18+09:00",
+    "updated_at": "2026-10-17T15:34:38+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,22 +19,22 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=09&rno=11",
-      "fetched_at": "2026-10-17T14:39:32+09:00",
-      "sha256": "07aea2c6cbb1c2390da8c871de1c840499485f85eb3d31c307ec835c1a20a7bb",
+      "fetched_at": "2026-10-17T15:34:29+09:00",
+      "sha256": "2576a2f83c59d1b66c4706ed34d7c555aa38e3e021f14b7a3ed005e811550326",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=09&rno=11",
-      "fetched_at": "2026-10-17T14:38:06+09:00",
-      "sha256": "d2d535564b8310f093cbecab7415f1a062550290eed4d2e63ed73201a081a824",
+      "fetched_at": "2026-10-17T15:34:38+09:00",
+      "sha256": "cfe5749d1f93eaca3bff24f71e4a11339ab2c403314d5ce9df18ed6e36c2e734",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
@@ -304,47 +304,72 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 後藤 翔之 53.5kg R 3"
+        "exhibition_time": 6.75,
+        "tilt": 0.0,
+        "raw_text": "1 後藤 翔之 53.5kg 6.75 0.0 R 3"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 竹井 貴史 52.5kg R 6"
+        "exhibition_time": 6.73,
+        "tilt": 0.0,
+        "raw_text": "2 竹井 貴史 52.5kg 6.73 0.0 R 6"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 本橋 克洋 53.5kg R 4"
+        "exhibition_time": 6.85,
+        "tilt": 0.0,
+        "raw_text": "3 本橋 克洋 53.5kg 6.85 0.0 R 4"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 向後 龍一 52.0kg リング×2 R"
+        "exhibition_time": 6.82,
+        "tilt": 0.0,
+        "raw_text": "4 向後 龍一 52.0kg 6.82 0.0 リング×2 R"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 畑 竜生 52.0kg R 1"
+        "exhibition_time": 6.77,
+        "tilt": -0.5,
+        "raw_text": "5 畑 竜生 52.0kg 6.77 -0.5 新 R 1"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 安藤 裕貴 52.8kg ギヤ R 5"
+        "exhibition_time": 6.78,
+        "tilt": -0.5,
+        "raw_text": "6 安藤 裕貴 52.8kg 6.78 -0.5 ギヤ R 5"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".12"
+      },
+      {
+        "lane": 2,
+        "st": ".20"
+      },
+      {
+        "lane": 3,
+        "st": ".25"
+      },
+      {
+        "lane": 4,
+        "st": "F.02"
+      },
+      {
+        "lane": 5,
+        "st": "F.01"
+      },
+      {
+        "lane": 6,
+        "st": ".21"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 3.0,
-      "wave_cm": 2.0
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
     }
   },
   "validation": {
