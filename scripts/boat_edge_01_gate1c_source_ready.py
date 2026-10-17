@@ -160,6 +160,10 @@ def run(root,now):
                 raise ValueError('GATE1C_DUPLICATE_SCHEDULE_DEADLINE')
             races[key]=due
     made=[];ready=0;window=0
+    # Ephemeral, per-run negative evidence only. Never persist a late
+    # observation as if it existed inside the original deadline window.
+    # A missing snapshot or empty gap list is NOT proof of eligibility.
+    missing_source=[]
     for key,due in sorted(races.items()):
         if not 120<=(due-now).total_seconds()<=600:continue
         window+=1
@@ -170,7 +174,19 @@ def run(root,now):
             # Even a malformed existing receipt must not be overwritten.
             continue
         proof=valid(root,key,due,now)
-        if proof is None:continue
+        if proof is None:
+            gaps=source_status(root,key,now)
+            missing_source.append({
+                'race_key':key,
+                'deadline_at':due.isoformat(),
+                'observed_at':now.isoformat(),
+                'source_gaps':gaps,
+                'strict_source_proof':'UNVERIFIED',
+                'source_eligibility':'UNPROVEN',
+                'snapshot_exists_at_observation':(
+                    root/'data/site_prediction_snapshots'/f'{key}.json').is_file(),
+            })
+            continue
         ready+=1
         p.parent.mkdir(parents=True,exist_ok=True)
         if p.parent.is_symlink():
@@ -183,6 +199,9 @@ def run(root,now):
             continue
         made.append(key)
     return {'created':made,'ready_in_window':ready,'window_races':window,
+            'missing_source_observations':missing_source,
+            'missing_source_count':len(missing_source),
+            'negative_evidence_scope':'CURRENT_2_TO_10M_WINDOW_ONLY_NOT_HISTORICAL',
             'not_an_eligibility_denominator':True}
 
 
