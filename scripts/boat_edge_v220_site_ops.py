@@ -328,6 +328,12 @@ def compute(root,now):
     # checks remain independent and fail closed.
     urgent_odds_only_keys=[]
     for r in urgent:
+        # Emergency source retries are disabled if the formal/system safety
+        # lock is not in its original closed state.
+        if (any(formal_guard.get(g) is not False for g in ('results_seen','unlock','scoring'))
+                or formal_guard.get('RESULT_UNLOCK_TOKEN') is not None
+                or (formal.get('formalFirst100') or {}).get('races',0)!=0):
+            break
         key=r['key']
         exact_due=expected_deadline(key,r['deadline_jst'])
         if not exact_due or not 2 <= (exact_due-now).total_seconds()/60 <= 10:
