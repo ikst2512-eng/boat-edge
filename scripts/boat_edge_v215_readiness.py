@@ -92,16 +92,20 @@ def audit(root, now):
             gaps=source_gaps(root,key,now)
             window.append({'race_key':key,'venue':venue,'deadline':hm,'minutes_left':round(left,1),
                            'reason':reason,'source_gaps':gaps})
+        if 0<=left<=15:
+            race=load(root/'data/races'/(key+'.json')) or {}
+            card=(race.get('source_audit') or {}).get('race_card') or {}
+            before=(race.get('source_audit') or {}).get('beforeinfo') or {}
+            prediction=root/'data/site_prediction_snapshots'/(key+'.json')
+            provisional['race_card_ok']=provisional.get('race_card_ok',0)+(card.get('status')=='ok')
+            provisional['beforeinfo_ok']=provisional.get('beforeinfo_ok',0)+(before.get('status')=='ok')
+            provisional['snapshot_exists']=provisional.get('snapshot_exists',0)+prediction.is_file()
         if 0<=left<=90 and len(forecast)<8:
             race=load(root/'data/races'/(key+'.json')) or {}
             card=(race.get('source_audit') or {}).get('race_card') or {}
             before=(race.get('source_audit') or {}).get('beforeinfo') or {}
             prediction=root/'data/site_prediction_snapshots'/(key+'.json')
             scratch=load(root/'data/site_scratches_v182'/(key+'.json')) or {}
-            if 0<=left<=15:
-                provisional['race_card_ok']=provisional.get('race_card_ok',0)+(card.get('status')=='ok')
-                provisional['beforeinfo_ok']=provisional.get('beforeinfo_ok',0)+(before.get('status')=='ok')
-                provisional['snapshot_exists']=provisional.get('snapshot_exists',0)+prediction.is_file()
             forecast.append({'race_key':key,'venue':venue,'deadline':hm,
                   'watch_start':(due-dt.timedelta(minutes=15)).astimezone(JST).strftime('%H:%M'),
                   'race_card_status':card.get('status','unknown'),
