@@ -58,6 +58,32 @@ class V125GitRaceSafety(unittest.TestCase):
         self.assertIn("  contents: write", pre)
         self.assertIn("git push origin HEAD:main", job)
 
+    def test_gate1c_v229_completion_wakes_existing_v125_without_new_writer(self):
+        """Only successful same-repo V229 can nudge the existing V125 index owner."""
+        src = self.src
+        event, job = src.split("jobs:", 1)
+        upstream = "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit"
+        historical = "BOAT EDGE V123 UI Matched Final History"
+        self.assertEqual(event.count("  workflow_run:"), 1)
+        self.assertEqual(event.count("  schedule:"), 1)
+        self.assertEqual(event.count('      - "' + upstream + '"'), 1)
+        self.assertEqual(event.count('      - "' + historical + '"'), 1)
+        self.assertIn("github.event.workflow_run.name == '" + upstream + "'", job)
+        self.assertIn("github.event.workflow_run.name == '" + historical + "'", job)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", job)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", job)
+        self.assertNotIn("BOAT EDGE V220 - Autonomous Site Operations", event)
+        self.assertNotIn("BOAT EDGE V235 - Stable Autonomous Prediction Freeze", event)
+        self.assertEqual(src.count("      - name: Recompute and publish V125 audit from the latest main"), 1)
+        self.assertIn('git reset --hard origin/main', job)
+        self.assertIn('git clean -fd -- data/site_prediction_audit/', job)
+        self.assertIn('if git push origin HEAD:main; then', job)
+        v229 = (ROOT / ".github" / "workflows" /
+                "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
+        self.assertNotIn("BOAT EDGE V125 Revision Safe FINAL15M Audit",
+                         v229.split("permissions:", 1)[0])
+
     def test_late_replay_fail_closed_without_formal_results(self):
         src = self.src
         save = src.split("      - name: Recompute and publish V125 audit from the latest main", 1)[1]
