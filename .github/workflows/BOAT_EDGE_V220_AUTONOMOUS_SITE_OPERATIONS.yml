@@ -12,12 +12,15 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '11,26,41,56 * * * *'
-  # When GitHub delays the primary collector cron, the already scheduled V216
-  # source-readiness pass can nudge EXISTING V220 recovery logic. No new
-  # collector, cron, engine, model writer, or after-deadline replay.
+  # Existing V186's independently scheduled source/scratch publication can
+  # wake the SAME V220 guarded recovery owner when the V71 cron is omitted.
+  # V186 does not listen to V220, V216 or V71: no feedback loop. Only V186
+  # schedule events are accepted; keep V216's already approved event path.
+  # No new cron, workflow, writer, results read or paid third-party service.
   workflow_run:
     workflows:
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+      - 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'
     types: [completed]
     branches: [main]
 
@@ -38,7 +41,10 @@ jobs:
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
+         (github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy' &&
+          github.event.workflow_run.event == 'schedule'))))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
