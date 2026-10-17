@@ -359,6 +359,54 @@ def compute(root,now):
         all(formal_guard.get(k) is False for k in ('results_seen','unlock','scoring'))
         and formal_guard.get('RESULT_UNLOCK_TOKEN') is None
         and (formal.get('formalFirst100') or {}).get('races',0)==0)
+    # Gate 1C: official exhibition can still be unpublished at the first
+    # collector attempt. A 900s *collector* cooldown then prevents a
+    # prospective 2-10m recovery even when the 120-price official odds and
+    # valid racecard are already available. This is a retry authorization
+    # for the EXISTING collector only, never permission to freeze a forecast.
+    # Exclude explicit known withdrawals, source/identity uncertainty and
+    # every missing/stale/unverified odds combination.
+    urgent_beforeinfo_only_keys=[]
+    if formal_locked:
+        for r in urgent:
+            key=r['key']
+            due=expected_deadline(key,r['deadline_jst'])
+            if not due or not 2 <= (due-now).total_seconds()/60 <= 10:
+                continue
+            gaps=set(r['missing_evidence'])
+            pending={'beforeinfo_unavailable','beforeinfo_stale',
+                     'scratch_unverified_or_blocked','scratch_stale'}
+            if ('frozen_prediction_missing_or_invalid' not in gaps
+                    or not gaps.intersection(pending)
+                    or not gaps.issubset(pending|{'frozen_prediction_missing_or_invalid'})
+                    or (root/'data/site_prediction_snapshots'/f'{key}.json').exists()):
+                continue
+            race=load(root/'data/races'/f'{key}.json') or {}
+            meta=race.get('meta') or {}
+            audit=race.get('source_audit') or {}
+            card=audit.get('race_card') or {}
+            before=audit.get('beforeinfo') or {}
+            scratch=load(root/'data/site_scratches_v182'/f'{key}.json') or {}
+            if (race.get('race_key') not in (None,key)
+                    or str(meta.get('venue_code')).zfill(2)!=key.split('-')[1]
+                    or str(meta.get('race_no'))!=str(int(key.split('-')[2]))
+                    or meta.get('phase')!='PRE_RESULT'
+                    or any(meta.get(flag) is not False for flag in
+                           ('results_seen','unlock','scoring'))
+                    or len(race.get('racers') or [])!=6
+                    or card.get('status')!='ok'
+                    or not isinstance(card.get('sha256'),str)
+                    or len(card['sha256'])!=64
+                    or age_minutes(card.get('fetched_at'),now) is None
+                    or age_minutes(card.get('fetched_at'),now)>16
+                    or before.get('status') not in ('ok','published_wait')
+                    or not str(before.get('source','')).startswith(
+                        'https://www.boatrace.jp/owpc/pc/race/beforeinfo?')
+                    or scratch.get('blocked') is True
+                    or scratch.get('suspect_lanes')
+                    or scratch.get('official_raw_flags')):
+                continue
+            urgent_beforeinfo_only_keys.append(key)
     if formal_locked and any(
         2<=r['minutes_left']<=10
         and r['missing_evidence']==['frozen_prediction_missing_or_invalid']
@@ -393,7 +441,8 @@ def compute(root,now):
       'research_model_production_promotion':False,'paper_wager_authorized_by_this_runner':False,
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover,
-      'urgent_odds_only_recovery_keys':urgent_odds_only_keys}
+      'urgent_odds_only_recovery_keys':urgent_odds_only_keys,
+      'urgent_beforeinfo_only_recovery_keys':urgent_beforeinfo_only_keys}
 
 def gate1c_previous_day_catalog_from_git(root,day):
     """Last committed schedule BEFORE next JST midnight; diagnostics only.
@@ -987,7 +1036,8 @@ def main():
             'saved':changed, 'rate_proven':False},sort_keys=True))
     elif a.recovery_plan:
         print(json.dumps({'workflows':doc['recovery_dispatch_candidates'],
-            'urgent_odds_only_recovery_keys':doc['urgent_odds_only_recovery_keys']},sort_keys=True))
+            'urgent_odds_only_recovery_keys':doc['urgent_odds_only_recovery_keys'],
+            'urgent_beforeinfo_only_recovery_keys':doc['urgent_beforeinfo_only_recovery_keys']},sort_keys=True))
     else:
         output=Path(a.root)/'data/site_ops_v220/current.json'
         changed=write_if_changed(output,doc)
