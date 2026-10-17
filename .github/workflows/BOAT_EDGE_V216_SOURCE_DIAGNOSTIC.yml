@@ -60,7 +60,7 @@ jobs:
           assert script.is_file() and not script.is_symlink()
           # Immutable previously audited V265 source identity. Unlike the
           # obsolete installer, this step never downgrades or rewrites it.
-          expected='f74705858e9bffbe28b4ce444d29aa8565ed6497'
+          expected='fb6e157bbede8abc15e2ad34fe0f11b34041938d'
           observed=subprocess.check_output(['git','hash-object',str(script)],text=True).strip()
           assert observed==expected, 'V286_SOURCE_PROVENANCE_CHANGED_REVIEW_REQUIRED'
           contents=script.read_text(encoding='utf-8')

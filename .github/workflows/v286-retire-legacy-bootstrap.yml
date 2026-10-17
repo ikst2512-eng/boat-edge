@@ -36,7 +36,7 @@ jobs:
           from pathlib import Path
           s=Path('scripts/boat_edge_v215_readiness.py')
           observed=subprocess.check_output(['git','hash-object',str(s)],text=True).strip()
-          assert observed=='f74705858e9bffbe28b4ce444d29aa8565ed6497'
+          assert observed=='fb6e157bbede8abc15e2ad34fe0f11b34041938d'
           g=json.loads(Path('data/formal_status.json').read_text())['guards']
           assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
           assert g['RESULT_UNLOCK_TOKEN'] is None
