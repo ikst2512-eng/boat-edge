@@ -199,6 +199,26 @@ class ProspectiveReady(unittest.TestCase):
         self.assertEqual(receipt['official_beforeinfo_sha256'],
                          self.scratch['beforeinfo_sha256'])
 
+    def test_missing_source_negative_evidence_is_only_current_window(self):
+        """Missing strict proof is recorded as unknown, never eligible."""
+        due=gate.expected_deadline(KEY,'08:35')
+        self.race['source_audit']['beforeinfo']['status']='published_wait'
+        self.sources()
+        report=gate.run(self.root,AT)
+        self.assertEqual(report['created'],[])
+        self.assertEqual(report['window_races'],1)
+        self.assertEqual(report['missing_source_count'],1)
+        row=report['missing_source_observations'][0]
+        self.assertEqual(row['race_key'],KEY)
+        self.assertEqual(row['source_eligibility'],'UNPROVEN')
+        self.assertEqual(row['strict_source_proof'],'UNVERIFIED')
+        self.assertIn('beforeinfo_unavailable',row['source_gaps'])
+        self.assertFalse((self.root/gate.OUT/f'{KEY}.json').exists())
+        later=gate.run(self.root,due+timedelta(seconds=1))
+        self.assertEqual(later['missing_source_count'],0)
+        self.assertEqual(later['missing_source_observations'],[])
+        self.assertEqual(later['window_races'],0)
+
     def test_deadline_bounds_fail_closed(self):
         for offset in (10*60+1,119,60,0,-2):
             self.assertEqual(gate.run(self.root,
