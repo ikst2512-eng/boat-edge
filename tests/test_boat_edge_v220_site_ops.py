@@ -769,6 +769,15 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         assert report['independently_source_eligible_denominator'] is None
         assert report['eligible_save_rate_percent'] is None
         assert report['acceptance_99_percent_proven'] is False
+        # A V215 observation with the correct key but a DIFFERENT deadline
+        # is not valid evidence that this scheduled race was observed.
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1','day_jst':DAY,
+            'observations':{KEY:{'race_key':KEY,'deadline':'08:36'}}})
+        mismatch=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
+        assert mismatch['catalog_matured_not_observed']==2,mismatch
+        assert mismatch['catalog_matured_not_observed_missing_keys']==[KEY],mismatch
+        assert mismatch['catalog_matured_observed_missing_keys']==[],mismatch
         # Duplicated keys, stale day and unsafe catalog symlinks cannot
         # manufacture a deceptively small cohort.
         bad={'date':'2026-10-11','venues':[{'races':[
