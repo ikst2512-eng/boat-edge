@@ -216,6 +216,38 @@ class FastLaneTests(unittest.TestCase):
         self.assertEqual(order,[('fetch',KEY),('update',KEY),('freeze',None),
                                 ('fetch',second),('update',second),('freeze',None)])
 
+    def test_priority_fresh_source_zero_freeze_recovers_other_live_race(self):
+        # A verified fetch is not proof of an immutable first snapshot.
+        second='20261011-06-09'
+        race=makerace('14:44')
+        race['race_key']=second
+        race['meta']['race_no']=9
+        m.write_json(self.root/'data/races'/f'{second}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':second,'deadline':'14:44'}]}]})
+        order=[]
+        def fetch(root,key):
+            order.append(('fetch',key))
+            return key,{'mock':True},None
+        def updated(root,key,data,now):
+            order.append(('update',key))
+            return 'fresh_verified'
+        def freeze(root):
+            order.append(('freeze',None))
+            return 1 if ('update',second) in order else 0
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',side_effect=freeze),
+              patch.object(m,'fetch_one',side_effect=fetch),
+              patch.object(m,'update_one',side_effect=updated),
+              patch.object(m,'local_now',return_value=self.now)):
+            got=m.run(self.root,now=self.now,priority_key=KEY,worker=2)
+        self.assertEqual(got['priority_failure_fallback_targets'],[second])
+        self.assertEqual(got['priority_failure_fallback_snapshots'],1)
+        self.assertEqual(got['new_snapshots_atomic_audited'],1)
+        self.assertEqual(order,[('fetch',KEY),('update',KEY),('freeze',None),
+                                ('fetch',second),('update',second),('freeze',None)])
+
     def test_priority_blocked_never_fallbacks_to_outside_freeze_window(self):
         later='20261011-06-09'
         race=makerace('14:53')
@@ -1024,7 +1056,7 @@ class PriorityWindowPassedFallbackRegressionTests(unittest.TestCase):
     def test_expired_priority_does_not_starve_another_live_race(self):
         import inspect
         source=inspect.getsource(m.run)
-        self.assertIn("('source_blocked','odds_incomplete','window_passed')",source)
+        self.assertIn("if priority_applied and count==0:",source)
         self.assertIn("2 <= (due-actual_now).total_seconds()/60 <= 10",source)
         self.assertIn("second=atomic_freeze(root)",source)
 
