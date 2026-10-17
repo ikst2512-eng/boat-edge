@@ -297,7 +297,11 @@ def compute(root,now):
     if active and 'collector_index_stale' in reasons:recover.append('auto-update.yml')
     if any(r['minutes_left']<=12 and any(i in ('race_pre_result_not_verified','racers_not_six','race_card_missing_or_future','race_card_stale','beforeinfo_unavailable','beforeinfo_stale','scratch_unverified_or_blocked','scratch_stale') for i in r['missing_evidence']) for r in urgent):
         recover.append('auto-update.yml')
-    if any(r['minutes_left']<=25 for r in soon) and 'odds_index_stale' in reasons:
+    # Gate 1C: do not detect stale official odds at <=40m and then wait
+    # until <=25m to wake the existing V71 owner. V71 already collects
+    # the official 120-combination market from -45m. The 900s cooldown
+    # and GitHub run-state guard still prevent duplicate dispatches.
+    if any(r['minutes_left']<=40 for r in soon) and 'odds_index_stale' in reasons:
         recover.append('site-odds.yml')
     if any(r['minutes_left']<=12 and any(i.startswith('odds_evidence_') or i in ('odds_120_incomplete','odds_official_dom_unverified') for i in r['missing_evidence']) for r in urgent):
         recover.append('site-odds.yml')
