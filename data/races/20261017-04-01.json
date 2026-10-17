@@ -8,7 +8,7 @@
     "event": "開設72周年記念トーキョー・ベイ・カップ",
     "race_no": 1,
     "deadline": "10:30",
-    "updated_at": "2026-10-17T07:01:45+09:00",
+    "updated_at": "2026-10-17T08:56:37+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=04&rno=1",
-      "fetched_at": "2026-10-17T07:04:33+09:00",
-      "sha256": "88a7835bd5736fccff7ff802096a04a4b4b0772d72559174fdffda89accb558a",
+      "fetched_at": "2026-10-17T09:00:13+09:00",
+      "sha256": "7e931f49821bdbe0de44c425c4d2e628dd28c521fc69e5154575543b188b5c9d",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=04&rno=1",
+      "fetched_at": "2026-10-17T08:57:26+09:00",
+      "sha256": "37523a32dc3d7482eb992e31a032e3a5a08615da3a4a4b62542d406ccdfaacb9",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "59ecff28d016927a12804daf21f2e4dd6225d81dbd350280232732446c3f5b7e"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "f4ed146f431fd9f08090313ea8330bf0d90ab9695520a5b1fbac9caabbb203b6"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "17a44f44c1182e2d271f9c3197060d03d991be17bc4e1a6073f7cf76ec167acd"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "6c83a62eda0027a88e74d9724ff0079786c5df729d29473291e1d643fb9894a8"
     }
   },
   "racers": [
@@ -290,9 +320,69 @@
       "raw_text": "6 4762 / A1 藤原 啓史朗 岡山/岡山 36歳/52.0kg F0 L0 0.13 7.52 57.02 76.86 7.00 50.00 68.75 74 37.04 54.32 15 26.58 44.30 5 2 9 7 2 11 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 大池 佑来 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 豊田 健士郎 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 西岡 顕心 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 北野 輝季 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 石渡 鉄兵 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 藤原 啓史朗 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

@@ -8,7 +8,7 @@
     "event": "開設72周年記念トーキョー・ベイ・カップ",
     "race_no": 3,
     "deadline": "11:25",
-    "updated_at": "2026-10-17T07:01:45+09:00",
+    "updated_at": "2026-10-17T08:56:37+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=04&rno=3",
-      "fetched_at": "2026-10-17T07:04:34+09:00",
-      "sha256": "fc54b197b80778bfada97a556c16779451ecce61a73409b2401f0ef1682200a2",
+      "fetched_at": "2026-10-17T09:00:16+09:00",
+      "sha256": "66175bc384e868ab8d3459eae87cb3c1a6d2ab0bafa217adf6c73c4b8b5fd1b9",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=04&rno=3",
+      "fetched_at": "2026-10-17T08:57:45+09:00",
+      "sha256": "d538d2f46d20bb4a0234e19d2e4b6ec79553146c6b8fb20d3c560dbdb7e68470",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "59ecff28d016927a12804daf21f2e4dd6225d81dbd350280232732446c3f5b7e"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "f4ed146f431fd9f08090313ea8330bf0d90ab9695520a5b1fbac9caabbb203b6"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "17a44f44c1182e2d271f9c3197060d03d991be17bc4e1a6073f7cf76ec167acd"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "6c83a62eda0027a88e74d9724ff0079786c5df729d29473291e1d643fb9894a8"
     }
   },
   "racers": [
@@ -290,9 +320,69 @@
       "raw_text": "6 3983 / A1 須藤 博倫 埼玉/埼玉 48歳/52.0kg F0 L0 0.15 6.58 45.67 65.35 7.47 55.26 73.68 34 33.33 58.33 17 43.59 57.69 4 6 1 10 7 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 馬場 貴也 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 磯部 誠 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 湯川 浩司 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 寺田 祥 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 吉川 元浩 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 須藤 博倫 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

@@ -8,7 +8,7 @@
     "event": "トランスワードトロフィー2026",
     "race_no": 2,
     "deadline": "11:19",
-    "updated_at": "2026-10-17T07:01:45+09:00",
+    "updated_at": "2026-10-17T08:56:37+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=16&rno=2",
-      "fetched_at": "2026-10-17T07:02:59+09:00",
-      "sha256": "1483c629aa80225a065da9c895d3c0bc6c4a3cd1da192b3872a99bb8cccd973d",
+      "fetched_at": "2026-10-17T08:59:53+09:00",
+      "sha256": "63dd829091032b9bfc25868e61f66e4617b3e5b782fcb57f6a9f94fddf4312b4",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=16&rno=2",
+      "fetched_at": "2026-10-17T08:57:46+09:00",
+      "sha256": "787f0304437ee2fd8111f70fded346f39d8896a8354ae28def5d482518e55503",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "59ecff28d016927a12804daf21f2e4dd6225d81dbd350280232732446c3f5b7e"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "f4ed146f431fd9f08090313ea8330bf0d90ab9695520a5b1fbac9caabbb203b6"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "17a44f44c1182e2d271f9c3197060d03d991be17bc4e1a6073f7cf76ec167acd"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "6c83a62eda0027a88e74d9724ff0079786c5df729d29473291e1d643fb9894a8"
     }
   },
   "racers": [
@@ -250,9 +280,69 @@
       "raw_text": "6 4791 / B1 黒澤 めぐみ 東京/神奈川 36歳/48.4kg F0 L0 0.20 6.18 41.23 67.54 6.90 60.00 70.00 20 48.29 65.81 19 38.16 52.66 8R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山田 佑樹 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 梅木 敬太 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 田頭 虎親 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 佐藤 駿介 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 渡辺 崇 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 黒澤 めぐみ R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

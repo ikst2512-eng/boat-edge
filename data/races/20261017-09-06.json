@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 6,
     "deadline": "12:56",
-    "updated_at": "2026-10-17T07:01:45+09:00",
+    "updated_at": "2026-10-17T08:56:37+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=09&rno=6",
-      "fetched_at": "2026-10-17T07:02:41+09:00",
-      "sha256": "3e07e97bef0d980203d6726e3efa35e8a3af278351f8ee119e696229658fbfec",
+      "fetched_at": "2026-10-17T08:57:54+09:00",
+      "sha256": "98ece3c07baee9fbc446209bf46b328be805aeb7099e6f1414621a85a8d2ff4a",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "59ecff28d016927a12804daf21f2e4dd6225d81dbd350280232732446c3f5b7e"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "f4ed146f431fd9f08090313ea8330bf0d90ab9695520a5b1fbac9caabbb203b6"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "17a44f44c1182e2d271f9c3197060d03d991be17bc4e1a6073f7cf76ec167acd"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "6c83a62eda0027a88e74d9724ff0079786c5df729d29473291e1d643fb9894a8"
     }
   },
   "racers": [
@@ -268,5 +292,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

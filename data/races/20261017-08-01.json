@@ -8,7 +8,7 @@
     "event": "秋の常滑温泉マーゴの湯競走",
     "race_no": 1,
     "deadline": "10:18",
-    "updated_at": "2026-10-17T07:01:45+09:00",
+    "updated_at": "2026-10-17T08:56:37+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=08&rno=1",
-      "fetched_at": "2026-10-17T07:03:10+09:00",
-      "sha256": "5522a8b0a8e0fb73abadd4410b029e43f633b415b19c0034ecce8b8efc89ff99",
+      "fetched_at": "2026-10-17T08:58:03+09:00",
+      "sha256": "c70e6a0de566ee303ce68f2f918da0607a03fc2c8b2deb2520670a1af3c3e0b0",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=08&rno=1",
+      "fetched_at": "2026-10-17T08:57:26+09:00",
+      "sha256": "6245236c0e648e3ef3da96399a75f17a677d3d655e5c9ef2dc185b054ae06060",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
+    },
+    "stt": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "59ecff28d016927a12804daf21f2e4dd6225d81dbd350280232732446c3f5b7e"
+    },
+    "tkz": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "f4ed146f431fd9f08090313ea8330bf0d90ab9695520a5b1fbac9caabbb203b6"
+    },
+    "sui": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "17a44f44c1182e2d271f9c3197060d03d991be17bc4e1a6073f7cf76ec167acd"
+    },
+    "original_exhibition": {
+      "status": "missing",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/17.csv",
+      "fetched_at": null,
+      "sha256": "6c83a62eda0027a88e74d9724ff0079786c5df729d29473291e1d643fb9894a8"
     }
   },
   "racers": [
@@ -265,9 +295,69 @@
       "raw_text": "6 5433 / B2 米本 圭佑 東京/東京 21歳/52.0kg F0 L0 0.24 2.22 2.63 6.58 0.00 0.00 0.00 21 22.22 33.33 74 38.81 61.19 1 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 井上 恵一 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 藤堂 里香 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 鈴木 猛 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 武田 正紀 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 菅沼 佳昭 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 米本 圭佑 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
