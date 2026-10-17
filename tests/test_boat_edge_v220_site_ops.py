@@ -143,7 +143,13 @@ def test_gate1c_v71_fresh_index_cannot_hide_missing_race_odds():
         assert report['formal_unlock_or_scoring_authorized'] is False
         assert report['formal_results_read_by_this_runner'] is False
         # Absent per-race data at 26m is not a reason to add extra wakes.
-        early=mod.compute(root,due-timedelta(minutes=26))
+        # Use an index timestamp that is already observable at this earlier
+        # synthetic clock; a FUTURE index must correctly be marked stale.
+        before=due-timedelta(minutes=26)
+        put(root,'data/site_odds/index.json',{
+            'date':'2026-10-11','updated_at':(before-timedelta(minutes=1)).isoformat(),
+            'checked':1,'updated':1})
+        early=mod.compute(root,before)
         assert 'site-odds.yml' not in early['recovery_dispatch_candidates'],early
         combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
                 for b in range(1,7) for c in range(1,7)
