@@ -17,7 +17,7 @@ class NoPinnedRollback(unittest.TestCase):
             self.assertNotIn(forbidden,src)
         self.assertIn('V286_V265_SOURCE_PIN_AND_FORMAL_LOCK_PASS_NO_REINSTALL',src)
         self.assertIn('V286_SOURCE_PROVENANCE_CHANGED_REVIEW_REQUIRED',src)
-        self.assertIn('f74705858e9bffbe28b4ce444d29aa8565ed6497',src)
+        self.assertIn('fb6e157bbede8abc15e2ad34fe0f11b34041938d',src)
     def test_atomic_pre_result_receipt_before_grade_and_settlement(self):
         steps=['Freeze PRE_RESULT diagnostics and shadow evidence in one Git commit',
                'Continue approved-only daily 50000 yen paper selection BEFORE results',
