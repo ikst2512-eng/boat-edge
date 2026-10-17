@@ -271,6 +271,20 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert "- cron: '11,26,41,56 * * * *'" in header
     assert '  workflow_run:' in header
     assert "'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" in header
+    # Existing V186 source-owned schedule is independent: V220 listens without
+    # creating a second worker, introducing a cycle or relaxing provenance.
+    independent=(here.parent/'.github/workflows/BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml').read_text(encoding='utf8')
+    independent_header=independent.split('permissions:',1)[0]
+    assert "'2-59/5 0-14,23 * * *'" in independent_header
+    assert '  workflow_run:' not in independent_header
+    assert header.count("'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'")==1
+    assert header.count('  workflow_run:')==1
+    assert wf.count('  site-operations:')==1
+    assert wf.count('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs')==1
+    assert "github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'" in wf
+    assert "github.event.workflow_run.event == 'schedule'" in wf
+    assert "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" in wf
+    assert 'github.event.workflow_run.conclusion == \'success\'' in wf
     assert '    types: [completed]' in header
     assert '    branches: [main]' in header
     job=wf.split('  site-operations:',1)[1].split('    runs-on:',1)[0]
