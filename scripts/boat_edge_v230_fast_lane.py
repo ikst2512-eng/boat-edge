@@ -513,9 +513,10 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     status['priority_failure_fallback_targets']=[]
     status['priority_failure_fallback_snapshots']=0
     initial_state=status['outcomes'].get(priority_key) if priority_applied else None
-    if (priority_applied and count==0 and
-        (initial_state in ('source_blocked','odds_incomplete','window_passed') or
-         (isinstance(initial_state,str) and initial_state.startswith('fetch_failed:')))):
+    # A fresh official response can still fail V229's strict immutable freeze.
+    # Zero audited snapshots, not the fetch label, is the decisive failure.
+    # The original first Git push has nothing to delay in this case.
+    if priority_applied and count==0:
         actual_now=local_now()
         alternatives=[]
         for key in targets(root,actual_now):
