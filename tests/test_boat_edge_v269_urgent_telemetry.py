@@ -32,8 +32,22 @@ assert "github.event.workflow_run.head_branch == 'main'" in collector
 assert "github.event.workflow_run.head_repository.full_name == github.repository" in collector
 assert "github.ref == 'refs/heads/main'" in collector
 odds=Path('.github/workflows/site-odds.yml').read_text(encoding='utf8')
-assert "workflow_run:" not in odds.split("permissions:",1)[0], (
-    "Collector and odds producer must never trigger one another cyclically")
+# Legacy versions had no V71 listener. Newer main accepts ONLY a V216
+# original schedule completion; V71-triggered V216 runs must not echo back.
+odds_header=odds.split("permissions:",1)[0]
+if "  workflow_run:" in odds_header:
+    assert odds_header.count("  workflow_run:")==1
+    assert "      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" in odds_header
+    assert "      - 'BOAT EDGE 自動更新'" not in odds_header
+    assert "      - 'BOAT EDGE 3連単オッズ更新 V71'" not in odds_header
+    for guard in (
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.event == 'schedule'",
+        "github.event.workflow_run.head_branch == 'main'",
+        "github.event.workflow_run.head_repository.full_name == github.repository",
+        "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
+    ):
+        assert guard in odds, "V71_UNSAFE_V216_SOURCE_WAKE_MISSING_GUARD: "+guard
 # Urgent status is a single predicate of observed source coverage, not
 # the unrelated success of race-card venue discovery.
 health_source=collector.split('          health={',1)[1].split(
