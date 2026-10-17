@@ -15,6 +15,9 @@ on:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
       - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
+      # Independent V216 schedule delivery supplies another 2-10m chance
+      # when V229/V235 cron is delayed. No new cron or prediction writer.
+      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
     types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
@@ -34,7 +37,11 @@ jobs:
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        # Do not echo V216's collector/odds workflow_run triggers. Only a
+        # separate V216 SCHEDULE completion adds a new wake (no fan-out).
+        (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
+         github.event.workflow_run.event == 'schedule')))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
