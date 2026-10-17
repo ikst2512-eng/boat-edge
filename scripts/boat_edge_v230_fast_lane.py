@@ -514,7 +514,7 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     status['priority_failure_fallback_snapshots']=0
     initial_state=status['outcomes'].get(priority_key) if priority_applied else None
     if (priority_applied and count==0 and
-        (initial_state in ('source_blocked','odds_incomplete') or
+        (initial_state in ('source_blocked','odds_incomplete','window_passed') or
          (isinstance(initial_state,str) and initial_state.startswith('fetch_failed:')))):
         actual_now=local_now()
         alternatives=[]

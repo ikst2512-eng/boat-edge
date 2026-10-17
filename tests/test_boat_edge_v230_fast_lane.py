@@ -1019,6 +1019,15 @@ class SourceIdentityTests(unittest.TestCase):
             session.get.assert_not_called()
 
 
+
+class PriorityWindowPassedFallbackRegressionTests(unittest.TestCase):
+    def test_expired_priority_does_not_starve_another_live_race(self):
+        import inspect
+        source=inspect.getsource(m.run)
+        self.assertIn("('source_blocked','odds_incomplete','window_passed')",source)
+        self.assertIn("2 <= (due-actual_now).total_seconds()/60 <= 10",source)
+        self.assertIn("second=atomic_freeze(root)",source)
+
 class V235DynamicPriorityContractTests(unittest.TestCase):
     """Future event days must not silently lose the first-race source priority."""
 
