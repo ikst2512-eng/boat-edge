@@ -11,6 +11,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
+import re
 
 JST = timezone(timedelta(hours=9))
 
@@ -55,13 +56,60 @@ def deadline_for(day: str, text: str):
         return None
 
 
+
+def scheduled_catalog(root: Path, day: str):
+    """Return validated current-day schedule, or None when untrusted.
+
+    This is a read-only coverage reference, never proof of official source
+    readiness and never permission to create a prediction.
+    """
+    catalog = load(root / "data/today.json")
+    if (str(catalog.get("date", "")).replace("-", "") != day
+            or not isinstance(catalog.get("venues"), list)):
+        return None
+    scheduled = {}
+    for venue in catalog["venues"]:
+        if not isinstance(venue, dict) or not isinstance(venue.get("races"), list):
+            return None
+        for row in venue["races"]:
+            if not isinstance(row, dict):
+                return None
+            key = row.get("race_key")
+            if (not isinstance(key, str) or
+                    re.fullmatch(r"20\d{6}-\d{2}-\d{2}", key) is None or
+                    not key.startswith(day + "-") or key in scheduled):
+                return None
+            due = deadline_for(day, row.get("deadline"))
+            if due is None:
+                return None
+            scheduled[key] = due
+    return scheduled
+
 def inspect(root: Path, now: datetime) -> dict:
     if now.tzinfo is None:
         raise ValueError("AWARE_CLOCK_REQUIRED")
     root = root.resolve()
     day = now.astimezone(JST).strftime("%Y%m%d")
     active, other, upcoming = [], 0, []
-    for path in sorted((root / "data/races").glob(f"{day}-??-??.json")):
+    schedule = scheduled_catalog(root, day)
+    race_paths = {path.stem: path for path in
+                  sorted((root / "data/races").glob(f"{day}-??-??.json"))}
+    scheduled_missing = 0
+    if schedule is not None:
+        for key, due in sorted(schedule.items()):
+            if key in race_paths:
+                continue
+            scheduled_missing += 1
+            mins = (due - now).total_seconds() / 60
+            if 2 <= mins <= 10:
+                active.append({"race_key": key, "minutes_to_deadline": round(mins, 2),
+                               "reasons": ["race_file_missing"],
+                               "preliminary_eligible": False})
+            else:
+                other += 1
+                if mins > 10:
+                    upcoming.append((mins, key, due))
+    for path in race_paths.values():
         key = path.stem
         race = load(path)
         meta = race.get("meta") or {}
@@ -119,7 +167,11 @@ def inspect(root: Path, now: datetime) -> dict:
         "scope": "SITE_ONLY_PRE_RESULT_NOT_FORMAL_FRESH",
         "caveat": ("Preliminary, race-card-current-view checks only; does not prove "
                    "a V229 job actually reached the decision window or validate "
-                   "odds byte SHA, raw evidence, full model input, or provenance."),
+                   "odds byte SHA, raw evidence, full model input, or provenance. "
+                   "Catalog coverage is not proof of eligible official sources."),
+        "catalog_coverage_verified": schedule is not None,
+        "scheduled_races_in_catalog": len(schedule) if schedule is not None else None,
+        "scheduled_missing_race_files": scheduled_missing if schedule is not None else None,
         "races_scanned": len(active) + other,
         "decision_window_races": len(active),
         "preliminary_ready_races": sum(row["preliminary_eligible"] for row in active),

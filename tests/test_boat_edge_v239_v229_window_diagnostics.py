@@ -81,6 +81,50 @@ class SiteWindowDiagnostics(unittest.TestCase):
             self.assertEqual(report["reason_counts_in_window"], {})
             self.assertEqual(report["outside_window_races"], 1)
 
+    def test_catalog_missing_race_file_in_decision_window_is_visible(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            day = "20261013"
+            missing = f"{day}-18-01"
+            existing = f"{day}-18-02"
+            setup_race(root, existing, "09:35", inputs=True)
+            write(root, "data/today.json", {
+                "date": "2026-10-13",
+                "venues": [{"races": [
+                    {"race_key": missing, "deadline": "09:35"},
+                    {"race_key": existing, "deadline": "09:35"},
+                    {"race_key": f"{day}-18-03", "deadline": "12:00"},
+                ]}],
+            })
+            report = inspect(root, NOW)
+            self.assertTrue(report["catalog_coverage_verified"])
+            self.assertEqual(report["scheduled_races_in_catalog"], 3)
+            self.assertEqual(report["scheduled_missing_race_files"], 2)
+            self.assertEqual(report["decision_window_races"], 2)
+            self.assertEqual(report["preliminary_ready_races"], 1)
+            self.assertEqual(report["reason_counts_in_window"], {"race_file_missing": 1})
+            self.assertEqual(report["races_scanned"], 3)
+            self.assertEqual(report["next_race"]["race_key"], f"{day}-18-03")
+            row = next(x for x in report["window_races"] if x["race_key"] == missing)
+            self.assertFalse(row["preliminary_eligible"])
+
+    def test_invalid_catalog_does_not_invent_missing_race_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            setup_race(root, "20261013-14-01", "09:35")
+            write(root, "data/today.json", {
+                "date": "2026-10-13",
+                "venues": [{"races": [
+                    {"race_key": "20261013-14-02", "deadline": "09:35"},
+                    {"race_key": "20261013-14-02", "deadline": "09:35"},
+                ]}],
+            })
+            report = inspect(root, NOW)
+            self.assertFalse(report["catalog_coverage_verified"])
+            self.assertIsNone(report["scheduled_missing_race_files"])
+            self.assertEqual(report["races_scanned"], 1)
+            self.assertNotIn("race_file_missing", report["reason_counts_in_window"])
+
     def test_symlink_never_reads_target_even_if_valid_json(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
