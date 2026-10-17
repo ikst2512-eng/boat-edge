@@ -319,6 +319,36 @@ def compute(root,now):
         recover.append('site-odds.yml')
     if any(r['minutes_left']<=12 and any(i.startswith('odds_evidence_') or i in ('odds_120_incomplete','odds_official_dom_unverified') for i in r['missing_evidence']) for r in urgent):
         recover.append('site-odds.yml')
+    # Gate 1C: a V71 attempt can run 4-15m BEFORE official odds reach 120
+    # valid combinations. Reuse the existing V220/V71 owner with a bounded
+    # shorter cooldown ONLY for a still-unfrozen race in the strict 2-10m
+    # window whose other PRE_RESULT source gates are already satisfied.
+    # This is a source-fetch urgency indicator, NEVER prediction eligibility.
+    # Source timestamps, scratch, official DOM, and V229 atomic first-Git
+    # checks remain independent and fail closed.
+    urgent_odds_only_keys=[]
+    for r in urgent:
+        # Emergency source retries are disabled if the formal/system safety
+        # lock is not in its original closed state.
+        if (any(formal_guard.get(g) is not False for g in ('results_seen','unlock','scoring'))
+                or formal_guard.get('RESULT_UNLOCK_TOKEN') is not None
+                or (formal.get('formalFirst100') or {}).get('races',0)!=0):
+            break
+        key=r['key']
+        exact_due=expected_deadline(key,r['deadline_jst'])
+        if not exact_due or not 2 <= (exact_due-now).total_seconds()/60 <= 10:
+            continue
+        gaps=set(r['missing_evidence'])
+        if ('frozen_prediction_missing_or_invalid' not in gaps
+                or not odds_gaps.intersection(gaps)
+                or not gaps.issubset(odds_gaps|{'frozen_prediction_missing_or_invalid'})
+                or (root/'data/site_prediction_snapshots'/f'{key}.json').exists()):
+            continue
+        race=load(root/'data/races'/f'{key}.json') or {}
+        before=((race.get('source_audit') or {}).get('beforeinfo') or {})
+        if (before.get('six_boat_coverage') or {}).get('six_boat_complete') is not True:
+            continue
+        urgent_odds_only_keys.append(key)
     # V410: GitHub's best-effort cron missed the V229/V235 2-10m
     # decision window for three observed 2026-10-14 races. Reuse the
     # EXISTING guarded V229 workflow only with complete currently saved
@@ -362,7 +392,8 @@ def compute(root,now):
       'site_prediction_freeze_observation':freeze_funnel,
       'research_model_production_promotion':False,'paper_wager_authorized_by_this_runner':False,
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
-      'recovery_dispatch_candidates':recover}
+      'recovery_dispatch_candidates':recover,
+      'urgent_odds_only_recovery_keys':urgent_odds_only_keys}
 
 def gate1c_previous_day_catalog_from_git(root,day):
     """Last committed schedule BEFORE next JST midnight; diagnostics only.
@@ -955,7 +986,8 @@ def main():
             'previous_day':report['previous_day']['first_git_original_sha_proven'],
             'saved':changed, 'rate_proven':False},sort_keys=True))
     elif a.recovery_plan:
-        print(json.dumps({'workflows':doc['recovery_dispatch_candidates']},sort_keys=True))
+        print(json.dumps({'workflows':doc['recovery_dispatch_candidates'],
+            'urgent_odds_only_recovery_keys':doc['urgent_odds_only_recovery_keys']},sort_keys=True))
     else:
         output=Path(a.root)/'data/site_ops_v220/current.json'
         changed=write_if_changed(output,doc)

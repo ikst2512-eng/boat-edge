@@ -96,6 +96,23 @@ jobs:
               BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120 ;;
               *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1 ;;
             esac
+            # The normal collector/odds cooldown remains 15m. Exception:
+            # source-proven, still-unfrozen 2-10m odds-only deficit gets one
+            # V71 retry after >=3m since the previous actual V71 attempt.
+            # V220 computes these keys from trusted latest-main PRE_RESULT
+            # files. Unknown/malformed emergency status never shortens it.
+            if [[ "$wf" == site-odds.yml ]]; then
+              if ! jq -e '(.urgent_odds_only_recovery_keys | type) == "array"' /tmp/v220_recovery_plan.json >/dev/null; then
+                echo 'V220_V71_URGENT_PROOF_MALFORMED_NO_DISPATCH'
+                continue
+              fi
+              if jq -e '(.urgent_odds_only_recovery_keys | length) > 0 and
+                  all(.urgent_odds_only_recovery_keys[]; type == "string" and test("^20[0-9]{6}-[0-9]{2}-[0-9]{2}$"))' \
+                  /tmp/v220_recovery_plan.json >/dev/null; then
+                cooldown=180
+                echo 'V220_V71_ONLY_OFFICIAL_ODDS_MISSING_STRICT_WINDOW_180S'
+              fi
+            fi
             # Source readiness was checked on latest main in --recovery-plan;
             # every V229 invocation performs its own independent PRE_RESULT,
             # official source, 120-odds and Git-first-add fail-closed checks.
@@ -113,6 +130,16 @@ jobs:
                if echo "$runs" | jq -e '[.workflow_runs[]? | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length > 0' >/dev/null; then
                   echo "V220_V229_ALREADY_ACTIVE_NO_DUPLICATE"; continue
                fi
+            fi
+            # A long-running V71 job is never duplicated even after 180s.
+            # An uninspectable state is not permission to start a producer.
+            if [[ "$wf" == site-odds.yml ]] && echo "$runs" | jq -e '
+               [.workflow_runs[]? | select(
+                 .status == "queued" or .status == "in_progress" or
+                 .status == "waiting" or .status == "pending" or
+                 .status == "requested")] | length > 0' >/dev/null; then
+              echo 'V220_V71_ALREADY_ACTIVE_NO_DUPLICATE'
+              continue
             fi
             # A skipped workflow_run (V229 OR collector) did no work and must
             # not consume the 120s / 900s production cooldown. Preserve it
