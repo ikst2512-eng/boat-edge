@@ -67,4 +67,55 @@ for bad in [
 g=json.loads(Path('data/formal_status.json').read_text())['guards']
 assert all(g[k] is False for k in ('results_seen','unlock','scoring'))
 assert g['RESULT_UNLOCK_TOKEN'] is None
+# Gate 1C: protect the independent schedule-only V216 -> V71 odds wake.
+# V216 itself listens to V71: its workflow_run completions must NEVER echo
+# back into V71. This is an independent odds-source producer, not a predictor.
+v71=Path('.github/workflows/site-odds.yml').read_text(encoding='utf8')
+v71_event=v71.split('jobs:',1)[0]
+v71_job=v71.split('  odds:',1)[1].split('    runs-on:',1)[0]
+assert v71_event.count('workflow_run:') == 1
+assert v71_event.count("'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'") == 1
+assert v71_event.count('cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"') == 1
+for required in (
+    "github.ref == 'refs/heads/main'",
+    "github.repository == 'ikst2512-eng/boat-edge'",
+    "github.event.workflow_run.conclusion == 'success'",
+    "github.event.workflow_run.event == 'schedule'",
+    "github.event.workflow_run.head_branch == 'main'",
+    "github.event.workflow_run.head_repository.full_name == github.repository",
+    "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
+):
+    assert required in v71_job, required
+assert "V71_FRESHER_SOURCE_ONLY_RECONCILED" in v71
+assert "V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED" in v71
+assert "bash scripts/boat_edge_v01_first_freeze_nudge.sh" in v71
+
+def v71_admitted(ev,ref,repo,upstream_name=None,upstream_event=None,conclusion=None,
+                 upstream_branch=None,upstream_repo=None):
+    expected='ikst2512-eng/boat-edge'
+    return ref=='refs/heads/main' and repo==expected and (
+        ev!='workflow_run' or (
+            upstream_name=='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+            and upstream_event=='schedule' and conclusion=='success'
+            and upstream_branch=='main' and upstream_repo==expected))
+assert v71_admitted('schedule','refs/heads/main','ikst2512-eng/boat-edge')
+assert v71_admitted('workflow_dispatch','refs/heads/main','ikst2512-eng/boat-edge')
+assert v71_admitted('workflow_run','refs/heads/main','ikst2512-eng/boat-edge',
+                    upstream_name='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',
+                    upstream_event='schedule',conclusion='success',upstream_branch='main',
+                    upstream_repo='ikst2512-eng/boat-edge')
+for kw in (
+    {'upstream_event':'workflow_run'},
+    {'conclusion':'failure'},
+    {'upstream_branch':'feature'},
+    {'upstream_repo':'fork/boat-edge'},
+    {'upstream_name':'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'},
+):
+    values=dict(upstream_name='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',
+                upstream_event='schedule',conclusion='success',upstream_branch='main',
+                upstream_repo='ikst2512-eng/boat-edge')
+    values.update(kw)
+    assert not v71_admitted('workflow_run','refs/heads/main','ikst2512-eng/boat-edge',**values)
+assert not v71_admitted('schedule','refs/heads/feature','ikst2512-eng/boat-edge')
+assert not v71_admitted('schedule','refs/heads/main','fork/boat-edge')
 print('V292_FAIL_CLOSED_SOURCE_SUCCESS_WAKE_MAIN_ONLY_PASS')

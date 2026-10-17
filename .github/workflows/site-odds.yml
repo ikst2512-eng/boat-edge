@@ -6,6 +6,13 @@ on:
     paths:
       - ".github/workflows/site-odds.yml"
   workflow_dispatch:
+  # Independent V216 *schedule* success can restore this existing V71
+  # source publisher when GitHub skips V71's own cron. V216 runs triggered
+  # by V71 are rejected below, preventing a V71 -> V216 -> V71 cycle.
+  workflow_run:
+    workflows:
+      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+    types: [completed]
   schedule:
     # Gate 1C: 2026-10-17 observed 0/35 planned schedule deliveries with
     # the previous 3 cron identities. Keep exactly 12 5-minute UTC wakes per
@@ -23,11 +30,17 @@ concurrency:
 
 jobs:
   odds:
-    # Guard workflow_dispatch, not just push: feature branches must never
-    # reset their checkout to origin/main and publish official odds there.
+    # Guard ALL privileged wakes. Only successful V216 original schedule
+    # runs on this repo's main may use workflow_run; never echo a V71 wake.
     if: >-
       github.ref == 'refs/heads/main' &&
-      github.repository == 'ikst2512-eng/boat-edge'
+      github.repository == 'ikst2512-eng/boat-edge' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'schedule' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'))
     runs-on: ubuntu-latest
     timeout-minutes: 6
 
