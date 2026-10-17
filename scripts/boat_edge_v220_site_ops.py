@@ -511,6 +511,10 @@ def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None,
          'catalog_matured_not_observed':None,
          'catalog_matured_not_observed_saved':None,
          'catalog_matured_without_snapshot':None,
+         # Key-level partitions: schedule/observation coverage, NEVER eligible denominator.
+         'catalog_matured_not_observed_saved_keys':None,
+         'catalog_matured_not_observed_missing_keys':None,
+         'catalog_matured_observed_missing_keys':None,
          # Count fully validated scheduled deadlines, not source eligibility.
          'catalog_matured_by_hour_jst':None,
          'catalog_matured_not_observed_by_hour_jst':None,
@@ -611,7 +615,7 @@ def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None,
                     key for key,record in obs.items()
                     if isinstance(key,str) and KEY.fullmatch(key)
                     and key.startswith(day+'-') and isinstance(record,dict)
-                    and expected_deadline(key,record.get('deadline')) is not None
+                    and expected_deadline(key,record.get('deadline'))==races.get(key)
                 }
                 matured={key for key,due in races.items() if now>=due}
                 not_observed=matured-valid_observed
@@ -626,6 +630,16 @@ def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None,
                     not (base/f'{key}.json').is_file() or
                     (base/f'{key}.json').is_symlink()
                     for key in matured)
+                def snapshot_exists(key):
+                    p=base/f'{key}.json'
+                    return p.is_file() and not p.is_symlink()
+                out['catalog_matured_not_observed_saved_keys']=[
+                    key for key in sorted(not_observed) if snapshot_exists(key)]
+                out['catalog_matured_not_observed_missing_keys']=[
+                    key for key in sorted(not_observed) if not snapshot_exists(key)]
+                out['catalog_matured_observed_missing_keys']=[
+                    key for key in sorted(matured & valid_observed)
+                    if not snapshot_exists(key)]
                 # Purely diagnostic time buckets; missing V215 observation
                 # must never be relabeled as official source-ready failure.
                 by_hour={}

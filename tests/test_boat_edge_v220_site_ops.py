@@ -744,6 +744,9 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         assert report['catalog_matured_not_observed']==1,report
         assert report['catalog_matured_not_observed_saved']==1,report
         assert report['catalog_matured_without_snapshot']==1,report
+        assert report['catalog_matured_not_observed_saved_keys']==[key2],report
+        assert report['catalog_matured_not_observed_missing_keys']==[],report
+        assert report['catalog_matured_observed_missing_keys']==[KEY],report
         assert report['catalog_matured_by_hour_jst']=={'08':2},report
         assert report['catalog_matured_not_observed_by_hour_jst']=={'08':1},report
         # Advance until the previously future 09:10 race matures.
@@ -751,12 +754,30 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
             root,DAY,NOW+timedelta(minutes=70),lambda *_:('PASS','fake'))
         assert later['catalog_matured_by_hour_jst']=={'08':2,'09':1},later
         assert later['catalog_matured_not_observed_by_hour_jst']=={'08':1,'09':1},later
+        assert later['catalog_matured_not_observed_missing_keys']==[key3],later
+        assert later['catalog_matured_not_observed_saved_keys']==[key2],later
+        assert later['catalog_matured_observed_missing_keys']==[KEY],later
+        assert (len(later['catalog_matured_not_observed_missing_keys'])+
+                len(later['catalog_matured_observed_missing_keys'])
+                ==later['catalog_matured_without_snapshot'])
+        assert (len(later['catalog_matured_not_observed_saved_keys'])+
+                len(later['catalog_matured_not_observed_missing_keys'])
+                ==later['catalog_matured_not_observed'])
         assert later['eligible_save_rate_percent'] is None
         assert later['acceptance_99_percent_proven'] is False
         assert report['observed_races']==1 and report['matured_races']==1,report
         assert report['independently_source_eligible_denominator'] is None
         assert report['eligible_save_rate_percent'] is None
         assert report['acceptance_99_percent_proven'] is False
+        # A V215 observation with the correct key but a DIFFERENT deadline
+        # is not valid evidence that this scheduled race was observed.
+        put(root,f'data/site_paper_sim/readiness_history_v215/{DAY}.json',{
+            'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1','day_jst':DAY,
+            'observations':{KEY:{'race_key':KEY,'deadline':'08:36'}}})
+        mismatch=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
+        assert mismatch['catalog_matured_not_observed']==2,mismatch
+        assert mismatch['catalog_matured_not_observed_missing_keys']==[KEY],mismatch
+        assert mismatch['catalog_matured_observed_missing_keys']==[],mismatch
         # Duplicated keys, stale day and unsafe catalog symlinks cannot
         # manufacture a deceptively small cohort.
         bad={'date':'2026-10-11','venues':[{'races':[
@@ -766,18 +787,23 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         repeated=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
         assert repeated['catalog_matured_races'] is None
         assert repeated['catalog_matured_not_observed'] is None
+        assert repeated['catalog_matured_not_observed_saved_keys'] is None
+        assert repeated['catalog_matured_not_observed_missing_keys'] is None
+        assert repeated['catalog_matured_observed_missing_keys'] is None
         assert repeated['catalog_matured_by_hour_jst'] is None
         assert repeated['catalog_matured_not_observed_by_hour_jst'] is None
         bad['date']='2026-10-10'
         put(root,'data/today.json',bad)
         wrong_day=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
         assert wrong_day['catalog_matured_races'] is None
+        assert wrong_day['catalog_matured_not_observed_missing_keys'] is None
         assert wrong_day['catalog_matured_by_hour_jst'] is None
         catalog=root/'data/today.json'
         catalog.unlink()
         catalog.symlink_to(root/'data/site_prediction_snapshots'/f'{key2}.json')
         unsafe=mod.gate1c_first_git_summary(root,DAY,after,lambda *_:('PASS','fake'))
         assert unsafe['catalog_matured_races'] is None
+        assert unsafe['catalog_matured_not_observed_missing_keys'] is None
         assert unsafe['catalog_matured_by_hour_jst'] is None
         assert unsafe['catalog_matured_not_observed_by_hour_jst'] is None
     print('GATE1C_UNOBSERVED_CATALOG_COVERAGE_NOT_ELIGIBILITY_DENOMINATOR_PASS')
