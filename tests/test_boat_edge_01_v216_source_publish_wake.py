@@ -103,7 +103,7 @@ class V216CollectorWake(unittest.TestCase):
             self.assertIn(marker,wf)
         self.assertIn("data/site_paper_sim/readiness_history_v215/",wf)
 
-    def test_v71_disjoint_crons_preserve_exact_prior_slots_without_feedback(self):
+    def test_v71_off_peak_cron_preserves_twelve_five_minute_wakes_without_feedback(self):
         odds=ODDS.read_text(encoding='utf8')
         event=odds.split('on:\n',1)[1].split('\npermissions:',1)[0]
         self.assertEqual(event.count('  schedule:'),1)
@@ -113,14 +113,17 @@ class V216CollectorWake(unittest.TestCase):
         slots=[]
         lines=[line.strip() for line in event.splitlines()
                if line.strip().startswith('- cron:')]
-        self.assertEqual(len(lines),3)
+        self.assertEqual(len(lines),1)
         for line in lines:
             spec=line.split('"')[1]
             fields=spec.split()
             self.assertEqual(fields[1:],['*','*','*','*'])
             slots.extend(int(n) for n in fields[0].split(','))
-        self.assertEqual(sorted(slots),list(range(0,60,5)))
+        self.assertEqual(sorted(slots),list(range(2,60,5)))
         self.assertEqual(len(set(slots)),12)
+        # Exactly 5-minute spacing, no extra peak :00/:05 slots or new jobs.
+        self.assertTrue(all((slots[(i+1)%12]-slots[i])%60==5
+                            for i in range(12)))
         # No V216/V229 listener: completed/skipped workflow_run feedback
         # events must not cause an accidental recursion or extra writer.
         self.assertNotIn('BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',event)
