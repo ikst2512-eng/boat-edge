@@ -76,7 +76,7 @@ def scheduled_catalog(root: Path, day: str):
                 return None
             key = row.get("race_key")
             if (not isinstance(key, str) or
-                    re.fullmatch(r"20\\d{6}-\\d{2}-\\d{2}", key) is None or
+                    re.fullmatch(r"20\d{6}-\d{2}-\d{2}", key) is None or
                     not key.startswith(day + "-") or key in scheduled):
                 return None
             due = deadline_for(day, row.get("deadline"))
