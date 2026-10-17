@@ -202,7 +202,7 @@ class V235Proof(unittest.TestCase):
         for path in files:
             raw=(root/path).read_bytes()
             sha=hashlib.sha1(
-                b'blob '+str(len(raw)).encode('ascii')+b'\\x00'+raw
+                b'blob '+str(len(raw)).encode('ascii')+b'\x00'+raw
             ).hexdigest()
             self.assertIn(f"'{path}:{sha}'", workflow, path)
         self.assertNotIn(
