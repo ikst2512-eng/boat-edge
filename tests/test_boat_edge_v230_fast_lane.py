@@ -1056,7 +1056,7 @@ class PriorityWindowPassedFallbackRegressionTests(unittest.TestCase):
     def test_expired_priority_does_not_starve_another_live_race(self):
         import inspect
         source=inspect.getsource(m.run)
-        self.assertIn("('source_blocked','odds_incomplete','window_passed')",source)
+        self.assertIn("if priority_applied and count==0:",source)
         self.assertIn("2 <= (due-actual_now).total_seconds()/60 <= 10",source)
         self.assertIn("second=atomic_freeze(root)",source)
 
