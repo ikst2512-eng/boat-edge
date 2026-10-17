@@ -8,7 +8,7 @@
     "event": "yab山口朝日放送杯争奪戦",
     "race_no": 7,
     "deadline": "11:22",
-    "updated_at": "2026-10-18T07:25:49+09:00",
+    "updated_at": "2026-10-18T07:41:36+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=18&rno=7",
-      "fetched_at": "2026-10-18T07:28:28+09:00",
-      "sha256": "18149fc7eb684f44aad19bc4e0dbda59b469f0046b9dca81a047a9f636300d1a",
+      "fetched_at": "2026-10-18T07:44:42+09:00",
+      "sha256": "70f332f82f3a66a0a08fe83e83905aa456ed2ff984423a092327a9f69bd487fe",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -39,7 +63,7 @@
       "name": "松本 庸平",
       "class": "B1",
       "age": 42,
-      "weight_kg": 51.3,
+      "weight_kg": 51.5,
       "branch": "三重",
       "birthplace": "三重",
       "F": 0,
@@ -67,7 +91,7 @@
       },
       "series_tokens": [],
       "early_race": 1,
-      "raw_text": "1 4358 / B1 松本 庸平 三重/三重 42歳/51.3kg F0 L0 0.22 4.41 26.85 40.74 0.00 0.00 0.00 11 28.91 46.09 11 29.57 45.22 1R"
+      "raw_text": "1 4358 / B1 松本 庸平 三重/三重 42歳/51.5kg F0 L0 0.22 4.41 26.85 40.74 0.00 0.00 0.00 11 28.91 46.09 11 29.57 45.22 1R"
     },
     {
       "lane": 2,
@@ -111,7 +135,7 @@
       "name": "大谷 健太",
       "class": "B1",
       "age": 37,
-      "weight_kg": 52.1,
+      "weight_kg": 52.4,
       "branch": "埼玉",
       "birthplace": "埼玉",
       "F": 1,
@@ -139,7 +163,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "3 4836 / B1 大谷 健太 埼玉/埼玉 37歳/52.1kg F1 L0 0.17 4.80 27.27 47.73 5.23 26.92 46.15 27 37.38 53.27 34 32.19 48.07"
+      "raw_text": "3 4836 / B1 大谷 健太 埼玉/埼玉 37歳/52.4kg F1 L0 0.17 4.80 27.27 47.73 5.23 26.92 46.15 27 37.38 53.27 34 32.19 48.07"
     },
     {
       "lane": 4,
@@ -147,7 +171,7 @@
       "name": "石原 光",
       "class": "B1",
       "age": 30,
-      "weight_kg": 54.4,
+      "weight_kg": 54.5,
       "branch": "静岡",
       "birthplace": "静岡",
       "F": 0,
@@ -175,7 +199,7 @@
       },
       "series_tokens": [],
       "early_race": 11,
-      "raw_text": "4 5076 / B1 石原 光 静岡/静岡 30歳/54.4kg F0 L0 0.17 5.09 34.48 50.00 5.05 35.00 55.00 16 28.57 50.00 37 33.62 52.16 11R"
+      "raw_text": "4 5076 / B1 石原 光 静岡/静岡 30歳/54.5kg F0 L0 0.17 5.09 34.48 50.00 5.05 35.00 55.00 16 28.57 50.00 37 33.62 52.16 11R"
     },
     {
       "lane": 5,
@@ -254,5 +278,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
