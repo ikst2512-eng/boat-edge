@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 8,
     "deadline": "14:01",
-    "updated_at": "2026-10-17T10:12:11+09:00",
+    "updated_at": "2026-10-17T12:42:39+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261017&jcd=09&rno=8",
-      "fetched_at": "2026-10-17T10:16:02+09:00",
-      "sha256": "6e508ce6439cc75f1352a82b4f662b525e57e1a217c52a74cb55d2c493974963",
+      "fetched_at": "2026-10-17T12:44:34+09:00",
+      "sha256": "37a155648a1277c8939d2e60963f8ddfd8702379915f356429d8bd7687b05a49",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261017&jcd=09&rno=8",
+      "fetched_at": "2026-10-17T12:43:43+09:00",
+      "sha256": "a3487510ccd6df116261e671fa7f1d6baed383563a2f4f41862467bc92aaf274",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/17.csv",
       "fetched_at": null,
-      "sha256": "919496ba7789fa963d9e47bc126d02cd8e809ad8d79860bac33fd0ad99c8637d"
+      "sha256": "c2a91248457f9377527f54167090a0b56ad97eec2dc8054d978570982b1e2605"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/17.csv",
       "fetched_at": null,
-      "sha256": "457330def9ccc82b217ffdb176f745a1aeda535d473e0ef4e18f822dc782777c"
+      "sha256": "8d0ae698fb70410ed48858d8b03a62526df6cfcedc173243063f54d1a996018f"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/17.csv",
       "fetched_at": null,
-      "sha256": "51d084bbcd1ba688420b23e796f9b44d1005a930e2ee977ca65a702068c270ea"
+      "sha256": "4e892d18da750b445eab8bb8b7593d7c938bc30fb7960fc998ac266ff102557b"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/17.csv",
       "fetched_at": null,
-      "sha256": "43ae9b4f5469de88938de4f13b7225b5d1c3019d717e0aa5375b7ab88b726371"
+      "sha256": "49faaef708ebee3857df61683f5f7ac51fc608f900947e1a6a3cb7507a9b234c"
     }
   },
   "racers": [
@@ -168,10 +174,11 @@
         "trio_rate": 60.37
       },
       "series_tokens": [
-        "5"
+        "5",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "3 3852 / B1 澤 大介 三重/三重 54歳/52.0kg F0 L0 0.21 5.03 28.57 44.64 5.08 28.57 46.83 15 35.76 51.52 46 42.07 60.37 5 2R"
+      "raw_text": "3 3852 / B1 澤 大介 三重/三重 54歳/52.0kg F0 L0 0.21 5.03 28.57 44.64 5.08 28.57 46.83 15 35.76 51.52 46 42.07 60.37 5 2 2R"
     },
     {
       "lane": 4,
@@ -290,7 +297,53 @@
       "raw_text": "6 4769 / A1 馬場 剛 東京/東京 34歳/51.5kg F0 L0 0.12 6.49 47.32 65.18 6.92 52.00 76.00 21 35.80 54.55 75 48.89 68.15 5 12"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 占部 一真 52.2kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 川島 圭司 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 澤 大介 52.0kg R 2"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 松尾 昂明 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 小倉 康典 51.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 馬場 剛 51.5kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
