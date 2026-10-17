@@ -95,6 +95,31 @@ jobs:
             # source-ready observation after its original time window.
             git clean -fd -- data/site_ops_v220/gate1c_source_ready/
             python3 scripts/boat_edge_v215_readiness.py
+            # Read-only, pre-result diagnostic: expose the exact eligible
+            # observation window without inventing source-ready evidence.
+            python3 - <<'PY_V216_WINDOW_COVERAGE'
+          import json
+          from pathlib import Path
+          p=Path('data/site_paper_sim/readiness_v215_current.json')
+          h=Path('data/site_paper_sim/readiness_history_v215')
+          cur=json.loads(p.read_text())
+          day=cur['day_jst']
+          hist=json.loads((h/(day+'.json')).read_text())
+          window=cur.get('current_window',[])
+          observed=hist.get('observations',{})
+          keys=[row['race_key'] for row in window]
+          print('V216_WINDOW_COVERAGE',json.dumps({
+              'day_jst':day,
+              'checked_at':cur.get('checked_at'),
+              'scheduled_races':cur.get('scheduled_races'),
+              'window_races':cur.get('window_races'),
+              'window_rows_emitted':len(keys),
+              'window_keys':keys,
+              'window_keys_in_history':sum(k in observed for k in keys),
+              'day_observed_total':len(observed),
+              'window_truncated':cur.get('window_races',0)>len(keys),
+          },ensure_ascii=False,sort_keys=True))
+          PY_V216_WINDOW_COVERAGE
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_01_gate1c_source_ready.py
             python3 scripts/boat_edge_v214_shadow.py freeze
             git add -- data/site_paper_sim/readiness_v215_current.json data/site_paper_sim/readiness_history_v215/ data/site_paper_sim/shadow_v213_current.json data/site_paper_sim/shadow_v213_ledger.json
