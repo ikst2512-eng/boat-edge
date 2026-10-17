@@ -32,14 +32,14 @@ concurrency:
 
 jobs:
   atomic-prospective-site-evidence:
+    # Do not echo V216's collector/odds workflow_run triggers. Only a
+    # separate V216 SCHEDULE completion adds a new wake (no fan-out).
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        # Do not echo V216's collector/odds workflow_run triggers. Only a
-        # separate V216 SCHEDULE completion adds a new wake (no fan-out).
         (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
          github.event.workflow_run.event == 'schedule')))
     runs-on: ubuntu-latest
