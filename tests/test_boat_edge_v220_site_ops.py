@@ -1114,10 +1114,103 @@ def test_gate1c_v71_short_cooldown_is_strict_odds_only_and_first_freeze_window()
     print('GATE1C_V71_BOUNDED_ODDS_ONLY_FIRST_FREEZE_RETRY_PASS')
 
 
+
+def test_gate1c_bounded_beforeinfo_collector_retry_is_source_only():
+    """Recover unpublished exhibition with the existing collector, fail closed.
+
+    The old 900s cooldown can outlive the entire strict 2-10m first-freeze
+    window. Only an exact official six-entry PRE_RESULT card, proven 120-way
+    odds, and unpublished exhibition/scratch gaps authorize the shorter
+    recovery cadence; a source wake is not prediction eligibility.
+    """
+    with tempfile.TemporaryDirectory() as d:
+        root=Path(d);sample(root)
+        due=datetime(2026,10,11,8,35,tzinfo=JST)
+        stamp='2026-10-11T08:23:00+09:00'
+        source='https://www.boatrace.jp/owpc/pc/race/'
+        query='hd=20261011&jcd=23&rno=1'
+        card={'status':'ok','source':source+'racelist?'+query,
+              'fetched_at':stamp,'sha256':'a'*64}
+        before={'status':'published_wait','source':source+'beforeinfo?'+query,
+                'fetched_at':stamp,'sha256':'b'*64,
+                'six_boat_coverage':{'six_boat_complete':False}}
+        race={'race_key':KEY,'meta':{
+            'date':'2026-10-11','venue_code':'23','race_no':1,
+            'deadline':'08:35','phase':'PRE_RESULT',
+            'results_seen':False,'unlock':False,'scoring':False},
+            'racers':[{'lane':i} for i in range(1,7)],
+            'source_audit':{'race_card':card,'beforeinfo':before}}
+        put(root,f'data/races/{KEY}.json',race)
+        combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
+                for b in range(1,7) for c in range(1,7)
+                if len({a,b,c})==3}
+        odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY',
+              'results_seen':False,'scoring':False,
+              'fetched_at':stamp,'available_count':120,
+              'verified_official_dom_v167':True,'trifecta_odds':combos}
+        path=f'data/site_odds/{KEY}.json'
+        put(root,path,odds)
+        assert mod.compute(root,due-timedelta(minutes=11))[
+            'urgent_beforeinfo_only_recovery_keys']==[]
+        for lead in (10,8,2):
+            doc=mod.compute(root,due-timedelta(minutes=lead))
+            assert doc['urgent_beforeinfo_only_recovery_keys']==[KEY],(lead,doc)
+            assert 'auto-update.yml' in doc['recovery_dispatch_candidates']
+            assert doc['formal_results_read_by_this_runner'] is False
+        assert mod.compute(root,due-timedelta(seconds=119))[
+            'urgent_beforeinfo_only_recovery_keys']==[]
+        at=due-timedelta(minutes=8)
+        # No first-freeze recovery or new source mutations after any snapshot.
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',{
+            'race_key':KEY,'snapshot_window':'FINAL_15M','odds_sha256':'c'*64})
+        assert mod.compute(root,at)['urgent_beforeinfo_only_recovery_keys']==[]
+        (root/f'data/site_prediction_snapshots/{KEY}.json').unlink()
+        # An explicitly blocked/scratched lane is never a rapid retry target.
+        scratch={'race_key':KEY,'blocked':True,'suspect_lanes':[1],
+                 'official_raw_flags':['racelist']}
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        assert mod.compute(root,at)['urgent_beforeinfo_only_recovery_keys']==[]
+        put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'blocked':False})
+        assert mod.compute(root,at)['urgent_beforeinfo_only_recovery_keys']==[]
+        (root/f'data/site_scratches_v182/{KEY}.json').unlink()
+        # If odds are incomplete or not mapped to official DOM, the caller
+        # keeps its old 900s collector cadence (V71 remains the odds owner).
+        for broken in ({'verified_official_dom_v167':False},
+                       {'available_count':119},
+                       {'fetched_at':'2026-10-11T07:59:00+09:00'}):
+            put(root,path,{**odds,**broken})
+            assert mod.compute(root,at)['urgent_beforeinfo_only_recovery_keys']==[],broken
+        put(root,path,odds)
+        for altered in (
+            {'meta':{**race['meta'],'deadline':'08:36'}},
+            {'source_audit':{'race_card':card,'beforeinfo':{
+                **before,'source':source+'beforeinfo?hd=20261011&jcd=24&rno=1'}}},
+            {'source_audit':{'race_card':{**card,'sha256':None},'beforeinfo':before}},
+        ):
+            put(root,f'data/races/{KEY}.json',{**race,**altered})
+            assert mod.compute(root,at)['urgent_beforeinfo_only_recovery_keys']==[],altered
+        put(root,f'data/races/{KEY}.json',race)
+        put(root,'data/formal_status.json',{'guards':{
+            'results_seen':False,'unlock':True,'scoring':False,
+            'RESULT_UNLOCK_TOKEN':None}})
+        assert mod.compute(root,at)['urgent_beforeinfo_only_recovery_keys']==[]
+        # No global disable, and the 900s default collector / V71 cooldown
+        # and V229 120s boundary remain in the same existing V220 owner.
+        wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text()
+        assert 'auto-update.yml|site-odds.yml) cooldown=900' in wf
+        assert "if [[ \"$wf\" == auto-update.yml ]]" in wf
+        assert 'V220_COLLECTOR_ONLY_BEFOREINFO_MISSING_STRICT_WINDOW_180S' in wf
+        assert 'V220_COLLECTOR_ALREADY_ACTIVE_NO_DUPLICATE' in wf
+        assert 'V220_COLLECTOR_URGENT_PROOF_MALFORMED_NO_DISPATCH' in wf
+        assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120' in wf
+    print('GATE1C_COLLECTOR_SOURCE_ONLY_BOUNDED_EXHIBITION_RETRY_PASS')
+
+
 if __name__=='__main__':
     test_all()
     test_gate1c_v71_fresh_index_cannot_hide_missing_race_odds()
     test_gate1c_v71_short_cooldown_is_strict_odds_only_and_first_freeze_window()
+    test_gate1c_bounded_beforeinfo_collector_retry_is_source_only()
     test_gate1c_v71_stale_index_recovery_matches_40min_detection_window()
     test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector()
     test_v271_urgent_health()
