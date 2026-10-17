@@ -6,9 +6,14 @@ on:
     paths:
       - ".github/workflows/site-v125.yml"
   workflow_dispatch:
+  # Gate 1C: V229 creates immutable SITE snapshots while GitHub may omit
+  # V125's schedule. Reuse this exact V125 audit owner on successful
+  # V229 completion to refresh the index; no new cron or second writer.
+  # V229 does not listen to V125: no workflow_run feedback cycle.
   workflow_run:
     workflows:
       - "BOAT EDGE V123 UI Matched Final History"
+      - "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit"
     types:
       - completed
   schedule:
@@ -31,7 +36,9 @@ jobs:
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.name == 'BOAT EDGE V123 UI Matched Final History' ||
+         github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
