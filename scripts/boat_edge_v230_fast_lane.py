@@ -578,7 +578,7 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     # Observability only. A race marked source_blocked remains ineligible.
     output=root/'data/site_autopilot/v230_fast_current.json'
     write_json(output,status)
-    print('V230_FAST_OFFICIAL_PRE_RESULT '+json.dumps({k:v for k,v in status.items() if k!='outcomes'},ensure_ascii=False,sort_keys=True))
+    print('V230_FAST_OFFICIAL_PRE_RESULT '+json.dumps({**status, 'checked_at_jst':local_now().isoformat()},ensure_ascii=False,sort_keys=True))
     return status
 
 def run_postcommit_incomplete(root, now=None, worker=6):
