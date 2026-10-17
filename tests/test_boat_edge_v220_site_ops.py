@@ -419,14 +419,16 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
 
 
 def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
-    """10/16 10:40 skipped V229 must not veto 10:42 source-ready retry."""
+    """Skipped V229 and collector wakeups never consume actual-run cooldown."""
     import shutil
     import subprocess
 
     wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
     line=next((v for v in wf.splitlines() if 'jq -e --arg wf "$wf"' in v),None)
     assert line is not None
-    assert 'select($wf != "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml" or .conclusion != "skipped")' in line
+    assert 'select(.created_at != null and .conclusion != "skipped")' in line
+    assert 'runs?per_page=100' in wf
+    assert 'V220_RECOVERY_MALFORMED_STATUS_FAIL_CLOSED' in wf
     assert 'V220_V229_ALREADY_ACTIVE_NO_DUPLICATE' in wf
     assert 'auto-update.yml|site-odds.yml) cooldown=900' in wf
     assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120' in wf
@@ -448,9 +450,41 @@ def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
         assert not suppressed(v229,'skipped')
         assert suppressed(v229,'success')
         assert suppressed(v229,'failure')
-        # Collector cooldown must not change even for a skipped run.
-        assert suppressed('auto-update.yml','skipped')
-    print('V220_SKIPPED_V229_EXCLUDED_ACTIVE_AND_REAL_COOLDOWN_PRESERVED')
+        # A skipped collector has no source updates to cool down. Keep
+        # real 15-minute runs and active/pending attempts protected.
+        assert not suppressed('auto-update.yml','skipped')
+        assert suppressed('auto-update.yml','success')
+        assert suppressed('auto-update.yml','failure')
+        assert suppressed('auto-update.yml',None)
+    # Reproduce observed 2026-10-17 20:29 JST race: an auto-update
+    # skipped event at 20:29:35 must not suppress an independent V220
+    # source recovery at 20:29:55 (last real collector was 19:15).
+    if shutil.which('jq'):
+        expression=line.split("'",2)[1]
+        now=int(datetime(2026,10,17,11,29,55,tzinfo=timezone.utc).timestamp())
+        def production_suppresses(items, cooldown=900):
+            p=subprocess.run(['jq','-e','--arg','wf','auto-update.yml',
+                              '--argjson','t',str(now),
+                              '--argjson','c',str(cooldown),
+                              expression],
+                input=json.dumps({'workflow_runs':items}),text=True,
+                capture_output=True,check=False)
+            assert p.returncode in (0,1),p.stderr
+            return p.returncode==0
+        ignored={'created_at':'2026-10-17T11:29:35Z',
+                 'status':'completed','conclusion':'skipped'}
+        old_good={'created_at':'2026-10-17T10:15:49Z',
+                  'status':'completed','conclusion':'success'}
+        assert not production_suppresses([ignored,old_good])
+        recent_success={'created_at':'2026-10-17T11:20:00Z',
+                        'status':'completed','conclusion':'success'}
+        recent_active={'created_at':'2026-10-17T11:25:00Z',
+                       'status':'in_progress','conclusion':None}
+        assert production_suppresses([ignored,recent_success])
+        assert production_suppresses([ignored,recent_active])
+        # V229 still uses its original, shorter strict 120-second limit.
+        assert not production_suppresses([ignored,old_good],120)
+    print('V220_SKIPPED_ALL_WORKFLOWS_EXCLUDED_REAL_COOLDOWN_PRESERVED')
 
 
 def fully_proven_pre_result_fixture(root, now):
