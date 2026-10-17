@@ -1206,9 +1206,87 @@ def test_gate1c_bounded_beforeinfo_collector_retry_is_source_only():
     print('GATE1C_COLLECTOR_SOURCE_ONLY_BOUNDED_EXHIBITION_RETRY_PASS')
 
 
+
+def test_gate1c_all_simultaneous_races_in_25m_and_15m_recovery_windows():
+    """No 8/12-entry cutoff silently hides a valid scheduled race.
+
+    Production 2026-10-17 reached ten races in a single 25-minute period.
+    Synthetic 13-race overlap also proves the 12-entry urgent limit cannot
+    censor the last race's source-gap or its original recovery candidate.
+    No result, payout, formal unlock, network call or snapshot writing.
+    """
+    with tempfile.TemporaryDirectory() as d:
+        root=Path(d)
+        sample(root)
+        deadline=datetime(2026,10,11,8,35,tzinfo=JST)
+        keys=[f'{DAY}-20-01']+[f'{DAY}-23-{n:02d}' for n in range(1,13)]
+        missing=keys[-1]
+        put(root,'data/today.json',{
+            'date':DAY,'updated_at':'2026-10-11T08:14:00+09:00',
+            'venues':[{'venue':'test','races':[
+                {'race_key':key,'deadline':'08:35'} for key in keys]}]})
+        combos={f'{a}-{b}-{c}':11.5 for a in range(1,7)
+                for b in range(1,7) for c in range(1,7)
+                if len({a,b,c})==3}
+
+        def publish_first_twelve(at):
+            stamp=(at-timedelta(minutes=1)).isoformat()
+            put(root,'data/site_odds/index.json',{'date':'2026-10-11',
+                'updated_at':stamp,'checked':12,'updated':12})
+            for key in keys[:-1]:
+                card={'status':'ok','fetched_at':stamp}
+                put(root,f'data/races/{key}.json',{
+                    'race_key':key,'racers':[{'lane':n} for n in range(1,7)],
+                    'meta':{'phase':'PRE_RESULT','results_seen':False,
+                            'unlock':False,'scoring':False},
+                    'source_audit':{'race_card':card,'beforeinfo':card}})
+                put(root,f'data/site_scratches_v182/{key}.json',{
+                    'race_key':key,'blocked':False,'checked_at':stamp,
+                    'race_card_source_status':'ok',
+                    'official_beforeinfo_source_status':'ok'})
+                put(root,f'data/site_odds/{key}.json',{
+                    'race_key':key,'phase':'PRE_RESULT_PURCHASE_ONLY',
+                    'results_seen':False,'scoring':False,'fetched_at':stamp,
+                    'available_count':120,'verified_official_dom_v167':True,
+                    'trifecta_odds':combos})
+                put(root,f'data/site_prediction_snapshots/{key}.json',{
+                    'race_key':key,'snapshot_window':'FINAL_15M',
+                    'odds_sha256':'a'*64})
+
+        at=deadline-timedelta(minutes=20)
+        publish_first_twelve(at)
+        early=mod.compute(root,at)
+        assert early['scheduled_races']==13,early
+        assert early['active_window_races']==13,early
+        assert early['decision_window_races']==0,early
+        assert 'odds_index_stale' not in early['issues'],early
+        assert 'predeadline_race_odds_gap' in early['issues'],early
+        assert 'site-odds.yml' in early['recovery_dispatch_candidates'],early
+
+        at=deadline-timedelta(minutes=3)
+        publish_first_twelve(at)
+        urgent=mod.compute(root,at)
+        assert urgent['active_window_races']==13,urgent
+        assert urgent['decision_window_races']==13,urgent
+        assert len(urgent['current_windows'])==13,urgent
+        late=next(row for row in urgent['current_windows']
+                  if row['key']==missing)
+        assert 'beforeinfo_unavailable' in late['missing_evidence'],late
+        assert 'odds_evidence_missing' in late['missing_evidence'],late
+        assert 'predeadline_incomplete' in urgent['issues'],urgent
+        assert 'auto-update.yml' in urgent['recovery_dispatch_candidates'],urgent
+        assert 'site-odds.yml' in urgent['recovery_dispatch_candidates'],urgent
+        assert urgent['formal_unlock_or_scoring_authorized'] is False
+        assert urgent['formal_results_read_by_this_runner'] is False
+        # Even for 13 active races, missing evidence must never authorize V229.
+        assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml' not in urgent[
+            'recovery_dispatch_candidates'],urgent
+    print('GATE1C_ALL_13_SIMULTANEOUS_SOURCE_RECOVERY_WINDOWS_VISIBLE_PASS')
+
 if __name__=='__main__':
     test_all()
     test_gate1c_v71_fresh_index_cannot_hide_missing_race_odds()
+    test_gate1c_all_simultaneous_races_in_25m_and_15m_recovery_windows()
     test_gate1c_v71_short_cooldown_is_strict_odds_only_and_first_freeze_window()
     test_gate1c_bounded_beforeinfo_collector_retry_is_source_only()
     test_gate1c_v71_stale_index_recovery_matches_40min_detection_window()

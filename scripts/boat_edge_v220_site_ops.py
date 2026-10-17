@@ -264,13 +264,19 @@ def compute(root,now):
                 if d and str(key).startswith(day+'-'):
                     race_cards.append((d,key,str(venue.get('venue') or '-')))
     race_cards.sort()
+    # Gate 1C: do not silently truncate the recovery *decision set*.
+    # On 2026-10-17 ten distinct races could fall inside a single 25-minute
+    # odds recovery window, so an eight-race cap hid the 9th/10th from
+    # official source-gap detection. These lists are read-only local checks,
+    # NOT extra workflows, HTTP requests, prediction writers or promises of
+    # source eligibility. Keep the same exact PRE_RESULT time bounds.
     soon=[];urgent=[]
     for due,key,venue in race_cards:
         minutes=(due-now).total_seconds()/60
-        if 0<=minutes<=90 and len(soon)<8:
+        if 0<=minutes<=90:
             soon.append({'key':key,'venue':venue,'deadline_jst':due.astimezone(JST).strftime('%H:%M'),
                          'minutes_left':round(minutes,1)})
-        if 2<=minutes<=15 and len(urgent)<12:
+        if 2<=minutes<=15:
             urgent.append({'key':key,'venue':venue,'deadline_jst':due.astimezone(JST).strftime('%H:%M'),
                            'minutes_left':round(minutes,1),'missing_evidence':source_status(root,key,now)})
     active=bool(soon)
