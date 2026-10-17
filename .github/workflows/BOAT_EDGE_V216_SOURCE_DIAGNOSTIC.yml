@@ -108,6 +108,30 @@ jobs:
           window=cur.get('current_window',[])
           observed=hist.get('observations',{})
           keys=[row['race_key'] for row in window]
+          # A blank gap list is NOT evidence that official sources were ready.
+          # Preserve observed-time missing-snapshot evidence independently
+          # from later immutable snapshot publication.
+          missing=[]
+          for key,row in sorted(observed.items()):
+              if 'snapshot_missing' not in row.get('reasons_seen',[]):
+                  continue
+              snapshot=Path('data/site_prediction_snapshots')/(key+'.json')
+              missing.append({
+                  'race_key':key,
+                  'still_missing':not snapshot.is_file(),
+                  'source_gaps_ever_seen':row.get('source_gaps_seen',[]),
+                  'source_eligibility':'UNPROVEN',
+              })
+          print('V216_OBSERVED_MISSING_SNAPSHOT_DIAGNOSTIC',json.dumps({
+              'day_jst':day,
+              'missing_at_some_observation':len(missing),
+              'still_missing':sum(r['still_missing'] for r in missing),
+              'later_snapshot_present':sum(not r['still_missing'] for r in missing),
+              'still_missing_without_recorded_source_gaps':[
+                  r['race_key'] for r in missing
+                  if r['still_missing'] and not r['source_gaps_ever_seen']],
+              'races':missing,
+          },ensure_ascii=False,sort_keys=True))
           print('V216_WINDOW_COVERAGE',json.dumps({
               'day_jst':day,
               'checked_at':cur.get('checked_at'),
