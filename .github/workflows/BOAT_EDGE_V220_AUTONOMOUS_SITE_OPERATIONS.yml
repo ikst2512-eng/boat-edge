@@ -159,6 +159,7 @@ jobs:
             git fetch --no-tags origin main
             git reset --hard origin/main
             PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
+            PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_01_gate1c_missing_freeze_diagnostics.py' -v
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py --gate1c-proof
             # V281: coalesce the stale V227 UI status with the existing

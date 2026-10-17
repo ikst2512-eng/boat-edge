@@ -802,6 +802,9 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
          'source_ready_prediction_input_parity_reasons':{},
          'source_ready_without_proven_prediction':0,
          'source_ready_missing_prediction_keys':[],
+         # First-Git verified readiness without a proven prediction is a
+         # distinct failure class from source gaps seen EARLIER in V215.
+         'source_ready_missing_prediction_diagnostics':[],
          'source_ready_prediction_unverified_reasons':{},
          'independently_source_eligible_denominator':None,
          'eligible_save_rate_percent':None, 'acceptance_99_percent_proven':False,
@@ -871,6 +874,32 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
             else:proof_code='prediction_snapshot_metadata_unverified'
         out['source_ready_without_proven_prediction']+=1
         out['source_ready_missing_prediction_keys'].append(key)
+        history_path=root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json'
+        history=load(history_path) if not history_path.is_symlink() else None
+        entries=(history.get('observations') or {}) if (
+            isinstance(history,dict) and history.get('day_jst')==day
+            and isinstance(history.get('observations'),dict)) else {}
+        observed=entries.get(key)
+        observed=observed if isinstance(observed,dict) and observed.get('race_key')==key else {}
+        # V215's historical union of source_gaps_seen must NEVER be used as
+        # the cause of a miss AFTER a separately first-Git proven ready receipt.
+        out['source_ready_missing_prediction_diagnostics'].append({
+            'race_key':key,
+            'source_ready_observed_at':rec.get('observed_at'),
+            'deadline_at':rec.get('deadline_at'),
+            'prediction_verification_reason':proof_code,
+            'snapshot_file_exists':snap_path.is_file() and not snap_path.is_symlink(),
+            'v215_first_seen_at':observed.get('first_seen_at'),
+            'v215_last_seen_at':observed.get('last_seen_at'),
+            'v215_source_gaps_ever_seen':observed.get('source_gaps_seen',[])
+                if isinstance(observed.get('source_gaps_seen'),list) else [],
+            'v215_latest_source_gaps':observed.get('source_gaps',[])
+                if isinstance(observed.get('source_gaps'),list) else [],
+            'classification':'FIRST_GIT_SOURCE_READY_PREDICTION_NOT_PROVEN',
+            # Actual workflow start/job logs must be checked separately.
+            # No scheduling conclusion may be invented from repo files alone.
+            'writer_execution_cause':'ACTIONS_HISTORY_REQUIRED',
+        })
         out['source_ready_prediction_unverified_reasons'][proof_code]=(
             out['source_ready_prediction_unverified_reasons'].get(proof_code,0)+1)
     return out
