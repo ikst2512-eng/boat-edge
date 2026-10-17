@@ -390,6 +390,14 @@ def compute(root,now):
             if (race.get('race_key') not in (None,key)
                     or str(meta.get('venue_code')).zfill(2)!=key.split('-')[1]
                     or str(meta.get('race_no'))!=str(int(key.split('-')[2]))
+                    or str(meta.get('date','')).replace('-','')!=key[:8]
+                    or expected_deadline(key,meta.get('deadline'))!=due
+                    or card.get('source')!=('https://www.boatrace.jp/owpc/pc/race/'
+                       'racelist?hd='+key[:8]+'&jcd='+key.split('-')[1]
+                       +'&rno='+str(int(key.split('-')[2])))
+                    or before.get('source')!=('https://www.boatrace.jp/owpc/pc/race/'
+                       'beforeinfo?hd='+key[:8]+'&jcd='+key.split('-')[1]
+                       +'&rno='+str(int(key.split('-')[2])))
                     or meta.get('phase')!='PRE_RESULT'
                     or any(meta.get(flag) is not False for flag in
                            ('results_seen','unlock','scoring'))
