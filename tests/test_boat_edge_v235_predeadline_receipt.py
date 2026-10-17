@@ -120,7 +120,7 @@ class V235Proof(unittest.TestCase):
         }
         expected_cron_counts = {
             'v235': 2, 'v229': 2, 'v216': 3,
-            'collector': 1, 'official_odds': 1,
+            'collector': 1, 'official_odds': 3,
         }
 
         def field_set(expr, max_value):
