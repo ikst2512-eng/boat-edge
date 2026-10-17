@@ -239,14 +239,6 @@ jobs:
             if git push origin HEAD:main; then echo 'V216_POST_FREEZE_SETTLEMENT_ATOMIC_PUBLISHED'; break; fi
             if [ "$attempt" -eq 8 ]; then exit 1; fi
           done
-      - name: Disable replaced V215 scheduler after successful V216 audit
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          if gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/BOAT_EDGE_V215_DEADLINE_READINESS.yml/disable"; then
-            echo 'V216_PREVIOUS_SCHEDULER_DISABLED'
-          else
-            echo 'V216_OLD_SCHEDULER_NEEDS_MANUAL_STOP'
-          fi
+      # V215 no longer has a schedule or workflow_run trigger (V271).
+      # Keep its explicit workflow_dispatch fallback available; do not attempt
+      # to disable an already inactive workflow on every V216 execution.
