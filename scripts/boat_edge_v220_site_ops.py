@@ -301,7 +301,21 @@ def compute(root,now):
     # until <=25m to wake the existing V71 owner. V71 already collects
     # the official 120-combination market from -45m. The 900s cooldown
     # and GitHub run-state guard still prevent duplicate dispatches.
-    if any(r['minutes_left']<=40 for r in soon) and 'odds_index_stale' in reasons:
+    # V71's global index can be fresh because OTHER races were updated while
+    # this still-unfrozen race has no fresh, official, complete 120-odds file.
+    # In the existing <=25m recovery window, inspect only actual per-race
+    # PRE_RESULT source evidence. The 900s V71 cooldown and active-job check
+    # remain solely owned by the existing V220 workflow.
+    odds_gaps={'odds_evidence_missing','odds_evidence_stale',
+               'odds_120_incomplete','odds_official_dom_unverified'}
+    race_odds_missing=any(
+        r['minutes_left']<=25
+        and not (root/'data/site_prediction_snapshots'/f"{r['key']}.json").exists()
+        and bool(odds_gaps.intersection(source_status(root,r['key'],now)))
+        for r in soon)
+    if race_odds_missing: reasons.append('predeadline_race_odds_gap')
+    if any(r['minutes_left']<=40 for r in soon) and (
+        'odds_index_stale' in reasons or race_odds_missing):
         recover.append('site-odds.yml')
     if any(r['minutes_left']<=12 and any(i.startswith('odds_evidence_') or i in ('odds_120_incomplete','odds_official_dom_unverified') for i in r['missing_evidence']) for r in urgent):
         recover.append('site-odds.yml')
