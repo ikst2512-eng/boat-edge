@@ -112,7 +112,7 @@ def audit(root, now):
     next_watch_start=(next_race[0]-dt.timedelta(minutes=15)).astimezone(JST).strftime('%H:%M') if next_race else None
     return {'schema':SCHEMA,'scope':'PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH',
             'day_jst':today,'schedule_source_today':is_today,'scheduled_races':len(races),
-            'window_races':len(window),'reason_counts':reasons,'current_window':window[:32],
+            'window_races':len(window),'reason_counts':reasons,'current_window':window,
             'next_race':{'race_key':next_race[1],'venue':next_race[2],'deadline':next_race[3],
                          'watch_start':next_watch_start} if next_race else None,
             'upcoming':forecast,'source_counts_in_window':provisional,
