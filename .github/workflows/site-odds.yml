@@ -7,7 +7,12 @@ on:
       - ".github/workflows/site-odds.yml"
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    # Gate 1C: retain exactly the same 12 five-minute UTC slots, spread over
+    # three disjoint cron identities to test resilience to omitted GitHub
+    # schedule deliveries. No additional run windows, workflow or writer.
+    - cron: "0,15,30,45 * * * *"
+    - cron: "5,20,35,50 * * * *"
+    - cron: "10,25,40,55 * * * *"
 
 permissions:
   contents: write

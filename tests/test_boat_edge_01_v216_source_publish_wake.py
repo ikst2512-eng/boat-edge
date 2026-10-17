@@ -103,5 +103,31 @@ class V216CollectorWake(unittest.TestCase):
             self.assertIn(marker,wf)
         self.assertIn("data/site_paper_sim/readiness_history_v215/",wf)
 
+    def test_v71_disjoint_crons_preserve_exact_prior_slots_without_feedback(self):
+        odds=ODDS.read_text(encoding='utf8')
+        event=odds.split('on:\n',1)[1].split('\npermissions:',1)[0]
+        self.assertEqual(event.count('  schedule:'),1)
+        self.assertNotIn('  workflow_run:',event)
+        self.assertIn('  workflow_dispatch:',event)
+        self.assertIn('branches: [main]',event)
+        slots=[]
+        lines=[line.strip() for line in event.splitlines()
+               if line.strip().startswith('- cron:')]
+        self.assertEqual(len(lines),3)
+        for line in lines:
+            spec=line.split('"')[1]
+            fields=spec.split()
+            self.assertEqual(fields[1:],['*','*','*','*'])
+            slots.extend(int(n) for n in fields[0].split(','))
+        self.assertEqual(sorted(slots),list(range(0,60,5)))
+        self.assertEqual(len(set(slots)),12)
+        # No V216/V229 listener: completed/skipped workflow_run feedback
+        # events must not cause an accidental recursion or extra writer.
+        self.assertNotIn('BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',event)
+        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit',event)
+        self.assertIn('group: boat-edge-site-odds-v71',odds)
+        self.assertIn('cancel-in-progress: false',odds)
+        self.assertIn('V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED',odds)
+
 if __name__=='__main__':
     unittest.main()
