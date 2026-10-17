@@ -77,7 +77,8 @@ if (( cooldown_left > 0 )); then
       echo V01_FIRST_FREEZE_NUDGE_WAIT_INTERRUPTED_NO_DISPATCH
       exit 0
     fi
-    V01_COOLDOWN_WAITED=1 exec bash "$0"
+    export V01_COOLDOWN_WAITED=1
+    exec bash "$0"
   fi
   echo V01_FIRST_FREEZE_NUDGE_V229_COOLDOWN
   exit 0
