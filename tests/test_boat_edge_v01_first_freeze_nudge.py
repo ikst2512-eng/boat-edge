@@ -23,15 +23,33 @@ class SourceCommitV229Nudge(unittest.TestCase):
             root = Path(d)
             bin_dir = root / "bin"
             bin_dir.mkdir()
+            create_stub(bin_dir, "date", '''
+if [[ -n "$MOCK_NOW_EPOCH" ]]; then
+  if [[ -f "$MOCK_SLEPT" ]]; then printf '%s\n' "$MOCK_AFTER_EPOCH"
+  else printf '%s\n' "$MOCK_NOW_EPOCH"; fi
+else /usr/bin/date "$@"; fi
+''')
+            create_stub(bin_dir, "sleep", '''
+printf 'sleep:%s\n' "$*" >> "$MOCK_EVENTS"
+touch "$MOCK_SLEPT"
+''')
             create_stub(bin_dir, "git", 'printf "git:%s\\n" "$*" >> "$MOCK_EVENTS"')
             create_stub(bin_dir, "python3", '''
 if [[ "${MOCK_PYTHON_FAIL:-0}" == 1 ]]; then exit 1; fi
-printf '%s\\n' "$MOCK_PLAN"
+if [[ -f "$MOCK_SLEPT" && -n "$MOCK_PLAN_AFTER_SLEEP" ]]; then
+  printf '%s\n' "$MOCK_PLAN_AFTER_SLEEP"
+else
+  printf '%s\n' "$MOCK_PLAN"
+fi
 ''')
             create_stub(bin_dir, "gh", '''
 if [[ "$1" == api ]]; then
   if [[ "${MOCK_GH_FAIL:-0}" == 1 ]]; then exit 1; fi
-  printf '%s\\n' "$MOCK_RUNS"
+  if [[ -f "$MOCK_SLEPT" && -n "$MOCK_RUNS_AFTER_SLEEP" ]]; then
+    printf '%s\n' "$MOCK_RUNS_AFTER_SLEEP"
+  else
+    printf '%s\n' "$MOCK_RUNS"
+  fi
 elif [[ "$1" == workflow && "$2" == run ]]; then
   printf "dispatch:%s\\n" "$*" >> "$MOCK_EVENTS"
 else
@@ -44,6 +62,11 @@ fi
                 "GITHUB_REPOSITORY": "ikst2512-eng/boat-edge",
                 "GITHUB_REF": "refs/heads/main", "GH_TOKEN": "unit-test-token",
                 "MOCK_EVENTS": str(events),
+                "MOCK_SLEPT": str(root / "slept"),
+                "MOCK_NOW_EPOCH": "",
+                "MOCK_AFTER_EPOCH": "",
+                "MOCK_PLAN_AFTER_SLEEP": "",
+                "MOCK_RUNS_AFTER_SLEEP": "",
                 "MOCK_PLAN": json.dumps({"workflows": [FREEZE]} if plan is None else plan),
                 "MOCK_RUNS": json.dumps({"workflow_runs": []} if runs is None else runs),
             }
@@ -79,6 +102,50 @@ fi
         for data in cases:
             _, events = self.run_case(runs=data)
             self.assertNotIn("dispatch:", events)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
+    def test_bounded_existing_cooldown_recheck_then_single_v229_dispatch(self):
+        # A V229 run 65 seconds ago can have missed the odds published after
+        # it finished. Keep the full 120s, re-read main and exact 2-10m source
+        # gate, and dispatch at most one EXISTING V229 writer.
+        epoch = 1800000000
+        stamp = datetime.fromtimestamp(epoch - 65, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        rows = {"workflow_runs": [{"status": "completed",
+                                  "conclusion": "success", "created_at": stamp}]}
+        clock = dict(MOCK_NOW_EPOCH=epoch, MOCK_AFTER_EPOCH=epoch + 58)
+        output, events = self.run_case(runs=rows, **clock)
+        self.assertIn("BOUNDED_WAIT seconds=57", output)
+        self.assertEqual(events.count("sleep:"), 1)
+        self.assertEqual(events.count("dispatch:"), 1)
+        self.assertGreaterEqual(events.count("git:fetch"), 2)
+        self.assertIn("EXISTING_V229_DISPATCHED", output)
+        # A changed/expired source window MUST block the second attempt.
+        output, events = self.run_case(
+            runs=rows, MOCK_PLAN_AFTER_SLEEP=json.dumps({"workflows": []}),
+            **clock)
+        self.assertIn("NOT_SOURCE_READY_OR_OUTSIDE_WINDOW", output)
+        self.assertEqual(events.count("dispatch:"), 0)
+        # Another V229 starts while waiting; do not send a second one.
+        output, events = self.run_case(
+            runs=rows, MOCK_RUNS_AFTER_SLEEP=json.dumps({"workflow_runs": [
+                {"status": "in_progress", "created_at": stamp}]}),
+            **clock)
+        self.assertIn("V229_ALREADY_ACTIVE", output)
+        self.assertEqual(events.count("dispatch:"), 0)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
+    def test_no_hold_when_v229_cooldown_is_longer_than_90_seconds(self):
+        epoch = 1800000000
+        stamp = datetime.fromtimestamp(epoch - 10, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        output, events = self.run_case(
+            runs={"workflow_runs": [{"status": "completed",
+                "conclusion": "success", "created_at": stamp}]},
+            MOCK_NOW_EPOCH=epoch, MOCK_AFTER_EPOCH=epoch + 115)
+        self.assertIn("V229_COOLDOWN", output)
+        self.assertEqual(events.count("sleep:"), 0)
+        self.assertEqual(events.count("dispatch:"), 0)
 
     @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
     def test_untrusted_missing_auth_and_unavailable_evidence_fail_closed(self):

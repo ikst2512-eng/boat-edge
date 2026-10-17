@@ -56,11 +56,29 @@ if printf '%s\n' "$runs" | jq -e '
   exit 0
 fi
 now=$(date -u +%s)
-if printf '%s\n' "$runs" | jq -e --argjson now "$now" '
+# Gate 1C: keep the full existing 120s cooldown, but do not permanently
+# lose a newly source-ready 2-10m freeze when an earlier V229 ran before
+# the final official odds were Git-published. Wait in THIS producer job only
+# if <=90s remain; then re-run all latest-main, source, window, and active
+# job checks from the beginning. No additional workflow/cron/writer.
+if ! cooldown_left=$(printf '%s\n' "$runs" | jq -er --argjson now "$now" '
   [.workflow_runs[]? | select(.created_at != null) |
-    select((.created_at | fromdateiso8601) <= $now and
-           ($now - (.created_at | fromdateiso8601)) < 120)] | length > 0
-' >/dev/null 2>&1; then
+    (.created_at | fromdateiso8601) |
+    select(. <= $now and ($now - .) < 120)] |
+  if length == 0 then 0 else (max + 120 - $now) end
+' 2>/dev/null); then
+  echo V01_FIRST_FREEZE_NUDGE_COOLDOWN_UNVERIFIABLE_NO_DISPATCH
+  exit 0
+fi
+if (( cooldown_left > 0 )); then
+  if (( cooldown_left <= 90 )) && [[ "${V01_COOLDOWN_WAITED:-0}" != 1 ]]; then
+    echo "V01_FIRST_FREEZE_NUDGE_BOUNDED_WAIT seconds=$((cooldown_left+2))"
+    if ! sleep "$((cooldown_left+2))"; then
+      echo V01_FIRST_FREEZE_NUDGE_WAIT_INTERRUPTED_NO_DISPATCH
+      exit 0
+    fi
+    V01_COOLDOWN_WAITED=1 exec bash "$0"
+  fi
   echo V01_FIRST_FREEZE_NUDGE_V229_COOLDOWN
   exit 0
 fi
