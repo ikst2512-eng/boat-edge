@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 3,
     "deadline": "09:35",
-    "updated_at": "2026-10-18T06:03:45+09:00",
+    "updated_at": "2026-10-18T07:25:49+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=21&rno=3",
-      "fetched_at": "2026-10-18T06:05:38+09:00",
-      "sha256": "be1208fe2bccd1ac1f0bdebac11c7302d8c917f1fc13818c2cab91ccc232d694",
+      "fetched_at": "2026-10-18T07:27:04+09:00",
+      "sha256": "58c92ae9113266684a7c2abfdba12ecb9557dd9b38ee5db02b1247ef06792403",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=21&rno=3",
+      "fetched_at": "2026-10-18T07:26:29+09:00",
+      "sha256": "e02a39e9d23d0f5feef09d6882ae7d9a48877eacaa2b3f7fc27a495ba59457f9",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -296,7 +302,53 @@
       "raw_text": "6 4065 / B1 金田 幸子 岡山/岡山 46歳/43.5kg F0 L0 0.17 5.15 35.71 52.38 5.84 40.00 52.00 50 31.07 47.57 136 37.72 52.63 4 6 10 4 8 8 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 茅原 悠紀 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 土屋 蘭 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 戸塚 邦好 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 眞田 英二 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 角 ひとみ R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 金田 幸子 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

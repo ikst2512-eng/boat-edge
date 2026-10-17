@@ -8,7 +8,7 @@
     "event": "山口シネマ杯",
     "race_no": 2,
     "deadline": "09:09",
-    "updated_at": "2026-10-18T06:03:45+09:00",
+    "updated_at": "2026-10-18T07:25:49+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=21&rno=2",
-      "fetched_at": "2026-10-18T06:05:37+09:00",
-      "sha256": "b4b9577aacb5ac12e60bb616aabfa69555ae84e87bc52bf15f0e19262290d201",
+      "fetched_at": "2026-10-18T07:27:03+09:00",
+      "sha256": "bdc9627fa8258b6ad1c0953c6a82c49d4f1633395834d6ab1f28419e30b997b9",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=21&rno=2",
+      "fetched_at": "2026-10-18T07:26:29+09:00",
+      "sha256": "974f786713cf2ef66288fc7e6e5a0a652d0370d7ec4f1a4fe93f72f82fcadfa0",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     }
   },
   "racers": [
@@ -295,7 +301,53 @@
       "raw_text": "6 3699 / B1 富永 正人 埼玉/埼玉 53歳/52.1kg F0 L0 0.19 4.61 25.84 40.45 5.76 38.10 61.90 10 43.80 60.33 158 33.91 51.30 1 8 6 1 5 1 9 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 興津 藍 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 山田 真聖 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 服部 剛 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 辻 栄蔵 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 今出 晋二 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 富永 正人 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
