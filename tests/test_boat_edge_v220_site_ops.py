@@ -1047,9 +1047,77 @@ def test_gate1c_legacy_v229_original_first_git_separate_tier():
     print('GATE1C_LEGACY_FIRST_GIT_DISTINCT_FROM_V125_99_AND_TAMPERING_PASS')
 
 
+
+def test_gate1c_v71_short_cooldown_is_strict_odds_only_and_first_freeze_window():
+    """Urgent V71 source retry is not proof of 120 odds or a frozen forecast.
+
+    A 15m cooldown can miss an official 120-price page first published during
+    the immutable 2-10m freeze window. Only that narrow, fully PRE_RESULT,
+    six-boat source-backed odds deficit gets the existing V71 180s retry.
+    """
+    with tempfile.TemporaryDirectory() as d:
+        root=Path(d);sample(root)
+        due=datetime(2026,10,11,8,35,tzinfo=JST)
+        evidence_stamp='2026-10-11T08:21:00+09:00'
+        before={'status':'ok','fetched_at':evidence_stamp,
+                'six_boat_coverage':{'six_boat_complete':True}}
+        card={'status':'ok','fetched_at':evidence_stamp}
+        race={'race_key':KEY,'meta':{'phase':'PRE_RESULT',
+              'results_seen':False,'unlock':False,'scoring':False},
+              'racers':[{'lane':i} for i in range(1,7)],
+              'source_audit':{'race_card':card,'beforeinfo':before}}
+        put(root,f'data/races/{KEY}.json',race)
+        scratch={'race_key':KEY,'blocked':False,'checked_at':evidence_stamp,
+                 'race_card_source_status':'ok',
+                 'official_beforeinfo_source_status':'ok'}
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        assert mod.compute(root,due-timedelta(minutes=11))['urgent_odds_only_recovery_keys']==[]
+        for lead in (10,8,2):
+            report=mod.compute(root,due-timedelta(minutes=lead))
+            assert report['urgent_odds_only_recovery_keys']==[KEY],(lead,report)
+            assert 'site-odds.yml' in report['recovery_dispatch_candidates']
+            assert report['formal_results_read_by_this_runner'] is False
+        assert mod.compute(root,due-timedelta(seconds=119))['urgent_odds_only_recovery_keys']==[]
+
+        at=due-timedelta(minutes=8)
+        # Missing/stale sources OTHER than odds must keep the normal 900s
+        # V71 cooldown even if the site needs another official fetch.
+        put(root,f'data/site_scratches_v182/{KEY}.json',{**scratch,'blocked':True})
+        assert mod.compute(root,at)['urgent_odds_only_recovery_keys']==[]
+        put(root,f'data/site_scratches_v182/{KEY}.json',scratch)
+        put(root,f'data/races/{KEY}.json',{
+            **race,'source_audit':{'race_card':card,'beforeinfo':{
+                **before,'six_boat_coverage':{'six_boat_complete':False}}}})
+        assert mod.compute(root,at)['urgent_odds_only_recovery_keys']==[]
+        put(root,f'data/races/{KEY}.json',race)
+
+        # Neither formal unlock nor a previous immutable first freeze can
+        # create an emergency source job.
+        put(root,'data/formal_status.json',{'guards':{
+            'results_seen':False,'unlock':True,'scoring':False,
+            'RESULT_UNLOCK_TOKEN':None}})
+        assert mod.compute(root,at)['urgent_odds_only_recovery_keys']==[]
+        put(root,'data/formal_status.json',{'guards':{
+            'results_seen':False,'unlock':False,'scoring':False,
+            'RESULT_UNLOCK_TOKEN':None}})
+        put(root,f'data/site_prediction_snapshots/{KEY}.json',{
+            'race_key':KEY,'snapshot_window':'FINAL_15M','odds_sha256':'a'*64})
+        assert mod.compute(root,at)['urgent_odds_only_recovery_keys']==[]
+        # The original source and freeze audit remain independently strict.
+        wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text()
+        assert 'auto-update.yml|site-odds.yml) cooldown=900' in wf
+        assert 'cooldown=180' in wf
+        assert 'V220_V71_ALREADY_ACTIVE_NO_DUPLICATE' in wf
+        assert 'V220_V71_URGENT_PROOF_MALFORMED_NO_DISPATCH' in wf
+        assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120' in wf
+        assert 'gh workflow run "$wf" --ref main' in wf
+    print('GATE1C_V71_BOUNDED_ODDS_ONLY_FIRST_FREEZE_RETRY_PASS')
+
+
 if __name__=='__main__':
     test_all()
     test_gate1c_v71_fresh_index_cannot_hide_missing_race_odds()
+    test_gate1c_v71_short_cooldown_is_strict_odds_only_and_first_freeze_window()
     test_gate1c_v71_stale_index_recovery_matches_40min_detection_window()
     test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector()
     test_v271_urgent_health()
