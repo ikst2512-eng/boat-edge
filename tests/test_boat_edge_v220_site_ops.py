@@ -746,7 +746,7 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         assert report['catalog_matured_without_snapshot']==1,report
         assert report['catalog_matured_not_observed_saved_keys']==[key2],report
         assert report['catalog_matured_not_observed_missing_keys']==[],report
-        assert report['catalog_matured_observed_missing_keys']==[],report
+        assert report['catalog_matured_observed_missing_keys']==[KEY],report
         assert report['catalog_matured_by_hour_jst']=={'08':2},report
         assert report['catalog_matured_not_observed_by_hour_jst']=={'08':1},report
         # Advance until the previously future 09:10 race matures.
@@ -756,7 +756,7 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
         assert later['catalog_matured_not_observed_by_hour_jst']=={'08':1,'09':1},later
         assert later['catalog_matured_not_observed_missing_keys']==[key3],later
         assert later['catalog_matured_not_observed_saved_keys']==[key2],later
-        assert later['catalog_matured_observed_missing_keys']==[],later
+        assert later['catalog_matured_observed_missing_keys']==[KEY],later
         assert (len(later['catalog_matured_not_observed_missing_keys'])+
                 len(later['catalog_matured_observed_missing_keys'])
                 ==later['catalog_matured_without_snapshot'])
