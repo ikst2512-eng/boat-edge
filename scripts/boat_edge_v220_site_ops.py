@@ -295,7 +295,7 @@ def compute(root,now):
     # A scheduled job may already be running: the workflow will suppress dispatch when
     # that exact action has run recently; no results endpoints, betting or formal actions.
     if active and 'collector_index_stale' in reasons:recover.append('auto-update.yml')
-    if any(r['minutes_left']<=12 and any(i in ('race_pre_result_not_verified','racers_not_six','race_card_missing_or_future','race_card_stale','beforeinfo_unavailable','beforeinfo_stale') for i in r['missing_evidence']) for r in urgent):
+    if any(r['minutes_left']<=12 and any(i in ('race_pre_result_not_verified','racers_not_six','race_card_missing_or_future','race_card_stale','beforeinfo_unavailable','beforeinfo_stale','scratch_unverified_or_blocked','scratch_stale') for i in r['missing_evidence']) for r in urgent):
         recover.append('auto-update.yml')
     if any(r['minutes_left']<=25 for r in soon) and 'odds_index_stale' in reasons:
         recover.append('site-odds.yml')

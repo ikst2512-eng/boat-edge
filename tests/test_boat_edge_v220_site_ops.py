@@ -86,6 +86,56 @@ def test_all():
         assert not mod.write_if_changed(state,warn)
         assert 'NOT_FORMAL_FRESH' in warn['scope']
     print('V220_TESTS_PASS waiting, window deficits, fail-closed recovery, ready sources, formal separation, deterministic reports')
+def test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector():
+    """A valid six-racer card, beforeinfo and verified 120 odds are not
+    enough to freeze if the collector scratch is absent or expired.
+
+    Reuse V220's existing guarded auto-update owner and 900s cooldown, not
+    a second writer or a new Actions event. No result page/source is opened.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp);sample(root)
+        at=NOW+timedelta(minutes=27) # 08:32 JST; 3m before 唐津1R
+        fresh=(at-timedelta(minutes=2)).isoformat()
+        put(root,f'data/races/{KEY}.json',{
+            'race_key':KEY,'racers':[{}]*6,
+            'meta':{'phase':'PRE_RESULT','results_seen':False,
+                    'unlock':False,'scoring':False},
+            'source_audit':{
+                'race_card':{'status':'ok','fetched_at':fresh},
+                'beforeinfo':{'status':'ok','fetched_at':fresh}}})
+        combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
+                for b in range(1,7) for c in range(1,7)
+                if len({a,b,c})==3}
+        put(root,f'data/site_odds/{KEY}.json',{
+            'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY',
+            'results_seen':False,'scoring':False,
+            'fetched_at':fresh,'available_count':120,
+            'verified_official_dom_v167':True,'trifecta_odds':combos})
+        # No current scratch and no stale odds/collector INDEX.
+        initial=mod.compute(root,at)
+        gaps=initial['current_windows'][0]['missing_evidence']
+        assert gaps==['frozen_prediction_missing_or_invalid',
+                      'scratch_unverified_or_blocked'],gaps
+        assert initial['recovery_dispatch_candidates']==['auto-update.yml'],initial
+        put(root,f'data/site_scratches_v182/{KEY}.json',{
+            'race_key':KEY,'blocked':False,
+            'checked_at':(at-timedelta(minutes=16)).isoformat(),
+            'race_card_source_status':'ok',
+            'official_beforeinfo_source_status':'ok'})
+        expired=mod.compute(root,at)
+        assert 'scratch_stale' in expired['current_windows'][0]['missing_evidence']
+        assert 'auto-update.yml' in expired['recovery_dispatch_candidates'],expired
+        # Once its original source is verified, no unnecessary collector
+        # recovery; snapshot permissions remain with independent V229.
+        put(root,f'data/site_scratches_v182/{KEY}.json',{
+            'race_key':KEY,'blocked':False,'checked_at':at.isoformat(),
+            'race_card_source_status':'ok',
+            'official_beforeinfo_source_status':'ok'})
+        ready=mod.compute(root,at)
+        assert 'auto-update.yml' not in ready['recovery_dispatch_candidates'],ready
+    print('GATE1C_SCRATCH_ONLY_EXISTING_COLLECTOR_RECOVERY_PASS')
+
 def test_v271_urgent_health():
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp);sample(root)
@@ -875,6 +925,7 @@ def test_gate1c_legacy_v229_original_first_git_separate_tier():
 
 if __name__=='__main__':
     test_all()
+    test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector()
     test_v271_urgent_health()
     test_v272_source_change_trigger()
     test_v284_freeze_coverage_not_early_false_miss()
