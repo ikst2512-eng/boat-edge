@@ -211,6 +211,7 @@ class FastLaneTests(unittest.TestCase):
         self.assertTrue(got['priority_applied'])
         self.assertEqual(got['priority_failure_fallback_targets'],[second])
         self.assertEqual(got['priority_failure_fallback_snapshots'],1)
+        self.assertEqual(got['priority_zero_freeze_reason'],'FIRST_FREEZE_ZERO_SNAPSHOTS')
         self.assertEqual(got['new_snapshots_atomic_audited'],1)
         self.assertEqual(got['targets'],[KEY,second])
         self.assertEqual(order,[('fetch',KEY),('update',KEY),('freeze',None),

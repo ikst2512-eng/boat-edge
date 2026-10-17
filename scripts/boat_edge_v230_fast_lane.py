@@ -512,7 +512,9 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     # are all independently rechecked by existing targets/update_one/V229.
     status['priority_failure_fallback_targets']=[]
     status['priority_failure_fallback_snapshots']=0
-    initial_state=status['outcomes'].get(priority_key) if priority_applied else None
+    status['priority_zero_freeze_reason']='NOT_APPLICABLE'
+    if priority_applied and count==0:
+        status['priority_zero_freeze_reason']='FIRST_FREEZE_ZERO_SNAPSHOTS'
     # A fresh official response can still fail V229's strict immutable freeze.
     # Zero audited snapshots, not the fetch label, is the decisive failure.
     # The original first Git push has nothing to delay in this case.
