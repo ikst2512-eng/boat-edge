@@ -136,6 +136,15 @@ def test_v272_source_change_trigger():
     assert "'tests/test_boat_edge_v220_site_ops.py'" in workflow
     assert 'PY_V220_INSTALL' not in workflow
     assert 'Verify current versioned site-operations code' in workflow
+    # ①-1C: existing guarded nudge must execute before potentially long
+    # report retries; never add another workflow, dispatcher, or cadence.
+    assert workflow.count('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs') == 1
+    assert workflow.index('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs') < workflow.index('      - name: Generate observed pre-result site-operations report')
+    assert workflow.index('git fetch --no-tags origin main') < workflow.index('scripts/boat_edge_v220_site_ops.py --recovery-plan')
+    assert 'auto-update.yml|site-odds.yml) cooldown=900' in workflow
+    assert 'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120' in workflow
+    assert workflow.count('if gh workflow run "$wf" --ref main; then') == 1
+    assert workflow.count('      - name: Generate observed pre-result site-operations report') == 1
     print('V272_SOURCE_CHANGE_TRIGGER_PASS')
 
 def test_v284_freeze_coverage_not_early_false_miss():

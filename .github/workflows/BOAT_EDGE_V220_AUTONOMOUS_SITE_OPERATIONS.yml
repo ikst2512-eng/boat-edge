@@ -65,6 +65,60 @@ jobs:
           test -f assets/boat_edge_v220_site_ops.css
           test -f index.html
 
+      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs
+        # Existing 15-minute collector cooldown is unchanged; V229 is allowed
+        # only for source-complete uncommitted FINAL in its actual 2-10m window.
+        # A 2-minute V229 cooldown lets genuine cron gaps recover while
+        # suppressing duplicate queued/running execution and rapid retries.
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # A safe missed-cron nudge only. It is NOT a model change, formal unlock, payout fetch or purchase.
+          # Gate 1C: recover against latest main BEFORE report Git retries
+          # consume the strictly limited 2-10 minute PRE_RESULT window.
+          # This is the SAME recovery step, not a second dispatch path.
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py --recovery-plan > /tmp/v220_recovery_plan.json
+          cat /tmp/v220_recovery_plan.json
+          if ! command -v gh >/dev/null || ! command -v jq >/dev/null; then echo 'V220_RECOVERY_CLI_UNAVAILABLE_FAIL_CLOSED'; exit 0; fi
+          for wf in $(jq -r '.workflows[]?' /tmp/v220_recovery_plan.json); do
+            case "$wf" in
+              auto-update.yml|site-odds.yml) cooldown=900 ;;
+              BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120 ;;
+              *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1 ;;
+            esac
+            # Source readiness was checked on latest main in --recovery-plan;
+            # every V229 invocation performs its own independent PRE_RESULT,
+            # official source, 120-odds and Git-first-add fail-closed checks.
+            if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=12" 2>/dev/null); then
+               echo "V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE $wf"; continue
+            fi
+            current=$(date -u +%s)
+            # Never dispatch if a V229 instance is pending/running, regardless
+            # of start time; keep original 15-min cooldown for collectors.
+            if [[ "$wf" == BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml ]]; then
+               if echo "$runs" | jq -e '[.workflow_runs[]? | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length > 0' >/dev/null; then
+                  echo "V220_V229_ALREADY_ACTIVE_NO_DUPLICATE"; continue
+               fi
+            fi
+            # A completed/skipped V229 run executed ZERO freeze steps. Do not
+            # let a skipped workflow_run event suppress an independently
+            # source-ready recovery for the entire 2-minute cooldown. Other
+            # completed V229 attempts and ALL collector cooldowns stay intact.
+            if echo "$runs" | jq -e --arg wf "$wf" --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null) | select($wf != "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml" or .conclusion != "skipped") | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
+               echo "V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE $wf"; continue
+            fi
+            if gh workflow run "$wf" --ref main; then
+               echo "V220_RECOVERY_DISPATCHED_ONLY_PRE_RESULT $wf"
+            else
+               echo "V220_RECOVERY_DISPATCH_FAILED_FAIL_CLOSED $wf"
+            fi
+          done
+
+
       - name: Generate observed pre-result site-operations report
         shell: bash
         run: |
@@ -131,52 +185,4 @@ jobs:
             if [ "$try_no" -eq 6 ]; then echo 'V220_REPORT_RETRY_EXHAUSTED'; exit 1; fi
           done
           test "$saved" = 1
-
-      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs
-        # Existing 15-minute collector cooldown is unchanged; V229 is allowed
-        # only for source-complete uncommitted FINAL in its actual 2-10m window.
-        # A 2-minute V229 cooldown lets genuine cron gaps recover while
-        # suppressing duplicate queued/running execution and rapid retries.
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # A safe missed-cron nudge only. It is NOT a model change, formal unlock, payout fetch or purchase.
-          PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py --recovery-plan > /tmp/v220_recovery_plan.json
-          cat /tmp/v220_recovery_plan.json
-          if ! command -v gh >/dev/null || ! command -v jq >/dev/null; then echo 'V220_RECOVERY_CLI_UNAVAILABLE_FAIL_CLOSED'; exit 0; fi
-          for wf in $(jq -r '.workflows[]?' /tmp/v220_recovery_plan.json); do
-            case "$wf" in
-              auto-update.yml|site-odds.yml) cooldown=900 ;;
-              BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120 ;;
-              *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1 ;;
-            esac
-            # Source readiness was checked on latest main in --recovery-plan;
-            # every V229 invocation performs its own independent PRE_RESULT,
-            # official source, 120-odds and Git-first-add fail-closed checks.
-            if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=12" 2>/dev/null); then
-               echo "V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE $wf"; continue
-            fi
-            current=$(date -u +%s)
-            # Never dispatch if a V229 instance is pending/running, regardless
-            # of start time; keep original 15-min cooldown for collectors.
-            if [[ "$wf" == BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml ]]; then
-               if echo "$runs" | jq -e '[.workflow_runs[]? | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length > 0' >/dev/null; then
-                  echo "V220_V229_ALREADY_ACTIVE_NO_DUPLICATE"; continue
-               fi
-            fi
-            # A completed/skipped V229 run executed ZERO freeze steps. Do not
-            # let a skipped workflow_run event suppress an independently
-            # source-ready recovery for the entire 2-minute cooldown. Other
-            # completed V229 attempts and ALL collector cooldowns stay intact.
-            if echo "$runs" | jq -e --arg wf "$wf" --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null) | select($wf != "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml" or .conclusion != "skipped") | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
-               echo "V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE $wf"; continue
-            fi
-            if gh workflow run "$wf" --ref main; then
-               echo "V220_RECOVERY_DISPATCHED_ONLY_PRE_RESULT $wf"
-            else
-               echo "V220_RECOVERY_DISPATCH_FAILED_FAIL_CLOSED $wf"
-            fi
-          done
 
