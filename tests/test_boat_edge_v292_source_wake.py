@@ -13,6 +13,15 @@ assert "'BOAT EDGE 3連単オッズ更新 V71'" in prefix
 # V235 source lane is an additional completion signal; it is not a new writer.
 v235_name="'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'"
 assert prefix.count(v235_name) == 1
+# Gate 1C: a V216 *scheduled* completion can independently wake V229
+# even when V229 and V235 cron is dropped. Collector-triggered V216 events
+# must not fan out a duplicate V229, and no new cron/writer is introduced.
+v216_name="'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'"
+assert prefix.count(v216_name) == 1
+assert "github.event.workflow_run.name != " + v216_name in job
+assert "github.event.workflow_run.event == 'schedule'" in job
+v216=Path('.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text(encoding='utf8')
+assert "'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'" not in v216.split('jobs:',1)[0]
 v235=Path('.github/workflows/V235.yml').read_text(encoding='utf8')
 v235_events=v235.split('jobs:',1)[0]
 assert "name: BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring" in v235_events
@@ -32,12 +41,21 @@ assert "V229_NO_NEW_ELIGIBLE_EVIDENCE" in s
 assert "git push origin HEAD:main" in s
 # Logical contract of GitHub Actions expression: only successful trusted main
 # completions are allowed; scheduled/manual triggers keep their old behavior.
-def admitted(ev,ref,conclusion=None,branch=None,repo=None,expected='ikst2512-eng/boat-edge'):
+def admitted(ev,ref,conclusion=None,branch=None,repo=None,expected='ikst2512-eng/boat-edge',
+             upstream_name=None,upstream_event=None):
     return ref=='refs/heads/main' and (ev!='workflow_run' or (
-        conclusion=='success' and branch=='main' and repo==expected))
+        conclusion=='success' and branch=='main' and repo==expected and
+        (upstream_name!='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+         or upstream_event=='schedule')))
 assert admitted('schedule','refs/heads/main')
 assert admitted('workflow_dispatch','refs/heads/main')
 assert admitted('workflow_run','refs/heads/main','success','main','ikst2512-eng/boat-edge')
+assert admitted('workflow_run','refs/heads/main','success','main','ikst2512-eng/boat-edge',
+                upstream_name='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',
+                upstream_event='schedule')
+assert not admitted('workflow_run','refs/heads/main','success','main','ikst2512-eng/boat-edge',
+                    upstream_name='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',
+                    upstream_event='workflow_run')
 for bad in [
     ('workflow_run','refs/heads/main','failure','main','ikst2512-eng/boat-edge'),
     ('workflow_run','refs/heads/main','cancelled','main','ikst2512-eng/boat-edge'),
