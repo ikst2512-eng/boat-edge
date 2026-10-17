@@ -135,6 +135,28 @@ fi
         self.assertEqual(events.count("dispatch:"), 0)
 
     @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
+    def test_second_recent_completed_v229_never_starts_another_wait(self):
+        # A new completed V229 can land during the first bounded hold. In
+        # that case the same nudge must NOT begin another wait/loop. The
+        # child bash must inherit the once-only marker across exec.
+        initial = 1800000000
+        first = datetime.fromtimestamp(initial - 65, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        latest = datetime.fromtimestamp(initial + 20, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        output, events = self.run_case(
+            runs={"workflow_runs": [{"status": "completed", "conclusion":
+                                     "success", "created_at": first}]},
+            MOCK_RUNS_AFTER_SLEEP=json.dumps({"workflow_runs": [
+                {"status": "completed", "conclusion": "success",
+                 "created_at": latest}]}),
+            MOCK_NOW_EPOCH=initial, MOCK_AFTER_EPOCH=initial + 58)
+        self.assertIn("BOUNDED_WAIT seconds=57", output)
+        self.assertIn("V229_COOLDOWN", output)
+        self.assertEqual(events.count("sleep:"), 1)
+        self.assertEqual(events.count("dispatch:"), 0)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
     def test_no_hold_when_v229_cooldown_is_longer_than_90_seconds(self):
         epoch = 1800000000
         stamp = datetime.fromtimestamp(epoch - 10, timezone.utc).isoformat(
