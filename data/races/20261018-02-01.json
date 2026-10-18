@@ -8,7 +8,7 @@
     "event": "第15回マスターズVSルーキーズ",
     "race_no": 1,
     "deadline": "10:47",
-    "updated_at": "2026-10-18T08:05:57+09:00",
+    "updated_at": "2026-10-18T09:10:42+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=02&rno=1",
-      "fetched_at": "2026-10-18T08:08:37+09:00",
-      "sha256": "eda36d9974777a4a5fd5e5481c0d4de7a1bc621bfb6831ed3f85e82b7b26cd8b",
+      "fetched_at": "2026-10-18T09:14:14+09:00",
+      "sha256": "5f427169fddf574e00d91f8d44160ab93a092140e70f2a0bf5d3781f20d37643",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=02&rno=1",
+      "fetched_at": "2026-10-18T09:11:34+09:00",
+      "sha256": "2a1f5a69f6d26f7b06a641f5032c76a7e592af88757eeb1d8b480a13f4270069",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "df2e0d774811661ca4d7d46f58f856b61b4ad0c0cd2d43c409fd7a28e8587b41"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5946929d8795d397898eb039700b7ebb30c31b62bb50da92f83c21093b88c4db"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "776167a504546e219de0a4d0b9e3e44b8d7e09fa08e536d4692d7a6d5916c8c0"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "bfd4c5ee09f19b40e504815e3df30672ef1d32cba0f05921ca95b68c750a7265"
     }
   },
   "racers": [
@@ -304,7 +310,53 @@
       "raw_text": "6 5286 / B1 坂井 滉哉 福岡/福岡 27歳/51.0kg F1 L0 0.16 4.59 25.71 44.76 3.38 0.00 37.50 37 11.11 20.00 45 30.23 41.86 2 1 10 8"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 崎 利仁 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 梅原 祥平 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 山下 拓巳 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 中村 尊 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 瀬川 大地 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 坂井 滉哉 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

@@ -8,7 +8,7 @@
     "event": "yab山口朝日放送杯争奪戦",
     "race_no": 6,
     "deadline": "10:50",
-    "updated_at": "2026-10-18T08:05:57+09:00",
+    "updated_at": "2026-10-18T09:10:42+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=18&rno=6",
-      "fetched_at": "2026-10-18T08:07:38+09:00",
-      "sha256": "d1b7b14752e93bb1a5fd7a5c99845c5ffc406ffab617a77376831a17fa5f8882",
+      "fetched_at": "2026-10-18T09:12:37+09:00",
+      "sha256": "1c84e505a2564cb9a2a598f26e5c7e1bc99a3b2a842d21afb077d91bc2d12aa0",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=18&rno=6",
+      "fetched_at": "2026-10-18T09:11:38+09:00",
+      "sha256": "36558ac0e8e25dcda5ccdff4c072c61c8b2392a2c2efa47d27c23777477683aa",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "df2e0d774811661ca4d7d46f58f856b61b4ad0c0cd2d43c409fd7a28e8587b41"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5946929d8795d397898eb039700b7ebb30c31b62bb50da92f83c21093b88c4db"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "776167a504546e219de0a4d0b9e3e44b8d7e09fa08e536d4692d7a6d5916c8c0"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "bfd4c5ee09f19b40e504815e3df30672ef1d32cba0f05921ca95b68c750a7265"
     }
   },
   "racers": [
@@ -197,9 +203,11 @@
         "quinella_rate": 34.91,
         "trio_rate": 49.14
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "1"
+      ],
       "early_race": 1,
-      "raw_text": "4 3892 / B1 草場 康幸 佐賀/佐賀 50歳/54.3kg F0 L0 0.17 5.03 32.08 46.23 5.42 34.85 50.00 34 41.96 61.54 40 34.91 49.14 1R"
+      "raw_text": "4 3892 / B1 草場 康幸 佐賀/佐賀 50歳/54.3kg F0 L0 0.17 5.03 32.08 46.23 5.42 34.85 50.00 34 41.96 61.54 40 34.91 49.14 1 1R"
     },
     {
       "lane": 5,
@@ -274,7 +282,53 @@
       "raw_text": "6 5421 / B2 原田 朱理 兵庫/大阪 25歳/52.9kg F0 L0 0.24 1.57 1.39 4.17 1.29 0.00 0.00 72 36.51 62.70 46 29.00 45.45 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 吉田 和仁 55.3kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 土屋 実沙希 47.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 上原 健次郎 52.5kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 草場 康幸 54.3kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 下條 雄太郎 52.3kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 原田 朱理 52.9kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
