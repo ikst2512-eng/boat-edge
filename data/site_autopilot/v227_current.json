@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-10-18T14:26:57.558492+00:00",
-  "day_jst": "20261018",
+  "checked_at": "2026-10-18T16:21:25.414650+00:00",
+  "day_jst": "20261019",
   "follow_up_order": [
     "直前公式データと欠場照合",
     "締切前スナップショットの保存とSHA監査",
@@ -68,18 +68,18 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
+    "collector_health_issues": [
+      "predeadline_diagnostics_not_today",
+      "today_schedule_not_confirmed"
+    ],
     "current_window": [],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 44,
-    "readiness_reasons": {
-      "snapshot_missing": 18,
-      "verified_shadow_ready": 26
-    },
-    "readiness_shadow_verified_races": 26,
-    "schedule_today": true,
-    "snapshot_files_today": 43,
-    "status": "WAITING_FOR_PREDEADLINE",
+    "readiness_observed_races": 0,
+    "readiness_reasons": {},
+    "readiness_shadow_verified_races": 0,
+    "schedule_today": false,
+    "snapshot_files_today": 0,
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
