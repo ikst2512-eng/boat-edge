@@ -80,6 +80,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          V220_TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name || '' }}
         run: |
           set -euo pipefail
           # A safe missed-cron nudge only. It is NOT a model change, formal unlock, payout fetch or purchase.
@@ -95,6 +96,7 @@ jobs:
             case "$wf" in
               auto-update.yml|site-odds.yml) cooldown=900 ;;
               BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml) cooldown=120 ;;
+              BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml) cooldown=900 ;;
               *) echo 'V220_REJECTED_UNAPPROVED_WORKFLOW'; exit 1 ;;
             esac
             # The normal collector/odds cooldown remains 15m. Exception:
@@ -133,6 +135,13 @@ jobs:
                 echo 'V220_COLLECTOR_ONLY_BEFOREINFO_MISSING_STRICT_WINDOW_180S'
               fi
             fi
+            # V216 completion is already a V220 wake: do not send V216 back
+            # to itself through V220 even if its readiness write was delayed.
+            if [[ "$wf" == BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml &&
+                  "${GITHUB_EVENT_NAME:-}" == "workflow_run" &&
+                  "${V220_TRIGGER_WORKFLOW:-}" == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ]]; then
+              echo 'V220_V216_SELF_WAKE_NO_FEEDBACK_DISPATCH'; continue
+            fi
             # Source readiness was checked on latest main in --recovery-plan;
             # every V229 invocation performs its own independent PRE_RESULT,
             # official source, 120-odds and Git-first-add fail-closed checks.
@@ -150,6 +159,16 @@ jobs:
                if echo "$runs" | jq -e '[.workflow_runs[]? | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length > 0' >/dev/null; then
                   echo "V220_V229_ALREADY_ACTIVE_NO_DUPLICATE"; continue
                fi
+            fi
+            # A V216 observer already pending/running does not need a second
+            # dispatch; its original source checks stay fail-closed.
+            if [[ "$wf" == BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml ]] && echo "$runs" | jq -e '
+               [.workflow_runs[]? | select(
+                 .status == "queued" or .status == "in_progress" or
+                 .status == "waiting" or .status == "pending" or
+                 .status == "requested")] | length > 0' >/dev/null; then
+              echo 'V220_V216_ALREADY_ACTIVE_NO_DUPLICATE'
+              continue
             fi
             # A long-running collector must never be duplicated after 180s.
             # This active-state guard also protects the normal 900s path.
