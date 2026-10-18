@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 12,
     "deadline": "16:15",
-    "updated_at": "2026-10-18T13:35:36+09:00",
+    "updated_at": "2026-10-18T13:47:08+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=09&rno=12",
-      "fetched_at": "2026-10-18T13:37:18+09:00",
-      "sha256": "04abc108315d287d47f5be35b5d230e44b41795634c3ac90b8608557f7044d20",
+      "fetched_at": "2026-10-18T13:48:47+09:00",
+      "sha256": "2d0000707f449d486f6ef69b86ddfa7f54d40a453c3fef7ea05871d2a5349a87",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=09&rno=12",
+      "fetched_at": "2026-10-18T13:48:27+09:00",
+      "sha256": "721464186a65da3101aa4290ec196a9abe63a53b60a10188f94274faa2e07727",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "8fa05fdb4da08d1149c9e224c3e1ad5ac3ffc7c5a9ef4765b9bad6cffc787024"
+      "sha256": "f45d90f5aaf8ec55870dd9f4d37b0c09775c26bb1b43b41c856313139f270650"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "95a2ff7ea651f1d21b474e733d7708a27543f07465d063fd4ae1684165372c9c"
+      "sha256": "95453d4c35a6995a75442153220517662b6aaac32901ec4f211f5417bb187eb8"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "5c302aea9a32dbe02bdeb3d2edc1be614a047eaf1ca2dc28a7e476aa4dfe40dc"
+      "sha256": "ac69449e9e181034aaa657e94c3049105a2a55ad8f636baadf7d11eb3100827c"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "bf9192d683fb7473694c37e99705614377240dd96da1a21681b2501b534a3116"
+      "sha256": "f790ee03103444f42d98a56d70187dc2e96399d98f748c9394f4111b893d57e5"
     }
   },
   "racers": [
@@ -303,7 +309,53 @@
       "raw_text": "6 5082 / B1 一色 凌雅 愛知/愛知 27歳/57.6kg F1 L0 0.18 5.48 37.50 56.73 5.00 32.35 50.00 62 28.65 42.19 60 30.91 46.67 5 10 9 6 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 原田 才一郎 52.0kg R 3"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 入海 馨 52.8kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 乃村 康友 53.3kg R 5"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 眞崎 武蔵 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 松尾 昂明 52.2kg R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 一色 凌雅 57.6kg R 6"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 6.0,
+      "wave_cm": 5.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
