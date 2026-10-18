@@ -1360,8 +1360,7 @@ def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
         assert stale['v216_observation_freshness']['eligibility_proven'] is False
         assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in stale['recovery_dispatch_candidates']
         assert stale['formal_unlock_or_scoring_authorized'] is False
-        # A fresh scheduled observer, old date, and outside decision window
-        # must not send duplicate observers.
+        # A fresh scheduled observer must not send duplicate observers.
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':DAY,'checked_at':(now-timedelta(minutes=2)).isoformat()})
         fresh=mod.compute(root,now)
@@ -1370,11 +1369,33 @@ def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':'20261010','checked_at':last})
         previous=mod.compute(root,now)
-        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in previous['recovery_dispatch_candidates']
+        assert 'predeadline_v216_observation_missing' in previous['issues'],previous
+        assert previous['v216_observation_freshness']['missing_during_race_window']
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in previous['recovery_dispatch_candidates']
+        assert previous['v216_observation_freshness']['eligibility_proven'] is False
+        # Today has observations but its timestamp is corrupted: fail closed
+        # on source eligibility while recovering the missing audit.
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'checked_at':'broken','day_observed_races':2})
+        corrupted=mod.compute(root,now)
+        assert 'predeadline_v216_observation_missing' in corrupted['issues'],corrupted
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in corrupted['recovery_dispatch_candidates']
+        # An empty synthetic same-day placeholder without a timestamp cannot
+        # independently establish that a V216 execution was expected/delayed.
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'day_observed_races':0})
+        unknown=mod.compute(root,now)
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in unknown['recovery_dispatch_candidates']
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':DAY,'checked_at':last})
         early=mod.compute(root,due-timedelta(minutes=20))
         assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in early['recovery_dispatch_candidates']
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':'20261010','checked_at':last})
+        earlier_missing=mod.compute(root,due-timedelta(minutes=20))
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in earlier_missing['recovery_dispatch_candidates']
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'checked_at':last})
         # Frozen formal guard makes this an alert only, never a dispatch.
         put(root,'data/formal_status.json',{
             'guards':{'results_seen':True,'unlock':False,'scoring':False,
