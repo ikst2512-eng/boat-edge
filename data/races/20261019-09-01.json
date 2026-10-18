@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 1,
     "deadline": "10:32",
-    "updated_at": "2026-10-19T08:01:19+09:00",
+    "updated_at": "2026-10-19T08:19:25+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261019&jcd=09&rno=1",
-      "fetched_at": "2026-10-19T08:03:09+09:00",
-      "sha256": "b8583ff43172e82057c7873f04bd5d259d1ff03b171be1365fd34d3688f39f8c",
+      "fetched_at": "2026-10-19T08:21:14+09:00",
+      "sha256": "584ccdff3a68859c33f266be8cc88efd83c756933e1d92ae48770ef7ce026dae",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261019&jcd=09&rno=1",
+      "fetched_at": "2026-10-19T08:20:10+09:00",
+      "sha256": "f7be91ce397d5c8dc694f4517463d45806f5b4e873846b07eef63ef5d6751afc",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
@@ -306,7 +312,53 @@
       "raw_text": "6 3370 / B1 坪内 実 大阪/大阪 59歳/52.1kg F1 L0 0.18 3.97 22.97 39.19 2.56 0.00 12.50 16 39.18 56.14 34 38.51 55.75 2 7 7 3 7"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 笠置 博之 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 浜崎 準也 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 谷 勝幸 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 長野 未来 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 石原 凪紗 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 坪内 実 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
