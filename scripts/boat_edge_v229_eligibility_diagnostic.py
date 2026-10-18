@@ -95,6 +95,8 @@ def inspect(root: Path, now: datetime) -> dict:
     race_paths = {path.stem: path for path in
                   sorted((root / "data/races").glob(f"{day}-??-??.json"))}
     scheduled_missing = 0
+    unlisted_race_files = 0
+    catalog_deadline_mismatches = 0
     if schedule is not None:
         for key, due in sorted(schedule.items()):
             if key in race_paths:
@@ -111,13 +113,26 @@ def inspect(root: Path, now: datetime) -> dict:
                     upcoming.append((mins, key, due))
     for path in race_paths.values():
         key = path.stem
+        # Never use an unscheduled race file to infer a legitimate 2–10m
+        # decision window when the independently fetched day catalog exists.
+        # It could be stale, misidentified or have a different deadline.
+        if schedule is not None and key not in schedule:
+            unlisted_race_files += 1
+            other += 1
+            continue
         race = load(path)
         meta = race.get("meta") or {}
         if not isinstance(meta, dict):
             meta = {}
-        deadline = deadline_for(day, str(meta.get("deadline") or ""))
+        file_deadline = deadline_for(day, str(meta.get("deadline") or ""))
+        deadline = schedule[key] if schedule is not None else file_deadline
+        deadline_mismatch = (schedule is not None and
+                             file_deadline != deadline)
+        if deadline_mismatch:
+            catalog_deadline_mismatches += 1
         if deadline is None:
-            # Surface a malformed deadline as an explicit diagnostics failure.
+            # Catalog missing: malformed file deadline is an unverified
+            # diagnostic, NEVER an eligibility certificate.
             active.append({"race_key": key, "minutes_to_deadline": None,
                            "reasons": ["deadline_unknown"],
                            "preliminary_eligible": False})
@@ -128,7 +143,7 @@ def inspect(root: Path, now: datetime) -> dict:
             if mins > 10:
                 upcoming.append((mins, key, deadline))
             continue
-        reasons = []
+        reasons = ["race_deadline_catalog_mismatch"] if deadline_mismatch else []
         audit = race.get("source_audit") or {}
         if not isinstance(audit, dict):
             audit = {}
@@ -172,6 +187,8 @@ def inspect(root: Path, now: datetime) -> dict:
         "catalog_coverage_verified": schedule is not None,
         "scheduled_races_in_catalog": len(schedule) if schedule is not None else None,
         "scheduled_missing_race_files": scheduled_missing if schedule is not None else None,
+        "race_files_not_in_verified_catalog": unlisted_race_files if schedule is not None else None,
+        "race_file_deadlines_mismatching_catalog": catalog_deadline_mismatches if schedule is not None else None,
         "races_scanned": len(active) + other,
         "decision_window_races": len(active),
         "preliminary_ready_races": sum(row["preliminary_eligible"] for row in active),

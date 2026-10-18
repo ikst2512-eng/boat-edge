@@ -108,6 +108,80 @@ class SiteWindowDiagnostics(unittest.TestCase):
             row = next(x for x in report["window_races"] if x["race_key"] == missing)
             self.assertFalse(row["preliminary_eligible"])
 
+    def test_catalog_deadline_overrides_late_race_file_clock_without_false_eligible(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            key = "20261013-18-01"
+            # The official catalog says 09:35 (five minutes left), but the
+            # race file says 10:35 (outside the actual decision window).
+            setup_race(root, key, "10:35", inputs=True)
+            write(root, "data/today.json", {
+                "date": "2026-10-13",
+                "venues": [{"races": [{"race_key": key, "deadline": "09:35"}]}],
+            })
+            report = inspect(root, NOW)
+            self.assertTrue(report["catalog_coverage_verified"])
+            self.assertEqual(report["race_file_deadlines_mismatching_catalog"], 1)
+            self.assertEqual(report["scheduled_missing_race_files"], 0)
+            self.assertEqual(report["decision_window_races"], 1)
+            self.assertEqual(report["preliminary_ready_races"], 0)
+            self.assertEqual(report["window_races"][0]["minutes_to_deadline"], 5)
+            self.assertEqual(report["reason_counts_in_window"],
+                             {"race_deadline_catalog_mismatch": 1})
+            self.assertIsNone(report["next_race"])
+
+    def test_catalog_deadline_prevents_false_eligible_from_early_file_clock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            key = "20261013-18-01"
+            # Race file suggests five minutes; verified schedule says 55.
+            setup_race(root, key, "09:35", inputs=True)
+            write(root, "data/today.json", {
+                "date": "2026-10-13",
+                "venues": [{"races": [{"race_key": key, "deadline": "10:25"}]}],
+            })
+            report = inspect(root, NOW)
+            self.assertEqual(report["decision_window_races"], 0)
+            self.assertEqual(report["preliminary_ready_races"], 0)
+            self.assertEqual(report["race_file_deadlines_mismatching_catalog"], 1)
+            self.assertEqual(report["next_race"]["race_key"], key)
+            self.assertEqual(report["outside_window_races"], 1)
+
+    def test_verified_catalog_excludes_unscheduled_race_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake = "20261013-18-09"
+            real = "20261013-18-01"
+            setup_race(root, fake, "09:35", inputs=True)
+            setup_race(root, real, "09:35", inputs=True)
+            write(root, "data/today.json", {
+                "date": "2026-10-13",
+                "venues": [{"races": [{"race_key": real, "deadline": "09:35"}]}],
+            })
+            report = inspect(root, NOW)
+            self.assertTrue(report["catalog_coverage_verified"])
+            self.assertEqual(report["race_files_not_in_verified_catalog"], 1)
+            self.assertEqual(report["decision_window_races"], 1)
+            self.assertEqual(report["preliminary_ready_races"], 1)
+            self.assertEqual(report["window_races"][0]["race_key"], real)
+            self.assertEqual(report["races_scanned"], 2)
+
+    def test_catalog_missing_file_deadline_fails_closed_in_verified_window(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            key = "20261013-18-01"
+            setup_race(root, key, "bad", inputs=True)
+            write(root, "data/today.json", {
+                "date": "2026-10-13",
+                "venues": [{"races": [{"race_key": key, "deadline": "09:35"}]}],
+            })
+            report = inspect(root, NOW)
+            self.assertEqual(report["race_file_deadlines_mismatching_catalog"], 1)
+            self.assertEqual(report["decision_window_races"], 1)
+            self.assertEqual(report["preliminary_ready_races"], 0)
+            self.assertEqual(report["reason_counts_in_window"],
+                             {"race_deadline_catalog_mismatch": 1})
+
     def test_invalid_catalog_does_not_invent_missing_race_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
