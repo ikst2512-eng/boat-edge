@@ -190,13 +190,15 @@ jobs:
               echo 'V220_V71_ALREADY_ACTIVE_NO_DUPLICATE'
               continue
             fi
-            # A skipped workflow_run (V229 OR collector) did no work and must
-            # not consume the 120s / 900s production cooldown. Preserve it
-            # for all real attempts and queued/running jobs. Production
-            # 2026-10-17 20:29:35 JST skipped auto-update otherwise blocked
-            # genuine stale-source recovery despite no collector since 19:15.
-            # Fetch 100 statuses so skipped triggers do not hide real runs.
-            if echo "$runs" | jq -e --arg wf "$wf" --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null and .conclusion != "skipped") | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
+            # GitHub can cancel a producer BEFORE a job even starts (zero
+            # jobs in Actions). A cancelled/skipped trigger did not establish
+            # a useful source attempt and must NOT consume the 120s/900s
+            # cooldown while a still-unfrozen race is actually in its window.
+            # Successful and failed jobs still throttle normally; all queued
+            # or running producers are rejected by the active-job guards.
+            # The plan is freshly recomputed from main official PRE_RESULT
+            # evidence, so a completed source publication never gets redone.
+            if echo "$runs" | jq -e --arg wf "$wf" --argjson t "$current" --argjson c "$cooldown" '[.workflow_runs[]? | select(.created_at != null and .conclusion != "skipped" and .conclusion != "cancelled") | select((.created_at|fromdateiso8601) <= $t and ($t - (.created_at|fromdateiso8601)) < $c)] | length > 0' >/dev/null; then
                echo "V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE $wf"; continue
             fi
             if gh workflow run "$wf" --ref main; then
