@@ -61,6 +61,44 @@ class NearWindowHoldTests(unittest.TestCase):
         self.assertEqual(p['reason'],'COARSE_SOURCE_READY_PREWINDOW_WAIT_ONLY')
         self.assertEqual(plan(self.root,self.now+timedelta(seconds=42))['wait_seconds'],0)
 
+    def test_real_1834_gap_is_held_into_strict_window_without_backfill(self):
+        """2026-10-18 Shimonoseki 3R: V229 ran 18:22:28, due 18:34.
+
+        The previous 11m05 cap discarded this source-ready opportunity;
+        Actions had no other V229 run before deadline. Holding is only a
+        scheduling hint: a separate strict writer rechecks after the sleep.
+        """
+        self.now=datetime(2026,10,18,9,22,28,tzinfo=timezone.utc)
+        self.day='20261018'
+        self.key='20261018-19-03'
+        self.ready(692)  # 11m32s before 18:34 JST
+        result=plan(self.root,self.now)
+        self.assertEqual(result['reason'],'COARSE_SOURCE_READY_PREWINDOW_WAIT_ONLY')
+        self.assertEqual(result['race_key'],self.key)
+        self.assertEqual(result['wait_seconds'],102)
+        self.assertLessEqual(result['wait_seconds'],MAX_HOLD_SECONDS)
+        # Once the wait elapses, there is no second hold and V229's own
+        # source-, Git-, and pre-result gates remain sole freeze authority.
+        later=self.now+timedelta(seconds=result['wait_seconds'])
+        self.assertEqual((self.now+timedelta(seconds=692)-later).total_seconds(),590)
+        self.assertEqual(plan(self.root,later)['wait_seconds'],0)
+
+    def test_maximum_hold_is_bounded_and_earlier_races_do_not_block(self):
+        # A minute-aligned 12m prewindow is the outer bound (130s hold).
+        self.now=datetime(2026,10,17,4,53,0,tzinfo=timezone.utc)
+        self.ready(720)
+        result=plan(self.root,self.now)
+        self.assertEqual(result['wait_seconds'],MAX_HOLD_SECONDS)
+        self.assertEqual(MAX_HOLD_SECONDS,130)
+        self.assertEqual(plan(self.root,self.now-timedelta(seconds=1))['wait_seconds'],0)
+        # A late new source cannot become an eligible prediction merely
+        # because a previous V229 process slept for the full allowance.
+        blocked=self.root/f'data/site_odds/{self.key}.json'
+        odds=json.loads(blocked.read_text())
+        odds['available_count']=119
+        self.put(f'data/site_odds/{self.key}.json',odds)
+        self.assertEqual(plan(self.root,self.now)['wait_seconds'],0)
+
     def test_strict_current_window_never_waits_for_another_near_window_race(self):
         self.ready(635)
         key2=f'{self.day}-13-09'
