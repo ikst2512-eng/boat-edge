@@ -508,8 +508,9 @@ def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_dayb
     assert 'PY_V220_COMPETING_REPORT' in stage
     # Verify exact deployed Python guard with negative schema/old-day/input
     # cases and a valid original-current-date report. No GitHub dispatch.
-    body=stage.split("if python3 - <<'PY_V220_COMPETING_REPORT'\n",1)[1].split(
-        "\n          PY_V220_COMPETING_REPORT",1)[0]
+    import textwrap
+    body=textwrap.dedent(stage.split("if python3 - <<'PY_V220_COMPETING_REPORT'\n",1)[1].split(
+        "\n          PY_V220_COMPETING_REPORT",1)[0])
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)
         today=datetime.now(JST).strftime('%Y%m%d')
@@ -528,11 +529,15 @@ def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_dayb
         files=[root/'data/site_ops_v220/current.json',
                root/'data/site_ops_v220/gate1c_current.json',
                root/'data/site_autopilot/v227_current.json']
-        def execute():
+        def execute(omit=None):
             for filename,doc in zip(files,(ops,gate,ui)):
-                filename.write_text(json.dumps(doc),encoding='utf8')
-            return subprocess.run([sys.executable,'-c',body],cwd=root,
-                                  capture_output=True,text=True).returncode
+                if filename==omit:
+                    if filename.exists():filename.unlink()
+                else:
+                    filename.write_text(json.dumps(doc),encoding='utf8')
+            out=subprocess.run([sys.executable,'-c',body],cwd=root,
+                               capture_output=True,text=True)
+            return out.returncode
         assert execute()==0
         ops['day_jst']='20261017'
         assert execute()!=0
@@ -543,10 +548,7 @@ def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_dayb
         ui['formal']['guard_closed']=False
         assert execute()!=0
         ui['formal']['guard_closed']=True
-        files[2].unlink()
-        # Recreate all envelopes on every attempt: validate a file is
-        # missing rather than silently producing a false PASS.
-        files[2].write_text(json.dumps(ui))
+        assert execute(omit=files[2])!=0
         assert execute()==0
     print('GATE1C_V220_COMPETING_FRESH_MAIN_REPORT_SAFE_REUSE_GUARD_PASS')
 
