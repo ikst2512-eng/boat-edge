@@ -1050,22 +1050,38 @@ def gate1c_read_only_report(root,now,verify=None):
     now=now.astimezone(timezone.utc)
     day=now.astimezone(JST).date()
     previous=(day-timedelta(days=1)).strftime('%Y%m%d')
+    if verify is None:
+        from site_v136_historical_proof import check_historical_proof
+        verify=check_historical_proof
+    # The observed cohort and the all-saved cohort both validate each same
+    # snapshot against its first Git-add. Repeating the Git log/tree reads
+    # costs tens of seconds during active main writes and causes V220 report
+    # retries to lose the push race. Cache ONLY within this one read-only
+    # report invocation/checkout and ONLY for identical input snapshot bytes.
+    # A new retry starts a new process and independently verifies fresh main.
+    original_proofs={}
+    def verify_once(checkout,key,snapshot):
+        identity=(str(checkout),key,json.dumps(
+            snapshot,sort_keys=True,ensure_ascii=False,separators=(',',':')))
+        if identity not in original_proofs:
+            original_proofs[identity]=verify(checkout,key,snapshot)
+        return original_proofs[identity]
     # Preserve overnight coverage from the original committed catalog before
     # it was replaced by today's schedule. Never backfill eligible 99% counts.
     archived,archived_sha=gate1c_previous_day_catalog_from_git(root,previous)
     return {
         'schema':'BOAT_EDGE_GATE1C_FIRST_GIT_ORIGINAL_OBSERVATION_V1',
         'scope':'SITE_ONLY_PRE_RESULT_NO_OUTCOME_OR_FORMAL_INPUT',
-        'today':gate1c_first_git_summary(root,day.strftime('%Y%m%d'),now,verify),
-        'all_saved_snapshots_today':gate1c_all_saved_originals(root,day.strftime('%Y%m%d'),now,verify),
-        'all_saved_snapshots_previous_day':gate1c_all_saved_originals(root,previous,now,verify),
+        'today':gate1c_first_git_summary(root,day.strftime('%Y%m%d'),now,verify_once),
+        'all_saved_snapshots_today':gate1c_all_saved_originals(root,day.strftime('%Y%m%d'),now,verify_once),
+        'all_saved_snapshots_previous_day':gate1c_all_saved_originals(root,previous,now,verify_once),
         'previous_day':gate1c_first_git_summary(
-            root,previous,now,verify,catalog_override=archived,
+            root,previous,now,verify_once,catalog_override=archived,
             archived_catalog_git_commit=archived_sha),
         'prospective_source_ready':{
-            'today':gate1c_source_receipt_summary(root,day.strftime('%Y%m%d'),now,verify),
+            'today':gate1c_source_receipt_summary(root,day.strftime('%Y%m%d'),now,verify_once),
             'previous_day':gate1c_source_receipt_summary(
-                root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify)},
+                root,(day-timedelta(days=1)).strftime('%Y%m%d'),now,verify_once)},
         'note':'Observed V215 races and all saved SITE snapshots are distinct numerator cohorts. '
                'Every positive original proof requires V125 receipt and first Git SHA bytes. '
                'Neither cohort proves a source-eligible denominator; no 99% claim until '
