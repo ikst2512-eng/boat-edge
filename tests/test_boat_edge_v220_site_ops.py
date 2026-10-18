@@ -489,6 +489,70 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
     print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
 
+def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_daybound_reports():
+    """A competing owner may satisfy the report, not an unrelated Git update.
+
+    The 2026-10-18 14:12 JST retry-exhaustion log showed repeated main
+    races. Skip only after a SECOND attempt and newer *report-file* Git
+    commit with all three trusted current-day same-owner report envelopes.
+    """
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
+    stage=wf.split('      - name: Generate observed pre-result site-operations report',1)[1]
+    assert 'report_start_epoch="$(date -u +%s)"' in stage
+    assert 'if (( try_no > 1 )); then' in stage
+    assert 'git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json' in stage
+    assert 'newer_commit_epoch > report_start_epoch' in stage
+    assert 'V220_RETRY_ALREADY_PUBLISHED_BY_CONCURRENT_MAIN_OWNER' in stage
+    assert 'V220_REPORT_RETRY_EXHAUSTED' in stage  # still fail closed when none exists
+    assert 'git push origin HEAD:main' in stage
+    assert 'PY_V220_COMPETING_REPORT' in stage
+    # Verify exact deployed Python guard with negative schema/old-day/input
+    # cases and a valid original-current-date report. No GitHub dispatch.
+    import textwrap
+    body=textwrap.dedent(stage.split("if python3 - <<'PY_V220_COMPETING_REPORT'\n",1)[1].split(
+        "\n          PY_V220_COMPETING_REPORT",1)[0])
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        today=datetime.now(JST).strftime('%Y%m%d')
+        for p in ('data/site_ops_v220','data/site_autopilot'):
+            (root/p).mkdir(parents=True,exist_ok=True)
+        ops={'schema':'BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1',
+             'day_jst':today,'formal_results_read_by_this_runner':False,
+             'formal_unlock_or_scoring_authorized':False}
+        gate={'all_saved_snapshots_today':{'day_jst':today,
+              'acceptance_99_percent_proven':False,
+              'independently_source_eligible_denominator':None}}
+        ui={'schema':'BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1',
+            'day_jst':today,'formal':{'guard_closed':True,
+                  'results_read_by_v227':False},
+            'prediction':{'model_auto_promotion':False}}
+        files=[root/'data/site_ops_v220/current.json',
+               root/'data/site_ops_v220/gate1c_current.json',
+               root/'data/site_autopilot/v227_current.json']
+        def execute(omit=None):
+            for filename,doc in zip(files,(ops,gate,ui)):
+                if filename==omit:
+                    if filename.exists():filename.unlink()
+                else:
+                    filename.write_text(json.dumps(doc),encoding='utf8')
+            out=subprocess.run([sys.executable,'-c',body],cwd=root,
+                               capture_output=True,text=True)
+            return out.returncode
+        assert execute()==0
+        ops['day_jst']='20261017'
+        assert execute()!=0
+        ops['day_jst']=today
+        gate['all_saved_snapshots_today']['independently_source_eligible_denominator']=156
+        assert execute()!=0
+        gate['all_saved_snapshots_today']['independently_source_eligible_denominator']=None
+        ui['formal']['guard_closed']=False
+        assert execute()!=0
+        ui['formal']['guard_closed']=True
+        assert execute(omit=files[2])!=0
+        assert execute()==0
+    print('GATE1C_V220_COMPETING_FRESH_MAIN_REPORT_SAFE_REUSE_GUARD_PASS')
+
+
 def test_v220_event_stale_report_gate_uses_original_git_commit_age():
     """Exercise the REAL V220 shell guard: fresh events skip, stale may reuse writer."""
     import textwrap
@@ -1431,6 +1495,7 @@ if __name__=='__main__':
     test_v290_missing_source_vs_freeze_window()
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
     test_v220_event_stale_report_gate_uses_original_git_commit_age()
+    test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_daybound_reports()
     test_v220_skipped_v229_never_suppresses_source_ready_recovery()
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()

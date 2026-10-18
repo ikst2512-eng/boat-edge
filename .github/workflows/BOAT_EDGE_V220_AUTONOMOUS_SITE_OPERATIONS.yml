@@ -230,10 +230,51 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # The first report write is generated from its own source-time
+          # evidence. After a Git push conflict, a DIFFERENT V220 owner may
+          # have published a newer, day-bound monitor while we were retrying.
+          # Verify the original main Git commit time and all three co-owned
+          # report files before deciding the obsolete duplicate write is done.
+          # Never treat mere upstream advancement as successful publication.
+          report_start_epoch="$(date -u +%s)"
           saved=0
           for try_no in 1 2 3 4 5 6; do
             git fetch --no-tags origin main
             git reset --hard origin/main
+            if (( try_no > 1 )); then
+              newer_commit_epoch="$(git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json || true)"
+              if [[ "$newer_commit_epoch" =~ ^[0-9]+$ ]] && (( newer_commit_epoch > report_start_epoch )); then
+                if python3 - <<'PY_V220_COMPETING_REPORT'
+          import datetime as dt,json
+          from pathlib import Path
+          root=Path('.')
+          day=dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime('%Y%m%d')
+          try:
+              ops=json.loads((root/'data/site_ops_v220/current.json').read_text())
+              gate=json.loads((root/'data/site_ops_v220/gate1c_current.json').read_text())
+              ui=json.loads((root/'data/site_autopilot/v227_current.json').read_text())
+              saved=gate['all_saved_snapshots_today']
+              assert ops['schema']=='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'
+              assert ops['day_jst']==day and saved['day_jst']==day
+              assert ui['schema']=='BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1'
+              assert ui['day_jst']==day
+              assert ops['formal_results_read_by_this_runner'] is False
+              assert ops['formal_unlock_or_scoring_authorized'] is False
+              assert saved['acceptance_99_percent_proven'] is False
+              assert saved['independently_source_eligible_denominator'] is None
+              assert ui['formal']['guard_closed'] is True
+              assert ui['formal']['results_read_by_v227'] is False
+              assert ui['prediction']['model_auto_promotion'] is False
+          except (OSError,ValueError,KeyError,AssertionError,TypeError):
+              raise SystemExit(1)
+          PY_V220_COMPETING_REPORT
+                then
+                  echo 'V220_RETRY_ALREADY_PUBLISHED_BY_CONCURRENT_MAIN_OWNER'
+                  saved=1
+                  break
+                fi
+              fi
+            fi
             PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v220_site_ops.py
             PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_01_gate1c_missing_freeze_diagnostics.py' -v
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v220_site_ops.py
