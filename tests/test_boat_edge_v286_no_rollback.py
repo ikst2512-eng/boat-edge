@@ -56,6 +56,49 @@ class NoPinnedRollback(unittest.TestCase):
         self.assertEqual(settled.count("git push origin HEAD:main"),1)
         self.assertEqual(self.src.count("git commit -m"),3)
 
+    def test_independent_v229_schedule_wakes_v216_observer_without_feedback(self):
+        # Production 2026-10-18: 101 matured catalog races had no prospective
+        # V215 observation while independently scheduled V229 did run.
+        # This is extra observer COVERAGE, never eligibility or a new writer.
+        src=self.src
+        header=src.split('permissions:',1)[0]
+        assert header.count('  workflow_run:')==1
+        self.assertEqual(header.count(
+            "'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'"),1)
+        job=src.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
+        self.assertIn(
+            "github.event.workflow_run.name != 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",
+            job)
+        self.assertIn("github.event.workflow_run.event == 'schedule'",job)
+        for token in ("github.event.workflow_run.conclusion == 'success'",
+                      "github.event.workflow_run.head_branch == 'main'",
+                      "github.event.workflow_run.head_repository.full_name == github.repository"):
+            self.assertIn(token,job)
+        first=src.split('      - name: Freeze PRE_RESULT diagnostics and shadow evidence in one Git commit',1)[1].split(
+            '      - name: Continue approved-only',1)[0]
+        self.assertIn('python3 scripts/boat_edge_v215_readiness.py',first)
+        self.assertIn('python3 scripts/boat_edge_01_gate1c_source_ready.py',first)
+        self.assertIn('V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED',first)
+        paper=src.split('      - name: Continue approved-only',1)[1].split(
+            '      - name: Settle earlier frozen',1)[0]
+        settle=src.split('      - name: Settle earlier frozen',1)[1]
+        self.assertIn(
+            "github.event.workflow_run.name != 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",
+            paper)
+        self.assertIn(
+            "github.event.workflow_run.name != 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",
+            settle)
+        # Opposite dependency must be schedule-only, so V229 cannot echo
+        # a V216 run that was originally awakened by V229 itself.
+        upstream=(ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text()
+        v229_job=upstream.split('  atomic-prospective-site-evidence:',1)[1].split(
+            '    runs-on:',1)[0]
+        self.assertIn(
+            "github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
+            v229_job)
+        self.assertIn("github.event.workflow_run.event == 'schedule'",v229_job)
+        self.assertEqual(src.count('      - name: Freeze PRE_RESULT diagnostics and shadow evidence in one Git commit'),1)
+
     def test_schedule_and_formal_lock_retained(self):
         # Three disjoint cron groups preserve every 5m pre-result window.
         import re
