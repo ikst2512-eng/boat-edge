@@ -12,15 +12,15 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '11,26,41,56 * * * *'
-  # Existing V186's independently scheduled source/scratch publication can
-  # wake the SAME V220 guarded recovery owner when the V71 cron is omitted.
-  # V186 does not listen to V220, V216 or V71: no feedback loop. Only V186
-  # schedule events are accepted; keep V216's already approved event path.
-  # No new cron, workflow, writer, results read or paid third-party service.
+  # Independently scheduled V186 and V125 completions may wake the SAME
+  # V220 recovery owner when GitHub omits V71/V220's own schedule.
+  # Require upstream event=schedule: V125's V229-derived workflow_run cannot
+  # echo into V220. Keep the existing V216 path; no new cron or writer.
   workflow_run:
     workflows:
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
       - 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'
+      - 'BOAT EDGE V125 Revision Safe FINAL15M Audit'
     types: [completed]
     branches: [main]
 
@@ -43,7 +43,8 @@ jobs:
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
         (github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
-         (github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy' &&
+         ((github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy' ||
+           github.event.workflow_run.name == 'BOAT EDGE V125 Revision Safe FINAL15M Audit') &&
           github.event.workflow_run.event == 'schedule'))))
     runs-on: ubuntu-latest
     timeout-minutes: 12
