@@ -10,12 +10,17 @@ on:
   # odds publisher completes successfully, give this same V216 source-ready
   # observer another chance in the real 2-10m window. Either source may
   # finish last; neither completion proves readiness by itself.
-  # No new cron, writer, prediction, or feedback listener: both producers
-  # never listen to this V216 observation workflow.
+  # No new cron, writer, or prediction. An independently scheduled,
+  # successful V229 first-freeze audit adds a SECOND chance to observe race
+  # sources in the 2-15m window when GitHub omits V216's own cron. Accept
+  # ONLY its original schedule completion, not its many V216/V235/collector
+  # workflow_run triggers: V229 itself only reacts to V216 SCHEDULE success,
+  # so this cannot become a V216 -> V229 -> V216 feedback loop.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
+      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
     types: [completed]
     branches: [main]
   schedule:
@@ -40,7 +45,9 @@ jobs:
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.name != 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit' ||
+         github.event.workflow_run.event == 'schedule')))
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -179,6 +186,11 @@ jobs:
             if [ "$attempt" -eq 8 ]; then exit 1; fi
           done
       - name: Continue approved-only daily 50000 yen paper selection BEFORE results
+        # V229's extra independent cron wake is PRE_RESULT observation only.
+        # Do not duplicate the paper writer from this fallback.
+        if: >-
+          github.event_name != 'workflow_run' ||
+          github.event.workflow_run.name != 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
         shell: bash
         run: |
           set -euo pipefail
@@ -202,7 +214,11 @@ jobs:
         # Already Git-frozen SITE-only decisions may be reconciled later;
         # pre-result readiness, shadow freeze and paper select still run on
         # ALL twelve original five-minute source windows above.
-        if: ${{ github.event_name != 'schedule' || github.event.schedule == '14,29,44,59 * * * *' }}
+        if: >-
+          (github.event_name != 'schedule' ||
+           github.event.schedule == '14,29,44,59 * * * *') &&
+          (github.event_name != 'workflow_run' ||
+           github.event.workflow_run.name != 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit')
         shell: bash
         run: |
           set -euo pipefail
