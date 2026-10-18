@@ -15,7 +15,8 @@ import sys
 JST=timezone(timedelta(hours=9))
 SCHEMA='BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1'
 KEY=re.compile(r'^20\d{6}-\d{2}-\d{2}$')
-RECOVER_ALLOW={'auto-update.yml','site-odds.yml','BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'}
+RECOVER_ALLOW={'auto-update.yml','site-odds.yml','BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml',
+               'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'}
 
 def load(p):
     try:
@@ -429,6 +430,21 @@ def compute(root,now):
         for r in urgent
     ):
         recover.append('BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml')
+    # Gate 1C: independent V216 cron can disappear for hours even when
+    # collector/odds/V220 wakeups still arrive. A same-day, verifiable prior
+    # V215 observation >12 minutes old during a real 2-15m race window
+    # is an OBSERVATION gap, not proof that source data were eligible.
+    # Reuse only V216's existing guarded workflow_dispatch. The workflow
+    # applies a 15m cooldown, active-run guard and excludes V216->V220
+    # self-trigger; never authorize a new prediction, retry after a deadline,
+    # or claim an independently source-eligible denominator.
+    audit_age=age_minutes(readiness.get('checked_at'),now)
+    audit_stale=(bool(urgent) and str(readiness.get('day_jst'))==day
+                 and audit_age is not None and audit_age>12)
+    if audit_stale:
+        reasons.append('predeadline_v216_observation_stale')
+        if formal_locked:
+            recover.append('BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml')
     recover=sorted(set(recover)&RECOVER_ALLOW)
     if reasons:status='NEEDS_ATTENTION'
     elif not urgent:status='WAITING_FOR_PREDEADLINE'
@@ -455,6 +471,11 @@ def compute(root,now):
       'research_model_production_promotion':False,'paper_wager_authorized_by_this_runner':False,
       'formal_unlock_or_scoring_authorized':False,'formal_results_read_by_this_runner':False,
       'recovery_dispatch_candidates':recover,
+      'v216_observation_freshness':{
+          'last_observed_at':readiness.get('checked_at'),
+          'age_minutes':round(audit_age,1) if audit_age is not None else None,
+          'stale_during_race_window':audit_stale,
+          'eligibility_proven':False},
       'urgent_odds_only_recovery_keys':urgent_odds_only_keys,
       'urgent_beforeinfo_only_recovery_keys':urgent_beforeinfo_only_keys}
 
