@@ -1341,8 +1341,63 @@ def test_gate1c_all_simultaneous_races_in_25m_and_15m_recovery_windows():
             'recovery_dispatch_candidates'],urgent
     print('GATE1C_ALL_13_SIMULTANEOUS_SOURCE_RECOVERY_WINDOWS_VISIBLE_PASS')
 
+def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
+    """A lost GitHub V216 cron gets one guarded wake from an existing V220 run.
+
+    Synthetic clocks only; neither a stale monitor nor a source gap makes a
+    race freeze-eligible or permits reading the result.
+    """
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp);sample(root)
+        due=datetime(2026,10,11,8,35,tzinfo=JST)
+        now=due-timedelta(minutes=5)
+        last=(now-timedelta(minutes=20)).isoformat()
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'checked_at':last,'day_observed_races':1})
+        stale=mod.compute(root,now)
+        assert 'predeadline_v216_observation_stale' in stale['issues'],stale
+        assert stale['v216_observation_freshness']['stale_during_race_window']
+        assert stale['v216_observation_freshness']['eligibility_proven'] is False
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in stale['recovery_dispatch_candidates']
+        assert stale['formal_unlock_or_scoring_authorized'] is False
+        # A fresh scheduled observer, old date, and outside decision window
+        # must not send duplicate observers.
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'checked_at':(now-timedelta(minutes=2)).isoformat()})
+        fresh=mod.compute(root,now)
+        assert 'predeadline_v216_observation_stale' not in fresh['issues'],fresh
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in fresh['recovery_dispatch_candidates']
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':'20261010','checked_at':last})
+        previous=mod.compute(root,now)
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in previous['recovery_dispatch_candidates']
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'checked_at':last})
+        early=mod.compute(root,due-timedelta(minutes=20))
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in early['recovery_dispatch_candidates']
+        # Frozen formal guard makes this an alert only, never a dispatch.
+        put(root,'data/formal_status.json',{
+            'guards':{'results_seen':True,'unlock':False,'scoring':False,
+                      'RESULT_UNLOCK_TOKEN':None},
+            'formalFirst100':{'races':0}})
+        unsafe=mod.compute(root,now)
+        assert 'predeadline_v216_observation_stale' in unsafe['issues']
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in unsafe['recovery_dispatch_candidates']
+        assert unsafe['formal_unlock_or_scoring_authorized'] is False
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
+    assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml) cooldown=900' in wf
+    assert 'V220_V216_ALREADY_ACTIVE_NO_DUPLICATE' in wf
+    assert 'V220_V216_SELF_WAKE_NO_FEEDBACK_DISPATCH' in wf
+    assert "github.event.workflow_run.name || ''" in wf
+    assert 'gh workflow run "$wf" --ref main' in wf
+    assert wf.count('  schedule:')==1
+    assert wf.count('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs')==1
+    print('GATE1C_V216_STALE_OBSERVER_SAFE_BACKUP_WITHOUT_FEEDBACK_PASS')
+
+
 if __name__=='__main__':
     test_all()
+    test_v216_stale_window_recovery_is_bounded_and_fail_closed()
     test_gate1c_v71_fresh_index_cannot_hide_missing_race_odds()
     test_gate1c_all_simultaneous_races_in_25m_and_15m_recovery_windows()
     test_gate1c_v71_short_cooldown_is_strict_odds_only_and_first_freeze_window()
