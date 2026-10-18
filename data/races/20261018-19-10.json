@@ -8,7 +8,7 @@
     "event": "ミッドナイトボートレース下関6th 関釜フェリー杯",
     "race_no": 10,
     "deadline": "21:51",
-    "updated_at": "2026-10-18T19:07:25+09:00",
+    "updated_at": "2026-10-18T19:44:22+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=19&rno=10",
-      "fetched_at": "2026-10-18T19:08:23+09:00",
-      "sha256": "44019ec28c59c9bceb0e883104b0366a8932be0cea342a75358e26bb0e6752ea",
+      "fetched_at": "2026-10-18T19:45:22+09:00",
+      "sha256": "35db6ed3cece2da889890d8bcc3739eb56e5c871a30cb61c46a79504ac1fe6bb",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=19&rno=10",
+      "fetched_at": "2026-10-18T19:45:12+09:00",
+      "sha256": "85fe67e1338c83464fc9f4f2ec32dccae73901738a23e1ecc7d474bd2af0fad7",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "98a36c2535ca74375c80fbf537a57ac896ede702119c97ecf4c8ed4fbb762360"
+      "sha256": "cbcb02f303b015f14b0ea5964eae606c0d9c509a8bff79e3297d9d02d4c9cacf"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "5e846114f4ab7bf9e66556917da1d3ad99dcbf776676063a06fbcf529d5f3b6f"
+      "sha256": "a3368b18f97835fc1a169d035169741292f6e3dfa54062d666be390efc443378"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "61a1f7fb980255a2972ff6c4ee3d9eeebf78d763f71d79f5645faa4eca94b45e"
+      "sha256": "2f6a6cdf2dbc674f87a7d29942a1d56a1acc2e5b15d127fa0e1dd1cf73773e41"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "fe4b8ec8836d0d1f32eec44c0a7deab827029aa52722650cf0ca54ff62941349"
+      "sha256": "45d98e136bb37390e528bd1701e4cebbf249a90629f9bb1a4a91a8f5d045dcab"
     }
   },
   "racers": [
@@ -174,10 +180,11 @@
         "2",
         "12",
         "4",
-        "11"
+        "11",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "3 4236 / A1 松村 敏 福岡/熊本 43歳/53.2kg F1 L0 0.11 7.61 66.07 85.71 8.28 72.00 92.00 71 40.38 55.77 19 32.11 50.46 2 12 4 11 4R"
+      "raw_text": "3 4236 / A1 松村 敏 福岡/熊本 43歳/53.2kg F1 L0 0.11 7.61 66.07 85.71 8.28 72.00 92.00 71 40.38 55.77 19 32.11 50.46 2 12 4 11 4 4R"
     },
     {
       "lane": 4,
@@ -296,13 +303,60 @@
       "series_tokens": [
         "1",
         "7",
-        "3"
+        "3",
+        "5"
       ],
       "early_race": 5,
-      "raw_text": "6 4219 / B1 本岡 勝利 広島/広島 45歳/52.4kg F1 L0 0.19 3.96 12.50 28.75 4.47 20.00 46.67 47 33.04 47.83 66 31.53 41.44 1 7 3 5R"
+      "raw_text": "6 4219 / B1 本岡 勝利 広島/広島 45歳/52.4kg F1 L0 0.19 3.96 12.50 28.75 4.47 20.00 46.67 47 33.04 47.83 66 31.53 41.44 1 7 3 5 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山田 丈 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 奥平 拓也 52.9kg R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 松村 敏 53.2kg R 4"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 内田 圭 52.6kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 馬野 耀 53.6kg R 3"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 本岡 勝利 52.4kg R 5"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
