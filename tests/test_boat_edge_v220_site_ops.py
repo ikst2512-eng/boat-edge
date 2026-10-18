@@ -419,6 +419,38 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert '  workflow_run:' not in independent_header
     assert header.count("'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'")==1
     assert header.count('  workflow_run:')==1
+    # Existing V125 five-minute schedule was delivered at 13:20 JST on
+    # 2026-10-18 when V71 own cron was absent. Wake existing V220 only from
+    # its original schedule success, not V229-derived workflow_run events.
+    v125=(here.parent/'.github/workflows/site-v125.yml').read_text(encoding='utf8')
+    events=v125.split('permissions:',1)[0]
+    assert events.count('  schedule:')==1
+    assert '- cron: "3,8,13,18,23,28,33,38,43,48,53,58 * * * *"' in events
+    assert header.count("'BOAT EDGE V125 Revision Safe FINAL15M Audit'")==1
+    guard=wf.split('  site-operations:',1)[1].split('    runs-on:',1)[0]
+    for required in (
+        "github.event.workflow_run.name == 'BOAT EDGE V125 Revision Safe FINAL15M Audit'",
+        "github.event.workflow_run.event == 'schedule'",
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.head_branch == 'main'",
+        "github.event.workflow_run.head_repository.full_name == github.repository",
+    ):
+        assert required in guard, required
+    assert '  workflow_run:' in events
+    def allowed(name,event,conclusion,branch,repo):
+        return (name=='BOAT EDGE V125 Revision Safe FINAL15M Audit'
+                and event=='schedule' and conclusion=='success'
+                and branch=='main' and repo=='ikst2512-eng/boat-edge')
+    assert allowed('BOAT EDGE V125 Revision Safe FINAL15M Audit',
+                   'schedule','success','main','ikst2512-eng/boat-edge')
+    for case in (
+        ('workflow_run','success','main','ikst2512-eng/boat-edge'),
+        ('schedule','failure','main','ikst2512-eng/boat-edge'),
+        ('schedule','skipped','main','ikst2512-eng/boat-edge'),
+        ('schedule','success','feature','ikst2512-eng/boat-edge'),
+        ('schedule','success','main','fork/boat-edge'),
+    ):
+        assert not allowed('BOAT EDGE V125 Revision Safe FINAL15M Audit',*case)
     assert wf.count('  site-operations:')==1
     assert wf.count('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs')==1
     assert "github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'" in wf
