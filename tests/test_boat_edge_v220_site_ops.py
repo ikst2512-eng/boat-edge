@@ -692,7 +692,7 @@ def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
     wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
     line=next((v for v in wf.splitlines() if 'jq -e --arg wf "$wf"' in v),None)
     assert line is not None
-    assert 'select(.created_at != null and .conclusion != "skipped")' in line
+    assert 'select(.created_at != null and .conclusion != "skipped" and .conclusion != "cancelled")' in line
     assert 'runs?per_page=100' in wf
     assert 'V220_RECOVERY_MALFORMED_STATUS_FAIL_CLOSED' in wf
     assert 'V220_V229_ALREADY_ACTIVE_NO_DUPLICATE' in wf
@@ -714,11 +714,17 @@ def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
             return result.returncode==0
         v229='BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml'
         assert not suppressed(v229,'skipped')
+        # 2026-10-18 cancelled V229/collector workflow_run events with
+        # ZERO jobs were preventing a real PRE_RESULT recovery attempt.
+        assert not suppressed(v229,'cancelled')
         assert suppressed(v229,'success')
         assert suppressed(v229,'failure')
         # A skipped collector has no source updates to cool down. Keep
         # real 15-minute runs and active/pending attempts protected.
         assert not suppressed('auto-update.yml','skipped')
+        assert not suppressed('auto-update.yml','cancelled')
+        assert not suppressed('site-odds.yml','cancelled')
+        assert not suppressed('BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml','cancelled')
         assert suppressed('auto-update.yml','success')
         assert suppressed('auto-update.yml','failure')
         assert suppressed('auto-update.yml',None)
@@ -742,6 +748,16 @@ def test_v220_skipped_v229_never_suppresses_source_ready_recovery():
         old_good={'created_at':'2026-10-17T10:15:49Z',
                   'status':'completed','conclusion':'success'}
         assert not production_suppresses([ignored,old_good])
+        # Cancelled GitHub workflow_run, with no job ever allocated, is
+        # not a real fetch. Even adjacent cancelled + skipped events cannot
+        # hide the last successful collector being older than 15 minutes.
+        cancelled={'created_at':'2026-10-17T11:29:40Z',
+                   'status':'completed','conclusion':'cancelled'}
+        assert not production_suppresses([cancelled,ignored,old_good])
+        assert production_suppresses([cancelled,{
+            'created_at':'2026-10-17T11:27:00Z',
+            'status':'completed','conclusion':'success'}])
+
         recent_success={'created_at':'2026-10-17T11:20:00Z',
                         'status':'completed','conclusion':'success'}
         recent_active={'created_at':'2026-10-17T11:25:00Z',
