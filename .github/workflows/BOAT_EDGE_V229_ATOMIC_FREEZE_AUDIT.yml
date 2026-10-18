@@ -100,7 +100,7 @@ jobs:
           set -euo pipefail
           # V229 optional bounded prewindow hold without relaxing 2-10m gate:
           # this is only a read-only scheduling hint. Existing strict V229
-          # rechecks all original source gates after the <=75-second hold.
+          # rechecks all original source gates after the <=130-second hold.
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_01_v229_nearwindow_hold.py
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_atomic_freeze.py
           git diff --check
