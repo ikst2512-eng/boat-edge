@@ -8,7 +8,7 @@
     "event": "開設72周年記念トーキョー・ベイ・カップ",
     "race_no": 5,
     "deadline": "12:24",
-    "updated_at": "2026-10-18T09:46:25+09:00",
+    "updated_at": "2026-10-18T10:01:55+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=04&rno=5",
-      "fetched_at": "2026-10-18T09:47:54+09:00",
-      "sha256": "b75a1f9bd802787fcb9f2b53f562501621cd163f7c706430401615af3b64063e",
+      "fetched_at": "2026-10-18T10:03:45+09:00",
+      "sha256": "ccccf847596f22abb9e80adc3ee60b9e8e3c84e8c2632477c3420e46c9e9d8ef",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=04&rno=5",
+      "fetched_at": "2026-10-18T10:03:16+09:00",
+      "sha256": "7d1e40d27c24ca37152c996b263bcc0c3a44cba6e01af4e914cc4961470f63f4",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "b1502a490091474b384202002c1dba5f722e59f0a72c2eb928d338aac45b6d9e"
+      "sha256": "40139ea9c8b94a8cfbe919813f82fe38d8c63d51e171da1ba0cf3d94bcf01752"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "bc98287ab8193399f0bbafbbe8d542fc7a788ceeae68a275eee0ec1c27a4a1bd"
+      "sha256": "c06cba44abde97a33bd81b3ab8d233be9067d42cbb83c2e06523158890c78d15"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "bdd136fd93cc634b68835eafe4be50983e9697c1d4ff0161cda98a2d800e025e"
+      "sha256": "99668e4e6a071a69bb3d43a666e7270d2d47921378c86ecd46e9735cbbf940e0"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "8f6ce42398e67155418765de744d8a3db19ba9328ffea7fae170c21aff4e522f"
+      "sha256": "8779c0eb0f81178b1f43c11bb84cbfeba40a62917da4c3a3f5e7d0b315239c3d"
     }
   },
   "racers": [
@@ -324,7 +330,53 @@
       "raw_text": "6 4030 / A1 森高 一真 香川/香川 48歳/50.0kg F0 L0 0.14 6.50 33.91 52.17 7.06 47.06 70.59 35 32.91 46.84 45 37.80 52.44 2 8 12 5 10 7 5 9"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 坪井 康晴 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 藤原 啓史朗 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 石本 裕武 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 秦 英悟 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 今泉 友吾 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 森高 一真 50.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
