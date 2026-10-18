@@ -236,14 +236,19 @@ jobs:
           # Verify the original main Git commit time and all three co-owned
           # report files before deciding the obsolete duplicate write is done.
           # Never treat mere upstream advancement as successful publication.
-          report_start_epoch="$(date -u +%s)"
+          report_start_sha="$(git log -1 --format=%H -- data/site_ops_v220/gate1c_current.json || true)"
           saved=0
           for try_no in 1 2 3 4 5 6; do
             git fetch --no-tags origin main
             git reset --hard origin/main
             if (( try_no > 1 )); then
-              newer_commit_epoch="$(git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json || true)"
-              if [[ "$newer_commit_epoch" =~ ^[0-9]+$ ]] && (( newer_commit_epoch > report_start_epoch )); then
+              newer_report_sha="$(git log -1 --format=%H -- data/site_ops_v220/gate1c_current.json || true)"
+              # A concurrent report can land in the very same second as
+              # this job. Commit timestamps cannot establish its identity.
+              # Only a CHANGED Git commit for this exact report path plus
+              # the full current-day/safety envelope check may skip a retry.
+              if [[ "$newer_report_sha" =~ ^[0-9a-f]{40}$ &&
+                    "$newer_report_sha" != "$report_start_sha" ]]; then
                 if python3 - <<'PY_V220_COMPETING_REPORT'
           import datetime as dt,json
           from pathlib import Path

@@ -498,10 +498,11 @@ def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_dayb
     """
     wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf8')
     stage=wf.split('      - name: Generate observed pre-result site-operations report',1)[1]
-    assert 'report_start_epoch="$(date -u +%s)"' in stage
+    assert 'report_start_sha="$(git log -1 --format=%H -- data/site_ops_v220/gate1c_current.json || true)"' in stage
     assert 'if (( try_no > 1 )); then' in stage
-    assert 'git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json' in stage
-    assert 'newer_commit_epoch > report_start_epoch' in stage
+    assert 'newer_report_sha="$(git log -1 --format=%H -- data/site_ops_v220/gate1c_current.json || true)"' in stage
+    assert '"$newer_report_sha" != "$report_start_sha"' in stage
+    assert 'newer_commit_epoch > report_start_epoch' not in stage
     assert 'V220_RETRY_ALREADY_PUBLISHED_BY_CONCURRENT_MAIN_OWNER' in stage
     assert 'V220_REPORT_RETRY_EXHAUSTED' in stage  # still fail closed when none exists
     assert 'git push origin HEAD:main' in stage
@@ -551,6 +552,85 @@ def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_dayb
         assert execute(omit=files[2])!=0
         assert execute()==0
     print('GATE1C_V220_COMPETING_FRESH_MAIN_REPORT_SAFE_REUSE_GUARD_PASS')
+
+
+def test_v220_report_reuses_identical_original_git_proofs_in_one_checkout():
+    """Two diagnostic cohorts must not run the same historical Git proof twice.
+
+    A separate report invocation must still re-verify the original, and the
+    same path with changed snapshot bytes cannot reuse a stale proof.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        now=datetime(2026,10,18,6,0,tzinfo=timezone.utc)
+        counts={}
+        for day in ("20261017","20261018"):
+            key=f"{day}-18-01"
+            put(root,f'data/site_paper_sim/readiness_history_v215/{day}.json',{
+                'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+                'day_jst':day,'observations':{
+                    key:{'race_key':key,'deadline':'08:35'}}})
+            put(root,f'data/site_prediction_snapshots/{key}.json',{
+                'race_key':key,'deadline':'08:35','snapshot_window':'FINAL_15M',
+                'saved_at':f"{day[:4]}-{day[4:6]}-{day[6:]}T08:30:00+09:00"})
+        def verify(checkout,key,snapshot):
+            assert checkout==root
+            counts[key]=counts.get(key,0)+1
+            return 'PASS','a'*40
+        report=mod.gate1c_read_only_report(root,now,verify)
+        for day in ("20261017","20261018"):
+            key=f"{day}-18-01"
+            assert counts[key]==1,(key,counts)
+        assert report['today']['first_git_original_sha_proven']==1
+        assert report['all_saved_snapshots_today']['first_git_original_sha_proven']==1
+        assert report['previous_day']['first_git_original_sha_proven']==1
+        assert report['all_saved_snapshots_previous_day']['first_git_original_sha_proven']==1
+        assert report['today']['independently_source_eligible_denominator'] is None
+        # Another run on a fresh main must not persist cached Git evidence.
+        mod.gate1c_read_only_report(root,now,verify)
+        assert counts=={'20261017-18-01':2,'20261018-18-01':2},counts
+        key='20261018-18-01'
+        put(root,f'data/site_prediction_snapshots/{key}.json',{
+            'race_key':key,'deadline':'08:35','snapshot_window':'FINAL_15M',
+            'saved_at':'2026-10-18T08:29:00+09:00'})
+        mod.gate1c_read_only_report(root,now,verify)
+        assert counts[key]==3,counts
+        assert counts['20261017-18-01']==3,counts
+    print('GATE1C_V220_ONE_GIT_PROOF_PER_IDENTICAL_SNAPSHOT_PER_CHECKOUT_PASS')
+
+
+def test_v220_competing_report_sha_detects_same_second_git_update():
+    """Different Git commits with identical second timestamps are distinct."""
+    import textwrap
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text()
+    section=wf.split('      - name: Generate observed pre-result site-operations report',1)[1]
+    assert '"$newer_report_sha" != "$report_start_sha"' in section
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        subprocess.run(['git','init','-q'],cwd=root,check=True)
+        path=root/'data/site_ops_v220/gate1c_current.json'
+        path.parent.mkdir(parents=True)
+        env={**os.environ,'GIT_AUTHOR_DATE':'2026-10-18T14:00:00+09:00',
+             'GIT_COMMITTER_DATE':'2026-10-18T14:00:00+09:00'}
+        hashes=[];times=[]
+        for i in (1,2):
+            path.write_text(json.dumps({'revision':i}),encoding='utf8')
+            subprocess.run(['git','add','--','data/site_ops_v220/gate1c_current.json'],
+                           cwd=root,check=True)
+            subprocess.run(['git','-c','user.name=Fixture',
+                            '-c','user.email=test@example.invalid',
+                            'commit','-qm',str(i)],cwd=root,env=env,check=True)
+            hashes.append(subprocess.check_output(
+                ['git','log','-1','--format=%H','--',
+                 'data/site_ops_v220/gate1c_current.json'],
+                cwd=root,text=True).strip())
+            times.append(subprocess.check_output(
+                ['git','log','-1','--format=%ct','--',
+                 'data/site_ops_v220/gate1c_current.json'],
+                cwd=root,text=True).strip())
+        assert times[0]==times[1],times
+        assert hashes[0]!=hashes[1],hashes
+    print('GATE1C_V220_SAME_SECOND_COMPETING_REPORT_SHA_DETECTION_PASS')
 
 
 def test_v220_event_stale_report_gate_uses_original_git_commit_age():
@@ -1494,6 +1574,8 @@ if __name__=='__main__':
     test_v284_freeze_coverage_not_early_false_miss()
     test_v290_missing_source_vs_freeze_window()
     test_v220_v216_event_nudges_only_existing_fail_closed_recovery()
+    test_v220_report_reuses_identical_original_git_proofs_in_one_checkout()
+    test_v220_competing_report_sha_detects_same_second_git_update()
     test_v220_event_stale_report_gate_uses_original_git_commit_age()
     test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_daybound_reports()
     test_v220_skipped_v229_never_suppresses_source_ready_recovery()
