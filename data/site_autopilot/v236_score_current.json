@@ -2,63 +2,30 @@
   "comparisons": {
     "balance10": {
       "avg_points": 10.0,
-      "hit": 58,
-      "hit_rate_percent": 37.66,
-      "races": 154
+      "hit": 59,
+      "hit_rate_percent": 37.58,
+      "races": 157
     },
     "coverage15": {
       "avg_points": 15.0,
-      "hit": 69,
-      "hit_rate_percent": 44.81,
-      "races": 154
+      "hit": 70,
+      "hit_rate_percent": 44.59,
+      "races": 157
     },
     "hit10": {
       "avg_points": 10.0,
       "hit": 54,
-      "hit_rate_percent": 35.06,
-      "races": 154
+      "hit_rate_percent": 34.39,
+      "races": 157
     },
     "scenario7plus3": {
       "avg_points": 10.0,
       "hit": 57,
-      "hit_rate_percent": 37.01,
-      "races": 154
+      "hit_rate_percent": 36.31,
+      "races": 157
     }
   },
   "examples": [
-    {
-      "outcomes": {
-        "balance10": false,
-        "coverage15": false,
-        "headsecond10": false,
-        "hit10": false,
-        "scenario7plus3": false
-      },
-      "race_key": "20261015-12-03",
-      "winning": "1-3-2"
-    },
-    {
-      "outcomes": {
-        "balance10": false,
-        "coverage15": false,
-        "headsecond10": false,
-        "hit10": false,
-        "scenario7plus3": false
-      },
-      "race_key": "20261015-12-04",
-      "winning": "1-2-6"
-    },
-    {
-      "outcomes": {
-        "balance10": true,
-        "coverage15": true,
-        "headsecond10": true,
-        "hit10": true,
-        "scenario7plus3": true
-      },
-      "race_key": "20261015-13-04",
-      "winning": "1-5-2"
-    },
     {
       "outcomes": {
         "balance10": false,
@@ -287,6 +254,28 @@
         "hit10": false,
         "scenario7plus3": false
       },
+      "race_key": "20261018-02-08",
+      "winning": "1-2-3"
+    },
+    {
+      "outcomes": {
+        "balance10": true,
+        "coverage15": true,
+        "headsecond10": true,
+        "hit10": false,
+        "scenario7plus3": false
+      },
+      "race_key": "20261018-08-09",
+      "winning": "2-1-6"
+    },
+    {
+      "outcomes": {
+        "balance10": false,
+        "coverage15": false,
+        "headsecond10": false,
+        "hit10": false,
+        "scenario7plus3": false
+      },
       "race_key": "20261018-10-04",
       "winning": "1-6-5"
     },
@@ -300,24 +289,35 @@
       },
       "race_key": "20261018-21-04",
       "winning": "3-1-4"
+    },
+    {
+      "outcomes": {
+        "balance10": false,
+        "coverage15": false,
+        "headsecond10": false,
+        "hit10": false,
+        "scenario7plus3": false
+      },
+      "race_key": "20261018-21-12",
+      "winning": "1-2-4"
     }
   ],
   "headsecond10_distinct_matched_prospective_only": {
-    "candidate_hit10_hits": 14,
+    "candidate_hit10_hits": 15,
     "current_hit10_hits": 13,
-    "gains": 2,
+    "gains": 3,
     "losses": 1,
-    "paired_exact_p_two_sided": 1.0,
+    "paired_exact_p_two_sided": 0.625,
     "promotion_authorized": false,
-    "races": 46,
+    "races": 49,
     "ranked_top3_top5_top10": {
       "10": {
-        "candidate_hits": 14,
+        "candidate_hits": 15,
         "current_hits": 13,
-        "gains": 2,
+        "gains": 3,
         "losses": 1,
-        "paired_exact_p_two_sided": 1.0,
-        "races": 46
+        "paired_exact_p_two_sided": 0.625,
+        "races": 49
       },
       "3": {
         "candidate_hits": 8,
@@ -325,15 +325,15 @@
         "gains": 2,
         "losses": 0,
         "paired_exact_p_two_sided": 0.5,
-        "races": 46
+        "races": 49
       },
       "5": {
-        "candidate_hits": 8,
+        "candidate_hits": 9,
         "current_hits": 10,
-        "gains": 2,
+        "gains": 3,
         "losses": 4,
-        "paired_exact_p_two_sided": 0.6875,
-        "races": 46
+        "paired_exact_p_two_sided": 1.0,
+        "races": 49
       }
     }
   },
@@ -372,15 +372,15 @@
       }
     }
   },
-  "new_scored_this_run": 2,
+  "new_scored_this_run": 3,
   "production_model_changed": false,
   "promotion_authorized": false,
   "real_or_paper_purchase": false,
   "rejected_or_pending_this_run": {
-    "race_not_over": 3
+    "race_not_over": 1
   },
   "schema": "BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1",
   "scope": "POST_RESULT_SAME_COHORT_COMPARISON_NOT_FORMAL_FRESH",
-  "scored_total": 154,
+  "scored_total": 157,
   "status": "DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION"
 }
