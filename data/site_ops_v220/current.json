@@ -2,8 +2,8 @@
   "active_window_races": 2,
   "current_windows": [],
   "data_sources": {
-    "collector_freshness": "STALE_OR_UNVERIFIED",
-    "odds_index_freshness": "STALE_OR_UNVERIFIED",
+    "collector_freshness": "CURRENT",
+    "odds_index_freshness": "CURRENT",
     "predeadline_observations": 42,
     "site_autovalidation": "EVIDENCE_BLOCKED_OR_MISSING"
   },
@@ -11,11 +11,7 @@
   "decision_window_races": 0,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
-  "issues": [
-    "collector_index_stale",
-    "odds_index_stale",
-    "predeadline_race_odds_gap"
-  ],
+  "issues": [],
   "next_race": {
     "deadline_jst": "22:18",
     "race_key": "20261018-19-11",
@@ -23,19 +19,16 @@
     "watch_from_jst": "22:03"
   },
   "official_beforeinfo_urgent_15m": {
-    "error": null,
-    "health_updated_at": null,
-    "ok": null,
-    "partial_six_boat_source": null,
-    "published_wait": null,
-    "status": "UNVERIFIED_OR_STALE",
-    "targets": null
+    "error": 0,
+    "health_updated_at": "2026-10-18T21:57:43+09:00",
+    "ok": 0,
+    "partial_six_boat_source": 0,
+    "published_wait": 0,
+    "status": "OBSERVED",
+    "targets": 0
   },
   "paper_wager_authorized_by_this_runner": false,
-  "recovery_dispatch_candidates": [
-    "auto-update.yml",
-    "site-odds.yml"
-  ],
+  "recovery_dispatch_candidates": [],
   "research_model_production_promotion": false,
   "scheduled_races": 156,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
@@ -108,11 +101,11 @@
       "v229_attestation_record_matched": 36
     }
   },
-  "status": "NEEDS_ATTENTION",
+  "status": "WAITING_FOR_PREDEADLINE",
   "urgent_beforeinfo_only_recovery_keys": [],
   "urgent_odds_only_recovery_keys": [],
   "v216_observation_freshness": {
-    "age_minutes": 130.8,
+    "age_minutes": 135.5,
     "eligibility_proven": false,
     "last_observed_at": "2026-10-18T10:46:45.428816+00:00",
     "missing_during_race_window": false,
