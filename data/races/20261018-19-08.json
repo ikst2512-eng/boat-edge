@@ -8,7 +8,7 @@
     "event": "ミッドナイトボートレース下関6th 関釜フェリー杯",
     "race_no": 8,
     "deadline": "20:59",
-    "updated_at": "2026-10-18T18:19:36+09:00",
+    "updated_at": "2026-10-18T18:37:11+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261018&jcd=19&rno=8",
-      "fetched_at": "2026-10-18T18:20:43+09:00",
-      "sha256": "7738acdb81857c0b0cf54d2aad4edf8a03c6c228bf5d20493c1f708f9bc077b3",
+      "fetched_at": "2026-10-18T18:38:11+09:00",
+      "sha256": "b5cd8c96b1b226ddc38d003d71f2f294db00c4d2492a699b4a44df98d351e841",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261018&jcd=19&rno=8",
+      "fetched_at": "2026-10-18T18:38:00+09:00",
+      "sha256": "0d5f65b5f39778674885c9471931e04581ca11f24a15ff0f05b8b198b9cb1bb4",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "09ba3b5baca69264ff8d8f7b188643dc02c0b6ca272446b1dde043f519aeb4fc"
+      "sha256": "07d9c19c89189a298893b82236abfb220dff05432606f8da218ca73b764ea3b6"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "85333b2f8cf5b3f7d4f2bcc29fde4933590eb700c073774d0b80d43b387e036b"
+      "sha256": "259bcd4cfe7dbb932272134c60df139c8aad23ac9ba1864b155b6d0baaa2128d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "6e090aa0327324c415b2380f5ef5dcf8fcdf051c4411904626726468d8386cfd"
+      "sha256": "750c4e913fa3a9a0fddc9504a235ebf2388c7dd6315b69bdf3504083028ebc59"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/18.csv",
       "fetched_at": null,
-      "sha256": "20ad13870cc11e8fff51dfbdc3e21f0d2c283100984d726d394b41babccdce5e"
+      "sha256": "e95b4486d2b10581c0fc448c5dcae0879378277d35f8adb597b9bbc2d0f58947"
     }
   },
   "racers": [
@@ -92,10 +98,11 @@
       "series_tokens": [
         "2",
         "7",
-        "5"
+        "5",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "1 4638 / B1 小林 遼太 福岡/福岡 35歳/52.3kg F0 L0 0.18 5.53 37.23 57.45 5.27 27.27 63.64 73 25.66 42.48 52 29.63 42.59 2 7 5 2R"
+      "raw_text": "1 4638 / B1 小林 遼太 福岡/福岡 35歳/52.3kg F0 L0 0.18 5.53 37.23 57.45 5.27 27.27 63.64 73 25.66 42.48 52 29.63 42.59 2 7 5 2 2R"
     },
     {
       "lane": 2,
@@ -299,7 +306,53 @@
       "raw_text": "6 4675 / A2 井手 良太 大阪/大阪 38歳/51.5kg F1 L0 0.14 5.58 36.05 55.81 5.36 40.00 60.00 59 37.17 55.75 55 37.17 55.75 10 4 12"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 小林 遼太 52.3kg R 2"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 木場 雄二郎 55.3kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 川崎 公靖 52.6kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 今井 貴士 55.3kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 後藤 盛也 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 井手 良太 51.5kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
