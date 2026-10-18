@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-17T23:01:16.125096+00:00",
+  "checked_at": "2026-10-18T00:16:06.796198+00:00",
   "day_jst": "20261018",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -68,15 +68,41 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
-    "current_window": [],
+    "collector_health_issues": [
+      "odds_index_stale",
+      "predeadline_incomplete",
+      "predeadline_race_odds_gap"
+    ],
+    "current_window": [
+      {
+        "deadline_jst": "09:17",
+        "issues": [
+          "最新オッズ120通り未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 0.9,
+        "race_key": "20261018-10-02",
+        "venue": "三国"
+      },
+      {
+        "deadline_jst": "09:27",
+        "issues": [
+          "締切前予想未保存"
+        ],
+        "minutes_left": 10.9,
+        "race_key": "20261018-18-03",
+        "venue": "徳山"
+      }
+    ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 0,
-    "readiness_reasons": {},
+    "readiness_observed_races": 1,
+    "readiness_reasons": {
+      "snapshot_missing": 1
+    },
     "readiness_shadow_verified_races": 0,
     "schedule_today": true,
     "snapshot_files_today": 0,
-    "status": "WAITING_FOR_PREDEADLINE",
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
