@@ -439,12 +439,23 @@ def compute(root,now):
     # self-trigger; never authorize a new prediction, retry after a deadline,
     # or claim an independently source-eligible denominator.
     audit_age=age_minutes(readiness.get('checked_at'),now)
-    audit_stale=(bool(urgent) and str(readiness.get('day_jst'))==day
+    audit_day_ok=str(readiness.get('day_jst'))==day
+    audit_missing=(bool(urgent) and schedule_ok and
+                   (not audit_day_ok or
+                    (audit_age is None and
+                     type(readiness.get('day_observed_races')) is int and
+                     readiness['day_observed_races']>0)))
+    audit_stale=(bool(urgent) and schedule_ok and audit_day_ok
                  and audit_age is not None and audit_age>12)
+    if audit_missing:
+        # Yesterday's readiness (or a corrupt timestamp on an already
+        # observed current-day report) is NOT a fresh V216 observation.
+        # Never equate missing diagnostics with missing official source.
+        reasons.append('predeadline_v216_observation_missing')
     if audit_stale:
         reasons.append('predeadline_v216_observation_stale')
-        if formal_locked:
-            recover.append('BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml')
+    if (audit_missing or audit_stale) and formal_locked:
+        recover.append('BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml')
     recover=sorted(set(recover)&RECOVER_ALLOW)
     if reasons:status='NEEDS_ATTENTION'
     elif not urgent:status='WAITING_FOR_PREDEADLINE'
@@ -475,6 +486,7 @@ def compute(root,now):
           'last_observed_at':readiness.get('checked_at'),
           'age_minutes':round(audit_age,1) if audit_age is not None else None,
           'stale_during_race_window':audit_stale,
+          'missing_during_race_window':audit_missing,
           'eligibility_proven':False},
       'urgent_odds_only_recovery_keys':urgent_odds_only_keys,
       'urgent_beforeinfo_only_recovery_keys':urgent_beforeinfo_only_keys}
