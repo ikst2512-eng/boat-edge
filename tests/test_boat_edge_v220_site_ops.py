@@ -1001,6 +1001,61 @@ def test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibi
     print('GATE1C_UNOBSERVED_CATALOG_COVERAGE_NOT_ELIGIBILITY_DENOMINATOR_PASS')
 
 
+def test_gate1c_missing_v215_history_still_exposes_catalog_coverage():
+    """A completely missed observer day must never hide the schedule.
+
+    Only saved snapshot existence and original schedule membership are counted.
+    This does NOT backfill observations or invent a source-ready denominator.
+    """
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp);sample(root)
+        later=NOW+timedelta(minutes=35)  # 08:40 JST
+        key2=f'{DAY}-23-02'
+        key3=f'{DAY}-23-03'
+        put(root,'data/today.json',{'date':'2026-10-11','venues':[{'races':[
+            {'race_key':KEY,'deadline':'08:35'},
+            {'race_key':key2,'deadline':'08:37'},
+            {'race_key':key3,'deadline':'09:10'}]}]})
+        # Saved without observer != valid source eligibility or first-Git proof.
+        put(root,f'data/site_prediction_snapshots/{key2}.json',{'race_key':key2})
+        report=mod.gate1c_first_git_summary(root,DAY,later,lambda *_:('PASS','fake'))
+        assert report['observation_history_status']=='MISSING',report
+        assert report['observed_races']==0 and report['matured_races']==0,report
+        assert report['catalog_matured_races']==2,report
+        assert report['catalog_matured_not_observed']==2,report
+        assert report['catalog_matured_not_observed_saved']==1,report
+        assert report['catalog_matured_without_snapshot']==1,report
+        assert report['catalog_matured_not_observed_saved_keys']==[key2],report
+        assert report['catalog_matured_not_observed_missing_keys']==[KEY],report
+        assert report['catalog_matured_observed_missing_keys']==[],report
+        assert report['catalog_matured_by_hour_jst']=={'08':2},report
+        assert report['catalog_matured_not_observed_by_hour_jst']=={'08':2},report
+        assert report['first_git_original_sha_proven']==0
+        assert report['independently_source_eligible_denominator'] is None
+        assert report['eligible_save_rate_percent'] is None
+        assert report['acceptance_99_percent_proven'] is False
+        # The same result with genuine empty V215 history has a distinct
+        # provenance label; no source-readiness claim in either case.
+        path=f'data/site_paper_sim/readiness_history_v215/{DAY}.json'
+        put(root,path,{'schema':'BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1',
+                       'day_jst':DAY,'observations':{}})
+        verified=mod.gate1c_first_git_summary(root,DAY,later,lambda *_:('PASS','fake'))
+        assert verified['observation_history_status']=='VERIFIED'
+        assert verified['catalog_matured_not_observed']==2
+        # Untrusted history is NOT silently turned into an empty valid sample.
+        put(root,path,{'schema':'INVALID','day_jst':DAY,'observations':{}})
+        invalid=mod.gate1c_first_git_summary(root,DAY,later,lambda *_:('PASS','fake'))
+        assert invalid['observation_history_status']=='INVALID',invalid
+        assert invalid['catalog_matured_races'] is None
+        assert invalid['independently_source_eligible_denominator'] is None
+        history=root/path;history.unlink()
+        history.symlink_to(root/'data/today.json')
+        unsafe=mod.gate1c_first_git_summary(root,DAY,later,lambda *_:('PASS','fake'))
+        assert unsafe['observation_history_status']=='UNSAFE',unsafe
+        assert unsafe['catalog_matured_races'] is None
+    print('GATE1C_MISSING_OBSERVATION_HISTORY_EXPOSES_ONLY_SCHEDULE_COVERAGE_PASS')
+
+
 def test_gate1c_previous_day_catalog_immutable_before_midnight_only():
     # Synthesize a complete previous-day catalog and a later rollover in one
     # Git tree. Git history, not a backfilled mutable current catalog, counts.
@@ -1598,6 +1653,7 @@ if __name__=='__main__':
     test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m()
     test_recovery_freshness_matches_independent_freeze_boundaries()
     test_gate1c_catalog_exposes_unobserved_deadlines_without_fabricating_eligibility()
+    test_gate1c_missing_v215_history_still_exposes_catalog_coverage()
     test_gate1c_previous_day_catalog_immutable_before_midnight_only()
     test_gate1c_first_git_sha_is_not_the_observed_denominator()
     test_gate1c_all_saved_snapshot_files_do_not_hide_unobserved_frozen_races()
