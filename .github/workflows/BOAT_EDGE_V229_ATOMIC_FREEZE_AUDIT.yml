@@ -15,8 +15,11 @@ on:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
       - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
-      # Independent V216 schedule delivery supplies another 2-10m chance
-      # when V229/V235 cron is delayed. No new cron or prediction writer.
+      # Independent V216 schedule OR guarded workflow_dispatch recovery
+      # supplies another 2-10m chance if V229 cron is delayed. Recovered
+      # V216 can finish LAST after the source producer that prompted it.
+      # Reject V216 workflow_run (collector/odds derived): each producer
+      # already wakes V229 directly. No new cron or prediction writer.
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
     types: [completed]
   schedule:
@@ -32,8 +35,10 @@ concurrency:
 
 jobs:
   atomic-prospective-site-evidence:
-    # Do not echo V216's collector/odds workflow_run triggers. Only a
-    # separate V216 SCHEDULE completion adds a new wake (no fan-out).
+    # Do not echo V216's collector/odds workflow_run triggers. Accept
+    # the independent V216 SCHEDULE or V220's guarded workflow_dispatch
+    # rescue; its successful source observation can land after producers.
+    # V216 never listens to V229, and V220 blocks V216 self-feedback.
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' ||
@@ -41,7 +46,8 @@ jobs:
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
         (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
-         github.event.workflow_run.event == 'schedule')))
+         github.event.workflow_run.event == 'schedule' ||
+         github.event.workflow_run.event == 'workflow_dispatch')))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

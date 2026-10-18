@@ -151,5 +151,40 @@ class V216CollectorWake(unittest.TestCase):
         self.assertIn('cancel-in-progress: false',odds)
         self.assertIn('V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED',odds)
 
+
+    def test_rescued_v216_dispatch_completion_can_wake_existing_v229_without_cycle(self):
+        """V216 rescue completion is a source observation, not eligibility.
+
+        Recovered workflow_dispatch differs from producer-derived workflow_run:
+        the latter is already a V229 wake and must not fan out twice.
+        """
+        v229=(ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
+        v216=V216.read_text(encoding='utf8')
+        v220=V220.read_text(encoding='utf8')
+        event=v229.split('on:\n',1)[1].split('\npermissions:',1)[0]
+        job=v229.split('  atomic-prospective-site-evidence:',1)[1].split('    runs-on:',1)[0]
+        self.assertEqual(event.count('  workflow_run:'),1)
+        self.assertEqual(event.count('  schedule:'),1)
+        self.assertEqual(event.count("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'"),1)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'",job)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'",job)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",job)
+        self.assertIn("github.event.workflow_run.event == 'schedule'",job)
+        self.assertIn("github.event.workflow_run.event == 'workflow_dispatch'",job)
+        self.assertIn("github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",job)
+        # The producer-triggered V216 workflow_run must NOT fan out into
+        # another V229 run. Other producer completions still wake V229.
+        self.assertNotIn("github.event.workflow_run.event != 'workflow_run'",job)
+        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",v216)
+        self.assertIn('V220_V216_SELF_WAKE_NO_FEEDBACK_DISPATCH',v220)
+        self.assertIn('V220_V216_ALREADY_ACTIVE_NO_DUPLICATE',v220)
+        self.assertIn('BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml) cooldown=900',v220)
+        self.assertIn('group: boat-edge-v229-atomic-first-freeze-source-audit',v229)
+        self.assertIn('cancel-in-progress: false',v229)
+        self.assertIn('V229_TRACKED_SOURCE_PINS_PASS',v229)
+        self.assertIn('python3 scripts/boat_edge_v229_atomic_freeze.py',v229)
+        self.assertNotIn('git push --force',v229)
+
+
 if __name__=='__main__':
     unittest.main()
