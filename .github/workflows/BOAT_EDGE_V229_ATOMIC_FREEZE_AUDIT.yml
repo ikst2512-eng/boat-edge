@@ -21,6 +21,11 @@ on:
       # Reject V216 workflow_run (collector/odds derived): each producer
       # already wakes V229 directly. No new cron or prediction writer.
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+      # The existing Pages original 5m SCHEDULE succeeded at 18:24 JST,
+      # inside a missed V229 first-freeze window on 2026-10-18.
+      # Pages also listens to V229; reject its derived workflow_run to
+      # prevent V229 -> Pages -> V229 feedback. Clock hint, not eligibility.
+      - 'BOAT EDGE 01 - Controlled GitHub Pages Publish'
     types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
@@ -45,9 +50,12 @@ jobs:
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
-         github.event.workflow_run.event == 'schedule' ||
-         github.event.workflow_run.event == 'workflow_dispatch')))
+        ((github.event.workflow_run.name == 'BOAT EDGE 01 - Controlled GitHub Pages Publish' &&
+          github.event.workflow_run.event == 'schedule') ||
+         (github.event.workflow_run.name != 'BOAT EDGE 01 - Controlled GitHub Pages Publish' &&
+          (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
+           github.event.workflow_run.event == 'schedule' ||
+           github.event.workflow_run.event == 'workflow_dispatch')))))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

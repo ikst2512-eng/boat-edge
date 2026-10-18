@@ -152,6 +152,54 @@ class V216CollectorWake(unittest.TestCase):
         self.assertIn('V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED',odds)
 
 
+    def test_pages_original_schedule_only_wakes_v229_without_echo(self):
+        """Original Pages schedule fills a missing V229 2-10m delivery slot.
+
+        Pages itself listens to V229 workflow_run; prohibit V229->Pages->V229.
+        All original odds, official source, first-add and formal locks remain.
+        """
+        pages=(ROOT/'.github/workflows/pages-controlled-publish.yml').read_text(encoding='utf8')
+        v229=(ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
+        pages_event=pages.split('permissions:',1)[0]
+        event=v229.split('permissions:',1)[0]
+        job=v229.split('  atomic-prospective-site-evidence:',1)[1].split('    runs-on:',1)[0]
+        name='BOAT EDGE 01 - Controlled GitHub Pages Publish'
+        self.assertEqual(event.count('  workflow_run:'),1)
+        self.assertEqual(event.count('  schedule:'),1)
+        self.assertEqual(event.count("      - '"+name+"'"),1)
+        self.assertEqual(pages_event.count('  schedule:'),1)
+        self.assertIn("cron: '*/5 23,0-14 * * *'",pages_event)
+        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",pages_event)
+        self.assertIn("github.event.workflow_run.name == '"+name+"'",job)
+        self.assertIn("github.event.workflow_run.name != '"+name+"'",job)
+        for value in (
+            "github.ref == 'refs/heads/main'",
+            "github.event.workflow_run.conclusion == 'success'",
+            "github.event.workflow_run.head_branch == 'main'",
+            "github.event.workflow_run.head_repository.full_name == github.repository",
+            "github.event.workflow_run.event == 'schedule'",
+        ):
+            self.assertIn(value,job)
+        def allow(original,event,conclusion,branch,repo):
+            return (original==name and event=='schedule'
+                    and conclusion=='success' and branch=='main'
+                    and repo=='ikst2512-eng/boat-edge')
+        self.assertTrue(allow(name,'schedule','success','main','ikst2512-eng/boat-edge'))
+        for args in (
+            ('workflow_run','success','main','ikst2512-eng/boat-edge'),
+            ('push','success','main','ikst2512-eng/boat-edge'),
+            ('workflow_dispatch','success','main','ikst2512-eng/boat-edge'),
+            ('schedule','failure','main','ikst2512-eng/boat-edge'),
+            ('schedule','cancelled','main','ikst2512-eng/boat-edge'),
+            ('schedule','success','feature','ikst2512-eng/boat-edge'),
+            ('schedule','success','main','fork/boat-edge'),
+        ):
+            self.assertFalse(allow(name,*args))
+        self.assertEqual(v229.count('  atomic-prospective-site-evidence:'),1)
+        self.assertIn('cancel-in-progress: false',v229)
+        self.assertIn('V229_TRACKED_SOURCE_PINS_PASS',v229)
+        self.assertNotIn('git push --force',v229)
+
     def test_rescued_v216_dispatch_completion_can_wake_existing_v229_without_cycle(self):
         """V216 rescue completion is a source observation, not eligibility.
 
