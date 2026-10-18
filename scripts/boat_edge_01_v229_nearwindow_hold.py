@@ -3,8 +3,9 @@
 
 The existing V229 writer independently enforces 2-10m deadline, original
 official 6-boat HTML, complete verified official 120 odds, scratch and first Git.
-This code can only delay that writer by <=75s when all coarse live inputs are
-already present immediately before the window. No results/formal/payout reads.
+This code can only delay that writer by <=130s when all coarse live inputs
+are already present immediately before the window. The strict freeze gate
+always rechecks the source and 2-10m window AFTER the delay. No results/formal/payout reads.
 """
 from __future__ import annotations
 
@@ -17,8 +18,8 @@ import sys
 
 from boat_edge_v220_site_ops import JST, expected_deadline, load, source_status
 
-MAX_HOLD_SECONDS = 75
-PREWINDOW_END = 665  # from 11m05 to 10m, then stop at 9m50
+MAX_HOLD_SECONDS = 130
+PREWINDOW_END = 720  # from 12m00 to 10m, then stop at 9m50
 EARLY_TARGET_SECONDS = 590
 _KEY = re.compile(r'^20\d{6}-\d{2}-\d{2}$')
 
