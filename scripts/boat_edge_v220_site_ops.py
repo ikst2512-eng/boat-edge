@@ -536,6 +536,7 @@ def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None,
         verify = check_historical_proof
     out={'day_jst':day, 'scope':'OBSERVED_MATURED_RACES_ONLY',
          'observed_races':0, 'matured_races':0, 'missing_after_deadline':0,
+         'observation_history_status':'UNVERIFIED',
          'snapshots_present':0, 'first_git_original_sha_proven':0,
          'original_not_verified':0, 'unverified_reasons':{},
          # Catalog counts expose races never reached by V215 sampling.
@@ -557,11 +558,28 @@ def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None,
          'independently_source_eligible_denominator':None,
          'eligible_save_rate_percent':None,
          'acceptance_99_percent_proven':False}
-    hist=load(root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json') or {}
-    if hist.get('schema')!='BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1' or hist.get('day_jst')!=day:
+    history_path=root/'data/site_paper_sim/readiness_history_v215'/f'{day}.json'
+    # A lost V216 cron can leave NO history at all. Previously this early
+    # return silently hid the independently validated scheduled-race coverage,
+    # precisely when the observer was unavailable. Missing means NO durable
+    # observation proof, never that official sources were absent/eligible.
+    # Malformed or unsafe existing history remains fail-closed.
+    if history_path.is_symlink() or any(p.is_symlink() for p in history_path.parents):
+        out['observation_history_status']='UNSAFE'
         return out
-    obs=hist.get('observations')
-    if not isinstance(obs,dict):return out
+    if not history_path.exists():
+        obs={}
+        out['observation_history_status']='MISSING'
+    else:
+        hist=load(history_path)
+        if (not isinstance(hist,dict)
+                or hist.get('schema')!='BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1'
+                or hist.get('day_jst')!=day
+                or not isinstance(hist.get('observations'),dict)):
+            out['observation_history_status']='INVALID'
+            return out
+        obs=hist['observations']
+        out['observation_history_status']='VERIFIED'
     for key,record in sorted(obs.items()):
         if not isinstance(record,dict) or not KEY.fullmatch(str(key)) or not key.startswith(day+'-'):
             continue
