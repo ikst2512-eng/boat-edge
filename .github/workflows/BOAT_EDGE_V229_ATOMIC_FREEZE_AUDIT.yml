@@ -5,11 +5,9 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml']
   workflow_dispatch:
-  # GitHub cron and independent collector/odds completion can leave a
-  # 2-10m gap AFTER V235's own V230 fresh source publication. Wake this
-  # EXISTING fail-closed V229 first-Git-save owner on successful V235 too.
-  # V235 does not depend on V229: no self-trigger or writer replacement.
-  # No trigger itself certifies source readiness or changes freeze bounds.
+  # Single terminal first-Git-save owner. Upstream source producers and
+  # V216 original source observations may wake V229, but downstream Pages
+  # never wakes it back: rejected jobs still generate completion events.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
@@ -21,11 +19,6 @@ on:
       # Reject V216 workflow_run (collector/odds derived): each producer
       # already wakes V229 directly. No new cron or prediction writer.
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
-      # The existing Pages original 5m SCHEDULE succeeded at 18:24 JST,
-      # inside a missed V229 first-freeze window on 2026-10-18.
-      # Pages also listens to V229; reject its derived workflow_run to
-      # prevent V229 -> Pages -> V229 feedback. Clock hint, not eligibility.
-      - 'BOAT EDGE 01 - Controlled GitHub Pages Publish'
     types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
@@ -50,12 +43,9 @@ jobs:
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        ((github.event.workflow_run.name == 'BOAT EDGE 01 - Controlled GitHub Pages Publish' &&
-          github.event.workflow_run.event == 'schedule') ||
-         (github.event.workflow_run.name != 'BOAT EDGE 01 - Controlled GitHub Pages Publish' &&
-          (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
-           github.event.workflow_run.event == 'schedule' ||
-           github.event.workflow_run.event == 'workflow_dispatch')))))
+        (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
+         github.event.workflow_run.event == 'schedule' ||
+         github.event.workflow_run.event == 'workflow_dispatch')))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
