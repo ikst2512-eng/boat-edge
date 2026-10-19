@@ -7,6 +7,7 @@ must be acyclic to avoid Actions run storms and cron starvation.
 No external calls, odds, results, settlement or formal state reads.
 """
 from pathlib import Path
+import ast
 import re
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -34,6 +35,25 @@ for listener,source in content.items():
     for producer,name in names.items():
         if name in watched:
             edges[producer].add(listener)
+# V220 can dispatch original producers and V216/V229, not merely listen
+# for completions. Include these indirect edges before detecting cycles:
+# otherwise V216 -> V220 -> V216 can escape a completion-only graph audit.
+ops=(ROOT/'scripts/boat_edge_v220_site_ops.py').read_text(encoding='utf-8')
+approved=re.search(r'(?s)\bRECOVER_ALLOW\s*=\s*(\{[^}]*\})',ops)
+assert approved, 'GATE1C_RECOVERY_ALLOWLIST_NOT_FOUND'
+allowed=ast.literal_eval(approved.group(1))
+assert allowed=={
+    'auto-update.yml',
+    'site-odds.yml',
+    'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml',
+    'BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml',
+}, 'GATE1C_RECOVERY_ALLOWLIST_CHANGED_REVIEW_REQUIRED'
+assert 'gh workflow run "$wf" --ref main' in content['recovery']
+keys_by_file={Path(p).name:k for k,p in FILES.items()}
+for workflow in allowed:
+    assert workflow in keys_by_file, 'GATE1C_UNKNOWN_RECOVERY_DISPATCH_'+workflow
+    edges['recovery'].add(keys_by_file[workflow])
+
 for node in edges:
     seen=set()
     stack=[]
@@ -52,7 +72,8 @@ assert 'first_git' in edges['freeze']
 # No V216 completion subscriber: a skipped job still produces 'completed'.
 for target in ('first_git','freeze','recovery'):
     assert target not in edges['observer'], (target, edges)
-assert 'observer' not in edges['recovery']
+assert edges['recovery']=={'collector','odds','observer','first_git'}
+assert 'recovery' not in edges['observer']
 assert 'observer' in edges['collector']
 assert 'observer' in edges['odds']
 assert 'collector' in edges['odds']
