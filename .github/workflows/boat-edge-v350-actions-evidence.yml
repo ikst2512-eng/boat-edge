@@ -33,7 +33,7 @@ concurrency:
 jobs:
   export-scheduled-runs:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - name: Checkout read-only code
         uses: actions/checkout@v4
@@ -96,6 +96,16 @@ jobs:
               for race in missed["races"]:
                   complete = "complete" if race["run_history_complete_for_window"] else "UNVERIFIED"
                   summary.write(f"| `{race['race_key']}` | {race['deadline_jst']} | {complete} | `{race['classification']}` |\n")
+              historical_path = Path("evidence/c1-20261019-actions-windows.json")
+              if historical_path.is_file():
+                  historical = json.loads(historical_path.read_text())
+                  summary.write("\\n### C1 Oct 19 full-catalog coverage\\n\\n")
+                  summary.write(f"- Catalog matured races: **{historical[\'catalog_matured_races\']}**\\n")
+                  summary.write(f"- Catalog missing snapshots: **{historical[\'catalog_matured_missing_snapshots\']}**\\n")
+                  summary.write(f"- Unobserved and missing: **{historical[\'catalog_unobserved_missing_snapshots\']}**\\n")
+                  summary.write(f"- Complete Actions windows: **{historical[\'complete_window_queries\']}**\\n")
+                  summary.write(f"- Incomplete Actions windows: **{historical[\'incomplete_window_queries\']}**\\n")
+                  summary.write("- Eligibility denominator / 99%: **NOT PROVEN**\\n")
               summary.write("- C1 independent source eligibility / 99%: **NOT PROVEN**\n")
           PY
       - name: Upload evidence (no repository commit)
