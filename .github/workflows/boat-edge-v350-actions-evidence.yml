@@ -85,6 +85,12 @@ jobs:
               summary.write(f"- C1 observed matured missed snapshots: **{missed['observed_matured_missing_snapshots']}**\n")
               summary.write(f"- C1 fully checked Action start windows: **{missed['complete_window_queries']}**\n")
               summary.write(f"- C1 incomplete Action start windows: **{missed['incomplete_window_queries']}**\n")
+              summary.write("\n### C1 missing-freeze race classifications\n\n")
+              summary.write("| Race | Deadline (JST) | Actions history | Classification |\n")
+              summary.write("| --- | --- | --- | --- |\n")
+              for race in missed["races"]:
+                  complete = "complete" if race["run_history_complete_for_window"] else "UNVERIFIED"
+                  summary.write(f"| `{race['race_key']}` | {race['deadline_jst']} | {complete} | `{race['classification']}` |\n")
               summary.write("- C1 independent source eligibility / 99%: **NOT PROVEN**\n")
           PY
       - name: Upload evidence (no repository commit)
