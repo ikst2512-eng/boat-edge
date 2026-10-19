@@ -8,7 +8,7 @@
     "event": "全日本王者決定戦(開設73周年記念)",
     "race_no": 1,
     "deadline": "10:38",
-    "updated_at": "2026-10-20T08:05:54+09:00",
+    "updated_at": "2026-10-20T08:49:31+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261020&jcd=23&rno=1",
-      "fetched_at": "2026-10-20T08:07:31+09:00",
-      "sha256": "0211327c18a14a5077e64377d3aff5a941434120d1ac0912d509dd3f2dac6669",
+      "fetched_at": "2026-10-20T08:52:15+09:00",
+      "sha256": "f91b7525a5426818db9c4d2aa8493600e658cfec901ca161241a1324ca8ef006",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261020&jcd=23&rno=1",
+      "fetched_at": "2026-10-20T08:50:18+09:00",
+      "sha256": "6aee9066386057b6f9571a6ba4a551d8566dadf81b6015253d3ce03f31b5e42e",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "68ac96ebbd9f40e98400222b05144b294f19f5f6442e7e396a15bcc441dd3598"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "c92da7205c8edff9667dbaf7af3e6a18397856cdd1bcbc152672859be67af6fa"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "870b2a68932c5c90a9b9228438df04bff2efdf66d9f4ad1f78553c6746b15268"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "1804a387c09662fa6c2ae61225639be3e9c409a50a74f016648dde73fd616156"
     }
   },
   "racers": [
@@ -297,7 +303,53 @@
       "raw_text": "6 5121 / A1 定松 勇樹 佐賀/福岡 25歳/52.0kg F2 L0 0.13 7.23 47.78 64.44 7.43 58.47 77.12 47 30.00 40.00 11 31.72 39.31 7 11 12 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山口 剛 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 木田 峰由季 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 常住 蓮 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 井上 忠政 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 椎名 豊 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 定松 勇樹 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
