@@ -77,48 +77,30 @@ class V235Proof(unittest.TestCase):
         odds_events = odds.split('\npermissions:', 1)[0]
         self.assertNotIn('BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring', odds_events)
 
-    def test_v216_independent_schedule_source_ready_wakes_existing_v235_only(self):
-        # Production Toda 1R 2026-10-16: source-ready first Git at 10:41:39,
-        # 10:47 deadline, V235 prior wake at 10:40 was skipped. Reuse V216
-        # schedule completion; reject nested workflow_run to avoid feedback.
+    def test_v216_completion_does_not_wake_v235(self):
+        # Cron and official producer wakes remain; V216 observation is not
+        # a producer, and skipped V216 jobs still emit completion events.
         root = Path(__file__).resolve().parents[1]
         flow = (root/'.github/workflows/V235.yml').read_text(encoding='utf-8')
-        preamble = flow.split('\npermissions:', 1)[0]
-        job = flow.split('  freeze-then-score-site-only:\n', 1)[1].split('    runs-on:', 1)[0]
+        preamble = flow.split('permissions:', 1)[0]
+        job = flow.split('  freeze-then-score-site-only:', 1)[1].split('    runs-on:', 1)[0]
         self.assertEqual(preamble.count('  workflow_run:'), 1)
         self.assertEqual(preamble.count('  schedule:'), 1)
         self.assertEqual(preamble.count('    - cron:'), 2)
-        self.assertIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'", preamble)
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'", job)
-        self.assertIn("github.event.workflow_run.event == 'schedule'", job)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
-        self.assertIn("github.event.workflow_run.head_branch == 'main'", job)
-        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", job)
-        # Preserve collector/V71 signals and avoid V235->V216->V235 echo.
-        # V216 can now hear ORIGINAL V235 scheduled completions only; the
-        # reciprocal V235 listener already rejects V216 workflow_run events.
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE 自動更新'", job)
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71'", job)
-        source = (root/'.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text(encoding='utf-8')
-        upstream = source.split('\npermissions:', 1)[0]
-        observer_gate = source.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
-        v235_name = 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
-        self.assertEqual(upstream.count("      - '"+v235_name+"'"),0)
-        self.assertNotIn("github.event.workflow_run.name == '"+v235_name+"'",observer_gate)
-        self.assertNotIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",observer_gate)
-        self.assertNotIn("github.event.workflow_run.event == 'schedule'",observer_gate)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'",observer_gate)
-        self.assertIn("github.event.workflow_run.head_branch == 'main'",observer_gate)
-        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",observer_gate)
-        self.assertIn("cron: '4,19,34,49 * * * *'", upstream)
-        self.assertIn("cron: '9,24,39,54 * * * *'", upstream)
-        self.assertIn("cron: '14,29,44,59 * * * *'", upstream)
-        self.assertIn('group: boat-edge-v235-conflict-safe-source-and-scoring', flow)
-        self.assertIn('cancel-in-progress: false', flow)
-        self.assertIn('V235_INITIAL_SNAPSHOT_PUBLISHED', flow)
-        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", preamble)
-        self.assertNotIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", job)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
+        self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'", preamble)
+        self.assertNotIn("github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'", job)
+        for upstream in ('BOAT EDGE 自動更新', 'BOAT EDGE 3連単オッズ更新 V71'):
+            self.assertIn("      - '"+upstream+"'",preamble)
+            self.assertIn("github.event.workflow_run.name == '"+upstream+"'",job)
+        for guard in ("github.event.workflow_run.conclusion == 'success'",
+                      "github.event.workflow_run.head_branch == 'main'",
+                      "github.event.workflow_run.head_repository.full_name == github.repository"):
+            self.assertIn(guard,job)
+        source=(root/'.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text(encoding='utf-8')
+        for cron in ('4,19,34,49','9,24,39,54','14,29,44,59'):
+            self.assertIn("cron: '"+cron+" * * * *'",source)
+        self.assertIn('V235_INITIAL_SNAPSHOT_PUBLISHED',flow)
+        self.assertIn('cancel-in-progress: false',flow)
 
     def test_first_three_morning_races_keep_multiple_free_scheduled_wakes(self):
         # ①-1C: This checks planned wake coverage, NOT actual dispatch,
