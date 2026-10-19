@@ -4,14 +4,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/5 * * * *"
-  # GitHub cron may omit collector and V71 runs. Reuse the EXISTING
-  # independently scheduled V229 first-freeze check as a fallback heartbeat.
-  # Only a V229 *schedule* completion may wake the collector. A V229 run
-  # triggered by this collector is rejected below: no execution cycle.
+  # Only independent V71 odds publication may wake this collector.
+  # V229 consumes collector updates and must never trigger it back.
   workflow_run:
     workflows:
       - 'BOAT EDGE 3連単オッズ更新 V71'
-      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
     types: [completed]
 
 permissions:
@@ -33,9 +30,7 @@ jobs:
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71' ||
-         (github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit' &&
-          github.event.workflow_run.event == 'schedule'))))
+        github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71'))
     runs-on: ubuntu-latest
     timeout-minutes: 8
 

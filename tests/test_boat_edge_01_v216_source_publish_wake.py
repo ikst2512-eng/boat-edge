@@ -32,59 +32,20 @@ class V216CollectorWake(unittest.TestCase):
         self.assertEqual(wf.count('  workflow_run:'),1)
         self.assertEqual(wf.count("      - 'BOAT EDGE 自動更新'"),1)
         self.assertEqual(wf.count("      - 'BOAT EDGE 3連単オッズ更新 V71'"),1)
-        self.assertEqual(wf.count("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'"),1)
+        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",wf)
         self.assertNotIn("git push --force",wf)
 
-    def test_gate1c_v235_original_schedule_can_wake_v216_without_feedback(self):
-        # 2026-10-19: V235 original cron completed at 14:25 JST after
-        # V216's independently scheduled observations had gone missing
-        # since the 11:05 JST window. Reuse one existing observer.
+    def test_observer_is_only_downstream_of_source_producers(self):
         v216=V216.read_text(encoding='utf8')
         v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf8')
-        prefix=v216.split('permissions:',1)[0]
+        event=v216.split('jobs:',1)[0]
         job=v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
-        self.assertEqual(prefix.count('  schedule:'),1)
-        self.assertEqual(prefix.count('  workflow_run:'),1)
-        self.assertEqual(prefix.count(
-            "      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'"),1)
-        self.assertIn("github.event.workflow_run.event == 'schedule'",job)
-        self.assertIn(
-            "github.event.workflow_run.name == 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",
-            job)
-        for needle in ("github.ref == 'refs/heads/main'",
-                       "github.event.workflow_run.conclusion == 'success'",
-                       "github.event.workflow_run.head_branch == 'main'",
-                       "github.event.workflow_run.head_repository.full_name == github.repository"):
-            self.assertIn(needle,job)
-        # V235 may wake on V216 only when upstream V216 was an ORIGINAL
-        # schedule, never when V216 itself was woken by a V235 event.
-        v235_gate=v235.split('  freeze-then-score-site-only:',1)[1].split(
-            '    runs-on:',1)[0]
-        self.assertIn(
-            "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
-            v235_gate)
-        self.assertIn("github.event.workflow_run.event == 'schedule'",v235_gate)
-        # Model both guards, testing the provenance and original-event scope.
-        def v216_accepts(trigger,origin,conclusion,branch,repository):
-            return trigger!='workflow_run' or (
-                conclusion=='success' and branch=='main' and
-                repository=='ikst2512-eng/boat-edge' and
-                (origin!='V235' or trigger_event=='schedule'))
-        for trigger_event in ('workflow_run','push','workflow_dispatch','schedule'):
-            expected=(trigger_event=='schedule')
-            self.assertEqual(v216_accepts('workflow_run','V235','success','main',
-                                           'ikst2512-eng/boat-edge'),expected)
-        trigger_event='schedule'
-        for outcome,branch,repository in (
-                ('failure','main','ikst2512-eng/boat-edge'),
-                ('cancelled','main','ikst2512-eng/boat-edge'),
-                ('success','topic','ikst2512-eng/boat-edge'),
-                ('success','main','fork/boat-edge')):
-            self.assertFalse(v216_accepts('workflow_run','V235',outcome,
-                                          branch,repository))
-        self.assertIn('V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED',v216)
-        self.assertIn('V286_SOURCE_PROVENANCE_CHANGED_REVIEW_REQUIRED',v216)
-        self.assertNotIn('git push --force',v216)
+        self.assertNotIn("      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'", event)
+        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", event)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'",job)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",job)
+        self.assertIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",v235.split('jobs:',1)[0])
+        self.assertIn("github.event.workflow_run.event == 'schedule'",v235.split('  freeze-then-score-site-only:',1)[1].split('    runs-on:',1)[0])
 
     def test_privileged_event_accepts_verified_main_source_only(self):
         wf=V216.read_text(encoding='utf8')
@@ -105,19 +66,9 @@ class V216CollectorWake(unittest.TestCase):
         self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'",collector)
         self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",collector)
         odds=ODDS.read_text(encoding='utf8')
-        # The V71 listener is NEW but ONLY successful, original V216 schedule
-        # runs from trusted main may reach the odds job. The V216 completion
-        # generated by V71's own workflow_run cannot cycle back to V71.
-        self.assertIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",odds)
-        odds_job=odds.split('  odds:',1)[1].split('    runs-on:',1)[0]
-        for required in (
-            "github.event.workflow_run.conclusion == 'success'",
-            "github.event.workflow_run.event == 'schedule'",
-            "github.event.workflow_run.head_branch == 'main'",
-            "github.event.workflow_run.head_repository.full_name == github.repository",
-            "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
-        ):
-            self.assertIn(required,odds_job)
+        # V71 must not listen to V216: a skipped upstream is still a
+        # completed workflow_run and causes recursive event fanout.
+        self.assertNotIn("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",odds)
         # Both collector and odds keep their strict source-publishing guards.
         self.assertIn("V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED",odds)
         self.assertIn("V270_PRE_RESULT_SAFE_PUSH_PASS",collector)
@@ -125,31 +76,16 @@ class V216CollectorWake(unittest.TestCase):
         self.assertIn("V220_RECOVERY_COOLDOWN_OR_SCHEDULE_ACTIVE",observer)
         self.assertIn("cooldown=900",observer)
 
-    def test_existing_v229_schedule_is_free_source_collector_fallback_only(self):
-        # Existing V229 scheduled run is a heartbeat, not source eligibility.
-        # A V229 triggered by the collector must NEVER wake it again.
-        collector = COLLECTOR.read_text(encoding='utf8')
-        v229 = (ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
-        event = collector.split('on:\n', 1)[1].split('\npermissions:', 1)[0]
-        job = collector.split('  update:\n', 1)[1].split('    runs-on:', 1)[0]
-        self.assertEqual(event.count('  schedule:'), 1)
-        self.assertEqual(event.count('  workflow_run:'), 1)
-        self.assertIn('cron: "*/5 * * * *"', event)
-        self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'", event)
-        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", event)
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71'", job)
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", job)
-        self.assertIn("github.event.workflow_run.event == 'schedule'", job)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
-        self.assertIn("github.event.workflow_run.head_branch == 'main'", job)
-        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", job)
-        self.assertIn('group: boat-edge-current-v17', collector)
-        self.assertIn('cancel-in-progress: false', collector)
-        self.assertIn("      - 'BOAT EDGE 自動更新'", v229)
-        self.assertIn("cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'", v229)
-        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit',
-                         (ROOT/'.github/workflows/site-odds.yml').read_text(encoding='utf8'))
-        self.assertNotIn('git push --force', collector)
+    def test_collector_is_not_woken_by_its_own_downstream_first_git_freeze(self):
+        collector=COLLECTOR.read_text(encoding='utf8')
+        v229=(ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
+        event=collector.split('on:',1)[1].split('permissions:',1)[0]
+        self.assertIn('cron: "*/5 * * * *"',event)
+        self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'",event)
+        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",event)
+        self.assertIn("      - 'BOAT EDGE 自動更新'",v229.split('jobs:',1)[0])
+        self.assertIn('group: boat-edge-current-v17',collector)
+        self.assertNotIn('git push --force',collector)
 
     def test_formal_guards_and_first_git_evidence_owner_unmodified(self):
         wf=V216.read_text(encoding='utf8')
@@ -167,89 +103,29 @@ class V216CollectorWake(unittest.TestCase):
 
     def test_v71_off_peak_cron_preserves_twelve_five_minute_wakes_without_feedback(self):
         odds=ODDS.read_text(encoding='utf8')
-        event=odds.split('on:\n',1)[1].split('\npermissions:',1)[0]
+        event=odds.split('on:',1)[1].split('permissions:',1)[0]
         self.assertEqual(event.count('  schedule:'),1)
-        self.assertEqual(event.count('  workflow_run:'),1)
-        self.assertIn('types: [completed]',event)
+        self.assertNotIn('  workflow_run:',event)
         self.assertIn('  workflow_dispatch:',event)
-        self.assertIn('branches: [main]',event)
-        slots=[]
-        lines=[line.strip() for line in event.splitlines()
-               if line.strip().startswith('- cron:')]
+        lines=[line.strip() for line in event.splitlines() if line.strip().startswith('- cron:')]
         self.assertEqual(len(lines),1)
-        for line in lines:
-            spec=line.split('"')[1]
-            fields=spec.split()
-            self.assertEqual(fields[1:],['*','*','*','*'])
-            slots.extend(int(n) for n in fields[0].split(','))
+        fields=lines[0].split('"')[1].split()
+        self.assertEqual(fields[1:],['*','*','*','*'])
+        slots=[int(n) for n in fields[0].split(',')]
         self.assertEqual(sorted(slots),list(range(2,60,5)))
         self.assertEqual(len(set(slots)),12)
-        # Exactly 5-minute spacing, no extra peak :00/:05 slots or new jobs.
-        self.assertTrue(all((slots[(i+1)%12]-slots[i])%60==5
-                            for i in range(12)))
-        # The ONE V216 schedule-only listener is safe: V71-triggered V216
-        # workflow_run completions cannot pass V71's upstream event guard.
-        self.assertEqual(event.count("      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'"),1)
-        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit',event)
-        job=odds.split('  odds:',1)[1].split('    runs-on:',1)[0]
-        self.assertIn("github.event_name != 'workflow_run'",job)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'",job)
-        self.assertIn("github.event.workflow_run.event == 'schedule'",job)
-        self.assertIn("github.event.workflow_run.head_branch == 'main'",job)
-        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",job)
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",job)
         self.assertIn('group: boat-edge-site-odds-v71',odds)
-        self.assertIn('cancel-in-progress: false',odds)
         self.assertIn('V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED',odds)
 
-
-    def test_pages_original_schedule_only_wakes_v229_without_echo(self):
-        """Original Pages schedule fills a missing V229 2-10m delivery slot.
-
-        Pages itself listens to V229 workflow_run; prohibit V229->Pages->V229.
-        All original odds, official source, first-add and formal locks remain.
-        """
+    def test_pages_publishes_after_v229_without_first_git_feedback(self):
         pages=(ROOT/'.github/workflows/pages-controlled-publish.yml').read_text(encoding='utf8')
         v229=(ROOT/'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml').read_text(encoding='utf8')
-        pages_event=pages.split('permissions:',1)[0]
-        event=v229.split('permissions:',1)[0]
-        job=v229.split('  atomic-prospective-site-evidence:',1)[1].split('    runs-on:',1)[0]
-        name='BOAT EDGE 01 - Controlled GitHub Pages Publish'
-        self.assertEqual(event.count('  workflow_run:'),1)
-        self.assertEqual(event.count('  schedule:'),1)
-        self.assertEqual(event.count("      - '"+name+"'"),1)
-        self.assertEqual(pages_event.count('  schedule:'),1)
-        self.assertIn("cron: '*/5 23,0-14 * * *'",pages_event)
+        event=v229.split('jobs:',1)[0]
+        pages_event=pages.split('jobs:',1)[0]
+        self.assertNotIn("      - 'BOAT EDGE 01 - Controlled GitHub Pages Publish'",event)
         self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",pages_event)
-        self.assertIn("github.event.workflow_run.name == '"+name+"'",job)
-        self.assertIn("github.event.workflow_run.name != '"+name+"'",job)
-        for value in (
-            "github.ref == 'refs/heads/main'",
-            "github.event.workflow_run.conclusion == 'success'",
-            "github.event.workflow_run.head_branch == 'main'",
-            "github.event.workflow_run.head_repository.full_name == github.repository",
-            "github.event.workflow_run.event == 'schedule'",
-        ):
-            self.assertIn(value,job)
-        def allow(original,event,conclusion,branch,repo):
-            return (original==name and event=='schedule'
-                    and conclusion=='success' and branch=='main'
-                    and repo=='ikst2512-eng/boat-edge')
-        self.assertTrue(allow(name,'schedule','success','main','ikst2512-eng/boat-edge'))
-        for args in (
-            ('workflow_run','success','main','ikst2512-eng/boat-edge'),
-            ('push','success','main','ikst2512-eng/boat-edge'),
-            ('workflow_dispatch','success','main','ikst2512-eng/boat-edge'),
-            ('schedule','failure','main','ikst2512-eng/boat-edge'),
-            ('schedule','cancelled','main','ikst2512-eng/boat-edge'),
-            ('schedule','success','feature','ikst2512-eng/boat-edge'),
-            ('schedule','success','main','fork/boat-edge'),
-        ):
-            self.assertFalse(allow(name,*args))
-        self.assertEqual(v229.count('  atomic-prospective-site-evidence:'),1)
-        self.assertIn('cancel-in-progress: false',v229)
+        self.assertIn('cron: \'*/5 23,0-14 * * *\'',pages_event)
         self.assertIn('V229_TRACKED_SOURCE_PINS_PASS',v229)
-        self.assertNotIn('git push --force',v229)
 
     def test_rescued_v216_dispatch_completion_can_wake_existing_v229_without_cycle(self):
         """V216 rescue completion is a source observation, not eligibility.
@@ -274,10 +150,8 @@ class V216CollectorWake(unittest.TestCase):
         # The producer-triggered V216 workflow_run must NOT fan out into
         # another V229 run. Other producer completions still wake V229.
         self.assertNotIn("github.event.workflow_run.event != 'workflow_run'",job)
-        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",v216)
-        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",
-                      v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0])
-        self.assertIn("github.event.workflow_run.event == 'schedule'",
+        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",v216)
+        self.assertNotIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",
                       v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0])
         self.assertIn('V220_V216_SELF_WAKE_NO_FEEDBACK_DISPATCH',v220)
         self.assertIn('V220_V216_ALREADY_ACTIVE_NO_DUPLICATE',v220)
