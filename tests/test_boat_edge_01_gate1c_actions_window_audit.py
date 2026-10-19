@@ -48,6 +48,7 @@ class C1MissedWindowAudit(unittest.TestCase):
             return {"total_count": 0, "workflow_runs": []}
         data = audit(self.root, DAY, NOW, fetch)
         self.assertEqual(data["observed_matured_missing_snapshots"], 2)
+        self.assertEqual(data["observed_matured_with_existing_snapshot"], 1)
         self.assertEqual(data["complete_window_queries"], 2)
         self.assertEqual(data["incomplete_window_queries"], 0)
         self.assertEqual(set(x["race_key"] for x in data["races"]),
