@@ -59,7 +59,7 @@ jobs:
           import requests
           from bs4 import BeautifulSoup
           from scripts.boat_edge_v275_frozen_protection import protected_site_snapshot
-          from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed
+          from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed_with_prior_deadline as source_write_allowed
           from scripts.boat_edge_v01_catalog_continuity import should_keep_verified_same_day_catalog
 
           JST=timezone(timedelta(hours=9))
@@ -461,10 +461,15 @@ jobs:
                       if not isinstance(preserved,dict) or preserved.get("race_key")!=key:
                           preserved={}
                       old_before=(preserved.get("source_audit") or {}).get("beforeinfo") or {}
+                      previous_clock=(preserved.get("meta") or {}).get("deadline")
+                      clock_conflict=(isinstance(previous_clock,str) and isinstance(clock,str)
+                                      and previous_clock!=clock)
                       venue["races"].append({
                         "race_key":key,"race_no":rno,
                         "deadline":ds[rno-1] if len(ds)>=rno else None,
                         "file":f"data/races/{key}.json",
+                        "deadline_disagrees_with_preserved_source":clock_conflict,
+                        "preserved_race_deadline":previous_clock if clock_conflict else None,
                         "racers_ready":len(preserved.get("racers") or [])==6,
                         "beforeinfo_status":old_before.get("status","protected_source_unavailable")})
                       continue
