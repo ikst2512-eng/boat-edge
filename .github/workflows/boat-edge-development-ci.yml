@@ -65,6 +65,9 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_v01_first_freeze_nudge.py' -v
           bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
+          python3 -m unittest discover -s tests -p 'test_boat_edge_01_v235_source_gap_wake.py' -v
+          bash -n scripts/boat_edge_01_v235_source_gap_wake.sh
+          python3 -m py_compile scripts/boat_edge_01_v235_source_gap_wake.py
       - name: Verify obsolete V226 recovery cannot interrupt active SITE collectors
         env:
           PYTHONDONTWRITEBYTECODE: '1'
