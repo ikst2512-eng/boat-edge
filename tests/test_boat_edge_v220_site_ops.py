@@ -239,7 +239,7 @@ def test_gate1c_recovery_plan_reports_source_gaps_without_claiming_denominator()
         report=json.loads(result.stdout)
         expected=mod.compute(root,at)
         assert report['workflows']==expected['recovery_dispatch_candidates']
-        assert report['decision_window_races']==1
+        assert report['freeze_window_races']==1
         assert report['eligible_denominator_proven'] is False
         assert report['window_observation_only'] is True
         assert report['current_windows']==[
@@ -249,6 +249,27 @@ def test_gate1c_recovery_plan_reports_source_gaps_without_claiming_denominator()
         assert report['urgent_odds_only_recovery_keys']==[]
         assert not (root/'data/site_ops_v220/current.json').exists()
         assert not (root/'data/site_ops_v220/gate1c_current.json').exists()
+        # V220 observes from 15m; V229 can freeze only 2-10m.
+        # An otherwise valid 13m race must NOT appear in V229's window.
+        monitor=subprocess.run(
+            [sys.executable,str(loc),'--root',str(root),
+             '--at',(NOW+timedelta(minutes=17)).isoformat(),
+             '--recovery-plan'],
+            capture_output=True,text=True,check=True)
+        early=json.loads(monitor.stdout)
+        assert mod.compute(root,NOW+timedelta(minutes=17))['decision_window_races']==1
+        assert early['freeze_window_races']==0 and early['current_windows']==[]
+        # Boundary precision must not be rounded before deciding eligibility.
+        for lead_seconds,eligible in ((601,False),(600,True),(120,True),(119,False)):
+            check=mod.expected_deadline(KEY,'08:35')-timedelta(seconds=lead_seconds)
+            observation=subprocess.run(
+                [sys.executable,str(loc),'--root',str(root),
+                 '--at',check.isoformat(),'--recovery-plan'],
+                capture_output=True,text=True,check=True)
+            result=json.loads(observation.stdout)
+            assert result['freeze_window_races']==int(eligible),(lead_seconds,result)
+            assert result['eligible_denominator_proven'] is False
+
         # No after-deadline reconstruction or assumed eligible counts.
         late=subprocess.run(
             [sys.executable,str(loc),'--root',str(root),
@@ -256,7 +277,7 @@ def test_gate1c_recovery_plan_reports_source_gaps_without_claiming_denominator()
              '--recovery-plan'],
             capture_output=True,text=True,check=True)
         last=json.loads(late.stdout)
-        assert last['decision_window_races']==0
+        assert last['freeze_window_races']==0
         assert last['current_windows']==[]
         assert last['eligible_denominator_proven'] is False
     print('GATE1C_REJECT_REASON_DIAGNOSTIC_READ_ONLY_NO_ELIGIBLE_DENOMINATOR_PASS')
