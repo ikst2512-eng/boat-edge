@@ -32,6 +32,30 @@ if ! printf '%s\n' "$plan" | jq -e --arg wf "$wf" '
   (.workflows | type) == "array" and
   (.workflows | index($wf)) != null
 ' >/dev/null 2>&1; then
+  # This does NOT certify source eligibility. It only distinguishes zero
+  # scheduled 2-10m opportunities from blocked, prospectively observed
+  # windows. Never infer a denominator or dispatch from this diagnostic.
+  if printf '%s\n' "$plan" | jq -e '
+    (.window_observation_only == true) and
+    (.eligible_denominator_proven == false) and
+    (.freeze_window_races | type) == "number" and
+    (.freeze_window_races >= 0) and
+    (.current_windows | type) == "array" and
+    (.current_windows | length) == .freeze_window_races and
+    all(.current_windows[];
+      (.race_key | type) == "string" and
+      (.missing_evidence | type) == "array" and
+      all(.missing_evidence[]; type == "string"))
+  ' >/dev/null 2>&1; then
+    printf '%s\n' "$plan" | jq -c '{
+      window_class: (if .freeze_window_races == 0
+        then "NO_2_TO_10M_WINDOW" else "STRICT_SOURCE_PROOF_NOT_YET_CONFIRMED" end),
+      checked_window_races: .freeze_window_races,
+      observed_source_gaps: [.current_windows[] |
+        {race_key, missing_evidence}],
+      eligible_denominator_proven: false
+    }' | sed 's/^/V01_FIRST_FREEZE_NUDGE_WINDOW_DIAGNOSTIC /'
+  fi
   echo V01_FIRST_FREEZE_NUDGE_NOT_SOURCE_READY_OR_OUTSIDE_WINDOW
   exit 0
 fi

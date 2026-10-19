@@ -92,6 +92,57 @@ fi
             self.assertNotIn("dispatch:", events)
 
     @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
+    def test_source_window_diagnostics_are_observational_only(self):
+        # A missing 2-10m opportunity must be distinguishable from official
+        # proof not yet established, without converting an observation to
+        # eligibility or sending another workflow_dispatch.
+        zero = {
+            "workflows": [], "freeze_window_races": 0,
+            "current_windows": [], "window_observation_only": True,
+            "eligible_denominator_proven": False,
+        }
+        output, events = self.run_case(plan=zero)
+        self.assertIn("NO_2_TO_10M_WINDOW", output)
+        self.assertIn("V01_FIRST_FREEZE_NUDGE_NOT_SOURCE_READY_OR_OUTSIDE_WINDOW", output)
+        self.assertNotIn("dispatch:", events)
+        self.assertNotIn("sleep:", events)
+
+        gaps = {
+            **zero, "freeze_window_races": 2,
+            "current_windows": [
+                {"race_key": "20261019-19-06", "missing_evidence":
+                 ["beforeinfo_unavailable", "frozen_prediction_missing_or_invalid"]},
+                {"race_key": "20261019-01-11", "missing_evidence":
+                 ["frozen_prediction_missing_or_invalid"]},
+            ],
+        }
+        output, events = self.run_case(plan=gaps)
+        self.assertIn("STRICT_SOURCE_PROOF_NOT_YET_CONFIRMED", output)
+        self.assertIn("beforeinfo_unavailable", output)
+        self.assertIn("20261019-01-11", output)
+        self.assertIn('"eligible_denominator_proven":false', output)
+        self.assertNotIn("dispatch:", events)
+
+        # Malformed/unverified diagnostics never invent a missing count or
+        # success claim. The pre-existing dispatch denial remains mandatory.
+        for invalid in (
+            {**gaps, "eligible_denominator_proven": True},
+            {**gaps, "freeze_window_races": 3},
+            {**gaps, "current_windows": "unsafe"},
+        ):
+            output, events = self.run_case(plan=invalid)
+            self.assertIn("NOT_SOURCE_READY_OR_OUTSIDE_WINDOW", output)
+            self.assertNotIn("WINDOW_DIAGNOSTIC", output)
+            self.assertNotIn("dispatch:", events)
+
+        # The extra diagnostic never authorizes a dispatch by itself.
+        ready = {**zero, "workflows": [FREEZE]}
+        output, events = self.run_case(plan=ready)
+        self.assertIn("EXISTING_V229_DISPATCHED", output)
+        self.assertNotIn("WINDOW_DIAGNOSTIC", output)
+        self.assertEqual(events.count("dispatch:"), 1)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
     def test_queued_cooldown_and_malformed_api_fail_closed(self):
         now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
         cases = [

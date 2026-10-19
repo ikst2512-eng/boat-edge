@@ -1130,9 +1130,26 @@ def main():
             'previous_day':report['previous_day']['first_git_original_sha_proven'],
             'saved':changed, 'rate_proven':False},sort_keys=True))
     elif a.recovery_plan:
+        # V220's decision window is 2-15m; the immutable V229 writer is
+        # allowed only from 2-10m. Never label an 11-15m monitoring race
+        # as a failed first-Git-save opportunity. Use unrounded UTC seconds.
+        freeze_window=[]
+        for item in doc['current_windows']:
+            due=expected_deadline(item['key'],item['deadline_jst'])
+            if due is not None and 120 <= (due-now).total_seconds() <= 600:
+                freeze_window.append({
+                    'race_key':item['key'],
+                    'deadline_jst':item['deadline_jst'],
+                    'missing_evidence':item['missing_evidence']})
+        # These are prospective observations, NEVER a proven eligible-race
+        # denominator. No new HTTP requests, writes, or recover candidates.
         print(json.dumps({'workflows':doc['recovery_dispatch_candidates'],
             'urgent_odds_only_recovery_keys':doc['urgent_odds_only_recovery_keys'],
-            'urgent_beforeinfo_only_recovery_keys':doc['urgent_beforeinfo_only_recovery_keys']},sort_keys=True))
+            'urgent_beforeinfo_only_recovery_keys':doc['urgent_beforeinfo_only_recovery_keys'],
+            'freeze_window_races':len(freeze_window),
+            'current_windows':freeze_window,
+            'eligible_denominator_proven':False,
+            'window_observation_only':True},sort_keys=True))
     else:
         output=Path(a.root)/'data/site_ops_v220/current.json'
         changed=write_if_changed(output,doc)
