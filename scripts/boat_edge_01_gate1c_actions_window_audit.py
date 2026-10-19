@@ -97,11 +97,16 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
     try:
         history = json.loads(doc_path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
-        raise ValueError("HISTORY_UNAVAILABLE") from exc
-    if (history.get("schema") != "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1"
+        if catalog is None:
+            raise ValueError("HISTORY_UNAVAILABLE") from exc
+        history = None
+    if history is not None and (history.get("schema") != "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1"
             or history.get("day_jst") != day
             or not isinstance(history.get("observations"), dict)):
-        raise ValueError("HISTORY_UNVERIFIED")
+        if catalog is None:
+            raise ValueError("HISTORY_UNVERIFIED")
+        history = None
+    history = history or {"observations": {}}
     records = dict(history['observations'])
     if catalog is not None:
         if not isinstance(catalog, dict) or str(catalog.get('date', '')).replace('-', '') != day or not isinstance(catalog.get('venues'), list):
@@ -191,6 +196,7 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
     return {
         "schema": "BOAT_EDGE_C1_MISSING_FREEZE_ACTIONS_WINDOW_V1",
         "day_jst": day, "read_only": True,
+        "v215_history_verified": history.get("schema") == "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
         "snapshot_freeze_window_minutes_before_deadline": [10, 2],
         "observed_matured_missing_snapshots": sum(r["v215_observation_present"] for r in output),
         "catalog_matured_missing_snapshots": len(output) if catalog is not None else None,
