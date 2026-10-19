@@ -73,7 +73,7 @@ class C1MissedWindowAudit(unittest.TestCase):
                 "2026-10-19T07:54:00Z")]}
         rows = {x["race_key"]: x for x in audit(self.root, DAY, NOW, fetch)["races"]}
         self.assertEqual(rows["20261019-18-07"]["classification"],
-                         "V229_START_RECORDED_SNAPSHOT_MISSING")
+                         "V229_ALL_RUNS_SKIPPED_NO_EXECUTED_FREEZE_PROVEN")
         self.assertEqual(rows["20261019-12-05"]["classification"],
                          "V216_START_WITHOUT_V229_START")
         self.assertEqual(rows["20261019-18-07"]["capture_owner_starts"][0]["conclusion"],
@@ -87,7 +87,7 @@ class C1MissedWindowAudit(unittest.TestCase):
                     entry(31, v125, "2026-10-19T02:17:00Z", "success", "schedule"),
                     entry(32, v125, "2026-10-19T02:18:00Z", "success", "workflow_run"),
                 ]}
-            return {"total_count": 2, "workflow_runs": [
+            return {"total_count": 1, "workflow_runs": [
                 entry(33, v125, "2026-10-19T07:54:00Z", "success", "workflow_run"),
             ]}
         rows = {r["race_key"]: r for r in audit(
