@@ -21,7 +21,34 @@ assert prefix.count(v216_name) == 1
 assert "github.event.workflow_run.name != " + v216_name in job
 assert "github.event.workflow_run.event == 'schedule'" in job
 v216=Path('.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text(encoding='utf8')
-assert "'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'" not in v216.split('jobs:',1)[0]
+# V229 ORIGINAL SCHEDULE -> V216 adds independent time-window sampling.
+# V229 workflow_run -> V216 is blocked; V229 accepts V216 only when the
+# upstream V216 event was schedule/dispatch (so there is no event cycle).
+v216_event=v216.split('jobs:',1)[0]
+v216_job=v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
+assert v216_event.count("'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'")==1
+assert v216_event.count('workflow_run:')==1
+assert "github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'" in v216_job
+assert "github.event.workflow_run.event == 'schedule'" in v216_job
+assert "github.event.workflow_run.conclusion == 'success'" in v216_job
+assert "github.event.workflow_run.head_branch == 'main'" in v216_job
+assert "github.event.workflow_run.head_repository.full_name == github.repository" in v216_job
+
+def v216_admitted(upstream_name, upstream_event, conclusion='success', branch='main', repo='ikst2512-eng/boat-edge'):
+    return (conclusion=='success' and branch=='main' and repo=='ikst2512-eng/boat-edge'
+            and (upstream_name in ('BOAT EDGE 自動更新','BOAT EDGE 3連単オッズ更新 V71')
+            or (upstream_name in ('BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring',
+                                  'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit')
+                and upstream_event=='schedule')))
+assert v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule')
+assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','workflow_run')
+assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','workflow_dispatch')
+assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule',conclusion='failure')
+assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule',branch='feature')
+assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule',repo='fork/boat-edge')
+assert not admitted('workflow_run','refs/heads/main','success','main','ikst2512-eng/boat-edge',
+                    upstream_name='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',
+                    upstream_event='workflow_run')
 v235=Path('.github/workflows/V235.yml').read_text(encoding='utf8')
 v235_events=v235.split('jobs:',1)[0]
 assert "name: BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring" in v235_events
