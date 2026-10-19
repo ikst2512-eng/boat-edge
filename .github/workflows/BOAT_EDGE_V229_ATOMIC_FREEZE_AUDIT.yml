@@ -5,14 +5,14 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml']
   workflow_dispatch:
-  # Only independently published official source producers and V235 may
-  # wake the terminal first-Git owner. V216 is a diagnostic observer, never
-  # a completion-event source: even a skipped job emits 'completed'.
+  # Wake from independently published official source producers only.
+  # V235 already invokes V229 atomic_freeze inside its own V230 source
+  # lane; subscribing to V235 completion merely creates redundant runs.
+  # Skipped jobs also emit 'completed', so avoid completion-event fanout.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
-      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
     types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
@@ -27,8 +27,8 @@ concurrency:
 
 jobs:
   atomic-prospective-site-evidence:
-    # Match only trusted upstream names. Job-level guards alone cannot stop
-    # completion-event fanout, so V216 is absent from event subscriptions.
+    # Match only trusted upstream collectors. Job guards alone cannot stop
+    # completion-event fanout: V216 and V235 are not event subscriptions.
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' ||
@@ -36,8 +36,7 @@ jobs:
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
         (github.event.workflow_run.name == 'BOAT EDGE 自動更新' ||
-         github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71' ||
-         github.event.workflow_run.name == 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring')))
+         github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71')))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

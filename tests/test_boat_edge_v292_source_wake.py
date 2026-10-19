@@ -85,7 +85,13 @@ for node in edges:
         stack.pop()
         seen.add(current)
     walk(node)
-assert 'first_git' in edges['freeze']
+# V235 already executes the V230 lane which imports and runs the same
+# V229 atomic_freeze in-process. A second V229 workflow_run on V235
+# completion adds no original-source opportunity but may starve cron slots.
+assert 'first_git' not in edges['freeze']
+v230=(ROOT/'scripts/boat_edge_v230_fast_lane.py').read_text(encoding='utf-8')
+assert 'from boat_edge_v229_atomic_freeze import run as atomic_freeze' in v230
+assert 'count=atomic_freeze(root)' in v230
 # No V216 completion subscriber: a skipped job still produces 'completed'.
 for target in ('freeze','recovery'):
     assert target not in edges['observer'], (target, edges)
