@@ -91,12 +91,21 @@ class V235Proof(unittest.TestCase):
         self.assertIn("github.event.workflow_run.conclusion == 'success'", job)
         self.assertIn("github.event.workflow_run.head_branch == 'main'", job)
         self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", job)
-        # Preserve primary V71/collector signals and no feedback to V216.
+        # Preserve collector/V71 signals and avoid V235->V216->V235 echo.
+        # V216 can now hear ORIGINAL V235 scheduled completions only; the
+        # reciprocal V235 listener already rejects V216 workflow_run events.
         self.assertIn("github.event.workflow_run.name == 'BOAT EDGE 自動更新'", job)
         self.assertIn("github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71'", job)
         source = (root/'.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml').read_text(encoding='utf-8')
         upstream = source.split('\npermissions:', 1)[0]
-        self.assertNotIn('BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring', upstream)
+        observer_gate = source.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
+        v235_name = 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
+        self.assertEqual(upstream.count("      - '"+v235_name+"'"),1)
+        self.assertIn("github.event.workflow_run.name != '"+v235_name+"'",observer_gate)
+        self.assertIn("github.event.workflow_run.event == 'schedule'",observer_gate)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'",observer_gate)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'",observer_gate)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",observer_gate)
         self.assertIn("cron: '4,19,34,49 * * * *'", upstream)
         self.assertIn("cron: '9,24,39,54 * * * *'", upstream)
         self.assertIn("cron: '14,29,44,59 * * * *'", upstream)
