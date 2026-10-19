@@ -48,6 +48,23 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Gate 1C independent-schedule source-ready V229 first-freeze wake
+        # V125 listens to V229 completion for READ-ONLY revision auditing.
+        # Never dispatch V229 for that workflow_run event: it would make
+        # V229 -> V125 -> V229 feedback even when no snapshot was written.
+        # Only V125's own independent existing cron can reuse this one
+        # shared fail-closed source-ready 2-10m V229 dispatch guard.
+        # The script re-fetches main and rejects stale/unverified source,
+        # queued/active V229 and any real attempt within 120 seconds.
+        if: github.event_name == 'schedule'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
+          bash scripts/boat_edge_v01_first_freeze_nudge.sh
+
       - name: Disable obsolete V124 audit
         if: github.event_name != 'schedule' && github.event_name != 'workflow_run'
         env:
