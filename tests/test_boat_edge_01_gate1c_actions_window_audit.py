@@ -1,0 +1,112 @@
+"""Offline regression for exact GitHub Actions starts in missed C-1 windows."""
+import json
+import tempfile
+import unittest
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from scripts.boat_edge_01_gate1c_actions_window_audit import audit, deadline_for, window_runs
+
+JST = timezone(timedelta(hours=9))
+NOW = datetime(2026, 10, 19, 21, 15, tzinfo=JST)
+DAY = "20261019"
+
+
+def entry(run_id, name, created, conclusion="success", event="schedule"):
+    return {"id": run_id, "name": name, "created_at": created, "event": event,
+            "status": "completed", "conclusion": conclusion}
+
+
+class C1MissedWindowAudit(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        observations = {
+            "20261019-18-07": {"deadline": "11:22", "source_gaps_seen": [],
+                                  "reasons_seen": ["snapshot_missing"]},
+            "20261019-12-05": {"deadline": "17:01", "source_gaps_seen": [],
+                                  "reasons_seen": ["snapshot_missing"]},
+            "20261019-01-12": {"deadline": "20:45", "source_gaps_seen": ["beforeinfo_not_ok"],
+                                  "reasons_seen": ["snapshot_missing"]},
+        }
+        p = self.root / "data/site_paper_sim/readiness_history_v215" / (DAY + ".json")
+        p.parent.mkdir(parents=True)
+        p.write_text(json.dumps({
+            "schema": "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
+            "day_jst": DAY, "observations": observations,
+        }), encoding="utf-8")
+        # Existing snapshot means no missing-freeze audit regardless of earlier
+        # snapshot_missing observation.
+        s = self.root / "data/site_prediction_snapshots/20261019-01-12.json"
+        s.parent.mkdir(parents=True)
+        s.write_text("{}", encoding="utf-8")
+
+    def test_no_run_starts_does_not_falsely_prove_source_ready(self):
+        def fetch(start, end, page):
+            self.assertEqual(page, 1)
+            self.assertEqual((end - start).total_seconds(), 8 * 60)
+            return {"workflow_runs": []}
+        data = audit(self.root, DAY, NOW, fetch)
+        self.assertEqual(data["observed_matured_missing_snapshots"], 2)
+        self.assertEqual(data["complete_window_queries"], 2)
+        self.assertEqual(data["incomplete_window_queries"], 0)
+        self.assertEqual(set(x["race_key"] for x in data["races"]),
+                         {"20261019-18-07", "20261019-12-05"})
+        for row in data["races"]:
+            self.assertEqual(row["classification"], "NO_CAPTURE_OWNER_START_IN_WINDOW")
+            self.assertFalse(row["independent_source_eligibility_proven"])
+            self.assertFalse(row["no_prior_active_run_proven"])
+            self.assertTrue(row["first_git_save_absent_in_current_tree"])
+        self.assertIsNone(data["independently_source_eligible_denominator"])
+        self.assertIsNone(data["eligible_save_rate_percent"])
+        self.assertFalse(data["automated_recovery_or_formal_unlock_authorized"])
+
+    def test_v229_starts_and_v216_starts_never_confused_with_successful_freeze(self):
+        def fetch(start, end, page):
+            key = "18" if start.hour < 4 else "12"
+            if key == "18":
+                return {"workflow_runs": [entry(11,
+                    "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit",
+                    "2026-10-19T02:17:00Z", "skipped", "workflow_run")]}
+            return {"workflow_runs": [entry(12,
+                "BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps",
+                "2026-10-19T07:54:00Z")]}
+        rows = {x["race_key"]: x for x in audit(self.root, DAY, NOW, fetch)["races"]}
+        self.assertEqual(rows["20261019-18-07"]["classification"],
+                         "V229_START_RECORDED_SNAPSHOT_MISSING")
+        self.assertEqual(rows["20261019-12-05"]["classification"],
+                         "V216_START_WITHOUT_V229_START")
+        self.assertEqual(rows["20261019-18-07"]["capture_owner_starts"][0]["conclusion"],
+                         "skipped")
+
+    def test_status_api_failure_and_truncation_cannot_be_interpreted_as_zero(self):
+        def broken(start, end, page):
+            raise OSError("rate limited")
+        r = audit(self.root, DAY, NOW, broken)
+        self.assertEqual(r["incomplete_window_queries"], 2)
+        self.assertTrue(all(x["classification"] == "RUN_HISTORY_UNVERIFIED"
+                            for x in r["races"]))
+        now_utc = NOW.astimezone(timezone.utc)
+        many = [entry(i, "noise", "2026-10-19T12:00:00Z")
+                for i in range(100)]
+        # Use a synthetic window containing the returned timestamps.
+        start, end = now_utc - timedelta(minutes=20), now_utc
+        self.assertEqual(len(many), 100)
+        records, complete, error = window_runs(
+            lambda start, end, page: {"workflow_runs": many}, start, end, max_pages=1)
+        self.assertFalse(complete)
+        self.assertEqual(error, "PAGE_LIMIT_REACHED")
+
+    def test_prospective_deadline_and_untrusted_history_fail_closed(self):
+        early = datetime(2026, 10, 19, 10, 30, tzinfo=JST)
+        d = audit(self.root, DAY, early, lambda s, e, p: {"workflow_runs": []})
+        self.assertEqual(d["observed_matured_missing_snapshots"], 0)
+        self.assertIsNone(deadline_for("20261019-18-07", "99:99"))
+        with self.assertRaises(ValueError):
+            audit(self.root, "20261018", NOW, lambda s, e, p: {"workflow_runs": []})
+        with self.assertRaises(ValueError):
+            audit(self.root, "../bad", NOW, lambda s, e, p: {"workflow_runs": []})
+
+
+if __name__ == "__main__":
+    unittest.main()
