@@ -39,6 +39,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Export scheduled run metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -57,7 +58,7 @@ jobs:
           python3 scripts/boat_edge_01_gate1c_actions_window_audit.py --repo "$REPO" --day "$C1_DAY" --max-pages "$MAX_PAGES" > evidence/c1-missed-freeze-action-windows.json
           # Scheduled-only historical comparison; evidence only, no writes to repository.
           if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
-            python3 scripts/boat_edge_01_gate1c_actions_window_audit.py --repo "$REPO" --day 20261019 --max-pages "$MAX_PAGES" > evidence/c1-20261019-actions-windows.json
+            python3 scripts/boat_edge_01_gate1c_actions_window_audit.py --repo "$REPO" --day 20261019 --catalog-git-sha 88051a336dee27b5175f797598b31d110b17db10 --max-pages "$MAX_PAGES" > evidence/c1-20261019-actions-windows.json
           fi
           python3 - <<'PY'
           import json
