@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 1,
     "deadline": "10:33",
-    "updated_at": "2026-10-20T05:16:09+09:00",
+    "updated_at": "2026-10-20T08:05:54+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261020&jcd=09&rno=1",
-      "fetched_at": "2026-10-20T05:17:39+09:00",
-      "sha256": "6b3cbf44a9b3f65dd38570fae2775c2a8b65da14e5e29b1e0f3f55f7125df5e0",
+      "fetched_at": "2026-10-20T08:08:25+09:00",
+      "sha256": "8c72cdba5d7d91bbcca441f1bd7636f9afc497cddf561c46b16d1bcc00f5d5fe",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261020&jcd=09&rno=1",
+      "fetched_at": "2026-10-20T08:06:41+09:00",
+      "sha256": "a317dcf1afb61dd860ac2bcd8e7dffa367858379fb73794f50944bb230791fc8",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -293,9 +323,69 @@
       "raw_text": "6 3796 / B1 長野 道臣 静岡/静岡 53歳/53.1kg F1 L0 0.17 4.32 25.77 36.08 5.85 42.42 60.61 64 30.57 48.19 18 40.85 59.15 4 11 1 2 7 6"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 後藤 翔之 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 小倉 康典 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 安藤 裕貴 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 浅見 宗孝 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 池田 雷太 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 長野 道臣 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }

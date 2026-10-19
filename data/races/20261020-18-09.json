@@ -8,7 +8,7 @@
     "event": "yab山口朝日放送杯争奪戦",
     "race_no": 9,
     "deadline": "12:27",
-    "updated_at": "2026-10-20T05:16:09+09:00",
+    "updated_at": "2026-10-20T08:05:54+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,8 +19,8 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261020&jcd=18&rno=9",
-      "fetched_at": "2026-10-20T05:16:48+09:00",
-      "sha256": "cc5147de41b36649f7b88528cb4169c3d04f078a21362be3bcefcf3fa48a351c",
+      "fetched_at": "2026-10-20T08:08:12+09:00",
+      "sha256": "af1813dcf8b7485a14bbbbd4517c5f17f10397b1bd51d34c5e93736bbcf25eed",
       "error": null
     },
     "beforeinfo": {
@@ -30,6 +30,30 @@
       "sha256": null,
       "error": null,
       "six_boat_coverage": null
+    },
+    "stt": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "tkz": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "sui": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
+    },
+    "original_exhibition": {
+      "status": "not_published",
+      "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/20.csv",
+      "fetched_at": null,
+      "sha256": null
     }
   },
   "racers": [
@@ -160,7 +184,7 @@
       "name": "松下 誉士",
       "class": "B1",
       "age": 42,
-      "weight_kg": 52.9,
+      "weight_kg": 53.4,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -192,7 +216,7 @@
         "11"
       ],
       "early_race": null,
-      "raw_text": "4 4693 / B1 松下 誉士 福岡/福岡 42歳/52.9kg F0 L0 0.19 4.33 25.49 39.22 4.04 11.11 29.63 42 37.90 52.42 62 36.36 53.68 5 1 11"
+      "raw_text": "4 4693 / B1 松下 誉士 福岡/福岡 42歳/53.4kg F0 L0 0.19 4.33 25.49 39.22 4.04 11.11 29.63 42 37.90 52.42 62 36.36 53.68 5 1 11"
     },
     {
       "lane": 5,
@@ -200,7 +224,7 @@
       "name": "塩崎 桐加",
       "class": "B1",
       "age": 34,
-      "weight_kg": 49.3,
+      "weight_kg": 49.4,
       "branch": "三重",
       "birthplace": "三重",
       "F": 0,
@@ -232,7 +256,7 @@
         "2"
       ],
       "early_race": 1,
-      "raw_text": "5 4589 / B1 塩崎 桐加 三重/三重 34歳/49.3kg F0 L0 0.17 5.88 34.82 63.39 3.85 15.38 30.77 22 28.70 41.74 29 30.87 47.83 4 9 2 1R"
+      "raw_text": "5 4589 / B1 塩崎 桐加 三重/三重 34歳/49.4kg F0 L0 0.17 5.88 34.82 63.39 3.85 15.38 30.77 22 28.70 41.74 29 30.87 47.83 4 9 2 1R"
     },
     {
       "lane": 6,
@@ -280,5 +304,19 @@
   "validation": {
     "result_unlock_token": null,
     "result": null
+  },
+  "actual_entry": [],
+  "current_model_input": {
+    "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
+    "source_presence": {
+      "race_cards": true,
+      "stt": false,
+      "tkz": false,
+      "sui": false,
+      "original_exhibition": false
+    },
+    "core7_ready": false,
+    "formal_prediction_ready": false,
+    "note": "CORE7 readiness only. Formal CURRENT requires frozen first100 + D-1 enrichment + exact runner gates."
   }
 }
