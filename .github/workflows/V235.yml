@@ -14,6 +14,10 @@ on:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
       - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
+      # Independent V229 ORIGINAL cron completion rescues missing V235
+      # source refreshes. V229 events caused by V235/collector/V216 are
+      # NOT accepted, so V235 -> V229 -> V235 cannot cycle.
+      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
     types: [completed]
   schedule:
     # 08:20 JST is 23:20 UTC on the previous calendar day.
@@ -36,7 +40,8 @@ jobs:
         github.event.workflow_run.head_repository.full_name == github.repository &&
         (github.event.workflow_run.name == 'BOAT EDGE 自動更新' ||
          github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71' ||
-         (github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' &&
+         ((github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
+           github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit') &&
           github.event.workflow_run.event == 'schedule'))))
     runs-on: ubuntu-latest
     timeout-minutes: 20

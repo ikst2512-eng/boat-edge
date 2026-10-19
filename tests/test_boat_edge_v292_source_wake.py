@@ -49,7 +49,12 @@ assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Aud
 v235=Path('.github/workflows/V235.yml').read_text(encoding='utf8')
 v235_events=v235.split('jobs:',1)[0]
 assert "name: BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring" in v235_events
-assert "'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'" not in v235_events
+assert v235_events.count("'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'")==1
+v235_job=v235.split('  freeze-then-score-site-only:',1)[1].split('    runs-on:',1)[0]
+assert "github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'" in v235_job
+assert "github.event.workflow_run.event == 'schedule'" in v235_job
+assert "github.event.workflow_run.conclusion == 'success'" in v235_job
+assert "github.event.workflow_run.head_repository.full_name == github.repository" in v235_job
 assert 'workflow_run:' in v235_events  # existing collector -> V235 -> V229, no cycle
 assert 'types: [completed]' in prefix
 assert "cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'" in prefix

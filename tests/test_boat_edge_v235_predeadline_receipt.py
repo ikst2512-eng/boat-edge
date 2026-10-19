@@ -58,6 +58,7 @@ class V235Proof(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         v235 = (root / '.github/workflows/V235.yml').read_text(encoding='utf-8')
         preamble = v235.split('\npermissions:', 1)[0]
+        job = v235.split('  freeze-then-score-site-only:',1)[1].split('    runs-on:',1)[0]
         self.assertIn("      - 'BOAT EDGE 自動更新'", preamble)
         self.assertIn("      - 'BOAT EDGE 3連単オッズ更新 V71'", preamble)
         self.assertIn('    types: [completed]', preamble)
@@ -68,8 +69,10 @@ class V235Proof(unittest.TestCase):
         self.assertIn('group: boat-edge-v235-conflict-safe-source-and-scoring', v235)
         self.assertIn('cancel-in-progress: false', v235)
         self.assertIn('V235_INITIAL_SNAPSHOT_PUBLISHED', v235)
-        # Downstream V229 must not be listened to by V235 (no cycle).
-        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit', preamble)
+        # Only V229 ORIGINAL schedule may wake V235, never V235-derived V229.
+        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", preamble)
+        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", job)
+        self.assertIn("github.event.workflow_run.event == 'schedule'", job)
         odds = (root / '.github/workflows/site-odds.yml').read_text(encoding='utf-8')
         odds_events = odds.split('\npermissions:', 1)[0]
         self.assertNotIn('BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring', odds_events)
@@ -113,7 +116,9 @@ class V235Proof(unittest.TestCase):
         self.assertIn('group: boat-edge-v235-conflict-safe-source-and-scoring', flow)
         self.assertIn('cancel-in-progress: false', flow)
         self.assertIn('V235_INITIAL_SNAPSHOT_PUBLISHED', flow)
-        self.assertNotIn('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit', preamble)
+        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", preamble)
+        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'", job)
+        self.assertIn("github.event.workflow_run.event == 'schedule'", job)
 
     def test_first_three_morning_races_keep_multiple_free_scheduled_wakes(self):
         # ①-1C: This checks planned wake coverage, NOT actual dispatch,
