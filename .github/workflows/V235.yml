@@ -106,6 +106,12 @@ jobs:
             # stale, wrong-date, later-deadline or outside-2-to-10m priority.
             # A live-day priority must never be pinned to the 2026-10-16 1R.
             priority_key="$(PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 -c 'from pathlib import Path; from boat_edge_v230_fast_lane import targets,local_now; candidates=targets(Path("."),local_now()); print(candidates[0] if candidates else "")')"
+            # Gate 1C: capture the first *actual* 2-15m source gaps BEFORE
+            # V230 refresh and V229 freeze can change the worktree. This is
+            # observational, never source eligibility or a new prediction writer.
+            # The existing V234 staging commits this same-day history atomically.
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v215_readiness.py
+            echo V235_PREFREEZE_SOURCE_WINDOW_OBSERVED_NOT_ELIGIBILITY_PROOF
             PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent --priority-race-key "$priority_key"
             # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
             # so Git reset/clean and repeated main conflicts cannot rewrite
