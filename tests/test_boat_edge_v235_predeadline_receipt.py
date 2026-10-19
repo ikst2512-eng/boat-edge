@@ -101,7 +101,8 @@ class V235Proof(unittest.TestCase):
         observer_gate = source.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
         v235_name = 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
         self.assertEqual(upstream.count("      - '"+v235_name+"'"),1)
-        self.assertIn("github.event.workflow_run.name != '"+v235_name+"'",observer_gate)
+        self.assertIn("github.event.workflow_run.name == '"+v235_name+"'",observer_gate)
+        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",observer_gate)
         self.assertIn("github.event.workflow_run.event == 'schedule'",observer_gate)
         self.assertIn("github.event.workflow_run.conclusion == 'success'",observer_gate)
         self.assertIn("github.event.workflow_run.head_branch == 'main'",observer_gate)
