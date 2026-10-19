@@ -15,12 +15,10 @@ on:
       - 'index.html'
       - 'assets/**'
   workflow_dispatch:
-  # Integration-owned source signal: trigger existing read-only browser tests
-  # only if a V229 commit has truly published a still-live SHA-audited FINAL.
-  workflow_run:
-    workflows:
-      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'
-    types: [completed]
+  # Gate 1C: do not subscribe browser E2E to EVERY V229 completion.
+  # Even a skipped or no-new-evidence V229 emits workflow_run.completed,
+  # causing browser Actions fanout without collecting or freezing any data.
+  # Preserve UI-change PR/push, manual, and three independent live schedules.
   # PRE_RESULT live TopK is not testable at the overnight UI push: revisit
   # public Pages while actual racing is underway (UTC -> JST +9).
   # This replaces, rather than adds to, the daily browser checks. GitHub cron

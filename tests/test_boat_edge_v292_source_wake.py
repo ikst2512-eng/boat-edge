@@ -19,6 +19,7 @@ FILES={
     'first_git':'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml',
     'recovery':'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml',
     'pages':'.github/workflows/pages-controlled-publish.yml',
+    'browser':'.github/workflows/boat-edge-03-real-browser.yml',
 }
 content={k:(ROOT/p).read_text(encoding='utf-8') for k,p in FILES.items()}
 names={k:re.search(r'(?m)^name:\s*(.*)$',v).group(1).strip() for k,v in content.items()}
@@ -80,6 +81,17 @@ assert 'collector' in edges['odds']
 assert 'first_git' in edges['collector']
 assert 'first_git' in edges['odds']
 assert 'pages' in edges['first_git']
+# Read-only browser checks remain independent: a skipped V229 completion is
+# never proof of newly frozen evidence and must not spawn Chromium/WebKit.
+assert 'browser' not in edges['first_git']
+browser_events=content['browser'].split('jobs:',1)[0]
+assert '  workflow_run:' not in browser_events
+assert '  workflow_dispatch:' in browser_events
+assert '  pull_request:' in browser_events
+assert '  push:' in browser_events
+assert browser_events.count('    - cron:')==3
+assert 'contents: read' in browser_events
+assert '  schedule:' in browser_events
 for key in ('observer','freeze','first_git'):
     assert 'schedule:' in content[key] and 'workflow_dispatch:' in content[key]
 for key in ('collector','odds'):
