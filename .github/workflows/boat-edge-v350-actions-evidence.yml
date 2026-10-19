@@ -73,10 +73,10 @@ jobs:
               for item in pressure["busiest_five_minute_windows"][:3]:
                   summary.write(f"- {item['window_start_utc']}: {item['run_count']} runs, {item['capture_owner_skipped']} capture-owner skips, {item['capture_owner_cancelled']} capture-owner cancels\n")
               summary.write("- Metadata-only and paginated: neither duplicate writes nor source eligibility are proven.\n")
-              summary.write(f"- C1 observed matured missed snapshots: **{missed['observed_matured_missing_snapshots']}**\\n")
-              summary.write(f"- C1 fully checked Action start windows: **{missed['complete_window_queries']}**\\n")
-              summary.write(f"- C1 incomplete Action start windows: **{missed['incomplete_window_queries']}**\\n")
-              summary.write("- C1 independent source eligibility / 99%: **NOT PROVEN**\\n")
+              summary.write(f"- C1 observed matured missed snapshots: **{missed['observed_matured_missing_snapshots']}**\n")
+              summary.write(f"- C1 fully checked Action start windows: **{missed['complete_window_queries']}**\n")
+              summary.write(f"- C1 incomplete Action start windows: **{missed['incomplete_window_queries']}**\n")
+              summary.write("- C1 independent source eligibility / 99%: **NOT PROVEN**\n")
           PY
       - name: Upload evidence (no repository commit)
         uses: actions/upload-artifact@v4
