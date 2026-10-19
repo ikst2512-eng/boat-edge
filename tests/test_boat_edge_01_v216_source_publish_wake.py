@@ -35,6 +35,57 @@ class V216CollectorWake(unittest.TestCase):
         self.assertNotIn("BOAT EDGE V229 - Atomic",wf)
         self.assertNotIn("git push --force",wf)
 
+    def test_gate1c_v235_original_schedule_can_wake_v216_without_feedback(self):
+        # 2026-10-19: V235 original cron completed at 14:25 JST after
+        # V216's independently scheduled observations had gone missing
+        # since the 11:05 JST window. Reuse one existing observer.
+        v216=V216.read_text(encoding='utf8')
+        v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf8')
+        prefix=v216.split('permissions:',1)[0]
+        job=v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0]
+        self.assertEqual(prefix.count('  schedule:'),1)
+        self.assertEqual(prefix.count('  workflow_run:'),1)
+        self.assertEqual(prefix.count(
+            "      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'"),1)
+        self.assertIn("github.event.workflow_run.event == 'schedule'",job)
+        self.assertIn(
+            "github.event.workflow_run.name != 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",
+            job)
+        for needle in ("github.ref == 'refs/heads/main'",
+                       "github.event.workflow_run.conclusion == 'success'",
+                       "github.event.workflow_run.head_branch == 'main'",
+                       "github.event.workflow_run.head_repository.full_name == github.repository"):
+            self.assertIn(needle,job)
+        # V235 may wake on V216 only when upstream V216 was an ORIGINAL
+        # schedule, never when V216 itself was woken by a V235 event.
+        v235_gate=v235.split('  freeze-then-score-site-only:',1)[1].split(
+            '    runs-on:',1)[0]
+        self.assertIn(
+            "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
+            v235_gate)
+        self.assertIn("github.event.workflow_run.event == 'schedule'",v235_gate)
+        # Model both guards, testing the provenance and original-event scope.
+        def v216_accepts(trigger,origin,conclusion,branch,repository):
+            return trigger!='workflow_run' or (
+                conclusion=='success' and branch=='main' and
+                repository=='ikst2512-eng/boat-edge' and
+                (origin!='V235' or trigger_event=='schedule'))
+        for trigger_event in ('workflow_run','push','workflow_dispatch','schedule'):
+            expected=(trigger_event=='schedule')
+            self.assertEqual(v216_accepts('workflow_run','V235','success','main',
+                                           'ikst2512-eng/boat-edge'),expected)
+        trigger_event='schedule'
+        for outcome,branch,repository in (
+                ('failure','main','ikst2512-eng/boat-edge'),
+                ('cancelled','main','ikst2512-eng/boat-edge'),
+                ('success','topic','ikst2512-eng/boat-edge'),
+                ('success','main','fork/boat-edge')):
+            self.assertFalse(v216_accepts('workflow_run','V235',outcome,
+                                          branch,repository))
+        self.assertIn('V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED',v216)
+        self.assertIn('V286_SOURCE_PROVENANCE_CHANGED_REVIEW_REQUIRED',v216)
+        self.assertNotIn('git push --force',v216)
+
     def test_privileged_event_accepts_verified_main_source_only(self):
         wf=V216.read_text(encoding='utf8')
         for part in (
