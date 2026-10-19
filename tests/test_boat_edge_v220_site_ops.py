@@ -855,6 +855,13 @@ def fully_proven_pre_result_fixture(root, now):
     combos={f'{a}-{b}-{c}':12.3 for a in range(1,7)
             for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}
     odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY','fetched_at':stamp,
+          'schema_version':'boat-edge-site-odds-v71',
+          'source':'BOAT RACE オフィシャルウェブサイト 3連単オッズ',
+          'source_url':f'https://www.boatrace.jp/owpc/pc/race/odds3t?hd={DAY}&jcd=23&rno=1',
+          'deadline':'08:35',
+          'raw_official_html_sha256':hashlib.sha256(b'official odds').hexdigest(),
+          'unavailable_count':0,'unavailable_combinations':[],
+          'odds_validation':'VERIFIED','no_bet':False,
           'results_seen':False,'scoring':False,'available_count':120,
           'verified_official_dom_v167':True,'trifecta_odds':combos}
     put(root,f'data/races/{KEY}.json',race)

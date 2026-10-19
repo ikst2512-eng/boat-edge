@@ -57,7 +57,13 @@ class ProspectiveReady(unittest.TestCase):
             'official_beforeinfo_six_boat_complete':True,
             'suspect_lanes':[],'official_raw_flags':[]}
         self.odds={'race_key':KEY,'phase':'PRE_RESULT_PURCHASE_ONLY',
-            'fetched_at':stamp,'available_count':120,
+            'schema_version':'boat-edge-site-odds-v71',
+            'source':'BOAT RACE オフィシャルウェブサイト 3連単オッズ',
+            'source_url':'https://www.boatrace.jp/owpc/pc/race/odds3t?hd=20261016&jcd=14&rno=1',
+            'deadline':'08:35',
+            'raw_official_html_sha256':hashlib.sha256(b'official odds').hexdigest(),
+            'fetched_at':stamp,'available_count':120,'unavailable_count':0,
+            'unavailable_combinations':[],'odds_validation':'VERIFIED','no_bet':False,
             'verified_official_dom_v167':True,'results_seen':False,'scoring':False,
             'trifecta_odds':{f'{a}-{b}-{c}':12.3 for a in range(1,7)
                 for b in range(1,7) for c in range(1,7) if len({a,b,c})==3}}
@@ -113,6 +119,46 @@ class ProspectiveReady(unittest.TestCase):
         self.odds['verified_official_dom_v167']=True
         self.race['source_audit']['beforeinfo']['source']='https://evil.example/beforeinfo'
         check_failure()
+
+    def test_source_ready_rejects_unbound_odds_and_fake_sha(self):
+        """A 120-price map alone is not official same-race evidence."""
+        def check():
+            self.sources()
+            self.assertIsNone(gate.valid(
+                self.root, KEY, gate.expected_deadline(KEY,'08:35'), AT))
+        self.assertIsNotNone(gate.valid(
+            self.root, KEY, gate.expected_deadline(KEY,'08:35'), AT))
+        for field, invalid in (
+            ('source_url',self.odds['source_url'].replace('rno=1','rno=2')),
+            ('source_url','https://evil.invalid/owpc/pc/race/odds3t?hd=20261016&jcd=14&rno=1'),
+            ('source_url',self.odds['source_url']+'&rno=2'),
+            ('source','unverified odds'),
+            ('deadline','08:40'),
+            ('raw_official_html_sha256','not-a-sha'),
+            ('unavailable_count',1),
+            ('unavailable_combinations',['1-2-3']),
+            ('odds_validation','REJECTED_NO_BET'),
+            ('no_bet',True),
+        ):
+            before=self.odds[field]
+            self.odds[field]=invalid
+            check()
+            self.odds[field]=before
+        for field in ('source_url','source','deadline',
+                      'raw_official_html_sha256','unavailable_count',
+                      'unavailable_combinations'):
+            original=self.odds.pop(field)
+            check()
+            self.odds[field]=original
+        self.sources()
+        self.assertEqual(gate.run(self.root,AT)['created'],[KEY])
+
+    def test_source_ready_accepts_native_v230_odds_without_v71_marker(self):
+        """V230 authentic source records omit two V71-specific marker fields."""
+        self.odds.pop('odds_validation')
+        self.odds.pop('no_bet')
+        self.sources()
+        self.assertEqual(gate.run(self.root,AT)['created'],[KEY])
 
     def test_original_official_source_uri_must_identify_this_race(self):
         """Even an official URL for a different real race cannot count."""
