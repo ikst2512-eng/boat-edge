@@ -54,7 +54,7 @@ class V216CollectorWake(unittest.TestCase):
         # its own paper selection and past-result settlement stay downstream.
         self.assertLess(wf.index("V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED"),
                         start)
-        self.assertLess(end,wf.index(
+        self.assertEqual(end,wf.index(
             '      - name: Continue approved-only daily 50000 yen paper selection BEFORE results'))
         for path in ('BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml','V235.yml',
                      'BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml'):
