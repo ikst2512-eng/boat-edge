@@ -38,7 +38,9 @@ fi
 
 # Keep exactly the same 120s V229 cooldown and active-job exclusion as V220.
 # Failure to inspect state means no dispatch; a "success" cannot be invented.
-# Match V220\x27s 100-run lookback: 12 events can all be skipped/cancelled\n# during a completion storm and hide a recent real V229 attempt.\nif ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=100" 2>/dev/null); then
+# Match V220's 100-run lookback: 12 events can all be skipped/cancelled
+# during a completion storm and hide a recent real V229 attempt.
+if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=100" 2>/dev/null); then
   echo V01_FIRST_FREEZE_NUDGE_STATUS_UNKNOWN_NO_DISPATCH
   exit 0
 fi
