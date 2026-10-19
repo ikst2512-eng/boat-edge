@@ -97,11 +97,17 @@ def audit(root, day, now, fetch_page, max_pages=3):
             or not isinstance(history.get("observations"), dict)):
         raise ValueError("HISTORY_UNVERIFIED")
     output = []
+    observed_with_existing_snapshot = 0
     for key, record in sorted(history["observations"].items()):
         if not (KEY.fullmatch(str(key)) and key.startswith(day + "-") and isinstance(record, dict)):
             continue
         due = deadline_for(key, record.get("deadline"))
-        if due is None or now < due or (root / "data/site_prediction_snapshots" / (key + ".json")).is_file():
+        if due is None or now < due:
+            continue
+        # Historical snapshot_missing is an observation, not the current Git state.
+        # Count saved snapshots separately, never as missing or eligible by inference.
+        if (root / "data/site_prediction_snapshots" / (key + ".json")).is_file():
+            observed_with_existing_snapshot += 1
             continue
         start, end = due - timedelta(minutes=10), due - timedelta(minutes=2)
         runs, complete, error = window_runs(fetch_page, start.astimezone(timezone.utc),
@@ -160,6 +166,7 @@ def audit(root, day, now, fetch_page, max_pages=3):
         "day_jst": day, "read_only": True,
         "snapshot_freeze_window_minutes_before_deadline": [10, 2],
         "observed_matured_missing_snapshots": len(output),
+        "observed_matured_with_existing_snapshot": observed_with_existing_snapshot,
         "complete_window_queries": sum(x["run_history_complete_for_window"] for x in output),
         "incomplete_window_queries": sum(not x["run_history_complete_for_window"] for x in output),
         "independently_source_eligible_denominator": None,
