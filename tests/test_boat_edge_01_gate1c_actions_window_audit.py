@@ -45,7 +45,7 @@ class C1MissedWindowAudit(unittest.TestCase):
         def fetch(start, end, page):
             self.assertEqual(page, 1)
             self.assertEqual((end - start).total_seconds(), 8 * 60)
-            return {"workflow_runs": []}
+            return {"total_count": 0, "workflow_runs": []}
         data = audit(self.root, DAY, NOW, fetch)
         self.assertEqual(data["observed_matured_missing_snapshots"], 2)
         self.assertEqual(data["complete_window_queries"], 2)
@@ -65,10 +65,10 @@ class C1MissedWindowAudit(unittest.TestCase):
         def fetch(start, end, page):
             key = "18" if start.hour < 4 else "12"
             if key == "18":
-                return {"workflow_runs": [entry(11,
+                return {"total_count": 1, "workflow_runs": [entry(11,
                     "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit",
                     "2026-10-19T02:17:00Z", "skipped", "workflow_run")]}
-            return {"workflow_runs": [entry(12,
+            return {"total_count": 1, "workflow_runs": [entry(12,
                 "BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps",
                 "2026-10-19T07:54:00Z")]}
         rows = {x["race_key"]: x for x in audit(self.root, DAY, NOW, fetch)["races"]}
@@ -83,11 +83,11 @@ class C1MissedWindowAudit(unittest.TestCase):
         v125 = "BOAT EDGE V125 Revision Safe FINAL15M Audit"
         def fetch(start, end, page):
             if start.hour == 2:
-                return {"workflow_runs": [
+                return {"total_count": 2, "workflow_runs": [
                     entry(31, v125, "2026-10-19T02:17:00Z", "success", "schedule"),
                     entry(32, v125, "2026-10-19T02:18:00Z", "success", "workflow_run"),
                 ]}
-            return {"workflow_runs": [
+            return {"total_count": 2, "workflow_runs": [
                 entry(33, v125, "2026-10-19T07:54:00Z", "success", "workflow_run"),
             ]}
         rows = {r["race_key"]: r for r in audit(
@@ -122,19 +122,33 @@ class C1MissedWindowAudit(unittest.TestCase):
         start, end = now_utc - timedelta(minutes=20), now_utc
         self.assertEqual(len(many), 100)
         records, complete, error = window_runs(
-            lambda start, end, page: {"workflow_runs": many}, start, end, max_pages=1)
+            lambda start, end, page: {"total_count": 100, "workflow_runs": many}, start, end, max_pages=1)
         self.assertFalse(complete)
         self.assertEqual(error, "PAGE_LIMIT_REACHED")
 
+    def test_short_page_and_missing_total_count_fail_closed(self):
+        start = datetime(2026, 10, 19, 2, 12, tzinfo=timezone.utc)
+        end = start + timedelta(minutes=8)
+        records, complete, error = window_runs(
+            lambda a, b, page: {"total_count": 2, "workflow_runs": [
+                entry(99, "noise", "2026-10-19T02:17:00Z")]}, start, end)
+        self.assertEqual(records, [])
+        self.assertFalse(complete)
+        self.assertEqual(error, "RUN_TOTAL_COUNT_MISMATCH")
+        records, complete, error = window_runs(
+            lambda a, b, page: {"workflow_runs": []}, start, end)
+        self.assertFalse(complete)
+        self.assertIn("RUN_TOTAL_COUNT_UNVERIFIED", error)
+
     def test_prospective_deadline_and_untrusted_history_fail_closed(self):
         early = datetime(2026, 10, 19, 10, 30, tzinfo=JST)
-        d = audit(self.root, DAY, early, lambda s, e, p: {"workflow_runs": []})
+        d = audit(self.root, DAY, early, lambda s, e, p: {"total_count": 0, "workflow_runs": []})
         self.assertEqual(d["observed_matured_missing_snapshots"], 0)
         self.assertIsNone(deadline_for("20261019-18-07", "99:99"))
         with self.assertRaises(ValueError):
-            audit(self.root, "20261018", NOW, lambda s, e, p: {"workflow_runs": []})
+            audit(self.root, "20261018", NOW, lambda s, e, p: {"total_count": 0, "workflow_runs": []})
         with self.assertRaises(ValueError):
-            audit(self.root, "../bad", NOW, lambda s, e, p: {"workflow_runs": []})
+            audit(self.root, "../bad", NOW, lambda s, e, p: {"total_count": 0, "workflow_runs": []})
 
 
 if __name__ == "__main__":
