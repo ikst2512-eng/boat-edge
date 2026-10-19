@@ -334,14 +334,23 @@ fi
                 {"race_key": key, "race_no": no, "deadline": deadline}]}
             for key, no, deadline in rows
         ]}
-        namespace = {"today": catalog, "now": at, "re": re}
+        # The live collector now excludes post-deadline odds and clocks that
+        # disagree with the original independently saved race deadline.
+        # This local ordering fixture stubs ONLY that separately tested guard.
+        def admitted(_root, key, clock, stamp):
+            hour, minute = map(int, clock.split(":"))
+            end = stamp.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            return stamp < end and key != "20261016-24-03"
+        namespace = {"today": catalog, "now": at, "re": re,
+                     "ymd":"20261016", "DATA":SCRIPT.parents[1] / "data",
+                     "odds_source_window_allowed":admitted}
         exec(compile(code, "site-odds:race-selector", "exec"), namespace)
         ordered = [row["race_key"] for row in namespace["races"]]
         self.assertEqual(ordered, [
             "20261016-24-02", "20261016-02-11",
-            "20261016-20-03", "20261016-24-03",
-            "20261016-20-02", "20261016-02-10"
+            "20261016-20-03", "20261016-20-02"
         ])
+        self.assertEqual(namespace["skipped_source_gate"],2)  # expired and mismatched
         self.assertIn("verify_official_dom_price_mapping(html)", wf)
         self.assertIn('if len(odds) != 120 or unavailable:', wf)
         self.assertIn("V71_SOURCE_TIMESTAMP_GUARDED_ODDS_PUBLISHED", wf)
