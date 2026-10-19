@@ -1075,3 +1075,17 @@ jobs:
           set -euo pipefail
           bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
           bash scripts/boat_edge_v01_first_freeze_nudge.sh
+
+      # Best-effort GitHub cron can skip the actual 2-10m freeze window.
+      # A successful independent official-source publication may nudge only
+      # EXISTING V235 when a still-unfrozen same-race input is incomplete.
+      # This is one-way: V235 completion never wakes the producer.
+      - name: Rescue missed V235 source refresh without completion feedback
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash -n scripts/boat_edge_01_v235_source_gap_wake.sh
+          bash scripts/boat_edge_01_v235_source_gap_wake.sh
