@@ -8,7 +8,7 @@
     "event": "メカニカルシティ稲城・第50回日刊スポーツ杯",
     "race_no": 8,
     "deadline": "14:34",
-    "updated_at": "2026-10-19T11:02:19+09:00",
+    "updated_at": "2026-10-19T14:26:30+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261019&jcd=03&rno=8",
-      "fetched_at": "2026-10-19T11:04:19+09:00",
-      "sha256": "f7b9d8065390a20145073f50fdff2c6c8802838060dd395c737d802e5b06cf65",
+      "fetched_at": "2026-10-19T14:26:22+09:00",
+      "sha256": "daea588e476c4d1f6599f10ba9f862efe8be768bc28695ed1313c80d5873c310",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261019&jcd=03&rno=8",
+      "fetched_at": "2026-10-19T14:26:30+09:00",
+      "sha256": "1d46e122a1f9e7d98470647648856caf62134d56bb59dc7df687b4a77b9c60cd",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
@@ -308,7 +314,78 @@
       "raw_text": "6 4813 / B1 宮内 直哉 東京/東京 36歳/52.4kg F1 L0 0.18 4.65 19.05 42.86 4.46 23.19 37.68 54 23.17 36.59 18 31.11 46.67 8 1 5 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.83,
+        "tilt": 1.0,
+        "raw_text": "1 高田 明 52.1kg 6.83 1.0 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 7.11,
+        "tilt": 1.0,
+        "raw_text": "2 沢田 昭宏 53.8kg 7.11 1.0 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 7.14,
+        "tilt": 0.5,
+        "raw_text": "3 長谷川 暖 51.5kg 7.14 0.5 R 2"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 7.13,
+        "tilt": 1.0,
+        "raw_text": "4 横井 健太 57.7kg 7.13 1.0 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 7.07,
+        "tilt": 0.5,
+        "raw_text": "5 荒井 翔伍 54.1kg 7.07 0.5 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 7.15,
+        "tilt": 0.0,
+        "raw_text": "6 宮内 直哉 52.4kg 7.15 0.0 R 3"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".07"
+      },
+      {
+        "lane": 2,
+        "st": ".07"
+      },
+      {
+        "lane": 3,
+        "st": ".15"
+      },
+      {
+        "lane": 4,
+        "st": ".18"
+      },
+      {
+        "lane": 5,
+        "st": ".17"
+      },
+      {
+        "lane": 6,
+        "st": ".19"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 7.0,
+      "wave_cm": 10.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
