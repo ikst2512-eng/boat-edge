@@ -104,6 +104,51 @@ fi
             self.assertNotIn("dispatch:", events)
 
     @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
+    def test_skipped_cancelled_v229_without_a_job_cannot_consume_cooldown(self):
+        # A completed no-job Actions event is not a first-Git-save attempt.
+        # Preserve the existing 2-10 minute source window and active-run gate.
+        epoch = 1800000000
+        stamp = datetime.fromtimestamp(epoch - 15, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        for conclusion in ("skipped", "cancelled"):
+            with self.subTest(conclusion=conclusion):
+                output, events = self.run_case(
+                    runs={"workflow_runs": [{"status": "completed",
+                        "conclusion": conclusion, "created_at": stamp}]},
+                    MOCK_NOW_EPOCH=epoch)
+                self.assertIn("EXISTING_V229_DISPATCHED", output)
+                self.assertEqual(events.count("dispatch:"), 1)
+                self.assertEqual(events.count("sleep:"), 0)
+
+        # Mixed skipped/cancelled completions do not suppress a real attempt.
+        # The real V229 success must still enforce its full 120-second cooldown,
+        # with exactly one bounded recheck before an eventual dispatch.
+        real = datetime.fromtimestamp(epoch - 75, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        ignored = [
+            {"status": "completed", "conclusion": conclusion, "created_at": stamp}
+            for conclusion in ("skipped", "cancelled")
+        ]
+        rows = {"workflow_runs": ignored + [
+            {"status": "completed", "conclusion": "success", "created_at": real}
+        ]}
+        output, events = self.run_case(
+            runs=rows, MOCK_NOW_EPOCH=epoch, MOCK_AFTER_EPOCH=epoch + 47)
+        self.assertIn("BOUNDED_WAIT seconds=47", output)
+        self.assertIn("EXISTING_V229_DISPATCHED", output)
+        self.assertEqual(events.count("sleep:"), 1)
+        self.assertEqual(events.count("dispatch:"), 1)
+        self.assertGreaterEqual(events.count("git:fetch"), 2)
+
+        # Failed but actually attempted runs continue consuming the cooldown.
+        output, events = self.run_case(
+            runs={"workflow_runs": [{"status": "completed",
+                "conclusion": "failure", "created_at": stamp}]},
+            MOCK_NOW_EPOCH=epoch, MOCK_AFTER_EPOCH=epoch + 110)
+        self.assertIn("V229_COOLDOWN", output)
+        self.assertNotIn("dispatch:", events)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
     def test_bounded_existing_cooldown_recheck_then_single_v229_dispatch(self):
         # A V229 run 65 seconds ago can have missed the odds published after
         # it finished. Keep the full 120s, re-read main and exact 2-10m source
