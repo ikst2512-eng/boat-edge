@@ -71,6 +71,20 @@ assert 'gh workflow run "$wf" --ref main' in nudge_source
 assert 'V229_ALREADY_ACTIVE' in nudge_source
 edges['observer'].add('first_git')
 
+# V125 listens to V229 for index auditing, but is permitted to dispatch
+# V229 ONLY on V125's independent schedule. Model the event qualification
+# explicitly: a V229 completion produces V125.workflow_run, never V125.schedule.
+v125=(ROOT/'.github/workflows/site-v125.yml').read_text(encoding='utf-8')
+v125_events=v125.split('jobs:',1)[0]
+assert 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit' in v125_events
+assert '  workflow_run:' in v125_events and '  schedule:' in v125_events
+step_name='      - name: Gate 1C independent-schedule source-ready V229 first-freeze wake'
+assert v125.count(step_name)==1
+v125_nudge=v125.split(step_name,1)[1].split('      - name:',1)[0]
+assert "if: github.event_name == 'schedule'" in v125_nudge, 'GATE1C_V125_EVENT_FEEDBACK_RISK'
+assert 'bash scripts/boat_edge_v01_first_freeze_nudge.sh' in v125_nudge
+assert 'GH_TOKEN: ${{ github.token }}' in v125_nudge
+assert '  actions: write' in v125_events
 for node in edges:
     seen=set()
     stack=[]
