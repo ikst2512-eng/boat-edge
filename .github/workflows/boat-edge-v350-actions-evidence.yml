@@ -5,6 +5,11 @@ on:
     - cron: '23 3 * * *'
   workflow_dispatch:
     inputs:
+      c1_day:
+        description: 'C1 audit day (YYYYMMDD); default yesterday'
+        required: false
+        default: 'yesterday'
+        type: string
       max_pages:
         description: 'Pages of scheduled runs to inspect (1-20, 100/page)'
         required: true
@@ -39,6 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           MAX_PAGES: ${{ inputs.max_pages || '3' }}
+          C1_DAY: ${{ inputs.c1_day || 'yesterday' }}
         run: |
           set -euo pipefail
           mkdir -p evidence
@@ -48,7 +54,7 @@ jobs:
           python3 scripts/boat_edge_v348_actions_run_export.py --repo "$REPO" --max-pages "$MAX_PAGES" --event all > evidence/v352-all-events.json
           python3 scripts/boat_edge_v352_action_pressure.py evidence/v352-all-events.json > evidence/v352-event-pressure.json
           # C1 yesterday's missed save-window run starts; never a writer.
-          python3 scripts/boat_edge_01_gate1c_actions_window_audit.py --repo "$REPO" --day yesterday --max-pages 3 > evidence/c1-missed-freeze-action-windows.json
+          python3 scripts/boat_edge_01_gate1c_actions_window_audit.py --repo "$REPO" --day "$C1_DAY" --max-pages 3 > evidence/c1-missed-freeze-action-windows.json
           python3 - <<'PY'
           import json
           from pathlib import Path
