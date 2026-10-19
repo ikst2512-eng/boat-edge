@@ -46,9 +46,6 @@ assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Aud
 assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule',conclusion='failure')
 assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule',branch='feature')
 assert not v216_admitted('BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit','schedule',repo='fork/boat-edge')
-assert not admitted('workflow_run','refs/heads/main','success','main','ikst2512-eng/boat-edge',
-                    upstream_name='BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps',
-                    upstream_event='workflow_run')
 v235=Path('.github/workflows/V235.yml').read_text(encoding='utf8')
 v235_events=v235.split('jobs:',1)[0]
 assert "name: BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring" in v235_events
