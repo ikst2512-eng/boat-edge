@@ -80,7 +80,8 @@ def imminent(schedule: dict, now: datetime) -> list[str]:
     return sorted(keys)
 
 
-def decision(schedule: dict, workflow: dict, runs: dict, now: datetime) -> dict:
+def decision(schedule: dict, workflow: dict, runs: dict, now: datetime,
+             cancelled_jobs=None) -> dict:
     """Fail closed if run coverage, identity, or current status is ambiguous."""
     if workflow.get('path') != f'.github/workflows/{WORKFLOW}' or workflow.get('state') != 'active':
         return {'dispatch': False, 'reason': 'WORKFLOW_NOT_ACTIVE_OR_IDENTITY_UNVERIFIED'}
@@ -101,17 +102,39 @@ def decision(schedule: dict, workflow: dict, runs: dict, now: datetime) -> dict:
             return {'dispatch': False, 'reason': 'V235_ALREADY_ACTIVE', 'targets': targets}
         if status != 'completed':
             return {'dispatch': False, 'reason': 'V235_UNKNOWN_RUN_STATE', 'targets': targets}
-        if run.get('conclusion') == 'skipped':
+        conclusion = run.get('conclusion')
+        if conclusion == 'skipped':
             continue  # skipped jobs never fetched sources or froze predictions
-        if not isinstance(run.get('conclusion'), str):
+        if not isinstance(conclusion, str):
             return {'dispatch': False, 'reason': 'V235_UNVERIFIED_CONCLUSION', 'targets': targets}
         try:
             created = datetime.fromisoformat(run['created_at'].replace('Z', '+00:00'))
+            if created.tzinfo is None:
+                raise ValueError('naive GitHub run timestamp')
             elapsed = (now - created).total_seconds()
         except (KeyError, TypeError, ValueError, AttributeError):
             return {'dispatch': False, 'reason': 'V235_UNVERIFIED_RUN_TIME', 'targets': targets}
         if elapsed < -90:
             return {'dispatch': False, 'reason': 'CLOCK_AHEAD_OF_GITHUB', 'targets': targets}
+        # GitHub can create a cancelled workflow_run with ZERO jobs during an
+        # Actions event storm. It never attempted V230/V229 source acquisition,
+        # so it must not impose the seven-minute 'actual run' cooldown.
+        # Conversely, a cancelled job that exists MAY have executed; retain
+        # the cooldown. Unknown job evidence fails closed, never guesses.
+        if conclusion == 'cancelled' and elapsed < 420:
+            run_id = run.get('id')
+            if type(run_id) is not int or run_id <= 0 or cancelled_jobs is None:
+                return {'dispatch': False, 'reason': 'V235_CANCELLED_JOBS_UNVERIFIED', 'targets': targets}
+            try:
+                jobs = cancelled_jobs(run_id)
+            except Exception:
+                return {'dispatch': False, 'reason': 'V235_CANCELLED_JOBS_UNVERIFIED', 'targets': targets}
+            if (not isinstance(jobs, dict) or type(jobs.get('total_count')) is not int
+                    or jobs['total_count'] < 0 or not isinstance(jobs.get('jobs'), list)
+                    or jobs['total_count'] != len(jobs['jobs'])):
+                return {'dispatch': False, 'reason': 'V235_CANCELLED_JOBS_UNVERIFIED', 'targets': targets}
+            if jobs['total_count'] == 0 and not jobs['jobs']:
+                continue  # Independent GitHub jobs API proves NO job was created.
         if newest_executed is None or elapsed < newest_executed:
             newest_executed = elapsed
     # Other branches' runs cannot prove the main workflow is idle. The exact
@@ -146,7 +169,10 @@ def main(argv=None) -> int:
         schedule = official_schedule(api_json('GET', '/contents/data/today.json?ref=main', token))
         workflow = api_json('GET', f'/actions/workflows/{WORKFLOW}', token)
         runs = api_json('GET', f'/actions/workflows/{WORKFLOW}/runs?branch=main&per_page=100', token)
-        status = decision(schedule, workflow, runs, utc_now())
+        status = decision(
+            schedule, workflow, runs, utc_now(),
+            cancelled_jobs=lambda run_id: api_json(
+                'GET', f'/actions/runs/{run_id}/jobs?per_page=100', token))
         if not status['dispatch']:
             print(json.dumps(status, sort_keys=True))
             return 0
