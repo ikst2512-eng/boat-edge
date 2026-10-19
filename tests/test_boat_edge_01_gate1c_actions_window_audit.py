@@ -79,6 +79,35 @@ class C1MissedWindowAudit(unittest.TestCase):
         self.assertEqual(rows["20261019-18-07"]["capture_owner_starts"][0]["conclusion"],
                          "skipped")
 
+    def test_v125_only_independent_schedule_is_a_possible_v229_wake(self):
+        v125 = "BOAT EDGE V125 Revision Safe FINAL15M Audit"
+        def fetch(start, end, page):
+            if start.hour == 2:
+                return {"workflow_runs": [
+                    entry(31, v125, "2026-10-19T02:17:00Z", "success", "schedule"),
+                    entry(32, v125, "2026-10-19T02:18:00Z", "success", "workflow_run"),
+                ]}
+            return {"workflow_runs": [
+                entry(33, v125, "2026-10-19T07:54:00Z", "success", "workflow_run"),
+            ]}
+        rows = {r["race_key"]: r for r in audit(
+            self.root, DAY, NOW, fetch)["races"]}
+        candidate = rows["20261019-18-07"]
+        self.assertEqual(candidate["classification"],
+                         "V125_SCHEDULE_STARTED_WITHOUT_V229_START")
+        self.assertEqual(candidate["capture_owner_starts"][0]["owner"],
+                         "v125_schedule")
+        self.assertEqual(len(candidate["capture_owner_starts"]), 1)
+        self.assertEqual(candidate["v125_completion_only_audit_starts_ignored"], 1)
+        self.assertFalse(candidate["independent_source_eligibility_proven"])
+        self.assertFalse(candidate["no_prior_active_run_proven"])
+        passive = rows["20261019-12-05"]
+        self.assertEqual(passive["classification"],
+                         "NO_CAPTURE_OWNER_START_IN_WINDOW")
+        self.assertEqual(passive["capture_owner_starts"], [])
+        self.assertEqual(passive["v125_completion_only_audit_starts_ignored"], 1)
+        self.assertEqual(passive["all_actions_starts_in_window"], 1)
+
     def test_status_api_failure_and_truncation_cannot_be_interpreted_as_zero(self):
         def broken(start, end, page):
             raise OSError("rate limited")
