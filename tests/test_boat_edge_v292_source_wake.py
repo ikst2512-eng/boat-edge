@@ -29,7 +29,7 @@ for listener,source in content.items():
     # Comments split monitored workflow names in V229. Never read only
     # the contiguous list prefix or a reciprocal edge can be missed.
     source_block=preamble.split('  workflow_run:',1)[1].split('    types:',1)[0]
-    watched=set(re.findall(r"(?m)^\\s+-\\s+['\\\"]([^'\\\"]+)['\\\"]",source_block))
+    watched=set(re.findall(r"(?m)^\s+-\s+['\"]([^'\"]+)['\"]",source_block))
     for producer,name in names.items():
         if name in watched:
             edges[producer].add(listener)
