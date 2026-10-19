@@ -99,7 +99,7 @@ jobs:
                   key=r.get("race_key")
                   rno=r.get("race_no")
                   dl=r.get("deadline")
-                  if (not isinstance(key,str) or not isinstance(rno,int)
+                  if (not isinstance(key,str) or type(rno) is not int
                           or not 1<=rno<=12 or key!=f"{ymd}-{jcd}-{rno:02d}"
                           or not isinstance(dl,str)):
                       continue
