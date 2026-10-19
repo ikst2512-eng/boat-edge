@@ -281,20 +281,15 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("python3 scripts/boat_edge_v234_settle.py", score)
         self.assertIn("git commit -m 'V234 score confirmed post-result", score)
 
-    def test_v199_all_future_freeze_minutes_preserved_with_scoring_only_each_15m(self):
-        """Do not lose first-addition research provenance to save Pages builds."""
-        import re
+    def test_v199_manual_replay_preserves_first_addition_provenance_while_c1_active(self):
+        """Pause research cron, keep ordered manual provenance and scoring replay."""
+        from scripts.boat_edge_v299_workflow_inventory import event_block
         workflow = (ROOT / ".github/workflows/BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml").read_text(encoding="utf-8")
-        slots = re.findall(r"^\s+- cron: '([^']+)'$", workflow, re.MULTILINE)
-        self.assertEqual(len(slots), 3)
-        minutes = []
-        for slot in slots:
-            minute, hour, day, month, weekday = slot.split()
-            self.assertEqual((hour, day, month, weekday),
-                             ("0-14,23", "*", "*", "*"))
-            minutes.extend(map(int, minute.split(",")))
-        self.assertEqual(sorted(minutes), list(range(0, 60, 5)))
-        self.assertEqual(len(set(minutes)), 12)
+        events = event_block(workflow)
+        self.assertIn("  workflow_dispatch:", events)
+        self.assertIn("  push:", events)
+        self.assertNotIn("  schedule:", events)
+        self.assertNotIn("  workflow_run:", events)
         freeze = workflow.index("      - name: Freeze only eligible future races without reading results")
         replay = workflow.index("      - name: Independently replay first Git addition before optional site-only result scoring")
         report = workflow.index("      - name: Save only research evidence with safe concurrent-write retry")
