@@ -405,5 +405,25 @@ class V235Proof(unittest.TestCase):
         )
 
 
+    def test_v235_records_true_source_window_before_atomic_freeze(self):
+        """A post-freeze-only V215 sample hides missed prospective opportunities."""
+        root = Path(__file__).resolve().parents[1]
+        workflow = (root / ".github/workflows/V235.yml").read_text(encoding="utf-8")
+        pre = "echo V235_PREFREEZE_SOURCE_WINDOW_OBSERVED_NOT_ELIGIBILITY_PROOF"
+        freeze = "python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent"
+        observer = "python3 scripts/boat_edge_v215_readiness.py"
+        stage = "'data/site_paper_sim/readiness_history_v215'"
+        self.assertEqual(workflow.count(pre), 1)
+        self.assertEqual(workflow.count(observer), 2)
+        self.assertLess(workflow.index(pre), workflow.index(freeze))
+        self.assertLess(workflow.index(freeze), workflow.rindex(observer))
+        self.assertLess(workflow.index(pre), workflow.index(stage))
+        self.assertIn("'data/site_paper_sim/readiness_v215_current.json'", workflow)
+        self.assertIn("git clean -fd -- data/site_prediction_snapshots/", workflow)
+        self.assertIn("V234_SITE_PRE_RESULT_ATOMIC_PUBLISHED", workflow)
+        # No new webhook subscription, new writer, or result/payout read.
+        self.assertNotIn("workflow_run:\\n    workflows:\\n      - 'BOAT EDGE V216", workflow)
+
+
 if __name__ == "__main__":
     unittest.main()
