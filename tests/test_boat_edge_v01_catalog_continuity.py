@@ -104,5 +104,47 @@ class SameDayContinuity(unittest.TestCase):
         self.assertIn('"source_unavailable"',wf)
         self.assertIn('git add -A data/',wf)
 
+
+    def test_existing_deadline_cannot_be_reopened_by_later_official_clock(self):
+        from scripts.boat_edge_v288_deadline_source_lock import (
+            source_write_allowed_with_prior_deadline as guarded)
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)/'data'
+            (root/'races').mkdir(parents=True)
+            key='20261017-01-01'
+            path=root/'races'/(key+'.json')
+            def store(clock):
+                path.write_text(json.dumps({
+                    'race_key':key,'meta':{'date':'2026-10-17',
+                    'venue_code':'01','race_no':1,'deadline':clock,
+                    'phase':'PRE_RESULT','results_seen':False,
+                    'unlock':False,'scoring':False}}), encoding='utf8')
+            when=datetime(2026,10,17,11,20,tzinfo=JST)
+            self.assertTrue(guarded(root,key,'11:30',when))
+            store('11:19')
+            self.assertFalse(guarded(root,key,'11:30',when))
+            store('11:30')
+            self.assertFalse(guarded(root,key,'11:19',when))
+            self.assertTrue(guarded(root,key,'11:30',when))
+            store('invalid')
+            self.assertFalse(guarded(root,key,'11:30',when))
+            store('11:30')
+            obj=json.loads(path.read_text())
+            obj['meta']['results_seen']=True
+            path.write_text(json.dumps(obj),encoding='utf8')
+            self.assertFalse(guarded(root,key,'11:30',when))
+            path.write_text('{bad',encoding='utf8')
+            self.assertFalse(guarded(root,key,'11:30',when))
+            path.unlink()
+            path.symlink_to(root/'races'/'unknown.json')
+            self.assertFalse(guarded(root,key,'11:30',when))
+
+    def test_collector_checks_both_deadlines_and_exposes_conflicts(self):
+        wf=(Path(__file__).resolve().parents[1]/'.github/workflows/auto-update.yml').read_text(encoding='utf8')
+        self.assertIn('from scripts.boat_edge_v288_deadline_source_lock import source_write_allowed_with_prior_deadline as source_write_allowed',wf)
+        self.assertIn('deadline_disagrees_with_preserved_source',wf)
+        self.assertIn('preserved_race_deadline',wf)
+        self.assertIn('old_before=(preserved.get',wf)
+
 if __name__=='__main__':
     unittest.main()
