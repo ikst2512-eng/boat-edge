@@ -8,7 +8,7 @@
     "event": "トランスワードトロフィー2026",
     "race_no": 5,
     "deadline": "12:55",
-    "updated_at": "2026-10-19T10:24:46+09:00",
+    "updated_at": "2026-10-19T10:35:54+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261019&jcd=16&rno=5",
-      "fetched_at": "2026-10-19T10:27:57+09:00",
-      "sha256": "f68f874168df0b137345d24179c4bb0284818c63ed6a8ddcbe5ecb06ffb6f974",
+      "fetched_at": "2026-10-19T10:38:00+09:00",
+      "sha256": "8aba5856724b98ffcb57a8cd6d85da011bc12b88f9eaf6bd604ee41613aa0e8d",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261019&jcd=16&rno=5",
+      "fetched_at": "2026-10-19T10:37:09+09:00",
+      "sha256": "78d0376e69bfabd2a0d5cf21c8435a15a205ee5ad3d8a920e6fec1dcf2755331",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "f3d5c557b8c24a1a831004db673bb9f4a919774cd3d153b6c03ba1f26b88e508"
+      "sha256": "870f22b66726e28a906f61e94c93abf42415c9bde19d42e7e99bbd20083ee0df"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "ac2880c6fd5fd5488b190609c138c2775102413b8ab9e64e30efc2e3d038053e"
+      "sha256": "36ef83c24640bf51f2a659a820db1f77abf2bc15dfa9a80f837e5ffb71efab47"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "c8a81384a7f56431ec12fc1c0313c2d675ffa6a16e1c2e1c9775f9df32c45184"
+      "sha256": "26c90e5cb89b738af108f1683c02df57bde65ca480013747cde4a4b141495426"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "c9f4cd6399b5f4f76f7392ae52f705f135afdc14d5172b0929ea38ea42fc449b"
+      "sha256": "6622d7130ca5e3ca2ababee78d372ca7ea1dac7122e441392a2108d625011b90"
     }
   },
   "racers": [
@@ -298,7 +304,53 @@
       "raw_text": "6 4697 / B1 國弘 翔平 福岡/福岡 40歳/50.5kg F0 L0 0.17 4.36 21.90 41.90 4.04 23.91 32.61 55 47.64 64.81 35 29.67 47.37 6 2 10"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 松井 友汰 52.4kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 水原 慎 51.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 田口 節子 46.5kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 河野 真也 52.3kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 谷川 将太 52.3kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 國弘 翔平 50.5kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
