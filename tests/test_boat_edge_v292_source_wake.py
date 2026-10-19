@@ -24,10 +24,12 @@ edges={k:set() for k in FILES}
 for listener,source in content.items():
     preamble=source.split('jobs:',1)[0]
     # Only parse workflow_run.workflows (not branch/cron/path job steps).
-    match=re.search(r'(?ms)^  workflow_run:\s*\n\s+workflows:\s*\n(?P<items>(?:\s+-\s+[^\n]+\n)+)',preamble)
-    if not match:
+    if '  workflow_run:' not in preamble:
         continue
-    watched=set(re.findall(r"(?m)^\s+-\s+['\"]([^'\"]+)['\"]",match.group('items')))
+    # Comments split monitored workflow names in V229. Never read only
+    # the contiguous list prefix or a reciprocal edge can be missed.
+    source_block=preamble.split('  workflow_run:',1)[1].split('    types:',1)[0]
+    watched=set(re.findall(r"(?m)^\\s+-\\s+['\\\"]([^'\\\"]+)['\\\"]",source_block))
     for producer,name in names.items():
         if name in watched:
             edges[producer].add(listener)
