@@ -410,7 +410,7 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert header.count('  schedule:')==1
     assert "- cron: '11,26,41,56 * * * *'" in header
     assert '  workflow_run:' in header
-    assert "'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" in header
+    assert "'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" not in header
     # Existing V186 source-owned schedule is independent: V220 listens without
     # creating a second worker, introducing a cycle or relaxing provenance.
     independent=(here.parent/'.github/workflows/BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml').read_text(encoding='utf8')
@@ -455,7 +455,7 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert wf.count('      - name: Recover stale collectors or evidence-ready missed V229 without duplicate runs')==1
     assert "github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'" in wf
     assert "github.event.workflow_run.event == 'schedule'" in wf
-    assert "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" in wf
+    assert "github.event.workflow_run.name == 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'" not in wf
     assert 'github.event.workflow_run.conclusion == \'success\'' in wf
     assert '    types: [completed]' in header
     assert '    branches: [main]' in header
@@ -487,7 +487,7 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert 'gh workflow run "$wf" --ref main' in recovery
     assert 'gh workflow run V235' not in recovery
     assert 'V220_RECOVERY_SKIPPED_STATUS_UNVERIFIABLE' in recovery
-    print('V220_V216_EVENT_SAFE_RELAY_SINGLE_OWNER_PASS')
+    print('V220_V216_FEEDBACK_REMOVED_SINGLE_OWNER_PASS')
 
 def test_v220_report_conflict_can_only_skip_for_newer_main_commit_with_safe_daybound_reports():
     """A competing owner may satisfy the report, not an unrelated Git update.
