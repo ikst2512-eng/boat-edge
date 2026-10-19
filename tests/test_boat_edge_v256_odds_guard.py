@@ -1,9 +1,15 @@
 """V256 independent no-result/odds completeness regression tests."""
 import unittest
+import ast
+import json
+import tempfile
+import textwrap
+from pathlib import Path
+from datetime import timedelta
 from datetime import datetime, timezone
 from scripts.boat_edge_v256_odds_guard import (
     REJECTED, is_safe_record, official_url_matches, rejected_document,
-    should_replace, record_time,
+    should_replace, record_time, odds_source_window_allowed,
 )
 
 KEY = "20261012-14-09"
@@ -112,6 +118,59 @@ class V256OfficialOddsSafety(unittest.TestCase):
         with self.assertRaises(ValueError):
             rejected_document(key=KEY,url="https://evil.test",deadline="12:19",
                 checked_at=TIME,error="fail")
+
+
+    def test_dual_clock_early_and_late_drift_fail_closed(self):
+        jst = timezone(timedelta(hours=9))
+        key = "20261017-03-01"
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "data"
+            (root / "races").mkdir(parents=True)
+            p = root / "races" / (key + ".json")
+            def set_race(clock, phase="PRE_RESULT"):
+                p.write_text(json.dumps({
+                    "race_key":key,
+                    "meta":{"date":"2026-10-17","venue_code":"03",
+                            "race_no":1,"deadline":clock,"phase":phase,
+                            "results_seen":False,"unlock":False,"scoring":False}
+                }),encoding="utf8")
+            at = datetime(2026,10,17,11,20,tzinfo=jst)
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",at))
+            set_race("11:30")
+            self.assertTrue(odds_source_window_allowed(root,key,"11:30",at))
+            # A catalog extension cannot authorize a post-original-deadline odds write.
+            set_race("11:19")
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",at))
+            # Even before both cutoffs, disagreement is NOT verified source time.
+            early=datetime(2026,10,17,11,10,tzinfo=jst)
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",early))
+            set_race("11:30")
+            self.assertFalse(odds_source_window_allowed(root,key,"11:19",early))
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",
+                datetime(2026,10,17,11,30,tzinfo=jst)))
+            set_race("11:30",phase="RESULT")
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",early))
+            p.write_text("{bad",encoding="utf8")
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",early))
+            p.unlink()
+            self.assertFalse(odds_source_window_allowed(root,key,"11:30",early))
+
+    def test_v71_actual_workflow_checks_clock_before_and_after_network(self):
+        wf=(Path(__file__).resolve().parents[1]/".github/workflows/site-odds.yml").read_text(encoding="utf8")
+        self.assertIn("skipped_unsafe_or_conflicting_deadline",wf)
+        self.assertIn('today.get("phase")!="PRE_RESULT"',wf)
+        self.assertIn('odds_source_window_allowed(DATA,key,dl,now)',wf)
+        self.assertIn('odds_source_window_allowed(DATA,key,item["deadline"],datetime.now(JST))',wf)
+        self.assertIn('odds_source_window_allowed(dst.parent,p.stem,x.get("deadline"),at)',wf)
+        self.assertNotIn('"window":"deadline -45min to +5min"',wf)
+        # Validate both embedded Python programs, not merely matching strings.
+        parts=wf.split("python - <<'PY'\\n")
+        self.assertGreaterEqual(len(parts),3)
+        for part in parts[1:]:
+            if "\\n          PY\\n" not in part:
+                continue
+            code=part.split("\\n          PY\\n",1)[0]
+            ast.parse(textwrap.dedent(code))
 
 
 if __name__=="__main__":
