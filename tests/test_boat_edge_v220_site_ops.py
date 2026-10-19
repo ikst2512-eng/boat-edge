@@ -226,6 +226,41 @@ def test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector():
         assert 'auto-update.yml' not in ready['recovery_dispatch_candidates'],ready
     print('GATE1C_SCRATCH_ONLY_EXISTING_COLLECTOR_RECOVERY_PASS')
 
+def test_gate1c_recovery_plan_reports_source_gaps_without_claiming_denominator():
+    # Fixture-only: the recovery CLI is already read-only. Enrich its output
+    # for pre-result nudge diagnostics without changing workflow allowlists.
+    with tempfile.TemporaryDirectory() as d:
+        root=Path(d);sample(root)
+        at=NOW+timedelta(minutes=20)
+        result=subprocess.run(
+            [sys.executable,str(loc),'--root',str(root),
+             '--at',at.isoformat(),'--recovery-plan'],
+            capture_output=True,text=True,check=True)
+        report=json.loads(result.stdout)
+        expected=mod.compute(root,at)
+        assert report['workflows']==expected['recovery_dispatch_candidates']
+        assert report['decision_window_races']==1
+        assert report['eligible_denominator_proven'] is False
+        assert report['window_observation_only'] is True
+        assert report['current_windows']==[
+            {'race_key':KEY,'deadline_jst':'08:35',
+             'missing_evidence':expected['current_windows'][0]['missing_evidence']}]
+        assert 'beforeinfo_unavailable' in report['current_windows'][0]['missing_evidence']
+        assert report['urgent_odds_only_recovery_keys']==[]
+        assert not (root/'data/site_ops_v220/current.json').exists()
+        assert not (root/'data/site_ops_v220/gate1c_current.json').exists()
+        # No after-deadline reconstruction or assumed eligible counts.
+        late=subprocess.run(
+            [sys.executable,str(loc),'--root',str(root),
+             '--at',(NOW+timedelta(minutes=40)).isoformat(),
+             '--recovery-plan'],
+            capture_output=True,text=True,check=True)
+        last=json.loads(late.stdout)
+        assert last['decision_window_races']==0
+        assert last['current_windows']==[]
+        assert last['eligible_denominator_proven'] is False
+    print('GATE1C_REJECT_REASON_DIAGNOSTIC_READ_ONLY_NO_ELIGIBLE_DENOMINATOR_PASS')
+
 def test_v271_urgent_health():
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp);sample(root)
@@ -1632,6 +1667,7 @@ def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
 
 
 if __name__=='__main__':
+    test_gate1c_recovery_plan_reports_source_gaps_without_claiming_denominator()
     test_all()
     test_v216_stale_window_recovery_is_bounded_and_fail_closed()
     test_gate1c_v71_fresh_index_cannot_hide_missing_race_odds()
