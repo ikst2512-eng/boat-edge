@@ -1,9 +1,9 @@
 {
-  "active_window_races": 4,
+  "active_window_races": 1,
   "current_windows": [],
   "data_sources": {
-    "collector_freshness": "CURRENT",
-    "odds_index_freshness": "CURRENT",
+    "collector_freshness": "STALE_OR_UNVERIFIED",
+    "odds_index_freshness": "STALE_OR_UNVERIFIED",
     "predeadline_observations": 50,
     "site_autovalidation": "EVIDENCE_BLOCKED_OR_MISSING"
   },
@@ -11,24 +11,31 @@
   "decision_window_races": 0,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
-  "issues": [],
+  "issues": [
+    "collector_index_stale",
+    "odds_index_stale",
+    "predeadline_race_odds_gap"
+  ],
   "next_race": {
-    "deadline_jst": "20:59",
-    "race_key": "20261019-19-08",
+    "deadline_jst": "22:45",
+    "race_key": "20261019-19-12",
     "venue": "下関",
-    "watch_from_jst": "20:44"
+    "watch_from_jst": "22:30"
   },
   "official_beforeinfo_urgent_15m": {
-    "error": 0,
-    "health_updated_at": "2026-10-19T20:44:03+09:00",
-    "ok": 2,
-    "partial_six_boat_source": 0,
-    "published_wait": 0,
-    "status": "OBSERVED",
-    "targets": 2
+    "error": null,
+    "health_updated_at": null,
+    "ok": null,
+    "partial_six_boat_source": null,
+    "published_wait": null,
+    "status": "UNVERIFIED_OR_STALE",
+    "targets": null
   },
   "paper_wager_authorized_by_this_runner": false,
-  "recovery_dispatch_candidates": [],
+  "recovery_dispatch_candidates": [
+    "auto-update.yml",
+    "site-odds.yml"
+  ],
   "research_model_production_promotion": false,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V220_SITE_AUTONOMOUS_OPERATIONS_V1",
@@ -99,11 +106,11 @@
       "v229_attestation_record_matched": 36
     }
   },
-  "status": "WAITING_FOR_PREDEADLINE",
+  "status": "NEEDS_ATTENTION",
   "urgent_beforeinfo_only_recovery_keys": [],
   "urgent_odds_only_recovery_keys": [],
   "v216_observation_freshness": {
-    "age_minutes": 21.9,
+    "age_minutes": 108.4,
     "eligibility_proven": false,
     "last_observed_at": "2026-10-19T11:37:01.629226+00:00",
     "missing_during_race_window": false,
