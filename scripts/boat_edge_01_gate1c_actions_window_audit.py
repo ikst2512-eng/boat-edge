@@ -46,6 +46,7 @@ def window_runs(fetch_page, start, end, max_pages=3):
     if not 1 <= max_pages <= 20:
         raise ValueError("max_pages must be 1..20")
     found = {}
+    expected_total = None
     for page in range(1, max_pages + 1):
         try:
             response = fetch_page(start, end, page)
@@ -53,6 +54,10 @@ def window_runs(fetch_page, start, end, max_pages=3):
             total_count = response.get("total_count")
             if type(total_count) is not int or total_count < 0:
                 raise ValueError("RUN_TOTAL_COUNT_UNVERIFIED")
+            if expected_total is None:
+                expected_total = total_count
+            elif total_count != expected_total:
+                raise ValueError('RUN_TOTAL_COUNT_CHANGED_BETWEEN_PAGES')
             if not isinstance(runs, list):
                 raise ValueError("RUNS_NOT_LIST")
             for run in runs:
@@ -75,7 +80,7 @@ def window_runs(fetch_page, start, end, max_pages=3):
                     "conclusion": run.get("conclusion"), "created_at": created,
                 }
             if len(runs) < 100:
-                if len(found) < total_count:
+                if len(found) != total_count:
                     return [], False, "RUN_TOTAL_COUNT_MISMATCH"
                 return sorted(found.values(), key=lambda x: (x["created_at"], x["id"])), True, None
         except (KeyError, TypeError, ValueError, OSError) as exc:
