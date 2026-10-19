@@ -164,6 +164,27 @@ class C1MissedWindowAudit(unittest.TestCase):
         self.assertFalse(complete)
         self.assertIn("RUN_TOTAL_COUNT_UNVERIFIED", error)
 
+    def test_excess_short_page_fails_closed(self):
+        start = datetime(2026, 10, 19, 2, 12, tzinfo=timezone.utc)
+        end = start + timedelta(minutes=8)
+        runs, complete, error = window_runs(
+            lambda a, b, page: {"total_count": 0, "workflow_runs": [
+                entry(1001, "noise", "2026-10-19T02:17:00Z")]}, start, end)
+        self.assertEqual((runs, complete, error), ([], False, "RUN_TOTAL_COUNT_MISMATCH"))
+
+    def test_changed_total_between_pages_fails_closed(self):
+        start = datetime(2026, 10, 19, 2, 12, tzinfo=timezone.utc)
+        end = start + timedelta(minutes=8)
+        first = [entry(i, "noise", "2026-10-19T02:17:00Z") for i in range(100)]
+        def fetch(a, b, page):
+            if page == 1:
+                return {"total_count": 101, "workflow_runs": first}
+            return {"total_count": 102, "workflow_runs": [
+                entry(100, "noise", "2026-10-19T02:18:00Z")]}
+        runs, complete, error = window_runs(fetch, start, end)
+        self.assertFalse(complete)
+        self.assertIn("RUN_TOTAL_COUNT_CHANGED_BETWEEN_PAGES", error)
+
     def test_prospective_deadline_and_untrusted_history_fail_closed(self):
         early = datetime(2026, 10, 19, 10, 30, tzinfo=JST)
         d = audit(self.root, DAY, early, lambda s, e, p: {"total_count": 0, "workflow_runs": []})
