@@ -73,11 +73,37 @@ class C1MissedWindowAudit(unittest.TestCase):
                 "2026-10-19T07:54:00Z")]}
         rows = {x["race_key"]: x for x in audit(self.root, DAY, NOW, fetch)["races"]}
         self.assertEqual(rows["20261019-18-07"]["classification"],
-                         "V229_START_RECORDED_SNAPSHOT_MISSING")
+                         "V229_ALL_RUNS_SKIPPED_NO_EXECUTED_FREEZE_PROVEN")
         self.assertEqual(rows["20261019-12-05"]["classification"],
                          "V216_START_WITHOUT_V229_START")
         self.assertEqual(rows["20261019-18-07"]["capture_owner_starts"][0]["conclusion"],
                          "skipped")
+
+    def test_cancelled_v229_does_not_prove_writer_executed(self):
+        name = "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit"
+        def fetch(start, end, page):
+            return {"workflow_runs": [
+                entry(61, name, "2026-10-19T02:17:00Z", "cancelled"),
+            ]} if start.hour == 2 else {"workflow_runs": []}
+        rows = {r["race_key"]: r for r in audit(
+            self.root, DAY, NOW, fetch)["races"]}
+        row = rows["20261019-18-07"]
+        self.assertEqual(row["classification"],
+                         "V229_ONLY_SKIPPED_OR_CANCELLED_EXECUTION_UNVERIFIED")
+        self.assertFalse(row["v229_execution_proven_by_run_metadata"])
+
+    def test_completed_v229_start_still_does_not_prove_snapshot(self):
+        name = "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit"
+        def fetch(start, end, page):
+            return {"workflow_runs": [
+                entry(62, name, "2026-10-19T02:17:00Z", "success"),
+            ]} if start.hour == 2 else {"workflow_runs": []}
+        rows = {r["race_key"]: r for r in audit(
+            self.root, DAY, NOW, fetch)["races"]}
+        row = rows["20261019-18-07"]
+        self.assertEqual(row["classification"],
+                         "V229_START_RECORDED_SNAPSHOT_MISSING")
+        self.assertFalse(row["v229_execution_proven_by_run_metadata"])
 
     def test_v125_only_independent_schedule_is_a_possible_v229_wake(self):
         v125 = "BOAT EDGE V125 Revision Safe FINAL15M Audit"
