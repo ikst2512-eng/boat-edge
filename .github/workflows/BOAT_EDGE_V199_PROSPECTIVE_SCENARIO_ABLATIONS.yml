@@ -6,17 +6,10 @@ on:
     paths:
       - '.github/workflows/BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml'
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - 'BOAT EDGE V185 - Prospective Third Role Challenger 10-20x Accuracy'
-    types: [completed]
-    branches: [main]
-  schedule:
-    # Exactly the original 00,05,...55 minute UTC freeze opportunities.
-    # SITE-only retrospective scores are deferred to the first 15m subset.
-    - cron: '0,15,30,45 0-14,23 * * *'
-    - cron: '5,20,35,50 0-14,23 * * *'
-    - cron: '10,25,40,55 0-14,23 * * *'
+  # C1 priority: pause unrelated V199 five-minute research freeze starts.
+  # Prior snapshots and experimental scripts remain untouched; operators can
+  # run workflow_dispatch explicitly after the 1C save-rate gate is verified.
+  # Do not subscribe to V185 completed events: they compete for Git main.
 
 permissions:
   contents: write
