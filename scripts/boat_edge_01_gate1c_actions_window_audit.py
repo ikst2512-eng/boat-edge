@@ -103,7 +103,6 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
             or not isinstance(history.get("observations"), dict)):
         raise ValueError("HISTORY_UNVERIFIED")
     records = dict(history['observations'])
-    catalog_keys = set()
     if catalog is not None:
         if not isinstance(catalog, dict) or str(catalog.get('date', '')).replace('-', '') != day or not isinstance(catalog.get('venues'), list):
             raise ValueError('CATALOG_UNVERIFIED')
@@ -119,9 +118,9 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
                 if due is None or not key.startswith(day + '-') or key in records:
                     raise ValueError('CATALOG_UNVERIFIED')
                 records[key] = {'deadline': race['deadline']}
-                catalog_keys.add(key)
     output = []
     observed_with_existing_snapshot = 0
+    window_cache = {}
     for key, record in sorted(records.items()):
         if not (KEY.fullmatch(str(key)) and key.startswith(day + "-") and isinstance(record, dict)):
             continue
@@ -134,8 +133,11 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
             observed_with_existing_snapshot += 1
             continue
         start, end = due - timedelta(minutes=10), due - timedelta(minutes=2)
-        runs, complete, error = window_runs(fetch_page, start.astimezone(timezone.utc),
-                                            end.astimezone(timezone.utc), max_pages)
+        cache_key = (start, end)
+        if cache_key not in window_cache:
+            window_cache[cache_key] = window_runs(fetch_page, start.astimezone(timezone.utc),
+                                                   end.astimezone(timezone.utc), max_pages)
+        runs, complete, error = window_cache[cache_key]
         # V125 is a valid *potential wake source* only on its independent
         # schedule. Its V229-triggered workflow_run performs index auditing
         # but must NEVER dispatch V229 back (completion feedback cycle).
@@ -190,7 +192,10 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
         "schema": "BOAT_EDGE_C1_MISSING_FREEZE_ACTIONS_WINDOW_V1",
         "day_jst": day, "read_only": True,
         "snapshot_freeze_window_minutes_before_deadline": [10, 2],
-        "observed_matured_missing_snapshots": len(output),
+        "observed_matured_missing_snapshots": sum(r["v215_observation_present"] for r in output),
+        "catalog_matured_missing_snapshots": len(output) if catalog is not None else None,
+        "catalog_unobserved_missing_snapshots": sum(not r["v215_observation_present"] for r in output) if catalog is not None else None,
+        "distinct_actions_windows_queried": len(window_cache),
         "observed_matured_with_existing_snapshot": observed_with_existing_snapshot,
         "complete_window_queries": sum(x["run_history_complete_for_window"] for x in output),
         "incomplete_window_queries": sum(not x["run_history_complete_for_window"] for x in output),
