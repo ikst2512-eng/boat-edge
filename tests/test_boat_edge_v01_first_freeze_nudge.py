@@ -97,7 +97,7 @@ fi
         # proof not yet established, without converting an observation to
         # eligibility or sending another workflow_dispatch.
         zero = {
-            "workflows": [], "decision_window_races": 0,
+            "workflows": [], "freeze_window_races": 0,
             "current_windows": [], "window_observation_only": True,
             "eligible_denominator_proven": False,
         }
@@ -108,7 +108,7 @@ fi
         self.assertNotIn("sleep:", events)
 
         gaps = {
-            **zero, "decision_window_races": 2,
+            **zero, "freeze_window_races": 2,
             "current_windows": [
                 {"race_key": "20261019-19-06", "missing_evidence":
                  ["beforeinfo_unavailable", "frozen_prediction_missing_or_invalid"]},
@@ -127,7 +127,7 @@ fi
         # success claim. The pre-existing dispatch denial remains mandatory.
         for invalid in (
             {**gaps, "eligible_denominator_proven": True},
-            {**gaps, "decision_window_races": 3},
+            {**gaps, "freeze_window_races": 3},
             {**gaps, "current_windows": "unsafe"},
         ):
             output, events = self.run_case(plan=invalid)
