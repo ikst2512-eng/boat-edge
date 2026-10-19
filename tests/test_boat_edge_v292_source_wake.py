@@ -55,6 +55,22 @@ for workflow in allowed:
     assert workflow in keys_by_file, 'GATE1C_UNKNOWN_RECOVERY_DISPATCH_'+workflow
     edges['recovery'].add(keys_by_file[workflow])
 
+# V216 can now call the existing guarded nudge IN its original schedule
+# rather than subscribing V229 to V216 completed events. Represent the
+# indirect dispatch edge separately and reject future completion feedback.
+observer_schedule=content['observer']
+assert 'first_git' not in edges['observer'], 'GATE1C_V216_COMPLETION_FANOUT_REINTRODUCED'
+assert "      - name: Recover source-ready first Git freeze during independent V216 cron" in observer_schedule
+nudge_step=observer_schedule.split(
+    '      - name: Recover source-ready first Git freeze during independent V216 cron',1
+)[1].split('      - name:',1)[0]
+assert "if: github.event_name == 'schedule'" in nudge_step
+assert 'bash scripts/boat_edge_v01_first_freeze_nudge.sh' in nudge_step
+nudge_source=(ROOT/'scripts/boat_edge_v01_first_freeze_nudge.sh').read_text(encoding='utf-8')
+assert 'gh workflow run "$wf" --ref main' in nudge_source
+assert 'V229_ALREADY_ACTIVE' in nudge_source
+edges['observer'].add('first_git')
+
 for node in edges:
     seen=set()
     stack=[]
@@ -71,10 +87,11 @@ for node in edges:
     walk(node)
 assert 'first_git' in edges['freeze']
 # No V216 completion subscriber: a skipped job still produces 'completed'.
-for target in ('first_git','freeze','recovery'):
+for target in ('freeze','recovery'):
     assert target not in edges['observer'], (target, edges)
 assert edges['recovery']=={'collector','odds','observer','first_git'}
 assert 'recovery' not in edges['observer']
+assert 'first_git' in edges['observer']
 assert 'observer' in edges['collector']
 assert 'observer' in edges['odds']
 assert 'collector' in edges['odds']

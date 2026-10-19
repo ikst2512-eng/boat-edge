@@ -35,6 +35,43 @@ class V216CollectorWake(unittest.TestCase):
         self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",wf)
         self.assertNotIn("git push --force",wf)
 
+    def test_independent_cron_nudges_existing_v229_without_workflow_run_echo(self):
+        # A skipped workflow still has a completion event. The V216 observer
+        # must never become an upstream subscription of V229/V220/V235.
+        wf=V216.read_text(encoding='utf8')
+        job=wf.split('jobs:',1)[1]
+        label='      - name: Recover source-ready first Git freeze during independent V216 cron'
+        self.assertEqual(wf.count(label),1)
+        start=wf.index(label)
+        end=wf.index('      - name:',start+len(label))
+        step=wf[start:end]
+        self.assertIn("if: github.event_name == 'schedule'",step)
+        self.assertIn('GH_TOKEN: ${{ github.token }}',step)
+        self.assertIn('bash -n scripts/boat_edge_v01_first_freeze_nudge.sh',step)
+        self.assertEqual(step.count('bash scripts/boat_edge_v01_first_freeze_nudge.sh'),1)
+        self.assertNotIn('gh workflow run',step)
+        # The observation is first-Git published before the nudge reads main;
+        # its own paper selection and past-result settlement stay downstream.
+        self.assertLess(wf.index("V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED"),
+                        start)
+        self.assertEqual(end,wf.index(
+            '      - name: Continue approved-only daily 50000 yen paper selection BEFORE results'))
+        for path in ('BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml','V235.yml',
+                     'BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml'):
+            downstream=(ROOT/'.github/workflows'/path).read_text(encoding='utf8')
+            self.assertNotIn(
+                "      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'",
+                downstream.split('jobs:',1)[0])
+        nudge=(ROOT/'scripts/boat_edge_v01_first_freeze_nudge.sh').read_text(encoding='utf8')
+        for safety in ('--recovery-plan','V229_ALREADY_ACTIVE','120 - $now',
+                       'NOT_SOURCE_READY_OR_OUTSIDE_WINDOW',
+                       'runs?per_page=100'):
+            self.assertIn(safety,nudge)
+        # The V216 schedule preserves two prospective 2-10m opportunities
+        # for a 19:56 deadline (19:49 and 19:54); delivery remains best effort.
+        self.assertIn("cron: '4,19,34,49 * * * *'",wf)
+        self.assertIn("cron: '9,24,39,54 * * * *'",wf)
+
     def test_observer_is_only_downstream_of_source_producers(self):
         v216=V216.read_text(encoding='utf8')
         v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf8')

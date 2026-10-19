@@ -176,6 +176,21 @@ jobs:
             if git push origin HEAD:main; then echo 'V216_PRE_RESULT_ATOMIC_FREEZE_GIT_PUBLISHED'; break; fi
             if [ "$attempt" -eq 8 ]; then exit 1; fi
           done
+      - name: Recover source-ready first Git freeze during independent V216 cron
+        # Gate 1C: V216 completion-event subscriptions back into V229 caused
+        # Actions fanout. Reuse the existing guarded dispatch only inside
+        # V216's independent schedule, AFTER its PRE_RESULT observation commit.
+        # The shared nudge re-reads main and requires a source-complete 2-10m
+        # window, no active V229 and the original 120s real-run cooldown.
+        # V229 remains the sole immutable prediction writer.
+        if: github.event_name == 'schedule'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
+          bash scripts/boat_edge_v01_first_freeze_nudge.sh
       - name: Continue approved-only daily 50000 yen paper selection BEFORE results
         shell: bash
         run: |
