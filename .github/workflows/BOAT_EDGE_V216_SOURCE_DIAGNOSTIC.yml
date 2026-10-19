@@ -5,17 +5,18 @@ on:
     paths:
       - '.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml'
   workflow_dispatch:
-  # GitHub scheduled five-minute runs can be delayed/skipped. Once the
-  # EXISTING official PRE_RESULT source collector OR independent 120-way
-  # odds publisher completes successfully, give this same V216 source-ready
-  # observer another chance in the real 2-10m window. Either source may
-  # finish last; neither completion proves readiness by itself.
-  # No new cron, writer, prediction, or feedback listener: both producers
-  # never listen to this V216 observation workflow.
+  # Scheduled V216 can go missing for hours (observed on 2026-10-19).
+  # Reuse the successful ORIGINAL V235 SCHEDULE completion as an independent
+  # observation wake, even when source collector/V71 cron and their events
+  # also disappear. Neither trigger is evidence of source eligibility.
+  # V235 itself accepts only ORIGINAL scheduled V216 completions: a V216
+  # workflow_run started from V235 cannot trigger V235 back (no cycle).
+  # No new schedule, source writer, model change, or deadline bypass.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
+      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
     types: [completed]
     branches: [main]
   schedule:
@@ -40,7 +41,9 @@ jobs:
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.name != 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring' ||
+         github.event.workflow_run.event == 'schedule')))
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
