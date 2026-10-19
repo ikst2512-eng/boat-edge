@@ -106,7 +106,7 @@ class V235Proof(unittest.TestCase):
         self.assertEqual(upstream.count("      - '"+v235_name+"'"),0)
         self.assertNotIn("github.event.workflow_run.name == '"+v235_name+"'",observer_gate)
         self.assertNotIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",observer_gate)
-        self.assertIn("github.event.workflow_run.event == 'schedule'",observer_gate)
+        self.assertNotIn("github.event.workflow_run.event == 'schedule'",observer_gate)
         self.assertIn("github.event.workflow_run.conclusion == 'success'",observer_gate)
         self.assertIn("github.event.workflow_run.head_branch == 'main'",observer_gate)
         self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",observer_gate)
