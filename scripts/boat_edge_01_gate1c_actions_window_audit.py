@@ -115,7 +115,17 @@ def audit(root, day, now, fetch_page, max_pages=3):
         if not complete:
             classification = "RUN_HISTORY_UNVERIFIED"
         elif "v229" in present:
-            classification = "V229_START_RECORDED_SNAPSHOT_MISSING"
+            # GitHub can create a workflow_run with a skipped job. Such a
+            # record is NOT evidence that the atomic first-Git writer ran.
+            # Cancelled runs may have executed partially; their job execution
+            # remains unverified until job-level logs are inspected.
+            v229 = [r for r in owners if r["owner"] == "v229"]
+            if all(r["conclusion"] == "skipped" for r in v229):
+                classification = "V229_ALL_RUNS_SKIPPED_NO_EXECUTED_FREEZE_PROVEN"
+            elif all(r["conclusion"] in ("skipped", "cancelled") for r in v229):
+                classification = "V229_ONLY_SKIPPED_OR_CANCELLED_EXECUTION_UNVERIFIED"
+            else:
+                classification = "V229_START_RECORDED_SNAPSHOT_MISSING"
         elif "v216" in present:
             classification = "V216_START_WITHOUT_V229_START"
         elif "v125_schedule" in present:
@@ -132,6 +142,7 @@ def audit(root, day, now, fetch_page, max_pages=3):
             "run_history_error": error,
             "all_actions_starts_in_window": len(runs),
             "capture_owner_starts": owners,
+            "v229_execution_proven_by_run_metadata": False,
             "v125_completion_only_audit_starts_ignored": passive_v125_completions,
             "classification": classification,
             "observed_source_gaps": record.get("source_gaps_seen"),
@@ -151,6 +162,7 @@ def audit(root, day, now, fetch_page, max_pages=3):
         "automated_recovery_or_formal_unlock_authorized": False,
         "limitations": [
             "Actions created_at is a run start, not a verified completed job",
+            "Skipped V229 runs do not prove a writer job executed; cancelled runs require job-level evidence",
             "An earlier active V229 may overlap a window without a new start",
             "A V125 schedule start only indicates a possible guarded V229 wake, not a dispatch",
             "V125 workflow_run completion events are passive audits, never V229 recovery attempts",
