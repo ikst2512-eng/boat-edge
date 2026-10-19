@@ -84,6 +84,37 @@ class V125GitRaceSafety(unittest.TestCase):
         self.assertNotIn("BOAT EDGE V125 Revision Safe FINAL15M Audit",
                          v229.split("permissions:", 1)[0])
 
+    def test_v125_cron_only_first_git_nudge_cannot_echo_v229_completion(self):
+        src = self.src
+        event = src.split("jobs:", 1)[0]
+        marker = "      - name: Gate 1C independent-schedule source-ready V229 first-freeze wake"
+        self.assertEqual(src.count(marker), 1)
+        step = src.split(marker, 1)[1].split("      - name:", 1)[0]
+        self.assertIn("if: github.event_name == 'schedule'", step)
+        self.assertIn("GH_TOKEN: ${{ github.token }}", step)
+        self.assertIn("bash -n scripts/boat_edge_v01_first_freeze_nudge.sh", step)
+        self.assertEqual(
+            step.count("bash scripts/boat_edge_v01_first_freeze_nudge.sh"), 1)
+        self.assertLess(src.index(marker), src.index(
+            "      - name: Audit V123 snapshots with revision history"))
+        self.assertIn('      - "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit"', event)
+        self.assertEqual(event.count("  workflow_run:"), 1)
+        self.assertEqual(event.count("  schedule:"), 1)
+        self.assertIn('    - cron: "3,8,13,18,23,28,33,38,43,48,53,58 * * * *"', event)
+        self.assertIn("  actions: write", event)
+        v229 = (ROOT / ".github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text()
+        self.assertNotIn("BOAT EDGE V125 Revision Safe FINAL15M Audit",
+                         v229.split("jobs:", 1)[0])
+        nudge = (ROOT / "scripts/boat_edge_v01_first_freeze_nudge.sh").read_text()
+        for token in (
+            'gh workflow run "$wf" --ref main',
+            "V229_ALREADY_ACTIVE",
+            "NOT_SOURCE_READY_OR_OUTSIDE_WINDOW",
+            "COOLDOWN_UNVERIFIABLE_NO_DISPATCH",
+            "runs?per_page=100",
+        ):
+            self.assertIn(token, nudge)
+
     def test_late_replay_fail_closed_without_formal_results(self):
         src = self.src
         save = src.split("      - name: Recompute and publish V125 audit from the latest main", 1)[1]
