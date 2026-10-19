@@ -121,6 +121,75 @@ class WatchdogContract(unittest.TestCase):
             mod.decision(catalog, self.workflow, history, at('06:15:00'))['reason'],
             'NO_SAME_DAY_PREWARM_RACE')
 
+    def test_cancelled_zero_job_workflow_does_not_fake_runtime_cooldown(self):
+        # Actual GitHub run 39185539407 on 2026-10-19 was cancelled
+        # with zero jobs; a workflow-level cancellation is not source IO.
+        record = runs(conclusion='cancelled', created='2026-10-16T01:39:00Z')
+        record['workflow_runs'][0]['id'] = 39185539407
+        fetched = []
+        def lookup(run_id):
+            fetched.append(run_id)
+            return {'total_count': 0, 'jobs': []}
+        d = mod.decision(fixture(), self.workflow, record, NOW, cancelled_jobs=lookup)
+        self.assertTrue(d['dispatch'], d)
+        self.assertEqual(fetched, [39185539407])
+
+    def test_cancelled_with_any_job_keeps_cooldown(self):
+        record = runs(conclusion='cancelled', created='2026-10-16T01:39:00Z')
+        record['workflow_runs'][0]['id'] = 123456
+        d = mod.decision(fixture(), self.workflow, record, NOW,
+                         cancelled_jobs=lambda run_id: {
+                             'total_count': 1,
+                             'jobs': [{'id': 99, 'conclusion': 'cancelled'}]})
+        self.assertFalse(d['dispatch'])
+        self.assertEqual(d['reason'], 'V235_RECENT_ACTUAL_RUN')
+
+    def test_cancelled_unverified_job_evidence_never_dispatches(self):
+        record = runs(conclusion='cancelled', created='2026-10-16T01:39:00Z')
+        record['workflow_runs'][0]['id'] = 123456
+        for lookup in (None, lambda _: {'jobs': []},
+                       lambda _: {'total_count': 1, 'jobs': []},
+                       lambda _: {'total_count': 0, 'jobs': [{'id': 1}]},
+                       lambda _: (_ for _ in ()).throw(RuntimeError('api failure'))):
+            with self.subTest(lookup=lookup):
+                d = mod.decision(fixture(), self.workflow, record, NOW,
+                                 cancelled_jobs=lookup)
+                # Positive count and zero jobs is unverified pagination.
+                self.assertFalse(d['dispatch'])
+        record['workflow_runs'][0].pop('id')
+        self.assertEqual(mod.decision(fixture(), self.workflow, record, NOW,
+                         cancelled_jobs=lambda _: {'total_count': 0, 'jobs': []})['reason'],
+                         'V235_CANCELLED_JOBS_UNVERIFIED')
+
+    def test_live_cancelled_zero_job_queries_exact_job_api_once(self):
+        import base64
+        import json
+        encoded = base64.b64encode(json.dumps(fixture()).encode()).decode()
+        record = runs(conclusion='cancelled', created='2026-10-16T01:39:00Z')
+        record['workflow_runs'][0]['id'] = 39185539407
+        seen = []
+        def api(method, route, token, body=None):
+            seen.append((method, route))
+            if method == 'POST':
+                return {}
+            if '/contents/' in route:
+                return {'encoding': 'base64', 'content': encoded}
+            if '/jobs?' in route:
+                return {'total_count': 0, 'jobs': []}
+            if '/runs?' in route:
+                return record
+            return self.workflow
+        with patch.dict(mod.os.environ,
+                        {'BOAT_EDGE_GITHUB_ACTIONS_TOKEN': 'fixture',
+                         'BOAT_EDGE_EXTERNAL_V235_ENABLED': 'true'}, clear=True), \
+             patch.object(mod, 'api_json', side_effect=api), \
+             patch.object(mod, 'utc_now', return_value=NOW):
+            self.assertEqual(mod.main(['--live']), 0)
+        self.assertEqual([x for x in seen if '/jobs?' in x[1]],
+                         [('GET', '/actions/runs/39185539407/jobs?per_page=100')])
+        self.assertEqual([x for x in seen if x[0] == 'POST'],
+                         [('POST', '/actions/workflows/V235.yml/dispatches')])
+
     def test_dry_run_does_not_post_even_when_eligible(self):
         import base64
         import json
