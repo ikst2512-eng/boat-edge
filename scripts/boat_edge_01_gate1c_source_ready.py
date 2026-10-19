@@ -15,6 +15,7 @@ import re
 
 from boat_edge_v220_site_ops import expected_deadline, load, source_status
 from boat_edge_v01_collector_scratch import official  # reuse strict role/date/venue/race URI identity
+from scripts.boat_edge_v256_odds_guard import official_url_matches, OFFICIAL_LABEL, HEX64
 
 JST=timezone(timedelta(hours=9))
 KEY=re.compile(r'^20\d{6}-\d{2}-\d{2}$')
@@ -109,9 +110,23 @@ def valid(root,key,deadline,now):
         or scratch.get('suspect_lanes')!=[]
         or scratch.get('official_raw_flags')!=[]):
         return None
+    # The coarse 120-price monitor alone can accept a price map for a
+    # DIFFERENT race, a fabricated odds SHA, or a shifted deadline. The
+    # prospective positive receipt must bind official odds to this exact
+    # PRE_RESULT race before it is used in a source-ready numerator.
+    # V230 source-only odds omit odds_validation/no_bet, while V71 supplies
+    # VERIFIED/False. Both legitimate producers remain accepted.
     if (odds.get('results_seen') is not False or odds.get('scoring') is not False
         or odds.get('verified_official_dom_v167') is not True
-        or odds.get('available_count')!=120):
+        or odds.get('available_count')!=120
+        or odds.get('source')!=OFFICIAL_LABEL
+        or not official_url_matches(key,odds.get('source_url'))
+        or odds.get('deadline')!=meta['deadline']
+        or HEX64.fullmatch(str(odds.get('raw_official_html_sha256',''))) is None
+        or odds.get('unavailable_count')!=0
+        or odds.get('unavailable_combinations')!=[]
+        or odds.get('odds_validation') not in (None,'VERIFIED')
+        or (odds.get('no_bet') is not None and odds.get('no_bet') is not False)):
         return None
     return {
         'schema':SCHEMA,'scope':'SITE_PRE_RESULT_SOURCE_OBSERVATION_NO_FORMAL_OR_RESULTS',
