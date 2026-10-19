@@ -56,13 +56,18 @@ if printf '%s\n' "$runs" | jq -e '
   exit 0
 fi
 now=$(date -u +%s)
-# Gate 1C: keep the full existing 120s cooldown, but do not permanently
-# lose a newly source-ready 2-10m freeze when an earlier V229 ran before
-# the final official odds were Git-published. Wait in THIS producer job only
-# if <=90s remain; then re-run all latest-main, source, window, and active
-# job checks from the beginning. No additional workflow/cron/writer.
+# Gate 1C: keep the full existing 120s cooldown for real attempts.
+# GitHub may emit a skipped or cancelled completion with ZERO executed jobs;
+# these do not prove a source/freeze attempt and must not suppress a fresh,
+# still-eligible 2-10m first-Git save. V220 uses the same exclusion.
+# Active runs are rejected above even if their conclusion is unavailable.
+# When a real V229 ran before final official odds were Git-published, wait
+# in THIS producer job only if <=90s remain, then re-read latest main,
+# source window, and active jobs. No additional workflow/cron/writer.
 if ! cooldown_left=$(printf '%s\n' "$runs" | jq -er --argjson now "$now" '
-  [.workflow_runs[]? | select(.created_at != null) |
+  [.workflow_runs[]? |
+    select(.created_at != null and
+           .conclusion != "skipped" and .conclusion != "cancelled") |
     (.created_at | fromdateiso8601) |
     select(. <= $now and ($now - .) < 120)] |
   if length == 0 then 0 else (max + 120 - $now) end
