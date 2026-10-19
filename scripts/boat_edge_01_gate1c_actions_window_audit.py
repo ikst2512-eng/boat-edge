@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import urllib.parse
 import urllib.request
 
@@ -88,8 +89,8 @@ def window_runs(fetch_page, start, end, max_pages=3):
     return sorted(found.values(), key=lambda x: (x["created_at"], x["id"])), False, "PAGE_LIMIT_REACHED"
 
 
-def audit(root, day, now, fetch_page, max_pages=3):
-    """Only matured observed races with no existing snapshot are assessed."""
+def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
+    """Audit matured missing snapshots; catalog mode includes unobserved races."""
     if not re.fullmatch(r"20\d{6}", day):
         raise ValueError("INVALID_DAY")
     doc_path = root / "data/site_paper_sim/readiness_history_v215" / (day + ".json")
@@ -101,9 +102,27 @@ def audit(root, day, now, fetch_page, max_pages=3):
             or history.get("day_jst") != day
             or not isinstance(history.get("observations"), dict)):
         raise ValueError("HISTORY_UNVERIFIED")
+    records = dict(history['observations'])
+    catalog_keys = set()
+    if catalog is not None:
+        if not isinstance(catalog, dict) or str(catalog.get('date', '')).replace('-', '') != day or not isinstance(catalog.get('venues'), list):
+            raise ValueError('CATALOG_UNVERIFIED')
+        records = {}
+        for venue in catalog['venues']:
+            if not isinstance(venue, dict) or not isinstance(venue.get('races'), list):
+                raise ValueError('CATALOG_UNVERIFIED')
+            for race in venue['races']:
+                if not isinstance(race, dict):
+                    raise ValueError('CATALOG_UNVERIFIED')
+                key = race.get('race_key')
+                due = deadline_for(key, race.get('deadline'))
+                if due is None or not key.startswith(day + '-') or key in records:
+                    raise ValueError('CATALOG_UNVERIFIED')
+                records[key] = {'deadline': race['deadline']}
+                catalog_keys.add(key)
     output = []
     observed_with_existing_snapshot = 0
-    for key, record in sorted(history["observations"].items()):
+    for key, record in sorted(records.items()):
         if not (KEY.fullmatch(str(key)) and key.startswith(day + "-") and isinstance(record, dict)):
             continue
         due = deadline_for(key, record.get("deadline"))
@@ -161,7 +180,8 @@ def audit(root, day, now, fetch_page, max_pages=3):
             "v229_execution_proven_by_run_metadata": False,
             "v125_completion_only_audit_starts_ignored": passive_v125_completions,
             "classification": classification,
-            "observed_source_gaps": record.get("source_gaps_seen"),
+            "observed_source_gaps": history["observations"].get(key, {}).get("source_gaps_seen"),
+            "v215_observation_present": key in history["observations"],
             "independent_source_eligibility_proven": False,
             "no_prior_active_run_proven": False,
             "first_git_save_absent_in_current_tree": True,
@@ -197,6 +217,7 @@ def main():
     p.add_argument("--root", type=Path, default=Path("."))
     p.add_argument("--day", default="yesterday", help="today, yesterday, or YYYYMMDD in JST")
     p.add_argument("--max-pages", type=int, default=3)
+    p.add_argument("--catalog-git-sha", default=None, help="Immutable Git commit containing historical data/today.json")
     args = p.parse_args()
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", args.repo):
         p.error("INVALID_REPOSITORY")
@@ -220,7 +241,13 @@ def main():
         })
         with urllib.request.urlopen(request, timeout=20) as response:
             return json.load(response)
-    print(json.dumps(audit(args.root, day, now, fetch, args.max_pages),
+    catalog = None
+    if args.catalog_git_sha:
+        if not re.fullmatch(r"[0-9a-f]{40}", args.catalog_git_sha):
+            p.error("INVALID_CATALOG_GIT_SHA")
+        raw = subprocess.run(["git", "show", args.catalog_git_sha + ":data/today.json"], check=True, capture_output=True, timeout=20).stdout
+        catalog = json.loads(raw)
+    print(json.dumps(audit(args.root, day, now, fetch, args.max_pages, catalog=catalog),
                      ensure_ascii=False, sort_keys=True, indent=2))
 
 
