@@ -68,7 +68,7 @@ jobs:
           from datetime import datetime, timedelta, timezone
           import requests
           from bs4 import BeautifulSoup
-          from scripts.boat_edge_v256_odds_guard import rejected_document
+          from scripts.boat_edge_v256_odds_guard import rejected_document, odds_source_window_allowed
 
           JST=timezone(timedelta(hours=9))
           now=datetime.now(JST)
@@ -87,20 +87,30 @@ jobs:
                   return None
 
           today=load(TODAY) or {}
+          if (str(today.get("date","")).replace("-","")!=ymd
+                  or today.get("phase")!="PRE_RESULT"
+                  or any(today.get(k) is not False for k in ("results_seen","unlock","scoring"))):
+              today={}
           races=[]
+          skipped_source_gate=0
           for v in today.get("venues",[]):
               jcd=str(v.get("jcd") or "").zfill(2)
               for r in v.get("races",[]):
                   key=r.get("race_key")
                   rno=r.get("race_no")
                   dl=r.get("deadline")
-                  if not key or not rno or not dl:
+                  if (not isinstance(key,str) or not isinstance(rno,int)
+                          or not 1<=rno<=12 or key!=f"{ymd}-{jcd}-{rno:02d}"
+                          or not isinstance(dl,str)):
                       continue
                   m=re.fullmatch(r"(\d{1,2}):(\d{2})",str(dl).strip())
                   if not m:
                       continue
                   deadline=now.replace(hour=int(m.group(1)),minute=int(m.group(2)),second=0,microsecond=0)
                   delta=(deadline-now).total_seconds()/60
+                  if not odds_source_window_allowed(DATA,key,dl,now):
+                      skipped_source_gate+=1
+                      continue
                   # Current purchase layer only needs near-race odds.
                   # Keep official-site load low: 45 min before deadline through 5 min after.
                   if -5 <= delta <= 45:
@@ -209,13 +219,22 @@ jobs:
           for item in races:
               checked+=1
               key=item["race_key"]
+              if not odds_source_window_allowed(DATA,key,item["deadline"],datetime.now(JST)):
+                  skipped_source_gate+=1
+                  continue
               url=(
                   "https://www.boatrace.jp/owpc/pc/race/odds3t"
                   f"?hd={ymd}&jcd={item['jcd']}&rno={item['race_no']}"
               )
               try:
                   res=fetch(url)
+                  if not odds_source_window_allowed(DATA,key,item["deadline"],datetime.now(JST)):
+                      skipped_source_gate+=1
+                      continue
                   odds,unavailable=parse_odds(res.text)
+                  if not odds_source_window_allowed(DATA,key,item["deadline"],datetime.now(JST)):
+                      skipped_source_gate+=1
+                      continue
                   doc={
                       "schema_version":"boat-edge-site-odds-v71",
                       "race_key":key,
@@ -242,6 +261,9 @@ jobs:
                   )
                   updated+=1
               except Exception as e:
+                  if not odds_source_window_allowed(DATA,key,item["deadline"],datetime.now(JST)):
+                      skipped_source_gate+=1
+                      continue
                   # Never publish partial or formerly valid odds after a newer
                   # official source failure. This marker contains NO price map.
                   # 60 numerical combinations do NOT prove a racer scratch.
@@ -271,8 +293,9 @@ jobs:
               "checked":checked,
               "updated":updated,
               "rejected_no_bet":len(errors),
+              "skipped_unsafe_or_conflicting_deadline":skipped_source_gate,
               "errors":errors[:30],
-              "window":"deadline -45min to +5min",
+              "window":"deadline -45min to before stored AND catalog deadline",
               "source":"official odds3t only",
               "prediction_logic_uses_odds":False
           }
@@ -302,7 +325,7 @@ jobs:
           import json, re, sys
           from datetime import datetime, timezone
           from pathlib import Path
-          from scripts.boat_edge_v256_odds_guard import is_safe_record, should_replace
+          from scripts.boat_edge_v256_odds_guard import is_safe_record, should_replace, record_time, odds_source_window_allowed
 
           src=Path(sys.argv[1]);dst=Path('data/site_odds');dst.mkdir(parents=True,exist_ok=True)
           key_re=re.compile(r'20\d{6}-\d{2}-\d{2}\.json')
@@ -323,6 +346,12 @@ jobs:
               # rejection markers. A newer rejection must supersede a previous
               # good odds snapshot; stale failures never replace newer source.
               if not is_safe_record(x,p.stem):continue
+              # Git publication can occur after fetch time, but odds must
+              # have been collected before BOTH official clocks and before any
+              # immutable original prediction now present on remote main.
+              at=record_time(x)
+              if not at or not odds_source_window_allowed(dst.parent,p.stem,x.get("deadline"),at):
+                  skipped+=1;continue
               target=dst/p.name
               prev=obj(target) if target.exists() else None
               if not should_replace(prev,x,p.stem):
