@@ -20,6 +20,7 @@ KEY = re.compile(r"^20\d{6}-\d{2}-\d{2}$")
 OWNERS = {
     "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit": "v229",
     "BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps": "v216",
+    "BOAT EDGE V125 Revision Safe FINAL15M Audit": "v125_schedule",
     "BOAT EDGE V220 - Autonomous Site Operations And Guarded Recovery": "v220",
     "BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring": "v235",
     "BOAT EDGE 自動更新": "collector",
@@ -100,7 +101,16 @@ def audit(root, day, now, fetch_page, max_pages=3):
         start, end = due - timedelta(minutes=10), due - timedelta(minutes=2)
         runs, complete, error = window_runs(fetch_page, start.astimezone(timezone.utc),
                                             end.astimezone(timezone.utc), max_pages)
-        owners = [{**r, "owner": OWNERS[r["workflow"]]} for r in runs if r.get("workflow") in OWNERS]
+        # V125 is a valid *potential wake source* only on its independent
+        # schedule. Its V229-triggered workflow_run performs index auditing
+        # but must NEVER dispatch V229 back (completion feedback cycle).
+        v125 = "BOAT EDGE V125 Revision Safe FINAL15M Audit"
+        passive_v125_completions = sum(
+            r.get("workflow") == v125 and r.get("event") == "workflow_run"
+            for r in runs)
+        owners = [{**r, "owner": OWNERS[r["workflow"]]} for r in runs
+                  if r.get("workflow") in OWNERS and
+                  (r.get("workflow") != v125 or r.get("event") == "schedule")]
         present = {r["owner"] for r in owners}
         if not complete:
             classification = "RUN_HISTORY_UNVERIFIED"
@@ -108,6 +118,8 @@ def audit(root, day, now, fetch_page, max_pages=3):
             classification = "V229_START_RECORDED_SNAPSHOT_MISSING"
         elif "v216" in present:
             classification = "V216_START_WITHOUT_V229_START"
+        elif "v125_schedule" in present:
+            classification = "V125_SCHEDULE_STARTED_WITHOUT_V229_START"
         elif present:
             classification = "SOURCE_OR_RECOVERY_START_WITHOUT_V229_START"
         else:
@@ -120,6 +132,7 @@ def audit(root, day, now, fetch_page, max_pages=3):
             "run_history_error": error,
             "all_actions_starts_in_window": len(runs),
             "capture_owner_starts": owners,
+            "v125_completion_only_audit_starts_ignored": passive_v125_completions,
             "classification": classification,
             "observed_source_gaps": record.get("source_gaps_seen"),
             "independent_source_eligibility_proven": False,
@@ -139,6 +152,8 @@ def audit(root, day, now, fetch_page, max_pages=3):
         "limitations": [
             "Actions created_at is a run start, not a verified completed job",
             "An earlier active V229 may overlap a window without a new start",
+            "A V125 schedule start only indicates a possible guarded V229 wake, not a dispatch",
+            "V125 workflow_run completion events are passive audits, never V229 recovery attempts",
             "Empty historical source-gap observations do not prove eligibility",
             "Git source publication and per-source validity at decision time are not verified",
             "Read-only diagnosis only; never retrospectively freeze a race",
