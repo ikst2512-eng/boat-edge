@@ -49,6 +49,8 @@ jobs:
           PYTHONPATH: scripts
         run: |
           python3 -m unittest discover -s tests -p 'test_boat_edge_01_gate1c_source_receipt_proof.py' -v
+          python3 -m unittest discover -s tests -p 'test_boat_edge_01_gate1c_actions_window_audit.py' -v
+          python3 -m py_compile scripts/boat_edge_01_gate1c_actions_window_audit.py
           python3 -m unittest discover -s tests -p 'test_boat_edge_01_gate1c_missing_freeze_diagnostics.py' -v
       - name: Verify prospective source-ready observation in existing V216 only
         env:
