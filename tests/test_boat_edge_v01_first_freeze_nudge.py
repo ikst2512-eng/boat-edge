@@ -149,6 +149,36 @@ fi
         self.assertNotIn("dispatch:", events)
 
     @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
+    def test_skipped_burst_cannot_hide_recent_real_or_active_v229(self):
+        # The first 15 completed runs can all be no-job Actions noise.
+        # List at least 100 runs so a real V229 is not hidden past page size 12.
+        epoch = 1800000000
+        stamp = datetime.fromtimestamp(epoch - 10, timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z")
+        noisy = [{"status": "completed", "conclusion": "cancelled" if i % 2
+                  else "skipped", "created_at": stamp} for i in range(15)]
+        script = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('runs?per_page=100', script)
+        self.assertNotIn('runs?per_page=12', script)
+
+        # A real recent attempt stays subject to the full 120s guard.
+        rows = noisy + [{"status": "completed", "conclusion": "success",
+                         "created_at": stamp}]
+        output, events = self.run_case(
+            runs={"workflow_runs": rows}, MOCK_NOW_EPOCH=epoch)
+        self.assertIn("V229_COOLDOWN", output)
+        self.assertNotIn("dispatch:", events)
+
+        # Even an older in-progress writer cannot be duplicated just because
+        # many skipped completion records precede it.
+        rows = noisy + [{"status": "in_progress", "conclusion": None,
+                         "created_at": stamp}]
+        output, events = self.run_case(
+            runs={"workflow_runs": rows}, MOCK_NOW_EPOCH=epoch)
+        self.assertIn("V229_ALREADY_ACTIVE", output)
+        self.assertNotIn("dispatch:", events)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq required for production workflow")
     def test_bounded_existing_cooldown_recheck_then_single_v229_dispatch(self):
         # A V229 run 65 seconds ago can have missed the odds published after
         # it finished. Keep the full 120s, re-read main and exact 2-10m source
