@@ -164,12 +164,12 @@ class V256OfficialOddsSafety(unittest.TestCase):
         self.assertIn('odds_source_window_allowed(dst.parent,p.stem,x.get("deadline"),at)',wf)
         self.assertNotIn('"window":"deadline -45min to +5min"',wf)
         # Validate both embedded Python programs, not merely matching strings.
-        parts=wf.split("python - <<'PY'\\n")
+        parts=wf.split("python - <<'PY'"+chr(10))
         self.assertGreaterEqual(len(parts),3)
         for part in parts[1:]:
-            if "\\n          PY\\n" not in part:
+            if chr(10)+"          PY"+chr(10) not in part:
                 continue
-            code=part.split("\\n          PY\\n",1)[0]
+            code=part.split(chr(10)+"          PY"+chr(10),1)[0]
             ast.parse(textwrap.dedent(code))
 
 
