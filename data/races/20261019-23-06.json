@@ -8,7 +8,7 @@
     "event": "全日本王者決定戦(開設73周年記念)",
     "race_no": 6,
     "deadline": "13:06",
-    "updated_at": "2026-10-19T10:35:54+09:00",
+    "updated_at": "2026-10-19T10:50:15+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261019&jcd=23&rno=6",
-      "fetched_at": "2026-10-19T10:38:50+09:00",
-      "sha256": "977fb70a26ee10d6b1b9d8b40ac8f8324647279f79ec06dc44e0c3631be2ca79",
+      "fetched_at": "2026-10-19T10:52:40+09:00",
+      "sha256": "41327f24c15636a3ec487ed37f806217b7d04fb98e3db4ba48891f276f5ce228",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261019&jcd=23&rno=6",
+      "fetched_at": "2026-10-19T10:51:32+09:00",
+      "sha256": "9181b50ef2ed8365067a34962bf68f14d204c62ffe9015e846c807ba9a00880c",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "870f22b66726e28a906f61e94c93abf42415c9bde19d42e7e99bbd20083ee0df"
+      "sha256": "4535bfa40aef2ee0b1cefe5ee000d41bf356a581cb7613d61654e60eb8c1a7b0"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "36ef83c24640bf51f2a659a820db1f77abf2bc15dfa9a80f837e5ffb71efab47"
+      "sha256": "9b5a06855b2a61bbf565382f11520783e37306ca3191006f0272fe5904fa772d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "26c90e5cb89b738af108f1683c02df57bde65ca480013747cde4a4b141495426"
+      "sha256": "d2313b6f7dce288a8879726cc463b752ba2e8253e4ef759608dbdaf91244c8c7"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/19.csv",
       "fetched_at": null,
-      "sha256": "6622d7130ca5e3ca2ababee78d372ca7ea1dac7122e441392a2108d625011b90"
+      "sha256": "f3a60466d5c62fe4bafdc385133c8818b10d7c988b58654c6dabbd3e90c758d4"
     }
   },
   "racers": [
@@ -282,13 +288,60 @@
         "trio_rate": 45.24
       },
       "series_tokens": [
-        "8"
+        "8",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "6 4278 / A1 藤岡 俊介 兵庫/兵庫 43歳/52.0kg F0 L0 0.13 7.14 57.98 75.63 7.71 63.16 84.21 40 38.89 50.00 43 30.95 45.24 8 1R"
+      "raw_text": "6 4278 / A1 藤岡 俊介 兵庫/兵庫 43歳/52.0kg F0 L0 0.13 7.14 57.98 75.63 7.71 63.16 84.21 40 38.89 50.00 43 30.95 45.24 8 1 1R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 佐藤 翼 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 上條 暢嵩 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 笠原 亮 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 山田 祐也 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 桑原 悠 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 藤岡 俊介 52.0kg R 1"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
