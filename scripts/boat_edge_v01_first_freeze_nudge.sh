@@ -38,19 +38,19 @@ if ! printf '%s\n' "$plan" | jq -e --arg wf "$wf" '
   if printf '%s\n' "$plan" | jq -e '
     (.window_observation_only == true) and
     (.eligible_denominator_proven == false) and
-    (.decision_window_races | type) == "number" and
-    (.decision_window_races >= 0) and
+    (.freeze_window_races | type) == "number" and
+    (.freeze_window_races >= 0) and
     (.current_windows | type) == "array" and
-    (.current_windows | length) == .decision_window_races and
+    (.current_windows | length) == .freeze_window_races and
     all(.current_windows[];
       (.race_key | type) == "string" and
       (.missing_evidence | type) == "array" and
       all(.missing_evidence[]; type == "string"))
   ' >/dev/null 2>&1; then
     printf '%s\n' "$plan" | jq -c '{
-      window_class: (if .decision_window_races == 0
+      window_class: (if .freeze_window_races == 0
         then "NO_2_TO_10M_WINDOW" else "STRICT_SOURCE_PROOF_NOT_YET_CONFIRMED" end),
-      checked_window_races: .decision_window_races,
+      checked_window_races: .freeze_window_races,
       observed_source_gaps: [.current_windows[] |
         {race_key, missing_evidence}],
       eligible_denominator_proven: false
