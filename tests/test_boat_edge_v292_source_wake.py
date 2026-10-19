@@ -16,6 +16,7 @@ FILES={
     'observer':'.github/workflows/BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml',
     'freeze':'.github/workflows/V235.yml',
     'first_git':'.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml',
+    'recovery':'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml',
     'pages':'.github/workflows/pages-controlled-publish.yml',
 }
 content={k:(ROOT/p).read_text(encoding='utf-8') for k,p in FILES.items()}
@@ -48,8 +49,10 @@ for node in edges:
         seen.add(current)
     walk(node)
 assert 'first_git' in edges['freeze']
-assert 'first_git' in edges['observer']
-assert 'freeze' in edges['observer']
+# No V216 completion subscriber: a skipped job still produces 'completed'.
+for target in ('first_git','freeze','recovery'):
+    assert target not in edges['observer'], (target, edges)
+assert 'observer' not in edges['recovery']
 assert 'observer' in edges['collector']
 assert 'observer' in edges['odds']
 assert 'collector' in edges['odds']

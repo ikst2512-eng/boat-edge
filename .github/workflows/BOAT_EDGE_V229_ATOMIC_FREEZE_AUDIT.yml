@@ -5,20 +5,14 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml']
   workflow_dispatch:
-  # Single terminal first-Git-save owner. Upstream source producers and
-  # V216 original source observations may wake V229, but downstream Pages
-  # never wakes it back: rejected jobs still generate completion events.
+  # Only independently published official source producers and V235 may
+  # wake the terminal first-Git owner. V216 is a diagnostic observer, never
+  # a completion-event source: even a skipped job emits 'completed'.
   workflow_run:
     workflows:
       - 'BOAT EDGE 自動更新'
       - 'BOAT EDGE 3連単オッズ更新 V71'
       - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'
-      # Independent V216 schedule OR guarded workflow_dispatch recovery
-      # supplies another 2-10m chance if V229 cron is delayed. Recovered
-      # V216 can finish LAST after the source producer that prompted it.
-      # Reject V216 workflow_run (collector/odds derived): each producer
-      # already wakes V229 directly. No new cron or prediction writer.
-      - 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps'
     types: [completed]
   schedule:
     - cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'
@@ -33,19 +27,17 @@ concurrency:
 
 jobs:
   atomic-prospective-site-evidence:
-    # Do not echo V216's collector/odds workflow_run triggers. Accept
-    # the independent V216 SCHEDULE or V220's guarded workflow_dispatch
-    # rescue; its successful source observation can land after producers.
-    # V216 never listens to V229, and V220 blocks V216 self-feedback.
+    # Match only trusted upstream names. Job-level guards alone cannot stop
+    # completion-event fanout, so V216 is absent from event subscriptions.
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.name != 'BOAT EDGE V216 - Identify Exact Pre-Deadline Source Gaps' ||
-         github.event.workflow_run.event == 'schedule' ||
-         github.event.workflow_run.event == 'workflow_dispatch')))
+        (github.event.workflow_run.name == 'BOAT EDGE 自動更新' ||
+         github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71' ||
+         github.event.workflow_run.name == 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring')))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
