@@ -32,7 +32,7 @@ class V216CollectorWake(unittest.TestCase):
         self.assertEqual(wf.count('  workflow_run:'),1)
         self.assertEqual(wf.count("      - 'BOAT EDGE 自動更新'"),1)
         self.assertEqual(wf.count("      - 'BOAT EDGE 3連単オッズ更新 V71'"),1)
-        self.assertNotIn("BOAT EDGE V229 - Atomic",wf)
+        self.assertEqual(wf.count("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'"),1)
         self.assertNotIn("git push --force",wf)
 
     def test_gate1c_v235_original_schedule_can_wake_v216_without_feedback(self):
@@ -49,7 +49,7 @@ class V216CollectorWake(unittest.TestCase):
             "      - 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'"),1)
         self.assertIn("github.event.workflow_run.event == 'schedule'",job)
         self.assertIn(
-            "github.event.workflow_run.name != 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",
+            "github.event.workflow_run.name == 'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",
             job)
         for needle in ("github.ref == 'refs/heads/main'",
                        "github.event.workflow_run.conclusion == 'success'",
@@ -274,7 +274,11 @@ class V216CollectorWake(unittest.TestCase):
         # The producer-triggered V216 workflow_run must NOT fan out into
         # another V229 run. Other producer completions still wake V229.
         self.assertNotIn("github.event.workflow_run.event != 'workflow_run'",job)
-        self.assertNotIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",v216)
+        self.assertIn("      - 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",v216)
+        self.assertIn("github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'",
+                      v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0])
+        self.assertIn("github.event.workflow_run.event == 'schedule'",
+                      v216.split('  deadline-audit:',1)[1].split('    runs-on:',1)[0])
         self.assertIn('V220_V216_SELF_WAKE_NO_FEEDBACK_DISPATCH',v220)
         self.assertIn('V220_V216_ALREADY_ACTIVE_NO_DUPLICATE',v220)
         self.assertIn('BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml) cooldown=900',v220)
