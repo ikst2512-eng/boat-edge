@@ -147,3 +147,34 @@ def should_replace(previous: object, candidate: dict, key: str) -> bool:
         return True
     old = record_time(previous)
     return old is None or now > old
+
+
+def odds_source_window_allowed(data_root, key: str, catalog_deadline: str,
+                               now: datetime) -> bool:
+    """Only admit same-race official odds while BOTH published clocks are open.
+
+    A newly changed venue schedule must not reopen a stale individual race
+    or contaminate the immutable first Git prediction. No results are read.
+    """
+    import json
+    from pathlib import Path
+    from scripts.boat_edge_v288_deadline_source_lock import (
+        source_write_allowed_with_prior_deadline)
+
+    if (not isinstance(key, str) or not RACE_KEY.fullmatch(key)
+            or not isinstance(catalog_deadline, str)
+            or not source_write_allowed_with_prior_deadline(
+                data_root, key, catalog_deadline, now)):
+        return False
+    path = Path(data_root) / "races" / (key + ".json")
+    if path.is_symlink() or not path.is_file():
+        return False
+    try:
+        if path.stat().st_size > 1_000_000:
+            return False
+        obj = json.loads(path.read_text(encoding="utf-8"))
+        return (isinstance(obj, dict)
+                and isinstance(obj.get("meta"), dict)
+                and obj["meta"].get("deadline") == catalog_deadline)
+    except (OSError, ValueError, TypeError, UnicodeError, OverflowError):
+        return False
