@@ -50,6 +50,9 @@ def window_runs(fetch_page, start, end, max_pages=3):
         try:
             response = fetch_page(start, end, page)
             runs = response["workflow_runs"]
+            total_count = response.get("total_count")
+            if type(total_count) is not int or total_count < 0:
+                raise ValueError("RUN_TOTAL_COUNT_UNVERIFIED")
             if not isinstance(runs, list):
                 raise ValueError("RUNS_NOT_LIST")
             for run in runs:
@@ -72,6 +75,8 @@ def window_runs(fetch_page, start, end, max_pages=3):
                     "conclusion": run.get("conclusion"), "created_at": created,
                 }
             if len(runs) < 100:
+                if len(found) < total_count:
+                    return [], False, "RUN_TOTAL_COUNT_MISMATCH"
                 return sorted(found.values(), key=lambda x: (x["created_at"], x["id"])), True, None
         except (KeyError, TypeError, ValueError, OSError) as exc:
             return [], False, type(exc).__name__ + ":" + str(exc)[:120]
