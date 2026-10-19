@@ -1130,9 +1130,21 @@ def main():
             'previous_day':report['previous_day']['first_git_original_sha_proven'],
             'saved':changed, 'rate_proven':False},sort_keys=True))
     elif a.recovery_plan:
+        # Same read-only calculation already used by V220. Provide bounded
+        # PRE_RESULT window diagnostics to the existing V229 nudge so a
+        # schedule miss is not confused with missing official source proof.
+        # These entries are OBSERVATIONS, never an eligible-race denominator.
         print(json.dumps({'workflows':doc['recovery_dispatch_candidates'],
             'urgent_odds_only_recovery_keys':doc['urgent_odds_only_recovery_keys'],
-            'urgent_beforeinfo_only_recovery_keys':doc['urgent_beforeinfo_only_recovery_keys']},sort_keys=True))
+            'urgent_beforeinfo_only_recovery_keys':doc['urgent_beforeinfo_only_recovery_keys'],
+            'decision_window_races':doc['decision_window_races'],
+            'current_windows':[{
+                'race_key':item['key'],
+                'deadline_jst':item['deadline_jst'],
+                'missing_evidence':item['missing_evidence']
+            } for item in doc['current_windows']],
+            'eligible_denominator_proven':False,
+            'window_observation_only':True},sort_keys=True))
     else:
         output=Path(a.root)/'data/site_ops_v220/current.json'
         changed=write_if_changed(output,doc)
