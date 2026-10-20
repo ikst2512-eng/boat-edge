@@ -150,8 +150,9 @@ class C1MissedWindowAudit(unittest.TestCase):
         self.assertEqual(len(many), 100)
         records, complete, error = window_runs(
             lambda start, end, page: {"total_count": 100, "workflow_runs": many}, start, end, max_pages=1)
-        self.assertFalse(complete)
-        self.assertEqual(error, "PAGE_LIMIT_REACHED")
+        self.assertTrue(complete)
+        self.assertIsNone(error)
+        self.assertEqual(len(records), 100)
 
     def test_total_count_missing_or_incomplete_is_unverified(self):
         start = datetime(2026, 10, 19, 2, 12, tzinfo=timezone.utc)
