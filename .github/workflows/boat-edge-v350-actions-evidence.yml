@@ -44,7 +44,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          MAX_PAGES: ${{ inputs.max_pages || '3' }}
+          MAX_PAGES: ${{ github.event_name == 'schedule' && '20' || inputs.max_pages || '3' }}
           C1_DAY: ${{ inputs.c1_day || 'yesterday' }}
         run: |
           set -euo pipefail
