@@ -57,6 +57,14 @@ def retry_candidates(rows, day, now=None):
     return candidates
 
 
+def _valid_timestamp(value):
+    try:
+        stamp = datetime.fromisoformat(value)
+        return stamp.tzinfo is not None and stamp.utcoffset() is not None
+    except ValueError:
+        return False
+
+
 def audit(root, day, expected=None, now=None):
     counts = {field: Counter() for field in FIELDS}
     rows = []
@@ -81,7 +89,12 @@ def audit(root, day, expected=None, now=None):
             for field in FIELDS:
                 entry = src.get(field)
                 status = (entry or {}).get("status", "not_recorded") if isinstance(entry, dict) else "not_recorded"
-                if status == "ok" and not (isinstance(entry, dict) and entry.get("sha256") and entry.get("fetched_at")):
+                if status == "ok" and not (
+                        isinstance(entry, dict)
+                        and isinstance(entry.get("sha256"), str)
+                        and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])
+                        and isinstance(entry.get("fetched_at"), str)
+                        and _valid_timestamp(entry["fetched_at"])):
                     status = "unverified_ok"
                 if status == "ok" and field == "beforeinfo":
                     cov = entry.get("six_boat_coverage") or {}
@@ -91,7 +104,7 @@ def audit(root, day, expected=None, now=None):
                 counts[field][status] += 1
             rows.append({"race_key": path.stem, "venue": meta.get("venue"),
                          "deadline": meta.get("deadline"), "statuses": statuses})
-        except (OSError, ValueError, TypeError) as error:
+        except (OSError, UnicodeError, ValueError, TypeError) as error:
             rows.append({"race_key": path.stem, "error": type(error).__name__})
             for field in FIELDS:
                 counts[field]["invalid_record"] += 1
@@ -104,7 +117,7 @@ def audit(root, day, expected=None, now=None):
     summary = {}
     for field in FIELDS:
         success = counts[field]["ok"]
-        summary[field] = {"saved_races": n, "confirmed_ok": success,
+        summary[field] = {"saved_races": n, "recorded_ok_with_metadata": success,
                           "saved_card_success_percent": round(100 * success / n, 2) if n else None,
                           "by_status": dict(sorted(counts[field].items())),
                           "scheduled_recorded_ok_percent": (
@@ -119,6 +132,8 @@ def audit(root, day, expected=None, now=None):
         "date_jst": day, "generated_at_jst": datetime.now(JST).isoformat(),
         "venues_total": 24, "saved_venues": len({r["race_key"][9:11] for r in valid_rows}),
         "saved_races": n,
+        "valid_saved_races": len(valid_rows),
+        "invalid_saved_races": n - len(valid_rows),
         "expected_scheduled_races": len(expected) if expected is not None else None,
         "missing_scheduled_race_keys": missing,
         "unexpected_saved_race_keys": unexpected,
