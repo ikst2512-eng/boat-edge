@@ -186,7 +186,8 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "scheduled_card_presence_percent": (
             round(100 * len(saved_keys & expected) / len(expected), 2)
             if expected else None),
-        "all_scheduled_race_success_percent": None,\n        "collection_state": "PROVISIONAL_NO_LIVE_SOURCE_ATTESTATION",
+        "all_scheduled_race_success_percent": None,
+        "collection_state": "PROVISIONAL_NO_LIVE_SOURCE_ATTESTATION",
         "note": "Saved-card rate only; missing scheduled races, live source verification and original exhibition values are not proven.",
         "summary": summary, "retry_candidates_diagnostics_only": retry_candidates(rows + missing_rows, day, now), "rows": rows,
     }
