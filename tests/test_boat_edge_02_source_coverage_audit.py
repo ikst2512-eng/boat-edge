@@ -1,9 +1,10 @@
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from scripts.boat_edge_02_source_coverage_audit import audit, load_expected
+from scripts.boat_edge_02_source_coverage_audit import audit, load_expected, retry_candidates
 
 
 class SourceCoverageTests(unittest.TestCase):
@@ -34,6 +35,16 @@ class SourceCoverageTests(unittest.TestCase):
             report = audit(Path(tmp), "20261021")
             self.assertIsNone(report["missing_scheduled_race_keys"])
             self.assertIsNone(report["scheduled_card_presence_percent"])
+
+    def test_retry_only_before_deadline(self):
+        jst = timezone(timedelta(hours=9))
+        rows = [{"race_key": "20261021-16-07", "deadline": "13:00",
+                 "statuses": {"race_card": "ok", "beforeinfo": "missing"}}]
+        early = retry_candidates(rows, "20261021", datetime(2026, 10, 21, 12, 0, tzinfo=jst))
+        late = retry_candidates(rows, "20261021", datetime(2026, 10, 21, 14, 0, tzinfo=jst))
+        self.assertEqual(len(early), 1)
+        self.assertFalse(early[0]["automatic_fetch_authorized"])
+        self.assertEqual(late, [])
 
     def test_schedule_duplicates_rejected(self):
         with TemporaryDirectory() as tmp:
