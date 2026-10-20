@@ -12,7 +12,6 @@ on:
   # V229 does not listen to V125: no workflow_run feedback cycle.
   workflow_run:
     workflows:
-      - "BOAT EDGE V123 UI Matched Final History"
       - "BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit"
     types:
       - completed
@@ -30,15 +29,14 @@ concurrency:
 jobs:
   audit:
     # The workflow uses checkout ref: main and holds contents:write. Never
-    # let a branch push or an unrelated/failed V123 workflow_run mutate main.
+    # let a branch push or an unrelated/failed workflow_run mutate main.
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.name == 'BOAT EDGE V123 UI Matched Final History' ||
-         github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit')))
+        github.event.workflow_run.name == 'BOAT EDGE V229 - Atomic Site Freeze and Pre-result Audit'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
