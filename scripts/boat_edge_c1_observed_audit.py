@@ -132,6 +132,8 @@ def historical_source_timing(root: Path, key: str, due: datetime) -> dict:
             "latest_file_minutes_before_deadline": round(minutes, 2) if minutes is not None else None,
             "latest_file_in_2_to_10m_window": bool(
                 status_ok and minutes is not None and 2 <= minutes <= 10),
+            "latest_file_in_10_to_19m_prewarm": bool(
+                status_ok and minutes is not None and 10 < minutes <= 19),
         }
     identity_ok = (meta.get("phase") == "PRE_RESULT"
                    and meta.get("results_seen") is False
@@ -146,6 +148,14 @@ def historical_source_timing(root: Path, key: str, due: datetime) -> dict:
         "all_four_latest_files_in_decision_window": bool(
             identity_ok and all(v["latest_file_in_2_to_10m_window"]
                                 for v in facts.values())),
+        "all_four_latest_files_in_prewarm_window": bool(
+            identity_ok and all(v["latest_file_in_10_to_19m_prewarm"]
+                                for v in facts.values())),
+        "latest_files_prewarm_only": bool(
+            identity_ok and all(v["latest_file_in_10_to_19m_prewarm"]
+                                for v in facts.values())
+            and not all(v["latest_file_in_2_to_10m_window"]
+                        for v in facts.values())),
         "sources": facts,
     }
 
@@ -227,6 +237,9 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
             for r in unproven),
         "latest_four_sources_not_in_2_to_10m": sum(
             (r.get("latest_source_timing") or {}).get("all_four_latest_files_in_decision_window") is not True
+            for r in unproven),
+        "latest_four_sources_prewarm_only": sum(
+            (r.get("latest_source_timing") or {}).get("latest_files_prewarm_only") is True
             for r in unproven),
     }
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
