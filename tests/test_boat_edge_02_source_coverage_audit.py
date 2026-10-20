@@ -48,6 +48,13 @@ class SourceCoverageTests(unittest.TestCase):
         self.assertFalse(early[0]["automatic_fetch_authorized"])
         self.assertEqual(late, [])
 
+    def test_not_in_window_is_not_retry_error(self):
+        jst = timezone(timedelta(hours=9))
+        rows = [{"race_key": "20261021-16-07", "deadline": "13:49",
+                 "statuses": {"race_card": "ok", "beforeinfo": "not_in_window"}}]
+        result = retry_candidates(rows, "20261021", datetime(2026, 10, 21, 3, 0, tzinfo=jst))
+        self.assertEqual(result, [])
+
     def test_corrupt_saved_card_counts_as_missing(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
