@@ -64,6 +64,25 @@ class WorkflowInventoryTests(unittest.TestCase):
         by_name={entry['workflow']:entry for entry in audit(ROOT/'.github/workflows')['workflows']}
         self.assertIn('schedule',by_name['BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml']['triggers'])
 
+    def test_critical_freeze_workflows_do_not_subscribe_to_each_other(self):
+        # C-1 completion event guard: official source producers only.
+        expected = ("BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml",
+                    "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml", "V235.yml")
+        names = {
+            (ROOT / ".github/workflows" / path).read_text(encoding="utf-8").splitlines()[0].removeprefix("name: ").strip()
+            for path in expected
+        }
+        for path in expected:
+            source = (ROOT / ".github/workflows" / path).read_text(encoding="utf-8")
+            event = source.split("permissions:", 1)[0]
+            self.assertIn("  workflow_run:", event)
+            self.assertIn("  schedule:", event)
+            for other in names:
+                self.assertNotIn("      - '" + other + "'", event)
+                self.assertNotIn('      - "' + other + '"', event)
+            self.assertIn("BOAT EDGE 自動更新", event)
+            self.assertIn("BOAT EDGE 3連単オッズ更新 V71", event)
+
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
         self.assertEqual(audit(root), audit(root))
