@@ -85,6 +85,7 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
     counts = dict(sorted(Counter(r["status"] for r in rows).items()))
     receipt_counts = dict(sorted(Counter(r.get("receipt_status") or "UNKNOWN" for r in rows).items()))
     gap_flags = dict(sorted(Counter(gap for r in rows for gap in r.get("source_gaps_at_last_observation", [])).items()))
+    observation_reasons = dict(sorted(Counter(r.get("last_observed_reason") or "UNKNOWN" for r in rows).items()))
     missing_schedule = sorted(set(schedule) - {r["race_key"] for r in rows})
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
@@ -92,7 +93,9 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
             "scheduled_races_catalog": len(schedule) if same_day else None,
             "observed_races": len(rows), "not_observed_count": len(missing_schedule),
             "classification_counts": counts, "receipt_status_counts": receipt_counts,
-            "last_observation_source_gap_flags": gap_flags, "races": rows,
+            "last_observation_source_gap_flags": gap_flags,
+            "last_observation_reason_counts": observation_reasons,
+            "source_gap_flags_are_not_root_causes": True, "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,
             "interpretation": "Unproven after deadline is not proof of eligible missed freeze; pending is never a final failure."}
