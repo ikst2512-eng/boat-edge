@@ -1086,3 +1086,55 @@ class V235DynamicPriorityContractTests(unittest.TestCase):
         self.assertIn('candidates=targets(Path("."),local_now())',workflow)
         self.assertIn('--priority-race-key "$priority_key"',workflow)
         self.assertNotIn('--priority-race-key 20261016-14-01',workflow)
+
+
+class V230EightRaceRescueTests(unittest.TestCase):
+    """The initial priority stays isolated; only its failed freeze opens a bounded fanout."""
+
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory()
+        self.root=Path(self.tmp.name)
+        self.now=datetime(2026,10,11,14,36,tzinfo=JST)
+        self.keys=[f'20261011-06-{i:02d}' for i in range(1,11)]
+        for i,key in enumerate(self.keys,1):
+            row=makerace('14:43')
+            row['race_key']=key
+            row['meta']['race_no']=i
+            m.write_json(self.root/'data/races'/f'{key}.json',row)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':key,'deadline':'14:43'} for key in self.keys]}]})
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_priority_failed_freeze_tries_eight_other_races_not_more(self):
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0) as freeze,
+              patch.object(m,'fetch_one',side_effect=lambda root,key:(key,{'mock':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='source_blocked'),
+              patch.object(m,'local_now',return_value=self.now)):
+            status=m.run(self.root,now=self.now,worker=8,priority_key=self.keys[0])
+        self.assertEqual(status['priority_failure_fallback_targets'],self.keys[1:9])
+        self.assertEqual(status['targets'],self.keys[:9])
+        self.assertEqual(fetch.call_count,9)
+        self.assertEqual(freeze.call_count,2)
+        self.assertNotIn(self.keys[9],status['targets'])
+
+    def test_postcommit_requires_git_proof_before_eight_other_races(self):
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011','targets':[self.keys[0]],
+            'outcomes':{self.keys[0]:'fresh_verified'},
+            'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}),
+              patch.object(m,'fetch_one',side_effect=lambda root,key:(key,{'mock':True},None)) as fetch,
+              patch.object(m,'update_one',return_value='fresh_verified'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0),
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as slept):
+            result=m.run_postcommit_incomplete(self.root,now=self.now,worker=8)
+        self.assertTrue(result['first_git_proven'])
+        self.assertEqual(result['retry_keys'],self.keys[1:9])
+        self.assertEqual(fetch.call_count,8)
+        slept.assert_not_called()

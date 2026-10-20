@@ -507,7 +507,7 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     # official request cannot delay its successful immutable first Git add.
     # If that FIRST request actually failed and produced no snapshot, however,
     # the existing one-race isolation must not starve OTHER imminent races.
-    # Make one bounded attempt on up to three still-valid alternative targets;
+    # Make one bounded attempt on up to eight still-valid alternative targets;
     # the formal/result locks, 2-10m first-freeze, 120-odds and scratch gates
     # are all independently rechecked by existing targets/update_one/V229.
     status['priority_failure_fallback_targets']=[]
@@ -527,12 +527,12 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
             due=due_for(key,(race.get('meta') or {}).get('deadline'))
             if due and 2 <= (due-actual_now).total_seconds()/60 <= 10:
                 alternatives.append(key)
-            if len(alternatives)>=3:break
+            if len(alternatives)>=8:break
         if alternatives:
             status['priority_failure_fallback_targets']=alternatives
             selected.extend(alternatives)
             status['targets']=selected
-            with ThreadPoolExecutor(max_workers=min(worker,3)) as pool:
+            with ThreadPoolExecutor(max_workers=min(worker,8)) as pool:
                 futures=[pool.submit(fetch_one,root,key) for key in alternatives]
                 for task in as_completed(futures):
                     key,data,err=task.result()
@@ -624,7 +624,7 @@ def run_postcommit_incomplete(root, now=None, worker=6):
     # The V235 first-Git priority intentionally fetches only ONE imminent race.
     # Successful publication is not a reason to abandon other live races that
     # were never attempted. ONLY after the original Git first-add is proven,
-    # take up to 3 more eligible 2-10m races. Never delay the FIRST push.
+    # take up to 8 more eligible 2-10m races. Never delay the FIRST push.
     unattempted=[]
     for key in targets(root,now):
         if key in source_keys:
@@ -634,7 +634,7 @@ def run_postcommit_incomplete(root, now=None, worker=6):
         due=due_for(key,deadline)
         if due and 2 <= (due-now).total_seconds()/60 <= 10:
             unattempted.append(key)
-        if len(unattempted)>=3:
+        if len(unattempted)>=8:
             break
     report['unattempted_live_targets_seen']=unattempted
     if not incomplete and not unattempted:
@@ -655,9 +655,9 @@ def run_postcommit_incomplete(root, now=None, worker=6):
         if (due and 2 <= (due-actual_now).total_seconds()/60 <= 10
                 and source_write_allowed(root/'data',key,deadline,actual_now)):
             retry_keys.append(key)
-        if len(retry_keys)>=3:
+        if len(retry_keys)>=8:
             break
-    report['retry_keys']=retry_keys[:3]
+    report['retry_keys']=retry_keys[:8]
     if not report['retry_keys']:
         return report
     retry_keys=report['retry_keys']
