@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
   # Keep a bounded hourly diagnostic; V235 already freezes and scores evidence.
   # Do not fan out another writer after each V235 success.
-  schedule:
-    - cron: '17 0-14,23 * * *'
+  # C-1 priority: retrospective research-only Git writing is manual-only.
+  # Preserve source, evidence and manual audit without competing with freezes.
 
 permissions:
   contents: write
