@@ -27,6 +27,8 @@ class SourceCoverageTests(unittest.TestCase):
             report = audit(root, "20261021", expected)
             self.assertEqual(report["missing_scheduled_race_keys"], ["20261021-17-09"])
             self.assertEqual(report["scheduled_card_presence_percent"], 50.0)
+            self.assertEqual(report["summary"]["race_card"]["scheduled_recorded_ok_percent"], 50.0)
+            self.assertEqual(report["summary"]["beforeinfo"]["scheduled_recorded_ok_percent"], 0.0)
             self.assertEqual(report["summary"]["beforeinfo"]["by_status"], {"incomplete_exhibition": 1})
             self.assertIsNone(report["all_scheduled_race_success_percent"])
 
