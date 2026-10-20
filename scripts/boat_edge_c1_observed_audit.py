@@ -26,10 +26,12 @@ def parse_time(raw):
         return None
 
 
-def accounting(root: Path, now: datetime) -> dict:
+def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
+    if audit_day is not None and (len(audit_day) != 8 or not audit_day.isascii() or not audit_day.isdigit()):
+        raise ValueError("audit_day must be YYYYMMDD")
     root = Path(root)
     now = now.astimezone(JST)
-    day = now.strftime("%Y%m%d")
+    day = (audit_day or now.strftime("%Y%m%d"))
     history = load(root / "data/site_paper_sim/readiness_history_v215" / (day + ".json"))
     observed = history.get("observations") or {}
     catalog = load(root / "data/today.json")
@@ -47,7 +49,10 @@ def accounting(root: Path, now: datetime) -> dict:
             continue
         if not isinstance(observation, dict):
             continue
-        clock = schedule.get(key)
+        # Historical observations retain the deadline after today.json rotates.
+        # This is an observed clock, not independent eligibility proof.
+        clock = schedule.get(key) or observation.get("deadline")
+        deadline_source = "catalog" if key in schedule else "readiness_observation"
         if not isinstance(clock, str) or len(clock) != 5:
             rows.append({"race_key": key, "status": "UNKNOWN_DEADLINE",
                          "last_observed_reason": observation.get("reason")})
@@ -68,7 +73,7 @@ def accounting(root: Path, now: datetime) -> dict:
         else:
             status = "UNPROVEN_AFTER_DEADLINE"
         rows.append({"race_key": key, "status": status, "deadline": clock,
-                     "receipt_status": proof.get("status"),
+                     "receipt_status": proof.get("status"), "deadline_source": deadline_source,
                      "last_observed_reason": observation.get("reason"),
                      "last_observed_at": observation.get("last_seen_at"),
                      "source_gaps_at_last_observation": observation.get("source_gaps") or []})
@@ -89,11 +94,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--now", default=None)
+    parser.add_argument("--day", default=None, help="Observed race day YYYYMMDD; no historical backfill")
     args = parser.parse_args()
     now = parse_time(args.now) if args.now else datetime.now(timezone.utc)
     if now is None:
         parser.error("invalid timezone-aware --now")
-    print(json.dumps(accounting(Path(args.root), now), ensure_ascii=False, sort_keys=True))
+    print(json.dumps(accounting(Path(args.root), now, args.day), ensure_ascii=False, sort_keys=True))
 
 
 if __name__ == "__main__":
