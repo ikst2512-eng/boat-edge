@@ -131,11 +131,17 @@ jobs:
           if git diff --cached --quiet; then echo V229_NO_NEW_ELIGIBLE_EVIDENCE; exit 0; fi
           git diff --cached --check
           git commit -m 'V229 first-freeze evidence, source freshness and atomic pre-result SHA audit'
+          # First push immediately; rebase only if the remote rejects it.
           for attempt in 1 2 3 4; do
-            git pull --rebase origin main
             if git push origin HEAD:main; then
               echo 'V229_ATOMIC_PROSPECTIVE_EVIDENCE_COMMITTED'
               exit 0
+            fi
+            if (( attempt == 4 )); then break; fi
+            if ! git pull --rebase origin main; then
+              git rebase --abort || true
+              echo V229_REBASE_CONFLICT_NO_PRODUCTION_CLAIM >&2
+              exit 1
             fi
             sleep 2
           done
