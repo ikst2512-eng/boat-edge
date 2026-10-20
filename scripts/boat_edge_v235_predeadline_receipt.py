@@ -96,7 +96,7 @@ def choose(root, now, requested=None):
     return min(recent or found, key=lambda x: x[0])
 
 
-def receipt(root, now=None, requested=None):
+def receipt(root, now=None, requested=None, historical_deadline=None):
     root = Path(root)
     now = (now or datetime.now(JST)).astimezone(JST)
     record = {
@@ -107,7 +107,18 @@ def receipt(root, now=None, requested=None):
         "formal_unlock": False,
         "prediction_saved_proven": False,
     }
-    chosen = choose(root, now, requested)
+    # Historical audit supplies the archived observation clock; this does not
+    # establish official eligibility and cannot create or alter predictions.
+    if historical_deadline is not None:
+        if (not isinstance(requested, str) or not KEY.fullmatch(requested) or
+                not re.fullmatch(r"(?:[01]\\d|2[0-3]):[0-5]\\d", str(historical_deadline))):
+            record["status"] = "INVALID_HISTORICAL_RACE_OR_DEADLINE"
+            return record
+        historical_due = datetime.strptime(requested[:8] + historical_deadline,
+                                            "%Y%m%d%H:%M").replace(tzinfo=JST)
+        chosen = (historical_due, requested, None, historical_deadline)
+    else:
+        chosen = choose(root, now, requested)
     if chosen is None:
         record["status"] = "NO_SAME_DAY_VERIFIED_RACE_ID"
         return record
