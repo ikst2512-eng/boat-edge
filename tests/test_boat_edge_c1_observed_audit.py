@@ -92,6 +92,9 @@ class C1ObservedAuditTests(unittest.TestCase):
             if args[0] == "log":
                 return (b"a" * 40) + b"\n"
             if args[0] == "show" and args[1].startswith("a" * 40 + ":"):
+                if "site_prediction_audit" in args[1]:
+                    return json.dumps({"race_key": KEY, "pass": True,
+                        "latest_snapshot_sha256": hashlib.sha256(raw).hexdigest()}).encode()
                 return raw
             if args[0] == "show":
                 return b"2026-10-20T06:48:00+00:00\n"
