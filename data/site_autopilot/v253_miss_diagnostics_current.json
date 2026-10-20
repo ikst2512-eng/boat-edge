@@ -3,23 +3,21 @@
   "formal_result_access": false,
   "lanes": {
     "v236": {
-      "excluded": {
-        "site_result_not_cross_verified": 3
-      },
+      "excluded": {},
       "headsecond_by_frozen_policy": {
         "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES": {
-          "matched_races": 54,
+          "matched_races": 57,
           "miss_categories": {
             "headsecond10": {
               "head_absent": 6,
-              "hit": 16,
-              "second_absent_given_head": 16,
+              "hit": 18,
+              "second_absent_given_head": 17,
               "third_absent_given_head_second": 16
             },
             "hit10": {
               "head_absent": 5,
-              "hit": 15,
-              "second_absent_given_head": 18,
+              "hit": 17,
+              "second_absent_given_head": 19,
               "third_absent_given_head_second": 16
             }
           }
@@ -45,26 +43,26 @@
       "miss_categories": {
         "balance10": {
           "head_absent": 18,
-          "hit": 60,
-          "second_absent_given_head": 34,
+          "hit": 62,
+          "second_absent_given_head": 35,
           "third_absent_given_head_second": 50
         },
         "coverage15": {
           "head_absent": 9,
-          "hit": 72,
-          "second_absent_given_head": 29,
+          "hit": 74,
+          "second_absent_given_head": 30,
           "third_absent_given_head_second": 52
         },
         "hit10": {
           "head_absent": 17,
-          "hit": 56,
-          "second_absent_given_head": 39,
+          "hit": 58,
+          "second_absent_given_head": 40,
           "third_absent_given_head_second": 50
         },
         "scenario7plus3": {
           "head_absent": 18,
-          "hit": 58,
-          "second_absent_given_head": 39,
+          "hit": 60,
+          "second_absent_given_head": 40,
           "third_absent_given_head_second": 47
         }
       },
@@ -2392,9 +2390,54 @@
           "race_key": "20261019-16-10",
           "reported_head_hit": false,
           "winning_combo": "3-1-6"
+        },
+        {
+          "actual_head": "1",
+          "candidate_policy": "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES",
+          "categories": {
+            "balance10": "hit",
+            "coverage15": "hit",
+            "headsecond10": "hit",
+            "hit10": "hit",
+            "scenario7plus3": "hit"
+          },
+          "date_jst": "20261020",
+          "race_key": "20261020-08-02",
+          "reported_head_hit": true,
+          "winning_combo": "1-2-4"
+        },
+        {
+          "actual_head": "1",
+          "candidate_policy": "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES",
+          "categories": {
+            "balance10": "second_absent_given_head",
+            "coverage15": "second_absent_given_head",
+            "headsecond10": "second_absent_given_head",
+            "hit10": "second_absent_given_head",
+            "scenario7plus3": "second_absent_given_head"
+          },
+          "date_jst": "20261020",
+          "race_key": "20261020-16-01",
+          "reported_head_hit": true,
+          "winning_combo": "1-5-2"
+        },
+        {
+          "actual_head": "3",
+          "candidate_policy": "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES",
+          "categories": {
+            "balance10": "hit",
+            "coverage15": "hit",
+            "headsecond10": "hit",
+            "hit10": "hit",
+            "scenario7plus3": "hit"
+          },
+          "date_jst": "20261020",
+          "race_key": "20261020-17-02",
+          "reported_head_hit": true,
+          "winning_combo": "3-1-2"
         }
       ],
-      "races_verified": 162
+      "races_verified": 165
     },
     "v240": {
       "excluded": {},
@@ -3223,5 +3266,5 @@
   "real_or_paper_wagers_placed": 0,
   "schema": "BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1",
   "scope": "POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS",
-  "site_verified_reference_races": 338
+  "site_verified_reference_races": 360
 }
