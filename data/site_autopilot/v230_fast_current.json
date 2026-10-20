@@ -1,33 +1,36 @@
 {
-  "schema": "BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1",
   "day_jst": "20261020",
-  "targets": [
-    "20261020-08-09"
-  ],
+  "imminent_retry_snapshots": 0,
+  "imminent_retry_targets": [],
+  "network_error": 0,
+  "new_snapshots_atomic_audited": 0,
+  "odds_incomplete": 0,
+  "outcomes": {
+    "20261020-13-09": "fresh_verified",
+    "20261020-23-09": "fresh_verified"
+  },
+  "priority_applied": false,
+  "priority_failure_fallback_snapshots": 0,
+  "priority_failure_fallback_targets": [],
+  "priority_race_key": null,
+  "priority_zero_freeze_reason": "NOT_APPLICABLE",
+  "schema": "BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1",
+  "source_blocked": 0,
+  "source_refreshed": 2,
   "target_diagnostic": {
-    "today_mismatch": 0,
+    "duplicate_catalog_race": 0,
+    "eligible": 2,
     "invalid_deadline_or_key": 0,
     "outside_2_to_19_min_window": 139,
-    "snapshot_exists": 0,
+    "race_identity_mismatch": 0,
     "race_missing_or_unsafe": 0,
     "racers_not_six": 0,
-    "race_identity_mismatch": 0,
-    "duplicate_catalog_race": 0,
-    "eligible": 5
+    "snapshot_exists": 3,
+    "today_mismatch": 0
   },
-  "priority_applied": true,
-  "priority_race_key": "20261020-08-09",
-  "source_refreshed": 1,
-  "source_blocked": 0,
-  "odds_incomplete": 0,
-  "network_error": 0,
-  "outcomes": {
-    "20261020-08-09": "fresh_verified"
-  },
-  "priority_failure_fallback_targets": [],
-  "priority_failure_fallback_snapshots": 0,
-  "priority_zero_freeze_reason": "NOT_APPLICABLE",
-  "imminent_retry_targets": [],
-  "imminent_retry_snapshots": 0,
-  "new_snapshots_atomic_audited": 4
+  "targets": [
+    "20261020-13-09",
+    "20261020-23-09"
+  ],
+  "v235_precommit_second_freeze_snapshots": 0
 }
