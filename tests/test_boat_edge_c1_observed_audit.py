@@ -104,6 +104,13 @@ class C1ObservedAuditTests(unittest.TestCase):
                              requested=KEY, historical_deadline="15:53")
         self.assertTrue(result["prediction_saved_proven"])
         self.assertEqual(result["first_git_snapshot_sha256"], hashlib.sha256(raw).hexdigest())
+        with patch("boat_edge_v235_predeadline_receipt.git", side_effect=lambda root, *args:
+                b"2026-10-20T06:52:30+00:00\\n" if args[0] == "show" and
+                args[1] == "-s" else fake_git(root, *args)):
+            late = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
+                           requested=KEY, historical_deadline="15:53")
+        self.assertFalse(late["prediction_saved_proven"])
+
 
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
