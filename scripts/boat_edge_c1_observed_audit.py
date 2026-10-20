@@ -10,10 +10,12 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from datetime import datetime, timedelta, timezone
+import hashlib
+import re
 import json
 from pathlib import Path
 
-from boat_edge_v235_predeadline_receipt import JST, KEY, load, receipt
+from boat_edge_v235_predeadline_receipt import JST, KEY, load, receipt, git, instant
 
 SCHEMA = "BOAT_EDGE_C1_OBSERVED_FIRST_GIT_ACCOUNTING_V1"
 
@@ -26,10 +28,56 @@ def parse_time(raw):
         return None
 
 
-def accounting(root: Path, now: datetime) -> dict:
+def archived_receipt(root: Path, key: str, due: datetime) -> dict:
+    """Independent historical first-Git evidence; never upgrades eligibility.
+
+    Uses only original committed snapshot bytes, committed time, V229 audit,
+    and pre-result snapshot metadata. Does not read scores or results.
+    """
+    rel = "data/site_prediction_snapshots/" + key + ".json"
+    path = root / rel
+    if not path.is_file():
+        return {"prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}
+    raw = path.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    snap = load(path)
+    audit = load(root / "data/site_prediction_audit" / (key + ".json"))
+    evidence = load(root / "data/site_autopilot/v229_evidence" / (key + ".json"))
+    saved = instant(snap.get("first_saved_at"))
+    if (snap.get("race_key") != key or snap.get("snapshot_window") != "FINAL_15M"
+            or snap.get("prediction_kind") != "SITE_REFERENCE_V122"
+            or any((snap.get("guards") or {}).get(x) is not False
+                   for x in ("results_seen", "unlock", "scoring"))
+            or audit.get("pass") is not True
+            or audit.get("latest_snapshot_sha256") != digest
+            or evidence.get("snapshot_sha256") != digest
+            or evidence.get("race_key") != key
+            or evidence.get("new_snapshot_created_this_run") is not True
+            or saved is None
+            or not 2 <= (due - saved).total_seconds() / 60 <= 10):
+        return {"prediction_saved_proven": False, "status": "ARCHIVE_SOURCE_OR_TIME_UNVERIFIED"}
+    commits = git(root, "log", "--diff-filter=A", "--format=%H", "--", rel)
+    if not commits:
+        return {"prediction_saved_proven": False, "status": "ARCHIVE_NO_FIRST_GIT_ADD"}
+    sha = commits.decode("utf-8", "replace").strip().splitlines()[-1]
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return {"prediction_saved_proven": False, "status": "ARCHIVE_BAD_COMMIT_SHA"}
+    original = git(root, "show", sha + ":" + rel)
+    committed = git(root, "show", "-s", "--format=%cI", sha)
+    commit_time = instant(committed.decode().strip()) if committed else None
+    if (original is None or hashlib.sha256(original).hexdigest() != digest
+            or commit_time is None or commit_time >= due):
+        return {"prediction_saved_proven": False, "status": "ARCHIVE_FIRST_GIT_PROOF_UNVERIFIED"}
+    return {"prediction_saved_proven": True, "status": "ARCHIVED_FIRST_GIT_PREDEADLINE",
+            "first_git_commit": sha, "first_git_commit_at": commit_time.isoformat()}
+
+
+def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
     root = Path(root)
     now = now.astimezone(JST)
-    day = now.strftime("%Y%m%d")
+    day = day or now.strftime("%Y%m%d")
+    if not re.fullmatch(r"20\d{6}", day):
+        raise ValueError("day must be YYYYMMDD")
     history = load(root / "data/site_paper_sim/readiness_history_v215" / (day + ".json"))
     observed = history.get("observations") or {}
     catalog = load(root / "data/today.json")
@@ -48,6 +96,10 @@ def accounting(root: Path, now: datetime) -> dict:
         if not isinstance(observation, dict):
             continue
         clock = schedule.get(key)
+        if not same_day:
+            # Historic catalog is overwritten on rollover; history keeps
+            # the observed deadline but is not an eligibility certificate.
+            clock = observation.get("deadline")
         if not isinstance(clock, str) or len(clock) != 5:
             rows.append({"race_key": key, "status": "UNKNOWN_DEADLINE",
                          "last_observed_reason": observation.get("reason")})
@@ -60,7 +112,8 @@ def accounting(root: Path, now: datetime) -> dict:
         # The last recorded provisional 'snapshot_missing' must never be
         # classified as a failed final Git save merely because the clock passed.
         # Check the real Git first-add even if the readiness history is stale.
-        proof = receipt(root, now=now, requested=key)
+        proof = (receipt(root, now=now, requested=key) if same_day
+                 else archived_receipt(root, key, due))
         if proof.get("prediction_saved_proven") is True:
             status = "PROVEN_FIRST_GIT_BEFORE_DEADLINE"
         elif now < due:
@@ -76,6 +129,7 @@ def accounting(root: Path, now: datetime) -> dict:
     missing_schedule = sorted(set(schedule) - {r["race_key"] for r in rows})
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
+            "deadline_source": "CURRENT_DAY_CATALOG" if same_day else "HISTORICAL_V215_OBSERVATION_UNVERIFIED",
             "official_result_files_read": False, "formal_prediction_files_read": False,
             "scheduled_races_catalog": len(schedule) if same_day else None,
             "observed_races": len(rows), "not_observed_count": len(missing_schedule),
@@ -89,11 +143,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--now", default=None)
+    parser.add_argument("--day", default=None, help="YYYYMMDD observation cohort, including previous days")
     args = parser.parse_args()
     now = parse_time(args.now) if args.now else datetime.now(timezone.utc)
     if now is None:
         parser.error("invalid timezone-aware --now")
-    print(json.dumps(accounting(Path(args.root), now), ensure_ascii=False, sort_keys=True))
+    print(json.dumps(accounting(Path(args.root), now, day=args.day), ensure_ascii=False, sort_keys=True))
 
 
 if __name__ == "__main__":
