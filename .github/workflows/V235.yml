@@ -130,6 +130,13 @@ jobs:
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v232_pre_result_cohort.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v215_readiness.py
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v214_shadow.py freeze
+            # C-1: V230 may have refreshed official sources at 10-19m and
+            # found no race yet inside the strict 2-10m first-freeze window.
+            # Cohort/readiness/shadow work can cross the 10m boundary.
+            # Recheck the unchanged V229 strict gate immediately before Git
+            # staging rather than waiting for another best-effort Actions start.
+            # No sleep, new writer, result access, or eligibility relaxation.
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_atomic_freeze.py
             python3 - <<'PY_V234_STAGE'
           from pathlib import Path
           import json,subprocess,re
