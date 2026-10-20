@@ -177,7 +177,7 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
         elif present:
             classification = "SOURCE_OR_RECOVERY_START_WITHOUT_V229_START"
         else:
-            classification = "NO_CAPTURE_OWNER_START_IN_WINDOW"
+            classification = "NO_NEW_CAPTURE_OWNER_START_PRIOR_ACTIVE_RUN_UNVERIFIED"
         output.append({
             "race_key": key, "deadline_jst": due.strftime("%H:%M"),
             "window_start_utc": utc_string(start),
@@ -193,6 +193,7 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
             "v215_observation_present": key in history["observations"],
             "independent_source_eligibility_proven": False,
             "no_prior_active_run_proven": False,
+            "prior_active_run_status": "UNVERIFIED_BY_START_WINDOW_ONLY",
             "first_git_save_absent_in_current_tree": True,
         })
     return {
