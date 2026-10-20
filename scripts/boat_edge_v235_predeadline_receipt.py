@@ -141,7 +141,7 @@ def historical_first_receipt(root, record, key, due, snap_path):
     )
     guards = first.get("guards")
     valid = (record["first_git_v229_audit_valid"] and
-             commit_time is not None and commit_time < due and
+             commit_time is not None and 2 <= (due - commit_time).total_seconds() / 60 <= 10 and
              raw is not None and first.get("race_key") == key and
              first.get("snapshot_window") == "FINAL_15M" and
              first.get("prediction_kind") == "SITE_REFERENCE_V122" and
