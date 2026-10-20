@@ -98,6 +98,58 @@ def observation_diagnostic(observation: dict, due: datetime) -> dict:
     return {"class": category, "minutes_to_deadline": round(minutes, 2)}
 
 
+def historical_source_timing(root: Path, key: str, due: datetime) -> dict:
+    """Read-only timings of latest locally preserved PRE_RESULT source files.
+
+    Later updates can replace earlier source bytes, so this cannot certify
+    source eligibility at a specific historical decision instant.
+    """
+    race = load(root / "data/races" / (key + ".json"))
+    meta = race.get("meta") or {}
+    source_audit = race.get("source_audit") or {}
+    scratch = load(root / "data/site_scratches_v182" / (key + ".json"))
+    odds = load(root / "data/site_odds" / (key + ".json"))
+    facts = {}
+    inputs = (
+        ("race_card", (source_audit.get("race_card") or {}).get("fetched_at"),
+         (source_audit.get("race_card") or {}).get("status") == "ok"),
+        ("beforeinfo", (source_audit.get("beforeinfo") or {}).get("fetched_at"),
+         (source_audit.get("beforeinfo") or {}).get("status") == "ok"),
+        ("scratch", scratch.get("checked_at"),
+         scratch.get("race_key") == key and scratch.get("blocked") is False
+         and scratch.get("official_beforeinfo_source_status") == "ok"),
+        ("official_odds", odds.get("fetched_at"),
+         odds.get("race_key") == key and odds.get("verified_official_dom_v167") is True
+         and odds.get("available_count") == 120
+         and odds.get("phase") == "PRE_RESULT_PURCHASE_ONLY"),
+    )
+    for source, raw, status_ok in inputs:
+        stamp = parse_time(raw)
+        minutes = (due - stamp).total_seconds() / 60 if stamp else None
+        facts[source] = {
+            "latest_file_verified": bool(status_ok),
+            "latest_file_timestamp": stamp.isoformat() if stamp else None,
+            "latest_file_minutes_before_deadline": round(minutes, 2) if minutes is not None else None,
+            "latest_file_in_2_to_10m_window": bool(
+                status_ok and minutes is not None and 2 <= minutes <= 10),
+        }
+    identity_ok = (meta.get("phase") == "PRE_RESULT"
+                   and meta.get("results_seen") is False
+                   and meta.get("unlock") is False
+                   and meta.get("scoring") is False
+                   and str(meta.get("venue_code")).zfill(2) == key.split("-")[1]
+                   and str(meta.get("race_no")) == str(int(key.split("-")[2]))
+                   and meta.get("deadline") == due.strftime("%H:%M"))
+    return {
+        "interpretation": "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY",
+        "latest_race_identity_pre_result": identity_ok,
+        "all_four_latest_files_in_decision_window": bool(
+            identity_ok and all(v["latest_file_in_2_to_10m_window"]
+                                for v in facts.values())),
+        "sources": facts,
+    }
+
+
 def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
     root = Path(root)
     now = now.astimezone(JST)
@@ -151,9 +203,11 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
         else:
             status = "UNPROVEN_AFTER_DEADLINE"
         diagnostic = observation_diagnostic(observation, due)
+        source_timing = historical_source_timing(root, key, due) if status == "UNPROVEN_AFTER_DEADLINE" else None
         rows.append({"race_key": key, "status": status, "deadline": clock,
                      "receipt_status": proof.get("status"),
                      "last_observation_diagnostic": diagnostic,
+                     "latest_source_timing": source_timing,
                      "last_observed_reason": observation.get("reason"),
                      "last_observed_at": observation.get("last_seen_at"),
                      "source_gaps_at_last_observation": observation.get("source_gaps") or []})
