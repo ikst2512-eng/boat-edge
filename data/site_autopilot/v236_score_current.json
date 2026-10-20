@@ -2,63 +2,30 @@
   "comparisons": {
     "balance10": {
       "avg_points": 10.0,
-      "hit": 60,
-      "hit_rate_percent": 37.04,
-      "races": 162
+      "hit": 62,
+      "hit_rate_percent": 37.58,
+      "races": 165
     },
     "coverage15": {
       "avg_points": 15.0,
-      "hit": 72,
-      "hit_rate_percent": 44.44,
-      "races": 162
+      "hit": 74,
+      "hit_rate_percent": 44.85,
+      "races": 165
     },
     "hit10": {
       "avg_points": 10.0,
-      "hit": 56,
-      "hit_rate_percent": 34.57,
-      "races": 162
+      "hit": 58,
+      "hit_rate_percent": 35.15,
+      "races": 165
     },
     "scenario7plus3": {
       "avg_points": 10.0,
-      "hit": 58,
-      "hit_rate_percent": 35.8,
-      "races": 162
+      "hit": 60,
+      "hit_rate_percent": 36.36,
+      "races": 165
     }
   },
   "examples": [
-    {
-      "outcomes": {
-        "balance10": false,
-        "coverage15": false,
-        "headsecond10": false,
-        "hit10": false,
-        "scenario7plus3": false
-      },
-      "race_key": "20261015-15-12",
-      "winning": "2-1-3"
-    },
-    {
-      "outcomes": {
-        "balance10": true,
-        "coverage15": true,
-        "headsecond10": true,
-        "hit10": true,
-        "scenario7plus3": true
-      },
-      "race_key": "20261015-20-02",
-      "winning": "1-2-4"
-    },
-    {
-      "outcomes": {
-        "balance10": false,
-        "coverage15": false,
-        "headsecond10": false,
-        "hit10": false,
-        "scenario7plus3": false
-      },
-      "race_key": "20261015-20-05",
-      "winning": "1-6-4"
-    },
     {
       "outcomes": {
         "balance10": false,
@@ -300,40 +267,73 @@
       },
       "race_key": "20261019-16-10",
       "winning": "3-1-6"
+    },
+    {
+      "outcomes": {
+        "balance10": true,
+        "coverage15": true,
+        "headsecond10": true,
+        "hit10": true,
+        "scenario7plus3": true
+      },
+      "race_key": "20261020-08-02",
+      "winning": "1-2-4"
+    },
+    {
+      "outcomes": {
+        "balance10": false,
+        "coverage15": false,
+        "headsecond10": false,
+        "hit10": false,
+        "scenario7plus3": false
+      },
+      "race_key": "20261020-16-01",
+      "winning": "1-5-2"
+    },
+    {
+      "outcomes": {
+        "balance10": true,
+        "coverage15": true,
+        "headsecond10": true,
+        "hit10": true,
+        "scenario7plus3": true
+      },
+      "race_key": "20261020-17-02",
+      "winning": "3-1-2"
     }
   ],
   "headsecond10_distinct_matched_prospective_only": {
-    "candidate_hit10_hits": 16,
-    "current_hit10_hits": 15,
+    "candidate_hit10_hits": 18,
+    "current_hit10_hits": 17,
     "gains": 3,
     "losses": 2,
     "paired_exact_p_two_sided": 1.0,
     "promotion_authorized": false,
-    "races": 54,
+    "races": 57,
     "ranked_top3_top5_top10": {
       "10": {
-        "candidate_hits": 16,
-        "current_hits": 15,
+        "candidate_hits": 18,
+        "current_hits": 17,
         "gains": 3,
         "losses": 2,
         "paired_exact_p_two_sided": 1.0,
-        "races": 54
+        "races": 57
       },
       "3": {
-        "candidate_hits": 8,
-        "current_hits": 6,
+        "candidate_hits": 9,
+        "current_hits": 8,
         "gains": 2,
-        "losses": 0,
-        "paired_exact_p_two_sided": 0.5,
-        "races": 54
+        "losses": 1,
+        "paired_exact_p_two_sided": 1.0,
+        "races": 57
       },
       "5": {
-        "candidate_hits": 9,
-        "current_hits": 11,
+        "candidate_hits": 11,
+        "current_hits": 13,
         "gains": 3,
         "losses": 5,
         "paired_exact_p_two_sided": 0.7265625,
-        "races": 54
+        "races": 57
       }
     }
   },
@@ -372,15 +372,13 @@
       }
     }
   },
-  "new_scored_this_run": 0,
+  "new_scored_this_run": 3,
   "production_model_changed": false,
   "promotion_authorized": false,
   "real_or_paper_purchase": false,
-  "rejected_or_pending_this_run": {
-    "race_not_over": 1
-  },
+  "rejected_or_pending_this_run": {},
   "schema": "BOAT_EDGE_V236_HITRATE_SCORE_SUMMARY_V1",
   "scope": "POST_RESULT_SAME_COHORT_COMPARISON_NOT_FORMAL_FRESH",
-  "scored_total": 162,
+  "scored_total": 165,
   "status": "DESCRIPTIVE_FORWARD_SHADOW_NO_TUNING_NO_PROMOTION"
 }
