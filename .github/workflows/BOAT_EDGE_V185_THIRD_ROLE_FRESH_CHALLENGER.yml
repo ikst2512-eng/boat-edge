@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V185_THIRD_ROLE_FRESH_CHALLENGER.yml']
   workflow_dispatch:
-  schedule:
-    - cron: '*/10 0-14,23 * * *' # JST 08:00-23:59, no historical backfill
+  # C-1: research-only Git writer paused while strict first-save coverage is stabilized.
+  # Existing workflow_dispatch remains available; frozen evidence is preserved.
 
 permissions:
   contents: write

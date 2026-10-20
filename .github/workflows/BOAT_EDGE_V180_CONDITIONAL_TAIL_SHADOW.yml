@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V180_CONDITIONAL_TAIL_SHADOW.yml']
   workflow_dispatch:
-  schedule:
-    - cron: "*/10 0-14,23 * * *" # 08:00-23:59 JST (UTC cron)
+  # C-1: research-only Git writer paused while strict first-save coverage is stabilized.
+  # Existing workflow_dispatch remains available; frozen evidence is preserved.
 
 permissions:
   contents: write
