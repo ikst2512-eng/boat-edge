@@ -85,6 +85,21 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(result["saved_venues"], 0)
             self.assertEqual(result["missing_scheduled_race_keys"], [key])
 
+    def test_malformed_source_sha_not_verified(self):
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key,
+                "source_audit": {
+                    "race_card": {"status": "ok", "sha256": "not-a-sha",
+                                  "fetched_at": "2026-10-21T12:00:00+09:00"}
+                }
+            }))
+            result = audit(Path(tmp), "20261021", {key})
+            self.assertEqual(result["summary"]["race_card"]["by_status"], {"unverified_ok": 1})
+
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
