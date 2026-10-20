@@ -22,7 +22,7 @@ def load_expected(path, day):
         raise ValueError("schedule date or race_keys invalid")
     if any(not isinstance(key, str) or not KEY.fullmatch(key) or key[:8] != day for key in keys):
         raise ValueError("schedule includes invalid or wrong-day race keys")
-    if len(set(keys)) != len(keys):
+    if not keys:\n        raise ValueError("empty independent schedule not accepted")\n    if len(set(keys)) != len(keys):
         raise ValueError("duplicate scheduled race")
     return set(keys)
 
@@ -30,7 +30,7 @@ def load_expected(path, day):
 def retry_candidates(rows, day, now=None):
     """Diagnostics only: never execute fetches or bypass deadline locks."""
     now = now or datetime.now(JST)
-    now = now.astimezone(JST)
+    if now.tzinfo is None or now.utcoffset() is None:\n        raise ValueError("aware JST clock required")\n    now = now.astimezone(JST)
     candidates = []
     for row in rows:
         key = row["race_key"]
@@ -81,7 +81,7 @@ def audit(root, day, expected=None, now=None):
             rows.append({"race_key": path.stem, "error": type(error).__name__})
             for field in FIELDS:
                 counts[field]["invalid_record"] += 1
-    saved_keys = {row["race_key"] for row in rows}
+    saved_keys = {row["race_key"] for row in rows if "error" not in row}
     missing = sorted(expected - saved_keys) if expected is not None else None
     unexpected = sorted(saved_keys - expected) if expected is not None else None
     # A saved race does not by itself establish data-source completeness.
