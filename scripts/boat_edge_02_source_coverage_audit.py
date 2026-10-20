@@ -67,12 +67,22 @@ def audit(root, day, expected=None, now=None):
             obj = json.loads(path.read_text(encoding="utf-8"))
             if obj.get("race_key") != path.stem:
                 raise ValueError("race_key mismatch")
+            if not isinstance(obj, dict):
+                raise ValueError("invalid race object")
             src = obj.get("source_audit") or {}
             meta = obj.get("meta") or {}
+            if not isinstance(src, dict) or not isinstance(meta, dict):
+                raise ValueError("invalid audit/meta structure")
+            if (meta.get("date") not in (None, day[:4] + "-" + day[4:6] + "-" + day[6:])
+                    or str(meta.get("venue_code", path.stem[9:11])).zfill(2) != path.stem[9:11]
+                    or meta.get("phase") not in (None, "PRE_RESULT")):
+                raise ValueError("race meta identity or phase mismatch")
             statuses = {}
             for field in FIELDS:
                 entry = src.get(field)
                 status = (entry or {}).get("status", "not_recorded") if isinstance(entry, dict) else "not_recorded"
+                if status == "ok" and not (isinstance(entry, dict) and entry.get("sha256") and entry.get("fetched_at")):
+                    status = "unverified_ok"
                 if status == "ok" and field == "beforeinfo":
                     cov = entry.get("six_boat_coverage") or {}
                     if not cov.get("six_boat_complete"):
@@ -86,6 +96,7 @@ def audit(root, day, expected=None, now=None):
             for field in FIELDS:
                 counts[field]["invalid_record"] += 1
     saved_keys = {row["race_key"] for row in rows if "error" not in row}
+    valid_rows = [row for row in rows if "error" not in row]
     missing = sorted(expected - saved_keys) if expected is not None else None
     unexpected = sorted(saved_keys - expected) if expected is not None else None
     # A saved race does not by itself establish data-source completeness.
@@ -106,7 +117,7 @@ def audit(root, day, expected=None, now=None):
     return {
         "schema": "BOAT_EDGE_02_READONLY_SOURCE_COVERAGE_V1",
         "date_jst": day, "generated_at_jst": datetime.now(JST).isoformat(),
-        "venues_total": 24, "saved_venues": len({r["race_key"][9:11] for r in rows}),
+        "venues_total": 24, "saved_venues": len({r["race_key"][9:11] for r in valid_rows}),
         "saved_races": n,
         "expected_scheduled_races": len(expected) if expected is not None else None,
         "missing_scheduled_race_keys": missing,
