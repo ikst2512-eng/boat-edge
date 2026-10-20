@@ -12,15 +12,7 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '11,26,41,56 * * * *'
-  # Only independent V186/V125 scheduled completions can supplement the
-  # 15-minute recovery cron. Do NOT watch V216: V220 may dispatch V216 and
-  # skipped V216 jobs still emit completion events (feedback risk).
-  workflow_run:
-    workflows:
-      - 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy'
-      - 'BOAT EDGE V125 Revision Safe FINAL15M Audit'
-    types: [completed]
-    branches: [main]
+  # Keep the 15-minute schedule and manual recovery; no completion-event fanout.
 
 permissions:
   contents: write
@@ -32,17 +24,7 @@ concurrency:
 
 jobs:
   site-operations:
-    # workflow_run must be a verified successful SAME-REPOSITORY main event;
-    # a forked/failed source job never authorizes dispatch or repository writes.
-    if: >-
-      github.ref == 'refs/heads/main' &&
-      (github.event_name != 'workflow_run' ||
-       (github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.name == 'BOAT EDGE V186 - Keep Scratch Fresh for V185 Prospective Accuracy' ||
-         github.event.workflow_run.name == 'BOAT EDGE V125 Revision Safe FINAL15M Audit') &&
-        github.event.workflow_run.event == 'schedule'))
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -55,7 +37,6 @@ jobs:
       - name: Verify current versioned site-operations code without overwriting main
         # Event recovery reuses the V220 plan: needed source collection or
         # strict evidence-ready missed V229; no extra main/Pages writer.
-        if: github.event_name != 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
@@ -77,7 +58,6 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          V220_TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name || '' }}
         run: |
           set -euo pipefail
           # A safe missed-cron nudge only. It is NOT a model change, formal unlock, payout fetch or purchase.
