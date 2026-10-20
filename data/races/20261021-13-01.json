@@ -8,7 +8,7 @@
     "event": "にっぽん未来プロジェクト競走in尼崎",
     "race_no": 1,
     "deadline": "10:36",
-    "updated_at": "2026-10-21T07:17:27+09:00",
+    "updated_at": "2026-10-21T08:27:22+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=13&rno=1",
-      "fetched_at": "2026-10-21T07:18:45+09:00",
-      "sha256": "8e2bc9e1ad034f0b016a9bb38693f23a6f99c15c75a117e26316e8f204c272d6",
+      "fetched_at": "2026-10-21T08:29:57+09:00",
+      "sha256": "53c9603c004625cd518c491eb42054fd14d34beba8998be4a915bc4293313d17",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=13&rno=1",
+      "fetched_at": "2026-10-21T08:28:14+09:00",
+      "sha256": "8742468aa8700ccc61bcfc806e34a1fd2554264e5962abd6c69357015a68be27",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "21bd5bfe4f6d68c5aed47a826ff2d11ba5304672e2b9bf3b9b3e712a5d16b5f1"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "84afc1d337bdec23f7e551809d8806972d2d46610f3adece512f7f0e8cc65916"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "da30d66e2fcfa5ed3508dea6e96f553fe901bab1f7f15ec6612cd1bc7189dd79"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "c41f46da5d910fcc0c6ac11e36d7903d4df196742243b36e02cd95f648fac426"
     }
   },
   "racers": [
@@ -288,7 +294,53 @@
       "raw_text": "6 3748 / B1 小黒 竜吾 埼玉/埼玉 51歳/56.3kg F1 L0 0.16 4.10 14.29 29.87 3.50 0.00 30.00 1 35.46 47.52 37 35.11 49.62 2 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山下 智己 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 金子 順一 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 若林 義人 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 新出 浩司 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 桑原 啓 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 小黒 竜吾 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

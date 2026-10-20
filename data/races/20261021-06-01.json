@@ -8,7 +8,7 @@
     "event": "SUZUKIスピードカップ",
     "race_no": 1,
     "deadline": "10:46",
-    "updated_at": "2026-10-21T07:17:27+09:00",
+    "updated_at": "2026-10-21T08:27:22+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=06&rno=1",
-      "fetched_at": "2026-10-21T07:19:51+09:00",
-      "sha256": "099e36bf7cf9403cbe40fe5e6c81bb4d16355d07d9ab5f9e5a6daad96c965bd4",
+      "fetched_at": "2026-10-21T08:29:34+09:00",
+      "sha256": "ddea21c37c1883b588738b16fc8cb81a9dba206874f53f189371070ebb3f85c3",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=06&rno=1",
+      "fetched_at": "2026-10-21T08:28:20+09:00",
+      "sha256": "45db14c0d458e08be4a19338dc216b9ce4672245e9b19ee694a4d5364b1476dd",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "21bd5bfe4f6d68c5aed47a826ff2d11ba5304672e2b9bf3b9b3e712a5d16b5f1"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "84afc1d337bdec23f7e551809d8806972d2d46610f3adece512f7f0e8cc65916"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "da30d66e2fcfa5ed3508dea6e96f553fe901bab1f7f15ec6612cd1bc7189dd79"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "c41f46da5d910fcc0c6ac11e36d7903d4df196742243b36e02cd95f648fac426"
     }
   },
   "racers": [
@@ -274,7 +280,53 @@
       "raw_text": "6 4669 / B1 井上 茂 福岡/福岡 41歳/54.5kg F1 L0 0.16 4.19 15.00 36.00 4.47 23.53 47.06 11 38.76 57.36 31 44.44 66.67 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 杉田 篤光 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 金児 隆太 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 末永 由楽 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 鈴木 智啓 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 佐藤 大佑 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 井上 茂 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
