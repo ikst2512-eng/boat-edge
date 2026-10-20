@@ -55,18 +55,18 @@ def load_catalog(path, day):
                 raise ValueError("catalog race key invalid")
             if key[9:11] != str(venue.get("jcd", "")).zfill(2):
                 raise ValueError("catalog venue mismatch")
-            if not isinstance(deadline, str) or not re.fullmatch(r"\d{2}:\d{2}", deadline):
+            if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", deadline):
                 raise ValueError("catalog deadline invalid")
             keys.append(key)
             deadlines[key] = deadline
     if not keys or len(keys) != len(set(keys)):
-        raise ValueError("duplicate catalog race")
+        raise ValueError("empty or duplicate catalog race")
     return set(keys), deadlines
 
 
 def retry_candidates(rows, day, now=None):
     """Diagnostics only: never execute fetches or bypass deadline locks."""
-    now = now or datetime.now(JST)
+    now = datetime.now(JST) if now is None else now
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError("aware JST clock required")
     now = now.astimezone(JST)
