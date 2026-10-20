@@ -32,7 +32,9 @@ jobs:
         github.event.workflow_run.head_repository.full_name == github.repository &&
         github.event.workflow_run.name == 'BOAT EDGE 3連単オッズ更新 V71'))
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    # Allow the multi-source crawl and guarded Git push to finish.
+    # Eight minutes could terminate the job before the save step.
+    timeout-minutes: 20
 
     steps:
       - name: リポジトリ取得
