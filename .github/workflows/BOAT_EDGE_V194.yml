@@ -6,10 +6,8 @@ on:
     paths:
       - '.github/workflows/BOAT_EDGE_V194.yml'
   workflow_dispatch:
-  schedule:
-    # Research-only diagnostic. V180 and V185 retain their own 10-minute
-    # immutable freeze schedules; do not run a third competing writer.
-    - cron: '33 0-14,23 * * *'
+  # C-1: independent research-only Git-writing cron paused to protect live
+  # immutable site-first-add. Manual research diagnostics remain available.
 
 permissions:
   contents: write
