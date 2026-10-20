@@ -113,6 +113,15 @@ jobs:
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v215_readiness.py
             echo V235_PREFREEZE_SOURCE_WINDOW_OBSERVED_NOT_ELIGIBILITY_PROOF
             PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py --workers 8 --retry-imminent --priority-race-key "$priority_key"
+            # C-1: A successful official refresh is not a first-freeze proof.
+            # Emit the existing read-only strict-window blocker report whenever
+            # V230 made zero new snapshots, before subsequent steps mutate files.
+            # Diagnostics must never grant eligibility or block a valid Git push.
+            if python3 -c 'import json; from pathlib import Path; s=json.loads(Path("data/site_autopilot/v230_fast_current.json").read_text()); exit(0 if s.get("new_snapshots_atomic_audited")==0 else 1)'; then
+              echo V235_ZERO_FREEZE_DIAGNOSTIC_BEGIN
+              PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_eligibility_diagnostic.py --summary-only || echo V235_ZERO_FREEZE_DIAGNOSTIC_UNAVAILABLE
+              echo V235_ZERO_FREEZE_DIAGNOSTIC_END
+            fi
             # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
             # so Git reset/clean and repeated main conflicts cannot rewrite
             # an earlier attestation or backfill a race after deadline.
