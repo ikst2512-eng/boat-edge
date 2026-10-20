@@ -18,8 +18,8 @@ class SourceCoverageTests(unittest.TestCase):
                 "race_key": key,
                 "meta": {"venue": "児島", "deadline": "13:00"},
                 "source_audit": {
-                    "race_card": {"status": "ok"},
-                    "beforeinfo": {"status": "ok", "six_boat_coverage": {"six_boat_complete": False}},
+                    "race_card": {"status": "ok", "sha256": "a" * 64, "fetched_at": "2026-10-21T12:00:00+09:00"},
+                    "beforeinfo": {"status": "ok", "sha256": "b" * 64, "fetched_at": "2026-10-21T12:00:00+09:00", "six_boat_coverage": {"six_boat_complete": False}},
                     "original_exhibition": {"status": "missing"}
                 }
             }), encoding="utf-8")
@@ -58,6 +58,32 @@ class SourceCoverageTests(unittest.TestCase):
             result = audit(root, "20261021", {key})
             self.assertEqual(result["missing_scheduled_race_keys"], [key])
             self.assertEqual(result["scheduled_card_presence_percent"], 0.0)
+
+    def test_unverified_ok_not_counted_as_success(self):
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key,
+                "meta": {"date": "2026-10-21", "venue_code": "16"},
+                "source_audit": {"race_card": {"status": "ok"}}
+            }))
+            result = audit(Path(tmp), "20261021", {key})
+            self.assertEqual(result["summary"]["race_card"]["by_status"], {"unverified_ok": 1})
+            self.assertEqual(result["summary"]["race_card"]["scheduled_recorded_ok_percent"], 0.0)
+
+    def test_wrong_venue_metadata_rejected(self):
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key, "meta": {"venue_code": "17"}
+            }))
+            result = audit(Path(tmp), "20261021", {key})
+            self.assertEqual(result["saved_venues"], 0)
+            self.assertEqual(result["missing_scheduled_race_keys"], [key])
 
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
