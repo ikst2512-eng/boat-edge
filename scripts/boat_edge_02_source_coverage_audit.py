@@ -35,7 +35,7 @@ def retry_candidates(rows, day, now=None):
     for row in rows:
         key = row["race_key"]
         deadline = row.get("deadline")
-        if row.get("error") or not isinstance(deadline, str) or not re.fullmatch(r"\\d{2}:\\d{2}", deadline):
+        if row.get("error") or not isinstance(deadline, str) or not re.fullmatch(r"\d{2}:\d{2}", deadline):
             continue
         try:
             due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
