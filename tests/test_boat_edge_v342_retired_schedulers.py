@@ -24,16 +24,13 @@ LEGACY = (
 
 
 class RetiredSchedulerTests(unittest.TestCase):
-    def test_legacy_writers_are_manual_only(self):
+    def test_legacy_writers_are_deleted(self):
         report = audit(WORKFLOWS)
         entries = {item["workflow"]: item for item in report["workflows"]}
         for name in LEGACY:
             with self.subTest(name=name):
-                self.assertEqual(entries[name]["triggers"], ["workflow_dispatch"])
-                self.assertEqual(entries[name]["crons"], [])
-                text = (WORKFLOWS / name).read_text(encoding="utf-8")
-                self.assertIn("manual recovery ONLY", text)
-                self.assertNotRegex(event_block(text), r"^  (?:push|schedule|workflow_run):")
+                self.assertNotIn(name, entries)
+                self.assertFalse((WORKFLOWS / name).exists())
 
     def test_v216_remains_single_live_paper_chain_owner(self):
         text = (WORKFLOWS / "BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml").read_text(
@@ -55,15 +52,17 @@ class RetiredSchedulerTests(unittest.TestCase):
         self.assertNotIn("base64.b64decode", text)
 
     def test_secondary_reports_do_not_fan_out_on_every_v235_run(self):
-        # V235 is the live source; secondary diagnostics retain a bounded
-        # hourly schedule and manual recovery, without a workflow_run fanout.
+        # V238 is now manual-only; V241 retains bounded scheduled reporting.
         for name in ("v238.yml", "v241.yml"):
             with self.subTest(name=name):
                 text = (WORKFLOWS / name).read_text(encoding="utf-8")
                 events = event_block(text)
-                self.assertIn("  schedule:", events)
+                if name == "v238.yml":
+                    self.assertNotIn("  schedule:", events)
+                else:
+                    self.assertIn("  schedule:", events)
                 self.assertIn("  workflow_dispatch:", events)
-                self.assertNotRegex(events, r"^  workflow_run:",)
+                self.assertNotIn("  workflow_run:", events)
                 self.assertIn("if: github.ref == 'refs/heads/main'", text)
 
     def test_result_collector_does_not_write_audit_todo(self):

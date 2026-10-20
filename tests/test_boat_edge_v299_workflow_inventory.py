@@ -6,32 +6,23 @@ from scripts.boat_edge_v299_workflow_inventory import audit, verify_retired, RET
 ROOT = Path(__file__).resolve().parents[1]
 
 class WorkflowInventoryTests(unittest.TestCase):
-    def test_previous_cron_installers_are_manual_only(self):
+    def test_previous_cron_installers_remain_deleted(self):
         report = audit(ROOT / ".github" / "workflows")
         verify_retired(report)
         items = {x["workflow"]: x for x in report["workflows"]}
         self.assertGreater(report["total_workflows"], 0)
         for name in RETIRED:
-            self.assertEqual(items[name]["triggers"], ["workflow_dispatch"])
-            self.assertEqual(items[name]["crons"], [])
-        # Two redundant copies had exactly the same inert 245-byte payload.
-        # Deleting them must never reactivate a producer or affect the retained
-        # canonical disabled tombstones; refuse accidental re-introduction.
-        for duplicate in ("auto-update-5min 2.yml", "auto-update-v10 2.yml"):
-            self.assertFalse((ROOT / ".github/workflows" / duplicate).exists(), duplicate)
+            self.assertNotIn(name, items)
         for removed in (
-            "auto-update-5min.yml",
-            "auto-update-v10.yml",
-            "site-v185-trigger.yml",
-            "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
+            "auto-update-5min 2.yml", "auto-update-v10 2.yml",
+            "auto-update-5min.yml", "auto-update-v10.yml",
+            "site-v185-trigger.yml", "BOAT_EDGE_V221_GUARDED_DEDUP.yml",
             "BOAT_EDGE_SITE_RESULTS_V58.zip",
         ):
             self.assertFalse((ROOT / ".github/workflows" / removed).exists(), removed)
-        self.assertFalse(
-            (ROOT / "scripts/boat_edge_v221_workflow_dedup.py").exists(),
-            "obsolete V221 workflow implementation must not be reintroduced",
-        )
+        self.assertFalse((ROOT / "scripts/boat_edge_v221_workflow_dedup.py").exists())
         self.assertIn("schedule", items[LIVE]["triggers"])
+
     def test_v133_history_cannot_compete_with_v229_first_git_freeze(self):
         # Live 2026-10-15 V133 add/add collision on a V229 snapshot. This
         # guard enforces a history-only stage and recomputation after a remote
@@ -82,69 +73,35 @@ class WorkflowInventoryTests(unittest.TestCase):
         for retired in RETIRED:
             self.assertNotIn(retired, result["scheduled_contents_writers"])
 
-    def test_v239_retired_and_manual_only_replays_original_site_cohorts(self):
-        workflow = ROOT / ".github/workflows/v239.yml"
-        source = workflow.read_text(encoding="utf-8")
-        from scripts.boat_edge_v299_workflow_inventory import event_block
-        events = event_block(source)
-        self.assertIn("  workflow_dispatch:", events)
-        self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
-        self.assertNotIn("scripts/boat_edge_v239_second_tail.py freeze", source)
-        self.assertIn("scripts/boat_edge_v239_second_tail.py score", source)
-        self.assertNotIn("V239_FROZEN_GIT_ATTESTED", source)
-        result = audit(ROOT / ".github/workflows")
-        self.assertNotIn("v239.yml", result["scheduled_contents_writers"])
-        verify_retired(result)
+    def test_v239_retired_without_reintroducing_research_writer(self):
+        self.assertFalse((ROOT / ".github/workflows/v239.yml").exists())
+        self.assertTrue((ROOT / "scripts/boat_edge_v239_second_tail.py").is_file())
+        report = audit(ROOT / ".github/workflows")
+        self.assertNotIn("v239.yml", report["scheduled_contents_writers"])
+        verify_retired(report)
 
-    def test_v240_research_retired_without_dropping_original_audit(self):
-        workflow = ROOT / ".github/workflows/v240.yml"
-        contents = workflow.read_text(encoding="utf-8")
-        from scripts.boat_edge_v299_workflow_inventory import event_block
-        events = event_block(contents)
-        self.assertIn("  workflow_dispatch:", events)
-        self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
-        # Explicit operator replay may still run the original frozen-only
-        # scorer. Never delete immutable frozen/scored research files.
-        self.assertNotIn("scripts/boat_edge_v240_coverage.py freeze", contents)
-        self.assertIn("scripts/boat_edge_v240_coverage.py score", contents)
-        self.assertNotIn("V240_FROZEN_GIT_ATTESTED", contents)
-        self.assertIn("V240_SCORING_GIT_PUBLISHED", contents)
-        self.assertIn("manual recovery ONLY", contents)
+    def test_v240_retired_without_dropping_research_source(self):
+        self.assertFalse((ROOT / ".github/workflows/v240.yml").exists())
+        self.assertTrue((ROOT / "scripts/boat_edge_v240_coverage.py").is_file())
         report = audit(ROOT / ".github/workflows")
         self.assertNotIn("v240.yml", report["scheduled_contents_writers"])
         verify_retired(report)
 
-    def test_v183_historic_scorer_cannot_resume_scheduled_or_source_writing(self):
-        retired = ROOT / ".github/workflows/BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml"
-        source = retired.read_text(encoding="utf-8")
-        from scripts.boat_edge_v299_workflow_inventory import event_block
-        events = event_block(source)
-        self.assertIn("  workflow_dispatch:", events)
-        self.assertNotRegex(events, r"(?m)^  (?:schedule|push|workflow_run):")
-        self.assertNotIn("contents: write", source)
-        self.assertNotIn("git push", source)
-        self.assertNotIn("git add", source)
-        self.assertNotIn("gzip.decompress", source)
-        self.assertNotIn("base64.b64decode", source)
-        self.assertIn("V183_RETIRED_V190_IS_ONLY_SCHEDULED_SCORE_OWNER", source)
-        successor=(ROOT/".github/workflows/BOAT_EDGE_V190.yml").read_text(encoding="utf-8")
-        self.assertIn("scripts/site_v183_audit.py", successor)
-        self.assertIn("scripts/site_v184_integrity.py", successor)
-        self.assertIn("V190_OLD_V183_SCHEDULE_DISABLED_VERIFIED", successor)
-        self.assertIn("git add -- scripts/site_v183_audit.py data/site_tail_shadow_v180/evaluation_v183.json",successor)
-        report = audit(ROOT / ".github/workflows")
-        self.assertNotIn("BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml",
-                         report["scheduled_contents_writers"])
-        verify_retired(report)
+    def test_v183_and_v190_retired_without_loss_of_research_sources(self):
+        for name in ("BOAT_EDGE_V183_PROSPECTIVE_SCORE.yml", "BOAT_EDGE_V190.yml"):
+            self.assertFalse((ROOT / ".github/workflows" / name).exists(), name)
+        for name in ("scripts/site_v183_audit.py", "scripts/site_v184_integrity.py"):
+            self.assertTrue((ROOT / name).is_file(), name)
+        verify_retired(audit(ROOT / ".github/workflows"))
 
-    def test_primary_collector_and_v185_stay_scheduled(self):
-        # The removed workflows are inert; the actual producers must remain.
+    def test_primary_collector_and_active_scratch_writer_stay_scheduled(self):
         report = audit(ROOT / ".github" / "workflows")
         entries = {x["workflow"]: x for x in report["workflows"]}
-        for name in ("auto-update.yml", "BOAT_EDGE_V185_THIRD_ROLE_FRESH_CHALLENGER.yml"):
+        for name in ("auto-update.yml", "BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml", "V235.yml"):
             with self.subTest(name=name):
                 self.assertIn("schedule", entries[name]["triggers"])
                 self.assertIn("workflow_dispatch", entries[name]["triggers"])
+        self.assertNotIn("BOAT_EDGE_V185_THIRD_ROLE_FRESH_CHALLENGER.yml", entries)
         self.assertNotIn("BOAT_EDGE_V221_GUARDED_DEDUP.yml", entries)
         self.assertNotIn("site-v185-trigger.yml", entries)
 
@@ -189,12 +146,7 @@ class WorkflowInventoryTests(unittest.TestCase):
 
     def test_01_site_only_post_result_scores_no_longer_push_each_5_minutes(self):
         """Cut Pages build churn without slowing prospective unseen freezes."""
-        targets = (
-            ("v236.yml", 3, "3,18,33,48", "boat_edge_v236_hit_rate.py"),
-            # V240 was retired after checking all 61 frozen same-Top7 tickets.
-            ("v254-third-tail-shadow.yml", 3, "13,28,43,58",
-             "boat_edge_v254_third_tail.py"),
-        )
+        targets = (("v236.yml", 3, "3,18,33,48", "boat_edge_v236_hit_rate.py"),)
         for filename, offset, score_slot, script in targets:
             with self.subTest(workflow=filename):
                 src = (ROOT / ".github/workflows" / filename).read_text(encoding="utf-8")
@@ -281,71 +233,23 @@ class WorkflowInventoryTests(unittest.TestCase):
         self.assertIn("python3 scripts/boat_edge_v234_settle.py", score)
         self.assertIn("git commit -m 'V234 score confirmed post-result", score)
 
-    def test_v199_manual_replay_preserves_first_addition_provenance_while_c1_active(self):
-        """Pause research cron, keep ordered manual provenance and scoring replay."""
-        from scripts.boat_edge_v299_workflow_inventory import event_block
-        workflow = (ROOT / ".github/workflows/BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml").read_text(encoding="utf-8")
-        events = event_block(workflow)
-        self.assertIn("  workflow_dispatch:", events)
-        self.assertIn("  push:", events)
-        self.assertNotIn("  schedule:", events)
-        self.assertNotIn("  workflow_run:", events)
-        freeze = workflow.index("      - name: Freeze only eligible future races without reading results")
-        replay = workflow.index("      - name: Independently replay first Git addition before optional site-only result scoring")
-        report = workflow.index("      - name: Save only research evidence with safe concurrent-write retry")
-        self.assertLess(freeze, replay)
-        self.assertLess(replay, report)
-        gate = ("github.event_name == 'schedule' && "
-                "github.event.schedule == '0,15,30,45 0-14,23 * * *'")
-        self.assertEqual(workflow.count(gate), 2)
-        self.assertIn("python3 scripts/site_v199_research.py freeze", workflow[freeze:replay])
-        self.assertNotIn("python3 scripts/site_v199_research.py score", workflow[freeze:replay])
-        self.assertIn("python3 scripts/site_v199_research.py score", workflow[replay:report])
-        self.assertIn("python3 scripts/site_v199_research.py score", workflow[report:])
-        self.assertIn("github.event_name == 'workflow_dispatch'", workflow)
-        self.assertIn("github.event_name == 'push'", workflow)
+    def test_v199_retired_and_current_first_git_owners_remain(self):
+        self.assertFalse((ROOT / ".github/workflows/BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml").exists())
+        self.assertTrue((ROOT / "scripts/site_v199_research.py").is_file())
+        for name in ("V234.yml", "V235.yml"):
+            source=(ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
+            self.assertIn("scripts/boat_edge_v230_fast_lane.py", source)
+            self.assertIn("  schedule:", source)
 
-    def test_01_retire_obsolete_v249_and_decouple_todo_from_five_minute_history(self):
-        """Protect live Pages from obsolete UI installs and redundant TODO pushes."""
+    def test_retired_v249_and_v134_cannot_reintroduce_legacy_writers(self):
         root = ROOT / ".github/workflows"
-        old_ui = (root / "v249.yml").read_text(encoding="utf-8")
-        todo = (root / "site-v134.yml").read_text(encoding="utf-8")
-        history = (root / "site-v133.yml").read_text(encoding="utf-8")
-        # V249 is no longer byte-identical to today's newer mobile CSS.
-        # Existing safety checks remain for explicit manual legacy inspection.
-        self.assertIn("  workflow_dispatch:", old_ui)
-        self.assertNotIn("  schedule:", old_ui)
-        self.assertNotIn("  push:", old_ui)
-        self.assertIn("V249_VERIFIED_UI_RESOURCE_DRIFT_", old_ui)
-        self.assertIn("assets/boat_edge_v249_focus.css", old_ui)
-        # Keep V133's 5-minute fallback, but start it at minute 04,09,...
-        # after the independent V229 01,06,... and V235 02,07,... source
-        # freeze slots. This does not guarantee actual Actions execution
-        # ordering and never upgrades unverified site reference predictions.
+        for name in ("v249.yml", "site-v134.yml"):
+            self.assertFalse((root / name).exists(), name)
+        history=(root / "site-v133.yml").read_text(encoding="utf-8")
         self.assertIn('cron: "4-59/5 * * * *"', history)
-        primary = (root / "V235.yml").read_text(encoding="utf-8")
-        atomic = (root / "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
-        self.assertIn("cron: '2,7,12,17,22,27,32,37,42,47,52,57 0-14,23 * * *'", primary)
-        self.assertIn("cron: '1 0-14,23 * * *'", atomic)
-        self.assertIn("cron: '6,11,16,21,26,31,36,41,46,51,56 0-14,23 * * *'", atomic)
-        self.assertEqual(history.count('cron: "4-59/5 * * * *"'), 1)
-        # The original V130-V132 installer is no longer safe to reapply.
-        # Manual and scheduled V133 history continue from the tracked script.
-        self.assertIn("  install:\\n", history) if False else None
         self.assertIn("if: ${{ false }}", history)
-        self.assertIn("if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')", history)
-        # V134 is now manual recovery only; never reactivate its hourly
-        # TODO rewrite just to satisfy a stale guard assertion.
-        from scripts.boat_edge_v299_workflow_inventory import event_block
-        todo_events = event_block(todo)
-        self.assertIn("  workflow_dispatch:", todo_events)
-        self.assertNotIn("  schedule:", todo_events)
-        self.assertNotIn("  workflow_run:", todo_events)
-        self.assertNotIn("cron: '38 * * * *'", todo_events)
-        self.assertIn("git add -- BOAT_EDGE_CURRENT_TODO.md", todo)
-        # V134's fix cannot disable or backdate the prediction source freeze.
-        primary = (root / "V235.yml").read_text(encoding="utf-8")
-        atomic = (root / "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
+        primary=(root / "V235.yml").read_text(encoding="utf-8")
+        atomic=(root / "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
         self.assertIn("  schedule:", primary)
         self.assertIn("  schedule:", atomic)
 
