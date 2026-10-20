@@ -79,6 +79,29 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(invalid["status"], "INVALID_HISTORICAL_RACE_OR_DEADLINE")
         self.assertFalse(invalid["prediction_saved_proven"])
 
+    def test_historical_first_git_proven_without_latest_worktree(self):
+        from boat_edge_v235_predeadline_receipt import receipt
+        import hashlib
+        first = {"race_key": KEY, "snapshot_window": "FINAL_15M",
+                 "prediction_kind": "SITE_REFERENCE_V122",
+                 "guards": {"results_seen": False, "unlock": False, "scoring": False},
+                 "first_saved_at": "2026-10-20T06:47:00+00:00",
+                 "modes": {"hit": {"tickets": [{"combo": str(n)} for n in range(10)]}}}
+        raw = json.dumps(first).encode()
+        def fake_git(root, *args):
+            if args[0] == "log":
+                return (b"a" * 40) + b"\\n"
+            if args[0] == "show" and args[1].startswith("a" * 40 + ":"):
+                return raw
+            if args[0] == "show":
+                return b"2026-10-20T06:48:00+00:00\\n"
+            return None
+        with patch("boat_edge_v235_predeadline_receipt.git", side_effect=fake_git):
+            result = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
+                             requested=KEY, historical_deadline="15:53")
+        self.assertTrue(result["prediction_saved_proven"])
+        self.assertEqual(result["first_git_snapshot_sha256"], hashlib.sha256(raw).hexdigest())
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
