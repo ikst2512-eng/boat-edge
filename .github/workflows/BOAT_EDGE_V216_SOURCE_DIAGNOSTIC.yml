@@ -192,6 +192,10 @@ jobs:
           bash -n scripts/boat_edge_v01_first_freeze_nudge.sh
           bash scripts/boat_edge_v01_first_freeze_nudge.sh
       - name: Continue approved-only daily 50000 yen paper selection BEFORE results
+        # C-1: paper selection is not a first-Git-freeze dependency. Run on one
+        # existing quarter-hour cron rather than all twelve five-minute wakes.
+        # Manual and official-source completion behaviour remains unchanged.
+        if: ${{ github.event_name != 'schedule' || github.event.schedule == '14,29,44,59 * * * *' }}
         shell: bash
         run: |
           set -euo pipefail
