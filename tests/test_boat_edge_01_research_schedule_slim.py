@@ -40,19 +40,12 @@ class SafeResearchWorkflowCadence(unittest.TestCase):
         self.assertIn("V171_FREEZE_PUSH_TOO_LATE", source)
         self.assertIn("data/site_learning/v171_prospective_venue/", source)
 
-    def test_v199_research_cannot_compete_with_gate1c_automatic_first_git(self):
-        # V199 experiments are not the V229/V235 production freeze lane.
-        # Remove only automatic wakes; retain explicit manual replay and
-        # unchanged research engine / immutable historical artifacts.
-        events, source = event_section(
-            "BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml")
-        self.assertIn("  workflow_dispatch:", events)
-        self.assertIn("  push:", events)
-        self.assertNotIn("  schedule:", events)
-        self.assertNotIn("  workflow_run:", events)
-        self.assertIn("scripts/site_v199_research.py", source)
-        self.assertIn("data/site_shadow_v199/", source)
-        self.assertIn("git push origin HEAD:main", source)
+    def test_retired_v199_research_cannot_compete_with_first_git(self):
+        # The separate V199 Git writer was retired, rather than only
+        # disabling its cron. Preserve tracked analysis, not the writer.
+        old = WORKFLOWS / "BOAT_EDGE_V199_PROSPECTIVE_SCENARIO_ABLATIONS.yml"
+        self.assertFalse(old.exists(), "Retired V199 must not regain Git writer")
+        self.assertTrue((ROOT / "scripts/site_v199_research.py").is_file())
         for path in ("auto-update.yml", "site-odds.yml",
                      "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml", "V235.yml"):
             live, _ = event_section(path)
