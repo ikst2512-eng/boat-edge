@@ -69,6 +69,29 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertFalse(data["c1_99_percent_proven"])
         proof.assert_called_once()
 
+    def test_stale_catalog_uses_historic_git_verifier_not_v235_today(self):
+        # Real 2026-10-21 rollover: today.json was still dated Oct 20.
+        # The same-day V235 receipt would return NO_SAME_DAY_VERIFIED_RACE_ID.
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
+                   {"observations": {KEY: {"deadline": "15:53",
+                                             "reason": "snapshot_missing"}}})
+        with patch.object(m, "receipt") as live, patch.object(
+            m, "archived_receipt", return_value={
+                "prediction_saved_proven": True,
+                "status": "ARCHIVED_FIRST_GIT_PREDEADLINE",
+            }) as archived:
+            data = m.accounting(self.root,
+                                datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
+                                day="20261020")
+        live.assert_not_called()
+        archived.assert_called_once()
+        self.assertTrue(data["historical_catalog_is_stale"])
+        self.assertEqual(data["classification_counts"],
+                         {"PROVEN_FIRST_GIT_BEFORE_DEADLINE": 1})
+        self.assertEqual(data["scheduled_races_catalog"], 2)
+        self.assertEqual(data["not_observed_count"], 1)
+        self.assertFalse(data["c1_99_percent_proven"])
+
     def test_historic_missing_git_proof_does_not_become_success(self):
         self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
                    {"observations": {KEY: {"deadline": "15:53", "reason": "snapshot_missing"}}})
