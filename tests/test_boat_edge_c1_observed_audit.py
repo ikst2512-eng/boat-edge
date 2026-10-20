@@ -67,6 +67,16 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertIsNone(data["scheduled_races_catalog"])
         self.assertFalse(data["eligible_denominator_verified"])
 
+    def test_historical_receipt_accepts_real_clock_and_rejects_malformed_clock(self):
+        from boat_edge_v235_predeadline_receipt import receipt
+        checked = datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc)
+        valid = receipt(self.root, now=checked, requested=KEY, historical_deadline="15:53")
+        self.assertEqual(valid["race_key"], KEY)
+        self.assertEqual(valid["status"], "SNAPSHOT_MISSING_OR_DEADLINE_PASSED")
+        invalid = receipt(self.root, now=checked, requested=KEY, historical_deadline="35:93")
+        self.assertEqual(invalid["status"], "INVALID_HISTORICAL_RACE_OR_DEADLINE")
+        self.assertFalse(invalid["prediction_saved_proven"])
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
