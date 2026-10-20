@@ -79,7 +79,7 @@ def retry_candidates(rows, day, now=None):
             continue
         statuses = row.get("statuses", {})
         for field in ("race_card", "beforeinfo"):
-            if statuses.get(field) not in ("ok",):
+            # Not yet in the official beforeinfo window is not a retryable failure.\n            # Unknown statuses also fail closed until classified by the owner.\n            if statuses.get(field) in ("missing", "error", "fetch_error", "timeout", "incomplete_exhibition", "unverified_ok"):
                 candidates.append({"race_key": key, "source": field,
                                    "reason": statuses.get(field, "not_recorded"),
                                    "deadline_jst": due.isoformat(),
@@ -174,7 +174,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "scheduled_card_presence_percent": (
             round(100 * len(saved_keys & expected) / len(expected), 2)
             if expected else None),
-        "all_scheduled_race_success_percent": None,
+        "all_scheduled_race_success_percent": None,\n        "collection_state": "PROVISIONAL_NO_LIVE_SOURCE_ATTESTATION",
         "note": "Saved-card rate only; missing scheduled races, live source verification and original exhibition values are not proven.",
         "summary": summary, "retry_candidates_diagnostics_only": retry_candidates(rows, day, now), "rows": rows,
     }
