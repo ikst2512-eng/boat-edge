@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """V269 deterministic telemetry audit: no network or formal target access."""
 import ast
+import json
 from pathlib import Path
 s=Path('.github/workflows/auto-update.yml').read_text(encoding='utf8')
 a=s.index('          urgent_keys=[f"')
