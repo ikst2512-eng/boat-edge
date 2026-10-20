@@ -29,6 +29,36 @@ def load_expected(path, day):
     return set(keys)
 
 
+def load_catalog(path, day):
+    """Load same-day race identities from an existing independent site catalog."""
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(doc, dict) or doc.get("date") != f"{day[:4]}-{day[4:6]}-{day[6:]}":
+        raise ValueError("catalog date mismatch")
+    venues = doc.get("venues")
+    if not isinstance(venues, list) or not venues:
+        raise ValueError("missing catalog venues")
+    keys = []
+    deadlines = {}
+    for venue in venues:
+        if not isinstance(venue, dict) or not isinstance(venue.get("races"), list):
+            raise ValueError("invalid catalog venue")
+        for race in venue["races"]:
+            if not isinstance(race, dict):
+                raise ValueError("invalid catalog race")
+            key, deadline = race.get("race_key"), race.get("deadline")
+            if not isinstance(key, str) or not KEY.fullmatch(key) or not key.startswith(day + "-"):
+                raise ValueError("catalog race key invalid")
+            if key[9:11] != str(venue.get("jcd", "")).zfill(2):
+                raise ValueError("catalog venue mismatch")
+            if not isinstance(deadline, str) or not re.fullmatch(r"\\d{2}:\\d{2}", deadline):
+                raise ValueError("catalog deadline invalid")
+            keys.append(key)
+            deadlines[key] = deadline
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate catalog race")
+    return set(keys), deadlines
+
+
 def retry_candidates(rows, day, now=None):
     """Diagnostics only: never execute fetches or bypass deadline locks."""
     now = now or datetime.now(JST)
@@ -65,7 +95,7 @@ def _valid_timestamp(value):
         return False
 
 
-def audit(root, day, expected=None, now=None):
+def audit(root, day, expected=None, now=None, deadlines=None):
     counts = {field: Counter() for field in FIELDS}
     rows = []
     for path in sorted((root / "data" / "races").glob(day + "-*.json")):
@@ -113,6 +143,7 @@ def audit(root, day, expected=None, now=None):
     saved_keys = {row["race_key"] for row in rows if "error" not in row}
     valid_rows = [row for row in rows if "error" not in row]
     missing = sorted(expected - saved_keys) if expected is not None else None
+    missing_deadlines = {key: deadlines[key] for key in missing if deadlines and key in deadlines} if missing is not None else None
     unexpected = sorted(saved_keys - expected) if expected is not None else None
     # A saved race does not by itself establish data-source completeness.
     n = len(rows)
@@ -138,6 +169,7 @@ def audit(root, day, expected=None, now=None):
         "invalid_saved_races": n - len(valid_rows),
         "expected_scheduled_races": len(expected) if expected is not None else None,
         "missing_scheduled_race_keys": missing,
+        "missing_scheduled_deadlines": missing_deadlines,
         "unexpected_saved_race_keys": unexpected,
         "scheduled_card_presence_percent": (
             round(100 * len(saved_keys & expected) / len(expected), 2)
@@ -153,16 +185,19 @@ def main():
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--day", required=True, help="JST date in YYYYMMDD")
     parser.add_argument("--output", type=Path, help="Optional explicit report destination")
+    parser.add_argument("--catalog", type=Path, help="Existing same-day data/today.json (read only)")
     parser.add_argument("--schedule", type=Path,
                         help="Trusted independent JSON schedule: date_jst and race_keys")
     args = parser.parse_args()
     if not re.fullmatch(r"20\d{6}", args.day):
         parser.error("--day must be YYYYMMDD")
     try:
-        expected = load_expected(args.schedule, args.day)
+        if args.schedule and args.catalog:
+            parser.error("use only one of --schedule and --catalog")
+        expected, deadlines = load_catalog(args.catalog, args.day) if args.catalog else (load_expected(args.schedule, args.day), None)
     except (OSError, ValueError, TypeError) as exc:
         parser.error("invalid schedule: " + str(exc))
-    report = audit(args.root, args.day, expected)
+    report = audit(args.root, args.day, expected, deadlines=deadlines)
     serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
