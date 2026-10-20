@@ -54,7 +54,7 @@ class C1MissedWindowAudit(unittest.TestCase):
         self.assertEqual(set(x["race_key"] for x in data["races"]),
                          {"20261019-18-07", "20261019-12-05"})
         for row in data["races"]:
-            self.assertEqual(row["classification"], "NO_CAPTURE_OWNER_START_IN_WINDOW")
+            self.assertEqual(row["classification"], "NO_NEW_CAPTURE_OWNER_START_PRIOR_ACTIVE_RUN_UNVERIFIED")
             self.assertFalse(row["independent_source_eligibility_proven"])
             self.assertFalse(row["no_prior_active_run_proven"])
             self.assertTrue(row["first_git_save_absent_in_current_tree"])
@@ -130,7 +130,7 @@ class C1MissedWindowAudit(unittest.TestCase):
         self.assertFalse(candidate["no_prior_active_run_proven"])
         passive = rows["20261019-12-05"]
         self.assertEqual(passive["classification"],
-                         "NO_CAPTURE_OWNER_START_IN_WINDOW")
+                         "NO_NEW_CAPTURE_OWNER_START_PRIOR_ACTIVE_RUN_UNVERIFIED")
         self.assertEqual(passive["capture_owner_starts"], [])
         self.assertEqual(passive["v125_completion_only_audit_starts_ignored"], 1)
         self.assertEqual(passive["all_actions_starts_in_window"], 1)
