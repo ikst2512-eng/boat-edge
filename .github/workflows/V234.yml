@@ -50,11 +50,11 @@ jobs:
           print('V234_SOURCE_HTML_AND_TEST_BYTES_PASS',len(resources))
           PY_V234_INSTALL
           for spec in \
-            'scripts/boat_edge_v230_fast_lane.py:24ee57af7594ecdd0b79510b727af41ed86dfc4a' \
+            'scripts/boat_edge_v230_fast_lane.py:18341fe642c4c69cb204d01858f94c526bb2f2db' \
             'scripts/boat_edge_v232_pre_result_cohort.py:99c69c924de451fe6635961253e9ea61d314366b' \
-            'scripts/boat_edge_v215_readiness.py:f74705858e9bffbe28b4ce444d29aa8565ed6497' \
+            'scripts/boat_edge_v215_readiness.py:fb6e157bbede8abc15e2ad34fe0f11b34041938d' \
             'scripts/boat_edge_v214_shadow.py:2fafe6932383c0ace68d82d3cc2591591b6affdb' \
-            'scripts/boat_edge_v229_atomic_freeze.py:c77d917ded93dc5584e990f769ced1ba108f8ed4'; do
+            'scripts/boat_edge_v229_atomic_freeze.py:d90738dd608b3d0b713bbfffdd40758b651509d5'; do
             path="${spec%:*}"; sha="${spec##*:}"
             test -f "$path" && test "$(git hash-object "$path")" = "$sha" || { echo "V234_PRE_RESULT_DEPENDENCY_CHANGED_$path"; exit 1; }
           done
