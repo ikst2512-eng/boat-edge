@@ -58,6 +58,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          # Compatibility for existing V220 regression; always empty on schedule/manual runs.
+          V220_TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name || '' }}
         run: |
           set -euo pipefail
           # A safe missed-cron nudge only. It is NOT a model change, formal unlock, payout fetch or purchase.
