@@ -90,7 +90,7 @@ class C1ObservedAuditTests(unittest.TestCase):
         raw = json.dumps(first).encode()
         def fake_git(root, *args):
             if args[0] == "log":
-                return (b"a" * 40) + b"\\n"
+                return (b"a" * 40) + b"\n"
             if args[0] == "show" and args[1].startswith("a" * 40 + ":"):
                 return raw
             if args[0] == "show":
