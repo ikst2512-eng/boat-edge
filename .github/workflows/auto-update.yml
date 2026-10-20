@@ -660,11 +660,15 @@ jobs:
           def original_complete(row):
               if not isinstance(row,dict):
                   return False
+              # The upstream source may publish fewer than three measurements.
+              # Require every advertised measurement for every boat, not
+              # imaginary columns that the source never promised.
               labels=[str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")]
-              if not all(labels):
+              count=sum(bool(label) for label in labels)
+              if count==0 or labels[:count]!=[label for label in labels if label]:
                   return False
               for boat in range(1,7):
-                  for n in range(1,4):
+                  for n in range(1,count+1):
                       raw=str(row.get(f"艇{boat}_値{n}") or "").strip()
                       try:
                           value=float(raw)
