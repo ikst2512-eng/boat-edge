@@ -57,9 +57,10 @@ class C1ObservedAuditTests(unittest.TestCase):
         observed["observations"][KEY]["deadline"] = "15:53"
         self.write("data/site_paper_sim/readiness_history_v215/20261020.json", observed)
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
-                                                       "status": "NO_SAME_DAY_VERIFIED_RACE_ID"}):
+                                                       "status": "LOCAL_SNAPSHOT_NOT_FIRST_GIT_COMMITTED"}) as proof:
             data = m.accounting(self.root, datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc),
                                 audit_day="20261020")
+        proof.assert_called_once_with(self.root, now=datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc).astimezone(m.JST), requested=KEY, historical_deadline="15:53")
         self.assertEqual(data["observed_races"], 1)
         self.assertEqual(data["races"][0]["deadline_source"], "readiness_observation")
         self.assertEqual(data["races"][0]["status"], "UNPROVEN_AFTER_DEADLINE")
