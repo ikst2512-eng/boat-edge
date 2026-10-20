@@ -112,6 +112,19 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertFalse(late["prediction_saved_proven"])
 
 
+    def test_stale_today_catalog_uses_historical_receipt_after_midnight(self):
+        observed = json.loads((self.root / "data/site_paper_sim/readiness_history_v215/20261020.json").read_text())
+        observed["observations"][KEY]["deadline"] = "15:53"
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json", observed)
+        checked = datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc)
+        with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
+                                                       "status": "NO_FIRST_GIT_ADD"}) as proof:
+            data = m.accounting(self.root, checked, audit_day="20261020")
+        self.assertEqual(data["observed_races"], 1)
+        self.assertIsNone(data["scheduled_races_catalog"])
+        proof.assert_called_once_with(self.root, now=checked.astimezone(m.JST),
+                                      requested=KEY, historical_deadline="15:53")
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
