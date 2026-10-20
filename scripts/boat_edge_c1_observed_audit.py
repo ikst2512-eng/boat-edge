@@ -81,9 +81,13 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
     history = load(root / "data/site_paper_sim/readiness_history_v215" / (day + ".json"))
     observed = history.get("observations") or {}
     catalog = load(root / "data/today.json")
-    same_day = str(catalog.get("date") or "").replace("-", "") == day
+    # A stale today.json can still point at yesterday after JST rollover.
+    # V235 receipt requires its race day to equal the *actual* current JST day.
+    catalog_matches_day = str(catalog.get("date") or "").replace("-", "") == day
+    same_day = catalog_matches_day and day == now.strftime("%Y%m%d")
     schedule = {}
-    if same_day:
+    # Retain historical catalog coverage when yesterday's card remains cached.
+    if catalog_matches_day:
         for venue in catalog.get("venues") or []:
             for race in venue.get("races") or []:
                 key = race.get("race_key")
@@ -131,8 +135,10 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
             "deadline_source": "CURRENT_DAY_CATALOG" if same_day else "HISTORICAL_V215_OBSERVATION_UNVERIFIED",
             "official_result_files_read": False, "formal_prediction_files_read": False,
-            "scheduled_races_catalog": len(schedule) if same_day else None,
-            "observed_races": len(rows), "not_observed_count": len(missing_schedule),
+            "scheduled_races_catalog": len(schedule) if catalog_matches_day else None,
+            "historical_catalog_is_stale": catalog_matches_day and not same_day,
+            "observed_races": len(rows),
+            "not_observed_count": len(missing_schedule) if catalog_matches_day else None,
             "classification_counts": counts, "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,
