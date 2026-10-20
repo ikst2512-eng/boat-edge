@@ -95,7 +95,14 @@ def audit(root, day, expected=None, now=None):
         success = counts[field]["ok"]
         summary[field] = {"saved_races": n, "confirmed_ok": success,
                           "saved_card_success_percent": round(100 * success / n, 2) if n else None,
-                          "by_status": dict(sorted(counts[field].items()))}
+                          "by_status": dict(sorted(counts[field].items())),
+                          "scheduled_recorded_ok_percent": (
+                              round(100 * sum(
+                                  1 for row in rows
+                                  if row["race_key"] in expected
+                                  and row.get("statuses", {}).get(field) == "ok"
+                              ) / len(expected), 2)
+                              if expected else None)}
     return {
         "schema": "BOAT_EDGE_02_READONLY_SOURCE_COVERAGE_V1",
         "date_jst": day, "generated_at_jst": datetime.now(JST).isoformat(),
