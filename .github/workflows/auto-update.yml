@@ -496,6 +496,15 @@ jobs:
                     "beforeinfo":bf.get("parsed",{}) if bf else {},
                     "validation":{"result_unlock_token":None,"result":None}
                   }
+                  # Read the previous on-disk snapshot for writable races too.
+                  # The protected-race branch above is not executed here, so
+                  # its local 'preserved' must never be reused across races.
+                  try:
+                      preserved=json.loads((RACES/f"{key}.json").read_text(encoding="utf-8"))
+                  except (OSError,ValueError,UnicodeError):
+                      preserved={}
+                  if not isinstance(preserved,dict) or preserved.get("race_key")!=key:
+                      preserved={}
                   # Preserve validated earlier exhibition data across collector
                   # stages. The CSV enrichment step runs AFTER this writer;
                   # without this carry-forward each cycle erases good evidence.
