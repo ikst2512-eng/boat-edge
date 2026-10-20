@@ -76,7 +76,7 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
     root = Path(root)
     now = now.astimezone(JST)
     day = day or now.strftime("%Y%m%d")
-    if not re.fullmatch(r"20\\d{6}", day):
+    if not re.fullmatch(r"20\d{6}", day):
         raise ValueError("day must be YYYYMMDD")
     history = load(root / "data/site_paper_sim/readiness_history_v215" / (day + ".json"))
     observed = history.get("observations") or {}
