@@ -5,9 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V232_PROSPECTIVE_COHORT.yml']
   workflow_dispatch:
-  workflow_run:
-    workflows: ['BOAT EDGE V231 - Byte-Exact Official Evidence and Reliable Atomic Commit']
-    types: [completed]
+  # Retired V231 is manual-only; it is not a production source event.
+  # V232 retains its independent 5-minute schedule and manual recovery.
   schedule:
     - cron: '4,9,14,19,24,29,34,39,44,49,54,59 0-14,23 * * *'
 
