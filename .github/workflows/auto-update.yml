@@ -519,6 +519,28 @@ jobs:
           urgent_error=len(urgent_keys)-urgent_ok-urgent_wait
           assert urgent_ok+urgent_wait+urgent_error==len(urgent_keys)
 
+          # C-1: report source coverage separately from successful official fetches.
+          # Never treat a successful fetch as proof of original exhibition coverage.
+          urgent_original_saved=0
+          urgent_original_missing=0
+          for race_key in urgent_keys:
+              try:
+                  saved=json.loads((RACES/f"{race_key}.json").read_text(encoding="utf-8"))
+              except (OSError,ValueError,UnicodeError):
+                  saved={}
+              audit=(saved.get("source_audit") or {}).get("original_exhibition") or {}
+              original=saved.get("original_exhibition") or {}
+              boats=original.get("boats") or []
+              lanes={b.get("lane") for b in boats if isinstance(b,dict)
+                     and isinstance(b.get("values"),list)
+                     and any(isinstance(v,(int,float)) and not isinstance(v,bool)
+                             for v in b["values"])}
+              if audit.get("status")=="ok" and lanes==set(range(1,7)):
+                  urgent_original_saved+=1
+              else:
+                  urgent_original_missing+=1
+          assert urgent_original_saved+urgent_original_missing==len(urgent_keys)
+
           health={
             "updated_at":iso,
             "collector_version":"BOAT_EDGE_V18",
@@ -547,6 +569,8 @@ jobs:
             "beforeinfo_ok":sum(1 for x in before.values() if x.get("status")=="ok"),
             "beforeinfo_targets":len(targets),
             "beforeinfo_urgent_15m_targets":len(urgent_keys),
+            "original_exhibition_urgent_15m_complete":urgent_original_saved,
+            "original_exhibition_urgent_15m_missing":urgent_original_missing,
             "beforeinfo_urgent_15m_ok":urgent_ok,
             "beforeinfo_urgent_15m_published_wait":urgent_wait,
             "beforeinfo_urgent_15m_partial":sum(
