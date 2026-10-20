@@ -78,14 +78,13 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertNotIn('settle',step)
         self.assertNotIn('git pull --rebase',step)
         self.assertNotIn('gh workflow run',step)
-        # Standalone V254 still independently verifies the original first Git
-        # commit and race deadline, and remains the periodic/event fallback.
+        # Manual V254 still independently verifies original first Git proof
+        # and the future-only deadline without a competing periodic writer.
         script=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
         self.assertIn("SOURCE_GIT_PROVENANCE_UNVERIFIED",script)
         self.assertIn("NOT_IN_FUTURE_FREEZE_WINDOW",script)
         self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",script)
         research=WORKFLOW.read_text(encoding='utf-8')
-        self.assertIn('workflow_dispatch:',research)
         self.assertIn("workflow_dispatch:",research)
         self.assertNotIn("\\n  workflow_run:",research.split("\\njobs:",1)[0])
         self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",research)
