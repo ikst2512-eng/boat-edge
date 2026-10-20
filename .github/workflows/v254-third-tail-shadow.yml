@@ -18,21 +18,9 @@ on:
       - '.github/workflows/V233.yml'
       - 'autopilot.html'
   workflow_dispatch:
-  # V286: V235 already performs a same-run, future-only research freeze
-  # immediately after immutable source commit. Do NOT enqueue a redundant
-  # full V254 workflow after every successful V235 run (often 0 new races).
-  # Keep the old V232 success event if separately reenabled, plus a staggered
-  # 5-minute fallback and manual recovery. All pre-result gates stay unchanged.
-  workflow_run:
-    workflows:
-      - 'BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort'
-    types: [completed]
-  schedule:
-    # Keep the five-minute PRE_RESULT freeze cadence; score older SITE-only
-    # frozen cohorts on one staggered 15-minute tick to reduce Pages churn.
-    - cron: '3,18,33,48 0-14,23 * * *'
-    - cron: '8,23,38,53 0-14,23 * * *'
-    - cron: '13,28,43,58 0-14,23 * * *'
+  # C-1: V235 and V234 already run this future-only research lane after
+  # source-first freeze. Do not schedule a third competing Git writer.
+  # Keep manual dispatch for targeted evidence inspection and recovery.
 
 permissions:
   contents: write
