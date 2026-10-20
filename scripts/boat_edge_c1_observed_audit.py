@@ -35,7 +35,8 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
     history = load(root / "data/site_paper_sim/readiness_history_v215" / (day + ".json"))
     observed = history.get("observations") or {}
     catalog = load(root / "data/today.json")
-    same_day = str(catalog.get("date") or "").replace("-", "") == day
+    same_day = (str(catalog.get("date") or "").replace("-", "") == day and
+                now.strftime("%Y%m%d") == day)
     schedule = {}
     if same_day:
         for venue in catalog.get("venues") or []:
