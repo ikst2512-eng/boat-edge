@@ -8,7 +8,7 @@
     "event": "2026モーターボートレディスカップ",
     "race_no": 5,
     "deadline": "17:01",
-    "updated_at": "2026-10-20T14:21:35+09:00",
+    "updated_at": "2026-10-20T15:43:16+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261020&jcd=12&rno=5",
-      "fetched_at": "2026-10-20T14:23:46+09:00",
-      "sha256": "5f67fab60baffb8b9972edb9f96b83f44082a664dcfbb7aab3e7fbe4a74703d1",
+      "fetched_at": "2026-10-20T15:44:41+09:00",
+      "sha256": "255d882d416d72d2e48461fbd5d024fe2d590f9197443dd355753c2bb5c519b1",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261020&jcd=12&rno=5",
+      "fetched_at": "2026-10-20T15:44:05+09:00",
+      "sha256": "754f0169a01d124b5b79473c54e6ce40b964bc1859732936e372885006778992",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "97a575b448d702692b4e1e363765e4ddaaf798dce1702546e776c83cc99bf266"
+      "sha256": "14ca419c60074e7321d646e20c9ce7ed8795af7361d971c68158ad27904d58e8"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "d57ff6d1858b8baf6730b32c83080d39e687da58b5b66463bd02e2e47b5f4216"
+      "sha256": "f06c1b4ac12a22fe126155b7d7f0079ffecb00ae0228f0f573a273e7e05da1b5"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "913afae6c543184b4fb114a1358b7bb564af34c8dac051072ddf001c46e8f028"
+      "sha256": "5e14d77db4d55713cd32b8038911f9e90a4c0dbdd37be5bb687daad660b1559b"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "8889437ac37d01246768471e9d0acc6377bd2aedd3d87ecbae62b07745468f55"
+      "sha256": "e33935ad42cd6e0f6dd4f4a48189852507ad136f5e3c3a67a5cf05af2661ed21"
     }
   },
   "racers": [
@@ -205,10 +211,11 @@
         "trio_rate": 68.52
       },
       "series_tokens": [
-        "4"
+        "4",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "4 5471 / B2 田中 結 大阪/大阪 17歳/48.4kg F0 L0 - 1.51 0.00 1.14 1.67 0.00 0.00 84 32.03 57.81 17 50.93 68.52 4 1R"
+      "raw_text": "4 5471 / B2 田中 結 大阪/大阪 17歳/48.4kg F0 L0 - 1.51 0.00 1.14 1.67 0.00 0.00 84 32.03 57.81 17 50.93 68.52 4 1 1R"
     },
     {
       "lane": 5,
@@ -288,7 +295,53 @@
       "raw_text": "6 3900 / A2 香川 素子 滋賀/大阪 49歳/47.4kg F1 L0 0.18 5.77 39.78 56.99 6.28 44.83 65.52 18 30.65 44.35 20 28.81 44.92 8 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 武井 莉里佳 45.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 山下 奈緒 47.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 津田 裕絵 50.6kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 田中 結 48.4kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 登 みひ果 44.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 香川 素子 47.4kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
