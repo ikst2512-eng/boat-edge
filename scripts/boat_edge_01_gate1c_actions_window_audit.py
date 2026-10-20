@@ -80,10 +80,12 @@ def window_runs(fetch_page, start, end, max_pages=3):
                     "event": run.get("event"), "status": run.get("status"),
                     "conclusion": run.get("conclusion"), "created_at": created,
                 }
-            if len(runs) < 100:
-                if len(found) != total_count:
-                    return [], False, "RUN_TOTAL_COUNT_MISMATCH"
+            # GitHub may return exactly 100 records on the final page.
+            # Trust verified unique IDs against total_count rather than page length.
+            if len(found) == total_count:
                 return sorted(found.values(), key=lambda x: (x["created_at"], x["id"])), True, None
+            if len(runs) < 100:
+                return [], False, "RUN_TOTAL_COUNT_MISMATCH"
         except (KeyError, TypeError, ValueError, OSError) as exc:
             return [], False, type(exc).__name__ + ":" + str(exc)[:120]
     return sorted(found.values(), key=lambda x: (x["created_at"], x["id"])), False, "PAGE_LIMIT_REACHED"
