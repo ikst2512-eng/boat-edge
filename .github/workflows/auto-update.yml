@@ -992,6 +992,40 @@ jobs:
           status["collector_gate"]="CORE7_100_READY_WAIT_FORMAL_PIPELINE" if len(eligible)>=100 else "WAIT_CORE7_100"
           status["formal_validation_connected"]=False
           status["formal_note"]="SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
+          # Audit after CSV enrichment, not before it. The first collector
+          # writes health.json before original-exhibition rows are merged.
+          health_path=DATA/"health.json"
+          if health_path.exists():
+              health=json.loads(health_path.read_text(encoding="utf-8"))
+              complete=missing=0
+              for race_key in sorted((DATA/"races").glob(f"{ymd}-??-??.json")):
+                  try:
+                      saved=json.loads(race_key.read_text(encoding="utf-8"))
+                      clock=(saved.get("meta") or {}).get("deadline")
+                      hh,minute=map(int,clock.split(":"))
+                      deadline=now.replace(hour=hh,minute=minute,second=0,microsecond=0)
+                      if not 0<=(deadline-now).total_seconds()/60<=15:
+                          continue
+                      oe=saved.get("original_exhibition") or {}
+                      audit=(saved.get("source_audit") or {}).get("original_exhibition") or {}
+                      labels=oe.get("labels") or []
+                      boats=oe.get("boats") or []
+                      valid=(audit.get("status")=="ok" and 1<=len(labels)<=3
+                          and len(boats)==6
+                          and {b.get("lane") for b in boats if isinstance(b,dict)}==set(range(1,7))
+                          and all(isinstance(b.get("values"),list)
+                              and len(b["values"])==len(labels)
+                              and all(type(v) in (int,float) and math.isfinite(v) for v in b["values"])
+                              for b in boats if isinstance(b,dict)))
+                      if valid:complete+=1
+                      else:missing+=1
+                  except (OSError,ValueError,TypeError,AttributeError):
+                      missing+=1
+              health["original_exhibition_urgent_15m_complete"]=complete
+              health["original_exhibition_urgent_15m_missing"]=missing
+              health["original_exhibition_audit_stage"]="after_csv_enrichment"
+              health_path.write_text(json.dumps(health,ensure_ascii=False,indent=2),encoding="utf-8")
+              print(f"C1_ORIGINAL_POST_ENRICHMENT complete={complete} missing={missing}")
           (DATA/"model_status.json").write_text(json.dumps(status,ensure_ascii=False,indent=2),encoding="utf-8")
 
           # Keep formal_status synchronized with collector readiness WITHOUT claiming a formal freeze.
