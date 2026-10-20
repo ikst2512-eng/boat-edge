@@ -53,7 +53,7 @@ jobs:
         run: |
           python - <<'PY'
           from __future__ import annotations
-          import json,re,hashlib,time,random,unicodedata
+          import json,re,hashlib,time,random,unicodedata,math
           from pathlib import Path
           from datetime import datetime,timedelta,timezone
           from urllib.parse import urljoin,urlparse,parse_qs
@@ -496,6 +496,26 @@ jobs:
                     "beforeinfo":bf.get("parsed",{}) if bf else {},
                     "validation":{"result_unlock_token":None,"result":None}
                   }
+                  # Preserve validated earlier exhibition data across collector
+                  # stages. The CSV enrichment step runs AFTER this writer;
+                  # without this carry-forward each cycle erases good evidence.
+                  if isinstance(preserved,dict) and preserved.get("race_key")==key:
+                      old_oe=preserved.get("original_exhibition")
+                      old_audit=(preserved.get("source_audit") or {}).get("original_exhibition")
+                      if isinstance(old_oe,dict) and isinstance(old_audit,dict) and old_audit.get("status")=="ok":
+                          labels=old_oe.get("labels")
+                          boats=old_oe.get("boats")
+                          if (isinstance(labels,list) and 1<=len(labels)<=3
+                                  and all(isinstance(label,str) and label.strip() for label in labels)
+                                  and isinstance(boats,list) and len(boats)==6
+                                  and {b.get("lane") for b in boats if isinstance(b,dict)}==set(range(1,7))
+                                  and all(isinstance(b.get("values"),list)
+                                          and len(b["values"])==len(labels)
+                                          and all(type(v) in (int,float) and math.isfinite(v)
+                                                  for v in b["values"])
+                                          for b in boats if isinstance(b,dict))):
+                              doc["original_exhibition"]=old_oe
+                              doc["source_audit"]["original_exhibition"]=old_audit
                   (RACES/f"{key}.json").write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
                   venue["races"].append({
                     "race_key":key,"race_no":rno,"deadline":doc["meta"]["deadline"],
