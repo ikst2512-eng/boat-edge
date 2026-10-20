@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-20T22:17:14.342829+00:00",
+  "checked_at": "2026-10-20T23:30:37.150890+00:00",
   "day_jst": "20261021",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -69,9 +69,27 @@
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
     "collector_health_issues": [
-      "collector_index_stale"
+      "collector_index_stale",
+      "odds_index_stale",
+      "predeadline_incomplete",
+      "predeadline_race_odds_gap",
+      "predeadline_v216_observation_stale"
     ],
-    "current_window": [],
+    "current_window": [
+      {
+        "deadline_jst": "08:35",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "最新オッズ120通り未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 4.4,
+        "race_key": "20261021-14-01",
+        "venue": "鳴門"
+      }
+    ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
     "readiness_observed_races": 0,
     "readiness_reasons": {},
