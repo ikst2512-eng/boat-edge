@@ -33,45 +33,37 @@ CASES = {
 
 
 class GuardTrackedResearchers(unittest.TestCase):
-    def test_no_live_worker_restores_or_replaces_historical_sources(self):
-        for name, (label, paths, required) in CASES.items():
+    def test_retired_research_writers_stay_deleted_without_losing_sources(self):
+        for name, (label, paths, _required) in CASES.items():
+            if label == "V186":
+                continue
             with self.subTest(workflow=name):
-                content = (WF / name).read_text(encoding="utf-8")
-                self.assertIn(
-                    f"Verify tracked {label} sources without restoring historical code",
-                    content,
-                )
-                self.assertIn(f"{label}_TRACKED_MAIN_SOURCE_NO_LEGACY_RESTORE_PASS",
-                              content)
-                self.assertNotIn("PYRESTORE", content)
-                self.assertNotIn("base64.b64decode", content)
-                self.assertNotIn("gzip.decompress", content)
-                self.assertNotIn("write_bytes(data)", content)
-                self.assertNotIn("write_bytes(raw)", content)
+                self.assertFalse((WF / name).exists(), "Retired research cron must stay absent")
                 for p in paths:
                     self.assertTrue((ROOT / p).is_file(), p)
-                    self.assertIn(p, content)
-                for statement in required:
-                    self.assertIn(statement, content)
 
-    def test_preserve_current_live_frequency_and_first_freeze_boundaries(self):
-        expected_cron = {
-            "V180": '*/10 0-14,23 * * *',
-            "V185": '*/10 0-14,23 * * *',
-            "V186": '2-59/5 0-14,23 * * *',
-        }
-        for name, (label, _paths, _required) in CASES.items():
-            with self.subTest(workflow=name):
-                content = (WF / name).read_text(encoding="utf-8")
-                triggers = content.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
-                self.assertIn("  workflow_dispatch:", triggers)
-                self.assertIn("  schedule:", triggers)
-                self.assertIn(expected_cron[label], triggers)
-                self.assertIn("if: github.ref == 'refs/heads/main'", content)
-                self.assertIn("cancel-in-progress: false", content)
-                self.assertIn("git push origin HEAD:main", content)
-                self.assertNotIn("data/formal_results", content)
-                self.assertNotIn("RESULT_UNLOCK_TOKEN=", content)
+    def test_active_v186_scratch_freshness_is_preserved(self):
+        name = "BOAT_EDGE_V186_SCRATCH_FRESHNESS.yml"
+        label, paths, required = CASES[name]
+        content = (WF / name).read_text(encoding="utf-8")
+        self.assertIn("Verify tracked V186 sources without restoring historical code", content)
+        self.assertIn("V186_TRACKED_MAIN_SOURCE_NO_LEGACY_RESTORE_PASS", content)
+        for forbidden in ("PYRESTORE", "base64.b64decode", "gzip.decompress",
+                          "write_bytes(data)", "write_bytes(raw)",
+                          "data/formal_results", "RESULT_UNLOCK_TOKEN="):
+            self.assertNotIn(forbidden, content)
+        for p in paths:
+            self.assertTrue((ROOT / p).is_file(), p)
+            self.assertIn(p, content)
+        for statement in required:
+            self.assertIn(statement, content)
+        triggers = content.split("\\non:\\n", 1)[1].split("\\npermissions:", 1)[0]
+        self.assertIn("  workflow_dispatch:", triggers)
+        self.assertIn("  schedule:", triggers)
+        self.assertIn("2-59/5 0-14,23 * * *", triggers)
+        self.assertIn("if: github.ref == 'refs/heads/main'", content)
+        self.assertIn("cancel-in-progress: false", content)
+        self.assertIn("git push origin HEAD:main", content)
 
 
 if __name__ == "__main__":
