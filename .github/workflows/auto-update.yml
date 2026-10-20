@@ -505,6 +505,21 @@ jobs:
                       preserved={}
                   if not isinstance(preserved,dict) or preserved.get("race_key")!=key:
                       preserved={}
+                  # Preserve verified official observations on transient fetch
+                  # failure. A fresh successful fetch always takes precedence.
+                  previous_audit=preserved.get("source_audit") or {}
+                  previous_before=previous_audit.get("beforeinfo") or {}
+                  if (not (bf and bf.get("ok"))
+                          and previous_before.get("status")=="ok"
+                          and isinstance(preserved.get("beforeinfo"),dict)
+                          and preserved["beforeinfo"]):
+                      doc["beforeinfo"]=preserved["beforeinfo"]
+                      doc["source_audit"]["beforeinfo"]=previous_before
+                  previous_card=previous_audit.get("race_card") or {}
+                  if (not rr.get("ok") and previous_card.get("status")=="ok"
+                          and len(preserved.get("racers") or [])==6):
+                      doc["racers"]=preserved["racers"]
+                      doc["source_audit"]["race_card"]=previous_card
                   # Preserve validated earlier exhibition data across collector
                   # stages. The CSV enrichment step runs AFTER this writer;
                   # without this carry-forward each cycle erases good evidence.
@@ -844,7 +859,6 @@ jobs:
               # verified source bytes in the race document. Audit still marks
               # the current fetch as missing; retained values are historical.
               prior_actual=doc.get("actual_entry")
-              prior_before=doc.get("beforeinfo")
               # stt: actual course + exhibition ST
               actual=[]
               if stt:
