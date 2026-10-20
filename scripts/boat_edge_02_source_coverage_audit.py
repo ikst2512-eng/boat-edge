@@ -12,7 +12,22 @@ KEY = re.compile(r"^(20\d{6})-(0[1-9]|1\d|2[0-4])-(0[1-9]|1[0-2])$")
 JST = timezone(timedelta(hours=9))
 
 
-def audit(root, day):
+def load_expected(path, day):
+    """An independently supplied schedule, never inferred from saved cards."""
+    if path is None:
+        return None
+    document = json.loads(path.read_text(encoding="utf-8"))
+    keys = document.get("race_keys")
+    if document.get("date_jst") != day or not isinstance(keys, list):
+        raise ValueError("schedule date or race_keys invalid")
+    if any(not isinstance(key, str) or not KEY.fullmatch(key) or key[:8] != day for key in keys):
+        raise ValueError("schedule includes invalid or wrong-day race keys")
+    if len(set(keys)) != len(keys):
+        raise ValueError("duplicate scheduled race")
+    return set(keys)
+
+
+def audit(root, day, expected=None):
     counts = {field: Counter() for field in FIELDS}
     rows = []
     for path in sorted((root / "data" / "races").glob(day + "-*.json")):
@@ -40,7 +55,10 @@ def audit(root, day):
             rows.append({"race_key": path.stem, "error": type(error).__name__})
             for field in FIELDS:
                 counts[field]["invalid_record"] += 1
-    # This denominator includes only saved cards, not all scheduled races.
+    saved_keys = {row["race_key"] for row in rows}
+    missing = sorted(expected - saved_keys) if expected is not None else None
+    unexpected = sorted(saved_keys - expected) if expected is not None else None
+    # A saved race does not by itself establish data-source completeness.
     n = len(rows)
     summary = {}
     for field in FIELDS:
@@ -64,10 +82,16 @@ def main():
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--day", required=True, help="JST date in YYYYMMDD")
     parser.add_argument("--output", type=Path, help="Optional explicit report destination")
+    parser.add_argument("--schedule", type=Path,
+                        help="Trusted independent JSON schedule: date_jst and race_keys")
     args = parser.parse_args()
     if not re.fullmatch(r"20\d{6}", args.day):
         parser.error("--day must be YYYYMMDD")
-    report = audit(args.root, args.day)
+    try:
+        expected = load_expected(args.schedule, args.day)
+    except (OSError, ValueError, TypeError) as exc:
+        parser.error("invalid schedule: " + str(exc))
+    report = audit(args.root, args.day, expected)
     serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
