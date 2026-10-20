@@ -16,27 +16,19 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/v254-third-tail-shadow.yml"
 
 class V257SourceTrigger(unittest.TestCase):
-    def test_exact_v232_source_completion_trigger_with_conclusion_branch_guard(self):
+    def test_retired_v254_is_manual_only_and_live_owner_preserves_guard(self):
         workflow=WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("workflow_run:",workflow)
-        # V235 freezes new third-tail candidates synchronously BEFORE its
-        # result-only stage. Enqueuing V254 again after V235 completes is
-        # redundant and can miss the future window. Keep V232 event fallback.
-        self.assertIn("'BOAT EDGE V232 - Independent Pre-Result Accuracy Cohort'",workflow)
-        self.assertNotIn("'BOAT EDGE V235 - Stable Autonomous Prediction Freeze and Verified Scoring'",workflow)
-        # Same five-minute PRE_RESULT windows are split into three cron
-        # identities solely to stagger post-result research scoring.
-        for slot in ("3,18,33,48", "8,23,38,53", "13,28,43,58"):
-            self.assertIn(f"cron: '{slot} 0-14,23 * * *'",workflow)
-        self.assertIn("V274 immediately freeze qualifying V254",(ROOT/'.github/workflows/V235.yml').read_text())
-        self.assertIn("types: [completed]",workflow)
-        self.assertIn("types: [completed]",workflow)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'",workflow)
-        self.assertIn("github.event.workflow_run.head_branch == 'main'",workflow)
+        header=workflow.split("\njobs:",1)[0]
+        self.assertIn("workflow_dispatch:",header)
+        self.assertNotIn("\n  schedule:",header)
+        self.assertNotIn("\n  workflow_run:",header)
+        self.assertIn("V274 immediately freeze qualifying V254",
+                      (ROOT/'.github/workflows/V235.yml').read_text())
+        self.assertIn("V275 immediately freeze qualifying V254",
+                      (ROOT/'.github/workflows/V234.yml').read_text())
         self.assertIn("concurrency:",workflow)
         self.assertIn("cancel-in-progress: false",workflow)
         self.assertIn("git reset --hard origin/main",workflow)
-        self.assertIn("data/site_autopilot/v254_frozen/",workflow)
         self.assertIn("V254_ONLY_PRE_RESULT_RESEARCH_STAGED",workflow)
         self.assertIn("V254_ONLY_SITE_RESEARCH_SCORE_STAGED",workflow)
 
@@ -86,15 +78,15 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertNotIn('settle',step)
         self.assertNotIn('git pull --rebase',step)
         self.assertNotIn('gh workflow run',step)
-        # Standalone V254 still independently verifies the original first Git
-        # commit and race deadline, and remains the periodic/event fallback.
+        # Manual V254 still independently verifies original first Git proof
+        # and the future-only deadline without a competing periodic writer.
         script=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
         self.assertIn("SOURCE_GIT_PROVENANCE_UNVERIFIED",script)
         self.assertIn("NOT_IN_FUTURE_FREEZE_WINDOW",script)
         self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",script)
         research=WORKFLOW.read_text(encoding='utf-8')
-        self.assertIn('workflow_dispatch:',research)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'",research)
+        self.assertIn("workflow_dispatch:",research)
+        self.assertNotIn("\\n  workflow_run:",research.split("\\njobs:",1)[0])
         self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",research)
 
     def test_v275_v234_source_producer_also_freezes_pre_result_tail(self):
@@ -122,93 +114,58 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",
             (ROOT/'scripts/boat_edge_v254_third_tail.py').read_text())
 
-    def test_v287_only_primary_and_staggered_safe_fallback_have_live_cron(self):
+    def test_only_primary_and_staggered_fallback_have_live_prediction_cron(self):
         import re
         folder=ROOT/'.github/workflows'
-        old=(folder/'V233.yml').read_text(encoding='utf-8')
+        self.assertFalse((folder/'V233.yml').exists())
         fallback=(folder/'V234.yml').read_text(encoding='utf-8')
         primary=(folder/'V235.yml').read_text(encoding='utf-8')
         shadow=WORKFLOW.read_text(encoding='utf-8')
-        # V233 still supports explicit manual recovery, but its
-        # unguarded legacy Git rebase is never launched on a schedule.
-        self.assertIn('workflow_dispatch:',old)
-        self.assertNotIn('  schedule:',old)
         self.assertIn('  schedule:',fallback)
         self.assertIn('  schedule:',primary)
-        self.assertIn('  schedule:',shadow)
-        def minute_slot(src, *, allow_0820_prewarm=False, split_research=False):
-            slots=[line.split("cron: '",1)[1].split("'",1)[0]
-                   for line in src.splitlines() if "cron: '" in line]
-            # The primary V235 source owner has ONE additional 08:20 JST
-            # source-prewarm trigger; it is not a second 5-minute writer.
-            self.assertEqual(len(slots),2 if allow_0820_prewarm else (3 if split_research else 1),
-                'V254 may split the SAME 5-minute freeze cadence for score throttling')
-            if allow_0820_prewarm:
-                self.assertEqual(slots.count('20 23 * * *'),1,
-                    'Only the exactly scheduled 08:20 JST prewarm is allowed')
-                slots.remove('20 23 * * *')
-            minutes=[]
-            for spec in slots:
-                minute,hour,dom,month,weekday=spec.split()
-                self.assertEqual((hour,dom,month,weekday),
-                    ('0-14,23','*','*','*'),
-                    '23 UTC must cover Japanese 08:00-08:59')
-                minutes.extend(map(int,minute.split(',')))
-            self.assertEqual(len(set(minutes)),len(minutes),'No duplicate freeze cron minutes')
-            return set(minutes)
-        primary_slots=minute_slot(primary,allow_0820_prewarm=True)
-        tail_slots=minute_slot(shadow,split_research=True)
-        backup_slots=minute_slot(fallback,split_research=True)
-        self.assertEqual(primary_slots,set(range(2,60,5)))
-        self.assertEqual(tail_slots,set(range(3,60,5)))
+        self.assertNotIn('  schedule:',shadow)
+        self.assertNotIn('  workflow_run:',shadow)
+        self.assertIn('workflow_dispatch:',shadow)
+        def slots(source, prewarm=False):
+            parts=re.findall(r"^\\s+- cron: '([^']+)'$",source,re.MULTILINE)
+            self.assertEqual(len(parts),2 if prewarm else 3)
+            if prewarm:
+                self.assertEqual(parts.count('20 23 * * *'),1)
+                parts.remove('20 23 * * *')
+            minutes=set()
+            for spec in parts:
+                minute,hour,day,month,weekday=spec.split()
+                self.assertEqual((hour,day,month,weekday),('0-14,23','*','*','*'))
+                parsed=set(map(int,minute.split(',')))
+                self.assertFalse(minutes & parsed)
+                minutes |= parsed
+            return minutes
+        main_slots=slots(primary,prewarm=True)
+        backup_slots=slots(fallback)
+        self.assertEqual(main_slots,set(range(2,60,5)))
         self.assertEqual(backup_slots,set(range(4,60,5)))
-        self.assertFalse(primary_slots & backup_slots)
-        self.assertFalse(tail_slots & backup_slots)
-        # Both active source owners still prohibit retrospective
-        # enrichment and freeze independently before any result score.
-        self.assertIn('V274 immediately freeze qualifying V254',primary)
-        self.assertIn('V275 immediately freeze qualifying V254',fallback)
-        self.assertIn('V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS',fallback)
-        self.assertIn('V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS',primary)
-        self.assertNotIn('git pull --rebase origin main',fallback)
-        self.assertNotIn('git pull --rebase origin main',primary)
+        self.assertFalse(main_slots & backup_slots)
+        for source in (primary,fallback):
+            self.assertIn('scripts/boat_edge_v254_third_tail.py freeze',source)
+            self.assertIn('git reset --hard origin/main',source)
+            self.assertNotIn('git push --force',source)
 
-    def test_v286_first_race_835_jst_has_prospective_owner_and_shadow_slots(self):
-        """Guard the UTC-23h schedules covering Japan's first saved 08:35 race.
-
-        Scheduled slots are opportunities, not proof of successfully published
-        exhibition/odds, and never authorize using results or backfilled picks.
-        """
+    def test_first_race_835_jst_has_live_owner_without_research_cron(self):
         import re
         primary=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
         research=WORKFLOW.read_text(encoding='utf-8')
-        def cron_slots(workflow, *, allow_0820_prewarm=False, split_research=False):
-            slots=re.findall(r"^\s+- cron: '([^']+)'$",workflow,re.MULTILINE)
-            self.assertEqual(len(slots),2 if allow_0820_prewarm else (3 if split_research else 1),
-                'V254 has three nonoverlapping five-minute freeze groups')
-            if allow_0820_prewarm:
-                self.assertEqual(slots.count('20 23 * * *'),1,
-                    '08:20 JST source prewarm must be unique and exact')
-                slots.remove('20 23 * * *')
-            minutes=[]
-            for spec in slots:
-                minute,hour,dom,month,weekday=spec.split()
-                self.assertEqual((hour,dom,month,weekday),('0-14,23','*','*','*'),
-                    '23 UTC must cover Japanese 08:00-08:59')
-                minutes.extend(map(int,minute.split(',')))
-            self.assertEqual(len(set(minutes)),len(minutes),'No duplicate freeze cron minutes')
-            return set(minutes)
-        parent=cron_slots(primary,allow_0820_prewarm=True)
-        tail=cron_slots(research,split_research=True)
-        self.assertEqual(parent,set(range(2,60,5)))
-        self.assertEqual(tail,set(range(3,60,5)))
-        # 08:35 JST == 23:35 UTC on the previous calendar day.
-        # Source capture must remain >120s before deadline; independent shadow
-        # may freeze only while original Git attestation is still pre-result.
+        self.assertNotIn('  schedule:',research)
+        slots=re.findall(r"^\\s+- cron: '([^']+)'$",primary,re.MULTILINE)
+        self.assertEqual(slots.count('20 23 * * *'),1)
+        slots.remove('20 23 * * *')
+        self.assertEqual(len(slots),1)
+        minute,hour,*rest=slots[0].split()
+        self.assertEqual((hour,rest),('0-14,23',['*','*','*']))
+        minutes=set(map(int,minute.split(',')))
+        self.assertEqual(minutes,set(range(2,60,5)))
         for minute in (22,27,32):
-            self.assertIn(minute,parent)
-            self.assertIn(minute+1,tail)
-            self.assertGreaterEqual(35-(minute+1),2)
+            self.assertIn(minute,minutes)
+            self.assertGreaterEqual(35-minute,2)
         self.assertIn("V274 immediately freeze qualifying V254",primary)
         self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
         source=(ROOT/'scripts/boat_edge_v232_pre_result_cohort.py').read_text(encoding='utf-8')
