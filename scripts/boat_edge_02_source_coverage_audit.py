@@ -88,7 +88,9 @@ def audit(root, day, expected=None, now=None):
             statuses = {}
             for field in FIELDS:
                 entry = src.get(field)
-                status = (entry or {}).get("status", "not_recorded") if isinstance(entry, dict) else "not_recorded"
+                status = entry.get("status", "not_recorded") if isinstance(entry, dict) else "not_recorded"
+                if not isinstance(status, str):
+                    status = "invalid_source_status"
                 if status == "ok" and not (
                         isinstance(entry, dict)
                         and isinstance(entry.get("sha256"), str)
@@ -98,7 +100,7 @@ def audit(root, day, expected=None, now=None):
                     status = "unverified_ok"
                 if status == "ok" and field == "beforeinfo":
                     cov = entry.get("six_boat_coverage") or {}
-                    if not cov.get("six_boat_complete"):
+                    if not isinstance(cov, dict) or cov.get("six_boat_complete") is not True:
                         status = "incomplete_exhibition"
                 statuses[field] = status
                 counts[field][status] += 1
