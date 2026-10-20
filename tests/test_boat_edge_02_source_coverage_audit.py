@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from scripts.boat_edge_02_source_coverage_audit import audit, load_expected, retry_candidates
+from scripts.boat_edge_02_source_coverage_audit import audit, load_expected, load_catalog, retry_candidates
 
 
 class SourceCoverageTests(unittest.TestCase):
@@ -118,6 +118,36 @@ class SourceCoverageTests(unittest.TestCase):
             result = audit(Path(tmp), "20261021", {key})
             self.assertEqual(result["summary"]["beforeinfo"]["by_status"],
                              {"incomplete_exhibition": 1})
+
+    def test_today_catalog_exposes_missing_races(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "today.json"
+            catalog.write_text(json.dumps({
+                "date": "2026-10-21",
+                "venues": [{"jcd": "16", "races": [
+                    {"race_key": "20261021-16-07", "deadline": "13:00"},
+                    {"race_key": "20261021-16-08", "deadline": "13:30"}
+                ]}]
+            }))
+            expected, deadlines = load_catalog(catalog, "20261021")
+            self.assertEqual(len(expected), 2)
+            report = audit(root, "20261021", expected, deadlines=deadlines)
+            self.assertEqual(len(report["missing_scheduled_race_keys"]), 2)
+            self.assertEqual(report["scheduled_card_presence_percent"], 0.0)
+            self.assertEqual(report["missing_scheduled_deadlines"]["20261021-16-07"], "13:00")
+
+    def test_catalog_cross_venue_identity_rejected(self):
+        with TemporaryDirectory() as tmp:
+            catalog = Path(tmp) / "today.json"
+            catalog.write_text(json.dumps({
+                "date": "2026-10-21",
+                "venues": [{"jcd": "16", "races": [
+                    {"race_key": "20261021-17-07", "deadline": "13:00"}
+                ]}]
+            }))
+            with self.assertRaises(ValueError):
+                load_catalog(catalog, "20261021")
 
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
