@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V228_SITE_AI_AUTOPILOT.yml']
   workflow_dispatch:
-  schedule:
-    - cron: '4,9,14,19,24,29,34,39,44,49,54,59 0-14,23 * * *'
+  # C-1: the old V228 writer stages site_prediction_snapshots directly.
+  # V229/V235 own the audited immutable first freeze; manual recovery only.
 
 permissions:
   contents: write
