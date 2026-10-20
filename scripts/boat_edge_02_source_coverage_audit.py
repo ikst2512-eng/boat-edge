@@ -70,7 +70,13 @@ def audit(root, day, expected=None):
         "schema": "BOAT_EDGE_02_READONLY_SOURCE_COVERAGE_V1",
         "date_jst": day, "generated_at_jst": datetime.now(JST).isoformat(),
         "venues_total": 24, "saved_venues": len({r["race_key"][9:11] for r in rows}),
-        "saved_races": n, "expected_scheduled_races": None,
+        "saved_races": n,
+        "expected_scheduled_races": len(expected) if expected is not None else None,
+        "missing_scheduled_race_keys": missing,
+        "unexpected_saved_race_keys": unexpected,
+        "scheduled_card_presence_percent": (
+            round(100 * len(saved_keys & expected) / len(expected), 2)
+            if expected else None),
         "all_scheduled_race_success_percent": None,
         "note": "Saved-card rate only; missing scheduled races, live source verification and original exhibition values are not proven.",
         "summary": summary, "rows": rows,
