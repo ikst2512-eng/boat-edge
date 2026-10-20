@@ -217,6 +217,18 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
         r["last_observation_diagnostic"]["class"] for r in rows
         if r["status"] == "UNPROVEN_AFTER_DEADLINE" and "last_observation_diagnostic" in r
     ).items()))
+    # Summarize current on-disk source timings only for unproven races.
+    # Do not infer that earlier historic bytes were available at freeze time.
+    unproven = [r for r in rows if r["status"] == "UNPROVEN_AFTER_DEADLINE"]
+    timing_counts = {
+        "unproven_observed_races": len(unproven),
+        "latest_four_sources_in_2_to_10m": sum(
+            (r.get("latest_source_timing") or {}).get("all_four_latest_files_in_decision_window") is True
+            for r in unproven),
+        "latest_four_sources_not_in_2_to_10m": sum(
+            (r.get("latest_source_timing") or {}).get("all_four_latest_files_in_decision_window") is not True
+            for r in unproven),
+    }
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
             "deadline_source": "CURRENT_DAY_CATALOG" if same_day else "HISTORICAL_V215_OBSERVATION_UNVERIFIED",
@@ -227,6 +239,7 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
             "not_observed_count": len(missing_schedule) if catalog_matches_day else None,
             "classification_counts": counts,
             "unproven_last_observation_diagnostics": diagnostic_counts,
+            "unproven_latest_source_timing_counts": timing_counts,
             "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,

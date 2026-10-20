@@ -179,6 +179,27 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(sum(x["latest_file_in_2_to_10m_window"]
                              for x in report["sources"].values()), 0)
 
+    def test_unproven_timing_rollup_never_certifies_eligible_miss(self):
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
+                   {"observations": {KEY: {"deadline": "15:53",
+                                             "last_seen_at": "2026-10-20T06:42:00+00:00",
+                                             "reason": "snapshot_missing", "source_gaps": []}}})
+        self.write("data/today.json", {"date": "2026-10-21", "venues": []})
+        with (patch.object(m, "archived_receipt", return_value={
+            "prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}),
+              patch.object(m, "historical_source_timing", return_value={
+                 "all_four_latest_files_in_decision_window": True,
+                 "interpretation": "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY"})):
+            report=m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
+                                day="20261020")
+        self.assertEqual(report["unproven_latest_source_timing_counts"], {
+            "unproven_observed_races": 1,
+            "latest_four_sources_in_2_to_10m": 1,
+            "latest_four_sources_not_in_2_to_10m": 0})
+        self.assertEqual(report["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
+        self.assertFalse(report["eligible_denominator_verified"])
+        self.assertFalse(report["c1_99_percent_proven"])
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
