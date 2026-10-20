@@ -174,6 +174,18 @@ class SourceCoverageTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_catalog(catalog, "20261021")
 
+    def test_catalog_impossible_deadline_rejected(self):
+        with TemporaryDirectory() as tmp:
+            catalog = Path(tmp) / "today.json"
+            catalog.write_text(json.dumps({
+                "date": "2026-10-21",
+                "venues": [{"jcd": "16", "races": [
+                    {"race_key": "20261021-16-07", "deadline": "25:99"}
+                ]}]
+            }))
+            with self.assertRaises(ValueError):
+                load_catalog(catalog, "20261021")
+
     def test_duplicate_catalog_venue_rejected(self):
         with TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "today.json"
