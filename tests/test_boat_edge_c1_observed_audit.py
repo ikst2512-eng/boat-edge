@@ -143,6 +143,42 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertFalse(data["eligible_denominator_verified"])
         self.assertFalse(data["c1_99_percent_proven"])
 
+    def test_historic_source_timings_never_upgrade_eligibility(self):
+        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
+        self.write("data/races/" + KEY + ".json", {
+            "meta": {"phase": "PRE_RESULT", "results_seen": False,
+                     "unlock": False, "scoring": False,
+                     "venue_code": "03", "race_no": 11, "deadline": "15:53"},
+            "source_audit": {
+                "race_card": {"status": "ok", "fetched_at": "2026-10-20T06:47:00+00:00"},
+                "beforeinfo": {"status": "ok", "fetched_at": "2026-10-20T06:47:10+00:00"}}})
+        self.write("data/site_scratches_v182/" + KEY + ".json", {
+            "race_key": KEY, "blocked": False,
+            "official_beforeinfo_source_status": "ok",
+            "checked_at": "2026-10-20T06:47:20+00:00"})
+        self.write("data/site_odds/" + KEY + ".json", {
+            "race_key": KEY, "phase": "PRE_RESULT_PURCHASE_ONLY",
+            "verified_official_dom_v167": True, "available_count": 120,
+            "fetched_at": "2026-10-20T06:47:30+00:00"})
+        report = m.historical_source_timing(self.root, KEY, due)
+        self.assertTrue(report["all_four_latest_files_in_decision_window"])
+        self.assertEqual(report["interpretation"],
+                         "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY")
+        self.write("data/site_odds/" + KEY + ".json", {
+            "race_key": KEY, "phase": "PRE_RESULT_PURCHASE_ONLY",
+            "verified_official_dom_v167": True, "available_count": 120,
+            "fetched_at": "2026-10-20T06:54:00+00:00"})
+        late = m.historical_source_timing(self.root, KEY, due)
+        self.assertFalse(late["all_four_latest_files_in_decision_window"])
+        self.assertFalse(late["sources"]["official_odds"]["latest_file_in_2_to_10m_window"])
+
+    def test_missing_official_source_timing_cannot_be_counted_ready(self):
+        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
+        report = m.historical_source_timing(self.root, KEY, due)
+        self.assertFalse(report["all_four_latest_files_in_decision_window"])
+        self.assertEqual(sum(x["latest_file_in_2_to_10m_window"]
+                             for x in report["sources"].values()), 0)
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
