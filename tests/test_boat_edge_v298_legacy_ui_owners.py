@@ -6,19 +6,13 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class LegacyUiOwnerTests(unittest.TestCase):
-    def test_legacy_ui_installers_manual_only(self):
+    def test_legacy_ui_installers_remain_deleted(self):
+        # Both V106 and V108 installers were fully retired; allowing their
+        # reintroduction would risk rewrites of modern prediction UI assets.
         for name in ("site-v106.yml", "site-v108.yml"):
             with self.subTest(name=name):
                 file = ROOT / ".github" / "workflows" / name
-                text = file.read_text(encoding="utf-8")
-                head = text.split("\npermissions:", 1)[0]
-                self.assertIn("\non:\n", head)
-                self.assertIn("\n  workflow_dispatch:", head)
-                for forbidden in ("\n  push:", "\n  schedule:", "\n  workflow_run:", "\n  pull_request:", "cron:"):
-                    self.assertNotIn(forbidden, head, (name, forbidden))
-                # Keep explicit operator recovery possible, but prohibit automated writes.
-                self.assertIn("contents: write", text)
-                self.assertIn("V298: Legacy UI installer is manual recovery ONLY.", head)
+                self.assertFalse(file.exists(), "Retired installer must remain absent")
 
     def test_current_collectors_and_v235_not_retired(self):
         active = {
