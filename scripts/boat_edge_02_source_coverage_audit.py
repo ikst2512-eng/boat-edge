@@ -144,6 +144,13 @@ def audit(root, day, expected=None, now=None, deadlines=None):
     valid_rows = [row for row in rows if "error" not in row]
     missing = sorted(expected - saved_keys) if expected is not None else None
     missing_deadlines = {key: deadlines[key] for key in missing if deadlines and key in deadlines} if missing is not None else None
+    # Missing entire cards have no local metadata; a trusted catalog deadline
+    # permits a diagnostic only, never automatic fetching or retroactive writing.
+    missing_rows = [
+        {"race_key": key, "deadline": missing_deadlines[key],
+         "statuses": {"race_card": "missing", "beforeinfo": "not_recorded"}}
+        for key in (missing or []) if missing_deadlines and key in missing_deadlines
+    ]
     unexpected = sorted(saved_keys - expected) if expected is not None else None
     # A saved race does not by itself establish data-source completeness.
     n = len(rows)
@@ -176,7 +183,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
             if expected else None),
         "all_scheduled_race_success_percent": None,\n        "collection_state": "PROVISIONAL_NO_LIVE_SOURCE_ATTESTATION",
         "note": "Saved-card rate only; missing scheduled races, live source verification and original exhibition values are not proven.",
-        "summary": summary, "retry_candidates_diagnostics_only": retry_candidates(rows, day, now), "rows": rows,
+        "summary": summary, "retry_candidates_diagnostics_only": retry_candidates(rows + missing_rows, day, now), "rows": rows,
     }
 
 
