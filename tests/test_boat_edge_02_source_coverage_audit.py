@@ -100,6 +100,25 @@ class SourceCoverageTests(unittest.TestCase):
             result = audit(Path(tmp), "20261021", {key})
             self.assertEqual(result["summary"]["race_card"]["by_status"], {"unverified_ok": 1})
 
+    def test_invalid_coverage_shape_is_not_success(self):
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key,
+                "source_audit": {
+                    "beforeinfo": {
+                        "status": "ok", "sha256": "a" * 64,
+                        "fetched_at": "2026-10-21T12:00:00+09:00",
+                        "six_boat_coverage": ["not-a-dict"]
+                    }
+                }
+            }))
+            result = audit(Path(tmp), "20261021", {key})
+            self.assertEqual(result["summary"]["beforeinfo"]["by_status"],
+                             {"incomplete_exhibition": 1})
+
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
