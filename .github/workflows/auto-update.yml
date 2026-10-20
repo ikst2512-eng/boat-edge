@@ -755,6 +755,25 @@ jobs:
               except (OSError,ValueError,UnicodeError):
                   continue
               if not isinstance(doc,dict):continue
+              # Retain an earlier complete original-exhibition observation
+              # when a later CSV is missing or temporarily incomplete.
+              if oe is None:
+                  prior=(doc.get("original_exhibition") or {})
+                  old_audit=(doc.get("source_audit") or {}).get("original_exhibition") or {}
+                  old_boats=prior.get("boats") or []
+                  old_labels=prior.get("labels") or []
+                  if (old_audit.get("status")=="ok" and old_labels
+                          and len(old_boats)==6
+                          and {b.get("lane") for b in old_boats if isinstance(b,dict)}==set(range(1,7))
+                          and all(isinstance(b.get("values"),list)
+                                  and len(b["values"])==len(old_labels)
+                                  and all(type(v) in (int,float) and math.isfinite(v) for v in b["values"])
+                                  for b in old_boats if isinstance(b,dict))):
+                      oe_preserved=True
+                  else:
+                      oe_preserved=False
+              else:
+                  oe_preserved=False
               race_key=f"{ymd}-{venue}-{rno:02d}"
               clock=(doc.get("meta") or {}).get("deadline")
               if not source_write_allowed(DATA,race_key,clock,datetime.now(JST)):
@@ -765,6 +784,8 @@ jobs:
 
               audit=doc.setdefault("source_audit",{})
               for role,row in [("stt",stt),("tkz",tkz),("sui",sui),("original_exhibition",oe)]:
+                  if role=="original_exhibition" and oe_preserved:
+                      continue
                   info=fetched[role]
                   audit[role]={
                     "status":"ok" if row else ("not_published" if info["error"]=="not_published" else "missing"),
@@ -888,7 +909,7 @@ jobs:
                 "stt":stt is not None,
                 "tkz":tkz is not None,
                 "sui":sui is not None,
-                "original_exhibition":oe is not None,
+                "original_exhibition":oe is not None or oe_preserved,
               }
               courses=[num(row_get(stt,f"艇{b}_コース"),int) for b in range(1,7)] if stt else []
               core7=(
