@@ -794,6 +794,13 @@ jobs:
               except (OSError,ValueError,UnicodeError):
                   continue
               if not isinstance(doc,dict):continue
+              # Official race-card collection can succeed before the upstream
+              # race-card CSV is published. Its absence must not erase the
+              # known official source presence from the saved document.
+              official_card=(doc.get("source_audit") or {}).get("race_card") or {}
+              card_available=(rc is not None or
+                  (official_card.get("status")=="ok" and
+                   len(doc.get("racers") or [])==6))
               # Retain an earlier complete original-exhibition observation
               # when a later CSV is missing or temporarily incomplete.
               if oe is None:
@@ -944,7 +951,7 @@ jobs:
                   doc["original_exhibition"]={"labels":labels,"boats":boats}
 
               source_presence={
-                "race_cards":rc is not None,
+                "race_cards":card_available,
                 "stt":stt is not None,
                 "tkz":tkz is not None,
                 "sui":sui is not None,
