@@ -55,7 +55,7 @@ def load_catalog(path, day):
                 raise ValueError("catalog race key invalid")
             if key[9:11] != str(venue.get("jcd", "")).zfill(2):
                 raise ValueError("catalog venue mismatch")
-            if not isinstance(deadline, str) or not re.fullmatch(r"\\d{2}:\\d{2}", deadline):
+            if not isinstance(deadline, str) or not re.fullmatch(r"\d{2}:\d{2}", deadline):
                 raise ValueError("catalog deadline invalid")
             keys.append(key)
             deadlines[key] = deadline
