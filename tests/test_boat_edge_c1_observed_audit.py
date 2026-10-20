@@ -185,11 +185,11 @@ class C1ObservedAuditTests(unittest.TestCase):
                                              "last_seen_at": "2026-10-20T06:42:00+00:00",
                                              "reason": "snapshot_missing", "source_gaps": []}}})
         self.write("data/today.json", {"date": "2026-10-21", "venues": []})
-        with patch.object(m, "archived_receipt", return_value={
-            "prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}), \\
-             patch.object(m, "historical_source_timing", return_value={
+        with (patch.object(m, "archived_receipt", return_value={
+            "prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}),
+              patch.object(m, "historical_source_timing", return_value={
                  "all_four_latest_files_in_decision_window": True,
-                 "interpretation": "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY"}):
+                 "interpretation": "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY"})):
             report=m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
                                 day="20261020")
         self.assertEqual(report["unproven_latest_source_timing_counts"], {
