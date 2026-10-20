@@ -188,8 +188,30 @@ def receipt(root, now=None, requested=None, historical_deadline=None):
     record["first_git_commit"] = first_sha
     record["first_git_commit_at"] = committed_at.isoformat() if committed_at else None
     record["first_git_snapshot_sha256"] = hashlib.sha256(git_raw).hexdigest() if git_raw else None
+    # An archived snapshot may have legitimate later revisions. For historical
+    # evidence, validate the original first-add bytes, never today's file.
+    # The first-add must independently carry valid pre-result metadata.
+    first_snap = {}
+    if git_raw is not None:
+        try:
+            first_snap = json.loads(git_raw.decode("utf-8"))
+        except (UnicodeError, ValueError):
+            pass
+    first_tickets = ((first_snap.get("modes") or {}).get("hit") or {}).get("tickets") or []
+    first_time = instant(first_snap.get("first_saved_at"))
+    first_valid = (
+        first_snap.get("race_key") == key and
+        first_snap.get("snapshot_window") == "FINAL_15M" and
+        first_snap.get("prediction_kind") == "SITE_REFERENCE_V122" and
+        all((first_snap.get("guards") or {}).get(g) is False for g in
+            ("results_seen", "unlock", "scoring")) and
+        len(first_tickets) >= 10 and
+        len({t.get("combo") for t in first_tickets[:10]}) == 10 and
+        first_time is not None and 2 <= (due - first_time).total_seconds() / 60 <= 10
+    )
     if (committed_at is None or committed_at >= due or
-            git_raw is None or hashlib.sha256(git_raw).hexdigest() != digest):
+            git_raw is None or not first_valid or
+            (historical_deadline is None and hashlib.sha256(git_raw).hexdigest() != digest)):
         record["status"] = "FIRST_GIT_COMMIT_NOT_SOURCE_BOUND_PREDEADLINE"
         return record
     record["prediction_saved_proven"] = True
