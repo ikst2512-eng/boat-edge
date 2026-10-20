@@ -97,11 +97,11 @@ def audit(root: Path = WORKFLOWS) -> dict:
 def verify_retired(report: dict) -> None:
     found = {x["workflow"]: x for x in report["workflows"]}
     for name in RETIRED:
-        if name not in found:
-            raise AssertionError("V299_REQUIRED_RETIRED_WORKFLOW_MISSING " + name)
-        actual = set(found[name]["triggers"])
-        if actual != {"workflow_dispatch"}:
-            raise AssertionError("V299_RETIRED_WORKFLOW_REACTIVATED " + name + ": " + repr(sorted(actual)))
+        # Retired writers are removed from the tree, not retained as
+        # manual-only tombstones. Any reintroduced YAML could regain
+        # automatic Git write ownership in a later edit.
+        if name in found:
+            raise AssertionError("V299_RETIRED_WORKFLOW_REINTRODUCED " + name)
     live = found.get(LIVE)
     if live is None or not {"schedule", "workflow_dispatch", "workflow_run"}.issubset(live["triggers"]):
         raise AssertionError("V299_EXPECTED_CURRENT_V235_AUTOMATION_MISSING")
