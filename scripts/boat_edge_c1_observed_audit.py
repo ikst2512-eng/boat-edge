@@ -65,7 +65,8 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
         # The last recorded provisional 'snapshot_missing' must never be
         # classified as a failed final Git save merely because the clock passed.
         # Check the real Git first-add even if the readiness history is stale.
-        proof = receipt(root, now=now, requested=key)
+        proof = (receipt(root, now=now, requested=key, historical_deadline=clock)
+                 if not same_day else receipt(root, now=now, requested=key))
         if proof.get("prediction_saved_proven") is True:
             status = "PROVEN_FIRST_GIT_BEFORE_DEADLINE"
         elif now < due:
