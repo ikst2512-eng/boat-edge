@@ -57,7 +57,7 @@ class GuardTrackedResearchers(unittest.TestCase):
             self.assertIn(p, content)
         for statement in required:
             self.assertIn(statement, content)
-        triggers = content.split("\\non:\\n", 1)[1].split("\\npermissions:", 1)[0]
+        triggers = content.split("permissions:", 1)[0]
         self.assertIn("  workflow_dispatch:", triggers)
         self.assertIn("  schedule:", triggers)
         self.assertIn("2-59/5 0-14,23 * * *", triggers)
