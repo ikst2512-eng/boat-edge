@@ -195,10 +195,33 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(report["unproven_latest_source_timing_counts"], {
             "unproven_observed_races": 1,
             "latest_four_sources_in_2_to_10m": 1,
-            "latest_four_sources_not_in_2_to_10m": 0})
+            "latest_four_sources_not_in_2_to_10m": 0,
+            "latest_four_sources_prewarm_only": 0})
         self.assertEqual(report["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
         self.assertFalse(report["eligible_denominator_verified"])
         self.assertFalse(report["c1_99_percent_proven"])
+
+    def test_latest_sources_early_prewarm_does_not_prove_final_git_save(self):
+        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
+        self.write("data/races/" + KEY + ".json", {
+            "meta": {"phase": "PRE_RESULT", "results_seen": False, "unlock": False,
+                     "scoring": False, "venue_code": "03", "race_no": 11,
+                     "deadline": "15:53"},
+            "source_audit": {
+                "race_card": {"status": "ok", "fetched_at": "2026-10-20T06:40:00+00:00"},
+                "beforeinfo": {"status": "ok", "fetched_at": "2026-10-20T06:40:10+00:00"}}})
+        self.write("data/site_scratches_v182/" + KEY + ".json", {
+            "race_key": KEY, "blocked": False,
+            "official_beforeinfo_source_status": "ok",
+            "checked_at": "2026-10-20T06:40:20+00:00"})
+        self.write("data/site_odds/" + KEY + ".json", {
+            "race_key": KEY, "phase": "PRE_RESULT_PURCHASE_ONLY",
+            "verified_official_dom_v167": True, "available_count": 120,
+            "fetched_at": "2026-10-20T06:40:30+00:00"})
+        result = m.historical_source_timing(self.root, KEY, due)
+        self.assertTrue(result["all_four_latest_files_in_prewarm_window"])
+        self.assertTrue(result["latest_files_prewarm_only"])
+        self.assertFalse(result["all_four_latest_files_in_decision_window"])
 
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
