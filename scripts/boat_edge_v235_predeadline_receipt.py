@@ -194,7 +194,8 @@ def receipt(root, now=None, requested=None, historical_deadline=None):
     first_snap = {}
     if git_raw is not None:
         try:
-            first_snap = json.loads(git_raw.decode("utf-8"))
+            parsed_first = json.loads(git_raw.decode("utf-8"))
+            first_snap = parsed_first if isinstance(parsed_first, dict) else {}
         except (UnicodeError, ValueError):
             pass
     first_tickets = ((first_snap.get("modes") or {}).get("hit") or {}).get("tickets") or []
