@@ -1,0 +1,125 @@
+name: BOAT EDGE V230 - Fast Predeadline Official Inputs and Atomic AI Proof
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/BOAT_EDGE_V230_FAST_OFFICIAL_PREDEADLINE.yml']
+  # V276: V235 executes the same pinned V230 source lane on this cadence.
+  # Keep manual dispatch for targeted recovery, not duplicate scheduled writes.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boat-edge-v230-imminent-official-source-only
+  cancel-in-progress: false
+
+jobs:
+  imminent-pre-result-evidence:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Install original parser dependencies
+        run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Pin source-only predecessor code and install exact V230 bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_V230_INSTALL'
+          from pathlib import Path
+          import subprocess,ast
+          repo=Path('.')
+          pins={'scripts/site_final_history_v133.py': '7b2916df307fcb2783cfc6ddc38ff73903d56da5', 'scripts/boat_edge_v228_freeze_only.py': 'cd71bc51b943b485f08d9610e305a3a7cefb220e', 'scripts/boat_edge_v229_atomic_freeze.py': 'c77d917ded93dc5584e990f769ced1ba108f8ed4', 'scripts/site_odds_v167_dom_verifier.py': '2b168d83859db2b90ce69cd8d817983a1ee38dd8'}
+          for path,expected in pins.items():
+              p=repo/path
+              if not p.is_file():raise SystemExit('V230_REQUIRED_PREDECESSOR_MISSING_'+path)
+              actual=subprocess.check_output(['git','hash-object',str(p)],text=True).strip()
+              if actual!=expected:raise SystemExit('V230_PREDECESSOR_PIN_DRIFT_'+path)
+          # The checkout must contain the two reviewed source files. Pin their
+          # exact Git blob hashes rather than reinstalling obsolete embedded
+          # copies; missing or changed files fail closed before any source IO.
+          pinned_current={
+              'scripts/boat_edge_v230_fast_lane.py':'24ee57af7594ecdd0b79510b727af41ed86dfc4a',
+              'tests/test_boat_edge_v230_fast_lane.py':'43ecfe78242d93ae4cdab027e4e3f32360f623e5',
+          }
+          for path,expected in pinned_current.items():
+              p=repo/path
+              if not p.is_file():raise SystemExit('V230_PINNED_CURRENT_SOURCE_MISSING_'+path)
+              actual=subprocess.check_output(['git','hash-object',str(p)],text=True).strip()
+              if actual!=expected:raise SystemExit('V230_PINNED_CURRENT_SOURCE_DRIFT_'+path)
+              ast.parse(p.read_text(encoding='utf-8'))
+          print('V230_PINNED_CURRENT_SOURCE_PASS',len(pinned_current))
+          PY_V230_INSTALL
+      - name: Run eleven source-readiness and no-backfill regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v230_fast_lane.py
+          echo V230_FAST_LANE_11_OFFLINE_REGRESSIONS_PASS
+      - name: Refresh ONLY imminent official sources then invoke V229 pre-result atomic freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=.:scripts PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v230_fast_lane.py
+          git diff --check
+          python3 - <<'PY_V230_REPORT'
+          from pathlib import Path
+          import json
+          p=Path('data/site_autopilot/v230_fast_current.json')
+          r=json.loads(p.read_text(encoding='utf8'))
+          assert r['schema']=='BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1'
+          assert len(r['targets'])<=12
+          print('V230_OFFICIAL_PRE_RESULT_RUN_PASS',json.dumps({k:r[k] for k in ('source_refreshed','source_blocked','odds_incomplete','network_error','new_snapshots_atomic_audited')},sort_keys=True))
+          PY_V230_REPORT
+      - name: Commit only targeted official source bytes and same-run V229 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY_V230_STAGE'
+          from pathlib import Path
+          import json,subprocess,re
+          root=Path('.')
+          doc=json.loads((root/'data/site_autopilot/v230_fast_current.json').read_text())
+          paths=['scripts/boat_edge_v230_fast_lane.py','tests/test_boat_edge_v230_fast_lane.py','data/site_autopilot/v230_fast_current.json']
+          for key in doc['targets']:
+              if not re.fullmatch(r'20\d{6}-\d{2}-\d{2}',key):raise SystemExit('V230_UNSAFE_RACE_KEY')
+              date,venue,rr=key.split('-')
+              paths.extend([f'data/races/{key}.json',f'data/site_scratches_v182/{key}.json',f'data/site_odds/{key}.json',
+                            f'data/raw/{date}/{venue}_{rr}_racelist.html',f'data/raw/{date}/{venue}_{rr}_beforeinfo.html',
+                            f'data/raw/{date}/{venue}_{rr}_odds3t.html.gz'])
+          paths.extend(['data/site_prediction_snapshots','data/site_prediction_audit','data/site_autopilot/v229_evidence'])
+          for p in paths:
+              if (root/p).exists():subprocess.check_call(['git','add','-A','--',p])
+          staged=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          basepaths={'scripts/boat_edge_v230_fast_lane.py','tests/test_boat_edge_v230_fast_lane.py','data/site_autopilot/v230_fast_current.json'}
+          targetparts=set(doc['targets'])
+          for path in staged:
+              if path in basepaths:continue
+              if path.startswith('data/site_prediction_snapshots/') or path.startswith('data/site_prediction_audit/') or path.startswith('data/site_autopilot/v229_evidence/'):
+                  continue
+              if not any(path in [f'data/races/{k}.json',f'data/site_scratches_v182/{k}.json',f'data/site_odds/{k}.json',
+                                  f'data/raw/{k[:8]}/{k[9:11]}_{k[12:14]}_racelist.html',
+                                  f'data/raw/{k[:8]}/{k[9:11]}_{k[12:14]}_beforeinfo.html',
+                                  f'data/raw/{k[:8]}/{k[9:11]}_{k[12:14]}_odds3t.html.gz'] for k in targetparts):
+                  raise SystemExit('V230_UNEXPECTED_STAGED_PATH_'+path)
+          print('V230_ALLOWED_FILES_ONLY',len(staged))
+          PY_V230_STAGE
+          if git diff --cached --quiet; then echo V230_NO_SOURCE_CHANGE_DO_NOT_CLAIM_NEW_EVIDENCE; exit 0; fi
+          git commit -m 'V230 prioritize imminent official racing inputs and source-proven first freeze'
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then echo V230_TARGETED_SOURCE_AND_AI_EVIDENCE_PUBLISHED; exit 0; fi
+            sleep 2
+          done
+          echo V230_REMOTE_PUSH_NOT_CONFIRMED_FAIL_CLOSED >&2
+          exit 1
