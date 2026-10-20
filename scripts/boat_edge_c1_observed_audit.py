@@ -86,7 +86,8 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
     catalog_matches_day = str(catalog.get("date") or "").replace("-", "") == day
     same_day = catalog_matches_day and day == now.strftime("%Y%m%d")
     schedule = {}
-    if same_day:
+    # Retain historical catalog coverage when yesterday's card remains cached.
+    if catalog_matches_day:
         for venue in catalog.get("venues") or []:
             for race in venue.get("races") or []:
                 key = race.get("race_key")
