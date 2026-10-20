@@ -840,6 +840,11 @@ jobs:
                     "sha256":info["sha256"],
                   }
 
+              # A temporarily absent preview CSV must not erase previously
+              # verified source bytes in the race document. Audit still marks
+              # the current fetch as missing; retained values are historical.
+              prior_actual=doc.get("actual_entry")
+              prior_before=doc.get("beforeinfo")
               # stt: actual course + exhibition ST
               actual=[]
               if stt:
@@ -852,7 +857,8 @@ jobs:
                         "exhibition_f":ef,
                         "exhibition_st_raw":row_get(stt,f"艇{b}_スタート展示"),
                       })
-              doc["actual_entry"]=actual
+              if stt or not isinstance(prior_actual,list) or len(prior_actual)!=6:
+                  doc["actual_entry"]=actual
 
               # tkz: weight / adjustment / exhibition time / tilt
               preview_boats=[]
