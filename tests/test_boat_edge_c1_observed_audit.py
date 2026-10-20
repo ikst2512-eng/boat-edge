@@ -94,7 +94,7 @@ class C1ObservedAuditTests(unittest.TestCase):
             if args[0] == "show" and args[1].startswith("a" * 40 + ":"):
                 return raw
             if args[0] == "show":
-                return b"2026-10-20T06:48:00+00:00\\n"
+                return b"2026-10-20T06:48:00+00:00\n"
             return None
         with patch("boat_edge_v235_predeadline_receipt.git", side_effect=fake_git):
             result = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
