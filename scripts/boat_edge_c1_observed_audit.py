@@ -75,17 +75,24 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
             status = "UNPROVEN_AFTER_DEADLINE"
         rows.append({"race_key": key, "status": status, "deadline": clock,
                      "receipt_status": proof.get("status"), "deadline_source": deadline_source,
+                     "first_git_commit": proof.get("first_git_commit"),
+                     "first_git_commit_at": proof.get("first_git_commit_at"),
+                     "first_git_snapshot_sha256": proof.get("first_git_snapshot_sha256"),
+                     "snapshot_sha256": proof.get("snapshot_sha256"),
                      "last_observed_reason": observation.get("reason"),
                      "last_observed_at": observation.get("last_seen_at"),
                      "source_gaps_at_last_observation": observation.get("source_gaps") or []})
     counts = dict(sorted(Counter(r["status"] for r in rows).items()))
+    receipt_counts = dict(sorted(Counter(r.get("receipt_status") or "UNKNOWN" for r in rows).items()))
+    gap_flags = dict(sorted(Counter(gap for r in rows for gap in r.get("source_gaps_at_last_observation", [])).items()))
     missing_schedule = sorted(set(schedule) - {r["race_key"] for r in rows})
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
             "official_result_files_read": False, "formal_prediction_files_read": False,
             "scheduled_races_catalog": len(schedule) if same_day else None,
             "observed_races": len(rows), "not_observed_count": len(missing_schedule),
-            "classification_counts": counts, "races": rows,
+            "classification_counts": counts, "receipt_status_counts": receipt_counts,
+            "last_observation_source_gap_flags": gap_flags, "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,
             "interpretation": "Unproven after deadline is not proof of eligible missed freeze; pending is never a final failure."}
