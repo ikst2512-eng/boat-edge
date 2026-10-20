@@ -28,7 +28,10 @@ class V238TrackedOnly(unittest.TestCase):
 
     def test_keep_diagnostic_run_and_stage_only_generated_report(self):
         source=self.workflow
-        self.assertIn("cron: '17 0-14,23 * * *'",source)
+        header=source.split("\npermissions:",1)[0]
+        self.assertNotIn("  schedule:",header)
+        self.assertNotIn("  workflow_run:",header)
+        self.assertNotIn("cron:",header)
         self.assertIn('workflow_dispatch:',source)
         self.assertIn('git reset --hard origin/main',source)
         self.assertIn("python3 -m unittest discover -s tests -p 'test_boat_edge_v238_tail_diagnostic.py'",source)
