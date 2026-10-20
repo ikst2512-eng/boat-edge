@@ -72,6 +72,32 @@ def archived_receipt(root: Path, key: str, due: datetime) -> dict:
             "first_git_commit": sha, "first_git_commit_at": commit_time.isoformat()}
 
 
+def observation_diagnostic(observation: dict, due: datetime) -> dict:
+    """Describe the latest observation, never infer a final eligible miss.
+
+    A monitor last seen 12 minutes before cutoff cannot witness a failed
+    freeze in the strictly required 2-to-10-minute decision window.
+    """
+    last = parse_time(observation.get("last_seen_at"))
+    gaps = observation.get("source_gaps") or []
+    if not isinstance(gaps, list):
+        gaps = []
+    if last is None:
+        return {"class": "LAST_OBSERVATION_TIME_UNKNOWN", "minutes_to_deadline": None}
+    minutes = (due - last).total_seconds() / 60
+    if minutes > 10:
+        category = "NO_OBSERVATION_IN_DECISION_WINDOW"
+    elif minutes < 2:
+        category = "LAST_OBSERVATION_AFTER_DECISION_WINDOW"
+    elif gaps:
+        category = "SOURCE_GAPS_IN_DECISION_WINDOW"
+    elif observation.get("reason") == "snapshot_missing":
+        category = "NO_SNAPSHOT_AT_OBSERVED_DECISION_INSTANT"
+    else:
+        category = "IN_WINDOW_OTHER_PROVISIONAL_STATE"
+    return {"class": category, "minutes_to_deadline": round(minutes, 2)}
+
+
 def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
     root = Path(root)
     now = now.astimezone(JST)
@@ -124,13 +150,19 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
             status = "PENDING_BEFORE_DEADLINE"
         else:
             status = "UNPROVEN_AFTER_DEADLINE"
+        diagnostic = observation_diagnostic(observation, due)
         rows.append({"race_key": key, "status": status, "deadline": clock,
                      "receipt_status": proof.get("status"),
+                     "last_observation_diagnostic": diagnostic,
                      "last_observed_reason": observation.get("reason"),
                      "last_observed_at": observation.get("last_seen_at"),
                      "source_gaps_at_last_observation": observation.get("source_gaps") or []})
     counts = dict(sorted(Counter(r["status"] for r in rows).items()))
     missing_schedule = sorted(set(schedule) - {r["race_key"] for r in rows})
+    diagnostic_counts = dict(sorted(Counter(
+        r["last_observation_diagnostic"]["class"] for r in rows
+        if r["status"] == "UNPROVEN_AFTER_DEADLINE" and "last_observation_diagnostic" in r
+    ).items()))
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
             "deadline_source": "CURRENT_DAY_CATALOG" if same_day else "HISTORICAL_V215_OBSERVATION_UNVERIFIED",
@@ -139,7 +171,9 @@ def accounting(root: Path, now: datetime, day: str | None = None) -> dict:
             "historical_catalog_is_stale": catalog_matches_day and not same_day,
             "observed_races": len(rows),
             "not_observed_count": len(missing_schedule) if catalog_matches_day else None,
-            "classification_counts": counts, "races": rows,
+            "classification_counts": counts,
+            "unproven_last_observation_diagnostics": diagnostic_counts,
+            "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,
             "interpretation": "Unproven after deadline is not proof of eligible missed freeze; pending is never a final failure."}
