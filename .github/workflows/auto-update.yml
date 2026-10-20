@@ -640,13 +640,21 @@ jobs:
               rows,digest,err=fetch_csv(role,url)
               # Transient HTTP/network failures and source publication lag are
               # common near the deadline. Retry boundedly in the same run.
-              if role=="original_exhibition" and (err or not rows):
+              if role=="original_exhibition" and (err or not rows or
+                  not any(str(r.get("レースコード","")).strip().startswith(ymd)
+                          and any(str(r.get(k) or "").strip()
+                                  for k in ("計測項目1","計測項目2","計測項目3"))
+                          for r in rows)):
                   for delay in (2,5):
                       time.sleep(delay)
                       retry_rows,retry_digest,retry_err=fetch_csv(role,url)
                       if retry_rows:
                           rows,digest,err=retry_rows,retry_digest,retry_err
-                          break
+                          if any(str(r.get("レースコード","")).strip().startswith(ymd)
+                                 and any(str(r.get(k) or "").strip()
+                                         for k in ("計測項目1","計測項目2","計測項目3"))
+                                 for r in rows):
+                              break
                       if retry_digest is not None:
                           rows,digest,err=retry_rows,retry_digest,retry_err
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err}
