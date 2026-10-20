@@ -65,10 +65,10 @@ def audit(root, day, expected=None, now=None):
             continue
         try:
             obj = json.loads(path.read_text(encoding="utf-8"))
-            if obj.get("race_key") != path.stem:
-                raise ValueError("race_key mismatch")
             if not isinstance(obj, dict):
                 raise ValueError("invalid race object")
+            if obj.get("race_key") != path.stem:
+                raise ValueError("race_key mismatch")
             src = obj.get("source_audit") or {}
             meta = obj.get("meta") or {}
             if not isinstance(src, dict) or not isinstance(meta, dict):
