@@ -27,7 +27,33 @@ def load_expected(path, day):
     return set(keys)
 
 
-def audit(root, day, expected=None):
+def retry_candidates(rows, day, now=None):
+    """Diagnostics only: never execute fetches or bypass deadline locks."""
+    now = now or datetime.now(JST)
+    now = now.astimezone(JST)
+    candidates = []
+    for row in rows:
+        key = row["race_key"]
+        deadline = row.get("deadline")
+        if row.get("error") or not isinstance(deadline, str) or not re.fullmatch(r"\\d{2}:\\d{2}", deadline):
+            continue
+        try:
+            due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
+        except ValueError:
+            continue
+        if due <= now:
+            continue
+        statuses = row.get("statuses", {})
+        for field in ("race_card", "beforeinfo"):
+            if statuses.get(field) not in ("ok",):
+                candidates.append({"race_key": key, "source": field,
+                                   "reason": statuses.get(field, "not_recorded"),
+                                   "deadline_jst": due.isoformat(),
+                                   "automatic_fetch_authorized": False})
+    return candidates
+
+
+def audit(root, day, expected=None, now=None):
     counts = {field: Counter() for field in FIELDS}
     rows = []
     for path in sorted((root / "data" / "races").glob(day + "-*.json")):
@@ -79,7 +105,7 @@ def audit(root, day, expected=None):
             if expected else None),
         "all_scheduled_race_success_percent": None,
         "note": "Saved-card rate only; missing scheduled races, live source verification and original exhibition values are not proven.",
-        "summary": summary, "rows": rows,
+        "summary": summary, "retry_candidates_diagnostics_only": retry_candidates(rows, day, now), "rows": rows,
     }
 
 
