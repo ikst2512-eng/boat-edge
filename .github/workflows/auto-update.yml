@@ -638,6 +638,17 @@ jobs:
 
           for role,url in SOURCES.items():
               rows,digest,err=fetch_csv(role,url)
+              # Transient HTTP/network failures and source publication lag are
+              # common near the deadline. Retry boundedly in the same run.
+              if role=="original_exhibition" and (err or not rows):
+                  for delay in (2,5):
+                      time.sleep(delay)
+                      retry_rows,retry_digest,retry_err=fetch_csv(role,url)
+                      if retry_rows:
+                          rows,digest,err=retry_rows,retry_digest,retry_err
+                          break
+                      if retry_digest is not None:
+                          rows,digest,err=retry_rows,retry_digest,retry_err
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err}
               if err and err!="not_published":
                   errors.append({"role":role,"error":err})
