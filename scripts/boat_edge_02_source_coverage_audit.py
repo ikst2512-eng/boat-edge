@@ -39,9 +39,14 @@ def load_catalog(path, day):
         raise ValueError("missing catalog venues")
     keys = []
     deadlines = {}
+    venue_codes = set()
     for venue in venues:
         if not isinstance(venue, dict) or not isinstance(venue.get("races"), list):
             raise ValueError("invalid catalog venue")
+        code = str(venue.get("jcd", "")).zfill(2)
+        if code not in {f"{i:02d}" for i in range(1, 25)} or code in venue_codes:
+            raise ValueError("invalid or duplicate catalog venue")
+        venue_codes.add(code)
         for race in venue["races"]:
             if not isinstance(race, dict):
                 raise ValueError("invalid catalog race")
@@ -54,7 +59,7 @@ def load_catalog(path, day):
                 raise ValueError("catalog deadline invalid")
             keys.append(key)
             deadlines[key] = deadline
-    if len(keys) != len(set(keys)):
+    if not keys or len(keys) != len(set(keys)):
         raise ValueError("duplicate catalog race")
     return set(keys), deadlines
 
