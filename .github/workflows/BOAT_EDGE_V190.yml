@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths: ['.github/workflows/BOAT_EDGE_V190.yml']
   workflow_dispatch:
-  schedule:
-    - cron: '20,50 * * * *'
+  # C-1 priority: retrospective research-only Git writing is manual-only.
+  # Preserve source, evidence and manual audit without competing with freezes.
 
 permissions:
   contents: write
