@@ -51,6 +51,21 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["classification_counts"], {"PROVEN_FIRST_GIT_BEFORE_DEADLINE": 1})
         self.assertFalse(data["c1_99_percent_proven"])
 
+    def test_historical_day_uses_observed_deadline_without_catalog_denominator(self):
+        self.write("data/today.json", {"date": "2026-10-21", "venues": []})
+        observed = json.loads((self.root / "data/site_paper_sim/readiness_history_v215/20261020.json").read_text())
+        observed["observations"][KEY]["deadline"] = "15:53"
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json", observed)
+        with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
+                                                       "status": "NO_SAME_DAY_VERIFIED_RACE_ID"}):
+            data = m.accounting(self.root, datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc),
+                                audit_day="20261020")
+        self.assertEqual(data["observed_races"], 1)
+        self.assertEqual(data["races"][0]["deadline_source"], "readiness_observation")
+        self.assertEqual(data["races"][0]["status"], "UNPROVEN_AFTER_DEADLINE")
+        self.assertIsNone(data["scheduled_races_catalog"])
+        self.assertFalse(data["eligible_denominator_verified"])
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
