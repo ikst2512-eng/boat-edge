@@ -111,7 +111,7 @@ def receipt(root, now=None, requested=None, historical_deadline=None):
     # establish official eligibility and cannot create or alter predictions.
     if historical_deadline is not None:
         if (not isinstance(requested, str) or not KEY.fullmatch(requested) or
-                not re.fullmatch(r"(?:[01]\\d|2[0-3]):[0-5]\\d", str(historical_deadline))):
+                not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", str(historical_deadline))):
             record["status"] = "INVALID_HISTORICAL_RACE_OR_DEADLINE"
             return record
         historical_due = datetime.strptime(requested[:8] + historical_deadline,
