@@ -46,6 +46,28 @@ class SourceCoverageTests(unittest.TestCase):
         self.assertFalse(early[0]["automatic_fetch_authorized"])
         self.assertEqual(late, [])
 
+    def test_corrupt_saved_card_counts_as_missing(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text('{"race_key":"WRONG"}')
+            result = audit(root, "20261021", {key})
+            self.assertEqual(result["missing_scheduled_race_keys"], [key])
+            self.assertEqual(result["scheduled_card_presence_percent"], 0.0)
+
+    def test_empty_schedule_rejected(self):
+        with TemporaryDirectory() as tmp:
+            f = Path(tmp) / "schedule.json"
+            f.write_text(json.dumps({"date_jst": "20261021", "race_keys": []}))
+            with self.assertRaises(ValueError):
+                load_expected(f, "20261021")
+
+    def test_naive_clock_rejected(self):
+        with self.assertRaises(ValueError):
+            retry_candidates([], "20261021", datetime(2026, 10, 21, 12))
+
     def test_schedule_duplicates_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
