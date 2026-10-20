@@ -127,7 +127,7 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertNotIn('  workflow_run:',shadow)
         self.assertIn('workflow_dispatch:',shadow)
         def slots(source, prewarm=False):
-            parts=re.findall(r"^\\s+- cron: '([^']+)'$",source,re.MULTILINE)
+            parts=re.findall(r"^\s+- cron: '([^']+)'$",source,re.MULTILINE)
             self.assertEqual(len(parts),2 if prewarm else 3)
             if prewarm:
                 self.assertEqual(parts.count('20 23 * * *'),1)
@@ -155,7 +155,7 @@ class V257SourceTrigger(unittest.TestCase):
         primary=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
         research=WORKFLOW.read_text(encoding='utf-8')
         self.assertNotIn('  schedule:',research)
-        slots=re.findall(r"^\\s+- cron: '([^']+)'$",primary,re.MULTILINE)
+        slots=re.findall(r"^\s+- cron: '([^']+)'$",primary,re.MULTILINE)
         self.assertEqual(slots.count('20 23 * * *'),1)
         slots.remove('20 23 * * *')
         self.assertEqual(len(slots),1)
