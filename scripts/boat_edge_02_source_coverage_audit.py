@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 
 FIELDS = ("race_card", "beforeinfo", "original_exhibition", "odds")
-KEY = re.compile(r"^(20\\d{6})-(0[1-9]|1\\d|2[0-4])-(0[1-9]|1[0-2])$")
+KEY = re.compile(r"^(20\d{6})-(0[1-9]|1\d|2[0-4])-(0[1-9]|1[0-2])$")
 JST = timezone(timedelta(hours=9))
 
 
@@ -65,10 +65,10 @@ def main():
     parser.add_argument("--day", required=True, help="JST date in YYYYMMDD")
     parser.add_argument("--output", type=Path, help="Optional explicit report destination")
     args = parser.parse_args()
-    if not re.fullmatch(r"20\\d{6}", args.day):
+    if not re.fullmatch(r"20\d{6}", args.day):
         parser.error("--day must be YYYYMMDD")
     report = audit(args.root, args.day)
-    serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\\n"
+    serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(serialized, encoding="utf-8")
