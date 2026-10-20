@@ -200,6 +200,7 @@ def audit(root, day, now, fetch_page, max_pages=3, catalog=None):
         "day_jst": day, "read_only": True,
         "v215_history_verified": history.get("schema") == "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
         "snapshot_freeze_window_minutes_before_deadline": [10, 2],
+        "catalog_matured_races": sum(1 for key, record in records.items() if deadline_for(key, record.get("deadline")) is not None and now >= deadline_for(key, record.get("deadline"))) if catalog is not None else None,
         "observed_matured_missing_snapshots": sum(r["v215_observation_present"] for r in output),
         "catalog_matured_missing_snapshots": len(output) if catalog is not None else None,
         "catalog_unobserved_missing_snapshots": sum(not r["v215_observation_present"] for r in output) if catalog is not None else None,
