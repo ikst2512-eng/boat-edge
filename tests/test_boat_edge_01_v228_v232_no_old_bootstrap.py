@@ -55,19 +55,24 @@ class NoOldCoreBootstrap(unittest.TestCase):
                 for marker in required:
                     self.assertIn(marker,text)
 
-    def test_keep_pre_result_staging_clocks_and_no_formal_results(self):
-        crons={"V228":"4,9,14,19,24,29,34,39,44,49,54,59",
-               "V232":"4,9,14,19,24,29,34,39,44,49,54,59"}
+    def test_manual_recovery_has_no_competing_schedule_or_formal_results(self):
         for name,(label,files,_) in CASES.items():
             with self.subTest(name=name):
                 text=(WORKFLOWS/name).read_text(encoding='utf-8')
-                self.assertIn("  schedule:",text)
-                self.assertIn("  workflow_dispatch:",text)
-                self.assertIn(crons[label],text)
+                header=text.split("\npermissions:",1)[0]
+                self.assertIn("  workflow_dispatch:",header)
+                self.assertNotIn("  schedule:",header)
+                self.assertNotIn("  workflow_run:",header)
                 self.assertIn("github.ref == 'refs/heads/main'",text)
                 self.assertIn('cancel-in-progress: false',text)
                 self.assertNotIn('data/formal_results',text)
                 self.assertNotIn('RESULT_UNLOCK_TOKEN=',text)
+        for name in ("V234.yml", "V235.yml"):
+            with self.subTest(live_owner=name):
+                live=(WORKFLOWS/name).read_text(encoding='utf-8')
+                self.assertIn("  schedule:",live)
+                self.assertIn("scripts/boat_edge_v230_fast_lane.py",live)
+                self.assertIn("scripts/boat_edge_v232_pre_result_cohort.py",live)
 
     def test_real_tracked_navigation_is_preserved(self):
         sim=(ROOT/'ai-simulation.html').read_text(encoding='utf-8')
