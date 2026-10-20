@@ -110,6 +110,39 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(proof["status"], "ARCHIVE_NO_SNAPSHOT")
         self.assertFalse(proof["prediction_saved_proven"])
 
+    def test_observation_ended_before_decision_window(self):
+        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
+        item = {"last_seen_at": "2026-10-20T06:40:00+00:00",
+                "reason": "snapshot_missing", "source_gaps": []}
+        report = m.observation_diagnostic(item, due)
+        self.assertEqual(report["class"], "NO_OBSERVATION_IN_DECISION_WINDOW")
+        self.assertEqual(report["minutes_to_deadline"], 13)
+
+    def test_in_window_source_gap_and_missing_snapshot_separated(self):
+        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
+        item = {"last_seen_at": "2026-10-20T06:46:00+00:00",
+                "reason": "snapshot_missing", "source_gaps": ["beforeinfo_not_ok"]}
+        self.assertEqual(m.observation_diagnostic(item, due)["class"],
+                         "SOURCE_GAPS_IN_DECISION_WINDOW")
+        item["source_gaps"] = []
+        self.assertEqual(m.observation_diagnostic(item, due)["class"],
+                         "NO_SNAPSHOT_AT_OBSERVED_DECISION_INSTANT")
+
+    def test_in_window_missing_does_not_become_certified_c1_failure(self):
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
+                   {"observations": {KEY: {"deadline": "15:53",
+                                             "last_seen_at": "2026-10-20T06:46:00+00:00",
+                                             "reason": "snapshot_missing", "source_gaps": []}}})
+        self.write("data/today.json", {"date": "2026-10-21", "venues": []})
+        with patch.object(m, "archived_receipt", return_value={
+            "prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}):
+            data = m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
+                                day="20261020")
+        self.assertEqual(data["unproven_last_observation_diagnostics"],
+                         {"NO_SNAPSHOT_AT_OBSERVED_DECISION_INSTANT": 1})
+        self.assertFalse(data["eligible_denominator_verified"])
+        self.assertFalse(data["c1_99_percent_proven"])
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
