@@ -764,7 +764,15 @@ jobs:
           eligible=[]
           merged_count=0
           protected_count=0
-          all_codes=sorted(set(I["race_cards"]))
+          # The upstream race-card CSV may lag behind official race cards.
+          # Enrich all races known to ANY preview source or saved official
+          # race JSON, not only codes present in the CSV race-card index.
+          saved_codes=set()
+          for saved_path in RACES.glob(f"{ymd}-??-??.json"):
+              parts=saved_path.stem.split("-")
+              if len(parts)==3 and len(parts[1])==2 and len(parts[2])==2:
+                  saved_codes.add(ymd+parts[1]+parts[2])
+          all_codes=sorted(set().union(saved_codes,*(set(v) for v in I.values())))
           for code in all_codes:
               if not code.startswith(ymd) or len(code)!=12:continue
               rc=I["race_cards"].get(code)
