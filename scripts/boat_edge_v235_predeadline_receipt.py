@@ -125,8 +125,23 @@ def historical_first_receipt(root, record, key, due, snap_path):
               if isinstance(tickets, list) and len(tickets) >= 10
               and all(isinstance(t, dict) for t in tickets[:10]) else [])
     first_time = instant(first.get("first_saved_at"))
+    audit_path = "data/site_prediction_audit/" + key + ".json"
+    audit_raw = git(root, "show", sha + ":" + audit_path)
+    try:
+        audit = json.loads(audit_raw.decode("utf-8")) if audit_raw is not None else {}
+    except (UnicodeError, ValueError):
+        audit = {}
+    if not isinstance(audit, dict):
+        audit = {}
+    record["first_git_v229_audit_valid"] = bool(
+        audit.get("pass") is True and
+        audit.get("race_key") == key and
+        audit.get("latest_snapshot_sha256") ==
+        (hashlib.sha256(raw).hexdigest() if raw is not None else None)
+    )
     guards = first.get("guards")
-    valid = (commit_time is not None and commit_time < due and
+    valid = (record["first_git_v229_audit_valid"] and
+             commit_time is not None and commit_time < due and
              raw is not None and first.get("race_key") == key and
              first.get("snapshot_window") == "FINAL_15M" and
              first.get("prediction_kind") == "SITE_REFERENCE_V122" and
