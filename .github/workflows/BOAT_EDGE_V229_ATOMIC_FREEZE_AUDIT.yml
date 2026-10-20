@@ -124,7 +124,7 @@ jobs:
             case "$f" in
               scripts/boat_edge_v229_atomic_freeze.py|tests/test_boat_edge_v229_atomic_freeze.py) ;;
               data/site_prediction_snapshots/20??????-??-??.json|data/site_prediction_snapshots/odds_v214/20??????-??-??-*.json) ;;
-              data/site_prediction_audit/20??????-??-??.json|data/site_autopilot/v229_evidence/20??????-??-??.json) ;;
+              data/site_prediction_audit/20??????-??-??.json|data/site_prediction_audit/index.json|data/site_autopilot/v229_evidence/20??????-??-??.json) ;;
               *) echo "V229_UNAPPROVED_STAGED_FILE: $f" >&2; exit 1 ;;
             esac
           done
