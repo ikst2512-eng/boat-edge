@@ -6,8 +6,8 @@ on:
     paths:
       - '.github/workflows/V197.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '9,39 0-14,23 * * *' # JST 08:09-23:39; independent research QA twice/hour
+  # C-1: independent research-only Git-writing cron paused to protect live
+  # immutable site-first-add. Manual research diagnostics remain available.
 
 permissions:
   contents: write
