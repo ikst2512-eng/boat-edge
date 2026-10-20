@@ -144,6 +144,24 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(report["scheduled_card_presence_percent"], 0.0)
             self.assertEqual(report["missing_scheduled_deadlines"]["20261021-16-07"], "13:00")
 
+    def test_missing_catalog_race_retry_diagnostic_predeadline_only(self):
+        jst = timezone(timedelta(hours=9))
+        key = "20261021-16-07"
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            expected = {key}
+            deadlines = {key: "13:49"}
+            early = audit(root, "20261021", expected,
+                          datetime(2026, 10, 21, 12, 0, tzinfo=jst),
+                          deadlines=deadlines)
+            late = audit(root, "20261021", expected,
+                         datetime(2026, 10, 21, 14, 0, tzinfo=jst),
+                         deadlines=deadlines)
+            candidates = early["retry_candidates_diagnostics_only"]
+            self.assertEqual({x["source"] for x in candidates}, {"race_card"})
+            self.assertFalse(candidates[0]["automatic_fetch_authorized"])
+            self.assertEqual(late["retry_candidates_diagnostics_only"], [])
+
     def test_catalog_cross_venue_identity_rejected(self):
         with TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "today.json"
