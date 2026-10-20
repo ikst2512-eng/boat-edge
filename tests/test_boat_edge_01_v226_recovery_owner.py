@@ -9,19 +9,10 @@ V226 = ROOT / ".github/workflows/BOAT_EDGE_V226_SAFE_RECOVERY.yml"
 
 
 class V226RecoveryOwner(unittest.TestCase):
-    def test_old_install_job_cannot_run_hourly_or_write_main(self):
-        source = V226.read_text(encoding="utf-8")
-        header = source.split("\njobs:", 1)[0]
-        # Exclude comments; the former 18-min/hour cron was a duplicate producer.
-        header = "\n".join(s for s in header.splitlines() if not s.lstrip().startswith("#"))
-        self.assertNotIn("schedule:", header)
-        self.assertNotIn("cron:", header)
-        self.assertIn("workflow_dispatch:", header)
-        self.assertRegex(header, r"permissions:\s*\n\s+contents: read")
-        self.assertNotRegex(source, r"git\s+(?:push|commit|add|reset|pull)")
-        self.assertNotIn("Restore V167 SHA-verified verifier", source)
-        self.assertIn("V226_MANUAL_RECOVERY_READ_ONLY_PASS", source)
-        self.assertIn("persist-credentials: false", source)
+    def test_retired_v226_installer_is_absent(self):
+        # V226 was deleted during workflow retirement. Reintroducing even a
+        # manual installer risks restoring stale, pre-approved source bytes.
+        self.assertFalse(V226.exists(), "V226 legacy installer must stay retired")
 
     def test_current_production_model_installed_not_replaced(self):
         content = (ROOT / "scripts/site_final_history_v133.py").read_text(encoding="utf-8")
@@ -45,13 +36,10 @@ class V226RecoveryOwner(unittest.TestCase):
             self.assertIn("schedule:", text, name)
             self.assertRegex(text, r"cron:\s*['\"]", name)
 
-    def test_no_model_ownership_or_results_endpoint_in_v226(self):
-        contents = V226.read_text(encoding="utf-8")
-        self.assertNotIn("data/site_results/", contents)
-        self.assertNotIn("/payout", contents)
-        self.assertNotIn("combined_api", contents)
-        self.assertNotIn("write_text(", contents)
-        self.assertNotIn("write_bytes(", contents)
+    def test_retired_v226_cannot_reinstall_or_rewrite_source(self):
+        # The absence of the workflow is stronger than the old manual-only
+        # content check. Active C-1 owners are checked independently above.
+        self.assertFalse(V226.is_file())
 
 
 if __name__ == "__main__":
