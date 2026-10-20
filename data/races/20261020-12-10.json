@@ -8,7 +8,7 @@
     "event": "2026モーターボートレディスカップ",
     "race_no": 10,
     "deadline": "19:38",
-    "updated_at": "2026-10-20T16:45:20+09:00",
+    "updated_at": "2026-10-20T19:12:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261020&jcd=12&rno=10",
-      "fetched_at": "2026-10-20T16:46:31+09:00",
-      "sha256": "2d832ca3b55c61ab6333ff50ed023f265b1f7d3b062f42cb9faeab9ef7e1a72f",
+      "fetched_at": "2026-10-20T19:13:49+09:00",
+      "sha256": "584a3504cfdae19c4d24c8577cf59fbac35c306cf24a990fa4ea916d2f7d409c",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261020&jcd=12&rno=10",
+      "fetched_at": "2026-10-20T19:13:21+09:00",
+      "sha256": "9c31434e3f933eceaf9b59688b8ead080bc21382c3f51ece7ce81d9e9553e4d1",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "e96f8dbd12900ea4af207b8864eb71bdeac9d32e4cd14be73b9da6feb8e385b6"
+      "sha256": "1291c83e2ce117c54bb0d84d520636db55374e7ad6a6b42e2e301be4c81473e9"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "bd358eb45363959a4e366956f7ef23b6ba72b1bae4df75058481f7d156401fe9"
+      "sha256": "8f9ce83b8baa0e502f088b4efc5ca599ae5b8a2b55474888e4ae2a5e46e6814d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "37d4d25b2464ce164d47a2c4c1f636131550c5978458ed82c2ad902b0e6b7cd8"
+      "sha256": "dd67b20c6cd594abf8a50e0f231283e376d1cfb6f922f42f659b66b02042d084"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "6914861e20799959991795ab2eff7f52eaea681393cb8ca4757ca1c6899f2058"
+      "sha256": "26f2ece6ef40d98b67c1b0b3ab8db83c99fd2be16d2fb9dd4ba341e5575fd7c8"
     }
   },
   "racers": [
@@ -168,10 +174,11 @@
         "trio_rate": 57.02
       },
       "series_tokens": [
-        "2"
+        "2",
+        "5"
       ],
       "early_race": 5,
-      "raw_text": "3 5151 / B1 山下 奈緒 大阪/香川 31歳/47.0kg F0 L0 0.23 4.00 19.28 33.73 4.57 23.81 38.10 21 23.39 37.90 65 35.96 57.02 2 5R"
+      "raw_text": "3 5151 / B1 山下 奈緒 大阪/香川 31歳/47.0kg F0 L0 0.23 4.00 19.28 33.73 4.57 23.81 38.10 21 23.39 37.90 65 35.96 57.02 2 5 5R"
     },
     {
       "lane": 4,
@@ -206,10 +213,11 @@
         "trio_rate": 45.69
       },
       "series_tokens": [
-        "12"
+        "12",
+        "6"
       ],
       "early_race": 6,
-      "raw_text": "4 4387 / A1 平山 智加 香川/香川 41歳/46.0kg F0 L0 0.15 6.94 51.45 72.46 5.75 25.00 75.00 17 33.60 51.20 19 25.00 45.69 12 6R"
+      "raw_text": "4 4387 / A1 平山 智加 香川/香川 41歳/46.0kg F0 L0 0.15 6.94 51.45 72.46 5.75 25.00 75.00 17 33.60 51.20 19 25.00 45.69 12 6 6R"
     },
     {
       "lane": 5,
@@ -291,7 +299,78 @@
       "raw_text": "6 5045 / A2 平川 香織 埼玉/東京 26歳/47.0kg F1 L0 0.19 7.11 52.83 75.47 6.76 52.94 58.82 83 30.08 46.34 25 29.82 45.61 1 11 4 4R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.82,
+        "tilt": -0.5,
+        "raw_text": "1 中村 桃佳 45.5kg 6.82 -0.5 R 3"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.83,
+        "tilt": -0.5,
+        "raw_text": "2 福島 陽子 48.1kg 6.83 -0.5 R 4"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.86,
+        "tilt": 0.0,
+        "raw_text": "3 山下 奈緒 47.0kg 6.86 0.0 R 5"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.87,
+        "tilt": -0.5,
+        "raw_text": "4 平山 智加 46.0kg 6.87 -0.5 R 6"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.88,
+        "tilt": -0.5,
+        "raw_text": "5 中里 優子 48.4kg 6.88 -0.5 R 2"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.87,
+        "tilt": -0.5,
+        "raw_text": "6 平川 香織 47.0kg 6.87 -0.5 R 4"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".15"
+      },
+      {
+        "lane": 2,
+        "st": ".33"
+      },
+      {
+        "lane": 3,
+        "st": ".22"
+      },
+      {
+        "lane": 4,
+        "st": ".06"
+      },
+      {
+        "lane": 5,
+        "st": ".19"
+      },
+      {
+        "lane": 6,
+        "st": ".25"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

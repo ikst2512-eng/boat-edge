@@ -8,7 +8,7 @@
     "event": "2026モーターボートレディスカップ",
     "race_no": 12,
     "deadline": "20:36",
-    "updated_at": "2026-10-20T16:45:20+09:00",
+    "updated_at": "2026-10-20T19:12:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261020&jcd=12&rno=12",
-      "fetched_at": "2026-10-20T16:46:30+09:00",
-      "sha256": "1f39632957452756a0c98229c626b0adc5087a8d371826d6046217b017179235",
+      "fetched_at": "2026-10-20T19:13:48+09:00",
+      "sha256": "72b4d4635c722d86930aa049fd7ba3035ea40e73c06a47dabaeeb6b22e709668",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261020&jcd=12&rno=12",
+      "fetched_at": "2026-10-20T19:13:28+09:00",
+      "sha256": "d411e6b6fced67a1adfe3a147ca86308e11ff73085ab03c6d3c9ed6f78eebd62",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "e96f8dbd12900ea4af207b8864eb71bdeac9d32e4cd14be73b9da6feb8e385b6"
+      "sha256": "1291c83e2ce117c54bb0d84d520636db55374e7ad6a6b42e2e301be4c81473e9"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "bd358eb45363959a4e366956f7ef23b6ba72b1bae4df75058481f7d156401fe9"
+      "sha256": "8f9ce83b8baa0e502f088b4efc5ca599ae5b8a2b55474888e4ae2a5e46e6814d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "37d4d25b2464ce164d47a2c4c1f636131550c5978458ed82c2ad902b0e6b7cd8"
+      "sha256": "dd67b20c6cd594abf8a50e0f231283e376d1cfb6f922f42f659b66b02042d084"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/20.csv",
       "fetched_at": null,
-      "sha256": "6914861e20799959991795ab2eff7f52eaea681393cb8ca4757ca1c6899f2058"
+      "sha256": "26f2ece6ef40d98b67c1b0b3ab8db83c99fd2be16d2fb9dd4ba341e5575fd7c8"
     }
   },
   "racers": [
@@ -292,7 +298,53 @@
       "raw_text": "6 3435 / A2 寺田 千恵 岡山/福岡 57歳/46.0kg F0 L0 0.15 6.72 47.58 67.74 6.20 50.00 50.00 26 26.98 48.41 84 26.09 44.35 3 7"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 井上 遥妃 46.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 三浦 永理 47.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 竹井 奈美 47.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 若狭 奈美子 46.5kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 落合 直子 47.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 寺田 千恵 46.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
