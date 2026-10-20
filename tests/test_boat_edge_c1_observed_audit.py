@@ -36,6 +36,7 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["not_observed_count"], 1)
         self.assertFalse(data["eligible_denominator_verified"])
         self.assertFalse(data["c1_99_percent_proven"])
+        self.assertEqual(data["receipt_status_counts"], {"SOURCE_WINDOW_NO_SNAPSHOT": 1})
 
     def test_after_deadline_without_git_proof_is_unproven_not_eligible_failure(self):
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
@@ -43,6 +44,7 @@ class C1ObservedAuditTests(unittest.TestCase):
             data = m.accounting(self.root, datetime(2026, 10, 20, 6, 54, tzinfo=timezone.utc))
         self.assertEqual(data["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
         self.assertEqual(data["races"][0]["last_observed_reason"], "snapshot_missing")
+        self.assertIsNone(data["races"][0]["first_git_commit"])
 
     def test_late_readiness_history_does_not_override_proven_git_first_add(self):
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": True,
