@@ -84,7 +84,9 @@ def retry_candidates(rows, day, now=None):
             continue
         statuses = row.get("statuses", {})
         for field in ("race_card", "beforeinfo"):
-            # Not yet in the official beforeinfo window is not a retryable failure.\n            # Unknown statuses also fail closed until classified by the owner.\n            if statuses.get(field) in ("missing", "error", "fetch_error", "timeout", "incomplete_exhibition", "unverified_ok"):
+            # Not yet in the official beforeinfo window is not a retryable failure.
+            # Unknown statuses also fail closed until classified by the owner.
+            if statuses.get(field) in ("missing", "error", "fetch_error", "timeout", "incomplete_exhibition", "unverified_ok"):
                 candidates.append({"race_key": key, "source": field,
                                    "reason": statuses.get(field, "not_recorded"),
                                    "deadline_jst": due.isoformat(),
