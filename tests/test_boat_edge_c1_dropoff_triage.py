@@ -45,6 +45,26 @@ class C1DropoffTriageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ACTIONS_DUPLICATE_RACE_KEY"):
             classify(report_observed([]), report_actions([row, row]))
 
+    def test_historical_catalog_only_race_is_not_silently_dropped(self):
+        catalog = {"date": "2026-10-20", "venues": [
+            {"races": [{"race_key": "20261020-03-12"}]}]}
+        result = classify(report_observed([]), report_actions([]), catalog)
+        self.assertEqual(result["catalog_only_races"], 1)
+        self.assertEqual(result["races"][0]["stage"], "CATALOG_RACE_WITHOUT_AUDIT_EVIDENCE")
+        self.assertIsNone(result["formal_save_rate_percent"])
+
+    def test_catalog_wrong_day_rejected(self):
+        with self.assertRaisesRegex(ValueError, "CATALOG_INVALID"):
+            classify(report_observed([]), report_actions([]),
+                     {"date": "2026-10-21", "venues": []})
+
+    def test_catalog_duplicate_rejected(self):
+        catalog = {"date": "20261020", "venues": [
+            {"races": [{"race_key": "20261020-03-12"},
+                       {"race_key": "20261020-03-12"}]}]}
+        with self.assertRaisesRegex(ValueError, "CATALOG_RACE_KEY_INVALID_OR_DUPLICATE"):
+            classify(report_observed([]), report_actions([]), catalog)
+
     def test_day_mismatch_rejected(self):
         with self.assertRaisesRegex(ValueError, "DAY_MISMATCH"):
             classify(report_observed([]), report_actions([], "20261021"))
