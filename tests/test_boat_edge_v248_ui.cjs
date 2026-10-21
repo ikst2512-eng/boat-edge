@@ -97,7 +97,7 @@ assert(frozenMobile.includes('V286_MOBILE_FREEZE_EVIDENCE_DATE_AND_SOURCE_GATES_
 const deadlineSourceLock=execFileSync('python3',['tests/test_boat_edge_v288_deadline_source_lock.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
 assert(deadlineSourceLock.includes('V288_FINISHED_RACE_SOURCE_LOCK_NO_BACKFILL_PASS'));
 const relayProof=execFileSync('python3',['tests/test_boat_edge_v295_manual_v231_relay.py'],{encoding:'utf8',timeout:20000,stdio:['ignore','pipe','pipe']});
-assert(relayProof.includes('V295_MANUAL_V231_RELAY_SINGLE_SCHEDULE_OWNER_AND_FORMAL_LOCK_PASS'));
+assert(relayProof.includes('V295_V231_RETIRED_V235_EARLY_POSTCOMMIT_FORMAL_LOCK_PASS'));
 console.log('V248_A13_A14_A15_A16_EVIDENCE_SAFE_TESTS_PASS');
 // V356: execute the V344–V356 six-boat source fixture suite from existing UI CI.
 require('./v344_original_exhibition_fixture.test.cjs');
