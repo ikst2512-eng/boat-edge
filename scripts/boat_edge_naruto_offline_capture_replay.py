@@ -28,6 +28,10 @@ def inspect_capture(html: bytes, *, race_key: str, source_url: str,
     if not isinstance(race_key, str) or not KEY.fullmatch(race_key):
         return {"status": "INVALID_RACE_KEY"}
     try:
+        datetime.strptime(race_key[:8], "%Y%m%d")
+    except ValueError:
+        return {"status": "INVALID_RACE_KEY"}
+    try:
         source = urlsplit(source_url)
         valid_url = (source.scheme == "https" and source.hostname in ALLOWED_HOSTS
                      and not source.username and not source.password
@@ -47,6 +51,8 @@ def inspect_capture(html: bytes, *, race_key: str, source_url: str,
         if (received.utcoffset() is None or due.utcoffset() is None
                 or received >= due):
             return {"status": "INVALID_OR_LATE_RECEIPT"}
+        if due.astimezone(JST).strftime("%Y%m%d") != race_key[:8]:
+            return {"status": "DEADLINE_RACE_DATE_MISMATCH"}
         if received.astimezone(JST).strftime("%Y%m%d") != race_key[:8]:
             return {"status": "RECEIPT_RACE_DATE_MISMATCH"}
     except (TypeError, ValueError, OverflowError):
