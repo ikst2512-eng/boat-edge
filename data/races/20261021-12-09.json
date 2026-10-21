@@ -8,7 +8,7 @@
     "event": "2026モーターボートレディスカップ",
     "race_no": 9,
     "deadline": "18:55",
-    "updated_at": "2026-10-21T16:06:36+09:00",
+    "updated_at": "2026-10-21T16:31:37+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=12&rno=9",
-      "fetched_at": "2026-10-21T16:07:58+09:00",
-      "sha256": "811e0d874c54aac7c49454af6b712ea2db3040aa034b9ee5c5b24e7492fb1c2d",
+      "fetched_at": "2026-10-21T16:32:47+09:00",
+      "sha256": "bfddf6a63120162cb652ef0d8f544f262eac312b3ca685d36207e74b6358a46e",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=12&rno=9",
+      "fetched_at": "2026-10-21T16:32:26+09:00",
+      "sha256": "b1f74858410fb6a10e7252ed5d767b21ca3118472cd4ac4eb25c0024a3d6c619",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "2bc7f2d3b74c82966d3e24815bf407754c2dbc21a23c7c9e31d5af2ab0271ed6"
+      "sha256": "b6d49df03fa79600f4f79eeb0a2d28f6fe5114df5fe4ba17b18b812d904da5b0"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "777791a99e1fdd609ab5ee481723cc98bdc04213a5f46fd01b443e15761f961f"
+      "sha256": "6573b734479b0352ff9421074a10bb22ed6e2ac120152152f2a405d93080a1a8"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "bcae586d2fd1f2a52be9805deee5f708e9048c5153e095cff57fe752d10241e6"
+      "sha256": "db450a3638d7e2294e21c805ebbb1851a9175ac7fbf8cc352175c916a056a08b"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "1725bef36a183ac8c7ae1ae73f81adde11f123037555e4fc21cbb15d6b79240c"
+      "sha256": "bd8838b7d9b2e4847c8a8baa2b3e61adfdb2ac24efc1d0b47327b4ff7e2a07b0"
     }
   },
   "racers": [
@@ -213,10 +219,11 @@
       "series_tokens": [
         "5",
         "9",
-        "12"
+        "12",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "4 4289 / A2 落合 直子 大阪/大阪 41歳/47.0kg F1 L0 0.13 5.73 40.00 59.05 6.84 60.71 67.86 15 29.60 47.20 67 43.36 61.95 5 9 12 3R"
+      "raw_text": "4 4289 / A2 落合 直子 大阪/大阪 41歳/47.0kg F1 L0 0.13 5.73 40.00 59.05 6.84 60.71 67.86 15 29.60 47.20 67 43.36 61.95 5 9 12 3 3R"
     },
     {
       "lane": 5,
@@ -300,7 +307,53 @@
       "raw_text": "6 5418 / B2 堀内 亜海 大阪/大阪 20歳/55.5kg F1 L0 0.20 1.07 0.00 0.00 1.05 0.00 0.00 76 20.17 41.18 18 28.33 40.83 1 7 4 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 石井 裕美 49.3kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 竹井 奈美 47.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 大橋 栄里佳 47.8kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 落合 直子 47.0kg R 3"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 津田 裕絵 50.4kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 堀内 亜海 55.5kg R 2"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
