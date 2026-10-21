@@ -4,6 +4,7 @@ import argparse
 from collections import Counter
 from datetime import datetime, timezone, timedelta
 import json
+import math
 from pathlib import Path
 import re
 
@@ -140,6 +141,23 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                     cov = entry.get("six_boat_coverage") or {}
                     if not isinstance(cov, dict) or cov.get("six_boat_complete") is not True:
                         status = "incomplete_exhibition"
+                if status == "ok" and field == "original_exhibition":
+                    original = obj.get("original_exhibition")
+                    labels = original.get("labels") if isinstance(original, dict) else None
+                    boats = original.get("boats") if isinstance(original, dict) else None
+                    if not (
+                        isinstance(labels, list) and 1 <= len(labels) <= 3
+                        and all(isinstance(x, str) and x.strip() for x in labels)
+                        and isinstance(boats, list) and len(boats) == 6
+                        and {b.get("lane") for b in boats if isinstance(b, dict)} == set(range(1, 7))
+                        and all(isinstance(b, dict)
+                                and isinstance(b.get("values"), list)
+                                and len(b["values"]) == len(labels)
+                                and all(type(v) in (int, float) and math.isfinite(v)
+                                        for v in b["values"])
+                                for b in boats)
+                    ):
+                        status = "incomplete_original_exhibition"
                 statuses[field] = status
                 source_fetched_at[field] = entry.get("fetched_at") if isinstance(entry, dict) else None
                 counts[field][status] += 1
