@@ -57,7 +57,7 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
         if bad:
             malformed[boat] = bad
     if malformed:
-        return {"status": "PARSE_FAILED", "retryable": True, "malformed": malformed}
+        return {"status": "PARSE_FAILED", "retryable": False, "malformed": malformed}
     if absent:
         category = "NOT_MEASURED_OR_NOT_YET_PUBLISHED"
         return {"status": category, "retryable": True, "missing": absent,
@@ -86,7 +86,7 @@ def retry_delay_seconds(attempt, status, *, remaining_seconds):
     Never retry access restrictions or late receipts. No network requests here.
     """
     retryable = {"NOT_YET_PUBLISHED", "PARTIAL_SIX_BOATS",
-                 "HTTP_UNAVAILABLE", "PARSE_FAILED",
+                 "HTTP_UNAVAILABLE",
                  "NOT_MEASURED_OR_NOT_YET_PUBLISHED"}
     if type(attempt) is not int or attempt < 0:
         raise ValueError("INVALID_ATTEMPT")
