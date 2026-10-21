@@ -74,7 +74,12 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
             status = "PENDING_BEFORE_DEADLINE"
         else:
             status = "UNPROVEN_AFTER_DEADLINE"
+        observed_at = parse_time(observation.get("last_seen_at"))
+        lead_minutes = ((due - observed_at).total_seconds() / 60
+                        if observed_at is not None else None)
         rows.append({"race_key": key, "status": status, "deadline": clock,
+                     "last_observation_minutes_before_deadline": round(lead_minutes, 2) if lead_minutes is not None else None,
+                     "last_observation_before_freeze_window": lead_minutes > 10 if lead_minutes is not None else None,
                      "receipt_status": proof.get("status"), "deadline_source": deadline_source,
                      "first_git_commit": proof.get("first_git_commit"),
                      "first_git_commit_at": proof.get("first_git_commit_at"),
@@ -90,6 +95,11 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
     unproven = [r for r in rows if r["status"] == "UNPROVEN_AFTER_DEADLINE"]
     unproven_with_gaps = sum(bool(r.get("source_gaps_at_last_observation")) for r in unproven)
     unproven_without_gaps = len(unproven) - unproven_with_gaps
+    unproven_outside_freeze_observation = sum(
+        row["status"] == "UNPROVEN_AFTER_DEADLINE"
+        and row.get("last_observation_before_freeze_window") is True
+        for row in rows
+    )
     missing_schedule = sorted(set(schedule) - {r["race_key"] for r in rows})
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
@@ -102,6 +112,7 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
             "source_gap_flags_are_not_root_causes": True,
             "unproven_with_last_observation_gaps": unproven_with_gaps,
             "unproven_without_last_observation_gaps": unproven_without_gaps,
+            "unproven_last_observed_before_freeze_window": unproven_outside_freeze_observation,
             "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,
