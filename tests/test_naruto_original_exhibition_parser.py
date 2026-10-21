@@ -81,6 +81,15 @@ class TestNarutoParser(unittest.TestCase):
         self.assertEqual(parse_naruto_original_exhibition(html, identity_verified=True,
                          fetched_at=NOW, deadline=DUE)["status"], "COMPLETE_SIX_BOATS")
 
+    def test_malformed_row_is_not_unpublished(self):
+        html = fixture().replace("<td>6号艇</td><td>36.50</td><td>5.70</td><td>7.05</td>", "<td>6号艇</td>")
+        self.assertEqual(parse_naruto_original_exhibition(html, identity_verified=True,
+                         fetched_at=NOW, deadline=DUE)["status"], "PARSE_FAILED")
+
+    def test_invalid_timestamp_checked_even_without_table(self):
+        self.assertEqual(parse_naruto_original_exhibition("<html></html>", identity_verified=True,
+                         fetched_at="unknown", deadline=DUE)["status"], "INVALID_TIMESTAMPS")
+
     def test_deadline(self):
         self.assertEqual(parse_naruto_original_exhibition(fixture(),
                          identity_verified=True, fetched_at=DUE, deadline=DUE)["status"],
