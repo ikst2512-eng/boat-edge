@@ -51,6 +51,17 @@ class TestNarutoParser(unittest.TestCase):
                          identity_verified=True, fetched_at=NOW, deadline=DUE)["status"],
                          "NOT_MEASURED_OR_NOT_YET_PUBLISHED")
 
+    def test_nested_table_does_not_duplicate_rows(self):
+        wrapped = "<table><tr><td>" + fixture() + "</td></tr></table>"
+        out = parse_naruto_original_exhibition(wrapped, identity_verified=True,
+                                               fetched_at=NOW, deadline=DUE)
+        self.assertEqual(out["status"], "COMPLETE_SIX_BOATS")
+
+    def test_bad_input_type(self):
+        out = parse_naruto_original_exhibition({"not": "html"}, identity_verified=True,
+                                               fetched_at=NOW, deadline=DUE)
+        self.assertEqual(out["status"], "PARSE_FAILED")
+
     def test_deadline(self):
         self.assertEqual(parse_naruto_original_exhibition(fixture(),
                          identity_verified=True, fetched_at=DUE, deadline=DUE)["status"],
