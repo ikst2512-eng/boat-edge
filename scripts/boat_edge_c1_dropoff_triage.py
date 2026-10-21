@@ -14,7 +14,7 @@ from pathlib import Path
 SCHEMA = "BOAT_EDGE_C1_DROPOFF_TRIAGE_V1"
 
 
-def classify(observed, actions, catalog=None):
+def classify(observed, actions, catalog=None, history=None):
     if observed.get("day_jst") != actions.get("day_jst"):
         raise ValueError("DAY_MISMATCH")
     if observed.get("schema") != "BOAT_EDGE_C1_OBSERVED_FIRST_GIT_ACCOUNTING_V1":
@@ -51,9 +51,22 @@ def classify(observed, actions, catalog=None):
                 if not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-") or key in catalog_keys:
                     raise ValueError("CATALOG_RACE_KEY_INVALID_OR_DUPLICATE")
                 catalog_keys.add(key)
+    historical = {}
+    if history is not None:
+        if (not isinstance(history, dict)
+                or history.get("schema") != "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1"
+                or history.get("day_jst") != observed["day_jst"]
+                or not isinstance(history.get("observations"), dict)):
+            raise ValueError("V215_HISTORY_INVALID")
+        historical = history["observations"]
+        for key, record in historical.items():
+            if (not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-")
+                    or not isinstance(record, dict)):
+                raise ValueError("V215_HISTORY_RACE_INVALID")
     output = []
     for key in sorted(set(observed_rows) | set(action_rows) | catalog_keys):
         o, a = observed_rows.get(key, {}), action_rows.get(key, {})
+        h = historical.get(key, {})
         status = o.get("status")
         source = o.get("latest_source_timing") or {}
         sources = source.get("sources") or {}
@@ -86,6 +99,9 @@ def classify(observed, actions, catalog=None):
             "race_key": key, "stage": stage,
             "observation_status": status or "NOT_IN_OBSERVATION_REPORT",
             "receipt_status": o.get("receipt_status"),
+            "v215_last_reason": h.get("reason"),
+            "v215_last_source_gaps": h.get("source_gaps") or [],
+            "v215_reason_not_proof_of_git_save": True,
             "actions_classification": a.get("classification"),
             "source_gaps_observed": gap,
             "historic_source_eligibility_proven": False,
@@ -102,6 +118,10 @@ def classify(observed, actions, catalog=None):
         "observed_rows": len(observed_rows), "actions_missing_rows": len(action_rows),
         "union_rows": len(output),
         "catalog_races": len(catalog_keys) if catalog is not None else None,
+        "v215_history_races": len(historical) if history is not None else None,
+        "v215_final_reasons": dict(sorted(Counter(
+            row.get("reason", "UNKNOWN") for row in historical.values()
+        ).items())) if history is not None else None,
         "catalog_only_races": len(catalog_keys - set(observed_rows) - set(action_rows)) if catalog is not None else None,
         "stage_counts": dict(sorted(Counter(r["stage"] for r in output).items())),
         "independently_source_eligible_denominator": None,
@@ -122,11 +142,13 @@ def main():
     parser.add_argument("--observed", required=True, type=Path)
     parser.add_argument("--actions", required=True, type=Path)
     parser.add_argument("--catalog", type=Path, default=None, help="Historic day-specific catalog JSON; never use rolled-over today.json")
+    parser.add_argument("--history", type=Path, default=None, help="V215 immutable-day observation history; reason is not save proof")
     args = parser.parse_args()
     observed = json.loads(args.observed.read_text(encoding="utf-8"))
     actions = json.loads(args.actions.read_text(encoding="utf-8"))
     catalog = json.loads(args.catalog.read_text(encoding="utf-8")) if args.catalog else None
-    print(json.dumps(classify(observed, actions, catalog=catalog), ensure_ascii=False, indent=2, sort_keys=True))
+    history = json.loads(args.history.read_text(encoding="utf-8")) if args.history else None
+    print(json.dumps(classify(observed, actions, catalog=catalog, history=history), ensure_ascii=False, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
