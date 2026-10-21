@@ -32,6 +32,13 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
         return {"status": "RACE_IDENTITY_UNVERIFIED", "retryable": False}
     if fetched_at is None or deadline is None:
         return {"status": "INVALID_TIMESTAMPS", "retryable": False}
+    from datetime import datetime
+    if (not isinstance(fetched_at, datetime) or not isinstance(deadline, datetime)
+            or fetched_at.tzinfo is None or deadline.tzinfo is None
+            or fetched_at.utcoffset() is None or deadline.utcoffset() is None):
+        return {"status": "INVALID_TIMESTAMPS", "retryable": False}
+    if fetched_at >= deadline:
+        return {"status": "STALE_AFTER_DEADLINE", "retryable": False}
     if not isinstance(html, (str, bytes)) or len(html) > 2_000_000:
         return {"status": "PARSE_FAILED", "retryable": False}
     try:
@@ -46,10 +53,6 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
             names = [_clean(x.get_text(" ", strip=True))
                      for x in header.find_all(["th", "td"], recursive=False)]
             if len(names) < 4 or names[0] not in ("艇", "艇番", "艇番号", "号艇"):
-                continue
-            # Column zero must explicitly identify boat numbers; otherwise
-            # a racer/statistics table can masquerade as an original-exhibition table.
-            if names[0] not in ("艇", "艇番", "艇番号", "号艇"):
                 continue
             indices = {}
             for label in HEADERS:
@@ -84,6 +87,9 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
     if len(candidates) != 1:
         return {"status": "TABLE_NOT_FOUND_OR_AMBIGUOUS", "retryable": False,
                 "tables_detected": len(candidates)}
+    if not candidates[0]:
+        return {"status": "PARSE_FAILED", "retryable": False,
+                "reason": "TRUNCATED_BOAT_ROW"}
     result = assess_original_exhibition(candidates[0], fetched_at=fetched_at,
                                          deadline=deadline)
     result["source_kind"] = "naruto_official_html_unverified_origin"
