@@ -27,10 +27,14 @@ def inspect_capture(html: bytes, *, race_key: str, source_url: str,
     """Read-only; returns explicit unverified status when proof is absent."""
     if not isinstance(race_key, str) or not KEY.fullmatch(race_key):
         return {"status": "INVALID_RACE_KEY"}
-    source = urlsplit(source_url)
-    if (source.scheme != "https" or source.hostname not in ALLOWED_HOSTS
-            or source.username or source.password or source.fragment
-            or source.port not in (None, 443)):
+    try:
+        source = urlsplit(source_url)
+        valid_url = (source.scheme == "https" and source.hostname in ALLOWED_HOSTS
+                     and not source.username and not source.password
+                     and not source.fragment and source.port in (None, 443))
+    except (TypeError, ValueError):
+        valid_url = False
+    if not valid_url:
         return {"status": "UNTRUSTED_SOURCE_URL"}
     if type(html) is not bytes or not html or len(html) > 2_000_000:
         return {"status": "INVALID_HTML"}
