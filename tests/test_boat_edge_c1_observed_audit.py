@@ -50,6 +50,7 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["races"][0]["last_observed_reason"], "snapshot_missing")
         self.assertIsNone(data["races"][0]["first_git_commit"])
         self.assertEqual(data["unproven_without_last_observation_gaps"], 1)
+        self.assertEqual(data["unproven_only_source_gap_flags"], {})
         self.assertEqual(data["unproven_last_observed_before_freeze_window"], 1)
         self.assertTrue(data["races"][0]["last_observation_before_freeze_window"])
         self.assertEqual(data["unproven_with_last_observation_gaps"], 0)
