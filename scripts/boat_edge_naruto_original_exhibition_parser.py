@@ -45,7 +45,7 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
         for index, header in enumerate(trs):
             names = [_clean(x.get_text(" ", strip=True))
                      for x in header.find_all(["th", "td"], recursive=False)]
-            if len(names) < 4:
+            if len(names) < 4 or names[0] not in ("艇", "艇番", "艇番号", "号艇"):
                 continue
             # Column zero must explicitly identify boat numbers; otherwise
             # a racer/statistics table can masquerade as an original-exhibition table.
