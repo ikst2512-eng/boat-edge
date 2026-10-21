@@ -14,7 +14,7 @@ from pathlib import Path
 SCHEMA = "BOAT_EDGE_C1_DROPOFF_TRIAGE_V1"
 
 
-def classify(observed, actions):
+def classify(observed, actions, catalog=None):
     if observed.get("day_jst") != actions.get("day_jst"):
         raise ValueError("DAY_MISMATCH")
     if observed.get("schema") != "BOAT_EDGE_C1_OBSERVED_FIRST_GIT_ACCOUNTING_V1":
@@ -39,14 +39,28 @@ def classify(observed, actions):
 
     observed_rows = unique_rows(observed, "OBSERVED")
     action_rows = unique_rows(actions, "ACTIONS")
+    catalog_keys = set()
+    if catalog is not None:
+        if not isinstance(catalog, dict) or str(catalog.get("date", "")).replace("-", "") != observed["day_jst"] or not isinstance(catalog.get("venues"), list):
+            raise ValueError("CATALOG_INVALID")
+        for venue in catalog["venues"]:
+            if not isinstance(venue, dict) or not isinstance(venue.get("races"), list):
+                raise ValueError("CATALOG_INVALID")
+            for race in venue["races"]:
+                key = race.get("race_key") if isinstance(race, dict) else None
+                if not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-") or key in catalog_keys:
+                    raise ValueError("CATALOG_RACE_KEY_INVALID_OR_DUPLICATE")
+                catalog_keys.add(key)
     output = []
-    for key in sorted(set(observed_rows) | set(action_rows)):
+    for key in sorted(set(observed_rows) | set(action_rows) | catalog_keys):
         o, a = observed_rows.get(key, {}), action_rows.get(key, {})
         status = o.get("status")
         source = o.get("latest_source_timing") or {}
         sources = source.get("sources") or {}
         gap = o.get("source_gaps_at_last_observation") or []
-        if status == "PROVEN_FIRST_GIT_BEFORE_DEADLINE":
+        if key not in observed_rows and key not in action_rows:
+            stage = "CATALOG_RACE_WITHOUT_AUDIT_EVIDENCE"
+        elif status == "PROVEN_FIRST_GIT_BEFORE_DEADLINE":
             stage = "FIRST_GIT_RECEIPT_PROVEN"
         elif status == "PENDING_BEFORE_DEADLINE":
             stage = "PENDING_NOT_FAILURE"
@@ -87,6 +101,8 @@ def classify(observed, actions):
         "scope": "INVESTIGATIVE_TRIAGE_NOT_FORMAL_ELIGIBILITY",
         "observed_rows": len(observed_rows), "actions_missing_rows": len(action_rows),
         "union_rows": len(output),
+        "catalog_races": len(catalog_keys) if catalog is not None else None,
+        "catalog_only_races": len(catalog_keys - set(observed_rows) - set(action_rows)) if catalog is not None else None,
         "stage_counts": dict(sorted(Counter(r["stage"] for r in output).items())),
         "independently_source_eligible_denominator": None,
         "formal_save_rate_percent": None,
@@ -105,10 +121,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--observed", required=True, type=Path)
     parser.add_argument("--actions", required=True, type=Path)
+    parser.add_argument("--catalog", type=Path, default=None, help="Historic day-specific catalog JSON; never use rolled-over today.json")
     args = parser.parse_args()
     observed = json.loads(args.observed.read_text(encoding="utf-8"))
     actions = json.loads(args.actions.read_text(encoding="utf-8"))
-    print(json.dumps(classify(observed, actions), ensure_ascii=False, indent=2, sort_keys=True))
+    catalog = json.loads(args.catalog.read_text(encoding="utf-8")) if args.catalog else None
+    print(json.dumps(classify(observed, actions, catalog=catalog), ensure_ascii=False, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
