@@ -81,6 +81,22 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(len(report["past_deadline_persisted_beforeinfo_wait"]), 1)
             self.assertEqual(report["retry_candidates_diagnostics_only"], [])
 
+    def test_overdue_not_in_window_record_is_reported_not_retried(self):
+        jst = timezone(timedelta(hours=9))
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-06-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key, "meta": {"deadline": "13:42"},
+                "source_audit": {"beforeinfo": {"status": "not_in_window"}}
+            }))
+            report = audit(Path(tmp), "20261021", {key},
+                           datetime(2026, 10, 21, 14, 0, tzinfo=jst))
+            self.assertEqual(report["past_deadline_persisted_beforeinfo_wait"][0]["persisted_status"],
+                             "not_in_window")
+            self.assertEqual(report["retry_candidates_diagnostics_only"], [])
+
     def test_not_in_window_is_not_retry_error(self):
         jst = timezone(timedelta(hours=9))
         rows = [{"race_key": "20261021-16-07", "deadline": "13:49",
