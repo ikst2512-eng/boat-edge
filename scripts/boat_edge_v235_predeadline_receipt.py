@@ -175,8 +175,12 @@ def receipt(root, now=None, requested=None, historical_deadline=None):
                 not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", str(historical_deadline))):
             record["status"] = "INVALID_HISTORICAL_RACE_OR_DEADLINE"
             return record
-        historical_due = datetime.strptime(requested[:8] + historical_deadline,
-                                            "%Y%m%d%H:%M").replace(tzinfo=JST)
+        try:
+            historical_due = datetime.strptime(requested[:8] + historical_deadline,
+                                                "%Y%m%d%H:%M").replace(tzinfo=JST)
+        except ValueError:
+            record["status"] = "INVALID_HISTORICAL_RACE_OR_DEADLINE"
+            return record
         chosen = (historical_due, requested, None, historical_deadline)
     else:
         chosen = choose(root, now, requested)
