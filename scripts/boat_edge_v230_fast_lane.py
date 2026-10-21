@@ -475,11 +475,8 @@ def local_now():
 def _timed_fetch_one(root,key):
     """Measure worker execution, not queue delay or main-thread processing."""
     started=time.monotonic()
-    try:
-        return fetch_one(root,key),round(time.monotonic()-started,3)
-    except BaseException:
-        # Preserve executor error semantics without suppressing failures.
-        raise
+    result=fetch_one(root,key)
+    return result,round(time.monotonic()-started,3)
 
 
 def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
