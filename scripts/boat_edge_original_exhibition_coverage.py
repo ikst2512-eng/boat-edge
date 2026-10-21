@@ -31,7 +31,9 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
             return {"status": "STALE_AFTER_DEADLINE", "retryable": False}
     if rows is None:
         return {"status": "NOT_YET_PUBLISHED", "retryable": True}
-    if not isinstance(rows, list) or not rows:
+    if rows is not None and not isinstance(rows, list):
+        return {"status": "PARSE_FAILED", "retryable": False}
+    if not rows:
         return {"status": "NOT_YET_PUBLISHED", "retryable": True}
     if len(rows) != 6 or any(not isinstance(r, dict) for r in rows):
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
@@ -46,6 +48,7 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
                    (isinstance(row.get(f), str) and row[f].strip() in MISSING)]
         bad = [f for f in FIELDS if f not in missing and
                (type(row.get(f)) not in (str, int, float) or
+                len(str(row[f]).strip()) > MAX_VALUE_CHARS or
                 not NUMBER.fullmatch(str(row[f]).strip()) or
                 not math.isfinite(float(row[f])) or float(row[f]) <= 0)]
         if missing:
@@ -69,7 +72,9 @@ def classify_fetch_failure(error):
         return {"status": "ACCESS_RESTRICTED", "retryable": False}
     if code == 404:
         return {"status": "NOT_YET_PUBLISHED_OR_BAD_URL", "retryable": False}
-    if code == 429 or (isinstance(code, int) and 500 <= code <= 599):
+    if code == 429:
+        return {"status": "RATE_LIMITED", "retryable": False}
+    if isinstance(code, int) and 500 <= code <= 599:
         return {"status": "HTTP_UNAVAILABLE", "retryable": True}
     return {"status": "HTTP_UNAVAILABLE", "retryable": True}
 
@@ -84,6 +89,8 @@ def retry_delay_seconds(attempt, status, *, remaining_seconds):
                  "NOT_MEASURED_OR_NOT_YET_PUBLISHED"}
     if type(attempt) is not int or attempt < 0:
         raise ValueError("INVALID_ATTEMPT")
+    if type(remaining_seconds) not in (int, float) or not math.isfinite(remaining_seconds):
+        raise ValueError("INVALID_REMAINING_SECONDS")
     if status not in retryable or remaining_seconds <= 0:
         return None
     delay = min(60, 2 ** min(attempt, 6) * 3)
