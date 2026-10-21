@@ -44,6 +44,20 @@ class FastLaneTests(unittest.TestCase):
         return {'racelist':(htmlregs(scratch).encode(),htmlregs(scratch),self.now),
                 'beforeinfo':(htmlbefore().encode(),htmlbefore(),self.now),
                 'odds':(b'official-odds-byte', '<html>...</html>',self.now)}
+    def test_http_429_does_not_retry_or_sleep(self):
+        import requests
+        response = Mock(status_code=429)
+        limited = requests.exceptions.HTTPError("rate limited", response=response)
+        with (patch("requests.Session") as session_factory,
+              patch.object(m, "fetch", side_effect=limited) as fetching,
+              patch("time.sleep") as sleeping):
+            key, data, error = m.fetch_one(self.root, KEY)
+        self.assertEqual(key, KEY)
+        self.assertIsNone(data)
+        self.assertIn("HTTPError", error)
+        fetching.assert_called_once()
+        sleeping.assert_not_called()
+
     def test_selects_window_only(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         self.assertEqual(m.targets(self.root,self.now),[KEY])
