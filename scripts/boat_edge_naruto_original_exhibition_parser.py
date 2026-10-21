@@ -31,10 +31,14 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
         return {"status": "INVALID_TIMESTAMPS", "retryable": False}
     if not isinstance(html, (str, bytes)) or len(html) > 2_000_000:
         return {"status": "PARSE_FAILED", "retryable": False}
-    soup = BeautifulSoup(html, "lxml")
+    try:
+        soup = BeautifulSoup(html, "lxml")
+    except (UnicodeError, TypeError, ValueError):
+        return {"status": "PARSE_FAILED", "retryable": False}
     candidates = []
     for table in soup.find_all("table"):
-        trs = table.find_all("tr")
+        # Reject nested table rows: they belong to a different source block.
+        trs = [tr for tr in table.find_all("tr") if tr.find_parent("table") is table]
         for index, header in enumerate(trs):
             names = [_clean(x.get_text(" ", strip=True))
                      for x in header.find_all(["th", "td"], recursive=False)]
@@ -70,4 +74,5 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
                                          deadline=deadline)
     result["source_kind"] = "naruto_official_html_unverified_origin"
     result["identity_verified_by_caller"] = True
+    result["origin_authenticated_by_parser"] = False
     return result
