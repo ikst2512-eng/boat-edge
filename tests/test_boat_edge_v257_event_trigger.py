@@ -22,8 +22,8 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("workflow_dispatch:",header)
         self.assertNotIn("\n  schedule:",header)
         self.assertNotIn("\n  workflow_run:",header)
-        self.assertIn("V274 immediately freeze qualifying V254",
-                      (ROOT/'.github/workflows/V235.yml').read_text())
+        self.assertNotIn("V274 immediately freeze qualifying V254",
+                         (ROOT/'.github/workflows/V235.yml').read_text())
         self.assertIn("V275 immediately freeze qualifying V254",
                       (ROOT/'.github/workflows/V234.yml').read_text())
         self.assertIn("concurrency:",workflow)
@@ -46,11 +46,11 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",gate)
         self.assertIn("cancel-in-progress: false",primary)
         self.assertIn("  schedule:",primary)
-        self.assertIn("      - name: V274 immediately freeze qualifying V254",primary)
+        self.assertNotIn("      - name: V274 immediately freeze qualifying V254",primary)
         # Collectors may read official PRE_RESULT only; the downstream future
         # research freeze remains strictly source/Git/deadline guarded.
         self.assertIn("git reset --hard origin/main",primary)
-        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
+        self.assertNotIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
         collector=(ROOT/'.github/workflows/auto-update.yml').read_text(encoding='utf-8')
         self.assertIn("name: BOAT EDGE 自動更新",collector)
         self.assertIn("  schedule:",collector)
@@ -58,36 +58,17 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertNotIn("git push --force",primary)
         self.assertNotIn("git push --force",collector)
 
-    def test_v274_same_runner_future_freeze_before_any_result_scoring(self):
-        v235=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
-        source=v235.index('      - name: Immutable pre-result source prediction cohort')
-        inline=v235.index('      - name: V274 immediately freeze qualifying V254')
-        post=v235.index('      - name: Only after pre-result commit - score already confirmed SITE results')
-        self.assertTrue(source < inline < post)
-        step=v235[inline:post]
-        self.assertIn('scripts/boat_edge_v254_third_tail.py freeze',step)
-        self.assertIn("test_boat_edge_v254_third_tail.py",step)
-        self.assertIn('git reset --hard origin/main',step)
-        self.assertIn('data/site_autopilot/v254_frozen',step)
-        self.assertIn('V274_FORBIDDEN_PRE_RESULT_STAGE_',step)
-        self.assertIn('V274_FUTURE_SHADOW_PRE_RESULT_PUBLISHED',step)
-        self.assertIn('V274_NO_ELIGIBLE_NEW_PRE_RESULT_COHORT_NO_BACKFILL',step)
-        self.assertIn('V274_NO_PUBLISHED_SHADOW_CONFLICT_SAFE_RETRY_NEXT_RUN',step)
-        self.assertIn('git diff --cached --check',step)
-        self.assertNotIn('site_results/',step)
-        self.assertNotIn('settle',step)
-        self.assertNotIn('git pull --rebase',step)
-        self.assertNotIn('gh workflow run',step)
-        # Manual V254 still independently verifies original first Git proof
-        # and the future-only deadline without a competing periodic writer.
-        script=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
-        self.assertIn("SOURCE_GIT_PROVENANCE_UNVERIFIED",script)
-        self.assertIn("NOT_IN_FUTURE_FREEZE_WINDOW",script)
-        self.assertIn("V254_FORMAL_GATE_MUST_STAY_CLOSED",script)
+    def test_v235_skips_optional_shadow_while_v234_keeps_backup(self):
+        primary=(ROOT/'.github/workflows/V235.yml').read_text(encoding='utf-8')
+        self.assertNotIn("V274 immediately freeze qualifying V254",primary)
+        self.assertNotIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
+        self.assertIn("scripts/boat_edge_v229_atomic_freeze",primary)
+        self.assertIn("Only after pre-result commit - score already confirmed SITE results",primary)
+        backup=(ROOT/'.github/workflows/V234.yml').read_text(encoding='utf-8')
+        self.assertIn("V275 immediately freeze qualifying V254",backup)
         research=WORKFLOW.read_text(encoding='utf-8')
         self.assertIn("workflow_dispatch:",research)
-        self.assertNotIn("\\n  workflow_run:",research.split("\\njobs:",1)[0])
-        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",research)
+        self.assertNotIn("  schedule:",research.split("\\njobs:",1)[0])
 
     def test_v275_v234_source_producer_also_freezes_pre_result_tail(self):
         v234=(ROOT/'.github/workflows/V234.yml').read_text(encoding='utf-8')
@@ -145,8 +126,9 @@ class V257SourceTrigger(unittest.TestCase):
         self.assertEqual(main_slots,set(range(2,60,5)))
         self.assertEqual(backup_slots,set(range(4,60,5)))
         self.assertFalse(main_slots & backup_slots)
+        self.assertNotIn('scripts/boat_edge_v254_third_tail.py freeze',primary)
+        self.assertIn('scripts/boat_edge_v254_third_tail.py freeze',fallback)
         for source in (primary,fallback):
-            self.assertIn('scripts/boat_edge_v254_third_tail.py freeze',source)
             self.assertIn('git reset --hard origin/main',source)
             self.assertNotIn('git push --force',source)
 
@@ -166,8 +148,8 @@ class V257SourceTrigger(unittest.TestCase):
         for minute in (22,27,32):
             self.assertIn(minute,minutes)
             self.assertGreaterEqual(35-minute,2)
-        self.assertIn("V274 immediately freeze qualifying V254",primary)
-        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
+        self.assertNotIn("V274 immediately freeze qualifying V254",primary)
+        self.assertNotIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
         source=(ROOT/'scripts/boat_edge_v232_pre_result_cohort.py').read_text(encoding='utf-8')
         guard=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
         self.assertIn('120 <= (due-now).total_seconds() <= 900',source)
