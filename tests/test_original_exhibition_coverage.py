@@ -59,6 +59,21 @@ class TestOriginalExhibitionCoverage(unittest.TestCase):
         self.assertIsNone(retry_delay_seconds(0, "HTTP_UNAVAILABLE", remaining_seconds=3))
         self.assertIsNone(retry_delay_seconds(0, "ACCESS_RESTRICTED", remaining_seconds=20))
 
+    def test_invalid_lane_type(self):
+        rows = six()
+        rows[0]["boat"] = True
+        self.assertEqual(assess_original_exhibition(rows)["status"], "PARTIAL_SIX_BOATS")
+
+    def test_invalid_missing_cell_container(self):
+        rows = six()
+        rows[0]["lap"] = []
+        self.assertEqual(assess_original_exhibition(rows)["status"], "PARSE_FAILED")
+
+    def test_404_no_unbounded_retry(self):
+        err = type("Error", (), {"code": 404})()
+        self.assertFalse(classify_fetch_failure(err)["retryable"])
+        self.assertIsNone(retry_delay_seconds(0, "NOT_YET_PUBLISHED_OR_BAD_URL", remaining_seconds=100))
+
     def test_access_restricted(self):
         err = type("Error", (), {"code": 403})()
         self.assertEqual(classify_fetch_failure(err)["status"], "ACCESS_RESTRICTED")
