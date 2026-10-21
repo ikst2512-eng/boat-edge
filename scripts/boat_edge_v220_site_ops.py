@@ -965,6 +965,7 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
          'source_ready_with_exact_race_odds_sha':0,
          'source_ready_prediction_input_parity_unverified':0,
          'source_ready_prediction_input_parity_reasons':{},
+         'source_ready_prediction_input_parity_diagnostics':[],
          'source_ready_without_proven_prediction':0,
          'source_ready_missing_prediction_keys':[],
          # First-Git verified readiness without a proven prediction is a
@@ -1033,6 +1034,10 @@ def gate1c_source_receipt_summary(root,day,now,prediction_verify=None):
                             out['source_ready_prediction_input_parity_unverified']+=1
                             counter=out['source_ready_prediction_input_parity_reasons']
                             counter[parity]=counter.get(parity,0)+1
+                            out['source_ready_prediction_input_parity_diagnostics'].append({
+                                'race_key':key, 'reason':parity,
+                                'prediction_saved_at':snap.get('saved_at'),
+                                'source_ready_observed_at':rec.get('observed_at')})
                         continue
                     if proof_code=='PASS':proof_code='prediction_first_git_commit_unverified'
                 else:proof_code='prediction_outside_v229_window'
