@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_original_exhibition_coverage import assess_original_exhibition, classify_fetch_failure
+from boat_edge_original_exhibition_coverage import assess_original_exhibition, classify_fetch_failure, retry_delay_seconds
 
 
 def six():
@@ -47,6 +47,17 @@ class TestOriginalExhibitionCoverage(unittest.TestCase):
             assess_original_exhibition(six(), fetched_at=a, deadline=a)["status"],
             "STALE_AFTER_DEADLINE",
         )
+
+    def test_string_boat_ids(self):
+        rows = six()
+        for row in rows:
+            row["boat"] = str(row["boat"])
+        self.assertEqual(assess_original_exhibition(rows)["status"], "COMPLETE_SIX_BOATS")
+
+    def test_retry_stops_at_deadline_and_on_permission(self):
+        self.assertEqual(retry_delay_seconds(0, "HTTP_UNAVAILABLE", remaining_seconds=20), 3)
+        self.assertIsNone(retry_delay_seconds(0, "HTTP_UNAVAILABLE", remaining_seconds=3))
+        self.assertIsNone(retry_delay_seconds(0, "ACCESS_RESTRICTED", remaining_seconds=20))
 
     def test_access_restricted(self):
         err = type("Error", (), {"code": 403})()
