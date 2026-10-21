@@ -83,6 +83,23 @@ class WorkflowInventoryTests(unittest.TestCase):
             self.assertIn("BOAT EDGE 自動更新", event)
             self.assertIn("BOAT EDGE 3連単オッズ更新 V71", event)
 
+    def test_v229_push_contention_must_fail_closed_without_false_save(self):
+        # C-1: a green Actions result must not claim an unpushed freeze.
+        source = (ROOT / ".github/workflows" /
+                  "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml").read_text(encoding="utf-8")
+        step = source.split("      - name: Commit only new snapshot", 1)[1]
+        self.assertIn("if git diff --cached --quiet; then echo V229_NO_NEW_ELIGIBLE_EVIDENCE; exit 0; fi", step)
+        self.assertIn("for attempt in 1 2 3 4; do", step)
+        self.assertIn("if git push origin HEAD:main; then", step)
+        self.assertIn("V229_ATOMIC_PROSPECTIVE_EVIDENCE_COMMITTED", step)
+        self.assertLess(step.index("if git push origin HEAD:main; then"),
+                        step.index("V229_ATOMIC_PROSPECTIVE_EVIDENCE_COMMITTED"))
+        self.assertIn("if ! git pull --rebase origin main; then", step)
+        self.assertIn("V229_REBASE_CONFLICT_NO_PRODUCTION_CLAIM", step)
+        self.assertIn("V229_PUSH_BLOCKED_NO_PRODUCTION_CLAIM", step)
+        self.assertIn("exit 1", step)
+        self.assertNotIn("git push --force", step)
+
     def test_inventory_is_read_only_and_deterministic(self):
         root = ROOT / ".github" / "workflows"
         self.assertEqual(audit(root), audit(root))
