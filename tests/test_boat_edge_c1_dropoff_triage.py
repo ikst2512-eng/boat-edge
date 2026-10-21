@@ -35,6 +35,16 @@ class C1DropoffTriageTests(unittest.TestCase):
         self.assertFalse(row["first_git_save_failure_proven"])
         self.assertFalse(row["historic_source_eligibility_proven"])
 
+    def test_duplicate_observed_race_rejected(self):
+        row = {"race_key": "20261020-01-01", "status": "UNPROVEN_AFTER_DEADLINE"}
+        with self.assertRaisesRegex(ValueError, "OBSERVED_DUPLICATE_RACE_KEY"):
+            classify(report_observed([row, row]), report_actions([]))
+
+    def test_duplicate_actions_race_rejected(self):
+        row = {"race_key": "20261020-01-01", "classification": "UNKNOWN"}
+        with self.assertRaisesRegex(ValueError, "ACTIONS_DUPLICATE_RACE_KEY"):
+            classify(report_observed([]), report_actions([row, row]))
+
     def test_day_mismatch_rejected(self):
         with self.assertRaisesRegex(ValueError, "DAY_MISMATCH"):
             classify(report_observed([]), report_actions([], "20261021"))
