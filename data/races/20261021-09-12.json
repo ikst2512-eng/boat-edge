@@ -8,7 +8,7 @@
     "event": "スポーツ報知ビクトリーカップ",
     "race_no": 12,
     "deadline": "16:15",
-    "updated_at": "2026-10-21T10:54:50+09:00",
+    "updated_at": "2026-10-21T13:45:45+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=09&rno=12",
-      "fetched_at": "2026-10-21T10:57:40+09:00",
-      "sha256": "438cead15ba8422eddbade4fcc8751d895af9673682899aede0ed1ba38b36f4c",
+      "fetched_at": "2026-10-21T13:48:11+09:00",
+      "sha256": "3689f54524437c898edaef0d71e9e9be3532f0922a53ab6426ce4c1fcf921e18",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=09&rno=12",
+      "fetched_at": "2026-10-21T13:47:05+09:00",
+      "sha256": "709d98241f0214f5e2af997816db5dd63628ec87f426fb626d42ff689f800637",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "4cd28031070121559ed4db4eae9fcf69dace459f11e3ec1fe23ebd9850ebdfbd"
+      "sha256": "84f480c0e226e33a0f0c5b1d0a47ab3d9291be36a0902c8c16013c246c2b2e34"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "9f7fc7b5e5985c2d560e8c36063488bf401f6c1119cc6d7d7434ecaf2b2b0c8d"
+      "sha256": "f9e9eca303984515a42ea8ed21ff80d05c09d72257bfeb0a07967d2928e97c65"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "2c11ace19b70b23a2d952d9ca999226d765ecf921abe0e39b0f7aacc0f773200"
+      "sha256": "3997f5b73005d229f9c4cada5d1259ea2c4e8e458043c021728c1a35aecf42b6"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "5493b13209deab583bbab89a2f807838f62e2b625db20fd81da0ed98c12bdebe"
+      "sha256": "3e161df47fbcc62b41fdbeb1aabc2a454f557211b7971022bc1a47fcac856402"
     }
   },
   "racers": [
@@ -333,7 +339,53 @@
       "raw_text": "6 4637 / A2 中田 友也 埼玉/埼玉 36歳/55.2kg F0 L0 0.18 5.49 36.11 48.61 5.87 35.48 64.52 27 32.58 47.19 19 32.19 50.68 7 4 12 7 3 10 3 11"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 竹井 貴史 52.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 入海 馨 52.5kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 原田 才一郎 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 後藤 翔之 53.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 畑 竜生 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中田 友也 55.2kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
