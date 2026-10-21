@@ -87,7 +87,8 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
                      "snapshot_sha256": proof.get("snapshot_sha256"),
                      "last_observed_reason": observation.get("reason"),
                      "last_observed_at": observation.get("last_seen_at"),
-                     "source_gaps_at_last_observation": observation.get("source_gaps") or []})
+                     "source_gaps_at_last_observation": observation.get("source_gaps") or [],
+                     "source_gaps_seen_anytime": observation.get("source_gaps_seen") or []})
     counts = dict(sorted(Counter(r["status"] for r in rows).items()))
     receipt_counts = dict(sorted(Counter(r.get("receipt_status") or "UNKNOWN" for r in rows).items()))
     gap_flags = dict(sorted(Counter(gap for r in rows for gap in r.get("source_gaps_at_last_observation", [])).items()))
@@ -100,6 +101,15 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
         and row.get("last_observation_before_freeze_window") is True
         for row in rows
     )
+    # Two-dimensional diagnostic: observation timing is not execution evidence.
+    unproven_observation_matrix = {}
+    for row in unproven:
+        timing = ("before_freeze_window" if row.get("last_observation_before_freeze_window") is True
+                  else "in_or_after_window" if row.get("last_observation_before_freeze_window") is False
+                  else "unknown")
+        gaps = "last_source_gaps" if row.get("source_gaps_at_last_observation") else "no_last_source_gaps"
+        unproven_observation_matrix.setdefault(timing, {}).setdefault(gaps, 0)
+        unproven_observation_matrix[timing][gaps] += 1
     missing_schedule = sorted(set(schedule) - {r["race_key"] for r in rows})
     return {"schema": SCHEMA, "day_jst": day, "checked_at_jst": now.isoformat(),
             "scope": "OBSERVED_ONLY_NOT_ELIGIBLE_DENOMINATOR",
@@ -113,6 +123,7 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
             "unproven_with_last_observation_gaps": unproven_with_gaps,
             "unproven_without_last_observation_gaps": unproven_without_gaps,
             "unproven_last_observed_before_freeze_window": unproven_outside_freeze_observation,
+            "unproven_observation_timing_source_gap_matrix": unproven_observation_matrix,
             "races": rows,
             "c1_99_percent_proven": False,
             "eligible_denominator_verified": False,
