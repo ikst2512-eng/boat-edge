@@ -131,9 +131,9 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
             data = m.accounting(self.root, datetime(2026, 10, 20, 6, 54, tzinfo=timezone.utc))
-        self.assertEqual(data["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
+        self.assertEqual(data["classification_counts"], {"UNKNOWN_DEADLINE": 1})
         self.assertIsNone(data["scheduled_races_catalog"])
-        proof.assert_called_once()
+        proof.assert_not_called()
 
 
 if __name__ == "__main__":
