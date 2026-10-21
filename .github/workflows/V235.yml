@@ -112,7 +112,10 @@ jobs:
                             +'\\n\\x60\\x60\\x60\\n')
           PY_V235_ZERO_CAUSE
               echo V235_ZERO_FREEZE_DIAGNOSTIC_BEGIN
-              PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_eligibility_diagnostic.py --summary-only || echo V235_ZERO_FREEZE_DIAGNOSTIC_UNAVAILABLE
+              # Inspect per-race blockers only during the *current* strict
+              # 2-to-10-minute decision window. No result/formal reads,
+              # no prediction writes and no eligibility or first-Git claims.
+              PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_eligibility_diagnostic.py || echo V235_ZERO_FREEZE_DIAGNOSTIC_UNAVAILABLE
               echo V235_ZERO_FREEZE_DIAGNOSTIC_END
             fi
             # Snapshot proposal/attempt evidence lives ONLY in RUNNER_TEMP,
