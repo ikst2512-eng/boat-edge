@@ -49,6 +49,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence
+          # Read-only static trigger inventory in the existing evidence artifact.
+          # A detected cycle is evidence to review, not a reason to lose logs.
+          python3 scripts/boat_edge_actions_topology_guard.py > evidence/actions-topology.json || echo 'ACTIONS_TOPOLOGY_REQUIRES_REVIEW'
           python3 scripts/boat_edge_v348_actions_run_export.py --repo "$REPO" --max-pages "$MAX_PAGES" > evidence/v348-scheduled-runs.json
           python3 scripts/boat_edge_v349_schedule_run_overlap.py evidence/v348-scheduled-runs.json > evidence/v349-temporal-hints.json
           # Read-only event pressure, including skipped/cancelled workflow_run.
