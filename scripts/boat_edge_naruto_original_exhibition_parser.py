@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup
 from boat_edge_original_exhibition_coverage import assess_original_exhibition
 
 HEADERS = ("一周", "まわり足", "直線")
+ALIASES = {"一周": {"一周", "一周タイム", "1周", "1周タイム", "周回タイム"},
+           "まわり足": {"まわり足", "まわり足タイム", "回り足", "回り足タイム"},
+           "直線": {"直線", "直線タイム"}}
 DASH = {"", "-", "－", "─", "—", "未計測"}
 
 
@@ -51,7 +54,7 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
             indices = {}
             for label in HEADERS:
                 matching = [i for i, name in enumerate(names)
-                            if name == label or name == label + "タイム"]
+                            if name in ALIASES[label]]
                 if len(matching) != 1:
                     break
                 indices[label] = matching[0]
@@ -64,6 +67,9 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
                 values = [_clean(c.get_text(" ", strip=True)) for c in cells]
                 boat = values[0].replace("号艇", "") if values else ""
                 if not re.fullmatch("[1-6]", boat):
+                    # Another header after the data block is not another boat.
+                    if parsed:
+                        break
                     continue
                 if len(values) <= max(indices.values()):
                     malformed_rows = True
