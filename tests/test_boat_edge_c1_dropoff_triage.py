@@ -65,6 +65,25 @@ class C1DropoffTriageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CATALOG_RACE_KEY_INVALID_OR_DUPLICATE"):
             classify(report_observed([]), report_actions([]), catalog)
 
+    def test_v215_observation_does_not_prove_a_save(self):
+        history = {"schema": "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
+                   "day_jst": "20261020",
+                   "observations": {"20261020-01-02": {
+                       "reason": "verified_shadow_ready", "source_gaps": []}}}
+        result = classify(report_observed([
+            {"race_key": "20261020-01-02", "status": "UNPROVEN_AFTER_DEADLINE"}
+        ]), report_actions([]), history=history)
+        self.assertEqual(result["v215_final_reasons"]["verified_shadow_ready"], 1)
+        self.assertTrue(result["races"][0]["v215_reason_not_proof_of_git_save"])
+        self.assertFalse(result["races"][0]["first_git_save_failure_proven"])
+        self.assertIsNone(result["formal_save_rate_percent"])
+
+    def test_v215_wrong_day_rejected(self):
+        with self.assertRaisesRegex(ValueError, "V215_HISTORY_INVALID"):
+            classify(report_observed([]), report_actions([]), history={
+                "schema": "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
+                "day_jst": "20261021", "observations": {}})
+
     def test_day_mismatch_rejected(self):
         with self.assertRaisesRegex(ValueError, "DAY_MISMATCH"):
             classify(report_observed([]), report_actions([], "20261021"))
