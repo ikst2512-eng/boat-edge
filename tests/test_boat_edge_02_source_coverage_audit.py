@@ -231,6 +231,29 @@ class SourceCoverageTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_catalog(catalog, "20261021")
 
+    def test_original_exhibition_requires_six_real_boats(self):
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            proof = {"status": "ok", "sha256": "a" * 64,
+                     "fetched_at": "2026-10-21T13:48:19+09:00"}
+            record = {"race_key": key,
+                      "source_audit": {"original_exhibition": proof},
+                      "original_exhibition": {
+                          "labels": ["一周"], "boats": [
+                              {"lane": lane, "values": [37.0]}
+                              for lane in range(1, 6)]}}
+            target = folder / (key + ".json")
+            target.write_text(json.dumps(record))
+            bad = audit(Path(tmp), "20261021", {key})
+            self.assertEqual(bad["summary"]["original_exhibition"]["by_status"],
+                             {"incomplete_original_exhibition": 1})
+            record["original_exhibition"]["boats"].append({"lane": 6, "values": [37.5]})
+            target.write_text(json.dumps(record))
+            good = audit(Path(tmp), "20261021", {key})
+            self.assertEqual(good["summary"]["original_exhibition"]["scheduled_recorded_ok_percent"], 100.0)
+
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
