@@ -244,7 +244,7 @@ def fetch_one(root,key):
     base='https://www.boatrace.jp/owpc/pc/race/'
     def retry_transient_only(url):
         # V230: one bounded second attempt for transient transport / official
-        # 429/5xx responses. The original fetch() still rejects redirects,
+        # 5xx responses. HTTP 429 is not retried (respect rate limiting).\n        # The original fetch() still rejects redirects,
         # different race identity, non-official URLs, or malformed inputs.
         for attempt in range(2):
             try:
@@ -253,7 +253,7 @@ def fetch_one(root,key):
                 if attempt:raise
             except requests.exceptions.HTTPError as exc:
                 status=getattr(getattr(exc,'response',None),'status_code',None)
-                if attempt or status not in (429,500,502,503,504):raise
+                if attempt or status not in (500,502,503,504):raise
             time.sleep(0.35)
         raise RuntimeError('V230_TRANSIENT_RETRY_EXHAUSTED')
     try:
