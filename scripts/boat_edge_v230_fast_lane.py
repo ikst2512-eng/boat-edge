@@ -495,10 +495,18 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     status={'schema':SCHEMA,'day_jst':now.strftime('%Y%m%d'),'targets':selected,'target_diagnostic':diagnostic,
             'priority_applied':priority_applied,'priority_race_key':priority_key if priority_applied else None,
             'source_refreshed':0,'source_blocked':0,'odds_incomplete':0,'network_error':0,'outcomes':{}}
+    # Record actual durations rather than inferring stalls from timeout values.
+    # Monotonic clocks do not affect the authoritative server receipt times.
+    status['fetch_wall_seconds']=0.0
+    status['freeze_wall_seconds']=0.0
+    status['fetch_task_seconds']={}
     if selected:
+        fetch_started=time.monotonic()
         with ThreadPoolExecutor(max_workers=worker) as pool:
-            futures=[pool.submit(fetch_one,root,key) for key in selected]
+            futures={pool.submit(fetch_one,root,key): (key,time.monotonic()) for key in selected}
             for task in as_completed(futures):
+                submitted_key,submitted_at=futures[task]
+                status['fetch_task_seconds'][submitted_key]=round(time.monotonic()-submitted_at,3)
                 key,data,err=task.result()
                 if err:
                     status['network_error']+=1;status['outcomes'][key]='fetch_failed:'+err
@@ -508,9 +516,14 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
                 if state=='source_blocked':status['source_blocked']+=1
                 if state=='odds_incomplete':status['odds_incomplete']+=1
                 status['outcomes'][key]=state
+        status['fetch_wall_seconds']=round(time.monotonic()-fetch_started,3)
     # Existing V229 is the only authority allowed to create the immutable first snapshot.
     # It reads neither historical results nor formal prediction data.
-    count=atomic_freeze(root)
+    freeze_started=time.monotonic()
+    try:
+        count=atomic_freeze(root)
+    finally:
+        status['freeze_wall_seconds']=round(time.monotonic()-freeze_started,3)
     # Gate 1C: V235 deliberately isolates the first deadline so another
     # official request cannot delay its successful immutable first Git add.
     # If that FIRST request actually failed and produced no snapshot, however,
