@@ -103,6 +103,13 @@ class TestOriginalExhibitionCoverage(unittest.TestCase):
         self.assertFalse(result["retryable"])
         self.assertIsNone(retry_delay_seconds(0, result["status"], remaining_seconds=200))
 
+    def test_nondict_sixth_boat_is_parse_failure(self):
+        rows = six()
+        rows[5] = None
+        report = assess_original_exhibition(rows)
+        self.assertEqual(report["status"], "PARSE_FAILED")
+        self.assertFalse(report["retryable"])
+
     def test_nonlist_is_parse_failure(self):
         self.assertEqual(assess_original_exhibition({"boat": 1})["status"], "PARSE_FAILED")
 
