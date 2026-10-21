@@ -32,12 +32,14 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
             return {"status": "STALE_AFTER_DEADLINE", "retryable": False}
     if rows is None:
         return {"status": "NOT_YET_PUBLISHED", "retryable": True}
-    if rows is not None and not isinstance(rows, list):
+    if not isinstance(rows, list):
         return {"status": "PARSE_FAILED", "retryable": False}
     if not rows:
         return {"status": "NOT_YET_PUBLISHED", "retryable": True}
-    if len(rows) != 6 or any(not isinstance(r, dict) for r in rows):
+    if len(rows) != 6:
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
+    if any(not isinstance(r, dict) for r in rows):
+        return {"status": "PARSE_FAILED", "retryable": False}
     boats = [r.get("boat") for r in rows]
     if any(type(b) not in (int, str) for b in boats) or sorted(map(str, boats)) != list("123456"):
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
