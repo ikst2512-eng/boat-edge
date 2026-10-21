@@ -44,6 +44,29 @@ class FastLaneTests(unittest.TestCase):
         return {'racelist':(htmlregs(scratch).encode(),htmlregs(scratch),self.now),
                 'beforeinfo':(htmlbefore().encode(),htmlbefore(),self.now),
                 'odds':(b'official-odds-byte', '<html>...</html>',self.now)}
+    def test_imminent_deadline_does_not_retry_transient_failure(self):
+        import requests
+        key = '20261021-14-12'
+        now = datetime.now(JST)
+        deadline = now + timedelta(seconds=30)
+        race = makerace(deadline.strftime('%H:%M'))
+        race['race_key'] = key
+        race['meta'].update(date=now.strftime('%Y-%m-%d'), venue_code='14',
+                            race_no=12, deadline=deadline.strftime('%H:%M'))
+        # Minute resolution may round the cutoff back into the past; patch
+        # the pure deadline parser to provide a deterministic exact instant.
+        m.write_json(self.root/'data/races'/f'{key}.json', race)
+        with (patch.object(m, 'due_for', return_value=deadline),
+              patch('requests.Session'),
+              patch.object(m, 'fetch', side_effect=requests.exceptions.Timeout('slow')) as fetching,
+              patch('time.sleep') as sleeping):
+            received, data, error = m.fetch_one(self.root, key)
+        self.assertEqual(received, key)
+        self.assertIsNone(data)
+        self.assertIn('RETRY_SKIPPED_IMMINENT_DEADLINE', error)
+        fetching.assert_called_once()
+        sleeping.assert_not_called()
+
     def test_http_429_does_not_retry_or_sleep(self):
         import requests
         response = Mock(status_code=429)
