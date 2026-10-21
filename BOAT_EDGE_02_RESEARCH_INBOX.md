@@ -69,3 +69,14 @@
 - 追加した15分類（公式・場公式・BOATERS・艇国データバンク・ボートとデータ・BOATRACE DATA・BR-STAT・艇脳・BOAT BANK・BOAT LAB・BOATBoy・Team-Nave API・気象庁など）の**出典・利用条件・研究候補N01–N07・feature contract**は [docs/BOAT_EDGE_02_SOURCE_LANDSCAPE_20261016.md](docs/BOAT_EDGE_02_SOURCE_LANDSCAPE_20261016.md) に集約。
 - 特に新規は対戦相手補正Elo、他艇同時条件付き着順、ST四分位/ばらつき、モーター乗り手補正の研究設計。既存R01–R16、PR #192/#253と重複実装しない。
 - **RESEARCH_ONLY / THIRD_PARTY_PERMISSION_UNVERIFIED**。公開サイトの数値を無断コピー/AI学習しない。実データ取込なし、実測改善なし、予想本番重み・Formal Fresh変更なし。
+
+## 2026-10-21 — 鳴門オリ展取得経路の再調査（作業②/③連携、研究記録のみ）
+
+- **一次情報**：鳴門公式FAQ https://n14.jp/sp/index.php?page=other-faq — 一周・まわり足・直線は鳴門独自計測。水面状況・再展示などにより欠測した場合、公式表示は `-`。未公開・公式欠測・転記サイトの遅延・HTTP取得失敗を混同しない。
+- **BOATERS公式説明**：https://boaters-boatrace.com/guide/original-exhibition-data — 各場公式で公開後にBOATERSへ反映。反映時刻差および進入変更反映タイミング差で値が一致しない可能性あり。表示されることは当方のHTTP自動取得権限・技術的到達性を保証しない。
+- **当日別経路の実例**：https://boatrace-techo.com/race/2026-10-21/naruto/10?tab=result — 鳴門10Rの2026-10-21 12:47取得表示で6艇の一周・まわり足・直線が揃うことを確認。これは12Rの取得成功を証明しない。
+- **取得失敗の観測**：https://boaters-boatrace.com/race/naruto/2026-10-21/12R/race-detail と https://boatrace-techo.com/race/2026-10-21/naruto/12?tab=before はこの調査で利用したWeb閲覧ツールからアクセス不可。先方にデータが存在しないとは判定できない。HTTPステータス、JS依存、bot対策等の原因は未特定。
+- **取得設計**：場公式を優先し、BOATERS/他サイトは利用規約・許諾を確認してからフォールバック候補にする。指数バックオフ＋ジッタ、レース締切前までの有限回再試行、フィールド単位バリデーション、`source_url`/`source_type`/`fetched_at`/`server_first_seen_at`/`race_id`/`six_boats`/`raw_sha256` を保持。後日の再取得で締切前スナップショットを上書きしない。
+- **失敗分類**：`NOT_YET_PUBLISHED`, `OFFICIAL_NOT_MEASURED`, `HTTP_UNAVAILABLE`, `PARSE_FAILED`, `PARTIAL_SIX_BOATS`, `STALE_AFTER_DEADLINE`, `TERMS_PERMISSION_PENDING` を分離する。 `-` や欠測を0扱いしない。
+- **連携条件**：作業①〜③の既存安定化中はActions/本番取得器/予想器を変更せず、まず隔離fixture＋権利確認＋既存source-binding監査。研究ノート記録のみで本番機能、取得率、正式Fresh合格を変更したとは主張しない。
+- **未解決**：12Rの生3項目取得・6艇一致照合、公式取得エンドポイント特定、許諾、実測成功率、3開催日連続検証。これらが終わるまで「絶対取得」「本番反映済み」とは表示しない。
