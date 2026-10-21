@@ -230,8 +230,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3; do
             # Never delay/modify the original first Git-add. A concurrent
             # writer wins; restart only from the actual current main.
@@ -409,8 +407,6 @@ jobs:
           # V274: same job as the source commit avoids workflow_run and cron delay.
           # This stage NEVER reads site results, actual finish, odds payout,
           # formal Fresh results, or changes the production model.
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3 4; do
             git fetch --no-tags origin main
             git reset --hard origin/main
@@ -449,8 +445,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           scoring_success=false
           for attempt in 1 2 3 4 5; do
             git fetch --no-tags origin main
