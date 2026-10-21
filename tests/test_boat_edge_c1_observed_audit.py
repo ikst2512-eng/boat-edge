@@ -127,6 +127,13 @@ class C1ObservedAuditTests(unittest.TestCase):
         proof.assert_called_once_with(self.root, now=checked.astimezone(m.JST),
                                       requested=KEY, historical_deadline="15:53")
 
+    def test_impossible_historical_date_fails_closed(self):
+        from boat_edge_v235_predeadline_receipt import receipt
+        bad = receipt(self.root, requested="20261340-03-11",
+                      historical_deadline="15:53")
+        self.assertEqual(bad["status"], "INVALID_HISTORICAL_RACE_OR_DEADLINE")
+        self.assertFalse(bad["prediction_saved_proven"])
+
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
         with patch.object(m, "receipt") as proof:
