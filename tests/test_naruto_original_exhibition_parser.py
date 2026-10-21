@@ -62,6 +62,18 @@ class TestNarutoParser(unittest.TestCase):
                                                fetched_at=NOW, deadline=DUE)
         self.assertEqual(out["status"], "PARSE_FAILED")
 
+    def test_unlabelled_table_rejected(self):
+        html = fixture().replace("<th>艇</th>", "<th>名前</th>")
+        self.assertEqual(parse_naruto_original_exhibition(html, identity_verified=True,
+                         fetched_at=NOW, deadline=DUE)["status"], "TABLE_NOT_FOUND_OR_AMBIGUOUS")
+
+    def test_truncated_boat_row_rejected(self):
+        html = fixture() + ""
+        html = html.replace("<td>6号艇</td><td>36.50</td><td>5.70</td><td>7.05</td>",
+                            "<td>6号艇</td><td>36.50</td>")
+        self.assertNotEqual(parse_naruto_original_exhibition(html, identity_verified=True,
+                            fetched_at=NOW, deadline=DUE)["status"], "COMPLETE_SIX_BOATS")
+
     def test_deadline(self):
         self.assertEqual(parse_naruto_original_exhibition(fixture(),
                          identity_verified=True, fetched_at=DUE, deadline=DUE)["status"],
