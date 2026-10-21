@@ -74,6 +74,11 @@ class TestOriginalExhibitionCoverage(unittest.TestCase):
         self.assertFalse(classify_fetch_failure(err)["retryable"])
         self.assertIsNone(retry_delay_seconds(0, "NOT_YET_PUBLISHED_OR_BAD_URL", remaining_seconds=100))
 
+    def test_overflow_is_not_valid_measurement(self):
+        rows = six()
+        rows[0]["lap"] = "9" * 400
+        self.assertEqual(assess_original_exhibition(rows)["status"], "PARSE_FAILED")
+
     def test_access_restricted(self):
         err = type("Error", (), {"code": 403})()
         self.assertEqual(classify_fetch_failure(err)["status"], "ACCESS_RESTRICTED")
