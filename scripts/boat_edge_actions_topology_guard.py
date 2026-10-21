@@ -32,7 +32,7 @@ def inventory(directory: Path) -> dict:
         if not target:
             continue
         for item in re.findall(r"(?m)^      -\s*['\"]?(.+?)['\"]?\s*$", target.group(1)):
-            producer = item.strip().strip("'\"")
+            producer = item.strip().split(" #", 1)[0].strip().strip("'\"")
             edges.append((producer, consumer))
     graph = defaultdict(list)
     consumers = defaultdict(list)
@@ -40,15 +40,17 @@ def inventory(directory: Path) -> dict:
         graph[producer].append(consumer)
         consumers[producer].append(consumer)
     cycles = []
+    visited = set()
     def visit(node, stack):
         if node in stack:
             cycles.append(stack[stack.index(node):] + [node])
             return
-        if len(stack) >= len(names):
+        if node in visited:
             return
         for next_node in graph[node]:
             if next_node in names:
                 visit(next_node, stack + [node])
+        visited.add(node)
     for node in names:
         visit(node, [])
     unique_cycles = sorted({tuple(cycle) for cycle in cycles})
