@@ -27,7 +27,10 @@ class SiteTrackedVenueSourceContracts(unittest.TestCase):
             with self.subTest(name=name):
                 source=(WORKFLOWS/name).read_text(encoding='utf-8')
                 self.assertIn('workflow_dispatch:',source)
-                self.assertIn(cron,source)
+                if name.endswith('V170_ONE_UPLOAD.yml'):
+                    self.assertNotIn(cron,source)
+                else:
+                    self.assertIn(cron,source)
                 self.assertIn(marker,source)
                 self.assertIn('git ls-files --error-unmatch',source)
                 self.assertNotIn('gzip.decompress',source)
@@ -43,8 +46,8 @@ class SiteTrackedVenueSourceContracts(unittest.TestCase):
     def test_v170_research_only_bounded_daily_fallback(self):
         source=(WORKFLOWS/'BOAT_EDGE_V170_ONE_UPLOAD.yml').read_text(encoding='utf-8')
         events=source.split('on:',1)[1].split('permissions:',1)[0]
-        self.assertIn("cron: '13 0,13 * * *'", events)
-        self.assertEqual(events.count('cron:'),1)
+        self.assertNotIn('  schedule:',events)
+        self.assertEqual(events.count('cron:'),0)
         self.assertIn("data/site_learning/mode_accuracy_v136.json", events)
         self.assertIn('  workflow_dispatch:',events)
         self.assertIn('  push:',events)
