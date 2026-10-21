@@ -8,7 +8,7 @@
     "event": "PayPay銀行賞",
     "race_no": 4,
     "deadline": "11:47",
-    "updated_at": "2026-10-21T09:07:49+09:00",
+    "updated_at": "2026-10-21T09:41:07+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=11&rno=4",
-      "fetched_at": "2026-10-21T09:10:24+09:00",
-      "sha256": "3a0ad29777cf52f82f831ce0b818caf4cf0f42258a1da80ff114abd0907c754e",
+      "fetched_at": "2026-10-21T09:44:01+09:00",
+      "sha256": "ba26169b8521d92d0d1ff055f5ef7befe7cb611d6a5818eab9136050797e0870",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=11&rno=4",
+      "fetched_at": "2026-10-21T09:42:17+09:00",
+      "sha256": "eb9767769d5a815b23e2f3fefb39398dcd6d3b783ddffd5ac1013946ebe1f18f",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "31ded62306cfffce7450b4a9d43f1f138d4da2fa0006fa24e44389447bcdb7e3"
+      "sha256": "fbb74c0c1d5d89239c82b1331e49e261423e28e6c664fa11332a94d014ba6653"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "0952bc5fd1149c72da1d689f062fc1bfedf91184801846db735ab110f78977f6"
+      "sha256": "5a072dd855c1b127acc73ee41cac14c146864f3b44703cda71b4a6406aadd0d0"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "886a1545d1ff865fb5f8bab3fec8a90feef2062b9b3d129a4892e9709aa28c3e"
+      "sha256": "859f73b4155290b67d25038350ca212c66b110deecc7e158c78e2e198d4cf0ed"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "635773e7fd09e3c3074125b4f9d6673e024fd60371549be533def76e2099f3ea"
+      "sha256": "934539997c88b9dfd15f4df7ce740b124cb622a905f89fb7126386c55ca2512c"
     }
   },
   "racers": [
@@ -274,7 +280,53 @@
       "raw_text": "6 5461 / B2 板頭 里緒 三重/三重 20歳/50.8kg F1 L0 - 1.19 0.00 0.00 0.00 0.00 0.00 32 33.33 44.72 47 37.69 55.38"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 水野 望美 46.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 関 裕也 53.6kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 渋谷 明憲 52.8kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 小川 日紀太 52.6kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 柳内 敬太 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 板頭 里緒 50.8kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
