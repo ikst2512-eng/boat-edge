@@ -53,6 +53,8 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["unproven_last_observed_before_freeze_window"], 1)
         self.assertTrue(data["races"][0]["last_observation_before_freeze_window"])
         self.assertEqual(data["unproven_with_last_observation_gaps"], 0)
+        self.assertEqual(data["unproven_observation_timing_source_gap_matrix"],
+                         {"before_freeze_window": {"no_last_source_gaps": 1}})
 
     def test_late_readiness_history_does_not_override_proven_git_first_add(self):
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": True,
