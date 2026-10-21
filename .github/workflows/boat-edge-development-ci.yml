@@ -114,6 +114,11 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v228_freeze_only.py' -v
+      - name: C1 archived first-Git receipt regression (read-only)
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_c1_observed_audit.py' -v
       - name: Verify V235 other-race postcommit source and Git-index stage before main
         env:
           PYTHONPATH: scripts
