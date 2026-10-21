@@ -21,8 +21,24 @@ def classify(observed, actions):
         raise ValueError("OBSERVED_SCHEMA_INVALID")
     if actions.get("schema") != "BOAT_EDGE_C1_MISSING_FREEZE_ACTIONS_WINDOW_V1":
         raise ValueError("ACTIONS_SCHEMA_INVALID")
-    observed_rows = {r["race_key"]: r for r in observed["races"]}
-    action_rows = {r["race_key"]: r for r in actions["races"]}
+    def unique_rows(report, source):
+        rows = report.get("races")
+        if not isinstance(rows, list):
+            raise ValueError(source + "_ROWS_INVALID")
+        result = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError(source + "_ROW_INVALID")
+            key = row.get("race_key")
+            if not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-"):
+                raise ValueError(source + "_RACE_KEY_INVALID")
+            if key in result:
+                raise ValueError(source + "_DUPLICATE_RACE_KEY")
+            result[key] = row
+        return result
+
+    observed_rows = unique_rows(observed, "OBSERVED")
+    action_rows = unique_rows(actions, "ACTIONS")
     output = []
     for key in sorted(set(observed_rows) | set(action_rows)):
         o, a = observed_rows.get(key, {}), action_rows.get(key, {})
