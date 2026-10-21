@@ -165,6 +165,12 @@ def inspect(root: Path, now: datetime) -> dict:
                 or not isinstance(rows, dict) or len(rows) != 120):
             reasons.append("odds_120_missing_or_invalid")
         else:
+            # V229 rejects 120 unverified or unbound prices even if the
+            # number of JSON combinations happens to match. This is only a
+            # read-only early diagnostic, not full source authentication.
+            if (odds.get("verified_official_dom_v167") is not True
+                    or odds.get("available_count") != 120):
+                reasons.append("official_odds_dom_proof_missing")
             fetched = timestamp(odds.get("fetched_at"))
             if fetched is None or not 0 <= (now - fetched).total_seconds() <= 900:
                 reasons.append("odds_stale")
