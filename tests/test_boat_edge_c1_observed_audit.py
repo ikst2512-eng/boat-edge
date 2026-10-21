@@ -46,6 +46,8 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["races"][0]["last_observed_reason"], "snapshot_missing")
         self.assertIsNone(data["races"][0]["first_git_commit"])
         self.assertEqual(data["unproven_without_last_observation_gaps"], 1)
+        self.assertEqual(data["unproven_last_observed_before_freeze_window"], 1)
+        self.assertTrue(data["races"][0]["last_observation_before_freeze_window"])
         self.assertEqual(data["unproven_with_last_observation_gaps"], 0)
 
     def test_late_readiness_history_does_not_override_proven_git_first_add(self):
