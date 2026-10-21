@@ -248,7 +248,8 @@ def fetch_one(root,key):
     base='https://www.boatrace.jp/owpc/pc/race/'
     def retry_transient_only(url):
         # V230: one bounded second attempt for transient transport / official
-        # 5xx responses. HTTP 429 is not retried (respect rate limiting).\n        # The original fetch() still rejects redirects,
+        # 5xx responses. HTTP 429 is not retried (respect rate limiting).
+        # The original fetch() still rejects redirects,
         # different race identity, non-official URLs, or malformed inputs.
         for attempt in range(2):
             try:
