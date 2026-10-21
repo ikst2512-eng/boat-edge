@@ -259,7 +259,7 @@ def fetch_one(root,key):
                 status=getattr(getattr(exc,'response',None),'status_code',None)
                 if attempt or status not in (500,502,503,504):raise
             # Keep a safety margin for parsing, immutable freeze and Git save.
-            if deadline is not None and (deadline-datetime.now(JST)).total_seconds() <= 45:
+            if deadline is not None and 0 < (deadline-datetime.now(JST)).total_seconds() <= 45:
                 raise RuntimeError('V230_RETRY_SKIPPED_IMMINENT_DEADLINE')
             time.sleep(0.35)
         raise RuntimeError('V230_TRANSIENT_RETRY_EXHAUSTED')
