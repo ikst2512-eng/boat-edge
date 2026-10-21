@@ -6,8 +6,8 @@ on:
     paths:
       - '.github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '11 0-13 * * *' # hourly integrity check; V71 already verifies each official odds fetch
+  # V167 diagnostic remains available on manual dispatch; V71 owns
+  # automated official-odds verification, avoiding duplicate hourly writers.
 
 permissions:
   contents: write
