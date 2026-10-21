@@ -123,6 +123,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                     or meta.get("phase") not in (None, "PRE_RESULT")):
                 raise ValueError("race meta identity or phase mismatch")
             statuses = {}
+            source_fetched_at = {}
             for field in FIELDS:
                 entry = src.get(field)
                 status = entry.get("status", "not_recorded") if isinstance(entry, dict) else "not_recorded"
@@ -140,9 +141,11 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                     if not isinstance(cov, dict) or cov.get("six_boat_complete") is not True:
                         status = "incomplete_exhibition"
                 statuses[field] = status
+                source_fetched_at[field] = entry.get("fetched_at") if isinstance(entry, dict) else None
                 counts[field][status] += 1
             rows.append({"race_key": path.stem, "venue": meta.get("venue"),
                          "record_updated_at": meta.get("updated_at"),
+                         "source_fetched_at": source_fetched_at,
                          "deadline": meta.get("deadline"), "statuses": statuses})
         except (OSError, UnicodeError, ValueError, TypeError) as error:
             rows.append({"race_key": path.stem, "error": type(error).__name__})
@@ -184,6 +187,9 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "invalid_saved_races": n - len(valid_rows),
         "published_wait_beforeinfo_count": sum(r.get("statuses", {}).get("beforeinfo") == "published_wait" for r in valid_rows),
         "missing_original_exhibition_count": sum(r.get("statuses", {}).get("original_exhibition") == "missing" for r in valid_rows),
+        "beforeinfo_published_wait_with_fetch_timestamp": sum(
+            r.get("statuses", {}).get("beforeinfo") == "published_wait"
+            and bool(r.get("source_fetched_at", {}).get("beforeinfo")) for r in valid_rows),
         "expected_scheduled_races": len(expected) if expected is not None else None,
         "missing_scheduled_race_keys": missing,
         "missing_scheduled_deadlines": missing_deadlines,
