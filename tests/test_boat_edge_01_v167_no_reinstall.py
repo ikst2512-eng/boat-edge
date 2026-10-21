@@ -11,7 +11,8 @@ WORKFLOW=ROOT/'.github'/'workflows'/'BOAT_EDGE_V167_ONE_UPLOAD.yml'
 class V167CurrentAuditor(unittest.TestCase):
     def test_no_legacy_restore_and_keep_independent_audit(self):
         s=WORKFLOW.read_text(encoding='utf-8')
-        self.assertIn("cron: '11 0-13 * * *'",s)
+        self.assertNotIn("cron: '11 0-13 * * *'",s)
+        self.assertNotIn("\n  schedule:",s.split("\npermissions:",1)[0])
         self.assertIn('workflow_dispatch:',s)
         self.assertIn('V167_TRACKED_AUDITOR_NO_LEGACY_REINSTALL_PASS',s)
         self.assertIn('git ls-files --error-unmatch',s)
