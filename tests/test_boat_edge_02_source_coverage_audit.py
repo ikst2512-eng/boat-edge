@@ -64,6 +64,23 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(result["beforeinfo_published_wait_with_fetch_timestamp"], 1)
             self.assertEqual(result["rows"][0]["source_fetched_at"]["beforeinfo"], stamp)
 
+    def test_persisted_wait_after_deadline_is_not_retroactive_retry(self):
+        jst = timezone(timedelta(hours=9))
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-06"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key, "meta": {"deadline": "13:20"},
+                "source_audit": {"beforeinfo": {
+                    "status": "published_wait",
+                    "fetched_at": "2026-10-21T10:56:24+09:00"}}
+            }))
+            report = audit(Path(tmp), "20261021", {key},
+                           datetime(2026, 10, 21, 13, 49, tzinfo=jst))
+            self.assertEqual(len(report["past_deadline_persisted_beforeinfo_wait"]), 1)
+            self.assertEqual(report["retry_candidates_diagnostics_only"], [])
+
     def test_not_in_window_is_not_retry_error(self):
         jst = timezone(timedelta(hours=9))
         rows = [{"race_key": "20261021-16-07", "deadline": "13:49",
