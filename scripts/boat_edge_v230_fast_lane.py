@@ -238,6 +238,10 @@ def fetch_one(root,key):
     import time
     params={'hd':key[:8],'jcd':key.split('-')[1],'rno':str(int(key.split('-')[2]))}
     session=requests.Session()
+    # The official receipt is deadline-bound. Avoid a second network attempt
+    # when the race deadline is already too close; never weaken freeze gates.
+    race=load(Path(root)/'data/races'/f'{key}.json') or {}
+    deadline=due_for(key,(race.get('meta') or {}).get('deadline'))
     session.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
         'Accept-Language':'ja-JP,ja;q=0.9,en;q=0.7','Connection':'close'})
     q=urlencode(params)
@@ -254,6 +258,9 @@ def fetch_one(root,key):
             except requests.exceptions.HTTPError as exc:
                 status=getattr(getattr(exc,'response',None),'status_code',None)
                 if attempt or status not in (500,502,503,504):raise
+            # Keep a safety margin for parsing, immutable freeze and Git save.
+            if deadline is not None and (deadline-datetime.now(JST)).total_seconds() <= 45:
+                raise RuntimeError('V230_RETRY_SKIPPED_IMMINENT_DEADLINE')
             time.sleep(0.35)
         raise RuntimeError('V230_TRANSIENT_RETRY_EXHAUSTED')
     try:
