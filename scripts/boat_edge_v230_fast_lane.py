@@ -472,6 +472,16 @@ def local_now():
     return datetime.now(JST)
 
 
+def _timed_fetch_one(root,key):
+    """Measure worker execution, not queue delay or main-thread processing."""
+    started=time.monotonic()
+    try:
+        return fetch_one(root,key),round(time.monotonic()-started,3)
+    except BaseException:
+        # Preserve executor error semantics without suppressing failures.
+        raise
+
+
 def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     from boat_edge_v228_freeze_only import check_formal_closed
     from boat_edge_v229_atomic_freeze import run as atomic_freeze
@@ -503,11 +513,12 @@ def run(root,now=None,worker=6,priority_key=None,retry_imminent=False):
     if selected:
         fetch_started=time.monotonic()
         with ThreadPoolExecutor(max_workers=worker) as pool:
-            futures={pool.submit(fetch_one,root,key): (key,time.monotonic()) for key in selected}
+            futures={pool.submit(_timed_fetch_one,root,key): key for key in selected}
             for task in as_completed(futures):
-                submitted_key,submitted_at=futures[task]
-                status['fetch_task_seconds'][submitted_key]=round(time.monotonic()-submitted_at,3)
-                key,data,err=task.result()
+                submitted_key=futures[task]
+                result,worker_seconds=task.result()
+                status['fetch_task_seconds'][submitted_key]=worker_seconds
+                key,data,err=result
                 if err:
                     status['network_error']+=1;status['outcomes'][key]='fetch_failed:'+err
                     continue
