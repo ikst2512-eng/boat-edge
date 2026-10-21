@@ -74,6 +74,13 @@ class TestNarutoParser(unittest.TestCase):
         self.assertNotEqual(parse_naruto_original_exhibition(html, identity_verified=True,
                             fetched_at=NOW, deadline=DUE)["status"], "COMPLETE_SIX_BOATS")
 
+    def test_common_official_header_aliases(self):
+        html = (fixture().replace("一周</th>", "1周タイム</th>")
+                .replace("まわり足</th>", "回り足タイム</th>")
+                .replace("直線</th>", "直線タイム</th>"))
+        self.assertEqual(parse_naruto_original_exhibition(html, identity_verified=True,
+                         fetched_at=NOW, deadline=DUE)["status"], "COMPLETE_SIX_BOATS")
+
     def test_deadline(self):
         self.assertEqual(parse_naruto_original_exhibition(fixture(),
                          identity_verified=True, fetched_at=DUE, deadline=DUE)["status"],
