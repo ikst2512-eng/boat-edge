@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Offline validation for independent original exhibition coverage helper."""
+import sys
+import unittest
+from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from boat_edge_original_exhibition_coverage import assess_original_exhibition, classify_fetch_failure
+
+
+def six():
+    return [{"boat": n, "lap": "36.2", "turn": "5.6", "straight": "7.4"}
+            for n in range(1, 7)]
+
+
+class TestOriginalExhibitionCoverage(unittest.TestCase):
+    def test_complete(self):
+        self.assertEqual(assess_original_exhibition(six())["status"], "COMPLETE_SIX_BOATS")
+
+    def test_unpublished(self):
+        self.assertEqual(assess_original_exhibition(None)["status"], "NOT_YET_PUBLISHED")
+
+    def test_partial(self):
+        self.assertEqual(assess_original_exhibition(six()[:5])["status"], "PARTIAL_SIX_BOATS")
+
+    def test_duplicate_lane(self):
+        rows = six()
+        rows[-1]["boat"] = 5
+        self.assertEqual(assess_original_exhibition(rows)["status"], "PARTIAL_SIX_BOATS")
+
+    def test_missing_not_zero(self):
+        rows = six()
+        rows[2]["turn"] = "─"
+        report = assess_original_exhibition(rows)
+        self.assertIn("NOT_MEASURED", report["status"])
+        self.assertEqual(report["missing"]["3"], ["turn"])
+
+    def test_bad_value(self):
+        rows = six()
+        rows[0]["lap"] = "broken"
+        self.assertEqual(assess_original_exhibition(rows)["status"], "PARSE_FAILED")
+
+    def test_deadline(self):
+        a = datetime(2026, 10, 21, 14, 15, tzinfo=timezone.utc)
+        self.assertEqual(
+            assess_original_exhibition(six(), fetched_at=a, deadline=a)["status"],
+            "STALE_AFTER_DEADLINE",
+        )
+
+    def test_access_restricted(self):
+        err = type("Error", (), {"code": 403})()
+        self.assertEqual(classify_fetch_failure(err)["status"], "ACCESS_RESTRICTED")
+
+
+if __name__ == "__main__":
+    unittest.main()
