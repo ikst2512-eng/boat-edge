@@ -50,7 +50,7 @@ def classify(observed, actions, catalog=None, history=None):
                 raise ValueError("CATALOG_INVALID")
             for race in venue["races"]:
                 key = race.get("race_key") if isinstance(race, dict) else None
-                if not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-") or key in catalog_keys:
+                if not isinstance(key, str) or not RACE_KEY.fullmatch(key) or not key.startswith(observed["day_jst"] + "-") or key in catalog_keys:
                     raise ValueError("CATALOG_RACE_KEY_INVALID_OR_DUPLICATE")
                 catalog_keys.add(key)
     historical = {}
@@ -62,7 +62,7 @@ def classify(observed, actions, catalog=None, history=None):
             raise ValueError("V215_HISTORY_INVALID")
         historical = history["observations"]
         for key, record in historical.items():
-            if (not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-")
+            if (not isinstance(key, str) or not RACE_KEY.fullmatch(key) or not key.startswith(observed["day_jst"] + "-")
                     or not isinstance(record, dict)):
                 raise ValueError("V215_HISTORY_RACE_INVALID")
     output = []
