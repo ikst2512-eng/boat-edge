@@ -23,7 +23,8 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
     if fetched_at is not None or deadline is not None:
         if not isinstance(fetched_at, datetime) or not isinstance(deadline, datetime):
             return {"status": "INVALID_TIMESTAMPS", "retryable": False}
-        if fetched_at.tzinfo is None or deadline.tzinfo is None:
+        if (fetched_at.tzinfo is None or deadline.tzinfo is None or
+                fetched_at.utcoffset() is None or deadline.utcoffset() is None):
             return {"status": "INVALID_TIMESTAMPS", "retryable": False}
         if fetched_at >= deadline:
             return {"status": "STALE_AFTER_DEADLINE", "retryable": False}
@@ -34,15 +35,16 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
     if len(rows) != 6 or any(not isinstance(r, dict) for r in rows):
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
     boats = [r.get("boat") for r in rows]
-    if sorted(map(str, boats)) != list("123456"):
+    if any(type(b) not in (int, str) for b in boats) or sorted(map(str, boats)) != list("123456"):
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
     absent = {}
     malformed = {}
     for row in rows:
         boat = str(row["boat"])
-        missing = [f for f in FIELDS if row.get(f) in MISSING]
+        missing = [f for f in FIELDS if row.get(f) is None or
+                   (isinstance(row.get(f), str) and row[f].strip() in MISSING)]
         bad = [f for f in FIELDS if f not in missing and
-               (not isinstance(row.get(f), (str, int, float)) or
+               (type(row.get(f)) not in (str, int, float) or
                 not NUMBER.fullmatch(str(row[f]).strip()) or
                 float(row[f]) <= 0)]
         if missing:
@@ -52,7 +54,7 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
     if malformed:
         return {"status": "PARSE_FAILED", "retryable": True, "malformed": malformed}
     if absent:
-        category = "OFFICIAL_NOT_MEASURED_OR_NOT_YET_PUBLISHED"
+        category = "NOT_MEASURED_OR_NOT_YET_PUBLISHED"
         return {"status": category, "retryable": True, "missing": absent,
                 "note": "Source metadata required to distinguish official omission from delay"}
     return {"status": "COMPLETE_SIX_BOATS", "retryable": False,
@@ -65,7 +67,7 @@ def classify_fetch_failure(error):
     if code in (401, 403):
         return {"status": "ACCESS_RESTRICTED", "retryable": False}
     if code == 404:
-        return {"status": "NOT_YET_PUBLISHED_OR_BAD_URL", "retryable": True}
+        return {"status": "NOT_YET_PUBLISHED_OR_BAD_URL", "retryable": False}
     if code == 429 or (isinstance(code, int) and 500 <= code <= 599):
         return {"status": "HTTP_UNAVAILABLE", "retryable": True}
     return {"status": "HTTP_UNAVAILABLE", "retryable": True}
@@ -77,8 +79,8 @@ def retry_delay_seconds(attempt, status, *, remaining_seconds):
     Never retry access restrictions or late receipts. No network requests here.
     """
     retryable = {"NOT_YET_PUBLISHED", "PARTIAL_SIX_BOATS",
-                 "NOT_YET_PUBLISHED_OR_BAD_URL", "HTTP_UNAVAILABLE", "PARSE_FAILED",
-                 "OFFICIAL_NOT_MEASURED_OR_NOT_YET_PUBLISHED"}
+                 "HTTP_UNAVAILABLE", "PARSE_FAILED",
+                 "NOT_MEASURED_OR_NOT_YET_PUBLISHED"}
     if type(attempt) is not int or attempt < 0:
         raise ValueError("INVALID_ATTEMPT")
     if status not in retryable or remaining_seconds <= 0:
