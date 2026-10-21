@@ -178,6 +178,25 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                                   and row.get("statuses", {}).get(field) == "ok"
                               ) / len(expected), 2)
                               if expected else None)}
+    clock = datetime.now(JST) if now is None else now
+    if clock.tzinfo is None or clock.utcoffset() is None:
+        raise ValueError("aware clock required")
+    clock = clock.astimezone(JST)
+    stale_wait = []
+    for row in valid_rows:
+        if row.get("statuses", {}).get("beforeinfo") != "published_wait":
+            continue
+        deadline = row.get("deadline")
+        if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\\d|2[0-3]):[0-5]\\d", deadline):
+            continue
+        due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
+        if due <= clock:
+            stale_wait.append({
+                "race_key": row["race_key"],
+                "deadline_jst": due.isoformat(),
+                "last_beforeinfo_fetch_jst": row.get("source_fetched_at", {}).get("beforeinfo"),
+                "interpretation": "PERSISTED_WAIT_AFTER_DEADLINE_NOT_PROOF_OF_RETRY_FAILURE",
+            })
     return {
         "schema": "BOAT_EDGE_02_READONLY_SOURCE_COVERAGE_V1",
         "date_jst": day, "generated_at_jst": datetime.now(JST).isoformat(),
@@ -185,6 +204,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "saved_races": n,
         "valid_saved_races": len(valid_rows),
         "invalid_saved_races": n - len(valid_rows),
+        "past_deadline_persisted_beforeinfo_wait": stale_wait,
         "published_wait_beforeinfo_count": sum(r.get("statuses", {}).get("beforeinfo") == "published_wait" for r in valid_rows),
         "missing_original_exhibition_count": sum(r.get("statuses", {}).get("original_exhibition") == "missing" for r in valid_rows),
         "beforeinfo_published_wait_with_fetch_timestamp": sum(
