@@ -243,11 +243,44 @@ def audit(root, day, expected=None, now=None, deadlines=None):
     }
 
 
+def inspect_health(path):
+    """Read-only consistency check; never equate a fetch count with saved coverage."""
+    h = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(h, dict):
+        raise ValueError("invalid health report")
+    checks = [
+        ("urgent_original_exhibition",
+         "beforeinfo_urgent_15m_targets",
+         ("original_exhibition_urgent_15m_complete",
+          "original_exhibition_urgent_15m_missing")),
+        ("urgent_beforeinfo",
+         "beforeinfo_urgent_15m_targets",
+         ("beforeinfo_urgent_15m_ok",
+          "beforeinfo_urgent_15m_published_wait",
+          "beforeinfo_urgent_15m_error")),
+    ]
+    diagnostics = []
+    for label, denominator, parts in checks:
+        total = h.get(denominator)
+        numbers = [h.get(part) for part in parts]
+        if any(type(v) is not int or v < 0 for v in [total, *numbers]):
+            diagnostics.append({"check": label, "status": "unknown_invalid_counts"})
+        elif sum(numbers) != total:
+            diagnostics.append({"check": label, "status": "inconsistent",
+                                "target": total, "classified": sum(numbers)})
+        else:
+            diagnostics.append({"check": label, "status": "arithmetically_consistent",
+                                "target": total})
+    return {"updated_at": h.get("updated_at"), "checks": diagnostics,
+            "note": "Health counts are not proof of persisted predeadline sources."}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--day", required=True, help="JST date in YYYYMMDD")
     parser.add_argument("--output", type=Path, help="Optional explicit report destination")
+    parser.add_argument("--health", type=Path, help="Optional read-only data/health.json check")
     parser.add_argument("--catalog", type=Path, help="Existing same-day data/today.json (read only)")
     parser.add_argument("--schedule", type=Path,
                         help="Trusted independent JSON schedule: date_jst and race_keys")
@@ -261,6 +294,11 @@ def main():
     except (OSError, ValueError, TypeError) as exc:
         parser.error("invalid schedule: " + str(exc))
     report = audit(args.root, args.day, expected, deadlines=deadlines)
+    if args.health:
+        try:
+            report["health_consistency"] = inspect_health(args.health)
+        except (OSError, UnicodeError, ValueError, TypeError) as exc:
+            parser.error("invalid health: " + str(exc))
     serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
