@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from scripts.boat_edge_02_source_coverage_audit import audit, load_expected, load_catalog, retry_candidates
+from scripts.boat_edge_02_source_coverage_audit import audit, load_expected, load_catalog, retry_candidates, inspect_health
 
 
 class SourceCoverageTests(unittest.TestCase):
@@ -253,6 +253,23 @@ class SourceCoverageTests(unittest.TestCase):
             target.write_text(json.dumps(record))
             good = audit(Path(tmp), "20261021", {key})
             self.assertEqual(good["summary"]["original_exhibition"]["scheduled_recorded_ok_percent"], 100.0)
+
+    def test_health_urgent_original_count_mismatch(self):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "health.json"
+            path.write_text(json.dumps({
+                "updated_at": "2026-10-21T13:45:45+09:00",
+                "beforeinfo_urgent_15m_targets": 4,
+                "original_exhibition_urgent_15m_complete": 3,
+                "original_exhibition_urgent_15m_missing": 2,
+                "beforeinfo_urgent_15m_ok": 4,
+                "beforeinfo_urgent_15m_published_wait": 0,
+                "beforeinfo_urgent_15m_error": 0
+            }))
+            checks = inspect_health(path)["checks"]
+            self.assertEqual(checks[0]["status"], "inconsistent")
+            self.assertEqual(checks[0]["classified"], 5)
+            self.assertEqual(checks[1]["status"], "arithmetically_consistent")
 
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
