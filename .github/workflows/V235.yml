@@ -348,16 +348,23 @@ jobs:
             path="${spec%:*}"; sha="${spec##*:}"
             test -f "$path" && test "$(git hash-object "$path")" = "$sha" || { echo "V234_PRE_RESULT_DEPENDENCY_CHANGED_$path"; exit 1; }
           done
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v228_freeze_only.py' -v
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
-          # Priority 2026-10-14 Naruto 1R: exercise timestamp/SHA/Git-first-add proof without results access.
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v232_pre_result_cohort.py' -v
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v234_settle.py' -v
-          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v234_settle.py
-          PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v265_readiness_sources.py
-          echo V235_V265_STRICT_PRE_RESULT_ODDS_AND_SCRATCH_PROOF_REGRESSIONS_PASS
-          echo V234_THIRTY_FIVE_PROSPECTIVE_AND_SETTLEMENT_REGRESSIONS_PASS
+          # Only verify full regression suite for deliberate manual runs. Scheduled
+          # and trusted collector wakes retain the exact source SHA checks above.
+          # The development CI covers code changes before production merge.
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v228_freeze_only.py' -v
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
+            # Priority 2026-10-14 Naruto 1R: exercise timestamp/SHA/Git-first-add proof without results access.
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v235_predeadline_receipt.py' -v
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v232_pre_result_cohort.py' -v
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v234_settle.py' -v
+            PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v234_settle.py
+            PYTHONPATH=scripts PYTHONDONTWRITEBYTECODE=1 python3 tests/test_boat_edge_v265_readiness_sources.py
+            echo V235_V265_STRICT_PRE_RESULT_ODDS_AND_SCRATCH_PROOF_REGRESSIONS_PASS
+            echo V234_THIRTY_FIVE_PROSPECTIVE_AND_SETTLEMENT_REGRESSIONS_PASS
+          else
+            echo V235_REGRESSIONS_SKIPPED_FOR_TIME_CRITICAL_WAKE_SOURCE_PINS_STILL_VERIFIED
+          fi
       - name: V235 read-only priority-race source, first-commit and SHA receipt
         # A failed fetch/commit is precisely when source diagnostics are needed.
         if: ${{ !cancelled() }}
