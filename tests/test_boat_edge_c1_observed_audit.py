@@ -76,7 +76,7 @@ class C1ObservedAuditTests(unittest.TestCase):
         checked = datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc)
         valid = receipt(self.root, now=checked, requested=KEY, historical_deadline="15:53")
         self.assertEqual(valid["race_key"], KEY)
-        self.assertEqual(valid["status"], "SNAPSHOT_MISSING_OR_DEADLINE_PASSED")
+        self.assertEqual(valid["status"], "LOCAL_SNAPSHOT_NOT_FIRST_GIT_COMMITTED")
         invalid = receipt(self.root, now=checked, requested=KEY, historical_deadline="35:93")
         self.assertEqual(invalid["status"], "INVALID_HISTORICAL_RACE_OR_DEADLINE")
         self.assertFalse(invalid["prediction_saved_proven"])
