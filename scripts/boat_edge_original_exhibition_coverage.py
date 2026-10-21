@@ -34,7 +34,7 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
     if len(rows) != 6 or any(not isinstance(r, dict) for r in rows):
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
     boats = [r.get("boat") for r in rows]
-    if sorted(boats, key=str) != [1, 2, 3, 4, 5, 6] and sorted(map(str, boats)) != list("123456"):
+    if sorted(map(str, boats)) != list("123456"):
         return {"status": "PARTIAL_SIX_BOATS", "retryable": True}
     absent = {}
     malformed = {}
@@ -66,6 +66,22 @@ def classify_fetch_failure(error):
         return {"status": "ACCESS_RESTRICTED", "retryable": False}
     if code == 404:
         return {"status": "NOT_YET_PUBLISHED_OR_BAD_URL", "retryable": True}
-    if code == 429 or isinstance(code, int) and 500 <= code <= 599:
+    if code == 429 or (isinstance(code, int) and 500 <= code <= 599):
         return {"status": "HTTP_UNAVAILABLE", "retryable": True}
     return {"status": "HTTP_UNAVAILABLE", "retryable": True}
+
+
+def retry_delay_seconds(attempt, status, *, remaining_seconds):
+    """Bounded pure backoff decision; callers must recheck race deadline.
+
+    Never retry access restrictions or late receipts. No network requests here.
+    """
+    retryable = {"NOT_YET_PUBLISHED", "PARTIAL_SIX_BOATS",
+                 "NOT_YET_PUBLISHED_OR_BAD_URL", "HTTP_UNAVAILABLE", "PARSE_FAILED",
+                 "OFFICIAL_NOT_MEASURED_OR_NOT_YET_PUBLISHED"}
+    if type(attempt) is not int or attempt < 0:
+        raise ValueError("INVALID_ATTEMPT")
+    if status not in retryable or remaining_seconds <= 0:
+        return None
+    delay = min(60, 2 ** min(attempt, 6) * 3)
+    return delay if delay < remaining_seconds else None
