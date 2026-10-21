@@ -8,7 +8,7 @@
     "event": "PayPay銀行賞",
     "race_no": 7,
     "deadline": "13:05",
-    "updated_at": "2026-10-21T10:29:04+09:00",
+    "updated_at": "2026-10-21T10:54:50+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=11&rno=7",
-      "fetched_at": "2026-10-21T10:31:03+09:00",
-      "sha256": "cd7f3b9f0393b9b0eb0182aca6a898779f8b8702bd8d1da6a8b201496350fcb9",
+      "fetched_at": "2026-10-21T10:56:56+09:00",
+      "sha256": "afab8b4820663331aadbbee31ace9f095dc6035a8eb91c18a2391ea98f9aa803",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=11&rno=7",
+      "fetched_at": "2026-10-21T10:56:17+09:00",
+      "sha256": "dfd733dd9caecb5d28c779f3767ce910269f91f121fd22e2528c2d77f2fee38d",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "b37c91961e96442e46e4d195e2a356c773cc30c9d25dc37f1121b75359eca50c"
+      "sha256": "4cd28031070121559ed4db4eae9fcf69dace459f11e3ec1fe23ebd9850ebdfbd"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "8cedfa6170738f90063d32ee8ef073495b244a755bcdf1edbe1f8efee39de906"
+      "sha256": "9f7fc7b5e5985c2d560e8c36063488bf401f6c1119cc6d7d7434ecaf2b2b0c8d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "64452912c28b8e6f7a83b2913adebf5e7bf2c8b37b3283fa97a16b594bce47dc"
+      "sha256": "2c11ace19b70b23a2d952d9ca999226d765ecf921abe0e39b0f7aacc0f773200"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/21.csv",
       "fetched_at": null,
-      "sha256": "c8deafacab2a8dffcb7d925a91e0a02bb9540ebd928d9b37e07c295d590ae2e2"
+      "sha256": "5493b13209deab583bbab89a2f807838f62e2b625db20fd81da0ed98c12bdebe"
     }
   },
   "racers": [
@@ -197,9 +203,11 @@
         "quinella_rate": 38.76,
         "trio_rate": 54.26
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "1"
+      ],
       "early_race": 1,
-      "raw_text": "4 5353 / B1 草川 壮良 滋賀/滋賀 22歳/51.5kg F1 L0 0.17 3.26 12.12 19.70 2.01 4.26 5.32 14 35.48 56.45 46 38.76 54.26 1R"
+      "raw_text": "4 5353 / B1 草川 壮良 滋賀/滋賀 22歳/51.5kg F1 L0 0.17 3.26 12.12 19.70 2.01 4.26 5.32 14 35.48 56.45 46 38.76 54.26 1 1R"
     },
     {
       "lane": 5,
@@ -274,7 +282,53 @@
       "raw_text": "6 4746 / B1 大豆生田 蒼 埼玉/栃木 31歳/47.1kg F0 L0 0.20 6.03 45.59 63.24 5.50 29.41 55.88 60 18.03 36.89 30 31.75 50.00"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山口 亮 53.9kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 溝口 海義也 54.4kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 峰重 力也 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 草川 壮良 51.5kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 荒川 健太 55.4kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 大豆生田 蒼 47.1kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
