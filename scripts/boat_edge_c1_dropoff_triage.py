@@ -8,10 +8,12 @@ not a certified denominator or proof of an eligible save failure.
 """
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
 SCHEMA = "BOAT_EDGE_C1_DROPOFF_TRIAGE_V1"
+RACE_KEY = re.compile(r"^20\\d{6}-(?:0[1-9]|1\\d|2[0-4])-(?:0[1-9]|1[0-2])$")
 
 
 def classify(observed, actions, catalog=None, history=None):
@@ -30,7 +32,7 @@ def classify(observed, actions, catalog=None, history=None):
             if not isinstance(row, dict):
                 raise ValueError(source + "_ROW_INVALID")
             key = row.get("race_key")
-            if not isinstance(key, str) or not key.startswith(observed["day_jst"] + "-"):
+            if not isinstance(key, str) or (not RACE_KEY.fullmatch(key) or not key.startswith(observed["day_jst"] + "-")):
                 raise ValueError(source + "_RACE_KEY_INVALID")
             if key in result:
                 raise ValueError(source + "_DUPLICATE_RACE_KEY")
@@ -123,7 +125,7 @@ def classify(observed, actions, catalog=None, history=None):
         "v215_final_reasons": dict(sorted(Counter(
             row.get("reason", "UNKNOWN") for row in historical.values()
         ).items())) if history is not None else None,
-        "catalog_only_races": len(catalog_keys - set(observed_rows) - set(action_rows)) if catalog is not None else None,
+        "catalog_only_races": len(catalog_keys - set(observed_rows) - set(action_rows) - set(historical)) if catalog is not None else None,
         "stage_counts": dict(sorted(Counter(r["stage"] for r in output).items())),
         "independently_source_eligible_denominator": None,
         "formal_save_rate_percent": None,
