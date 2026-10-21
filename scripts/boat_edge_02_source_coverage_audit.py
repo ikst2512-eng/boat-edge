@@ -202,7 +202,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
     clock = clock.astimezone(JST)
     stale_wait = []
     for row in valid_rows:
-        if row.get("statuses", {}).get("beforeinfo") != "published_wait":
+        if row.get("statuses", {}).get("beforeinfo") not in ("published_wait", "not_in_window"):
             continue
         deadline = row.get("deadline")
         if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", deadline):
@@ -213,6 +213,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                 "race_key": row["race_key"],
                 "deadline_jst": due.isoformat(),
                 "last_beforeinfo_fetch_jst": row.get("source_fetched_at", {}).get("beforeinfo"),
+                "persisted_status": row.get("statuses", {}).get("beforeinfo"),
                 "interpretation": "PERSISTED_WAIT_AFTER_DEADLINE_NOT_PROOF_OF_RETRY_FAILURE",
             })
     source_time_anomalies = []
