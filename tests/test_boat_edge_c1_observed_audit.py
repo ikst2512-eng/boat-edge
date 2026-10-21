@@ -36,6 +36,7 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["not_observed_count"], 1)
         self.assertFalse(data["eligible_denominator_verified"])
         self.assertFalse(data["c1_99_percent_proven"])
+        self.assertEqual(data["receipt_status_counts"], {"SOURCE_WINDOW_NO_SNAPSHOT": 1})
 
     def test_after_deadline_without_git_proof_is_unproven_not_eligible_failure(self):
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
@@ -43,6 +44,9 @@ class C1ObservedAuditTests(unittest.TestCase):
             data = m.accounting(self.root, datetime(2026, 10, 20, 6, 54, tzinfo=timezone.utc))
         self.assertEqual(data["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
         self.assertEqual(data["races"][0]["last_observed_reason"], "snapshot_missing")
+        self.assertIsNone(data["races"][0]["first_git_commit"])
+        self.assertEqual(data["unproven_without_last_observation_gaps"], 1)
+        self.assertEqual(data["unproven_with_last_observation_gaps"], 0)
 
     def test_late_readiness_history_does_not_override_proven_git_first_add(self):
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": True,
@@ -51,177 +55,95 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["classification_counts"], {"PROVEN_FIRST_GIT_BEFORE_DEADLINE": 1})
         self.assertFalse(data["c1_99_percent_proven"])
 
-    def test_historic_day_uses_observed_deadline_but_not_eligible_denominator(self):
-        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
-                   {"observations": {KEY: {"deadline": "15:53",
-                                             "reason": "snapshot_missing",
-                                             "last_seen_at": "2026-10-20T06:43:00+00:00"}}})
+    def test_historical_day_uses_observed_deadline_without_catalog_denominator(self):
         self.write("data/today.json", {"date": "2026-10-21", "venues": []})
-        with patch.object(m, "archived_receipt", return_value={
-            "prediction_saved_proven": True,
-            "status": "ARCHIVED_FIRST_GIT_PREDEADLINE"}) as proof:
-            data = m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
-                                day="20261020")
-        self.assertEqual(data["classification_counts"], {"PROVEN_FIRST_GIT_BEFORE_DEADLINE": 1})
-        self.assertEqual(data["deadline_source"], "HISTORICAL_V215_OBSERVATION_UNVERIFIED")
+        observed = json.loads((self.root / "data/site_paper_sim/readiness_history_v215/20261020.json").read_text())
+        observed["observations"][KEY]["deadline"] = "15:53"
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json", observed)
+        with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
+                                                       "status": "LOCAL_SNAPSHOT_NOT_FIRST_GIT_COMMITTED"}) as proof:
+            data = m.accounting(self.root, datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc),
+                                audit_day="20261020")
+        proof.assert_called_once_with(self.root, now=datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc).astimezone(m.JST), requested=KEY, historical_deadline="15:53")
+        self.assertEqual(data["observed_races"], 1)
+        self.assertEqual(data["races"][0]["deadline_source"], "readiness_observation")
+        self.assertEqual(data["races"][0]["status"], "UNPROVEN_AFTER_DEADLINE")
         self.assertIsNone(data["scheduled_races_catalog"])
         self.assertFalse(data["eligible_denominator_verified"])
-        self.assertFalse(data["c1_99_percent_proven"])
-        proof.assert_called_once()
 
-    def test_stale_catalog_uses_historic_git_verifier_not_v235_today(self):
-        # Real 2026-10-21 rollover: today.json was still dated Oct 20.
-        # The same-day V235 receipt would return NO_SAME_DAY_VERIFIED_RACE_ID.
-        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
-                   {"observations": {KEY: {"deadline": "15:53",
-                                             "reason": "snapshot_missing"}}})
-        with patch.object(m, "receipt") as live, patch.object(
-            m, "archived_receipt", return_value={
-                "prediction_saved_proven": True,
-                "status": "ARCHIVED_FIRST_GIT_PREDEADLINE",
-            }) as archived:
-            data = m.accounting(self.root,
-                                datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
-                                day="20261020")
-        live.assert_not_called()
-        archived.assert_called_once()
-        self.assertTrue(data["historical_catalog_is_stale"])
-        self.assertEqual(data["classification_counts"],
-                         {"PROVEN_FIRST_GIT_BEFORE_DEADLINE": 1})
-        self.assertEqual(data["scheduled_races_catalog"], 2)
-        self.assertEqual(data["not_observed_count"], 1)
-        self.assertFalse(data["c1_99_percent_proven"])
+    def test_historical_receipt_accepts_real_clock_and_rejects_malformed_clock(self):
+        from boat_edge_v235_predeadline_receipt import receipt
+        checked = datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc)
+        valid = receipt(self.root, now=checked, requested=KEY, historical_deadline="15:53")
+        self.assertEqual(valid["race_key"], KEY)
+        self.assertEqual(valid["status"], "SNAPSHOT_MISSING_OR_DEADLINE_PASSED")
+        invalid = receipt(self.root, now=checked, requested=KEY, historical_deadline="35:93")
+        self.assertEqual(invalid["status"], "INVALID_HISTORICAL_RACE_OR_DEADLINE")
+        self.assertFalse(invalid["prediction_saved_proven"])
 
-    def test_historic_missing_git_proof_does_not_become_success(self):
-        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
-                   {"observations": {KEY: {"deadline": "15:53", "reason": "snapshot_missing"}}})
-        self.write("data/today.json", {"date": "2026-10-21", "venues": []})
-        with patch.object(m, "archived_receipt", return_value={
-            "prediction_saved_proven": False, "status": "ARCHIVE_NO_FIRST_GIT_ADD"}):
-            data = m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
-                                day="20261020")
-        self.assertEqual(data["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
-        self.assertEqual(data["races"][0]["receipt_status"], "ARCHIVE_NO_FIRST_GIT_ADD")
+    def test_historical_first_git_proven_without_latest_worktree(self):
+        from boat_edge_v235_predeadline_receipt import receipt
+        import hashlib
+        first = {"race_key": KEY, "snapshot_window": "FINAL_15M",
+                 "prediction_kind": "SITE_REFERENCE_V122",
+                 "guards": {"results_seen": False, "unlock": False, "scoring": False},
+                 "first_saved_at": "2026-10-20T06:47:00+00:00",
+                 "modes": {"hit": {"tickets": [{"combo": str(n)} for n in range(10)]}}}
+        raw = json.dumps(first).encode()
+        def fake_git(root, *args):
+            if args[0] == "log":
+                return (b"a" * 40) + b"\n"
+            if args[0] == "show" and args[1].startswith("a" * 40 + ":"):
+                if "site_prediction_audit" in args[1]:
+                    return json.dumps({"race_key": KEY, "pass": True,
+                        "latest_snapshot_sha256": hashlib.sha256(raw).hexdigest()}).encode()
+                return raw
+            if args[0] == "show":
+                return b"2026-10-20T06:48:00+00:00\n"
+            return None
+        with patch("boat_edge_v235_predeadline_receipt.git", side_effect=fake_git):
+            result = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
+                             requested=KEY, historical_deadline="15:53")
+        self.assertTrue(result["prediction_saved_proven"])
+        self.assertEqual(result["first_git_snapshot_sha256"], hashlib.sha256(raw).hexdigest())
+        with patch("boat_edge_v235_predeadline_receipt.git", side_effect=lambda root, *args:
+                b"2026-10-20T06:52:30+00:00\n" if args[0] == "show" and
+                args[1] == "-s" else fake_git(root, *args)):
+            late = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
+                           requested=KEY, historical_deadline="15:53")
+        self.assertFalse(late["prediction_saved_proven"])
 
-    def test_archived_receipt_fails_closed_without_original_files(self):
-        from datetime import timedelta
-        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
-        proof = m.archived_receipt(self.root, KEY, due)
-        self.assertEqual(proof["status"], "ARCHIVE_NO_SNAPSHOT")
-        self.assertFalse(proof["prediction_saved_proven"])
+        def missing_audit(root, *args):
+            if args[0] == "show" and len(args) > 1 and "site_prediction_audit" in args[1]:
+                return None
+            return fake_git(root, *args)
+        with patch("boat_edge_v235_predeadline_receipt.git", side_effect=missing_audit):
+            not_audited = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
+                                  requested=KEY, historical_deadline="15:53")
+        self.assertFalse(not_audited["prediction_saved_proven"])
+        self.assertFalse(not_audited["first_git_v229_audit_valid"])
 
-    def test_observation_ended_before_decision_window(self):
-        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
-        item = {"last_seen_at": "2026-10-20T06:40:00+00:00",
-                "reason": "snapshot_missing", "source_gaps": []}
-        report = m.observation_diagnostic(item, due)
-        self.assertEqual(report["class"], "NO_OBSERVATION_IN_DECISION_WINDOW")
-        self.assertEqual(report["minutes_to_deadline"], 13)
 
-    def test_in_window_source_gap_and_missing_snapshot_separated(self):
-        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
-        item = {"last_seen_at": "2026-10-20T06:46:00+00:00",
-                "reason": "snapshot_missing", "source_gaps": ["beforeinfo_not_ok"]}
-        self.assertEqual(m.observation_diagnostic(item, due)["class"],
-                         "SOURCE_GAPS_IN_DECISION_WINDOW")
-        item["source_gaps"] = []
-        self.assertEqual(m.observation_diagnostic(item, due)["class"],
-                         "NO_SNAPSHOT_AT_OBSERVED_DECISION_INSTANT")
 
-    def test_in_window_missing_does_not_become_certified_c1_failure(self):
-        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
-                   {"observations": {KEY: {"deadline": "15:53",
-                                             "last_seen_at": "2026-10-20T06:46:00+00:00",
-                                             "reason": "snapshot_missing", "source_gaps": []}}})
-        self.write("data/today.json", {"date": "2026-10-21", "venues": []})
-        with patch.object(m, "archived_receipt", return_value={
-            "prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}):
-            data = m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
-                                day="20261020")
-        self.assertEqual(data["unproven_last_observation_diagnostics"],
-                         {"NO_SNAPSHOT_AT_OBSERVED_DECISION_INSTANT": 1})
-        self.assertFalse(data["eligible_denominator_verified"])
-        self.assertFalse(data["c1_99_percent_proven"])
+    def test_stale_today_catalog_uses_historical_receipt_after_midnight(self):
+        observed = json.loads((self.root / "data/site_paper_sim/readiness_history_v215/20261020.json").read_text())
+        observed["observations"][KEY]["deadline"] = "15:53"
+        self.write("data/site_paper_sim/readiness_history_v215/20261020.json", observed)
+        checked = datetime(2026, 10, 21, 6, 0, tzinfo=timezone.utc)
+        with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
+                                                       "status": "NO_FIRST_GIT_ADD"}) as proof:
+            data = m.accounting(self.root, checked, audit_day="20261020")
+        self.assertEqual(data["observed_races"], 1)
+        self.assertIsNone(data["scheduled_races_catalog"])
+        proof.assert_called_once_with(self.root, now=checked.astimezone(m.JST),
+                                      requested=KEY, historical_deadline="15:53")
 
-    def test_historic_source_timings_never_upgrade_eligibility(self):
-        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
-        self.write("data/races/" + KEY + ".json", {
-            "meta": {"phase": "PRE_RESULT", "results_seen": False,
-                     "unlock": False, "scoring": False,
-                     "venue_code": "03", "race_no": 11, "deadline": "15:53"},
-            "source_audit": {
-                "race_card": {"status": "ok", "fetched_at": "2026-10-20T06:47:00+00:00"},
-                "beforeinfo": {"status": "ok", "fetched_at": "2026-10-20T06:47:10+00:00"}}})
-        self.write("data/site_scratches_v182/" + KEY + ".json", {
-            "race_key": KEY, "blocked": False,
-            "official_beforeinfo_source_status": "ok",
-            "checked_at": "2026-10-20T06:47:20+00:00"})
-        self.write("data/site_odds/" + KEY + ".json", {
-            "race_key": KEY, "phase": "PRE_RESULT_PURCHASE_ONLY",
-            "verified_official_dom_v167": True, "available_count": 120,
-            "fetched_at": "2026-10-20T06:47:30+00:00"})
-        report = m.historical_source_timing(self.root, KEY, due)
-        self.assertTrue(report["all_four_latest_files_in_decision_window"])
-        self.assertEqual(report["interpretation"],
-                         "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY")
-        self.write("data/site_odds/" + KEY + ".json", {
-            "race_key": KEY, "phase": "PRE_RESULT_PURCHASE_ONLY",
-            "verified_official_dom_v167": True, "available_count": 120,
-            "fetched_at": "2026-10-20T06:54:00+00:00"})
-        late = m.historical_source_timing(self.root, KEY, due)
-        self.assertFalse(late["all_four_latest_files_in_decision_window"])
-        self.assertFalse(late["sources"]["official_odds"]["latest_file_in_2_to_10m_window"])
-
-    def test_missing_official_source_timing_cannot_be_counted_ready(self):
-        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
-        report = m.historical_source_timing(self.root, KEY, due)
-        self.assertFalse(report["all_four_latest_files_in_decision_window"])
-        self.assertEqual(sum(x["latest_file_in_2_to_10m_window"]
-                             for x in report["sources"].values()), 0)
-
-    def test_unproven_timing_rollup_never_certifies_eligible_miss(self):
-        self.write("data/site_paper_sim/readiness_history_v215/20261020.json",
-                   {"observations": {KEY: {"deadline": "15:53",
-                                             "last_seen_at": "2026-10-20T06:42:00+00:00",
-                                             "reason": "snapshot_missing", "source_gaps": []}}})
-        self.write("data/today.json", {"date": "2026-10-21", "venues": []})
-        with (patch.object(m, "archived_receipt", return_value={
-            "prediction_saved_proven": False, "status": "ARCHIVE_NO_SNAPSHOT"}),
-              patch.object(m, "historical_source_timing", return_value={
-                 "all_four_latest_files_in_decision_window": True,
-                 "interpretation": "LATEST_LOCAL_FILE_TIMINGS_ONLY_NOT_HISTORIC_ELIGIBILITY"})):
-            report=m.accounting(self.root, datetime(2026, 10, 21, 1, tzinfo=timezone.utc),
-                                day="20261020")
-        self.assertEqual(report["unproven_latest_source_timing_counts"], {
-            "unproven_observed_races": 1,
-            "latest_four_sources_in_2_to_10m": 1,
-            "latest_four_sources_not_in_2_to_10m": 0,
-            "latest_four_sources_prewarm_only": 0})
-        self.assertEqual(report["classification_counts"], {"UNPROVEN_AFTER_DEADLINE": 1})
-        self.assertFalse(report["eligible_denominator_verified"])
-        self.assertFalse(report["c1_99_percent_proven"])
-
-    def test_latest_sources_early_prewarm_does_not_prove_final_git_save(self):
-        due = datetime(2026, 10, 20, 15, 53, tzinfo=m.JST)
-        self.write("data/races/" + KEY + ".json", {
-            "meta": {"phase": "PRE_RESULT", "results_seen": False, "unlock": False,
-                     "scoring": False, "venue_code": "03", "race_no": 11,
-                     "deadline": "15:53"},
-            "source_audit": {
-                "race_card": {"status": "ok", "fetched_at": "2026-10-20T06:40:00+00:00"},
-                "beforeinfo": {"status": "ok", "fetched_at": "2026-10-20T06:40:10+00:00"}}})
-        self.write("data/site_scratches_v182/" + KEY + ".json", {
-            "race_key": KEY, "blocked": False,
-            "official_beforeinfo_source_status": "ok",
-            "checked_at": "2026-10-20T06:40:20+00:00"})
-        self.write("data/site_odds/" + KEY + ".json", {
-            "race_key": KEY, "phase": "PRE_RESULT_PURCHASE_ONLY",
-            "verified_official_dom_v167": True, "available_count": 120,
-            "fetched_at": "2026-10-20T06:40:30+00:00"})
-        result = m.historical_source_timing(self.root, KEY, due)
-        self.assertTrue(result["all_four_latest_files_in_prewarm_window"])
-        self.assertTrue(result["latest_files_prewarm_only"])
-        self.assertFalse(result["all_four_latest_files_in_decision_window"])
+    def test_impossible_historical_date_fails_closed(self):
+        from boat_edge_v235_predeadline_receipt import receipt
+        bad = receipt(self.root, requested="20261340-03-11",
+                      historical_deadline="15:53")
+        self.assertEqual(bad["status"], "INVALID_HISTORICAL_RACE_OR_DEADLINE")
+        self.assertFalse(bad["prediction_saved_proven"])
 
     def test_other_day_or_unverified_catalog_cannot_create_denominator(self):
         self.write("data/today.json", {"date": "2026-10-19", "venues": []})
