@@ -93,6 +93,5 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
                                          deadline=deadline)
     result["source_kind"] = "naruto_official_html_unverified_origin"
     result["identity_verified_by_caller"] = True
-    result["no_independent_race_identity_proof"] = True
     result["origin_authenticated_by_parser"] = False
     return result
