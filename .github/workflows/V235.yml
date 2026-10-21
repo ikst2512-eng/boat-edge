@@ -79,6 +79,38 @@ jobs:
             # V230 made zero new snapshots, before subsequent steps mutate files.
             # Diagnostics must never grant eligibility or block a valid Git push.
             if python3 -c 'import json; from pathlib import Path; s=json.loads(Path("data/site_autopilot/v230_fast_current.json").read_text()); exit(0 if s.get("new_snapshots_atomic_audited")==0 else 1)'; then
+              # Retain source-vs-freeze cause counts in the run summary even
+              # when no snapshot is staged or committed. This only reads the
+              # already generated PRE_RESULT V230 status; no results/formal data.
+              python3 - <<'PY_V235_ZERO_CAUSE'
+          import json,os
+          from pathlib import Path
+          report=json.loads(Path('data/site_autopilot/v230_fast_current.json').read_text(encoding='utf-8'))
+          assert report.get('schema')=='BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1'
+          checks=report.get('target_diagnostic') or {}
+          outcomes=report.get('outcomes') or {}
+          categories={key:sum(value==key for value in outcomes.values())
+                      for key in ('fresh_verified','odds_incomplete','source_blocked','window_passed','source_locked')}
+          categories['fetch_failed']=sum(isinstance(value,str) and value.startswith('fetch_failed:')
+                                         for value in outcomes.values())
+          payload={'date':report.get('day_jst'),'priority_applied':report.get('priority_applied'),
+                   'priority_race_key':report.get('priority_race_key'),
+                   'targets_attempted':len(report.get('targets') or []),
+                   'source_categories':categories,
+                   'target_diagnostic':checks,
+                   'priority_failure_fallback_targets':len(report.get('priority_failure_fallback_targets') or []),
+                   'imminent_retry_targets':len(report.get('imminent_retry_targets') or []),
+                   'first_git_proven':False,
+                   'interpretation':'ZERO_NEW_SNAPSHOTS_NOT_ELIGIBLE_DENOMINATOR'}
+          line='V235_ZERO_FREEZE_CAUSE '+json.dumps(payload,sort_keys=True)
+          print(line)
+          summary=os.environ.get('GITHUB_STEP_SUMMARY')
+          if summary:
+              with open(summary,'a',encoding='utf-8') as out:
+                  out.write('### C-1: zero new source snapshots (not a verified miss)\\n\\n')
+                  out.write('\\x60\\x60\\x60json\\n'+json.dumps(payload,sort_keys=True,indent=2)
+                            +'\\n\\x60\\x60\\x60\\n')
+          PY_V235_ZERO_CAUSE
               echo V235_ZERO_FREEZE_DIAGNOSTIC_BEGIN
               PYTHONDONTWRITEBYTECODE=1 python3 scripts/boat_edge_v229_eligibility_diagnostic.py --summary-only || echo V235_ZERO_FREEZE_DIAGNOSTIC_UNAVAILABLE
               echo V235_ZERO_FREEZE_DIAGNOSTIC_END
