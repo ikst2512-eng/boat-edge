@@ -14,7 +14,6 @@ HEADERS = ("一周", "まわり足", "直線")
 ALIASES = {"一周": {"一周", "一周タイム", "1周", "1周タイム", "周回タイム"},
            "まわり足": {"まわり足", "まわり足タイム", "回り足", "回り足タイム"},
            "直線": {"直線", "直線タイム"}}
-DASH = {"", "-", "－", "─", "—", "未計測"}
 
 
 def _clean(value):
@@ -94,5 +93,6 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
                                          deadline=deadline)
     result["source_kind"] = "naruto_official_html_unverified_origin"
     result["identity_verified_by_caller"] = True
+    result["no_independent_race_identity_proof"] = True
     result["origin_authenticated_by_parser"] = False
     return result
