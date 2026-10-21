@@ -238,6 +238,39 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                     "race_key": row["race_key"], "source": field,
                     "reason": "fetched_at_or_after_deadline",
                     "fetched_at": fetched_at, "deadline_jst": due.isoformat()})
+    predeadline_source_observations = None
+    if expected is not None and deadlines is not None:
+        by_race = {row["race_key"]: row for row in valid_rows}
+        predeadline_source_observations = {}
+        for field in FIELDS:
+            verified_before_due = 0
+            unknown_time_or_missing = 0
+            on_or_after_due = 0
+            for key in expected:
+                row = by_race.get(key, {})
+                stamp = row.get("source_fetched_at", {}).get(field)
+                deadline = deadlines.get(key)
+                if row.get("statuses", {}).get(field) != "ok" or not isinstance(stamp, str) or not isinstance(deadline, str):
+                    unknown_time_or_missing += 1
+                    continue
+                try:
+                    due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
+                    fetched = datetime.fromisoformat(stamp)
+                    if fetched.utcoffset() is None:
+                        raise ValueError("naive timestamp")
+                    if fetched.astimezone(JST) < due:
+                        verified_before_due += 1
+                    else:
+                        on_or_after_due += 1
+                except (ValueError, TypeError):
+                    unknown_time_or_missing += 1
+            predeadline_source_observations[field] = {
+                "recorded_ok_fetched_before_deadline": verified_before_due,
+                "recorded_ok_fetched_at_or_after_deadline": on_or_after_due,
+                "missing_or_not_verified": unknown_time_or_missing,
+                "denominator": len(expected),
+                "is_first_git_save_proof": False,
+            }
     urgent_cohort = None
     if expected is not None and deadlines is not None:
         urgent_keys = set()
@@ -276,6 +309,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "invalid_saved_races": n - len(valid_rows),
         "past_deadline_persisted_beforeinfo_wait": stale_wait,
         "same_cohort_urgent_sources": urgent_cohort,
+        "predeadline_source_observations": predeadline_source_observations,
         "source_time_anomalies": source_time_anomalies,
         "published_wait_beforeinfo_count": sum(r.get("statuses", {}).get("beforeinfo") == "published_wait" for r in valid_rows),
         "missing_original_exhibition_count": sum(r.get("statuses", {}).get("original_exhibition") == "missing" for r in valid_rows),
