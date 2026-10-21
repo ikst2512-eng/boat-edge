@@ -48,6 +48,8 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Read-only duration meter. Persist across steps, not in prediction data.
+          echo "V235_FREEZE_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
           source_success=false
           for attempt in 1 2 3 4 5; do
             # Discard ALL unpushed projections, then regenerate using the current exact sources.
@@ -373,6 +375,14 @@ jobs:
           set -euo pipefail
           # Report only saved original PRE_RESULT bytes and Git evidence.
           # No green PASS for a zero-snapshot run, and no result/formal access.
+          # Freeze + its retry interval measured before any result scoring.
+          if [[ "${V235_FREEZE_START_EPOCH:-}" =~ ^[0-9]+$ ]]; then
+            elapsed=$(( $(date +%s) - V235_FREEZE_START_EPOCH ))
+            echo "V235_FIRST_SAVE_PHASE_ELAPSED_SECONDS=$elapsed"
+            if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+              printf '### V235 critical-path timing\n\n- First-save phase elapsed: **%s seconds** (runner wall time, not deadline proof).\n' "$elapsed" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
           python3 scripts/boat_edge_v235_predeadline_receipt.py | tee "$RUNNER_TEMP/v235-priority-receipt.jsonl"
           {
             echo '### V235 priority race: PRE_RESULT source / Git first-commit receipt'
