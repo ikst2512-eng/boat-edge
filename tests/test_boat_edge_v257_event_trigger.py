@@ -149,7 +149,7 @@ class V257SourceTrigger(unittest.TestCase):
             self.assertIn(minute,minutes)
             self.assertGreaterEqual(35-minute,2)
         self.assertNotIn("V274 immediately freeze qualifying V254",primary)
-        self.assertIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
+        self.assertNotIn("scripts/boat_edge_v254_third_tail.py freeze",primary)
         source=(ROOT/'scripts/boat_edge_v232_pre_result_cohort.py').read_text(encoding='utf-8')
         guard=(ROOT/'scripts/boat_edge_v254_third_tail.py').read_text(encoding='utf-8')
         self.assertIn('120 <= (due-now).total_seconds() <= 900',source)
