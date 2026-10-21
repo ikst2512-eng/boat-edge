@@ -90,6 +90,27 @@ class TestNarutoParser(unittest.TestCase):
         self.assertEqual(parse_naruto_original_exhibition("<html></html>", identity_verified=True,
                          fetched_at="unknown", deadline=DUE)["status"], "INVALID_TIMESTAMPS")
 
+    def test_six_boats_horizontal_by_measurement(self):
+        html = ("<table><tr><th>項目</th>"
+                + "".join(f"<th>{i}号艇</th>" for i in range(1, 7)) + "</tr>"
+                + "<tr><th>一周</th>" + "<td>36.40</td>" * 6 + "</tr>"
+                + "<tr><th>まわり足</th>" + "<td>5.70</td>" * 6 + "</tr>"
+                + "<tr><th>直線</th>" + "<td>7.10</td>" * 6 + "</tr></table>")
+        out = parse_naruto_original_exhibition(html, identity_verified=True,
+                                                fetched_at=NOW, deadline=DUE)
+        self.assertEqual(out["status"], "COMPLETE_SIX_BOATS")
+        self.assertEqual(out["boats"]["6"]["lap"], 36.4)
+
+    def test_horizontal_wrong_boat_header_rejected(self):
+        html = ("<table><tr><th>項目</th>"
+                + "".join(f"<th>{i}号艇</th>" for i in (1, 2, 3, 4, 5, 5))
+                + "</tr>" + "".join(
+                    "<tr><th>" + h + "</th>" + "<td>7.10</td>" * 6 + "</tr>"
+                    for h in ("一周", "まわり足", "直線")) + "</table>")
+        out = parse_naruto_original_exhibition(html, identity_verified=True,
+                                                fetched_at=NOW, deadline=DUE)
+        self.assertEqual(out["status"], "TABLE_NOT_FOUND_OR_AMBIGUOUS")
+
     def test_deadline(self):
         self.assertEqual(parse_naruto_original_exhibition(fixture(),
                          identity_verified=True, fetched_at=DUE, deadline=DUE)["status"],
