@@ -91,6 +91,25 @@ class TestOriginalExhibitionCoverage(unittest.TestCase):
         rows[0]["lap"] = "9" * 400
         self.assertEqual(assess_original_exhibition(rows)["status"], "PARSE_FAILED")
 
+    def test_massive_numeric_value_rejected(self):
+        rows = six()
+        rows[0]["lap"] = "9" * 10000
+        self.assertEqual(assess_original_exhibition(rows)["status"], "PARSE_FAILED")
+
+    def test_429_rate_limit_not_retried(self):
+        err = type("Error", (), {"code": 429})()
+        result = classify_fetch_failure(err)
+        self.assertEqual(result["status"], "RATE_LIMITED")
+        self.assertFalse(result["retryable"])
+        self.assertIsNone(retry_delay_seconds(0, result["status"], remaining_seconds=200))
+
+    def test_nonlist_is_parse_failure(self):
+        self.assertEqual(assess_original_exhibition({"boat": 1})["status"], "PARSE_FAILED")
+
+    def test_invalid_retry_window(self):
+        with self.assertRaises(ValueError):
+            retry_delay_seconds(0, "HTTP_UNAVAILABLE", remaining_seconds=float("nan"))
+
     def test_access_restricted(self):
         err = type("Error", (), {"code": 403})()
         self.assertEqual(classify_fetch_failure(err)["status"], "ACCESS_RESTRICTED")
