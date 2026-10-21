@@ -215,6 +215,28 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                 "last_beforeinfo_fetch_jst": row.get("source_fetched_at", {}).get("beforeinfo"),
                 "interpretation": "PERSISTED_WAIT_AFTER_DEADLINE_NOT_PROOF_OF_RETRY_FAILURE",
             })
+    source_time_anomalies = []
+    for row in valid_rows:
+        deadline = row.get("deadline")
+        if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\\d|2[0-3]):[0-5]\\d", deadline):
+            continue
+        due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
+        for field, fetched_at in row.get("source_fetched_at", {}).items():
+            if not isinstance(fetched_at, str):
+                continue
+            try:
+                fetched = datetime.fromisoformat(fetched_at)
+                if fetched.utcoffset() is None:
+                    raise ValueError("naive source timestamp")
+            except (ValueError, TypeError):
+                source_time_anomalies.append({
+                    "race_key": row["race_key"], "source": field, "reason": "invalid_timestamp"})
+                continue
+            if fetched.astimezone(JST) >= due:
+                source_time_anomalies.append({
+                    "race_key": row["race_key"], "source": field,
+                    "reason": "fetched_at_or_after_deadline",
+                    "fetched_at": fetched_at, "deadline_jst": due.isoformat()})
     urgent_cohort = None
     if expected is not None and deadlines is not None:
         urgent_keys = set()
@@ -253,6 +275,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "invalid_saved_races": n - len(valid_rows),
         "past_deadline_persisted_beforeinfo_wait": stale_wait,
         "same_cohort_urgent_sources": urgent_cohort,
+        "source_time_anomalies": source_time_anomalies,
         "published_wait_beforeinfo_count": sum(r.get("statuses", {}).get("beforeinfo") == "published_wait" for r in valid_rows),
         "missing_original_exhibition_count": sum(r.get("statuses", {}).get("original_exhibition") == "missing" for r in valid_rows),
         "beforeinfo_published_wait_with_fetch_timestamp": sum(
