@@ -2,9 +2,7 @@ name: BOAT EDGE V255 - Calibrated Claims Evidence Guard
 
 on:
   push:
-    branches:
-      - main
-      - feat/v255-confidence-calibration-guard-20261012
+    branches: [main]
     paths:
       - '.github/workflows/v255-calibration-evidence.yml'
       - 'scripts/boat_edge_v255_confidence_audit.py'
