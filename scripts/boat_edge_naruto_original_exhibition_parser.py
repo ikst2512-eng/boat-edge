@@ -83,6 +83,40 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
                 # A truncated row must never be silently skipped and then
                 # accepted as six complete boats.
                 candidates.append(parsed if not malformed_rows else [])
+    # Alternative layout: measurement labels down the first column and
+    # boats 1..6 across the header. Never infer boat order without labels.
+    for table in soup.find_all("table"):
+        trs = [tr for tr in table.find_all("tr") if tr.find_parent("table") is table]
+        for hi, tr in enumerate(trs):
+            cells = tr.find_all(["th", "td"], recursive=False)
+            labels = [_clean(c.get_text(" ", strip=True)) for c in cells]
+            if len(labels) != 7:
+                continue
+            boats = [v.replace("号艇", "") for v in labels[1:]]
+            if boats != list("123456"):
+                continue
+            measurement = {}
+            for row in trs[hi + 1:]:
+                vals = [_clean(c.get_text(" ", strip=True))
+                        for c in row.find_all(["th", "td"], recursive=False)]
+                if not vals:
+                    continue
+                name = next((k for k, allowed in ALIASES.items()
+                             if vals[0] in allowed), None)
+                if name is None:
+                    if measurement:
+                        break
+                    continue
+                if name in measurement or len(vals) != 7:
+                    measurement = {}
+                    break
+                measurement[name] = vals[1:]
+            if len(measurement) == 3:
+                candidates.append([{"boat": i + 1,
+                                    "lap": measurement["一周"][i],
+                                    "turn": measurement["まわり足"][i],
+                                    "straight": measurement["直線"][i]}
+                                   for i in range(6)])
     if len(candidates) != 1:
         return {"status": "TABLE_NOT_FOUND_OR_AMBIGUOUS", "retryable": False,
                 "tables_detected": len(candidates)}
