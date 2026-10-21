@@ -15,10 +15,11 @@ assert 'schedule:' in v235 and 'workflow_run:' in v235 and 'workflow_dispatch:' 
 assert 'schedule:' not in v230.split('\npermissions:',1)[0]
 assert 'workflow_dispatch:' in v230.split('\npermissions:',1)[0]
 
-match=re.search(r"'scripts/boat_edge_v230_fast_lane.py:([0-9a-f]{40})'",v235)
-assert match, 'V295_V235_PIN_UNAVAILABLE'
+assert "'scripts/boat_edge_v230_fast_lane.py:TRACKED_MAIN'" in v235
+assert 'git rev-parse "HEAD:$path"' in v235
 actual=subprocess.check_output(['git','hash-object','scripts/boat_edge_v230_fast_lane.py'],text=True).strip()
-assert match.group(1)==actual, 'V295_V235_PIN_DRIFT'
+tracked=subprocess.check_output(['git','rev-parse','HEAD:scripts/boat_edge_v230_fast_lane.py'],text=True).strip()
+assert tracked==actual, 'V295_V235_GIT_TREE_SOURCE_MISMATCH'
 g=formal.get('guards') or {}
 assert all(g.get(x) is False for x in ('results_seen','unlock','scoring'))
 assert g.get('RESULT_UNLOCK_TOKEN') is None
