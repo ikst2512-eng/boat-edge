@@ -50,6 +50,14 @@ class CaptureReplayTests(unittest.TestCase):
         self.assertEqual(self.check(source_url="https://www.n14.jp:bad/path")["status"],
                          "UNTRUSTED_SOURCE_URL")
 
+    def test_impossible_calendar_date(self):
+        self.assertEqual(self.check(race_key="20260230-14-12")["status"],
+                         "INVALID_RACE_KEY")
+
+    def test_deadline_date_mismatch(self):
+        self.assertEqual(self.check(deadline="2026-10-22T14:15:00+09:00")["status"],
+                         "DEADLINE_RACE_DATE_MISMATCH")
+
     def test_wrong_venue(self):
         self.assertEqual(self.check(race_key="20261021-06-12")["status"],
                          "INVALID_RACE_KEY")
