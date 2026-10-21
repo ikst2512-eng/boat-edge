@@ -215,6 +215,35 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                 "last_beforeinfo_fetch_jst": row.get("source_fetched_at", {}).get("beforeinfo"),
                 "interpretation": "PERSISTED_WAIT_AFTER_DEADLINE_NOT_PROOF_OF_RETRY_FAILURE",
             })
+    urgent_cohort = None
+    if expected is not None and deadlines is not None:
+        urgent_keys = set()
+        for key in expected:
+            deadline = deadlines.get(key)
+            if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\\d|2[0-3]):[0-5]\\d", deadline):
+                continue
+            due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
+            if 0 <= (due - clock).total_seconds() <= 900:
+                urgent_keys.add(key)
+        by_key = {row["race_key"]: row for row in valid_rows}
+        fields = ("beforeinfo", "original_exhibition")
+        urgent_cohort = {
+            "scope": "SAME_CATALOG_KEYS_AND_SAME_ASOF_TIME",
+            "asof_jst": clock.isoformat(),
+            "target_race_keys": sorted(urgent_keys),
+            "target_count": len(urgent_keys),
+            "saved_record_count": sum(key in by_key for key in urgent_keys),
+            "source_counts": {
+                field: {
+                    "recorded_ok": sum(by_key.get(key, {}).get("statuses", {}).get(field) == "ok"
+                                       for key in urgent_keys),
+                    "not_ok_or_missing_record": sum(
+                        by_key.get(key, {}).get("statuses", {}).get(field) != "ok"
+                        for key in urgent_keys),
+                } for field in fields
+            },
+            "note": "A read-only current snapshot, not historical proof of acquisition or save by deadline.",
+        }
     return {
         "schema": "BOAT_EDGE_02_READONLY_SOURCE_COVERAGE_V1",
         "date_jst": day, "generated_at_jst": datetime.now(JST).isoformat(),
@@ -223,6 +252,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "valid_saved_races": len(valid_rows),
         "invalid_saved_races": n - len(valid_rows),
         "past_deadline_persisted_beforeinfo_wait": stale_wait,
+        "same_cohort_urgent_sources": urgent_cohort,
         "published_wait_beforeinfo_count": sum(r.get("statuses", {}).get("beforeinfo") == "published_wait" for r in valid_rows),
         "missing_original_exhibition_count": sum(r.get("statuses", {}).get("original_exhibition") == "missing" for r in valid_rows),
         "beforeinfo_published_wait_with_fetch_timestamp": sum(
