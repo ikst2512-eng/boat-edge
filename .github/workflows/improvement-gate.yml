@@ -2,14 +2,13 @@ name: BOAT EDGE 改善ゲート
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
   push:
     branches: [main]
     paths:
       - scripts/boat_edge_improvement_gate.py
       - tests/test_boat_edge_improvement_gate.py
-      - data/health.json
-      - data/formal_status.json
-      - data/site_autopilot/v230_fast_current.json
 
 permissions:
   contents: read
