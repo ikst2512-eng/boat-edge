@@ -16,12 +16,8 @@ on:
       - 'index.html'
       - 'autopilot.html'
   workflow_dispatch:
-  schedule:
-    # V255 is a post-freeze/site-only confidence evidence report, not a
-    # predeadline source collector or LIVE freeze. An hourly fallback reduces
-    # duplicate checkouts/CI and retrospective main pushes by two thirds;
-    # explicit dispatch and change-driven push verification remain available.
-    - cron: '9 0-14,23 * * *'
+  # Optional retrospective calibration remains push-triggered or manual;
+  # remove hourly main-writing audit contention with C-1.
 
 permissions:
   contents: write
