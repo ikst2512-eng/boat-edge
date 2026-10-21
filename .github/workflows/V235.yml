@@ -227,6 +227,7 @@ jobs:
             echo "V234_CONCURRENT_GIT_UPDATE_ABANDON_LOCAL_PREDICTIONS_AND_RECHECK_NOW_$attempt"
           done
           if test "$source_success" != true; then echo V234_PRE_RESULT_SOURCE_PUBLISH_UNCONFIRMED; exit 1; fi
+          echo "V235_INITIAL_FREEZE_END_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - name: V235 retry other incomplete sources AFTER first immutable Git publication
         if: env.V235_INITIAL_SNAPSHOT_PUBLISHED == '1'
         shell: bash
@@ -378,6 +379,10 @@ jobs:
           # Freeze + its retry interval measured before any result scoring.
           if [[ "${V235_FREEZE_START_EPOCH:-}" =~ ^[0-9]+$ ]]; then
             elapsed=$(( $(date +%s) - V235_FREEZE_START_EPOCH ))
+            if [[ "${V235_INITIAL_FREEZE_END_EPOCH:-}" =~ ^[0-9]+$ ]]; then
+              initial_elapsed=$(( V235_INITIAL_FREEZE_END_EPOCH - V235_FREEZE_START_EPOCH ))
+              echo "V235_INITIAL_FREEZE_ELAPSED_SECONDS=$initial_elapsed"
+            fi
             echo "V235_FIRST_SAVE_PHASE_ELAPSED_SECONDS=$elapsed"
             if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
               printf '### V235 critical-path timing\n\n- First-save phase elapsed: **%s seconds** (runner wall time, not deadline proof).\n' "$elapsed" >> "$GITHUB_STEP_SUMMARY"
