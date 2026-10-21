@@ -142,6 +142,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
                 statuses[field] = status
                 counts[field][status] += 1
             rows.append({"race_key": path.stem, "venue": meta.get("venue"),
+                         "record_updated_at": meta.get("updated_at"),
                          "deadline": meta.get("deadline"), "statuses": statuses})
         except (OSError, UnicodeError, ValueError, TypeError) as error:
             rows.append({"race_key": path.stem, "error": type(error).__name__})
@@ -181,6 +182,8 @@ def audit(root, day, expected=None, now=None, deadlines=None):
         "saved_races": n,
         "valid_saved_races": len(valid_rows),
         "invalid_saved_races": n - len(valid_rows),
+        "published_wait_beforeinfo_count": sum(r.get("statuses", {}).get("beforeinfo") == "published_wait" for r in valid_rows),
+        "missing_original_exhibition_count": sum(r.get("statuses", {}).get("original_exhibition") == "missing" for r in valid_rows),
         "expected_scheduled_races": len(expected) if expected is not None else None,
         "missing_scheduled_race_keys": missing,
         "missing_scheduled_deadlines": missing_deadlines,
@@ -190,6 +193,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
             if expected else None),
         "all_scheduled_race_success_percent": None,
         "collection_state": "PROVISIONAL_NO_LIVE_SOURCE_ATTESTATION",
+        "source_statuses_do_not_establish_final_deadline_capture": True,
         "note": "Saved-card rate only; missing scheduled races, live source verification and original exhibition values are not proven.",
         "summary": summary, "retry_candidates_diagnostics_only": retry_candidates(rows + missing_rows, day, now), "rows": rows,
     }
