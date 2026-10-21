@@ -96,6 +96,22 @@ class C1DropoffTriageTests(unittest.TestCase):
         self.assertEqual(result["races"][0]["stage"], "HISTORY_ONLY_NO_RECEIPT_AUDIT")
         self.assertIsNone(result["formal_save_rate_percent"])
 
+    def test_invalid_race_no_rejected(self):
+        with self.assertRaisesRegex(ValueError, "OBSERVED_RACE_KEY_INVALID"):
+            classify(report_observed([
+                {"race_key": "20261020-01-99"}]), report_actions([]))
+
+    def test_catalog_only_excludes_v215_history_races(self):
+        key = "20261020-03-12"
+        catalog = {"date": "20261020", "venues": [{"races": [{"race_key": key}]}]}
+        history = {"schema": "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
+                   "day_jst": "20261020",
+                   "observations": {key: {"reason": "snapshot_missing"}}}
+        result = classify(report_observed([]), report_actions([]),
+                          catalog=catalog, history=history)
+        self.assertEqual(result["catalog_only_races"], 0)
+        self.assertEqual(result["v215_only_races"], 1)
+
     def test_day_mismatch_rejected(self):
         with self.assertRaisesRegex(ValueError, "DAY_MISMATCH"):
             classify(report_observed([]), report_actions([], "20261021"))
