@@ -64,7 +64,7 @@ def classify(observed, actions, catalog=None, history=None):
                     or not isinstance(record, dict)):
                 raise ValueError("V215_HISTORY_RACE_INVALID")
     output = []
-    for key in sorted(set(observed_rows) | set(action_rows) | catalog_keys):
+    for key in sorted(set(observed_rows) | set(action_rows) | catalog_keys | set(historical)):
         o, a = observed_rows.get(key, {}), action_rows.get(key, {})
         h = historical.get(key, {})
         status = o.get("status")
@@ -72,7 +72,7 @@ def classify(observed, actions, catalog=None, history=None):
         sources = source.get("sources") or {}
         gap = o.get("source_gaps_at_last_observation") or []
         if key not in observed_rows and key not in action_rows:
-            stage = "CATALOG_RACE_WITHOUT_AUDIT_EVIDENCE"
+            stage = "HISTORY_ONLY_NO_RECEIPT_AUDIT" if key in historical else "CATALOG_RACE_WITHOUT_AUDIT_EVIDENCE"
         elif status == "PROVEN_FIRST_GIT_BEFORE_DEADLINE":
             stage = "FIRST_GIT_RECEIPT_PROVEN"
         elif status == "PENDING_BEFORE_DEADLINE":
@@ -119,6 +119,7 @@ def classify(observed, actions, catalog=None, history=None):
         "union_rows": len(output),
         "catalog_races": len(catalog_keys) if catalog is not None else None,
         "v215_history_races": len(historical) if history is not None else None,
+        "v215_only_races": len(set(historical) - set(observed_rows) - set(action_rows)) if history is not None else None,
         "v215_final_reasons": dict(sorted(Counter(
             row.get("reason", "UNKNOWN") for row in historical.values()
         ).items())) if history is not None else None,
