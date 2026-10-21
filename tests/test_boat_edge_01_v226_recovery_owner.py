@@ -28,13 +28,19 @@ class V226RecoveryOwner(unittest.TestCase):
         paths = (
             ".github/workflows/BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml",
             ".github/workflows/V235.yml",
-            ".github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml",
+            ".github/workflows/site-odds.yml",
             ".github/workflows/auto-update.yml",
         )
         for name in paths:
             text = (ROOT / name).read_text(encoding="utf-8")
             self.assertIn("schedule:", text, name)
             self.assertRegex(text, r"cron:\s*['\"]", name)
+        # Independent V167 DOM parity remains callable, but not an hourly
+        # competing Git writer; V71 is the scheduled official odds owner.
+        parity = (ROOT / ".github/workflows/BOAT_EDGE_V167_ONE_UPLOAD.yml").read_text(encoding="utf-8")
+        events = parity.split("\\npermissions:", 1)[0]
+        self.assertIn("workflow_dispatch:", events)
+        self.assertNotIn("\\n  schedule:", events)
 
     def test_retired_v226_cannot_reinstall_or_rewrite_source(self):
         # The absence of the workflow is stronger than the old manual-only
