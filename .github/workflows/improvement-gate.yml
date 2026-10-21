@@ -2,8 +2,7 @@ name: BOAT EDGE 改善ゲート
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 * * * *'
+  # Read-only diagnosis stays manually runnable and on targeted code changes.
   push:
     branches: [main]
     paths:
