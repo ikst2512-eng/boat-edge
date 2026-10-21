@@ -24,6 +24,26 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_c1_observed_audit.py' -v
+      - name: Audit historical October 20 first Git receipts (read only)
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 scripts/boat_edge_c1_observed_audit.py --day 20261020 > /tmp/c1-historical.json
+          python3 - <<'PY_C1_HIST'
+          import json,os
+          from pathlib import Path
+          d=json.loads(Path('/tmp/c1-historical.json').read_text())
+          print('C1_HISTORICAL_COUNTS',json.dumps({
+              'day':d['day_jst'],'observed':d['observed_races'],
+              'status':d['classification_counts'],
+              'receipt':d['receipt_status_counts'],
+              'eligible_denominator_verified':d['eligible_denominator_verified']},sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('### Historical C1 evidence, observed cohort only\\n\\n')
+              out.write(json.dumps(d['classification_counts'],sort_keys=True)+'\\n\\n')
+              out.write('C1 99% acceptance: NOT PROVEN\\n')
+          PY_C1_HIST
       - name: Summarize actual Git receipts without writing predictions
         if: github.ref == 'refs/heads/main'
         env:
