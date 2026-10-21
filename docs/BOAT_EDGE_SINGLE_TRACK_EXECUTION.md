@@ -19,6 +19,16 @@ This document is the single coordination point for workstreams ①–⑤. It is 
 
 These facts show *guardrails exist*, not that the runtime problem is resolved.
 
+## Fast execution protocol — binding for workstreams ①–⑤ (2026-10-21)
+
+- **Implement and validate in the same pass.** Before editing, identify a concrete acceptance test and rollback. Make the smallest useful change, launch the existing CI/fixture checks immediately, and inspect failures in the same execution flow. Do not open a separate work item merely to perform the check.
+- **PASS → merge → verify main in one flow.** If CI passes, integrate the approved reversible change and reread the exact updated file/commit. If checks fail, fix directly when the cause is clear, rerun, or **discard the proposal** when the expected benefit does not justify further work. Do not accumulate stale PRs.
+- **Bundle related cleanup, not independent projects.** Remove proven redundancy inside the existing owner; prefer deleting unused code and unnecessary schedules to inventing new monitoring systems. Keep the minimal official-input → eligibility → first Git freeze → evidence → results → site pipeline.
+- **One decisive report.** Share the actual applied diff/SHA, tests and runtime evidence, and any blocker. Avoid repeated “next I will verify” cycles when results are available.
+- **CI is not production evidence.** Run real Actions/first-Git/deadline checks alongside implementation wherever accessible. Mark end-to-end metrics unverified when logs, timestamps or a three-day denominator are unavailable. Never fabricate “99%” or claim a speedup without measured timings.
+- **Preserve irrecoverable proof.** Never erase original sources, source SHA, saved predictions, first Git commit provenance, or race-time observations. Rollback code changes, not evidence. Do not suppress tests solely to conceal a regression.
+- **Strict finish criteria remain unchanged.** C-1 requires >=99% of independently eligible races on three consecutive race days, initial source and Git time alignment; ② requires actual 24-venue coverage; ④ held-out validation; ⑤ mobile/website operational verification.
+
 ## Single change protocol (for all five workstreams)
 
 - Start from one named hypothesis and one measured failure signature. Record workflow run URL, event time JST, exact race key, first Git SHA (if present), and the existing baseline before changing production code.
