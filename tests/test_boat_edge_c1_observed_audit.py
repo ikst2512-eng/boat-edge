@@ -39,6 +39,10 @@ class C1ObservedAuditTests(unittest.TestCase):
         self.assertEqual(data["receipt_status_counts"], {"SOURCE_WINDOW_NO_SNAPSHOT": 1})
 
     def test_after_deadline_without_git_proof_is_unproven_not_eligible_failure(self):
+        observed_file = "data/site_paper_sim/readiness_history_v215/20261020.json"
+        observed = json.loads((self.root / observed_file).read_text())
+        observed["observations"][KEY]["last_seen_at"] = "2026-10-20T06:42:00+00:00"
+        self.write(observed_file, observed)
         with patch.object(m, "receipt", return_value={"prediction_saved_proven": False,
                                                        "status": "LOCAL_SNAPSHOT_NOT_FIRST_GIT_COMMITTED"}):
             data = m.accounting(self.root, datetime(2026, 10, 20, 6, 54, tzinfo=timezone.utc))
