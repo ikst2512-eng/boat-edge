@@ -34,7 +34,8 @@ def setup_race(root, key, deadline, inputs=False):
         write(root, f"data/site_odds/{key}.json",
               {"race_key": key, "phase": "PRE_RESULT_PURCHASE_ONLY",
                "trifecta_odds": {str(i): 1.0 for i in range(120)},
-               "fetched_at": ISO})
+               "fetched_at": ISO,
+               "verified_official_dom_v167": True, "available_count": 120})
 
 
 class SiteWindowDiagnostics(unittest.TestCase):
@@ -71,6 +72,27 @@ class SiteWindowDiagnostics(unittest.TestCase):
             self.assertEqual(second["preliminary_ready_races"], 0)
             self.assertEqual(second["reason_counts_in_window"],
                              {"snapshot_already_exists": 1})
+
+    def test_120_odds_without_independent_official_dom_proof_is_not_ready(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            key = "20261013-22-12"
+            setup_race(root, key, "09:35", inputs=True)
+            odds_path = root / f"data/site_odds/{key}.json"
+            odds = json.loads(odds_path.read_text(encoding="utf-8"))
+            odds["verified_official_dom_v167"] = False
+            write(root, f"data/site_odds/{key}.json", odds)
+            report = inspect(root, NOW)
+            self.assertEqual(report["preliminary_ready_races"], 0)
+            self.assertIn("official_odds_dom_proof_missing",
+                          report["window_races"][0]["reasons"])
+            odds["verified_official_dom_v167"] = True
+            odds["available_count"] = 119
+            write(root, f"data/site_odds/{key}.json", odds)
+            incomplete = inspect(root, NOW)
+            self.assertEqual(incomplete["preliminary_ready_races"], 0)
+            self.assertIn("official_odds_dom_proof_missing",
+                          incomplete["window_races"][0]["reasons"])
 
     def test_outside_window_does_not_attempt_to_read_other_site_inputs(self):
         with tempfile.TemporaryDirectory() as tmp:
