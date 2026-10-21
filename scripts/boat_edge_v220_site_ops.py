@@ -580,6 +580,12 @@ def gate1c_first_git_summary(root, day, now, verify=None, catalog_override=None,
             return out
         obs=hist['observations']
         out['observation_history_status']='VERIFIED'
+    # Provenance of the exact observation file consumed by this report.
+    # A newer observer write changes this digest even if old counts still look plausible.
+    # This is diagnostic only, NEVER an eligibility or 99% acceptance proof.
+    out['observation_history_sha256']=(
+        hashlib.sha256(history_path.read_bytes()).hexdigest()
+        if out['observation_history_status']=='VERIFIED' else None)
     for key,record in sorted(obs.items()):
         if not isinstance(record,dict) or not KEY.fullmatch(str(key)) or not key.startswith(day+'-'):
             continue
