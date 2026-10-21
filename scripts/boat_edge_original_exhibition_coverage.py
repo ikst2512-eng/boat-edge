@@ -98,26 +98,3 @@ def retry_delay_seconds(attempt, status, *, remaining_seconds):
         return None
     delay = min(60, 2 ** min(attempt, 6) * 3)
     return delay if delay < remaining_seconds else None
-
-
-
-def assess_official_beforeinfo(parsed):
-    """Bridge V230 official beforeinfo to source-status without conflating exhibits.
-
-    Standard exhibition-time and ST tables are NOT original exhibition
-    (one-lap/turn/straight). This function never upgrades their evidence.
-    """
-    if not isinstance(parsed, dict):
-        return {"official_beforeinfo_status": "PARSE_FAILED",
-                "original_exhibition_status": "NOT_VERIFIED"}
-    racers = parsed.get("racers")
-    starts = parsed.get("start_exhibition")
-    if not isinstance(racers, list) or not isinstance(starts, list):
-        return {"official_beforeinfo_status": "PARSE_FAILED",
-                "original_exhibition_status": "NOT_VERIFIED"}
-    from boat_edge_v230_fast_lane import beforeinfo_coverage
-    coverage = beforeinfo_coverage(parsed)
-    return {"official_beforeinfo_status": (
-                "COMPLETE" if coverage["six_boat_complete"] else "PARTIAL_SIX_BOATS"),
-            "official_beforeinfo_coverage": coverage,
-            "original_exhibition_status": "NOT_VERIFIED"}
