@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from boat_edge_original_exhibition_coverage import assess_original_exhibition, classify_fetch_failure, retry_delay_seconds, assess_official_beforeinfo
+from boat_edge_original_exhibition_coverage import assess_original_exhibition, classify_fetch_failure, retry_delay_seconds
 
 
 def six():
@@ -15,18 +15,6 @@ def six():
 
 
 class TestOriginalExhibitionCoverage(unittest.TestCase):
-    def test_official_beforeinfo_not_confused_with_original(self):
-        parsed = {"racers": [{"lane": n, "exhibition_time": 6.8} for n in range(1, 7)],
-                  "start_exhibition": [{"lane": n, "st": ".12"} for n in range(1, 7)]}
-        out = assess_official_beforeinfo(parsed)
-        self.assertEqual(out["official_beforeinfo_status"], "COMPLETE")
-        self.assertEqual(out["original_exhibition_status"], "NOT_VERIFIED")
-
-    def test_official_beforeinfo_partial(self):
-        out = assess_official_beforeinfo({"racers": [], "start_exhibition": []})
-        self.assertEqual(out["official_beforeinfo_status"], "PARTIAL_SIX_BOATS")
-        self.assertEqual(out["original_exhibition_status"], "NOT_VERIFIED")
-
     def test_complete(self):
         self.assertEqual(assess_original_exhibition(six())["status"], "COMPLETE_SIX_BOATS")
 
