@@ -113,6 +113,17 @@ class C1ObservedAuditTests(unittest.TestCase):
                            requested=KEY, historical_deadline="15:53")
         self.assertFalse(late["prediction_saved_proven"])
 
+        def missing_audit(root, *args):
+            if args[0] == "show" and len(args) > 1 and "site_prediction_audit" in args[1]:
+                return None
+            return fake_git(root, *args)
+        with patch("boat_edge_v235_predeadline_receipt.git", side_effect=missing_audit):
+            not_audited = receipt(self.root, now=datetime(2026, 10, 21, tzinfo=timezone.utc),
+                                  requested=KEY, historical_deadline="15:53")
+        self.assertFalse(not_audited["prediction_saved_proven"])
+        self.assertFalse(not_audited["first_git_v229_audit_valid"])
+
+
 
     def test_stale_today_catalog_uses_historical_receipt_after_midnight(self):
         observed = json.loads((self.root / "data/site_paper_sim/readiness_history_v215/20261020.json").read_text())
