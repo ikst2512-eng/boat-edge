@@ -110,6 +110,14 @@ class TestOriginalExhibitionCoverage(unittest.TestCase):
         with self.assertRaises(ValueError):
             retry_delay_seconds(0, "HTTP_UNAVAILABLE", remaining_seconds=float("nan"))
 
+    def test_malformed_data_is_not_retryable(self):
+        rows = six()
+        rows[0]["lap"] = "incorrect"
+        report = assess_original_exhibition(rows)
+        self.assertEqual(report["status"], "PARSE_FAILED")
+        self.assertFalse(report["retryable"])
+        self.assertIsNone(retry_delay_seconds(0, "PARSE_FAILED", remaining_seconds=120))
+
     def test_access_restricted(self):
         err = type("Error", (), {"code": 403})()
         self.assertEqual(classify_fetch_failure(err)["status"], "ACCESS_RESTRICTED")
