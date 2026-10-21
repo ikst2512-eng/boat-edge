@@ -44,6 +44,14 @@ class FastLaneTests(unittest.TestCase):
         return {'racelist':(htmlregs(scratch).encode(),htmlregs(scratch),self.now),
                 'beforeinfo':(htmlbefore().encode(),htmlbefore(),self.now),
                 'odds':(b'official-odds-byte', '<html>...</html>',self.now)}
+    def test_worker_timing_excludes_queue_delay(self):
+        with (patch.object(m, 'fetch_one', return_value=(KEY, None, 'error')) as worker,
+              patch.object(m.time, 'monotonic', side_effect=[100.0, 100.25])):
+            result, elapsed = m._timed_fetch_one(self.root, KEY)
+        self.assertEqual(result, (KEY, None, 'error'))
+        self.assertEqual(elapsed, 0.25)
+        worker.assert_called_once_with(self.root, KEY)
+
     def test_imminent_deadline_does_not_retry_transient_failure(self):
         import requests
         key = '20261021-14-12'
