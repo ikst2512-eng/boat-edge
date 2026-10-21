@@ -333,6 +333,31 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(report["source_time_anomalies"][0]["reason"],
                              "fetched_at_or_after_deadline")
 
+    def test_predeadline_fetch_counts_exclude_late_and_missing(self):
+        jst = timezone(timedelta(hours=9))
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            first = "20261021-16-07"
+            second = "20261021-16-08"
+            for key, when in [(first, "2026-10-21T13:48:00+09:00"),
+                              (second, "2026-10-21T13:55:00+09:00")]:
+                (folder / (key + ".json")).write_text(json.dumps({
+                    "race_key": key, "meta": {"deadline": "13:49"},
+                    "source_audit": {"race_card": {"status": "ok",
+                        "sha256": "a" * 64, "fetched_at": when}}
+                }))
+            expected = {first, second, "20261021-16-09"}
+            deadlines = {key: "13:49" for key in expected}
+            report = audit(Path(tmp), "20261021", expected,
+                           datetime(2026, 10, 21, 14, 0, tzinfo=jst),
+                           deadlines=deadlines)
+            counts = report["predeadline_source_observations"]["race_card"]
+            self.assertEqual(counts["recorded_ok_fetched_before_deadline"], 1)
+            self.assertEqual(counts["recorded_ok_fetched_at_or_after_deadline"], 1)
+            self.assertEqual(counts["missing_or_not_verified"], 1)
+            self.assertFalse(counts["is_first_git_save_proof"])
+
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
