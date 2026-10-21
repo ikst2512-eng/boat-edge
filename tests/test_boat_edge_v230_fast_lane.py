@@ -1156,6 +1156,9 @@ class V230EightRaceRescueTests(unittest.TestCase):
         self.assertEqual(fetch.call_count,9)
         self.assertEqual(freeze.call_count,2)
         self.assertNotIn(self.keys[9],status['targets'])
+        self.assertGreaterEqual(status['fetch_wall_seconds'],0)
+        self.assertGreaterEqual(status['freeze_wall_seconds'],0)
+        self.assertIn(self.keys[0],status['fetch_task_seconds'])
 
     def test_postcommit_requires_git_proof_before_eight_other_races(self):
         m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
