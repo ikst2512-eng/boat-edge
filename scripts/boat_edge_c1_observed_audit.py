@@ -94,6 +94,9 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
     gap_flags = dict(sorted(Counter(gap for r in rows for gap in r.get("source_gaps_at_last_observation", [])).items()))
     observation_reasons = dict(sorted(Counter(r.get("last_observed_reason") or "UNKNOWN" for r in rows).items()))
     unproven = [r for r in rows if r["status"] == "UNPROVEN_AFTER_DEADLINE"]
+    unproven_source_gap_flags = dict(sorted(Counter(
+        gap for row in unproven for gap in row.get("source_gaps_at_last_observation", [])
+    ).items()))
     unproven_with_gaps = sum(bool(r.get("source_gaps_at_last_observation")) for r in unproven)
     unproven_without_gaps = len(unproven) - unproven_with_gaps
     unproven_outside_freeze_observation = sum(
@@ -118,6 +121,7 @@ def accounting(root: Path, now: datetime, audit_day: str | None = None) -> dict:
             "observed_races": len(rows), "not_observed_count": len(missing_schedule),
             "classification_counts": counts, "receipt_status_counts": receipt_counts,
             "last_observation_source_gap_flags": gap_flags,
+            "unproven_only_source_gap_flags": unproven_source_gap_flags,
             "last_observation_reason_counts": observation_reasons,
             "source_gap_flags_are_not_root_causes": True,
             "unproven_with_last_observation_gaps": unproven_with_gaps,
