@@ -8,7 +8,7 @@
     "event": "SUZUKIスピードカップ",
     "race_no": 10,
     "deadline": "15:13",
-    "updated_at": "2026-10-21T14:44:18+09:00",
+    "updated_at": "2026-10-21T15:08:46+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,22 +19,22 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261021&jcd=06&rno=10",
-      "fetched_at": "2026-10-21T14:46:22+09:00",
-      "sha256": "c3cc63832be7b688632cbdff40b2e7758b7e211d1933ac2ac54210c14c6f498d",
+      "fetched_at": "2026-10-21T15:08:36+09:00",
+      "sha256": "c771dbd87c22e8ab7855c2d26ce8d9867fe7a0807396f8bb15ece4508b2be5fb",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261021&jcd=06&rno=10",
-      "fetched_at": "2026-10-21T14:44:59+09:00",
-      "sha256": "a660f692183f371ec18af4b8529fad9f4f8722e37bef99bd1a185143fda8d88b",
+      "fetched_at": "2026-10-21T15:08:46+09:00",
+      "sha256": "d179beb84f514c067fa6f54d9ced8903508c066a0a1013c594c4194c60e65708",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
@@ -292,42 +292,67 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
+        "exhibition_time": 6.71,
         "tilt": 0.0,
-        "raw_text": "1 佐藤 大佑 53.9kg 0.0 R 1"
+        "raw_text": "1 佐藤 大佑 53.9kg 6.71 0.0 R 1"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
+        "exhibition_time": 6.73,
         "tilt": 0.0,
-        "raw_text": "2 宮崎 奨 54.2kg 0.0 R 4"
+        "raw_text": "2 宮崎 奨 54.2kg 6.73 0.0 R 4"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
+        "exhibition_time": 6.76,
         "tilt": -0.5,
-        "raw_text": "3 笠 雅雄 53.4kg -0.5 R 3"
+        "raw_text": "3 笠 雅雄 53.4kg 6.76 -0.5 R 3"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
+        "exhibition_time": 6.71,
         "tilt": -0.5,
-        "raw_text": "4 横川 聖志 56.7kg -0.5 R"
+        "raw_text": "4 横川 聖志 56.7kg 6.71 -0.5 R"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
+        "exhibition_time": 6.73,
         "tilt": 0.0,
-        "raw_text": "5 繁野谷 圭介 52.3kg 0.0 R"
+        "raw_text": "5 繁野谷 圭介 52.3kg 6.73 0.0 R"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
+        "exhibition_time": 6.72,
         "tilt": 0.0,
-        "raw_text": "6 栗原 直也 52.0kg 0.0 R 2"
+        "raw_text": "6 栗原 直也 52.0kg 6.72 0.0 R 2"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".05"
+      },
+      {
+        "lane": 2,
+        "st": ".14"
+      },
+      {
+        "lane": 3,
+        "st": ".13"
+      },
+      {
+        "lane": 4,
+        "st": ".16"
+      },
+      {
+        "lane": 5,
+        "st": ".12"
+      },
+      {
+        "lane": 6,
+        "st": ".09"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
