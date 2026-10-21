@@ -44,6 +44,10 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
                      for x in header.find_all(["th", "td"], recursive=False)]
             if len(names) < 4:
                 continue
+            # Column zero must explicitly identify boat numbers; otherwise
+            # a racer/statistics table can masquerade as an original-exhibition table.
+            if names[0] not in ("艇", "艇番", "艇番号", "号艇"):
+                continue
             indices = {}
             for label in HEADERS:
                 matching = [i for i, name in enumerate(names)
@@ -54,19 +58,23 @@ def parse_naruto_original_exhibition(html, *, identity_verified=False,
             if len(indices) != 3 or len(set(indices.values())) != 3:
                 continue
             parsed = []
+            malformed_rows = False
             for tr in trs[index + 1:]:
                 cells = tr.find_all(["th", "td"], recursive=False)
                 values = [_clean(c.get_text(" ", strip=True)) for c in cells]
-                if len(values) <= max(indices.values()):
-                    continue
-                boat = values[0].replace("号艇", "")
+                boat = values[0].replace("号艇", "") if values else ""
                 if not re.fullmatch("[1-6]", boat):
+                    continue
+                if len(values) <= max(indices.values()):
+                    malformed_rows = True
                     continue
                 parsed.append({"boat": int(boat), "lap": values[indices["一周"]],
                                "turn": values[indices["まわり足"]],
                                "straight": values[indices["直線"]]})
-            if parsed:
-                candidates.append(parsed)
+            if parsed or malformed_rows:
+                # A truncated row must never be silently skipped and then
+                # accepted as six complete boats.
+                candidates.append(parsed if not malformed_rows else [])
     if len(candidates) != 1:
         return {"status": "TABLE_NOT_FOUND_OR_AMBIGUOUS", "retryable": False,
                 "tables_detected": len(candidates)}
