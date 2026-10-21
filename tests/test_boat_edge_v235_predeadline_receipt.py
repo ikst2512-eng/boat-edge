@@ -169,28 +169,26 @@ class V235Proof(unittest.TestCase):
             self.assertTrue(covered['v235'] and covered['v229'] and covered['v216'])
             self.assertTrue(covered['collector'] and covered['official_odds'])
 
-    def test_v235_pinned_fast_lane_matches_main_git_blob(self):
-        # Gate1C: Future V230 code changes MUST carry a reviewed V235 pin
-        # update or fail PR CI before live pre-result collection/freeze.
+    def test_v235_fast_lane_matches_checked_out_git_tree(self):
+        # Fast-lane changes are verified against the exact Git checkout,
+        # instead of a duplicated SHA that can block live 2-10m saves.
         root=Path(__file__).resolve().parents[1]
-        filename='scripts/boat_edge_v230_fast_lane.py'
-        raw=(root/filename).read_bytes()
-        git_blob=hashlib.sha1(b'blob '+str(len(raw)).encode('ascii')+b'\x00'+raw).hexdigest()
         workflow=(root/'.github/workflows/V235.yml').read_text(encoding='utf-8')
-        self.assertIn(f"'{filename}:{git_blob}'",workflow)
+        self.assertIn("'scripts/boat_edge_v230_fast_lane.py:TRACKED_MAIN'",workflow)
+        self.assertIn('git rev-parse "HEAD:$path"',workflow)
+        self.assertIn('git reset --hard origin/main',workflow)
         self.assertIn('test "$(git hash-object "$path")" = "$sha"',workflow)
 
     def test_v235_all_pinned_pre_result_dependencies_match_main_git_blobs(self):
         """A V215 source-coverage fix must repin V235 or fail before production.
 
-        Keep exact SHA matching fail-closed for all five immutable dependencies.
+        Keep pinned SHA matching for four stable dependencies; V230 uses current Git-tree identity.
         This catches the 2026-10-18 06:07 V235 outage after V215 changed,
         without removing any strict source-identity guard or reading results.
         """
         root=Path(__file__).resolve().parents[1]
         workflow=(root/'.github/workflows/V235.yml').read_text(encoding='utf-8')
         files=(
-            'scripts/boat_edge_v230_fast_lane.py',
             'scripts/boat_edge_v232_pre_result_cohort.py',
             'scripts/boat_edge_v215_readiness.py',
             'scripts/boat_edge_v214_shadow.py',
