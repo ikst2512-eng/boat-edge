@@ -300,6 +300,23 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(cohort["source_counts"]["original_exhibition"],
                              {"recorded_ok": 0, "not_ok_or_missing_record": 2})
 
+    def test_source_observation_after_deadline_is_not_predeadline_proof(self):
+        jst = timezone(timedelta(hours=9))
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key, "meta": {"deadline": "13:49"},
+                "source_audit": {"race_card": {
+                    "status": "ok", "sha256": "a" * 64,
+                    "fetched_at": "2026-10-21T13:50:00+09:00"}}
+            }))
+            report = audit(Path(tmp), "20261021", {key},
+                           datetime(2026, 10, 21, 14, 0, tzinfo=jst))
+            self.assertEqual(report["source_time_anomalies"][0]["reason"],
+                             "fetched_at_or_after_deadline")
+
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
