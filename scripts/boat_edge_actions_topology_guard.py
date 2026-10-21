@@ -31,7 +31,7 @@ def inventory(directory: Path) -> dict:
         target = re.search(r"(?ms)^    workflows:\s*\n((?:^      - .*\n?)+)", section)
         if not target:
             continue
-        for item in re.findall(r"(?m)^      -\s*['\"]?(.+?)['\"]?\s*$", target.group(1)):
+        for item in re.findall(r"(?m)^      -\s*(.+?)\s*$", target.group(1)):
             producer = item.strip().split(" #", 1)[0].strip().strip("'\"")
             edges.append((producer, consumer))
     graph = defaultdict(list)
