@@ -40,7 +40,8 @@ jobs:
               'receipt':d['receipt_status_counts'],
               'eligible_denominator_verified':d['eligible_denominator_verified'],
               'observation_timing_gap_matrix':d['unproven_observation_timing_source_gap_matrix'],
-              'source_gap_flags':d['last_observation_source_gap_flags']},sort_keys=True))
+              'source_gap_flags_all_observed':d['last_observation_source_gap_flags'],
+              'source_gap_flags_unproven_only':d['unproven_only_source_gap_flags']},sort_keys=True))
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
               out.write('### Historical C1 evidence, observed cohort only\\n\\n')
               out.write(json.dumps(d['classification_counts'],sort_keys=True)+'\\n\\n')
