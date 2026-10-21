@@ -36,6 +36,12 @@ jobs:
           node-version: '22'
       - name: Install parser dependencies
         run: python3 -m pip install --disable-pip-version-check requests beautifulsoup4 lxml pyyaml
+      - name: Verify Actions completion topology detector (fixtures only)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_boat_edge_actions_topology_guard.py' -v
+          python3 -m py_compile scripts/boat_edge_actions_topology_guard.py
       - name: Verify V216 safe wake and same-day catalog continuity
         env:
           PYTHONDONTWRITEBYTECODE: '1'
