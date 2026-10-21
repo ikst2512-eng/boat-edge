@@ -267,7 +267,8 @@ def inspect_health(path):
             diagnostics.append({"check": label, "status": "unknown_invalid_counts"})
         elif sum(numbers) != total:
             diagnostics.append({"check": label, "status": "inconsistent",
-                                "target": total, "classified": sum(numbers)})
+                                "target": total, "classified": sum(numbers),
+                                "possible_explanation": "PRE_ENRICHMENT_TARGETS_VS_POST_ENRICHMENT_FILE_SCAN" if label == "urgent_original_exhibition" else None})
         else:
             diagnostics.append({"check": label, "status": "arithmetically_consistent",
                                 "target": total})
