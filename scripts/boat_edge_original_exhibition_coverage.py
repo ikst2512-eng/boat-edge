@@ -7,6 +7,7 @@ response is not evidence of permission, predeadline receipt, or authenticity.
 from __future__ import annotations
 
 import re
+import math
 from datetime import datetime
 
 FIELDS = ("lap", "turn", "straight")
@@ -46,7 +47,7 @@ def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
         bad = [f for f in FIELDS if f not in missing and
                (type(row.get(f)) not in (str, int, float) or
                 not NUMBER.fullmatch(str(row[f]).strip()) or
-                float(row[f]) <= 0)]
+                not math.isfinite(float(row[f])) or float(row[f]) <= 0)]
         if missing:
             absent[boat] = missing
         if bad:
