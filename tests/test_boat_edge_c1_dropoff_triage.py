@@ -84,6 +84,18 @@ class C1DropoffTriageTests(unittest.TestCase):
                 "schema": "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
                 "day_jst": "20261021", "observations": {}})
 
+    def test_v215_only_race_not_dropped(self):
+        history = {"schema": "BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1",
+                   "day_jst": "20261020",
+                   "observations": {"20261020-01-04": {
+                       "reason": "snapshot_missing",
+                       "source_gaps": ["race_card_stale"]}}}
+        result = classify(report_observed([]), report_actions([]), history=history)
+        self.assertEqual(result["union_rows"], 1)
+        self.assertEqual(result["v215_only_races"], 1)
+        self.assertEqual(result["races"][0]["stage"], "HISTORY_ONLY_NO_RECEIPT_AUDIT")
+        self.assertIsNone(result["formal_save_rate_percent"])
+
     def test_day_mismatch_rejected(self):
         with self.assertRaisesRegex(ValueError, "DAY_MISMATCH"):
             classify(report_observed([]), report_actions([], "20261021"))
