@@ -13,6 +13,7 @@ from datetime import datetime
 FIELDS = ("lap", "turn", "straight")
 MISSING = (None, "", "-", "－", "─", "—", "未計測")
 NUMBER = re.compile(r"^(?:[0-9]+)(?:\.[0-9]+)?$")
+MAX_VALUE_CHARS = 16
 
 
 def assess_original_exhibition(rows, *, fetched_at=None, deadline=None):
