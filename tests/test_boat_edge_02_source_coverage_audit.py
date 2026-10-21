@@ -271,6 +271,35 @@ class SourceCoverageTests(unittest.TestCase):
             self.assertEqual(checks[0]["classified"], 5)
             self.assertEqual(checks[1]["status"], "arithmetically_consistent")
 
+    def test_urgent_sources_use_identical_catalog_cohort(self):
+        jst = timezone(timedelta(hours=9))
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "data" / "races"
+            folder.mkdir(parents=True)
+            key = "20261021-16-07"
+            (folder / (key + ".json")).write_text(json.dumps({
+                "race_key": key,
+                "meta": {"deadline": "13:49"},
+                "source_audit": {"beforeinfo": {
+                    "status": "ok", "sha256": "b" * 64,
+                    "fetched_at": "2026-10-21T13:46:00+09:00",
+                    "six_boat_coverage": {"six_boat_complete": True}},
+                    "original_exhibition": {"status": "missing"}}
+            }))
+            expected = {key, "20261021-16-08", "20261021-16-09"}
+            deadlines = {key: "13:49", "20261021-16-08": "13:54",
+                         "20261021-16-09": "14:30"}
+            report = audit(root, "20261021", expected,
+                           datetime(2026, 10, 21, 13, 45, tzinfo=jst),
+                           deadlines=deadlines)
+            cohort = report["same_cohort_urgent_sources"]
+            self.assertEqual(cohort["target_count"], 2)
+            self.assertEqual(cohort["source_counts"]["beforeinfo"],
+                             {"recorded_ok": 1, "not_ok_or_missing_record": 1})
+            self.assertEqual(cohort["source_counts"]["original_exhibition"],
+                             {"recorded_ok": 0, "not_ok_or_missing_record": 2})
+
     def test_empty_schedule_rejected(self):
         with TemporaryDirectory() as tmp:
             f = Path(tmp) / "schedule.json"
