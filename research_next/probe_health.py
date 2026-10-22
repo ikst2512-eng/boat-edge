@@ -21,6 +21,8 @@ def assess(run_status,summary):
     n=summary.get("manifests",0)
     if type(n) is not int or n<captured:
         return {"state":"MISSING_CAPTURE_EVIDENCE","proven_captures":0}
+    if n>captured:
+        return {"state":"AMBIGUOUS_CUMULATIVE_EVIDENCE","proven_captures":0}
     valid=summary.get("eligible_10",0)
     if type(valid) is not int or valid<0 or valid>n:return {"state":"INVALID_CAPTURE_EVIDENCE","proven_captures":0}
     if valid>captured:return {"state":"AMBIGUOUS_CUMULATIVE_EVIDENCE","proven_captures":0}
