@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-22T22:00:37.876543+00:00",
+  "checked_at": "2026-10-22T22:32:28.356498+00:00",
   "day_jst": "20261023",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -68,7 +68,9 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [],
+    "collector_health_issues": [
+      "collector_index_stale"
+    ],
     "current_window": [],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
     "readiness_observed_races": 0,
@@ -76,7 +78,7 @@
     "readiness_shadow_verified_races": 0,
     "schedule_today": true,
     "snapshot_files_today": 0,
-    "status": "WAITING_FOR_PREDEADLINE",
+    "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
 }
