@@ -1,5 +1,5 @@
 """Scheduled probe runner: discover today's races from title CSV, never results."""
-import csv,io,json,sys,os
+import csv,io,json,sys,os,hashlib
 from pathlib import Path
 from datetime import datetime,timedelta,timezone
 from urllib.request import Request,urlopen
@@ -16,6 +16,22 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None):
         if r.status!=200 or r.geturl()!=url:raise ValueError("invalid title response")
         body=r.read(2_000_001)
     if len(body)>2_000_000:raise ValueError("title too large")
+    # Preserve the exact title bytes used to choose deadlines for this run.
+    # The title's observed capture time is distinct from its publisher's release time.
+    captured_at=datetime.now(JST)
+    evidence_root=Path(root)/"_source_title"
+    evidence_root.mkdir(parents=True,exist_ok=True)
+    title_sha=hashlib.sha256(body).hexdigest()
+    evidence_name=captured_at.strftime("%Y%m%dT%H%M%S%f")+"_"+title_sha
+    title_file=evidence_root/(evidence_name+".body")
+    with title_file.open("xb") as out:
+        out.write(body)
+        out.flush()
+        os.fsync(out.fileno())
+    (evidence_root/(evidence_name+".json")).write_text(
+        json.dumps({"source_url":url,"captured_jst":captured_at.isoformat(),
+                    "sha256":title_sha,"bytes":len(body),
+                    "source_publication_time_proven":False},sort_keys=True),encoding="utf-8")
     races=list(csv.DictReader(io.StringIO(body.decode("utf-8-sig"))))
     # Fetching the same card CSV for every race is wasteful. Cache exact bytes
     # for this runner invocation, while each probe still timestamps verification.
