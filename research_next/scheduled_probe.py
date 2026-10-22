@@ -34,7 +34,12 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
         json.dumps({"source_url":url,"captured_jst":captured_at.isoformat(),
                     "sha256":title_sha,"bytes":len(body),
                     "source_publication_time_proven":False},sort_keys=True),encoding="utf-8")
-    races=list(csv.DictReader(io.StringIO(body.decode("utf-8-sig"))))
+    reader=csv.DictReader(io.StringIO(body.decode("utf-8-sig")))
+    if not reader.fieldnames or not {"レースコード","電話投票締切予定"}.issubset(reader.fieldnames):
+        raise ValueError("title CSV missing required columns")
+    races=list(reader)
+    if not races:
+        raise ValueError("title CSV has no race rows")
     # Fetching the same card CSV for every race is wasteful. Cache exact bytes
     # for this runner invocation, while each probe still timestamps verification.
     card_cache={}
