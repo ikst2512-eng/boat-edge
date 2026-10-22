@@ -38,7 +38,10 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
         code=x.get("レースコード","")
         if not (len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):continue
         try:
-            deadline=datetime.strptime(day+x["電話投票締切予定"],"%Y%m%d%H:%M").replace(tzinfo=JST)
+            deadline_text=x["電話投票締切予定"]
+            if not isinstance(deadline_text,str) or len(deadline_text)!=5 or deadline_text[2]!=":":
+                raise ValueError("invalid deadline format")
+            deadline=datetime.strptime(day+deadline_text,"%Y%m%d%H:%M").replace(tzinfo=JST)
         except (ValueError,KeyError,TypeError):continue
         # Start probing up to three hours early. Avoid relying on a late 60-minute window.
         # Repeated scheduled runs can track availability as the cutoff approaches.
