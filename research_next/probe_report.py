@@ -58,8 +58,6 @@ def report(root):
             if "/race_cards/" in m["source_url"]:
                 rates=[float(matches[0][f"艇{i}_全国勝率"]) for i in range(1,7)]
                 if not all(math.isfinite(v) and 0<v<20 for v in rates):raise ValueError("bad national rates")
-            elif "/title/" in m["source_url"]:
-                if not matches[0].get("電話投票締切予定"):raise ValueError("missing deadline")
             else:raise ValueError("unsupported CSV type")
             for minute in actual:
                 unique[minute].add((m["race_code"],m["source_url"]))
