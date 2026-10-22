@@ -5,7 +5,7 @@ class ProbeReportTests(unittest.TestCase):
  def test_reject_forged_cutoff(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/"202610231201";p.mkdir()
-   body=b"example captured content";sha=hashlib.sha256(body).hexdigest()
+   body=("レースコード,"+",".join(f"艇{i}_全国勝率" for i in range(1,7))+"\n202610231201,6,6,6,6,6,6\n").encode();sha=hashlib.sha256(body).hexdigest()
    (p/"capture.body").write_bytes(body)
    meta={"body_name":"capture.body","bytes":len(body),"sha256":sha,"target_race_validated":True,"race_code":"202610231201",
          "source_url":"https://boatracecsv.github.io/data/programs/race_cards/2026/10/23.csv",
@@ -18,7 +18,7 @@ class ProbeReportTests(unittest.TestCase):
  def test_matching_cutoff(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/"202610231201";p.mkdir()
-   body=b"captured bytes";sha=hashlib.sha256(body).hexdigest()
+   body=("レースコード,"+",".join(f"艇{i}_全国勝率" for i in range(1,7))+"\n202610231201,6,6,6,6,6,6\n").encode();sha=hashlib.sha256(body).hexdigest()
    (p/"capture.body").write_bytes(body)
    m={"body_name":"capture.body","bytes":len(body),"sha256":sha,"target_race_validated":True,"race_code":"202610231201",
       "source_url":"https://boatracecsv.github.io/data/programs/race_cards/2026/10/23.csv",
