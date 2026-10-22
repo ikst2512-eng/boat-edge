@@ -4,11 +4,11 @@ class HealthTests(unittest.TestCase):
  def test_no_races_not_success(self):
   self.assertEqual(assess({"status":"ok","due":0,"captured":0},{"manifests":0,"eligible_10":0,"invalid":0})["state"],"NO_RACES_DUE")
  def test_valid_evidence_distinguished(self):
-  x=assess({"status":"ok","due":2,"captured":2,"failed":0},{"manifests":2,"eligible_10":2,"invalid":0})
+  x=assess({"status":"ok","due":2,"captured":2,"failed":0},{"manifests":2,"eligible_10":2,"invalid":0,"title_sources":1,"invalid_title_sources":0})
   self.assertEqual(x["proven_captures"],2)
   self.assertIn("NOT_EXTERNALLY_ATTESTED",x["state"])
  def test_missing_evidence(self):
-  self.assertEqual(assess({"status":"ok","due":2,"captured":2},{"manifests":0,"eligible_10":0,"invalid":0})["state"],"MISSING_CAPTURE_EVIDENCE")
+  self.assertEqual(assess({"status":"ok","due":2,"captured":2},{"manifests":0,"eligible_10":0,"invalid":0,"title_sources":1})["state"],"MISSING_CAPTURE_EVIDENCE")
  def test_failure(self):
   self.assertEqual(assess({"status":"collector_failed"},{"manifests":0})["state"],"RUN_FAILED")
 if __name__=="__main__":unittest.main()
