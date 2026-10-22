@@ -15,7 +15,7 @@ def run_probe(race_code, deadline_jst, source_url, root, clock=None, opener=urlo
     if deadline.utcoffset()!=timedelta(hours=9):raise ValueError("JST deadline required")
     if not(isinstance(race_code,str) and len(race_code)==12 and race_code.isascii() and race_code.isdigit() and race_code[:8]==deadline.strftime("%Y%m%d")):raise ValueError("bad race")
     date_path=f"{race_code[:4]}/{race_code[4:6]}/{race_code[6:8]}.csv"
-    permitted={f"https://boatracecsv.github.io/data/programs/{name}/{date_path}" for name in ("race_cards","title")}
+    permitted={f"https://boatracecsv.github.io/data/programs/race_cards/{date_path}"}
     if source_url not in permitted:raise ValueError("unsupported source or wrong race date")
     before=clock()
     if before.utcoffset()!=timedelta(hours=9):raise ValueError("JST clock required")
@@ -36,9 +36,6 @@ def run_probe(race_code, deadline_jst, source_url, root, clock=None, opener=urlo
         if "/race_cards/" in source_url:
             values=[float(hits[0][f"艇{i}_全国勝率"]) for i in range(1,7)]
             if not all(math.isfinite(v) and 0<v<20 for v in values):raise ValueError("invalid rates")
-        elif "/title/" in source_url:
-            if hits[0].get("電話投票締切予定")!=deadline.strftime("%H:%M"):
-                raise ValueError("source deadline does not match request")
         else:raise ValueError("unsupported source family")
     except (UnicodeError,KeyError,TypeError) as exc:
         raise ValueError("bad source content") from exc
