@@ -25,9 +25,21 @@ def report(root):
                 raise ValueError("invalid chronology")
             actual=[minute for minute in (12,11,10) if completed<=deadline-timedelta(minutes=minute)]
             if m["eligible_margins"]!=actual:raise ValueError("inconsistent cutoff labels")
+            import csv,io,math
+            if p.parent.name!=m["race_code"] or p.stem+".body"!=name:
+                raise ValueError("manifest identity mismatch")
+            records=list(csv.DictReader(io.StringIO(data.decode("utf-8-sig"))))
+            matches=[r for r in records if r.get("レースコード")==m["race_code"]]
+            if len(matches)!=1:raise ValueError("race not in archived bytes")
+            if "/race_cards/" in m["source_url"]:
+                rates=[float(matches[0][f"艇{i}_全国勝率"]) for i in range(1,7)]
+                if not all(math.isfinite(v) and 0<v<20 for v in rates):raise ValueError("bad national rates")
+            elif "/title/" in m["source_url"]:
+                if not matches[0].get("電話投票締切予定"):raise ValueError("missing deadline")
+            else:raise ValueError("unsupported CSV type")
             for minute in actual:unique[minute].add((m["race_code"],m["source_url"]))
             output["manifests"]+=1
-        except (ValueError,KeyError,TypeError,OSError,json.JSONDecodeError):
+        except (ValueError,KeyError,TypeError,OSError,UnicodeError,json.JSONDecodeError):
             output["invalid"]+=1
     for minute in (12,11,10):output[f"eligible_{minute}"]=len(unique[minute])
     return output
