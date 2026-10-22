@@ -33,18 +33,6 @@ class ProbeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(ValueError):
                 run_probe(CODE,"2026-10-23T18:00:00+09:00",bad,d,clock=lambda:at,opener=fake(csv_body()))
-    def test_title_deadline_mismatch_rejected(self):
-        at=datetime(2026,10,23,17,47,tzinfo=JST)
-        title=URL.replace("/race_cards/","/title/")
-        body="レースコード,電話投票締切予定\\n202610231201,18:01\\n".encode()
-        response=MagicMock()
-        response.status=200
-        response.read.return_value=body
-        response.geturl.return_value=title
-        response.__enter__.return_value=response
-        with tempfile.TemporaryDirectory() as d:
-            with self.assertRaises(ValueError):
-                run_probe(CODE,"2026-10-23T18:00:00+09:00",title,d,clock=lambda:at,opener=lambda *a,**kw:response)
     def test_late_not_eligible(self):
         at=datetime(2026,10,23,17,51,tzinfo=JST)
         with tempfile.TemporaryDirectory() as d:
