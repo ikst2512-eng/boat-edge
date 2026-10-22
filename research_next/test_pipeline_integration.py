@@ -15,9 +15,7 @@ BASE="https://boatracecsv.github.io/data/programs/"
 
 class PipelineIntegrationTests(unittest.TestCase):
     def test_schedule_to_proven_race_without_results(self):
-        now=datetime.now(JST).replace(second=0,microsecond=0)
-        # Avoid crossing midnight in this fixture.
-        now=now.replace(hour=12,minute=0)
+        now=datetime(2026,10,23,12,0,tzinfo=JST)
         day=now.strftime("%Y%m%d")
         race=day+"1201"
         deadline=now+timedelta(minutes=40)
@@ -42,7 +40,7 @@ class PipelineIntegrationTests(unittest.TestCase):
             return run_probe(code,deadline_jst,source_url,root,
                              clock=lambda:now,opener=opener)
         with tempfile.TemporaryDirectory() as d:
-            status=run(now,root=d,opener=opener,probe=probe)
+            status=run(now,root=d,opener=opener,probe=probe,capture_clock=lambda:now)
             summary=report(d)
             self.assertEqual(status["due"],1)
             self.assertEqual(status["captured"],1)
