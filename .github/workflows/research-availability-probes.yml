@@ -36,7 +36,7 @@ jobs:
               "external_source_publication_verified": False,
           }
           Path("research_next/probe_execution.json").write_text(
-              json.dumps(record, sort_keys=True) + "\\n", encoding="utf-8"
+              json.dumps(record, sort_keys=True) + "\n", encoding="utf-8"
           )
           print(json.dumps(record, sort_keys=True))
           PY
