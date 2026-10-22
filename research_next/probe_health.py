@@ -12,12 +12,12 @@ def assess(run_status,summary):
         return {"state":"INVALID_RUN_STATUS","proven_captures":0}
     if run_status.get("failed",0) or captured<due:
         return {"state":"PARTIAL_FAILURE","proven_captures":0}
-    if due==0:return {"state":"NO_RACES_DUE","proven_captures":0}
     if (type(summary.get("invalid")) is not int or summary["invalid"]>0
         or summary.get("invalid_title_sources",0)>0):
         return {"state":"INVALID_CAPTURE_EVIDENCE","proven_captures":0}
     if summary.get("title_sources",0)==0:
         return {"state":"MISSING_DEADLINE_SOURCE_EVIDENCE","proven_captures":0}
+    if due==0:return {"state":"NO_RACES_DUE","proven_captures":0}
     n=summary.get("manifests",0)
     if type(n) is not int or n<captured:
         return {"state":"MISSING_CAPTURE_EVIDENCE","proven_captures":0}
