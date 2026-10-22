@@ -15,6 +15,10 @@ class HealthTests(unittest.TestCase):
   self.assertIn("NOT_EXTERNALLY_ATTESTED",x["state"])
  def test_missing_evidence(self):
   self.assertEqual(assess({"status":"ok","due":2,"captured":2},{"manifests":0,"eligible_10":0,"invalid":0,"title_sources":1})["state"],"MISSING_CAPTURE_EVIDENCE")
+ def test_incomplete_cutoff_coverage_not_success(self):
+  x=assess({"status":"ok","due":2,"captured":2,"failed":0},{"manifests":2,"eligible_10":1,"invalid":0,"title_sources":1})
+  self.assertEqual(x["state"],"INCOMPLETE_CUTOFF_COVERAGE")
+  self.assertEqual(x["proven_captures"],1)
  def test_incomplete_capture_not_success(self):
   x=assess({"status":"ok","due":3,"captured":2,"failed":0},{"manifests":2,"eligible_10":2,"invalid":0,"title_sources":1})
   self.assertEqual(x["state"],"PARTIAL_FAILURE")
