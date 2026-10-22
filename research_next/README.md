@@ -24,3 +24,11 @@ The example is header-only; no made-up forecasts or results are supplied.
 Each source JSON has `race_code` and exactly six `boats` objects containing `boat` (1–6), `actual_entry` (1–6, a permutation), and optionally `exhibition_st`, `lap_time`, `turn_time`, `straight_time`. The intake writes a structured copy with the SHA-256 of the raw input and a time check; incomplete exhibition values remain explicitly incomplete. This tool is source-agnostic: a trustworthy collector must separately establish how the data originated and that it was actually available at the recorded time. This module does **not** generate predictions, score races or claim source authenticity.
 
 Input examples are schema definitions only; no fabricated race data is included. Run `python -m unittest discover -s research_next -p 'test_*.py'` for both the evaluation and intake contract tests.
+
+## vNext frozen-record audit
+
+Store the raw JSON received by the collector separately and without modifications. Verify its relationship to the frozen normalized record with:
+
+`python research_next/audit_frozen.py frozen/202610231201.json raw/202610231201.json`
+
+The auditor recalculates the raw-file SHA-256 and reruns schema validation. A changed raw byte, changed saved feature, invalid entry permutation, or claimed capture after the chosen cutoff fails closed. **This does not establish an independent remote publication timestamp**. A production collector still needs capture-time provenance, immutable storage, and external source verification before results can be treated as genuinely pre-race.
