@@ -19,12 +19,29 @@ jobs:
           python-version: '3.12'
       - name: Probe due races, never score results
         run: python research_next/scheduled_probe.py
+      - name: Summarize cutoff availability
+        if: always()
+        shell: bash
+        run: |
+          python research_next/probe_report.py research_next/probes > research_next/probe_summary.json
+          cat research_next/probe_summary.json
+          {
+            echo '## Research acquisition status'
+            echo 'Run status:'
+            cat research_next/probe_run_status.json || true
+            echo ''
+            echo 'Verified snapshots:'
+            cat research_next/probe_summary.json
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Save exact capture bytes and manifests
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: research-probes-${{ github.run_id }}
-          path: research_next/probes/
+          path: |
+            research_next/probes/
+            research_next/probe_run_status.json
+            research_next/probe_summary.json
           if-no-files-found: ignore
           retention-days: 30
       - name: Run collection regression tests
