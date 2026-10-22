@@ -1,7 +1,6 @@
 """Aggregate only validated, on-disk probe manifests with intact captured bytes."""
 import argparse,hashlib,json
 from datetime import datetime,timedelta
-from collections import Counter
 from pathlib import Path
 def report(root):
     output={"manifests":0,"eligible_12":0,"eligible_11":0,"eligible_10":0,"invalid":0}
@@ -26,6 +25,9 @@ def report(root):
             actual=[minute for minute in (12,11,10) if completed<=deadline-timedelta(minutes=minute)]
             if m["eligible_margins"]!=actual:raise ValueError("inconsistent cutoff labels")
             import csv,io,math
+            date_code=m["race_code"]
+            expected=f"https://boatracecsv.github.io/data/programs/race_cards/{date_code[:4]}/{date_code[4:6]}/{date_code[6:8]}.csv"
+            if m["source_url"]!=expected:raise ValueError("unexpected data source")
             if p.parent.name!=m["race_code"] or p.stem+".body"!=name:
                 raise ValueError("manifest identity mismatch")
             records=list(csv.DictReader(io.StringIO(data.decode("utf-8-sig"))))
