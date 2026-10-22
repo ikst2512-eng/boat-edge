@@ -16,3 +16,11 @@ Input is a CSV of **frozen pre-race features** with mandatory race_code, capture
 Run: `python -m unittest discover -s research_next -p 'test_*.py'`.
 Evaluation: `python research_next/evaluate.py research_next/example_schema.csv --margin 12`.
 The example is header-only; no made-up forecasts or results are supplied.
+
+## Feature intake (new)
+
+`python research_next/feature_intake.py race_input.json --captured-at-jst 2026-10-23T08:00:00+09:00 --deadline-jst 2026-10-23T18:00:00+09:00 --output frozen/202610231201.json`
+
+Each source JSON has `race_code` and exactly six `boats` objects containing `boat` (1–6), `actual_entry` (1–6, a permutation), and optionally `exhibition_st`, `lap_time`, `turn_time`, `straight_time`. The intake writes a structured copy with the SHA-256 of the raw input and a time check; incomplete exhibition values remain explicitly incomplete. This tool is source-agnostic: a trustworthy collector must separately establish how the data originated and that it was actually available at the recorded time. This module does **not** generate predictions, score races or claim source authenticity.
+
+Input examples are schema definitions only; no fabricated race data is included. Run `python -m unittest discover -s research_next -p 'test_*.py'` for both the evaluation and intake contract tests.
