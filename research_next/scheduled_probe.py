@@ -56,4 +56,14 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
             totals["failures"].append({"race_code":code,"reason":type(exc).__name__})
     return totals
 if __name__=="__main__":
-    print(json.dumps(run(),ensure_ascii=False))
+    from pathlib import Path
+    try:
+        outcome=run()
+        outcome["status"]="ok"
+    except (OSError,ValueError,TypeError,UnicodeError) as e:
+        outcome={"status":"collector_failed","error_type":type(e).__name__}
+    dest=Path("research_next/probe_run_status.json")
+    dest.write_text(json.dumps(outcome,ensure_ascii=False,sort_keys=True),encoding="utf-8")
+    print(json.dumps(outcome,ensure_ascii=False))
+    if outcome["status"]!="ok" or outcome.get("failed",0):
+        sys.exit(1)
