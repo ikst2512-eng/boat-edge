@@ -7,6 +7,7 @@ def report(root):
     unique={12:set(),11:set(),10:set()}
     races={12:set(),11:set(),10:set()}
     title_deadlines={}
+    title_times={}
     title_conflicts=set()
     # Title-source manifests use a different schema and are separately audited.
     title_dir=Path(root)/"_source_title"
@@ -47,6 +48,7 @@ def report(root):
                     if code in title_deadlines and title_deadlines[code]!=scheduled:
                         title_conflicts.add(code)
                     title_deadlines[code]=scheduled
+                    title_times.setdefault(code,[]).append((scheduled,stamp))
                 output["title_sources"]+=1
             except (ValueError,KeyError,TypeError,OSError,UnicodeError,json.JSONDecodeError):
                 output["invalid_title_sources"]+=1
@@ -70,6 +72,8 @@ def report(root):
                 raise ValueError("invalid chronology")
             if m["race_code"] in title_conflicts or title_deadlines.get(m["race_code"])!=deadline:
                 raise ValueError("missing or conflicting schedule evidence")
+            if not any(scheduled==deadline and title_time<=started for scheduled,title_time in title_times.get(m["race_code"],[])):
+                raise ValueError("schedule was not observed before race-card capture")
             actual=[minute for minute in (12,11,10) if completed<=deadline-timedelta(minutes=minute)]
             if m["eligible_margins"]!=actual:raise ValueError("inconsistent cutoff labels")
             import csv,io,math
