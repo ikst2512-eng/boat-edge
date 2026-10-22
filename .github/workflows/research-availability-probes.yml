@@ -2,8 +2,8 @@ name: Research race-card availability probes
 on:
   schedule:
     # 07:00-08:50 JST (previous UTC day) plus 09:00-22:50 JST
-    - cron: '*/10 22-23 * * *'
-    - cron: '*/10 0-13 * * *'
+    - cron: '*/5 22-23 * * *'
+    - cron: '*/5 0-13 * * *'
   workflow_dispatch:
 permissions:
   contents: read
