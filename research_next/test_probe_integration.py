@@ -63,6 +63,7 @@ class IntegrationTests(unittest.TestCase):
    self.assertEqual((status["due"],status["captured"],status["failed"]),(2,2,0))
    self.assertEqual(calls.count(CARD),1)
    self.assertEqual((summary["invalid"],summary["eligible_10"]),(0,2))
+   self.assertEqual(assess({**status,"status":"ok"},summary)["state"],"PROBE_EVIDENCE_PRESENT_NOT_EXTERNALLY_ATTESTED")
  def test_tampered_bytes_rejected(self):
   with tempfile.TemporaryDirectory() as root:
    status=self.collect(root)
