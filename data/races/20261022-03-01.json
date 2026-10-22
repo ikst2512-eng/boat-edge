@@ -8,7 +8,7 @@
     "event": "メカニカルシティ稲城・第50回日刊スポーツ杯",
     "race_no": 1,
     "deadline": "11:14",
-    "updated_at": "2026-10-22T07:17:25+09:00",
+    "updated_at": "2026-10-22T09:03:08+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261022&jcd=03&rno=1",
-      "fetched_at": "2026-10-22T07:19:30+09:00",
-      "sha256": "b3ac3dcf8393fa6ef65907203be07189bff5543598974f94218dde0add862b17",
+      "fetched_at": "2026-10-22T09:04:45+09:00",
+      "sha256": "f7eb2b9c31f000349161a95525455886c3cdc57d5b8740e301988c0d7bd08ff1",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261022&jcd=03&rno=1",
+      "fetched_at": "2026-10-22T09:04:07+09:00",
+      "sha256": "f1bd3e4b9a63ea8cbbff970aa21455d5984448d4dfc0ded80e72bb760b4eab6b",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "21666558e4832a8e17eaddd9bdcd48ff4c3c976b021e59d0fe4f134203ee412f"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "f231d05d4ea27fa6cd0ee5cf707c15e3eb4005a28fb21e654b219f2aac1ebe4a"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "a794a05331ce63e6ce2fb7249ef395ffbb0aa01b6940dfc75505efdeec8308ba"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "fe1cd6342719c20f8ed87c7947d437da3e57995e24d562acc04ee109c7210e61"
     }
   },
   "racers": [
@@ -325,7 +331,53 @@
       "raw_text": "6 5430 / B2 鳥本 智史 三重/三重 22歳/51.0kg F1 L0 0.18 1.66 2.13 4.26 0.00 0.00 0.00 30 44.94 62.92 53 47.19 64.04 3 7 2 8 1 2 7 1 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 三品 隆浩 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 松田 隆司 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 三村 岳人 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 高山 弘斗 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 宮内 直哉 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 鳥本 智史 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

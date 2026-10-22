@@ -8,7 +8,7 @@
     "event": "SUZUKIスピードカップ",
     "race_no": 1,
     "deadline": "10:46",
-    "updated_at": "2026-10-22T07:17:25+09:00",
+    "updated_at": "2026-10-22T09:03:08+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261022&jcd=06&rno=1",
-      "fetched_at": "2026-10-22T07:20:16+09:00",
-      "sha256": "3b1faabf04700a92c8effe6bfe722a3312f51babd1add60e8547756be859318c",
+      "fetched_at": "2026-10-22T09:06:00+09:00",
+      "sha256": "09a747ebcd25393d21a34e490a6065fa44cce03e4285a40b04502fa5c8b92757",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261022&jcd=06&rno=1",
+      "fetched_at": "2026-10-22T09:03:56+09:00",
+      "sha256": "7836d622483a6e193af83accfb0de98235e581b0e5c03c687ea19d6b4083ba9b",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "21666558e4832a8e17eaddd9bdcd48ff4c3c976b021e59d0fe4f134203ee412f"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "f231d05d4ea27fa6cd0ee5cf707c15e3eb4005a28fb21e654b219f2aac1ebe4a"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "a794a05331ce63e6ce2fb7249ef395ffbb0aa01b6940dfc75505efdeec8308ba"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "fe1cd6342719c20f8ed87c7947d437da3e57995e24d562acc04ee109c7210e61"
     }
   },
   "racers": [
@@ -287,7 +293,53 @@
       "raw_text": "6 4880 / B1 澤崎 雄哉 東京/東京 31歳/52.7kg F1 L0 0.17 4.87 27.00 50.00 6.65 54.84 70.97 26 38.41 57.97 34 45.45 72.73 6 7R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 川上 聡介 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 村上 遼 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 伯母 芳恒 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 大場 敏 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 小林 文彦 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 澤崎 雄哉 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

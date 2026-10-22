@@ -8,7 +8,7 @@
     "event": "第47回報知エキサイトカップBTS尾道開設6周年",
     "race_no": 3,
     "deadline": "11:12",
-    "updated_at": "2026-10-22T07:17:25+09:00",
+    "updated_at": "2026-10-22T09:03:08+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261022&jcd=17&rno=3",
-      "fetched_at": "2026-10-22T07:19:00+09:00",
-      "sha256": "fc02348eb2858a54de04704670010769aef6ebbd6ba1e89787c2d133c9752134",
+      "fetched_at": "2026-10-22T09:04:57+09:00",
+      "sha256": "6958da524af556f49a04e5c964b1ca4c484092ff83e5d86fa7491cfe4ba9bfd9",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261022&jcd=17&rno=3",
+      "fetched_at": "2026-10-22T09:04:08+09:00",
+      "sha256": "aab746e10694b9a26995da8d270d3baa0db53ceaa0c371c9920ce536aa4a44e1",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "21666558e4832a8e17eaddd9bdcd48ff4c3c976b021e59d0fe4f134203ee412f"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "f231d05d4ea27fa6cd0ee5cf707c15e3eb4005a28fb21e654b219f2aac1ebe4a"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "a794a05331ce63e6ce2fb7249ef395ffbb0aa01b6940dfc75505efdeec8308ba"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/22.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "fe1cd6342719c20f8ed87c7947d437da3e57995e24d562acc04ee109c7210e61"
     }
   },
   "racers": [
@@ -298,7 +304,53 @@
       "raw_text": "6 3578 / B1 塩田 雄一 香川/香川 53歳/52.0kg F0 L0 0.18 3.62 10.81 24.32 3.35 11.76 29.41 56 0.00 0.00 57 0.00 0.00 1 10 7 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 富山 弘幸 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 新田 洋一 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 葛原 大陽 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 岡谷 健吾 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 山口 隼人 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 塩田 雄一 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
