@@ -34,22 +34,26 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
                 card_cache[target]=content
         return CachedResponse(target,card_cache[target])
     totals={"discovered":len(races),"due":0,"captured":0,"failed":0,"failures":[]}
+    due=[]
     for x in races:
         code=x.get("レースコード","")
-        if not (len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):continue
+        if not (len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):
+            continue
         try:
             deadline_text=x["電話投票締切予定"]
-            if not isinstance(deadline_text,str) or len(deadline_text)!=5 or deadline_text[2]!=":":
-                raise ValueError("invalid deadline format")
+            if len(deadline_text)!=5 or deadline_text[2]!=":":
+                continue
             deadline=datetime.strptime(day+deadline_text,"%Y%m%d%H:%M").replace(tzinfo=JST)
-        except (ValueError,KeyError,TypeError):continue
-        # Start probing up to three hours early. Avoid relying on a late 60-minute window.
-        # Repeated scheduled runs can track availability as the cutoff approaches.
+        except (ValueError,KeyError,TypeError):
+            continue
         remaining=(deadline-now).total_seconds()/60
-        if not 10<=remaining<=180:continue
-        totals["due"]+=1
+        if 10<=remaining<=180:
+            due.append((code,deadline))
+    totals["due"]=len(due)
+    for code,deadline in due:
         try:
             cardurl=BASE+"race_cards/"+path
+            # Fetch once per run, retain separate immutable race-specific evidence.
             if probe is run_probe:
                 probe(code,deadline.isoformat(),cardurl,root,opener=cached_opener)
             else:
