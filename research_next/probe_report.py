@@ -6,7 +6,28 @@ def report(root):
     output={"manifests":0,"eligible_12":0,"eligible_11":0,"eligible_10":0,"invalid":0}
     unique={12:set(),11:set(),10:set()}
     races={12:set(),11:set(),10:set()}
+    # Title-source manifests use a different schema and are separately audited.
+    title_dir=Path(root)/"_source_title"
+    output["title_sources"]=0
+    output["invalid_title_sources"]=0
+    if title_dir.exists():
+        for p in title_dir.glob("*.json"):
+            try:
+                t=json.loads(p.read_text(encoding="utf-8"))
+                b=p.with_suffix(".body")
+                if b.is_symlink() or not b.is_file():raise ValueError("missing title source")
+                raw=b.read_bytes()
+                if len(raw)!=t["bytes"] or hashlib.sha256(raw).hexdigest()!=t["sha256"]:
+                    raise ValueError("title source hash mismatch")
+                if t.get("source_publication_time_proven") is not False:
+                    raise ValueError("unproven publication claim")
+                stamp=datetime.fromisoformat(t["captured_jst"])
+                if stamp.utcoffset()!=timedelta(hours=9):raise ValueError("not JST")
+                output["title_sources"]+=1
+            except (ValueError,KeyError,TypeError,OSError,UnicodeError,json.JSONDecodeError):
+                output["invalid_title_sources"]+=1
     for p in Path(root).glob("*/*.json"):
+        if p.parent.name=="_source_title":continue
         try:
             m=json.loads(p.read_text(encoding="utf-8"))
             name=m["body_name"]
