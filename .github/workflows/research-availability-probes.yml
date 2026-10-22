@@ -19,6 +19,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Record Actions execution identity
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          record = {
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+              "event_name": os.environ.get("GITHUB_EVENT_NAME"),
+              "head_sha": os.environ.get("GITHUB_SHA"),
+              "workflow_ref": os.environ.get("GITHUB_WORKFLOW_REF"),
+              "runner_recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+              "external_source_publication_verified": False,
+          }
+          Path("research_next/probe_execution.json").write_text(
+              json.dumps(record, sort_keys=True) + "\\n", encoding="utf-8"
+          )
+          print(json.dumps(record, sort_keys=True))
+          PY
       - name: Run collection regression tests
         run: python -m unittest discover -s research_next -p 'test_*.py' -v
       - name: Probe due races, never score results
@@ -70,5 +91,6 @@ jobs:
             research_next/probe_run_status.json
             research_next/probe_summary.json
             research_next/probe_health.json
+            research_next/probe_execution.json
           if-no-files-found: ignore
           retention-days: 30
