@@ -6,12 +6,12 @@ JST=timezone(timedelta(hours=9))
 CODE="202610231201"
 URL="https://boatracecsv.github.io/data/programs/race_cards/2026/10/23.csv"
 def fake(body):
-    response=Mock()
+    response=MagicMock()
     response.status=200
     response.read.return_value=body
     response.geturl.return_value=URL
-    response.__enter__=Mock(return_value=response)
-    response.__exit__=Mock(return_value=False)
+    response.__enter__.return_value=response
+    response.__exit__.return_value=False
     return lambda *args,**kw:response
 def csv_body(code=CODE):
     return ("レースコード,"+",".join(f"艇{i}_全国勝率" for i in range(1,7))+"\n"+code+",6,6,6,6,6,6\n").encode()
