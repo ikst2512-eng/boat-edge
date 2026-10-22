@@ -6,6 +6,8 @@ def report(root):
     output={"manifests":0,"eligible_12":0,"eligible_11":0,"eligible_10":0,"invalid":0}
     unique={12:set(),11:set(),10:set()}
     races={12:set(),11:set(),10:set()}
+    title_deadlines={}
+    title_conflicts=set()
     # Title-source manifests use a different schema and are separately audited.
     title_dir=Path(root)/"_source_title"
     output["title_sources"]=0
@@ -32,6 +34,19 @@ def report(root):
                 rows=list(csv.DictReader(io.StringIO(raw.decode("utf-8-sig"))))
                 if not rows or "レースコード" not in rows[0] or "電話投票締切予定" not in rows[0]:
                     raise ValueError("title schedule invalid")
+                for row in rows:
+                    code=row.get("レースコード","")
+                    value=row.get("電話投票締切予定","")
+                    if not (len(code)==12 and code.isascii() and code.isdigit() and
+                            code.startswith(stamp.strftime("%Y%m%d")) and isinstance(value,str)):
+                        continue
+                    try:
+                        scheduled=datetime.strptime(code[:8]+value,"%Y%m%d%H:%M").replace(tzinfo=stamp.tzinfo)
+                    except ValueError:
+                        continue
+                    if code in title_deadlines and title_deadlines[code]!=scheduled:
+                        title_conflicts.add(code)
+                    title_deadlines[code]=scheduled
                 output["title_sources"]+=1
             except (ValueError,KeyError,TypeError,OSError,UnicodeError,json.JSONDecodeError):
                 output["invalid_title_sources"]+=1
@@ -53,6 +68,8 @@ def report(root):
                 raise ValueError("not JST")
             if started>completed or completed>deadline or m["race_code"][:8]!=deadline.strftime("%Y%m%d"):
                 raise ValueError("invalid chronology")
+            if m["race_code"] in title_conflicts or title_deadlines.get(m["race_code"])!=deadline:
+                raise ValueError("missing or conflicting schedule evidence")
             actual=[minute for minute in (12,11,10) if completed<=deadline-timedelta(minutes=minute)]
             if m["eligible_margins"]!=actual:raise ValueError("inconsistent cutoff labels")
             import csv,io,math
