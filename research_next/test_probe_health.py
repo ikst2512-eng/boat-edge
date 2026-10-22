@@ -19,6 +19,10 @@ class HealthTests(unittest.TestCase):
   x=assess({"status":"ok","due":2,"captured":2,"failed":0},{"manifests":2,"eligible_10":1,"invalid":0,"title_sources":1})
   self.assertEqual(x["state"],"INCOMPLETE_CUTOFF_COVERAGE")
   self.assertEqual(x["proven_captures"],1)
+ def test_reject_cumulative_capture_evidence(self):
+  x=assess({"status":"ok","due":1,"captured":1,"failed":0},{"manifests":20,"eligible_10":15,"invalid":0,"invalid_title_sources":0,"title_sources":1})
+  self.assertEqual(x["state"],"AMBIGUOUS_CUMULATIVE_EVIDENCE")
+  self.assertEqual(x["proven_captures"],0)
  def test_incomplete_capture_not_success(self):
   x=assess({"status":"ok","due":3,"captured":2,"failed":0},{"manifests":2,"eligible_10":2,"invalid":0,"title_sources":1})
   self.assertEqual(x["state"],"PARTIAL_FAILURE")
