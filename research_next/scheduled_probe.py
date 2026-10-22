@@ -15,6 +15,24 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
         body=r.read(2_000_001)
     if len(body)>2_000_000:raise ValueError("title too large")
     races=list(csv.DictReader(io.StringIO(body.decode("utf-8-sig"))))
+    # Fetching the same card CSV for every race is wasteful. Cache exact bytes
+    # for this runner invocation, while each probe still timestamps verification.
+    card_cache={}
+    class CachedResponse:
+        def __init__(self,url,body):self.status=200;self._url=url;self._body=body
+        def read(self,n):return self._body[:n]
+        def geturl(self):return self._url
+        def __enter__(self):return self
+        def __exit__(self,*args):return False
+    def cached_opener(req,timeout=12):
+        target=req.full_url
+        if target not in card_cache:
+            with opener(req,timeout=timeout) as response:
+                if response.status!=200 or response.geturl()!=target:raise ValueError("bad card response")
+                content=response.read(2_000_001)
+                if len(content)>2_000_000:raise ValueError("card too large")
+                card_cache[target]=content
+        return CachedResponse(target,card_cache[target])
     totals={"discovered":len(races),"due":0,"captured":0,"failed":0,"failures":[]}
     for x in races:
         code=x.get("レースコード","")
@@ -28,7 +46,10 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
         totals["due"]+=1
         try:
             cardurl=BASE+"race_cards/"+path
-            probe(code,deadline.isoformat(),cardurl,root)
+            if probe is run_probe:
+                probe(code,deadline.isoformat(),cardurl,root,opener=cached_opener)
+            else:
+                probe(code,deadline.isoformat(),cardurl,root)
             totals["captured"]+=1
         except (OSError,ValueError,KeyError,TypeError) as exc:
             totals["failed"]+=1
