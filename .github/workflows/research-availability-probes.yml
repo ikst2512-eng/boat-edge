@@ -25,6 +25,10 @@ jobs:
         run: |
           python research_next/probe_report.py research_next/probes > research_next/probe_summary.json
           cat research_next/probe_summary.json
+          if [ -f research_next/probe_run_status.json ]; then
+            python research_next/probe_health.py research_next/probe_run_status.json research_next/probe_summary.json > research_next/probe_health.json
+            cat research_next/probe_health.json
+          fi
           {
             echo '## Research acquisition status'
             echo 'Run status:'
@@ -42,6 +46,7 @@ jobs:
             research_next/probes/
             research_next/probe_run_status.json
             research_next/probe_summary.json
+            research_next/probe_health.json
           if-no-files-found: ignore
           retention-days: 30
       - name: Run collection regression tests
