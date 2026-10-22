@@ -1,5 +1,6 @@
 """Aggregate only validated, on-disk probe manifests with intact captured bytes."""
 import argparse,hashlib,json
+from datetime import datetime,timedelta
 from collections import Counter
 from pathlib import Path
 def report(root):
@@ -15,8 +16,16 @@ def report(root):
             data=body.read_bytes()
             if len(data)!=m["bytes"] or hashlib.sha256(data).hexdigest()!=m["sha256"]:raise ValueError("hash mismatch")
             if m["target_race_validated"] is not True:raise ValueError("race unverified")
-            for minute in (12,11,10):
-                if minute in m["eligible_margins"]:unique[minute].add((m["race_code"],m["source_url"]))
+            deadline=datetime.fromisoformat(m["deadline_jst"])
+            started=datetime.fromisoformat(m["started_jst"])
+            completed=datetime.fromisoformat(m["completed_jst"])
+            if any(t.utcoffset()!=timedelta(hours=9) for t in (deadline,started,completed)):
+                raise ValueError("not JST")
+            if started>completed or completed>deadline or m["race_code"][:8]!=deadline.strftime("%Y%m%d"):
+                raise ValueError("invalid chronology")
+            actual=[minute for minute in (12,11,10) if completed<=deadline-timedelta(minutes=minute)]
+            if m["eligible_margins"]!=actual:raise ValueError("inconsistent cutoff labels")
+            for minute in actual:unique[minute].add((m["race_code"],m["source_url"]))
             output["manifests"]+=1
         except (ValueError,KeyError,TypeError,OSError,json.JSONDecodeError):
             output["invalid"]+=1
