@@ -24,8 +24,8 @@ class PipelineIntegrationTests(unittest.TestCase):
         path=f"{day[:4]}/{day[4:6]}/{day[6:]}.csv"
         title_url=BASE+"title/"+path
         cards_url=BASE+"race_cards/"+path
-        title=f"レースコード,電話投票締切予定\\n{race},{deadline:%H:%M}\\n".encode()
-        cards=("レースコード,"+",".join(f"艇{i}_全国勝率" for i in range(1,7))+f"\\n{race},6,6,6,6,6,6\\n").encode()
+        title=f"レースコード,電話投票締切予定\n{race},{deadline:%H:%M}\n".encode()
+        cards=("レースコード,"+",".join(f"艇{i}_全国勝率" for i in range(1,7))+f"\n{race},6,6,6,6,6,6\n").encode()
         requests=[]
         def opener(request,timeout=12):
             url=request.full_url
