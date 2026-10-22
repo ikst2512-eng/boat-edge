@@ -10,7 +10,7 @@ def assess(run_status,summary):
     due=run_status.get("due");captured=run_status.get("captured")
     if type(due) is not int or type(captured) is not int or due<0 or captured<0 or captured>due:
         return {"state":"INVALID_RUN_STATUS","proven_captures":0}
-    if run_status.get("failed",0):
+    if run_status.get("failed",0) or captured<due:
         return {"state":"PARTIAL_FAILURE","proven_captures":0}
     if due==0:return {"state":"NO_RACES_DUE","proven_captures":0}
     if (type(summary.get("invalid")) is not int or summary["invalid"]>0
