@@ -30,10 +30,12 @@ def evaluate(rows,margin=12):
         split=r["split"]
         if split not in ("train","test"):raise ValueError("bad split")
         (train_dates if split=="train" else test_dates).add(code[:8])
+        # Training rows establish chronological split only. Never require future result labels or test predictions for training rows.
+        if split=="train":continue
         truth=r["outcome"]
         if truth not in TRIPLES:raise ValueError("bad outcome")
         a,b=parse_prob(r["baseline_probs"]),parse_prob(r["candidate_probs"])
-        if split=="test":results.append((score(a,truth),score(b,truth)))
+        results.append((score(a,truth),score(b,truth)))
     if not train_dates or not test_dates or max(train_dates)>=min(test_dates):raise ValueError("train/test dates overlap or not chronological")
     if not results:raise ValueError("no test races")
     def aggregate(i):
