@@ -26,4 +26,15 @@ class ProbeReportTests(unittest.TestCase):
       "completed_jst":"2026-10-23T17:45:02+09:00","eligible_margins":[12,11,10]}
    (p/"capture.json").write_text(json.dumps(m))
    self.assertEqual(report(d)["eligible_12"],1)
+ def test_wrong_race_in_archived_csv_rejected(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/"202610231201";p.mkdir()
+   body=("レースコード,"+",".join(f"艇{i}_全国勝率" for i in range(1,7))+"\n202610231202,6,6,6,6,6,6\n").encode()
+   (p/"capture.body").write_bytes(body)
+   meta={"body_name":"capture.body","bytes":len(body),"sha256":hashlib.sha256(body).hexdigest(),"target_race_validated":True,
+      "race_code":"202610231201","source_url":"https://boatracecsv.github.io/data/programs/race_cards/2026/10/23.csv",
+      "deadline_jst":"2026-10-23T18:00:00+09:00","started_jst":"2026-10-23T17:45:00+09:00",
+      "completed_jst":"2026-10-23T17:45:02+09:00","eligible_margins":[12,11,10]}
+   (p/"capture.json").write_text(json.dumps(meta))
+   self.assertEqual(report(d)["invalid"],1)
 if __name__=="__main__":unittest.main()
