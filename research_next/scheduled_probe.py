@@ -61,6 +61,7 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
     totals={"discovered":len(races),"due":0,"captured":0,"failed":0,"failures":[],"linked_duplicate_bodies":0}
     identical_bodies={}
     due=[]
+    valid_races=0
     for x in races:
         code=x.get("レースコード","")
         if not (len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):
@@ -72,9 +73,12 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
             deadline=datetime.strptime(day+deadline_text,"%Y%m%d%H:%M").replace(tzinfo=JST)
         except (ValueError,KeyError,TypeError):
             continue
+        valid_races+=1
         remaining=(deadline-now).total_seconds()/60
         if 10<=remaining<=180:
             due.append((code,deadline))
+    if valid_races==0:
+        raise ValueError("title CSV has no valid race schedules")
     totals["due"]=len(due)
     for code,deadline in due:
         try:
