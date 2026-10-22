@@ -40,9 +40,10 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
         try:
             deadline=datetime.strptime(day+x["電話投票締切予定"],"%Y%m%d%H:%M").replace(tzinfo=JST)
         except (ValueError,KeyError,TypeError):continue
-        # Capture early, from 60m before deadline until strictly 10m before.
+        # Start probing up to three hours early. Avoid relying on a late 60-minute window.
+        # Repeated scheduled runs can track availability as the cutoff approaches.
         remaining=(deadline-now).total_seconds()/60
-        if not 10<=remaining<=60:continue
+        if not 10<=remaining<=180:continue
         totals["due"]+=1
         try:
             cardurl=BASE+"race_cards/"+path
