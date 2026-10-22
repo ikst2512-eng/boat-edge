@@ -1,5 +1,6 @@
 """Synthetic HTTP-to-disk-to-audit integration checks; never request results."""
 import tempfile, unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from scheduled_probe import run
@@ -28,9 +29,10 @@ class IntegrationTests(unittest.TestCase):
    url=request.full_url
    if url not in (TITLE,CARD):raise AssertionError("Unexpected source")
    return Response(url,title if url==TITLE else card)
-  def capture(code,deadline,source,path):
+  def capture(code,deadline,source,path,opener=None):
    return run_probe(code,deadline,source,path,clock=lambda:NOW,opener=opener)
-  totals=run(now=NOW,root=root,opener=opener,probe=capture,capture_clock=lambda:NOW)
+  with patch("scheduled_probe.run_probe",side_effect=capture):
+   totals=run(now=NOW,root=root,opener=opener,capture_clock=lambda:NOW)
   totals["status"]="ok"
   return totals
  def test_valid_synthetic_capture(self):
