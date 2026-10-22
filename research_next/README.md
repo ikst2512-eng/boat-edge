@@ -56,3 +56,9 @@ No workflow execution or externally timestamped source capture has been verified
 ### Early collection window update
 
 The race-card polling eligibility window now begins **180 minutes** before the listed deadline (previously 60). This changes when a race is first considered, but does not itself prove upstream data availability or GitHub Actions run success. Repeated 10-minute probes provide time-series evidence; all successful snapshots must be audited against their raw CSV.
+
+## Simplification / storage (2026-10-23)
+
+The race-specific acquisition probe now accepts only `race_cards/YYYY/MM/DD.csv`. The unused `title` probe branch was removed; the scheduler alone reads the title CSV to discover deadlines. Inside a single scheduled run, the daily card CSV is downloaded once, and identical race-specific raw `.body` files are replaced by filesystem hardlinks on Linux. This preserves individual per-race, per-capture timestamps, manifests and SHA-256 checks while reducing **local runner disk use**. GitHub artifact compression/storage savings are not independently verified. Separate workflow runs still save separate copies: this change does not deduplicate across runs.
+
+Actual scheduled-run success and upstream availability remain unverified; do not infer a real acquisition rate from unit tests or code updates.
