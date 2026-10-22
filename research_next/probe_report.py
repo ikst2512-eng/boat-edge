@@ -5,6 +5,7 @@ from pathlib import Path
 def report(root):
     output={"manifests":0,"eligible_12":0,"eligible_11":0,"eligible_10":0,"invalid":0}
     unique={12:set(),11:set(),10:set()}
+    races={12:set(),11:set(),10:set()}
     for p in Path(root).glob("*/*.json"):
         try:
             m=json.loads(p.read_text(encoding="utf-8"))
@@ -39,11 +40,15 @@ def report(root):
             elif "/title/" in m["source_url"]:
                 if not matches[0].get("電話投票締切予定"):raise ValueError("missing deadline")
             else:raise ValueError("unsupported CSV type")
-            for minute in actual:unique[minute].add((m["race_code"],m["source_url"]))
+            for minute in actual:
+                unique[minute].add((m["race_code"],m["source_url"]))
+                races[minute].add(m["race_code"])
             output["manifests"]+=1
         except (ValueError,KeyError,TypeError,OSError,UnicodeError,json.JSONDecodeError):
             output["invalid"]+=1
-    for minute in (12,11,10):output[f"eligible_{minute}"]=len(unique[minute])
+    for minute in (12,11,10):
+        output[f"eligible_{minute}"]=len(unique[minute])
+        output[f"unique_races_{minute}"]=len(races[minute])
     return output
 if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("root");a=p.parse_args()
