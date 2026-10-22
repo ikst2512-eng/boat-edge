@@ -46,3 +46,9 @@ The example race/deadline is illustrative, not a confirmed official schedule. No
 The repository now includes `.github/workflows/research-availability-probes.yml`, which is configured for every ten minutes from 09:00–22:50 JST. The runner discovers today's races from the BoatraceCSV title feed, chooses races between 10 and 60 minutes before scheduled deadline, obtains the corresponding race card, checks six nationwide win rates, and writes immutable per-run raw response + SHA-256 metadata to a GitHub Actions artifact retained 30 days. It does **not** request any results or change BOAT EDGE CLEAN. The schedule is only a configuration; GitHub Actions may be delayed, disabled, or fail. Successful operation is not confirmed until run logs and artifacts are inspected. The result does not prove official site release time. This checks national win-rate race cards, **not** BOATERS exhibition data.
 
 After runs, download a complete run artifact and execute `python research_next/probe_report.py <artifact-root>`; output reports the count of validated source snapshots by cutoff. Its counts concern distinct race/source pairs, not externally attested pre-race forecasts.
+
+## Operational run status
+
+The scheduled workflow now writes `research_next/probe_run_status.json` (discovered/due/captured/failed and bounded error types) and `research_next/probe_summary.json` (recomputed 12/11/10-minute eligibility from captured raw bytes and manifests). Both appear as downloadable workflow artifacts and in the GitHub Actions step summary. An acquisition failure makes the job fail, rather than silently showing a successful green run. A zero-race successful run means the scheduler found nothing due, **not** that capture was proven across all races.
+
+No workflow execution or externally timestamped source capture has been verified at the time of this code change.
