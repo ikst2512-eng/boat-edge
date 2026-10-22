@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Run collection regression tests
+        run: python -m unittest discover -s research_next -p 'test_*.py' -v
       - name: Probe due races, never score results
         run: python research_next/scheduled_probe.py
       - name: Summarize cutoff availability
@@ -38,6 +40,9 @@ jobs:
             echo ''
             echo 'Verified snapshots:'
             cat research_next/probe_summary.json
+            echo ''
+            echo 'Evidence classification:'
+            cat research_next/probe_health.json || true
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Save exact capture bytes and manifests
         if: always()
@@ -51,5 +56,3 @@ jobs:
             research_next/probe_health.json
           if-no-files-found: ignore
           retention-days: 30
-      - name: Run collection regression tests
-        run: python -m unittest discover -s research_next -p 'test_*.py'
