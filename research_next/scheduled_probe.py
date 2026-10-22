@@ -5,7 +5,8 @@ from datetime import datetime,timedelta,timezone
 from urllib.request import Request,urlopen
 from probe_availability import run_probe,JST
 BASE="https://boatracecsv.github.io/data/programs/"
-def run(now=None,root="research_next/probes",opener=urlopen,probe=None):
+def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_clock=None):
+    capture_clock=capture_clock or (lambda:datetime.now(JST))
     if probe is None:probe=run_probe
     now=now or datetime.now(JST)
     if now.utcoffset()!=timedelta(hours=9):raise ValueError("JST required")
@@ -18,7 +19,8 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None):
     if len(body)>2_000_000:raise ValueError("title too large")
     # Preserve the exact title bytes used to choose deadlines for this run.
     # The title's observed capture time is distinct from its publisher's release time.
-    captured_at=datetime.now(JST)
+    captured_at=capture_clock()
+    if captured_at.utcoffset()!=timedelta(hours=9):raise ValueError("capture clock must be JST")
     evidence_root=Path(root)/"_source_title"
     evidence_root.mkdir(parents=True,exist_ok=True)
     title_sha=hashlib.sha256(body).hexdigest()
