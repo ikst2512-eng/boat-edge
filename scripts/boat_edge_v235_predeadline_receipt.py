@@ -96,7 +96,68 @@ def choose(root, now, requested=None):
     return min(recent or found, key=lambda x: x[0])
 
 
-def receipt(root, now=None, requested=None):
+def historical_first_receipt(root, record, key, due, snap_path):
+    """Validate original Git-add bytes even if later revisions exist."""
+    commits = git(root, "log", "--diff-filter=A", "--format=%H", "--", snap_path)
+    if not commits:
+        record["status"] = "LOCAL_SNAPSHOT_NOT_FIRST_GIT_COMMITTED"
+        return record
+    sha = commits.decode("utf-8", "replace").strip().splitlines()[-1]
+    if not re.fullmatch(r"[a-f0-9]{40}", sha):
+        record["status"] = "GIT_FIRST_COMMIT_UNVERIFIED"
+        return record
+    raw = git(root, "show", sha + ":" + snap_path)
+    stamp = git(root, "show", "-s", "--format=%cI", sha)
+    commit_time = instant(stamp.decode().strip()) if stamp else None
+    record["first_git_commit"] = sha
+    record["first_git_commit_at"] = commit_time.isoformat() if commit_time else None
+    record["first_git_snapshot_sha256"] = hashlib.sha256(raw).hexdigest() if raw is not None else None
+    try:
+        first = json.loads(raw.decode("utf-8")) if raw is not None else {}
+    except (UnicodeError, ValueError):
+        first = {}
+    if not isinstance(first, dict):
+        first = {}
+    modes = first.get("modes")
+    hit = modes.get("hit") if isinstance(modes, dict) else None
+    tickets = hit.get("tickets") if isinstance(hit, dict) else None
+    combos = ([t.get("combo") for t in tickets[:10]]
+              if isinstance(tickets, list) and len(tickets) >= 10
+              and all(isinstance(t, dict) for t in tickets[:10]) else [])
+    first_time = instant(first.get("first_saved_at"))
+    audit_path = "data/site_prediction_audit/" + key + ".json"
+    audit_raw = git(root, "show", sha + ":" + audit_path)
+    try:
+        audit = json.loads(audit_raw.decode("utf-8")) if audit_raw is not None else {}
+    except (UnicodeError, ValueError):
+        audit = {}
+    if not isinstance(audit, dict):
+        audit = {}
+    record["first_git_v229_audit_valid"] = bool(
+        audit.get("pass") is True and
+        audit.get("race_key") == key and
+        audit.get("latest_snapshot_sha256") ==
+        (hashlib.sha256(raw).hexdigest() if raw is not None else None)
+    )
+    guards = first.get("guards")
+    valid = (record["first_git_v229_audit_valid"] and
+             commit_time is not None and 2 <= (due - commit_time).total_seconds() / 60 <= 10 and
+             raw is not None and first.get("race_key") == key and
+             first.get("snapshot_window") == "FINAL_15M" and
+             first.get("prediction_kind") == "SITE_REFERENCE_V122" and
+             isinstance(guards, dict) and
+             all(guards.get(k) is False for k in ("results_seen", "unlock", "scoring")) and
+             len(combos) == 10 and all(isinstance(c, str) and c for c in combos) and
+             len(set(combos)) == 10 and first_time is not None and
+             2 <= (due - first_time).total_seconds() / 60 <= 10)
+    record["first_saved_at"] = first.get("first_saved_at")
+    record["prediction_saved_proven"] = bool(valid)
+    record["status"] = ("SITE_FIRST_GIT_COMMIT_BEFORE_DEADLINE" if valid
+                        else "FIRST_GIT_COMMIT_NOT_SOURCE_BOUND_PREDEADLINE")
+    return record
+
+
+def receipt(root, now=None, requested=None, historical_deadline=None):
     root = Path(root)
     now = (now or datetime.now(JST)).astimezone(JST)
     record = {
@@ -107,7 +168,22 @@ def receipt(root, now=None, requested=None):
         "formal_unlock": False,
         "prediction_saved_proven": False,
     }
-    chosen = choose(root, now, requested)
+    # Historical audit supplies the archived observation clock; this does not
+    # establish official eligibility and cannot create or alter predictions.
+    if historical_deadline is not None:
+        if (not isinstance(requested, str) or not KEY.fullmatch(requested) or
+                not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", str(historical_deadline))):
+            record["status"] = "INVALID_HISTORICAL_RACE_OR_DEADLINE"
+            return record
+        try:
+            historical_due = datetime.strptime(requested[:8] + historical_deadline,
+                                                "%Y%m%d%H:%M").replace(tzinfo=JST)
+        except ValueError:
+            record["status"] = "INVALID_HISTORICAL_RACE_OR_DEADLINE"
+            return record
+        chosen = (historical_due, requested, None, historical_deadline)
+    else:
+        chosen = choose(root, now, requested)
     if chosen is None:
         record["status"] = "NO_SAME_DAY_VERIFIED_RACE_ID"
         return record
@@ -133,6 +209,9 @@ def receipt(root, now=None, requested=None):
         record["v230_targeted"] = key in (status.get("targets") or [])
         record["v230_outcome"] = (status.get("outcomes") or {}).get(key, "no_target_outcome")
     snap_path = "data/site_prediction_snapshots/" + key + ".json"
+    # Archive first-add evidence does not depend on the latest working tree.
+    if historical_deadline is not None:
+        return historical_first_receipt(root, record, key, due, snap_path)
     snap_file = root / snap_path
     if not snap_file.is_file():
         record["status"] = "BEFORE_SOURCE_WINDOW" if left > 19 else (
@@ -177,8 +256,31 @@ def receipt(root, now=None, requested=None):
     record["first_git_commit"] = first_sha
     record["first_git_commit_at"] = committed_at.isoformat() if committed_at else None
     record["first_git_snapshot_sha256"] = hashlib.sha256(git_raw).hexdigest() if git_raw else None
+    # An archived snapshot may have legitimate later revisions. For historical
+    # evidence, validate the original first-add bytes, never today's file.
+    # The first-add must independently carry valid pre-result metadata.
+    first_snap = {}
+    if git_raw is not None:
+        try:
+            parsed_first = json.loads(git_raw.decode("utf-8"))
+            first_snap = parsed_first if isinstance(parsed_first, dict) else {}
+        except (UnicodeError, ValueError):
+            pass
+    first_tickets = ((first_snap.get("modes") or {}).get("hit") or {}).get("tickets") or []
+    first_time = instant(first_snap.get("first_saved_at"))
+    first_valid = (
+        first_snap.get("race_key") == key and
+        first_snap.get("snapshot_window") == "FINAL_15M" and
+        first_snap.get("prediction_kind") == "SITE_REFERENCE_V122" and
+        all((first_snap.get("guards") or {}).get(g) is False for g in
+            ("results_seen", "unlock", "scoring")) and
+        len(first_tickets) >= 10 and
+        len({t.get("combo") for t in first_tickets[:10]}) == 10 and
+        first_time is not None and 2 <= (due - first_time).total_seconds() / 60 <= 10
+    )
     if (committed_at is None or committed_at >= due or
-            git_raw is None or hashlib.sha256(git_raw).hexdigest() != digest):
+            git_raw is None or not first_valid or
+            (historical_deadline is None and hashlib.sha256(git_raw).hexdigest() != digest)):
         record["status"] = "FIRST_GIT_COMMIT_NOT_SOURCE_BOUND_PREDEADLINE"
         return record
     record["prediction_saved_proven"] = True
