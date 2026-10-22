@@ -23,6 +23,7 @@ def assess(run_status,summary):
         return {"state":"MISSING_CAPTURE_EVIDENCE","proven_captures":0}
     valid=summary.get("eligible_10",0)
     if type(valid) is not int or valid<0 or valid>n:return {"state":"INVALID_CAPTURE_EVIDENCE","proven_captures":0}
+    if valid>captured:return {"state":"AMBIGUOUS_CUMULATIVE_EVIDENCE","proven_captures":0}
     if valid<captured:return {"state":"INCOMPLETE_CUTOFF_COVERAGE","proven_captures":valid}
     return {"state":"PROBE_EVIDENCE_PRESENT_NOT_EXTERNALLY_ATTESTED","proven_captures":valid,"note":"Only source snapshots, not verified official publication or saved predictions"}
 if __name__=="__main__":
