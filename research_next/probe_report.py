@@ -8,7 +8,9 @@ def report(root):
     for p in Path(root).glob("*/*.json"):
         try:
             m=json.loads(p.read_text(encoding="utf-8"))
-            body=p.parent/m["body_name"]
+            name=m["body_name"]
+            if not isinstance(name,str) or Path(name).name!=name or not name.endswith(".body"):raise ValueError("unsafe body name")
+            body=p.parent/name
             if body.is_symlink() or body.parent!=p.parent or not body.is_file():raise ValueError("invalid body")
             data=body.read_bytes()
             if len(data)!=m["bytes"] or hashlib.sha256(data).hexdigest()!=m["sha256"]:raise ValueError("hash mismatch")
