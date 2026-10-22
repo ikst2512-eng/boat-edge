@@ -30,4 +30,15 @@ class TitleAuditTests(unittest.TestCase):
    }))
    r=report(d)
    self.assertEqual(r["invalid_title_sources"],1)
+ def test_title_date_mismatch_rejected(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/"_source_title";p.mkdir()
+   body="レースコード,電話投票締切予定\\n202610231201,10:30\\n".encode()
+   (p/"schedule.body").write_bytes(body)
+   (p/"schedule.json").write_text(json.dumps({
+    "source_url":"https://boatracecsv.github.io/data/programs/title/2026/10/22.csv",
+    "captured_jst":"2026-10-23T07:00:00+09:00",
+    "sha256":hashlib.sha256(body).hexdigest(),"bytes":len(body),
+    "source_publication_time_proven":False}))
+   self.assertEqual(report(d)["invalid_title_sources"],1)
 if __name__=="__main__":unittest.main()
