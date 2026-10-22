@@ -23,6 +23,15 @@ def report(root):
                     raise ValueError("unproven publication claim")
                 stamp=datetime.fromisoformat(t["captured_jst"])
                 if stamp.utcoffset()!=timedelta(hours=9):raise ValueError("not JST")
+                if not isinstance(t.get("source_url"),str):
+                    raise ValueError("missing title source URL")
+                day=stamp.strftime("%Y/%m/%d")
+                if t["source_url"]!=f"https://boatracecsv.github.io/data/programs/title/{day}.csv":
+                    raise ValueError("title date mismatch")
+                import csv,io
+                rows=list(csv.DictReader(io.StringIO(raw.decode("utf-8-sig"))))
+                if not rows or "レースコード" not in rows[0] or "電話投票締切予定" not in rows[0]:
+                    raise ValueError("title schedule invalid")
                 output["title_sources"]+=1
             except (ValueError,KeyError,TypeError,OSError,UnicodeError,json.JSONDecodeError):
                 output["invalid_title_sources"]+=1
