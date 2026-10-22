@@ -1,5 +1,6 @@
 """Scheduled probe runner: discover today's races from title CSV, never results."""
-import csv,io,json,sys
+import csv,io,json,sys,os
+from pathlib import Path
 from datetime import datetime,timedelta,timezone
 from urllib.request import Request,urlopen
 from probe_availability import run_probe,JST
@@ -33,7 +34,8 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
                 if len(content)>2_000_000:raise ValueError("card too large")
                 card_cache[target]=content
         return CachedResponse(target,card_cache[target])
-    totals={"discovered":len(races),"due":0,"captured":0,"failed":0,"failures":[]}
+    totals={"discovered":len(races),"due":0,"captured":0,"failed":0,"failures":[],"linked_duplicate_bodies":0}
+    identical_bodies={}
     due=[]
     for x in races:
         code=x.get("レースコード","")
@@ -55,7 +57,21 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
             cardurl=BASE+"race_cards/"+path
             # Fetch once per run, retain separate immutable race-specific evidence.
             if probe is run_probe:
-                probe(code,deadline.isoformat(),cardurl,root,opener=cached_opener)
+                meta=probe(code,deadline.isoformat(),cardurl,root,opener=cached_opener)
+                # Every race keeps its own timestamped manifest, but identical daily
+                # CSV bytes share one inode on runners supporting hardlinks.
+                body_path=Path(root)/code/meta["body_name"]
+                first=identical_bodies.get(meta["sha256"])
+                if first is None:
+                    identical_bodies[meta["sha256"]]=body_path
+                elif first.is_file() and body_path.is_file():
+                    link=body_path.with_name(body_path.name+".linktmp")
+                    try:
+                        os.link(first,link)
+                        os.replace(link,body_path)
+                        totals["linked_duplicate_bodies"]+=1
+                    except OSError:
+                        link.unlink(missing_ok=True)
             else:
                 probe(code,deadline.isoformat(),cardurl,root)
             totals["captured"]+=1
