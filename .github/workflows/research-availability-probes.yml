@@ -44,6 +44,22 @@ jobs:
             echo 'Evidence classification:'
             cat research_next/probe_health.json || true
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Require trustworthy acquisition classification
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("research_next/probe_health.json")
+          if not path.is_file():
+              raise SystemExit("Missing acquisition health report")
+          health = json.loads(path.read_text(encoding="utf-8"))
+          accepted = {"NO_RACES_DUE", "PROBE_EVIDENCE_PRESENT_NOT_EXTERNALLY_ATTESTED"}
+          if health.get("state") not in accepted:
+              raise SystemExit(f"Acquisition evidence rejected: {health.get('state')}")
+          print(f"Acquisition evidence state: {health['state']}")
+          PY
       - name: Save exact capture bytes and manifests
         if: always()
         uses: actions/upload-artifact@v4
