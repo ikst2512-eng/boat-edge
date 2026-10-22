@@ -8,6 +8,13 @@ def row(day,split,actual="1-2-3"):
 class EvalTests(unittest.TestCase):
     def test_common_evaluation(self):
         x=evaluate([row("21","train"),row("22","test")]);self.assertEqual(x["n"],1)
+    def test_train_without_result_or_probabilities(self):
+        train=row("21","train")
+        train["outcome"]=train["baseline_probs"]=train["candidate_probs"]=""
+        x=evaluate([train,row("22","test")]);self.assertEqual(x["n"],1)
+    def test_test_missing_outcome_rejected(self):
+        test=row("22","test");test["outcome"]=""
+        with self.assertRaises(ValueError):evaluate([row("21","train"),test])
     def test_missing_race(self):
         with self.assertRaises(ValueError):evaluate([row("22","test")])
     def test_late_capture(self):
