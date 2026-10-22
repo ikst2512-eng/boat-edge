@@ -32,3 +32,11 @@ Store the raw JSON received by the collector separately and without modification
 `python research_next/audit_frozen.py frozen/202610231201.json raw/202610231201.json`
 
 The auditor recalculates the raw-file SHA-256 and reruns schema validation. A changed raw byte, changed saved feature, invalid entry permutation, or claimed capture after the chosen cutoff fails closed. **This does not establish an independent remote publication timestamp**. A production collector still needs capture-time provenance, immutable storage, and external source verification before results can be treated as genuinely pre-race.
+
+## Availability probes (12, 11, 10 minutes)
+
+Run the real HTTP probe **before** the named cutoff, never retrospectively. It checks that the exact race row and all six nationwide win rates exist; only then stores response bytes, SHA-256, started/completed JST time, and which cutoff margins were met.
+
+`python research_next/probe_availability.py --race-code 202610231201 --deadline-jst 2026-10-23T18:00:00+09:00 --source-url https://boatracecsv.github.io/data/programs/race_cards/2026/10/23.csv --output research_next/probes`
+
+The example race/deadline is illustrative, not a confirmed official schedule. No automated probe has yet been deployed, and no real capture success is asserted. This measures **CSV host availability**, not the original official exhibition publication time. Per-run timestamps are local runner-clock assertions, not an independent trusted time source. Do not use late captures in pre-cutoff forecasting.
