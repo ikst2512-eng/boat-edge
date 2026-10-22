@@ -3,7 +3,7 @@
 Fetches must be made at the capture timestamp; this code never backdates availability.
 This probe stores exact response bytes and metadata; it does not parse results or score.
 """
-import argparse, hashlib, json, os, time
+import argparse, csv, io, hashlib, json, os, math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -26,6 +26,19 @@ def run_probe(race_code, deadline_jst, source_url, root, clock=None, opener=urlo
         if final!=source_url:raise ValueError("redirect not allowed")
     after=clock()
     if after<before or after.utcoffset()!=timedelta(hours=9):raise ValueError("clock inconsistent")
+    # HTTP success alone does not prove usable race data.
+    try:
+        rows=list(csv.DictReader(io.StringIO(content.decode("utf-8-sig"))))
+        hits=[row for row in rows if row.get("レースコード")==race_code]
+        if len(hits)!=1:raise ValueError("target race absent or duplicate")
+        if "/race_cards/" in source_url:
+            values=[float(hits[0][f"艇{i}_全国勝率"]) for i in range(1,7)]
+            if not all(math.isfinite(v) and 0<v<20 for v in values):raise ValueError("invalid rates")
+        elif "/title/" in source_url:
+            if not hits[0].get("電話投票締切予定"):raise ValueError("missing deadline")
+        else:raise ValueError("unsupported source family")
+    except (UnicodeError,KeyError,TypeError) as exc:
+        raise ValueError("bad source content") from exc
     digest=hashlib.sha256(content).hexdigest()
     # Body is saved first using exclusive create. A duplicate probe is not overwritten.
     dest=Path(root)/race_code
@@ -36,7 +49,7 @@ def run_probe(race_code, deadline_jst, source_url, root, clock=None, opener=urlo
         f.write(content);f.flush();os.fsync(f.fileno())
     meta={"race_code":race_code,"source_url":source_url,"deadline_jst":deadline_jst,
           "started_jst":before.isoformat(),"completed_jst":after.isoformat(),
-          "sha256":digest,"body_name":raw.name,"bytes":len(content),
+          "sha256":digest,"body_name":raw.name,"bytes":len(content),"target_race_validated":True,
           "eligible_margins":[m for m in MARGINS if after<=deadline-timedelta(minutes=m)],
           "source_publication_time_proven":False}
     with (dest/(raw.stem+".json")).open("x",encoding="utf-8") as f:
