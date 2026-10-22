@@ -5,7 +5,8 @@ from datetime import datetime,timedelta,timezone
 from urllib.request import Request,urlopen
 from probe_availability import run_probe,JST
 BASE="https://boatracecsv.github.io/data/programs/"
-def run(now=None,root="research_next/probes",opener=urlopen,probe=run_probe):
+def run(now=None,root="research_next/probes",opener=urlopen,probe=None):
+    if probe is None:probe=run_probe
     now=now or datetime.now(JST)
     if now.utcoffset()!=timedelta(hours=9):raise ValueError("JST required")
     day=now.strftime("%Y%m%d")
