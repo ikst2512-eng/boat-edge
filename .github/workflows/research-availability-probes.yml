@@ -81,6 +81,35 @@ jobs:
               raise SystemExit(f"Acquisition evidence rejected: {health.get('state')}")
           print(f"Acquisition evidence state: {health['state']}")
           PY
+      - name: Require complete evidence report files
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          required = (
+              "probe_execution.json",
+              "probe_run_status.json",
+              "probe_summary.json",
+              "probe_health.json",
+          )
+          base = Path("research_next")
+          missing = [name for name in required if not (base / name).is_file()]
+          if missing:
+              raise SystemExit("Missing required evidence files: " + ", ".join(missing))
+          for name in required:
+              path = base / name
+              if path.stat().st_size == 0:
+                  raise SystemExit("Empty required evidence file: " + name)
+              try:
+                  parsed = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                  raise SystemExit("Invalid evidence JSON: " + name) from exc
+              if not isinstance(parsed, dict):
+                  raise SystemExit("Evidence JSON must be an object: " + name)
+          print("All four required evidence reports exist and contain JSON objects")
+          PY
       - name: Save exact capture bytes and manifests
         if: always()
         uses: actions/upload-artifact@v4
