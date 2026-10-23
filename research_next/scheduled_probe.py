@@ -114,6 +114,9 @@ if __name__=="__main__":
         outcome["status"]="ok"
     except (OSError,ValueError,TypeError,UnicodeError) as e:
         outcome={"status":"collector_failed","error_type":type(e).__name__}
+        # Preserve only the numeric HTTP status; never interpret absence as publication proof.
+        if type(getattr(e,"code",None)) is int:
+            outcome["http_status"]=e.code
     dest=Path("research_next/probe_run_status.json")
     dest.write_text(json.dumps(outcome,ensure_ascii=False,sort_keys=True),encoding="utf-8")
     print(json.dumps(outcome,ensure_ascii=False))
