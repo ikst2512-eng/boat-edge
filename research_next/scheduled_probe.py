@@ -65,8 +65,8 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
     seen_codes=set()
     for x in races:
         code=x.get("レースコード","")
-        if not (len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):
-            continue
+        if not (isinstance(code,str) and len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):
+            raise ValueError("invalid race code in title CSV")
         if code in seen_codes:
             raise ValueError("duplicate race code in title CSV")
         seen_codes.add(code)
