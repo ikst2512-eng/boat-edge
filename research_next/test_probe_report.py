@@ -12,6 +12,36 @@ class ProbeReportTests(unittest.TestCase):
    "sha256":hashlib.sha256(data).hexdigest(),"bytes":len(data),
    "source_publication_time_proven":False}))
 
+ def test_invalid_title_row_rejected_instead_of_skipped(self):
+  with tempfile.TemporaryDirectory() as d:
+   self.add_title(d)
+   q=Path(d)/"_source_title"
+   body=("レースコード,電話投票締切予定\\n"
+         "202610231201,18:00\\n"
+         "BAD,19:00\\n").replace("\\n","\n").encode()
+   (q/"source.body").write_bytes(body)
+   meta=json.loads((q/"source.json").read_text())
+   meta["bytes"]=len(body)
+   meta["sha256"]=hashlib.sha256(body).hexdigest()
+   (q/"source.json").write_text(json.dumps(meta))
+   observed=report(d)
+   self.assertEqual(observed["invalid_title_sources"],1)
+   self.assertEqual(observed["title_sources"],0)
+ def test_duplicate_title_row_rejected(self):
+  with tempfile.TemporaryDirectory() as d:
+   self.add_title(d)
+   q=Path(d)/"_source_title"
+   body=("レースコード,電話投票締切予定\\n"
+         "202610231201,18:00\\n"
+         "202610231201,18:00\\n").replace("\\n","\n").encode()
+   (q/"source.body").write_bytes(body)
+   meta=json.loads((q/"source.json").read_text())
+   meta["bytes"]=len(body)
+   meta["sha256"]=hashlib.sha256(body).hexdigest()
+   (q/"source.json").write_text(json.dumps(meta))
+   observed=report(d)
+   self.assertEqual(observed["invalid_title_sources"],1)
+   self.assertEqual(observed["title_sources"],0)
  def test_reject_forged_cutoff(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/"202610231201";p.mkdir();self.add_title(d)
