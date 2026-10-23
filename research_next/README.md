@@ -39,11 +39,11 @@ Run the real HTTP probe **before** the named cutoff, never retrospectively. It c
 
 `python research_next/probe_availability.py --race-code 202610231201 --deadline-jst 2026-10-23T18:00:00+09:00 --source-url https://boatracecsv.github.io/data/programs/race_cards/2026/10/23.csv --output research_next/probes`
 
-The example race/deadline is illustrative, not a confirmed official schedule. No automated probe has yet been deployed, and no real capture success is asserted. This measures **CSV host availability**, not the original official exhibition publication time. Per-run timestamps are local runner-clock assertions, not an independent trusted time source. Do not use late captures in pre-cutoff forecasting.
+The example race/deadline is illustrative, not a confirmed official schedule. A scheduled collection workflow is configured, but no actual run/artifact success has been independently verified. This measures **CSV host availability**, not the original official exhibition publication time. Per-run timestamps are local runner-clock assertions, not an independent trusted time source. Do not use late captures in pre-cutoff forecasting.
 
 ## Scheduled real-source acquisition
 
-The repository now includes `.github/workflows/research-availability-probes.yml`, which is configured for every ten minutes from 09:00–22:50 JST. The runner discovers today's races from the BoatraceCSV title feed, chooses races between 10 and 180 minutes before scheduled deadline, obtains the corresponding race card, checks six nationwide win rates, and writes immutable per-run raw response + SHA-256 metadata to a GitHub Actions artifact retained 30 days. It does **not** request any results or change BOAT EDGE CLEAN. The schedule is only a configuration; GitHub Actions may be delayed, disabled, or fail. Successful operation is not confirmed until run logs and artifacts are inspected. The result does not prove official site release time. This checks national win-rate race cards, **not** BOATERS exhibition data.
+The repository now includes `.github/workflows/research-availability-probes.yml`, which is configured at five-minute cron intervals from 07:00–22:55 JST. The runner discovers today's races from the BoatraceCSV title feed, chooses races between 10 and 180 minutes before scheduled deadline, obtains the corresponding race card, checks six nationwide win rates, and writes immutable per-run raw response + SHA-256 metadata to a GitHub Actions artifact retained 30 days. It does **not** request any results or change BOAT EDGE CLEAN. The schedule is only a configuration; GitHub Actions may be delayed, disabled, or fail. Successful operation is not confirmed until run logs and artifacts are inspected. The result does not prove official site release time. This checks national win-rate race cards, **not** BOATERS exhibition data.
 
 After runs, download a complete run artifact and execute `python research_next/probe_report.py <artifact-root>`; output reports the count of validated source snapshots by cutoff. Its counts concern distinct race/source pairs, not externally attested pre-race forecasts.
 
@@ -55,7 +55,7 @@ No workflow execution or externally timestamped source capture has been verified
 
 ### Early collection window update
 
-The race-card polling eligibility window now begins **180 minutes** before the listed deadline (previously 60). This changes when a race is first considered, but does not itself prove upstream data availability or GitHub Actions run success. Repeated 10-minute probes provide time-series evidence; all successful snapshots must be audited against their raw CSV.
+The race-card polling eligibility window now begins **180 minutes** before the listed deadline (previously 60). This changes when a race is first considered, but does not itself prove upstream data availability or GitHub Actions run success. Repeated scheduled probes may provide time-series evidence only if their runs and saved captures are verified; all successful snapshots must be audited against their raw CSV.
 
 ## Simplification / storage (2026-10-23)
 
