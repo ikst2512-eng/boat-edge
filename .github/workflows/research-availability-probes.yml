@@ -176,8 +176,13 @@ jobs:
                                               "GUARD_OUTCOME", "CLASSIFY_OUTCOME",
                                               "ARTIFACT_OUTCOME")]
           health_file = Path("research_next/probe_health.json")
-          health = json.loads(health_file.read_text()) if health_file.is_file() else {}
-          classification = health.get("state", "NO_HEALTH_REPORT")
+          try:
+              health = json.loads(health_file.read_text(encoding="utf-8")) if health_file.is_file() else {}
+              classification = health.get("state", "NO_HEALTH_REPORT") if isinstance(health, dict) else "INVALID_HEALTH_REPORT"
+              if not isinstance(classification, str) or not classification:
+                  classification = "INVALID_HEALTH_STATE"
+          except (OSError, UnicodeError, ValueError):
+              classification = "UNREADABLE_HEALTH_REPORT"
           if not all(x == "success" for x in outcomes):
               state = "failure"
           elif classification == "PROBE_EVIDENCE_PRESENT_NOT_EXTERNALLY_ATTESTED":
