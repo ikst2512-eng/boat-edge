@@ -215,6 +215,11 @@ jobs:
           # schedule, publish a fresh source-dated report ONLY when the last
           # report's actual main Git commit is >=15 minutes old. This reuses
           # the SAME owner and does not add another cron, writer, or trigger.
+          # Inspect the latest committed V215 evidence before deciding that
+          # a recent V220 report may safely be reused. Checkout at job start
+          # can predate a concurrent V216 observation commit.
+          git fetch --no-tags origin main
+          git reset --hard origin/main
           if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_run" ]]; then
             last_report_commit="$(git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json || true)"
             if [[ "$last_report_commit" =~ ^[0-9]+$ ]]; then
