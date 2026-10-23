@@ -1,7 +1,7 @@
 name: Research race-card availability probes
 on:
   schedule:
-    # 07:00-08:50 JST (previous UTC day) plus 09:00-22:50 JST
+    # 07:00-08:55 JST (previous UTC day) plus 09:00-22:55 JST
     - cron: '*/5 22-23 * * *'
     - cron: '*/5 0-13 * * *'
   workflow_dispatch:
@@ -92,5 +92,5 @@ jobs:
             research_next/probe_summary.json
             research_next/probe_health.json
             research_next/probe_execution.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30
