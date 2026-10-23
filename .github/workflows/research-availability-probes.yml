@@ -86,7 +86,7 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import json, os
+          import json, os, sys
           from pathlib import Path
           required = (
               "probe_execution.json",
@@ -111,6 +111,11 @@ jobs:
           execution = json.loads((base / "probe_execution.json").read_text(encoding="utf-8"))
           status = json.loads((base / "probe_run_status.json").read_text(encoding="utf-8"))
           health = json.loads((base / "probe_health.json").read_text(encoding="utf-8"))
+          summary = json.loads((base / "probe_summary.json").read_text(encoding="utf-8"))
+          sys.path.insert(0, str(base.resolve()))
+          from probe_health import assess
+          if health != assess(status, summary):
+              raise SystemExit("Health report differs from independently recomputed assessment")
           if execution.get("run_id") != os.environ.get("GITHUB_RUN_ID"):
               raise SystemExit("Execution identity does not match current Actions run")
           if execution.get("head_sha") != os.environ.get("GITHUB_SHA"):
