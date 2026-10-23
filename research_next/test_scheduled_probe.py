@@ -76,6 +76,17 @@ class RunnerTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as root:
    with self.assertRaisesRegex(ValueError,"invalid deadline for race 202610231202"):
     run(now,root=root,opener=lambda *a,**k:r,probe=lambda *a:None)
+ def test_bad_race_code_does_not_disappear(self):
+  now=datetime(2026,10,23,10,0,tzinfo=JST)
+  body=("レースコード,電話投票締切予定\n"
+        "202610231201,11:00\n"
+        "NOT_A_RACE,11:30\n").encode()
+  r=MagicMock();r.status=200;r.read.return_value=body
+  r.geturl.return_value="https://boatracecsv.github.io/data/programs/title/2026/10/23.csv"
+  r.__enter__=MagicMock(return_value=r);r.__exit__=MagicMock(return_value=False)
+  with tempfile.TemporaryDirectory() as root:
+   with self.assertRaisesRegex(ValueError,"invalid race code"):
+    run(now,root=root,opener=lambda *a,**k:r,probe=lambda *a:None)
  def test_empty_title_feed_fails_closed(self):
   now=datetime(2026,10,23,10,0,tzinfo=JST)
   r=MagicMock();r.status=200;r.read.return_value=b"\xe3\x83\xac\xe3\x83\xbc\xe3\x82\xb9\xe3\x82\xb3\xe3\x83\xbc\xe3\x83\x89,\xe9\x9b\xbb\xe8\xa9\xb1\xe6\x8a\x95\xe7\xa5\xa8\xe7\xb7\xa0\xe5\x88\x87\xe4\xba\x88\xe5\xae\x9a\n"
