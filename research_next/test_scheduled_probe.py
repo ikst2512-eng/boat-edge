@@ -63,7 +63,7 @@ class RunnerTests(unittest.TestCase):
   r.geturl.return_value="https://boatracecsv.github.io/data/programs/title/2026/10/23.csv"
   r.__enter__=MagicMock(return_value=r);r.__exit__=MagicMock(return_value=False)
   with tempfile.TemporaryDirectory() as root:
-   with self.assertRaisesRegex(ValueError,"invalid deadline"):
+   with self.assertRaisesRegex(ValueError,"invalid race code"):
     run(now,root=root,opener=lambda *a,**k:r)
  def test_malformed_deadline_does_not_disappear_among_valid_races(self):
   now=datetime(2026,10,23,10,0,tzinfo=JST)
