@@ -8,7 +8,7 @@
     "event": "PayPay銀行賞",
     "race_no": 2,
     "deadline": "10:51",
-    "updated_at": "2026-10-23T07:45:00+09:00",
+    "updated_at": "2026-10-23T09:31:47+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261023&jcd=11&rno=2",
-      "fetched_at": "2026-10-23T07:48:13+09:00",
-      "sha256": "51f6662fa348c7be2a9331c578b39efecec60c6ea2d1ee11ef3abdf0ce0fb191",
+      "fetched_at": "2026-10-23T09:34:32+09:00",
+      "sha256": "39d6893c8aa34b9145f9c656ff7224730da7574b085c7a5fbe264444de4ea4ce",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261023&jcd=11&rno=2",
+      "fetched_at": "2026-10-23T09:32:35+09:00",
+      "sha256": "0539c1a9290025a3f85f7184b00826f0073b7354920d1bbd0c9b6c41b5cf8689",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "7e33d8a14c5e0e0cf21e35157d531eca0c94179009d1288b364efa1b074c7a53"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5f0101ebc8b5312c52e3533d6f5383a77963d2137d806c49f8ee535813295c9a"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "48bb406fab913d962aaabd4eb62e53d4101644a4828f7894d229168815cb0e82"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "3ffb30cbef7a362e919b35718771fee2a7127c789eb373e4115ea7126d002e64"
     }
   },
   "racers": [
@@ -63,7 +69,7 @@
       "name": "関 裕也",
       "class": "B1",
       "age": 43,
-      "weight_kg": 53.9,
+      "weight_kg": 53.7,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -95,7 +101,7 @@
         "9"
       ],
       "early_race": 6,
-      "raw_text": "1 4301 / B1 関 裕也 福岡/福岡 43歳/53.9kg F0 L0 0.20 4.71 29.89 43.68 3.60 20.00 20.00 73 24.78 39.82 36 27.97 45.76 4 10 9 6R"
+      "raw_text": "1 4301 / B1 関 裕也 福岡/福岡 43歳/53.7kg F0 L0 0.20 4.71 29.89 43.68 3.60 20.00 20.00 73 24.78 39.82 36 27.97 45.76 4 10 9 6R"
     },
     {
       "lane": 2,
@@ -103,7 +109,7 @@
       "name": "渋谷 明憲",
       "class": "A1",
       "age": 40,
-      "weight_kg": 52.4,
+      "weight_kg": 52.3,
       "branch": "大阪",
       "birthplace": "大阪",
       "F": 1,
@@ -136,7 +142,7 @@
         "11"
       ],
       "early_race": null,
-      "raw_text": "2 4436 / A1 渋谷 明憲 大阪/大阪 40歳/52.4kg F1 L0 0.15 6.09 47.42 63.92 6.10 45.16 70.97 28 21.30 37.96 22 34.11 48.06 4 12 5 11"
+      "raw_text": "2 4436 / A1 渋谷 明憲 大阪/大阪 40歳/52.3kg F1 L0 0.15 6.09 47.42 63.92 6.10 45.16 70.97 28 21.30 37.96 22 34.11 48.06 4 12 5 11"
     },
     {
       "lane": 3,
@@ -299,7 +305,53 @@
       "raw_text": "6 5461 / B2 板頭 里緒 三重/三重 20歳/50.3kg F1 L0 - 1.19 0.00 0.00 0.00 0.00 0.00 32 33.33 44.72 47 37.69 55.38 4 2 7 8R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 関 裕也 53.7kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 渋谷 明憲 52.3kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 岩下 巧斗 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 山本 寛久 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 森口 和紀 51.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 板頭 里緒 50.3kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

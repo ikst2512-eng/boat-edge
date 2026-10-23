@@ -8,7 +8,7 @@
     "event": "yab山口朝日放送杯争奪戦",
     "race_no": 7,
     "deadline": "11:30",
-    "updated_at": "2026-10-23T07:45:00+09:00",
+    "updated_at": "2026-10-23T09:31:47+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261023&jcd=18&rno=7",
-      "fetched_at": "2026-10-23T07:46:01+09:00",
-      "sha256": "891886cb1146fc189ef4003b819fb1a4c4fd30e7cb42b8e3d079f56d47a8f70b",
+      "fetched_at": "2026-10-23T09:35:27+09:00",
+      "sha256": "50efcedcdce4dcd3f1949d3fa7e8ababd3455552d5b5315758690002663568ab",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261023&jcd=18&rno=7",
+      "fetched_at": "2026-10-23T09:33:01+09:00",
+      "sha256": "db145e61558562fa4f2cb88633677fbb13f009658cbb0d766e3b7eeddfe25912",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "7e33d8a14c5e0e0cf21e35157d531eca0c94179009d1288b364efa1b074c7a53"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5f0101ebc8b5312c52e3533d6f5383a77963d2137d806c49f8ee535813295c9a"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "48bb406fab913d962aaabd4eb62e53d4101644a4828f7894d229168815cb0e82"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "3ffb30cbef7a362e919b35718771fee2a7127c789eb373e4115ea7126d002e64"
     }
   },
   "racers": [
@@ -96,10 +102,11 @@
         "5",
         "11",
         "3",
-        "6"
+        "6",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "1 4226 / B1 村田 浩司 山口/山口 44歳/52.4kg F0 L0 0.15 3.84 15.15 34.34 4.77 34.29 44.29 26 39.50 52.10 43 29.06 42.74 1 11 10 5 11 3 6 1R"
+      "raw_text": "1 4226 / B1 村田 浩司 山口/山口 44歳/52.4kg F0 L0 0.15 3.84 15.15 34.34 4.77 34.29 44.29 26 39.50 52.10 43 29.06 42.74 1 11 10 5 11 3 6 1 1R"
     },
     {
       "lane": 2,
@@ -274,10 +281,11 @@
         "8",
         "1",
         "7",
-        "4"
+        "4",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "5 3974 / B1 深山 祐二 佐賀/佐賀 50歳/52.0kg F0 L0 0.16 4.50 22.77 41.58 4.70 29.63 44.44 23 36.30 49.63 61 25.22 45.58 3 1 8 8 1 7 4 2R"
+      "raw_text": "5 3974 / B1 深山 祐二 佐賀/佐賀 50歳/52.0kg F0 L0 0.16 4.50 22.77 41.58 4.70 29.63 44.44 23 36.30 49.63 61 25.22 45.58 3 1 8 8 1 7 4 2 2R"
     },
     {
       "lane": 6,
@@ -324,7 +332,53 @@
       "raw_text": "6 5421 / B2 原田 朱理 兵庫/大阪 25歳/52.3kg F0 L0 0.24 1.57 1.39 4.17 1.29 0.00 0.00 72 36.51 62.70 46 29.00 45.45 6 11 10 3 6 10 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 村田 浩司 52.4kg R 1"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 石原 光 53.7kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 岡崎 凪汰 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 今坂 晃広 52.8kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 深山 祐二 52.0kg R 2"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 原田 朱理 52.3kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 4.0,
+      "wave_cm": 4.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

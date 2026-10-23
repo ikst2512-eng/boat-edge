@@ -8,7 +8,7 @@
     "event": "KBCラジオ杯",
     "race_no": 3,
     "deadline": "09:43",
-    "updated_at": "2026-10-23T07:45:00+09:00",
+    "updated_at": "2026-10-23T09:31:47+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,47 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261023&jcd=21&rno=3",
-      "fetched_at": "2026-10-23T07:47:17+09:00",
-      "sha256": "d5f4ba7e0b40f75b5fe69b80688dd309e3787dd60c62d54d74ee2e77b8e5f97c",
+      "fetched_at": "2026-10-23T09:34:10+09:00",
+      "sha256": "ebc4f90666b8d29c424e79911eba34a25ec82e1c6a3a3d7497bf93b23603bd87",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261023&jcd=21&rno=3",
-      "fetched_at": "2026-10-23T07:45:49+09:00",
-      "sha256": "be25bbcbd570551c4f4a1e781c1f69961b6bec3f64793e35c1143e45a36c9472",
+      "fetched_at": "2026-10-23T09:32:26+09:00",
+      "sha256": "2f7c370f2ba2b3cd29759fb22a7893e81cdfc7f27481c7706a50158118ee076d",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "7e33d8a14c5e0e0cf21e35157d531eca0c94179009d1288b364efa1b074c7a53"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5f0101ebc8b5312c52e3533d6f5383a77963d2137d806c49f8ee535813295c9a"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "48bb406fab913d962aaabd4eb62e53d4101644a4828f7894d229168815cb0e82"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "3ffb30cbef7a362e919b35718771fee2a7127c789eb373e4115ea7126d002e64"
     }
   },
   "racers": [
@@ -284,47 +284,72 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 山田 雄太 56.1kg R"
+        "exhibition_time": 6.66,
+        "tilt": -0.5,
+        "raw_text": "1 山田 雄太 56.1kg 6.66 -0.5 R"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 角浜 修 53.8kg R"
+        "exhibition_time": 6.7,
+        "tilt": 0.0,
+        "raw_text": "2 角浜 修 53.8kg 6.70 0.0 R"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 古結 宏 53.3kg R"
+        "exhibition_time": 6.65,
+        "tilt": 0.0,
+        "raw_text": "3 古結 宏 53.3kg 6.65 0.0 R"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 小松 卓司 52.0kg R"
+        "exhibition_time": 6.66,
+        "tilt": 0.0,
+        "raw_text": "4 小松 卓司 52.0kg 6.66 0.0 R"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 横澤 剛治 54.7kg R"
+        "exhibition_time": 6.68,
+        "tilt": 0.0,
+        "raw_text": "5 横澤 剛治 54.7kg 6.68 0.0 リング×2 R"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 楠原 翔太 54.9kg R"
+        "exhibition_time": 6.7,
+        "tilt": 0.0,
+        "raw_text": "6 楠原 翔太 54.9kg 6.70 0.0 R"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".13"
+      },
+      {
+        "lane": 2,
+        "st": ".19"
+      },
+      {
+        "lane": 3,
+        "st": ".13"
+      },
+      {
+        "lane": 4,
+        "st": ".19"
+      },
+      {
+        "lane": 5,
+        "st": ".15"
+      },
+      {
+        "lane": 6,
+        "st": ".17"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": null,
-      "wave_cm": null
+      "wind_speed_ms": 4.0,
+      "wave_cm": 4.0
     }
   },
   "validation": {
