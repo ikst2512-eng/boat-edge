@@ -34,6 +34,17 @@ class RunnerTests(unittest.TestCase):
   self.assertEqual(status["captured"],0)
   self.assertEqual(status["failed"],1)
   self.assertEqual(status["failures"][0]["http_status"],404)
+ def test_duplicate_title_race_code_fails_closed(self):
+  now=datetime(2026,10,23,10,0,tzinfo=JST)
+  body=("レースコード,電話投票締切予定\n"
+        "202610231201,11:00\n"
+        "202610231201,11:00\n").encode()
+  r=MagicMock();r.status=200;r.read.return_value=body
+  r.geturl.return_value="https://boatracecsv.github.io/data/programs/title/2026/10/23.csv"
+  r.__enter__=MagicMock(return_value=r);r.__exit__=MagicMock(return_value=False)
+  with tempfile.TemporaryDirectory() as root:
+   with self.assertRaisesRegex(ValueError,"duplicate race code"):
+    run(now,root=root,opener=lambda *a,**k:r,probe=lambda *a:None)
  def test_invalid_schedules_fail_closed(self):
   now=datetime(2026,10,23,10,0,tzinfo=JST)
   body="レースコード,電話投票締切予定\\nBAD,11:00\\n202610231201,invalid\\n".replace("\\n","\n").encode()
