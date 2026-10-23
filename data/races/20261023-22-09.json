@@ -8,7 +8,7 @@
     "event": "ボートレース福岡天神ストリートパーク開業記念競走",
     "race_no": 9,
     "deadline": "14:56",
-    "updated_at": "2026-10-23T10:26:10+09:00",
+    "updated_at": "2026-10-23T14:17:01+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261023&jcd=22&rno=9",
-      "fetched_at": "2026-10-23T10:30:02+09:00",
-      "sha256": "ad08c3ce7afbc4de5ff15d27afc5d592947172bf5434345990115cc27597904a",
+      "fetched_at": "2026-10-23T14:19:13+09:00",
+      "sha256": "3250d995525556281c5a587c045395b800a22a2bbd98800903d498537e96b0d2",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261023&jcd=22&rno=9",
+      "fetched_at": "2026-10-23T14:17:47+09:00",
+      "sha256": "12b52abc285f0b8d62a27c1489a2a0ccf2926a200c546b8d4178f713e8bf1885",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "11c1d70c632b7abdff7d21d361c886eefd62335742641fb3012a60925465d86c"
+      "sha256": "b248a81456b03003fe0ed026b18789f56d620c552fff435424f5acd138ec5435"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "1f0a7d7db40201c86f979833faecb5e7f322bcf9e1129fe485391508da14eab3"
+      "sha256": "61a6f632f38dd82ea58cf7b24b1aa0ba44289a2efaa42d246c9c31a35548e79f"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "8be9f497d04aa3dd49a9061d3f13ee1676c2f47aa725e73eb250dfcc2d82d1d4"
+      "sha256": "1dcc6c5c9a761a45a014402832f1ba64d8ff86dc130db7d47e8dfef51d2a7823"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "cfbe2fde5f30b3ad10991c0016a380df520df8e57ee83fbb3ffe5aedc01df37b"
+      "sha256": "b3e5d6a79192ea2427a814810c5952377a35971d0b5a7891bd575fe584a596b1"
     }
   },
   "racers": [
@@ -63,7 +69,7 @@
       "name": "鳥居塚 孝博",
       "class": "A2",
       "age": 51,
-      "weight_kg": 51.5,
+      "weight_kg": 51.0,
       "branch": "群馬",
       "birthplace": "群馬",
       "F": 1,
@@ -91,7 +97,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "1 3686 / A2 鳥居塚 孝博 群馬/群馬 51歳/51.5kg F1 L0 0.15 5.79 35.05 55.67 5.48 42.86 57.14 44 31.03 49.43 109 39.06 57.03"
+      "raw_text": "1 3686 / A2 鳥居塚 孝博 群馬/群馬 51歳/51.0kg F1 L0 0.15 5.79 35.05 55.67 5.48 42.86 57.14 44 31.03 49.43 109 39.06 57.03"
     },
     {
       "lane": 2,
@@ -125,9 +131,11 @@
         "quinella_rate": 32.58,
         "trio_rate": 50.76
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "1"
+      ],
       "early_race": 1,
-      "raw_text": "2 4116 / B1 川田 正人 徳島/徳島 45歳/52.0kg F1 L0 0.18 4.50 16.67 43.33 5.36 32.14 57.14 72 38.69 55.95 142 32.58 50.76 1R"
+      "raw_text": "2 4116 / B1 川田 正人 徳島/徳島 45歳/52.0kg F1 L0 0.18 4.50 16.67 43.33 5.36 32.14 57.14 72 38.69 55.95 142 32.58 50.76 1 1R"
     },
     {
       "lane": 3,
@@ -135,7 +143,7 @@
       "name": "中澤 和志",
       "class": "A1",
       "age": 50,
-      "weight_kg": 52.4,
+      "weight_kg": 52.3,
       "branch": "埼玉",
       "birthplace": "岩手",
       "F": 0,
@@ -163,7 +171,7 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "3 3952 / A1 中澤 和志 埼玉/岩手 50歳/52.4kg F0 L0 0.14 6.48 45.93 64.44 8.20 90.00 90.00 20 33.96 46.54 133 40.16 55.12"
+      "raw_text": "3 3952 / A1 中澤 和志 埼玉/岩手 50歳/52.3kg F0 L0 0.14 6.48 45.93 64.44 8.20 90.00 90.00 20 33.96 46.54 133 40.16 55.12"
     },
     {
       "lane": 4,
@@ -171,7 +179,7 @@
       "name": "鈴木 裕隆",
       "class": "B1",
       "age": 43,
-      "weight_kg": 55.3,
+      "weight_kg": 55.5,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 0,
@@ -197,9 +205,11 @@
         "quinella_rate": 25.41,
         "trio_rate": 42.62
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "3"
+      ],
       "early_race": 3,
-      "raw_text": "4 4231 / B1 鈴木 裕隆 愛知/愛知 43歳/55.3kg F0 L0 0.17 5.40 33.63 53.98 4.90 25.00 40.00 26 32.48 50.43 154 25.41 42.62 3R"
+      "raw_text": "4 4231 / B1 鈴木 裕隆 愛知/愛知 43歳/55.5kg F0 L0 0.17 5.40 33.63 53.98 4.90 25.00 40.00 26 32.48 50.43 154 25.41 42.62 3 3R"
     },
     {
       "lane": 5,
@@ -207,7 +217,7 @@
       "name": "柳橋 宏紀",
       "class": "A2",
       "age": 44,
-      "weight_kg": 52.7,
+      "weight_kg": 52.4,
       "branch": "滋賀",
       "birthplace": "京都",
       "F": 0,
@@ -233,9 +243,11 @@
         "quinella_rate": 31.78,
         "trio_rate": 51.94
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "4"
+      ],
       "early_race": 4,
-      "raw_text": "5 4146 / A2 柳橋 宏紀 滋賀/京都 44歳/52.7kg F0 L0 0.14 5.00 29.46 43.75 5.11 26.32 47.37 73 30.90 50.00 119 31.78 51.94 4R"
+      "raw_text": "5 4146 / A2 柳橋 宏紀 滋賀/京都 44歳/52.4kg F0 L0 0.14 5.00 29.46 43.75 5.11 26.32 47.37 73 30.90 50.00 119 31.78 51.94 4 4R"
     },
     {
       "lane": 6,
@@ -243,7 +255,7 @@
       "name": "倉尾 大介",
       "class": "A2",
       "age": 51,
-      "weight_kg": 52.9,
+      "weight_kg": 52.1,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 1,
@@ -271,10 +283,56 @@
       },
       "series_tokens": [],
       "early_race": null,
-      "raw_text": "6 3715 / A2 倉尾 大介 福岡/福岡 51歳/52.9kg F1 L0 0.17 5.55 36.49 58.11 5.10 30.00 50.00 43 60.18 78.76 105 47.01 64.93"
+      "raw_text": "6 3715 / A2 倉尾 大介 福岡/福岡 51歳/52.1kg F1 L0 0.17 5.55 36.49 58.11 5.10 30.00 50.00 43 60.18 78.76 105 47.01 64.93"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": -0.5,
+        "raw_text": "1 鳥居塚 孝博 51.0kg -0.5 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": -0.5,
+        "raw_text": "2 川田 正人 52.0kg -0.5 R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": 0.0,
+        "raw_text": "3 中澤 和志 52.3kg 0.0 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": 0.0,
+        "raw_text": "4 鈴木 裕隆 55.5kg 0.0 R 3"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": -0.5,
+        "raw_text": "5 柳橋 宏紀 52.4kg -0.5 R 4"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": -0.5,
+        "raw_text": "6 倉尾 大介 52.1kg -0.5 リング×3 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
