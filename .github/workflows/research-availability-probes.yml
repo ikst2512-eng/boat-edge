@@ -14,7 +14,8 @@ concurrency:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    # Must end before the next 5-minute cron slot; failure remains visible, never promoted to evidence.
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
