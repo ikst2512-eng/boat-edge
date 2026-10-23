@@ -72,11 +72,11 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
         seen_codes.add(code)
         try:
             deadline_text=x["電話投票締切予定"]
-            if len(deadline_text)!=5 or deadline_text[2]!=":":
-                continue
+            if not isinstance(deadline_text,str) or len(deadline_text)!=5 or deadline_text[2]!=":":
+                raise ValueError("invalid deadline")
             deadline=datetime.strptime(day+deadline_text,"%Y%m%d%H:%M").replace(tzinfo=JST)
-        except (ValueError,KeyError,TypeError):
-            continue
+        except (ValueError,KeyError,TypeError) as exc:
+            raise ValueError("invalid deadline for race "+code) from exc
         valid_races+=1
         remaining=(deadline-now).total_seconds()/60
         if 10<=remaining<=180:
