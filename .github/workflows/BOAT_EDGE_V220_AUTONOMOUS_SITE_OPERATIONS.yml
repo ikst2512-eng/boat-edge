@@ -221,8 +221,32 @@ jobs:
               now_epoch="$(date -u +%s)"
               report_age="$((now_epoch - last_report_commit))"
               if (( report_age >= 0 && report_age < 900 )); then
-                echo "V220_EVENT_REPORT_FRESH_SKIP age_sec=$report_age"
-                exit 0
+                # Time alone is insufficient: V215 may have published new
+                # immutable PRE_RESULT observations after the V220 report.
+                # Skip only when its exact history bytes were already counted.
+                if python3 - <<'PY_V220_SAME_OBSERVATIONS'
+          import datetime as dt,hashlib,json
+          from pathlib import Path
+          day=dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime('%Y%m%d')
+          history=Path('data/site_paper_sim/readiness_history_v215')/(day+'.json')
+          report=Path('data/site_ops_v220/gate1c_current.json')
+          try:
+              h=json.loads(history.read_text(encoding='utf-8'))
+              g=json.loads(report.read_text(encoding='utf-8'))['today']
+              assert h['day_jst']==day and g['day_jst']==day
+              assert h['schema']=='BOAT_EDGE_V215_DIAGNOSTIC_HISTORY_V1'
+              assert isinstance(h['observations'],dict)
+              assert g['observation_history_status']=='VERIFIED'
+              assert g['observation_history_sha256']==hashlib.sha256(history.read_bytes()).hexdigest()
+              assert g['observed_races']==len(h['observations'])
+          except (OSError,ValueError,TypeError,KeyError,AssertionError):
+              raise SystemExit(1)
+          PY_V220_SAME_OBSERVATIONS
+                then
+                  echo "V220_EVENT_REPORT_FRESH_AND_OBSERVATIONS_MATCH_SKIP age_sec=$report_age"
+                  exit 0
+                fi
+                echo 'V220_EVENT_NEW_V215_OBSERVATIONS_REFRESH_EXISTING_OWNER'
               fi
             fi
             echo 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER'
@@ -264,6 +288,16 @@ jobs:
               assert ui['day_jst']==day
               assert ops['formal_results_read_by_this_runner'] is False
               assert ops['formal_unlock_or_scoring_authorized'] is False
+              # Same-day competing writer must include latest V215 history;
+              # a new report commit is not evidence of up-to-date coverage.
+              import hashlib
+              history=root/'data/site_paper_sim/readiness_history_v215'/(day+'.json')
+              if history.is_file():
+                  hist=json.loads(history.read_text(encoding='utf-8'))
+                  observed=gate['today']
+                  assert observed['observation_history_status']=='VERIFIED'
+                  assert observed['observation_history_sha256']==hashlib.sha256(history.read_bytes()).hexdigest()
+                  assert observed['observed_races']==len(hist['observations'])
               assert saved['acceptance_99_percent_proven'] is False
               assert saved['independently_source_eligible_denominator'] is None
               assert ui['formal']['guard_closed'] is True
