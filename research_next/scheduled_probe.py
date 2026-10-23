@@ -67,6 +67,9 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
         code=x.get("レースコード","")
         if not (len(code)==12 and code.isascii() and code.isdigit() and code.startswith(day)):
             continue
+        if code in seen_codes:
+            raise ValueError("duplicate race code in title CSV")
+        seen_codes.add(code)
         try:
             deadline_text=x["電話投票締切予定"]
             if len(deadline_text)!=5 or deadline_text[2]!=":":
@@ -74,9 +77,6 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
             deadline=datetime.strptime(day+deadline_text,"%Y%m%d%H:%M").replace(tzinfo=JST)
         except (ValueError,KeyError,TypeError):
             continue
-        if code in seen_codes:
-            raise ValueError("duplicate race code in title CSV")
-        seen_codes.add(code)
         valid_races+=1
         remaining=(deadline-now).total_seconds()/60
         if 10<=remaining<=180:
