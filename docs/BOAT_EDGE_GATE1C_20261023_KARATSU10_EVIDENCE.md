@@ -25,3 +25,8 @@
 4. Keep Formal Fresh guards closed and do not reconstruct/publish a late prediction.
 
 This checkpoint is a **read-only forensic account**, not closure of Gate 1C/1D.
+
+## Additional workflow inspection (2026-10-23)
+- Tracked `.github/workflows/V235.yml` declares scheduled runs at minute `2,7,12,17,22,27,32,37,42,47,52,57` during UTC hours 0–14 and 23, plus a 23:20 UTC cron and dispatch/workflow-run triggers. For the 15:10–15:18 JST (06:10–06:18 UTC) Karatsu window, nominal scheduled minutes include **06:12 and 06:17 UTC**. These are configuration, **not proof that Actions runs were actually created or executed**. GitHub schedule delay/skips cannot be inferred away.
+- The V235 workflow contains a tracked V230 refresh and strict V229 freeze integration and logs a zero-freeze diagnostic. A rolling `v230_fast_current.json` for another race cannot establish Karatsu 10R run outcome.
+- Required remaining evidence: actual Actions run IDs, created/start times and logs for the 06:10–06:18 UTC window, paired with same-time committed source trees. **No scheduler defect or official-source failure classified yet.**
