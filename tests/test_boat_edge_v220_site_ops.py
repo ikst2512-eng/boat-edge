@@ -1694,7 +1694,24 @@ def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
     print('GATE1C_V216_STALE_OBSERVER_SAFE_BACKUP_WITHOUT_FEEDBACK_PASS')
 
 
+
+def test_v220_recent_report_skip_requires_exact_v215_history():
+    """A recent report cannot hide newer source-only observations."""
+    wf=(here.parent/'.github/workflows/BOAT_EDGE_V220_AUTONOMOUS_SITE_OPERATIONS.yml').read_text(encoding='utf-8')
+    assert 'V220_EVENT_REPORT_FRESH_AND_OBSERVATIONS_MATCH_SKIP' in wf
+    assert 'V220_EVENT_NEW_V215_OBSERVATIONS_REFRESH_EXISTING_OWNER' in wf
+    assert "g['observation_history_sha256']==hashlib.sha256(history.read_bytes()).hexdigest()" in wf
+    assert "g['observed_races']==len(h['observations'])" in wf
+    assert "observed['observation_history_sha256']==hashlib.sha256(history.read_bytes()).hexdigest()" in wf
+    assert 'Same-day competing writer must include latest V215 history' in wf
+    # A fixture proves differing observation bytes cannot have an equal SHA.
+    prior=b'{"day_jst":"20261023","observations":{}}'
+    updated=b'{"day_jst":"20261023","observations":{"race":{}}}'
+    assert hashlib.sha256(prior).digest()!=hashlib.sha256(updated).digest()
+
+
 if __name__=='__main__':
+    test_v220_recent_report_skip_requires_exact_v215_history()
     test_gate1c_recovery_plan_reports_source_gaps_without_claiming_denominator()
     test_all()
     test_v216_stale_window_recovery_is_bounded_and_fail_closed()
