@@ -35,16 +35,25 @@ def report(root):
                 rows=list(csv.DictReader(io.StringIO(raw.decode("utf-8-sig"))))
                 if not rows or "レースコード" not in rows[0] or "電話投票締切予定" not in rows[0]:
                     raise ValueError("title schedule invalid")
+                source_codes=set()
+                parsed=[]
                 for row in rows:
                     code=row.get("レースコード","")
                     value=row.get("電話投票締切予定","")
-                    if not (len(code)==12 and code.isascii() and code.isdigit() and
-                            code.startswith(stamp.strftime("%Y%m%d")) and isinstance(value,str)):
-                        continue
+                    if not (isinstance(code,str) and len(code)==12 and code.isascii() and code.isdigit() and
+                            code.startswith(stamp.strftime("%Y%m%d"))):
+                        raise ValueError("invalid race code in title evidence")
+                    if code in source_codes:
+                        raise ValueError("duplicate race in title evidence")
+                    source_codes.add(code)
+                    if not (isinstance(value,str) and len(value)==5 and value[2]==":"):
+                        raise ValueError("invalid deadline in title evidence")
                     try:
                         scheduled=datetime.strptime(code[:8]+value,"%Y%m%d%H:%M").replace(tzinfo=stamp.tzinfo)
-                    except ValueError:
-                        continue
+                    except ValueError as exc:
+                        raise ValueError("invalid deadline in title evidence") from exc
+                    parsed.append((code,scheduled))
+                for code,scheduled in parsed:
                     if code in title_deadlines and title_deadlines[code]!=scheduled:
                         title_conflicts.add(code)
                     title_deadlines[code]=scheduled
