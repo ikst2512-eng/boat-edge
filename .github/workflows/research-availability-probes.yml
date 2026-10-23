@@ -86,7 +86,7 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           required = (
               "probe_execution.json",
@@ -108,7 +108,28 @@ jobs:
                   raise SystemExit("Invalid evidence JSON: " + name) from exc
               if not isinstance(parsed, dict):
                   raise SystemExit("Evidence JSON must be an object: " + name)
-          print("All four required evidence reports exist and contain JSON objects")
+          execution = json.loads((base / "probe_execution.json").read_text(encoding="utf-8"))
+          status = json.loads((base / "probe_run_status.json").read_text(encoding="utf-8"))
+          health = json.loads((base / "probe_health.json").read_text(encoding="utf-8"))
+          if execution.get("run_id") != os.environ.get("GITHUB_RUN_ID"):
+              raise SystemExit("Execution identity does not match current Actions run")
+          if execution.get("head_sha") != os.environ.get("GITHUB_SHA"):
+              raise SystemExit("Execution commit does not match current Actions commit")
+          if execution.get("external_source_publication_verified") is not False:
+              raise SystemExit("External publication must remain unverified")
+          if status.get("status") == "ok":
+              counts = (status.get("due"), status.get("captured"), status.get("failed"))
+              if any(type(value) is not int or value < 0 for value in counts):
+                  raise SystemExit("Invalid collection counts")
+              due, captured, failed = counts
+              if due != captured + failed:
+                  raise SystemExit("Collection counts do not balance")
+          if health.get("state") == "NO_RACES_DUE" and status.get("due") != 0:
+              raise SystemExit("No-races-due state contradicts collector")
+          if health.get("state") == "PROBE_EVIDENCE_PRESENT_NOT_EXTERNALLY_ATTESTED":
+              if status.get("status") != "ok" or status.get("due", 0) <= 0:
+                  raise SystemExit("Evidence-positive state contradicts collector")
+          print("Required evidence reports and run identity are consistent")
           PY
       - name: Save exact capture bytes and manifests
         if: always()
