@@ -105,7 +105,10 @@ def run(now=None,root="research_next/probes",opener=urlopen,probe=None,capture_c
             totals["captured"]+=1
         except (OSError,ValueError,KeyError,TypeError) as exc:
             totals["failed"]+=1
-            totals["failures"].append({"race_code":code,"reason":type(exc).__name__})
+            failure={"race_code":code,"reason":type(exc).__name__}
+            if type(getattr(exc,"code",None)) is int:
+                failure["http_status"]=exc.code
+            totals["failures"].append(failure)
     return totals
 if __name__=="__main__":
     from pathlib import Path
