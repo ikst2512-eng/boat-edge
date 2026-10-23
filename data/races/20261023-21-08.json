@@ -8,7 +8,7 @@
     "event": "KBCラジオ杯",
     "race_no": 8,
     "deadline": "12:15",
-    "updated_at": "2026-10-23T09:31:47+09:00",
+    "updated_at": "2026-10-23T09:53:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261023&jcd=21&rno=8",
-      "fetched_at": "2026-10-23T09:34:16+09:00",
-      "sha256": "e3fa67a00dcadda79c0d85e571f7bcc1138d27ab34e14e26f2f167a82bc677ac",
+      "fetched_at": "2026-10-23T09:56:10+09:00",
+      "sha256": "7ef502262a66d6b4b93e6cd5cd458ed9c41842b52ec6478ae5106c967015f32b",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261023&jcd=21&rno=8",
+      "fetched_at": "2026-10-23T09:55:06+09:00",
+      "sha256": "7b82bd89f8495bcca2298bc84b202f72116feeb6b0dc0fee60b3294eccf5260a",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "7e33d8a14c5e0e0cf21e35157d531eca0c94179009d1288b364efa1b074c7a53"
+      "sha256": "5e53173283991524ec273d3dfa2a8ecaad4ea47b0b6658ced6400f703f2c6723"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "5f0101ebc8b5312c52e3533d6f5383a77963d2137d806c49f8ee535813295c9a"
+      "sha256": "8a8dd9d97165b0c0574f77c1e627827bd09a5f529e2355e6092015feed9bd377"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "48bb406fab913d962aaabd4eb62e53d4101644a4828f7894d229168815cb0e82"
+      "sha256": "5c666ddeb2a34230c1b64fa8520fafc51436bc4dad0eca04f9bdaf056512bfaa"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/23.csv",
       "fetched_at": null,
-      "sha256": "3ffb30cbef7a362e919b35718771fee2a7127c789eb373e4115ea7126d002e64"
+      "sha256": "80907dbbf86b12a052e6469fb6f5a3d1c3db58277a568083de24627977fc96ea"
     }
   },
   "racers": [
@@ -235,9 +241,11 @@
         "quinella_rate": 31.62,
         "trio_rate": 49.57
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "3"
+      ],
       "early_race": 3,
-      "raw_text": "5 3430 / B1 角浜 修 広島/広島 58歳/53.8kg F0 L0 0.17 4.34 25.44 40.35 3.74 21.05 36.84 23 37.07 47.41 132 31.62 49.57 3R"
+      "raw_text": "5 3430 / B1 角浜 修 広島/広島 58歳/53.8kg F0 L0 0.17 4.34 25.44 40.35 3.74 21.05 36.84 23 37.07 47.41 132 31.62 49.57 3 3R"
     },
     {
       "lane": 6,
@@ -278,7 +286,53 @@
       "raw_text": "6 5446 / B2 長嶺 真李愛 福岡/沖縄 24歳/49.8kg F0 L0 - 1.20 0.00 0.00 1.13 0.00 0.00 6 23.28 43.10 122 37.01 55.91 1 1R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 渡邊 伸太郎 53.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 岡村 慶太 55.2kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 吉永 浩則 53.9kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 松山 裕基 53.4kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 角浜 修 53.8kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 長嶺 真李愛 49.8kg R 1"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 4.0,
+      "wave_cm": 4.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
