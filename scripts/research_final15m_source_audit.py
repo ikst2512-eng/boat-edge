@@ -27,6 +27,8 @@ def summarize(race_dir: Path, now: datetime):
                 raise ValueError("invalid source audit")
             clock = d["meta"].get("deadline")
             hh, mm = map(int, clock.split(":"))
+            if not isinstance(clock, str) or len(clock) != 5 or clock[2] != ":" or not (0 <= hh <= 23 and 0 <= mm <= 59):
+                raise ValueError("invalid deadline clock")
             deadline = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
         except (OSError, ValueError, TypeError, AttributeError):
             invalid_files.append(path.name)
