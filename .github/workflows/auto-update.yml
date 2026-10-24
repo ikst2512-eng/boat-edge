@@ -709,7 +709,8 @@ jobs:
                               break
                       if retry_digest is not None:
                           rows,digest,err=retry_rows,retry_digest,retry_err
-              fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err}
+              fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err,
+                             "observed_at":datetime.now(JST).isoformat(timespec="seconds")}
               if err and err!="not_published":
                   errors.append({"role":role,"error":err})
 
@@ -865,8 +866,8 @@ jobs:
                   audit[role]={
                     "status":"ok" if row else ("not_published" if info["error"]=="not_published" else "missing"),
                     "source":info["url"],
-                    "fetched_at":iso if row else None,
-                    "observed_at":iso,
+                    "fetched_at":info["observed_at"] if row else None,
+                    "observed_at":info["observed_at"],
                     "availability_reason":reason,
                     "source_error":info["error"] if reason=="fetch_error" else None,
                     "sha256":info["sha256"],
