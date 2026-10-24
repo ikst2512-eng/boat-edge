@@ -18,7 +18,8 @@ def summarize(race_dir: Path, now: datetime):
             d = json.loads(path.read_text(encoding="utf-8"))
             if not isinstance(d, dict) or not isinstance(d.get("meta"), dict):
                 raise ValueError("invalid race document or meta")
-            audit = d.get("source_audit") or {}
+            raw_audit = d.get("source_audit")
+            audit = {} if raw_audit is None else raw_audit
             if not isinstance(audit, dict):
                 raise ValueError("invalid source audit")
             clock = d["meta"].get("deadline")
@@ -33,7 +34,8 @@ def summarize(race_dir: Path, now: datetime):
         # Do not promote old per-race observations to fresh evidence merely
         # because this read-only report was generated now.
         def source_reason(role):
-            row = audit.get(role) or {}
+            raw_row = audit.get(role)
+            row = {} if raw_row is None else raw_row
             if not isinstance(row, dict):
                 return "observation_structure_invalid"
             reason = row.get("availability_reason", "not_observed")
