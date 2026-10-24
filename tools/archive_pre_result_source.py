@@ -34,8 +34,8 @@ def archive(race, output_dir, now=None, opener=None):
     if meta.get("phase") != "PRE_RESULT" or any(meta.get(k) is not False for k in ("results_seen", "scoring", "unlock")):
         raise ValueError("not_locked_pre_result")
     deadline = dt.datetime.fromisoformat(meta["date"] + "T" + meta["deadline"] + ":00+09:00")
-    now = now or dt.datetime.now(JST)
-    if now.tzinfo is None or now >= deadline or now.date() != deadline.date():
+    effective_now = now if now is not None else dt.datetime.now(JST)
+    if effective_now.tzinfo is None or effective_now >= deadline or effective_now.date() != deadline.date():
         raise ValueError("not_before_deadline")
     url = f"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd={date}&jcd={venue}&rno={int(no)}"
     output_dir = Path(output_dir)
@@ -52,7 +52,7 @@ def archive(race, output_dir, now=None, opener=None):
         raw = response.read(2_000_001)
         if not raw or len(raw) > 2_000_000:
             raise ValueError("invalid_body_size")
-    captured_at = dt.datetime.now(JST) if now is None else now
+    captured_at = now if now is not None else dt.datetime.now(JST)
     if captured_at >= deadline:
         raise ValueError("deadline_passed_during_fetch")
     digest = hashlib.sha256(raw).hexdigest()
