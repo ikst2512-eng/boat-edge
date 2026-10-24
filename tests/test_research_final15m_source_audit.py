@@ -35,6 +35,13 @@ class SourceAuditTest(unittest.TestCase):
             mixed = summarize(p, now)
             self.assertEqual(mixed["input_state"], "RACE_FILES_PARTIAL")
             self.assertEqual((mixed["matched_file_count"], mixed["input_race_count"], mixed["invalid_file_count"]), (2, 1, 1))
+            (p / "20261025-01-03.json").write_text(json.dumps({"meta": {"deadline": "08:10"}, "source_audit": ["invalid"]}), encoding="utf-8")
+            (p / "20261025-01-04.json").write_text(json.dumps({"meta": ["invalid"]}), encoding="utf-8")
+            mixed = summarize(p, now)
+            self.assertEqual(mixed["input_state"], "RACE_FILES_PARTIAL")
+            self.assertEqual((mixed["matched_file_count"], mixed["input_race_count"], mixed["invalid_file_count"]), (4, 1, 3))
+            self.assertEqual(len(mixed["invalid_files"]), 3)
+
 
     def test_deadline_cohorts_and_reasons(self):
         with tempfile.TemporaryDirectory() as td:
