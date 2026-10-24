@@ -60,22 +60,30 @@ def capture(url, directory, timeout=15, opener=None):
         f.write(json.dumps(rec,ensure_ascii=False,sort_keys=True)+'\n');f.flush();os.fsync(f.fileno())
     return rec
 
-def run(day, venues, outdir, capturer=capture):
+def run(day, venues, outdir, capturer=capture, race_numbers=(1,)):
     if day!=datetime.now(JST).strftime('%Y%m%d'):raise ValueError('Must capture on current JST date')
     results={'date_jst':day,'formal_eligible':False,'results_seen':False,'captures':[],'errors':[]}
+    races=tuple(dict.fromkeys(race_numbers))
+    if not races or any(not isinstance(n,int) or isinstance(n,bool) or not 1<=n<=12 for n in races):
+        raise ValueError('Race numbers must be 1 through 12')
     for venue in dict.fromkeys(venues):
         if not re.fullmatch(r'\d{2}',venue) or not 1<=int(venue)<=24:raise ValueError('Invalid venue')
-        url=f'https://www.boatrace.jp/owpc/pc/race/racelist?hd={day}&jcd={venue}&rno=1'
-        try: results['captures'].append(capturer(url,str(Path(outdir)/day/venue)))
-        except Exception as e: results['errors'].append({'venue':venue,'error':str(e)[:300]})
+        for rno in races:
+            url=f'https://www.boatrace.jp/owpc/pc/race/racelist?hd={day}&jcd={venue}&rno={rno}'
+            try:
+                record=capturer(url,str(Path(outdir)/day/venue))
+                results['captures'].append({**record,'race_number_requested':rno})
+            except Exception as e:
+                results['errors'].append({'venue':venue,'race_number_requested':rno,'error':str(e)[:300]})
     return results
 
 if __name__=='__main__':
     p=argparse.ArgumentParser()
     p.add_argument('--date',required=True);p.add_argument('--venues',nargs='+',required=True)
     p.add_argument('--outdir',required=True);p.add_argument('--report',required=True)
+    p.add_argument('--all-races',action='store_true',help='Capture 1R through 12R per venue')
     a=p.parse_args()
-    report=run(a.date,a.venues,a.outdir)
+    report=run(a.date,a.venues,a.outdir,race_numbers=range(1,13) if a.all_races else (1,))
     file=Path(a.report);file.parent.mkdir(parents=True,exist_ok=True)
     with file.open('x',encoding='utf-8') as f:json.dump(report,f,ensure_ascii=False,indent=2)
     print(json.dumps({'captured':len(report['captures']),'failed':len(report['errors']),'formal_eligible':False}))
