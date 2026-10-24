@@ -52,6 +52,11 @@ def archive(race, output_dir, now=None, opener=None):
         raw = response.read(2_000_001)
         if not raw or len(raw) > 2_000_000:
             raise ValueError("invalid_body_size")
+        if not raw.lstrip().lower().startswith((b"<!doctype html", b"<html")):
+            raise ValueError("not_html_document")
+        content_type = response.headers.get("Content-Type", "") if hasattr(response, "headers") else ""
+        if content_type and "text/html" not in content_type.lower():
+            raise ValueError("unexpected_content_type")
     captured_at = now if now is not None else dt.datetime.now(JST)
     if captured_at >= deadline:
         raise ValueError("deadline_passed_during_fetch")
