@@ -19,17 +19,6 @@ class SourceAuditTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 summarize(Path(td), datetime(2026, 10, 25, 1, 0))
 
-    def test_jst_day_for_direct_utc_call(self):
-        with tempfile.TemporaryDirectory() as td:
-            race = {"meta": {"deadline": "08:00"}, "source_audit": {}}
-            (Path(td) / "20261025-01-01.json").write_text(json.dumps(race), encoding="utf-8")
-            at = datetime(2026, 10, 24, 16, 0, tzinfo=timezone.utc)
-            report = summarize(Path(td), at)
-            self.assertEqual(report["input_race_count"], 1)
-            self.assertEqual(report["observation_at"], "2026-10-25T01:00:00+09:00")
-            with self.assertRaises(ValueError):
-                summarize(Path(td), datetime(2026, 10, 25, 1, 0))
-
     def test_missing_day_files_distinct_from_no_urgent_races(self):
         with tempfile.TemporaryDirectory() as td:
             now = datetime(2026, 10, 25, 1, 0, tzinfo=JST)
