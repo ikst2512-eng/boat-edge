@@ -127,5 +127,19 @@ class EnrichmentValidatorTests(unittest.TestCase):
             applicator.apply(original, payload, now=NOW)
 
 
+    def test_course_stats_reject_duplicate_source_roster(self):
+        race = dict(RACE, racers=[{"registration_no": "4000"}] * 6)
+        rows = [{"registration_no": str(4000+i), "course": i+1, "first_rate": 20, "second_rate": 15, "third_rate": 10} for i in range(6)]
+        source = dict(AUDIT, source="https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=04&rno=1")
+        self.assertFalse(validator.validate(race, {"course_stats": rows, "source_audit": {"course_stats": source}}, now=NOW)["ok"])
+
+    def test_wrong_race_metadata_rejected(self):
+        race = dict(RACE, meta=dict(RACE["meta"], date="2026-10-23"))
+        payload = {"actual_entry": [1, 3, 2, 4, 5, 6], "source_audit": {"actual_entry": AUDIT}}
+        result = validator.validate(race, payload, now=NOW)
+        self.assertFalse(result["ok"])
+        self.assertIn("race_metadata_mismatch", result["reasons"])
+
+
 if __name__ == "__main__":
     unittest.main()
