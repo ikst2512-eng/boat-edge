@@ -31,5 +31,13 @@ class UrgentExhibitionCohortContract(unittest.TestCase):
         self.assertLess(workflow.index('if not source_write_allowed(DATA,race_key'), workflow.index('"availability_reason":reason'))
 
 
+    def test_csv_observation_timestamp_is_per_source(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/auto-update.yml").read_text(encoding="utf-8")
+        self.assertIn('"observed_at":datetime.now(JST).isoformat(timespec="seconds")', workflow)
+        self.assertIn('"fetched_at":info["observed_at"] if row else None', workflow)
+        self.assertIn('"observed_at":info["observed_at"]', workflow)
+        self.assertNotIn('"observed_at":iso,', workflow)
+
+
 if __name__ == "__main__":
     unittest.main()
