@@ -7,6 +7,9 @@ from pathlib import Path
 spec = importlib.util.spec_from_file_location("validator", Path(__file__).with_name("validate_pre_result_enrichment.py"))
 validator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(validator)
+apply_spec = importlib.util.spec_from_file_location('applicator', Path(__file__).with_name('apply_pre_result_enrichment.py'))
+applicator = importlib.util.module_from_spec(apply_spec)
+apply_spec.loader.exec_module(applicator)
 
 RACE = {
     "race_key": "20261024-04-01",
@@ -64,6 +67,31 @@ class EnrichmentValidatorTests(unittest.TestCase):
         rows = [{"registration_no": str(4000+i), "course": i+1, "first_rate": 80, "second_rate": 30, "third_rate": 10} for i in range(6)]
         source = dict(AUDIT, source="https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=04&rno=1")
         self.check({"course_stats": rows, "source_audit": {"course_stats": source}}, False)
+
+
+    def test_apply_entry_preserves_locked_fields(self):
+        payload = {"actual_entry": [1,3,2,4,5,6], "source_audit": {"actual_entry": AUDIT}}
+        updated = applicator.apply(RACE, payload, now=NOW)
+        self.assertEqual(updated["actual_entry"], [1,3,2,4,5,6])
+        self.assertEqual(updated["meta"], RACE["meta"])
+        self.assertEqual(updated["source_audit"]["actual_entry"], AUDIT)
+        self.assertNotIn("actual_entry", RACE)
+
+    def test_apply_course_stats_joins_registration_numbers(self):
+        rows = [{"registration_no": str(4005-i), "course": 6-i,
+                 "first_rate": 20.0, "second_rate": 15.0,
+                 "third_rate": 10.0} for i in range(6)]
+        source = dict(AUDIT, source="https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=04&rno=1")
+        updated = applicator.apply(RACE, {"course_stats": rows, "source_audit": {"course_stats": source}}, now=NOW)
+        self.assertEqual(len(updated["racers"]), 6)
+        self.assertEqual(updated["racers"][0]["course_stats"]["course"], 1)
+        self.assertEqual(updated["racers"][-1]["course_stats"]["course"], 6)
+        self.assertEqual(updated["source_audit"]["course_stats"], source)
+        self.assertNotIn("course_stats", RACE["racers"][0])
+
+    def test_apply_rejects_unaudited_entry(self):
+        with self.assertRaises(ValueError):
+            applicator.apply(RACE, {"actual_entry": [1,2,3,4,5,6]}, now=NOW)
 
 
 if __name__ == "__main__":
