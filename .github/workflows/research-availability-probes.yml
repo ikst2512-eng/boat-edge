@@ -44,7 +44,9 @@ jobs:
           PY
       - name: Run collection regression tests
         id: tests
-        run: python -m unittest discover -s research_next -p 'test_*.py' -v
+        run: |
+          python -m unittest discover -s research_next -p 'test_*.py' -v
+          python -m unittest discover -s tests -p 'test_research_final15m_source_audit.py' -v
       - name: Probe due races, never score results
         id: capture_probe
         run: python research_next/scheduled_probe.py
