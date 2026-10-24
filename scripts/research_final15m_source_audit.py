@@ -37,6 +37,8 @@ def summarize(race_dir: Path, now: datetime):
             if not isinstance(row, dict):
                 return "observation_structure_invalid"
             reason = row.get("availability_reason", "not_observed")
+            if not isinstance(reason, str) or not reason:
+                return "availability_reason_invalid"
             clock = row.get("observed_at")
             if not clock:
                 return "observation_time_missing" if reason != "not_observed" else reason
