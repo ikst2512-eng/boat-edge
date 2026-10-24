@@ -150,6 +150,15 @@ jobs:
               for role, counts in reasons.items():
                   if not isinstance(counts, dict) or any(type(n) is not int or n < 0 for n in counts.values()) or sum(counts.values()) != count:
                       raise SystemExit("Unbalanced source-window audit: " + name + "/" + role)
+          # The observation must belong to this runner day, not to a prior
+          # persisted race collection. No data may be promoted from stale runs.
+          from datetime import datetime, timezone
+          observation = datetime.fromisoformat(audit["observation_at"])
+          if observation.tzinfo is None:
+              raise SystemExit("Source-window audit timestamp lacks timezone")
+          current = datetime.now(timezone.utc)
+          if abs((current - observation.astimezone(timezone.utc)).total_seconds()) > 600:
+              raise SystemExit("Stale source-window audit observation")
           execution = json.loads((base / "probe_execution.json").read_text(encoding="utf-8"))
           status = json.loads((base / "probe_run_status.json").read_text(encoding="utf-8"))
           health = json.loads((base / "probe_health.json").read_text(encoding="utf-8"))
