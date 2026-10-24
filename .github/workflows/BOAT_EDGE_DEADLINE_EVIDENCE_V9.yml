@@ -39,6 +39,16 @@ jobs:
           ARGS=()
           if [[ "$ALL_RACES" == "true" ]]; then ARGS+=(--all-races); fi
           python scripts/deadline_v9/capture.py --date "$DAY" --venues "${VENUE_ARR[@]}" --outdir artifacts/snapshots --report artifacts/report.json "${ARGS[@]}"
+      - name: Verify snapshot integrity (research only; fail closed)
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f artifacts/report.json ]]; then
+            python scripts/deadline_v9/verify_artifacts.py --root artifacts --report artifacts/report.json --output artifacts/integrity.json
+          else
+            echo '{"status":"LOCKED","reason":"NO_CAPTURE_REPORT","formal_eligible":false}' > artifacts/integrity.json
+            exit 2
+          fi
       - name: Retain capture evidence
         if: always()
         uses: actions/upload-artifact@v4
