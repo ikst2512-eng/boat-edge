@@ -158,6 +158,8 @@ jobs:
                    "RACE_FILES_PARTIAL" if invalid else "RACE_FILES_PRESENT")
           if audit.get("input_state") != state:
               raise SystemExit("Source-window input state mismatch")
+          if invalid:
+              raise SystemExit("Unusable race files block research evidence acceptance: " + ", ".join(files[:10]))
           for name, cohort in cohorts.items():
               count = cohort.get("count")
               reasons = cohort.get("reason_counts")
