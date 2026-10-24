@@ -63,7 +63,7 @@ def write_new_snapshot(output, updated):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             json.dump(updated, stream, ensure_ascii=False, indent=2)
-            stream.write("\\n")
+            stream.write("\n")
         os.link(tmp, output)
     finally:
         os.unlink(tmp)
