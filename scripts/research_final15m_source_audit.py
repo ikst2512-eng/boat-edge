@@ -44,8 +44,11 @@ def summarize(race_dir: Path, now: datetime):
             return reason
         entry["sources"] = {role: source_reason(role) for role in ROLES}
         cohorts[group].append(entry)
+    input_race_count = sum(len(rows) for rows in cohorts.values())
     result = {"observation_at": now.isoformat(timespec="seconds"), "phase": "PRE_RESULT",
-              "read_only": True, "cohorts": {}}
+              "read_only": True, "input_race_count": input_race_count,
+              "input_state": "RACE_FILES_PRESENT" if input_race_count else "NO_RACE_FILES_FOR_DATE",
+              "cohorts": {}}
     for group, entries in cohorts.items():
         result["cohorts"][group] = {"count": len(entries), "reason_counts": {
             role: dict(sorted(Counter(e["sources"][role] for e in entries).items()))
