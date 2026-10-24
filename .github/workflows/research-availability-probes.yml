@@ -118,6 +118,7 @@ jobs:
               "probe_run_status.json",
               "probe_summary.json",
               "probe_health.json",
+              "final15m_source_audit.json",
           )
           base = Path("research_next")
           missing = [name for name in required if not (base / name).is_file()]
@@ -133,6 +134,22 @@ jobs:
                   raise SystemExit("Invalid evidence JSON: " + name) from exc
               if not isinstance(parsed, dict):
                   raise SystemExit("Evidence JSON must be an object: " + name)
+          audit = json.loads((base / "final15m_source_audit.json").read_text(encoding="utf-8"))
+          if audit.get("read_only") is not True or audit.get("phase") != "PRE_RESULT":
+              raise SystemExit("Source-window audit must be read-only PRE_RESULT")
+          cohorts = audit.get("cohorts")
+          if not isinstance(cohorts, dict) or set(cohorts) != {"final15m", "future", "past_locked"}:
+              raise SystemExit("Source-window audit cohorts invalid")
+          for name, cohort in cohorts.items():
+              count = cohort.get("count")
+              reasons = cohort.get("reason_counts")
+              if type(count) is not int or count < 0 or not isinstance(reasons, dict):
+                  raise SystemExit("Invalid source-window audit cohort: " + name)
+              if set(reasons) != {"stt", "tkz", "sui", "original_exhibition"}:
+                  raise SystemExit("Invalid source-window audit roles: " + name)
+              for role, counts in reasons.items():
+                  if not isinstance(counts, dict) or any(type(n) is not int or n < 0 for n in counts.values()) or sum(counts.values()) != count:
+                      raise SystemExit("Unbalanced source-window audit: " + name + "/" + role)
           execution = json.loads((base / "probe_execution.json").read_text(encoding="utf-8"))
           status = json.loads((base / "probe_run_status.json").read_text(encoding="utf-8"))
           health = json.loads((base / "probe_health.json").read_text(encoding="utf-8"))
