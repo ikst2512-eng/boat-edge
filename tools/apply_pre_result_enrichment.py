@@ -52,6 +52,23 @@ def apply(race, enrichment, now=None):
     return merged
 
 
+
+def write_new_snapshot(output, updated):
+    """Atomically create a fresh snapshot; never modify a previous file."""
+    output = Path(output)
+    if output.exists():
+        raise FileExistsError("output exists; overwrite is forbidden")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".enrichment-", dir=str(output.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(updated, stream, ensure_ascii=False, indent=2)
+            stream.write("\\n")
+        os.link(tmp, output)
+    finally:
+        os.unlink(tmp)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("race", type=Path)
@@ -65,17 +82,7 @@ def main():
     race = json.loads(args.race.read_text(encoding="utf-8"))
     addition = json.loads(args.enrichment.read_text(encoding="utf-8"))
     updated = apply(race, addition)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".enrichment-", dir=str(args.output.parent))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(updated, stream, ensure_ascii=False, indent=2)
-            stream.write("\n")
-        if args.output.exists():
-            raise FileExistsError("output appeared during creation")
-        os.link(tmp, args.output)
-    finally:
-        os.unlink(tmp)
+    write_new_snapshot(args.output, updated)
     print(json.dumps({"ok": True, "output": str(args.output), "race_key": race["race_key"],
                       "added": [k for k in ("actual_entry", "course_stats") if k in addition]}, ensure_ascii=False))
 
