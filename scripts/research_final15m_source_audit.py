@@ -11,13 +11,16 @@ JST = timezone(timedelta(hours=9))
 def summarize(race_dir: Path, now: datetime):
     day = now.strftime("%Y%m%d")
     cohorts = {"final15m": [], "future": [], "past_locked": []}
-    for path in sorted(race_dir.glob(f"{day}-??-??.json")):
+    files = sorted(race_dir.glob(f"{day}-??-??.json"))
+    invalid_files = []
+    for path in files:
         try:
             d = json.loads(path.read_text(encoding="utf-8"))
             clock = (d.get("meta") or {}).get("deadline")
             hh, mm = map(int, clock.split(":"))
             deadline = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
         except (OSError, ValueError, TypeError, AttributeError):
+            invalid_files.append(path.name)
             continue
         minutes = (deadline - now).total_seconds() / 60
         group = "final15m" if 0 <= minutes <= 15 else ("future" if minutes > 15 else "past_locked")
@@ -45,9 +48,16 @@ def summarize(race_dir: Path, now: datetime):
         entry["sources"] = {role: source_reason(role) for role in ROLES}
         cohorts[group].append(entry)
     input_race_count = sum(len(rows) for rows in cohorts.values())
+    matched_file_count = len(files)
+    invalid_file_count = len(invalid_files)
+    assert matched_file_count == input_race_count + invalid_file_count
+    input_state = ("NO_RACE_FILES_FOR_DATE" if not files else
+                   "RACE_FILES_UNUSABLE" if not input_race_count else
+                   "RACE_FILES_PARTIAL" if invalid_files else "RACE_FILES_PRESENT")
     result = {"observation_at": now.isoformat(timespec="seconds"), "phase": "PRE_RESULT",
               "read_only": True, "input_race_count": input_race_count,
-              "input_state": "RACE_FILES_PRESENT" if input_race_count else "NO_RACE_FILES_FOR_DATE",
+              "input_state": input_state, "matched_file_count": matched_file_count,
+              "invalid_file_count": invalid_file_count, "invalid_files": invalid_files,
               "cohorts": {}}
     for group, entries in cohorts.items():
         result["cohorts"][group] = {"count": len(entries), "reason_counts": {
