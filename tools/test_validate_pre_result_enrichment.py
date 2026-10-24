@@ -2,7 +2,10 @@
 import datetime as dt
 import importlib.util
 import unittest
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 spec = importlib.util.spec_from_file_location("validator", Path(__file__).with_name("validate_pre_result_enrichment.py"))
 validator = importlib.util.module_from_spec(spec)
