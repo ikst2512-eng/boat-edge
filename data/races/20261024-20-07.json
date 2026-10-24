@@ -8,7 +8,7 @@
     "event": "MNBR若松5thひめちゃん杯",
     "race_no": 7,
     "deadline": "20:53",
-    "updated_at": "2026-10-24T15:26:10+09:00",
+    "updated_at": "2026-10-24T18:29:28+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=20&rno=7",
-      "fetched_at": "2026-10-24T15:27:37+09:00",
-      "sha256": "d9a1f0e1f6975910a9310a55e22358eef40d3ec054779216feb6bc3998fd73c0",
+      "fetched_at": "2026-10-24T18:30:36+09:00",
+      "sha256": "d67a94545e2d933639e9998100c6701dc257186d8ddbe33e75fd0793688a0c88",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261024&jcd=20&rno=7",
+      "fetched_at": "2026-10-24T18:30:17+09:00",
+      "sha256": "dd62de0499b0f48c8b1215463a79933c5b5ccd9ea3201470399247ba59cbadc5",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": "4e36379d35323665329e29b91bf3a54b07b0eb1462e8b5ab5ef5114b67291107"
+      "observed_at": "2026-10-24T18:30:37+09:00",
+      "availability_reason": "race_row_absent",
+      "source_error": null,
+      "sha256": "ff4e26fcb61894088bdc40c4f6d348a19d15def3b5ce187650bf62f0949d54b0"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": "5120e1e4dcd559ebbb44efd7695e1704a7c69d81d18094d7590973ac66bcdf96"
+      "observed_at": "2026-10-24T18:30:37+09:00",
+      "availability_reason": "race_row_absent",
+      "source_error": null,
+      "sha256": "42939b40529c796d7a41815954e0c09d5f55f3a58e8fb0ffd452d1827085f424"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": "025b1e28f74ed7fbdea0e89f23d0a4ffbd10ee93e2f19d73fb3fcbf38643327b"
+      "observed_at": "2026-10-24T18:30:37+09:00",
+      "availability_reason": "race_row_absent",
+      "source_error": null,
+      "sha256": "c78264b91d6185f93c199a565515e72eaa16045d60b932d6e0fd28b7c78c68c6"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": "68507cfa50d6b21eb9656016c7c2fad962bd300ac19e4436bbcb1db88052a0a1"
+      "observed_at": "2026-10-24T18:30:37+09:00",
+      "availability_reason": "race_row_absent",
+      "source_error": null,
+      "sha256": "850e19a6a07937f8a72c582cc90aae069556427555ab5121ca16cd898339074f"
     }
   },
   "racers": [
@@ -63,7 +81,7 @@
       "name": "岩崎 正哉",
       "class": "A2",
       "age": 54,
-      "weight_kg": 52.1,
+      "weight_kg": 52.3,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -97,7 +115,7 @@
         "12"
       ],
       "early_race": 11,
-      "raw_text": "1 3853 / A2 岩崎 正哉 福岡/福岡 54歳/52.1kg F0 L0 0.20 5.89 37.70 54.10 5.91 40.24 56.10 5 39.42 60.10 68 35.56 47.78 4 9 5 7 12 11R"
+      "raw_text": "1 3853 / A2 岩崎 正哉 福岡/福岡 54歳/52.3kg F0 L0 0.20 5.89 37.70 54.10 5.91 40.24 56.10 5 39.42 60.10 68 35.56 47.78 4 9 5 7 12 11R"
     },
     {
       "lane": 2,
@@ -178,10 +196,11 @@
         "1",
         "12",
         "2",
-        "11"
+        "11",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "3 4803 / B1 飯田 庄吾 福岡/福岡 32歳/57.1kg F0 L0 0.19 3.92 19.23 32.05 2.50 0.00 20.00 16 30.88 42.16 26 47.78 56.67 5 1 12 2 11 1R"
+      "raw_text": "3 4803 / B1 飯田 庄吾 福岡/福岡 32歳/57.1kg F0 L0 0.19 3.92 19.23 32.05 2.50 0.00 20.00 16 30.88 42.16 26 47.78 56.67 5 1 12 2 11 1 1R"
     },
     {
       "lane": 4,
@@ -189,7 +208,7 @@
       "name": "八戸 琉楓",
       "class": "B2",
       "age": 21,
-      "weight_kg": 53.1,
+      "weight_kg": 53.2,
       "branch": "長崎",
       "birthplace": "佐賀",
       "F": 0,
@@ -222,7 +241,7 @@
         "10"
       ],
       "early_race": null,
-      "raw_text": "4 5384 / B2 八戸 琉楓 長崎/佐賀 21歳/53.1kg F0 L0 0.22 1.89 1.22 6.10 2.67 8.33 8.33 8 27.36 45.75 35 25.68 41.89 4 6 1 10"
+      "raw_text": "4 5384 / B2 八戸 琉楓 長崎/佐賀 21歳/53.2kg F0 L0 0.22 1.89 1.22 6.10 2.67 8.33 8.33 8 27.36 45.75 35 25.68 41.89 4 6 1 10"
     },
     {
       "lane": 5,
@@ -230,7 +249,7 @@
       "name": "高山 秀雄",
       "class": "B1",
       "age": 56,
-      "weight_kg": 52.6,
+      "weight_kg": 52.5,
       "branch": "群馬",
       "birthplace": "群馬",
       "F": 0,
@@ -263,7 +282,7 @@
         "6"
       ],
       "early_race": 2,
-      "raw_text": "5 3448 / B1 高山 秀雄 群馬/群馬 56歳/52.6kg F0 L0 0.19 4.21 16.28 37.21 4.64 36.36 36.36 40 35.32 52.29 49 24.68 45.45 6 1 9 6 2R"
+      "raw_text": "5 3448 / B1 高山 秀雄 群馬/群馬 56歳/52.5kg F0 L0 0.19 4.21 16.28 37.21 4.64 36.36 36.36 40 35.32 52.29 49 24.68 45.45 6 1 9 6 2R"
     },
     {
       "lane": 6,
@@ -271,7 +290,7 @@
       "name": "鈴木 勝博",
       "class": "A2",
       "age": 43,
-      "weight_kg": 52.1,
+      "weight_kg": 52.5,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 1,
@@ -304,10 +323,56 @@
         "3"
       ],
       "early_race": null,
-      "raw_text": "6 4276 / A2 鈴木 勝博 愛知/愛知 43歳/52.1kg F1 L0 0.16 6.36 49.04 64.42 3.82 17.65 41.18 41 34.88 51.16 34 46.15 64.10 5 11 9 3"
+      "raw_text": "6 4276 / A2 鈴木 勝博 愛知/愛知 43歳/52.5kg F1 L0 0.16 6.36 49.04 64.42 3.82 17.65 41.18 41 34.88 51.16 34 46.15 64.10 5 11 9 3"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 岩崎 正哉 52.3kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 高野 心吾 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 飯田 庄吾 57.1kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 八戸 琉楓 53.2kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 高山 秀雄 52.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 鈴木 勝博 52.5kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
