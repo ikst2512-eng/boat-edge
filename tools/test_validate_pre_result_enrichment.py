@@ -97,5 +97,22 @@ class EnrichmentValidatorTests(unittest.TestCase):
             applicator.apply(RACE, {"actual_entry": [1,2,3,4,5,6]}, now=NOW)
 
 
+    def test_malformed_course_values_fail_closed(self):
+        source = dict(AUDIT, source="https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=04&rno=1")
+        for broken in ([], {}, True, float("nan"), float("inf")):
+            rows = [{"registration_no": str(4000+i), "course": i+1,
+                     "first_rate": 20, "second_rate": 15, "third_rate": 10} for i in range(6)]
+            rows[0]["course"] = broken
+            self.check({"course_stats": rows, "source_audit": {"course_stats": source}}, False)
+
+    def test_malformed_percentage_values_fail_closed(self):
+        source = dict(AUDIT, source="https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=04&rno=1")
+        for broken in (True, float("nan"), float("inf"), -1, 101, "20"):
+            rows = [{"registration_no": str(4000+i), "course": i+1,
+                     "first_rate": 20, "second_rate": 15, "third_rate": 10} for i in range(6)]
+            rows[2]["first_rate"] = broken
+            self.check({"course_stats": rows, "source_audit": {"course_stats": source}}, False)
+
+
 if __name__ == "__main__":
     unittest.main()
