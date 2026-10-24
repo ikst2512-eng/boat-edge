@@ -22,6 +22,20 @@ class SourceAuditTest(unittest.TestCase):
             self.assertEqual(future["input_race_count"], 1)
             self.assertEqual(future["cohorts"]["final15m"]["count"], 0)
 
+    def test_invalid_race_files_are_visible(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td)
+            now = datetime(2026, 10, 25, 1, 0, tzinfo=JST)
+            (p / "20261025-01-01.json").write_text("{broken", encoding="utf-8")
+            bad = summarize(p, now)
+            self.assertEqual(bad["input_state"], "RACE_FILES_UNUSABLE")
+            self.assertEqual((bad["matched_file_count"], bad["input_race_count"], bad["invalid_file_count"]), (1, 0, 1))
+            self.assertEqual(bad["invalid_files"], ["20261025-01-01.json"])
+            (p / "20261025-01-02.json").write_text(json.dumps({"meta": {"deadline": "08:00"}}), encoding="utf-8")
+            mixed = summarize(p, now)
+            self.assertEqual(mixed["input_state"], "RACE_FILES_PARTIAL")
+            self.assertEqual((mixed["matched_file_count"], mixed["input_race_count"], mixed["invalid_file_count"]), (2, 1, 1))
+
     def test_deadline_cohorts_and_reasons(self):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td)
