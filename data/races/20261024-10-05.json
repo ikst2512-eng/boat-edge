@@ -8,7 +8,7 @@
     "event": "スポーツクラブ新田塚アーク杯",
     "race_no": 5,
     "deadline": "10:37",
-    "updated_at": "2026-10-24T07:46:46+09:00",
+    "updated_at": "2026-10-24T09:47:00+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=10&rno=5",
-      "fetched_at": "2026-10-24T07:47:54+09:00",
-      "sha256": "d3d05608ff1e898a5b964619bfbede6e954b3739d201109d8f6275f09cf1fa26",
+      "fetched_at": "2026-10-24T09:50:54+09:00",
+      "sha256": "9f620856c59efd275e9aee64857b77ee74d23fddd8ae4c50c19773ac567caef0",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261024&jcd=10&rno=5",
+      "fetched_at": "2026-10-24T09:47:46+09:00",
+      "sha256": "d62213b6480c0a74934505452888addae1ff9f4955b82c2bc190be4e61d93a50",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5927b69fdbeb78402980c3d62c9e13a10a00379b389784a86b2d46671b3e2cd7"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "fd7a40bcc44a9e12bf230984b35abf49883db7807c18b4764ce5933bc09be24e"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "4dc68254a031855bc3c30cc1b31c2f20dc44550c134d1dfdf6ead2e420e4c05c"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "575fd7dbc43da47003cb9781f697553a60fef5071bca89d9d96d7a31e51a428b"
     }
   },
   "racers": [
@@ -274,7 +280,53 @@
       "raw_text": "6 4311 / A1 岡村 仁 大阪/大阪 42歳/56.4kg F2 L0 0.15 6.16 47.22 58.33 6.91 50.00 68.75 45 34.46 54.05 49 22.86 46.43 10R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 西丸 敦基 53.1kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 森 弘行 52.1kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 山下 流心 53.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 幸野 史明 52.8kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 古川 誠之 56.8kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 岡村 仁 56.4kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

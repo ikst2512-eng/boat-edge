@@ -8,7 +8,7 @@
     "event": "BTS阿波かもじま開設4周年記念競走",
     "race_no": 6,
     "deadline": "10:56",
-    "updated_at": "2026-10-24T07:46:46+09:00",
+    "updated_at": "2026-10-24T09:47:00+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,41 +19,47 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261024&jcd=14&rno=6",
-      "fetched_at": "2026-10-24T07:49:37+09:00",
-      "sha256": "d0e1a8b77552652c2cfd197f34d6d730d3771d19bb53a90aeba715f75eeb207b",
+      "fetched_at": "2026-10-24T09:49:41+09:00",
+      "sha256": "4326a2b7bbc3ae9d873f053115ded8d4e95e60c463edeb26b225bc66750d1b8f",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261024&jcd=14&rno=6",
+      "fetched_at": "2026-10-24T09:47:48+09:00",
+      "sha256": "893d8d2d11e3a356f540893c457b403498e2f81d3346db24a60930ae1e33708e",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "5927b69fdbeb78402980c3d62c9e13a10a00379b389784a86b2d46671b3e2cd7"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "fd7a40bcc44a9e12bf230984b35abf49883db7807c18b4764ce5933bc09be24e"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "4dc68254a031855bc3c30cc1b31c2f20dc44550c134d1dfdf6ead2e420e4c05c"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/24.csv",
       "fetched_at": null,
-      "sha256": null
+      "sha256": "575fd7dbc43da47003cb9781f697553a60fef5071bca89d9d96d7a31e51a428b"
     }
   },
   "racers": [
@@ -262,10 +268,11 @@
         "6",
         "5",
         "9",
-        "9"
+        "9",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "5 5393 / B2 藤原 駿 大阪/奈良 25歳/56.7kg F1 L0 0.23 1.45 0.00 1.37 0.00 0.00 0.00 26 33.33 50.45 54 40.20 54.90 6 5 9 9 1R"
+      "raw_text": "5 5393 / B2 藤原 駿 大阪/奈良 25歳/56.7kg F1 L0 0.23 1.45 0.00 1.37 0.00 0.00 0.00 26 33.33 50.45 54 40.20 54.90 6 5 9 9 1 1R"
     },
     {
       "lane": 6,
@@ -310,7 +317,53 @@
       "raw_text": "6 4034 / B1 西原 明生 香川/愛媛 47歳/53.4kg F1 L0 0.22 3.89 21.21 29.29 4.37 18.52 38.89 73 20.95 39.05 11 38.46 58.65 7 1 9 3 11"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 南 佑典 51.0kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 浮田 圭浩 55.1kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 山口 裕二 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 國分 将太郎 52.6kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 藤原 駿 56.7kg R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 西原 明生 53.4kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
