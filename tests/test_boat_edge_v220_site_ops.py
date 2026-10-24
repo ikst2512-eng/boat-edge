@@ -736,6 +736,10 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)
         subprocess.run(['git','init','-q'],cwd=root,check=True)
+        subprocess.run(['git','branch','-M','main'],cwd=root,check=True)
+        subprocess.run(['git','remote','add','origin',str(root)],cwd=root,check=True)
+        subprocess.run(['git','-c','user.name=Fixture','-c','user.email=test@example.invalid',
+                        'commit','--allow-empty','-qm','initial'],cwd=root,check=True)
         p=subprocess.run(['bash','-c',guard],cwd=root,
                          env={**os.environ,'GITHUB_EVENT_NAME':'workflow_run'},
                          capture_output=True,text=True,timeout=8)
