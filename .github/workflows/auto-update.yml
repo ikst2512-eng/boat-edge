@@ -48,6 +48,12 @@ jobs:
       - name: 必要ライブラリ
         run: pip install requests beautifulsoup4 lxml
 
+      - name: 締切15分展示集計の回帰テスト
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_urgent_cohort_contract.py' -v
+
       - name: PRE_RESULT耐障害取得
         shell: bash
         run: |
