@@ -43,6 +43,21 @@ class SourceAuditTest(unittest.TestCase):
             self.assertEqual(len(mixed["invalid_files"]), 3)
 
 
+    def test_malformed_source_row_and_timezone_offset(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td)
+            now = datetime(2026, 10, 25, 20, 0, tzinfo=JST)
+            race = {"meta": {"deadline": "20:10"}, "source_audit": {
+                "stt": ["invalid"],
+                "tkz": {"availability_reason": "available", "observed_at": "2026-10-25T11:59:00+00:00"},
+                "sui": {"availability_reason": "available", "observed_at": "2026-10-25T20:11:00+09:00"}}}
+            (p / "20261025-01-01.json").write_text(json.dumps(race), encoding="utf-8")
+            out = summarize(p, now)
+            counts = out["cohorts"]["final15m"]["reason_counts"]
+            self.assertEqual(counts["stt"], {"observation_structure_invalid": 1})
+            self.assertEqual(counts["tkz"], {"available": 1})
+            self.assertEqual(counts["sui"], {"stale_observation": 1})
+
     def test_deadline_cohorts_and_reasons(self):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td)
