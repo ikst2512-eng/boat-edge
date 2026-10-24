@@ -47,6 +47,23 @@ jobs:
         run: |
           python -m unittest discover -s research_next -p 'test_*.py' -v
           python -m unittest discover -s tests -p 'test_research_final15m_source_audit.py' -v
+      - name: Report saved pre-result source gaps by deadline window
+        if: always()
+        shell: bash
+        run: |
+          python scripts/research_final15m_source_audit.py > research_next/final15m_source_audit.json
+          python -m json.tool research_next/final15m_source_audit.json > /dev/null
+          echo 'Saved source-window audit (no result access)' >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          audit=json.loads(Path("research_next/final15m_source_audit.json").read_text(encoding="utf-8"))
+          assert audit["read_only"] is True and audit["phase"]=="PRE_RESULT"
+          for cohort in audit["cohorts"].values():
+              for counts in cohort["reason_counts"].values():
+                  assert sum(counts.values())==cohort["count"]
+          print({name:data["count"] for name,data in audit["cohorts"].items()})
+          PY
       - name: Probe due races, never score results
         id: capture_probe
         run: python research_next/scheduled_probe.py
@@ -156,6 +173,7 @@ jobs:
             research_next/probe_summary.json
             research_next/probe_health.json
             research_next/probe_execution.json
+            research_next/final15m_source_audit.json
           if-no-files-found: error
           retention-days: 30
       - name: Publish discoverable probe run status
