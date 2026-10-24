@@ -72,13 +72,16 @@ def validate(race, addition, now=None):
             allowed_path = "/owpc/pc/race/beforeinfo" if kind == "actual_entry" else "/owpc/pc/race/racelist"
             # Course stats may come from separate source, but only explicit
             # HTTPS pages are accepted; do not claim an official source.
-            if p.scheme != "https" or not p.hostname or any(term in (p.path + p.query).lower() for term in FORBIDDEN_WORDS):
-                raise ValueError("not safe pre-result URL")
-            if p.hostname == "www.boatrace.jp" and p.path not in (allowed_path, "/owpc/pc/race/racerprofile"):
-                raise ValueError("unrecognized official source path")
-            if p.hostname == "www.boatrace.jp":
-                if qs.get("hd") != [key[:8]] or qs.get("jcd") != [key.split("-")[1]] or qs.get("rno") != [str(int(key.split("-")[2]))]:
-                    raise ValueError("official URL does not match race")
+            if p.scheme != "https" or p.hostname != "www.boatrace.jp" or p.username or p.password or p.port is not None or p.fragment:
+                raise ValueError("source must be exact trusted official host")
+            if any(term in (p.path + p.query).lower() for term in FORBIDDEN_WORDS):
+                raise ValueError("result-derived source forbidden")
+            if p.path != allowed_path:
+                raise ValueError("unsupported pre-result source path")
+            if set(qs) != {"hd", "jcd", "rno"}:
+                raise ValueError("unexpected source query parameters")
+            if qs.get("hd") != [key[:8]] or qs.get("jcd") != [key.split("-")[1]] or qs.get("rno") != [str(int(key.split("-")[2]))]:
+                raise ValueError("official URL does not match race")
         except (ValueError, TypeError, IndexError):
             reasons.append(kind + "_source_invalid")
         try:
