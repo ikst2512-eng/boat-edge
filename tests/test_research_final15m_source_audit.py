@@ -58,6 +58,17 @@ class SourceAuditTest(unittest.TestCase):
             self.assertEqual(counts["tkz"], {"available": 1})
             self.assertEqual(counts["sui"], {"post_deadline_observation": 1})
 
+    def test_unhashable_availability_reason_is_classified(self):
+        with tempfile.TemporaryDirectory() as td:
+            race = {"meta": {"deadline": "20:10"}, "source_audit": {
+                "stt": {"availability_reason": ["bad"], "observed_at": "2026-10-25T19:59:00+09:00"},
+                "tkz": {"availability_reason": {"bad": 1}, "observed_at": "2026-10-25T19:59:00+09:00"}}}
+            (Path(td) / "20261025-01-01.json").write_text(json.dumps(race), encoding="utf-8")
+            out = summarize(Path(td), datetime(2026, 10, 25, 20, 0, tzinfo=JST))
+            counts = out["cohorts"]["final15m"]["reason_counts"]
+            self.assertEqual(counts["stt"], {"availability_reason_invalid": 1})
+            self.assertEqual(counts["tkz"], {"availability_reason_invalid": 1})
+
     def test_deadline_cohorts_and_reasons(self):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td)
