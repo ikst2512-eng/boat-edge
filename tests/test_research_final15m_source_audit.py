@@ -9,6 +9,16 @@ from scripts.research_final15m_source_audit import summarize
 JST = timezone(timedelta(hours=9))
 
 class SourceAuditTest(unittest.TestCase):
+    def test_utc_observation_uses_jst_date(self):
+        with tempfile.TemporaryDirectory() as td:
+            race = {"meta": {"deadline": "08:00"}}
+            (Path(td) / "20261025-01-01.json").write_text(json.dumps(race), encoding="utf-8")
+            result = summarize(Path(td), datetime(2026, 10, 24, 16, 0, tzinfo=timezone.utc))
+            self.assertEqual(result["input_race_count"], 1)
+            self.assertEqual(result["observation_at"], "2026-10-25T01:00:00+09:00")
+            with self.assertRaises(ValueError):
+                summarize(Path(td), datetime(2026, 10, 25, 1, 0))
+
     def test_missing_day_files_distinct_from_no_urgent_races(self):
         with tempfile.TemporaryDirectory() as td:
             now = datetime(2026, 10, 25, 1, 0, tzinfo=JST)
