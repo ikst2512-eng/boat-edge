@@ -5,7 +5,42 @@
   "ui_target": "V122-SCENARIO-AWARE-REFERENCE-FIXED",
   "audit_rule": "SNAPSHOT_INTRINSIC_VALIDATION_WITH_REVISION_HISTORY",
   "current_hash_mismatch_policy": "INFORMATIONAL_NOT_FAILURE",
-  "audited": {},
+  "audited": {
+    "20261025-10-01": {
+      "race_key": "20261025-10-01",
+      "pass": true,
+      "latest_snapshot_saved_at": "2026-10-24T23:42:58.625479+00:00",
+      "latest_minutes_to_deadline": 8.02,
+      "prediction_kind": "SITE_REFERENCE_V122",
+      "selection_policy": "V122_SCENARIO_AWARE_PROBABILITY_FIRST",
+      "used_inputs": [
+        "当地3か月コース",
+        "展示ST",
+        "展示タイム"
+      ],
+      "top1": "1-2-3",
+      "top10_count": 10,
+      "revision_count": 1,
+      "audit_file": "data/site_prediction_audit/20261025-10-01.json"
+    },
+    "20261025-21-01": {
+      "race_key": "20261025-21-01",
+      "pass": true,
+      "latest_snapshot_saved_at": "2026-10-24T23:40:23.578128+00:00",
+      "latest_minutes_to_deadline": 2.61,
+      "prediction_kind": "SITE_REFERENCE_V122",
+      "selection_policy": "V122_SCENARIO_AWARE_PROBABILITY_FIRST",
+      "used_inputs": [
+        "当地3か月コース",
+        "展示ST",
+        "展示タイム"
+      ],
+      "top1": "1-2-4",
+      "top10_count": 10,
+      "revision_count": 1,
+      "audit_file": "data/site_prediction_audit/20261025-21-01.json"
+    }
+  },
   "errors": [],
-  "updated_at": "2026-10-24T16:29:44.896433+00:00"
+  "updated_at": "2026-10-24T23:50:17.498355+00:00"
 }
