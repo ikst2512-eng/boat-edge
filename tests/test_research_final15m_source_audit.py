@@ -18,7 +18,8 @@ class SourceAuditTest(unittest.TestCase):
                 ("01-03", "19:50", "available"),
             ]:
                 data = {"meta": {"deadline": deadline},
-                        "source_audit": {"stt": {"availability_reason": reason}}}
+                        "source_audit": {"stt": {"availability_reason": reason,
+                                                 "observed_at": "2026-10-24T19:59:00+09:00"}}}
                 (p / f"20261024-{ident}.json").write_text(json.dumps(data), encoding="utf-8")
             out = summarize(p, datetime(2026, 10, 24, 20, 0, tzinfo=JST))
             self.assertEqual(out["cohorts"]["final15m"]["count"], 1)
@@ -27,6 +28,14 @@ class SourceAuditTest(unittest.TestCase):
             self.assertEqual(out["cohorts"]["final15m"]["reason_counts"]["stt"]["race_row_absent"], 1)
             self.assertEqual(out["cohorts"]["final15m"]["reason_counts"]["tkz"]["not_observed"], 1)
             self.assertTrue(out["read_only"])
+            # A newly generated report cannot certify a stale race observation.
+            stale = {"meta": {"deadline": "20:11"},
+                     "source_audit": {"stt": {
+                         "availability_reason": "available",
+                         "observed_at": "2026-10-24T19:30:00+09:00"}}}
+            (p / "20261024-01-04.json").write_text(json.dumps(stale), encoding="utf-8")
+            later = summarize(p, datetime(2026, 10, 24, 20, 0, tzinfo=JST))
+            self.assertEqual(later["cohorts"]["final15m"]["reason_counts"]["stt"]["stale_observation"], 1)
 
 if __name__ == "__main__":
     unittest.main()
