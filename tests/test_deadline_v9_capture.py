@@ -45,4 +45,29 @@ class Tests(unittest.TestCase):
     def test_redirect_handler_refuses(self):
         with self.assertRaises(ValueError):mod.NoRedirect().redirect_request(None,None,302,'Found',{},'https://example.org')
 
+    def test_all12_races_and_error_isolation(self):
+        seen=[]
+        def fake(url,directory):
+            import urllib.parse
+            n=int(urllib.parse.parse_qs(urllib.parse.urlparse(url).query)['rno'][0])
+            seen.append(n)
+            if n==7:raise OSError('synthetic outage')
+            return {'sha256':'0'*64,'formal_eligible':False}
+        r=mod.run(self.day,['01'],self.tmp.name,capturer=fake,race_numbers=range(1,13))
+        self.assertEqual(seen,list(range(1,13)))
+        self.assertEqual(len(r['captures']),11)
+        self.assertEqual(r['errors'][0]['race_number_requested'],7)
+        self.assertFalse(r['formal_eligible'])
+    def test_invalid_race_number_fails_closed(self):
+        with self.assertRaises(ValueError):
+            mod.run(self.day,['01'],self.tmp.name,race_numbers=(0,13))
+    def test_single_race_default_unchanged(self):
+        urls=[]
+        def fake(url,directory):
+            urls.append(url)
+            return {'formal_eligible':False}
+        r=mod.run(self.day,['01'],self.tmp.name,capturer=fake)
+        self.assertEqual(len(urls),1)
+        self.assertEqual(r['captures'][0]['race_number_requested'],1)
+
 if __name__=='__main__':unittest.main()
