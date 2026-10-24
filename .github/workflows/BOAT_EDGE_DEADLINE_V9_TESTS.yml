@@ -4,6 +4,9 @@ on:
     paths:
       - 'scripts/deadline_v9/**'
       - 'tests/test_deadline_v9_capture.py'
+      - 'tests/test_deadline_v11_verify.py'
+      - 'tests/test_deadline_v12_schedule.py'
+      - '.github/workflows/BOAT_EDGE_DEADLINE_EVIDENCE_V9.yml'
       - '.github/workflows/BOAT_EDGE_DEADLINE_V9_TESTS.yml'
   workflow_dispatch:
 permissions:
@@ -19,5 +22,7 @@ jobs:
           python-version: '3.12'
       - name: Run V11 offline artifact integrity tests
         run: python -m unittest discover -s tests -p test_deadline_v11_verify.py -v
+      - name: Check scheduled capture safety guards
+        run: python -m unittest discover -s tests -p test_deadline_v12_schedule.py -v
       - name: Run offline tests (no network calls)
         run: python -m unittest discover -s tests -p test_deadline_v9_capture.py -v
