@@ -9,6 +9,9 @@ ROLES = ("stt", "tkz", "sui", "original_exhibition")
 JST = timezone(timedelta(hours=9))
 
 def summarize(race_dir: Path, now: datetime):
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("observation time must be timezone-aware")
+    now = now.astimezone(JST)
     day = now.strftime("%Y%m%d")
     cohorts = {"final15m": [], "future": [], "past_locked": []}
     files = sorted(race_dir.glob(f"{day}-??-??.json"))
