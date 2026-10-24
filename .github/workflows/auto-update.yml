@@ -854,10 +854,21 @@ jobs:
                   if role=="original_exhibition" and oe_preserved:
                       continue
                   info=fetched[role]
+                  # Record WHY a deadline-safe observation is absent, without
+                  # writing retroactively to frozen or elapsed races.
+                  source_row=I[role].get(code)
+                  reason=("available" if row else
+                          "http_404" if info["error"]=="not_published" else
+                          "fetch_error" if info["error"] else
+                          "incomplete_race_row" if source_row is not None else
+                          "race_row_absent")
                   audit[role]={
                     "status":"ok" if row else ("not_published" if info["error"]=="not_published" else "missing"),
                     "source":info["url"],
                     "fetched_at":iso if row else None,
+                    "observed_at":iso,
+                    "availability_reason":reason,
+                    "source_error":info["error"] if reason=="fetch_error" else None,
                     "sha256":info["sha256"],
                   }
 
