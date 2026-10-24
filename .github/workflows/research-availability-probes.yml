@@ -146,6 +146,12 @@ jobs:
           expected_state = "RACE_FILES_PRESENT" if total else "NO_RACE_FILES_FOR_DATE"
           if audit.get("input_state") != expected_state:
               raise SystemExit("Source-window audit input state mismatch")
+          total = audit.get("input_race_count")
+          expected_state = "RACE_FILES_PRESENT" if total else "NO_RACE_FILES_FOR_DATE"
+          if type(total) is not int or total < 0 or audit.get("input_state") != expected_state:
+              raise SystemExit("Invalid input race count or state")
+          if sum(cohort.get("count", -1) for cohort in cohorts.values()) != total:
+              raise SystemExit("Source-window cohort total differs from input race count")
           for name, cohort in cohorts.items():
               count = cohort.get("count")
               reasons = cohort.get("reason_counts")
