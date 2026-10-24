@@ -19,6 +19,17 @@ def apply(race, enrichment, now=None):
     report = validate(race, enrichment, now=now)
     if not report["ok"]:
         raise ValueError("enrichment rejected: " + ",".join(report["reasons"]))
+    # Never replace a previously recorded field, even if a later enrichment
+    # passes schema checks. Preserve the first immutable pre-result record.
+    for field in ("actual_entry", "course_stats"):
+        if field not in enrichment:
+            continue
+        if field == "actual_entry" and race.get("actual_entry"):
+            raise ValueError("actual_entry already recorded; replacement forbidden")
+        if field == "course_stats" and any("course_stats" in r for r in race.get("racers", [])):
+            raise ValueError("course_stats already recorded; replacement forbidden")
+        if field in (race.get("source_audit") or {}):
+            raise ValueError(field + " source audit already recorded; replacement forbidden")
     merged = json.loads(json.dumps(race))
     if "actual_entry" in enrichment:
         merged["actual_entry"] = enrichment["actual_entry"]
