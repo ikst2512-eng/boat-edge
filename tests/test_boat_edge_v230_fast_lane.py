@@ -660,6 +660,40 @@ class FastLaneTests(unittest.TestCase):
         slept.assert_not_called()
         self.assertEqual(frozen.read_bytes(),before)
 
+    def test_postcommit_unattempted_is_not_delayed_by_incomplete_retry(self):
+        # Previously failed source may need a cooldown, but an untouched
+        # live race must be requested immediately before its deadline expires.
+        failed='20261011-06-09'
+        untouched='20261011-06-10'
+        for key, number in ((failed,9),(untouched,10)):
+            race=makerace('14:44')
+            race['race_key']=key
+            race['meta']['race_no']=number
+            m.write_json(self.root/'data/races'/f'{key}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':failed,'deadline':'14:44'},
+                                {'race_key':untouched,'deadline':'14:44'}]}]})
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011',
+            'targets':[KEY,failed],
+            'outcomes':{KEY:'fresh_verified',failed:'odds_incomplete'},
+            'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}),
+              patch.object(m,'fetch_one',side_effect=lambda root,key:(key,{},None)) as fetched,
+              patch.object(m,'update_one',return_value='fresh_verified'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0),
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as slept):
+            got=m.run_postcommit_incomplete(self.root,now=self.now,worker=2)
+        self.assertTrue(got['first_git_proven'])
+        self.assertIn(untouched,got['retry_keys'])
+        self.assertIn(failed,got['retry_keys'])
+        self.assertEqual(fetched.call_count,2)
+        slept.assert_not_called()
+
     def test_postcommit_unattempted_requires_actual_first_git_proof(self):
         other='20261011-06-09'
         race=makerace('14:44')

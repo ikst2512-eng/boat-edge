@@ -670,7 +670,9 @@ def run_postcommit_incomplete(root, now=None, worker=6):
         return report
     # Only a previously incomplete source gets the existing bounded 20s wait.
     # Untouched live races are fetched immediately after the proven first push.
-    if incomplete:
+    # Do not hold previously unattempted closing races behind a retry cooldown.
+    # Preserve the existing cooldown when only incomplete attempted races remain.
+    if incomplete and not unattempted:
         time.sleep(20)
     actual_now=local_now()
     retry_keys=imminent_retry_targets(root,incomplete,outcomes,actual_now)
