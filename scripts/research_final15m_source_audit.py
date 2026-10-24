@@ -16,7 +16,12 @@ def summarize(race_dir: Path, now: datetime):
     for path in files:
         try:
             d = json.loads(path.read_text(encoding="utf-8"))
-            clock = (d.get("meta") or {}).get("deadline")
+            if not isinstance(d, dict) or not isinstance(d.get("meta"), dict):
+                raise ValueError("invalid race document or meta")
+            audit = d.get("source_audit") or {}
+            if not isinstance(audit, dict):
+                raise ValueError("invalid source audit")
+            clock = d["meta"].get("deadline")
             hh, mm = map(int, clock.split(":"))
             deadline = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
         except (OSError, ValueError, TypeError, AttributeError):
@@ -24,7 +29,6 @@ def summarize(race_dir: Path, now: datetime):
             continue
         minutes = (deadline - now).total_seconds() / 60
         group = "final15m" if 0 <= minutes <= 15 else ("future" if minutes > 15 else "past_locked")
-        audit = d.get("source_audit") or {}
         entry = {"race": path.stem, "minutes_to_deadline": round(minutes, 2)}
         # Do not promote old per-race observations to fresh evidence merely
         # because this read-only report was generated now.
