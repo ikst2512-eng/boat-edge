@@ -10,6 +10,8 @@ on:
       - tools/test_verify_pre_result_capture.py
       - tools/parse_explicit_start_order.py
       - tools/test_parse_explicit_start_order.py
+      - tools/build_verified_entry_candidate.py
+      - tools/test_build_verified_entry_candidate.py
       - .github/workflows/pre-result-enrichment.yml
   workflow_dispatch:
 permissions:
@@ -25,3 +27,4 @@ jobs:
           python-version: '3.12'
       - name: Run pre-result enrichment tests
         run: |\n          python -m unittest discover -s tools -p 'test_*pre_result*.py' -v\n          python -m unittest discover -s tools -p 'test_parse_explicit_start_order.py' -v
+          python -m unittest discover -s tools -p 'test_build_verified_entry_candidate.py' -v
