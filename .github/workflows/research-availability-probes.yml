@@ -140,6 +140,12 @@ jobs:
           cohorts = audit.get("cohorts")
           if not isinstance(cohorts, dict) or set(cohorts) != {"final15m", "future", "past_locked"}:
               raise SystemExit("Source-window audit cohorts invalid")
+          total = sum(cohort.get("count", -1) for cohort in cohorts.values())
+          if audit.get("input_race_count") != total:
+              raise SystemExit("Source-window audit input count mismatch")
+          expected_state = "RACE_FILES_PRESENT" if total else "NO_RACE_FILES_FOR_DATE"
+          if audit.get("input_state") != expected_state:
+              raise SystemExit("Source-window audit input state mismatch")
           for name, cohort in cohorts.items():
               count = cohort.get("count")
               reasons = cohort.get("reason_counts")
