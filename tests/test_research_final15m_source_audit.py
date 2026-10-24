@@ -36,6 +36,13 @@ class SourceAuditTest(unittest.TestCase):
             (p / "20261024-01-04.json").write_text(json.dumps(stale), encoding="utf-8")
             later = summarize(p, datetime(2026, 10, 24, 20, 0, tzinfo=JST))
             self.assertEqual(later["cohorts"]["final15m"]["reason_counts"]["stt"]["stale_observation"], 1)
+            late = {"meta": {"deadline": "20:12"},
+                    "source_audit": {"stt": {
+                        "availability_reason": "available",
+                        "observed_at": "2026-10-24T20:13:00+09:00"}}}
+            (p / "20261024-01-05.json").write_text(json.dumps(late), encoding="utf-8")
+            checked = summarize(p, datetime(2026, 10, 24, 20, 14, tzinfo=JST))
+            self.assertEqual(checked["cohorts"]["past_locked"]["reason_counts"]["stt"]["post_deadline_observation"], 1)
 
 if __name__ == "__main__":
     unittest.main()
