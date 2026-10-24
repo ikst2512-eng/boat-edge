@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-10-23T10:15:16.550242+00:00",
-  "day_jst": "20261023",
+  "checked_at": "2026-10-24T20:20:17.217415+00:00",
+  "day_jst": "20261025",
   "follow_up_order": [
     "直前公式データと欠場照合",
     "締切前スナップショットの保存とSHA監査",
@@ -68,46 +68,15 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [
-      "odds_index_stale",
-      "predeadline_incomplete",
-      "predeadline_race_odds_gap",
-      "predeadline_v216_observation_stale"
-    ],
-    "current_window": [
-      {
-        "deadline_jst": "19:17",
-        "issues": [
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 1.7,
-        "race_key": "20261023-24-09",
-        "venue": "大村"
-      },
-      {
-        "deadline_jst": "19:30",
-        "issues": [
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 14.7,
-        "race_key": "20261023-20-04",
-        "venue": "若松"
-      }
-    ],
+    "collector_health_issues": [],
+    "current_window": [],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 41,
-    "readiness_reasons": {
-      "snapshot_missing": 23,
-      "verified_shadow_ready": 18
-    },
-    "readiness_shadow_verified_races": 18,
+    "readiness_observed_races": 0,
+    "readiness_reasons": {},
+    "readiness_shadow_verified_races": 0,
     "schedule_today": true,
-    "snapshot_files_today": 24,
-    "status": "NEEDS_ATTENTION",
+    "snapshot_files_today": 0,
+    "status": "WAITING_FOR_PREDEADLINE",
     "v226_source_guard_active": true
   }
 }
