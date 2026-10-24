@@ -23,8 +23,22 @@ def summarize(race_dir: Path, now: datetime):
         group = "final15m" if 0 <= minutes <= 15 else ("future" if minutes > 15 else "past_locked")
         audit = d.get("source_audit") or {}
         entry = {"race": path.stem, "minutes_to_deadline": round(minutes, 2)}
-        entry["sources"] = {role: (audit.get(role) or {}).get("availability_reason", "not_observed")
-                            for role in ROLES}
+        # Do not promote old per-race observations to fresh evidence merely
+        # because this read-only report was generated now.
+        def source_reason(role):
+            row = audit.get(role) or {}
+            reason = row.get("availability_reason", "not_observed")
+            clock = row.get("observed_at")
+            if not clock:
+                return "observation_time_missing" if reason != "not_observed" else reason
+            try:
+                observed = datetime.fromisoformat(clock)
+                if observed.tzinfo is None or observed > now or (now - observed).total_seconds() > 600:
+                    return "stale_observation"
+            except (TypeError, ValueError):
+                return "observation_time_invalid"
+            return reason
+        entry["sources"] = {role: source_reason(role) for role in ROLES}
         cohorts[group].append(entry)
     result = {"observation_at": now.isoformat(timespec="seconds"), "phase": "PRE_RESULT",
               "read_only": True, "cohorts": {}}
