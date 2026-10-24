@@ -528,7 +528,7 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert "if: github.event_name != 'workflow_run'" in verify
     report=wf.split('      - name: Generate observed pre-result site-operations report',1)[1].split('      - name:',1)[0]
     assert "if: github.event_name != 'workflow_run'" not in report
-    assert 'V220_EVENT_REPORT_FRESH_SKIP' in report
+    assert 'V220_EVENT_REPORT_FRESH_AND_OBSERVATIONS_MATCH_SKIP' in report
     assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in report
     assert 'git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json' in report
     assert 'report_age < 900' in report
