@@ -141,5 +141,20 @@ class EnrichmentValidatorTests(unittest.TestCase):
         self.assertIn("race_metadata_mismatch", result["reasons"])
 
 
+    def test_reject_untrusted_and_ambiguous_sources(self):
+        for bad_url in (
+            "https://example.com/owpc/pc/race/beforeinfo?hd=20261024&jcd=04&rno=1",
+            "https://www.boatrace.jp.evil.test/owpc/pc/race/beforeinfo?hd=20261024&jcd=04&rno=1",
+            AUDIT["source"] + "&rno=2",
+            AUDIT["source"] + "&debug=1",
+            AUDIT["source"].replace("beforeinfo", "racerprofile"),
+            "https://attacker@www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261024&jcd=04&rno=1",
+        ):
+            evidence = dict(AUDIT, source=bad_url)
+            result = self.check({"actual_entry": [1,2,3,4,5,6],
+                                 "source_audit": {"actual_entry": evidence}}, False)
+            self.assertIn("actual_entry_source_invalid", result["reasons"])
+
+
 if __name__ == "__main__":
     unittest.main()
