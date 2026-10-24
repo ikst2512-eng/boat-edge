@@ -58,6 +58,19 @@ class SourceAuditTest(unittest.TestCase):
             self.assertEqual(counts["tkz"], {"available": 1})
             self.assertEqual(counts["sui"], {"post_deadline_observation": 1})
 
+    def test_empty_invalid_audit_containers(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td)
+            now = datetime(2026, 10, 25, 20, 0, tzinfo=JST)
+            first = {"meta": {"deadline": "20:10"}, "source_audit": []}
+            (p / "20261025-01-01.json").write_text(json.dumps(first), encoding="utf-8")
+            self.assertEqual(summarize(p, now)["input_state"], "RACE_FILES_UNUSABLE")
+            second = {"meta": {"deadline": "20:10"}, "source_audit": {"stt": []}}
+            (p / "20261025-01-02.json").write_text(json.dumps(second), encoding="utf-8")
+            out = summarize(p, now)
+            self.assertEqual(out["input_state"], "RACE_FILES_PARTIAL")
+            self.assertEqual(out["cohorts"]["final15m"]["reason_counts"]["stt"], {"observation_structure_invalid": 1})
+
     def test_unhashable_availability_reason_is_classified(self):
         with tempfile.TemporaryDirectory() as td:
             race = {"meta": {"deadline": "20:10"}, "source_audit": {
