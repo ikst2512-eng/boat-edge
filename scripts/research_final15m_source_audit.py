@@ -1,0 +1,48 @@
+"""Read-only PRE_RESULT CSV coverage audit. Never reads results or payouts."""
+import argparse
+import json
+from collections import Counter
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROLES = ("stt", "tkz", "sui", "original_exhibition")
+JST = timezone(timedelta(hours=9))
+
+def summarize(race_dir: Path, now: datetime):
+    day = now.strftime("%Y%m%d")
+    cohorts = {"final15m": [], "future": [], "past_locked": []}
+    for path in sorted(race_dir.glob(f"{day}-??-??.json")):
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"))
+            clock = (d.get("meta") or {}).get("deadline")
+            hh, mm = map(int, clock.split(":"))
+            deadline = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        except (OSError, ValueError, TypeError, AttributeError):
+            continue
+        minutes = (deadline - now).total_seconds() / 60
+        group = "final15m" if 0 <= minutes <= 15 else ("future" if minutes > 15 else "past_locked")
+        audit = d.get("source_audit") or {}
+        entry = {"race": path.stem, "minutes_to_deadline": round(minutes, 2)}
+        entry["sources"] = {role: (audit.get(role) or {}).get("availability_reason", "not_observed")
+                            for role in ROLES}
+        cohorts[group].append(entry)
+    result = {"observation_at": now.isoformat(timespec="seconds"), "phase": "PRE_RESULT",
+              "read_only": True, "cohorts": {}}
+    for group, entries in cohorts.items():
+        result["cohorts"][group] = {"count": len(entries), "reason_counts": {
+            role: dict(sorted(Counter(e["sources"][role] for e in entries).items()))
+            for role in ROLES}, "races": entries if group == "final15m" else []}
+    return result
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--race-dir", default="data/races")
+    ap.add_argument("--at", help="ISO8601 JST observation timestamp")
+    args = ap.parse_args()
+    now = datetime.fromisoformat(args.at) if args.at else datetime.now(JST)
+    if now.tzinfo is None:
+        ap.error("--at must contain a timezone offset")
+    print(json.dumps(summarize(Path(args.race_dir), now.astimezone(JST)), ensure_ascii=False, indent=2))
+
+if __name__ == "__main__":
+    main()
