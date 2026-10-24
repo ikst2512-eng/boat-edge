@@ -42,7 +42,7 @@ class SourceAuditTest(unittest.TestCase):
                         "observed_at": "2026-10-24T20:13:00+09:00"}}}
             (p / "20261024-01-05.json").write_text(json.dumps(late), encoding="utf-8")
             checked = summarize(p, datetime(2026, 10, 24, 20, 14, tzinfo=JST))
-            self.assertEqual(checked["cohorts"]["past_locked"]["reason_counts"]["stt"]["post_deadline_observation"], 1)
+            self.assertEqual(checked["cohorts"]["past_locked"]["reason_counts"]["stt"]["post_deadline_observation"], 2)
 
 if __name__ == "__main__":
     unittest.main()
