@@ -3,10 +3,14 @@ import argparse, hashlib, json, os, re, tempfile
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, build_opener, HTTPRedirectHandler
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        raise ValueError('Redirect refused; capture canonical source URL directly')
 JST=timezone(timedelta(hours=9))
 
-def capture(url, directory, timeout=15, opener=urlopen):
+def capture(url, directory, timeout=15, opener=None):
     u=urlparse(url)
     if u.scheme!='https' or u.hostname not in ('www.boatrace.jp','boatrace.jp'):
         raise ValueError('Official BOAT RACE HTTPS only')
@@ -19,6 +23,8 @@ def capture(url, directory, timeout=15, opener=urlopen):
         raise ValueError('No retrospective evidence capture')
     request=Request(url,headers={'User-Agent':'BoatraceResearchSnapshot/1.0','Accept':'text/html'})
     started=datetime.now(JST)
+    if opener is None:
+        opener=build_opener(NoRedirect()).open
     with opener(request,timeout=timeout) as response:
         final=response.geturl()
         f=urlparse(final)
@@ -28,6 +34,8 @@ def capture(url, directory, timeout=15, opener=urlopen):
         mime=response.headers.get('Content-Type','')
         status=response.status
     finished=datetime.now(JST)
+    if final!=url:
+        raise ValueError('Unexpected final URL')
     if status!=200 or not data or len(data)>3_000_000 or 'html' not in mime.lower():
         raise ValueError('Invalid official HTML response')
     sha=hashlib.sha256(data).hexdigest()
