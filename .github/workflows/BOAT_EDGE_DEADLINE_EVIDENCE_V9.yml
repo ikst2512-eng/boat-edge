@@ -6,6 +6,11 @@ on:
         description: Current JST date YYYYMMDD only
         required: true
         type: string
+      all_races:
+        description: Capture all 12 races per venue (research evidence only)
+        required: false
+        default: true
+        type: boolean
       venues:
         description: Space-separated venue codes e.g. 01 02 03
         required: true
@@ -26,11 +31,14 @@ jobs:
         env:
           DAY: ${{ inputs.jst_date }}
           VENUES: ${{ inputs.venues }}
+          ALL_RACES: ${{ inputs.all_races }}
         run: |
           set -euo pipefail
           test "$DAY" = "$(TZ=Asia/Tokyo date +%Y%m%d)"
           read -r -a VENUE_ARR <<< "$VENUES"
-          python scripts/deadline_v9/capture.py --date "$DAY" --venues "${VENUE_ARR[@]}" --outdir artifacts/snapshots --report artifacts/report.json
+          ARGS=()
+          if [[ "$ALL_RACES" == "true" ]]; then ARGS+=(--all-races); fi
+          python scripts/deadline_v9/capture.py --date "$DAY" --venues "${VENUE_ARR[@]}" --outdir artifacts/snapshots --report artifacts/report.json "${ARGS[@]}"
       - name: Retain capture evidence
         if: always()
         uses: actions/upload-artifact@v4
