@@ -528,7 +528,7 @@ def test_v220_v216_event_nudges_only_existing_fail_closed_recovery():
     assert "if: github.event_name != 'workflow_run'" in verify
     report=wf.split('      - name: Generate observed pre-result site-operations report',1)[1].split('      - name:',1)[0]
     assert "if: github.event_name != 'workflow_run'" not in report
-    assert 'V220_EVENT_REPORT_FRESH_SKIP' in report
+    assert 'V220_EVENT_REPORT_FRESH_AND_OBSERVATIONS_MATCH_SKIP' in report
     assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in report
     assert 'git log -1 --format=%ct -- data/site_ops_v220/gate1c_current.json' in report
     assert 'report_age < 900' in report
@@ -701,6 +701,8 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)
         subprocess.run(['git','init','-q'],cwd=root,check=True)
+        subprocess.run(['git','branch','-M','main'],cwd=root,check=True)
+        subprocess.run(['git','remote','add','origin',str(root)],cwd=root,check=True)
         report=root/'data/site_ops_v220/gate1c_current.json'
         report.parent.mkdir(parents=True)
         for label,age_min in (('fresh',2),('stale',45)):
@@ -713,12 +715,13 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
             subprocess.run(['git','-c','user.name=Fixture',
                             '-c','user.email=test@example.invalid',
                             'commit','-qm',label],cwd=root,env=env,check=True)
+            subprocess.run(['git','update-ref','refs/remotes/origin/main','HEAD'],cwd=root,check=True)
             p=subprocess.run(['bash','-c',guard],cwd=root,env=env,
                              capture_output=True,text=True,timeout=8)
             assert p.returncode==0,(label,p.stderr)
             if label=='fresh':
-                assert 'V220_EVENT_REPORT_FRESH_SKIP' in p.stdout,p.stdout
-                assert 'STALE_REFRESH' not in p.stdout,p.stdout
+                assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
+                # A recent report is not sufficient without matching V215 evidence.
             else:
                 assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
                 assert 'FRESH_SKIP' not in p.stdout,p.stdout
@@ -727,11 +730,16 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
                                           env={**env,'GITHUB_EVENT_NAME':event},
                                           capture_output=True,text=True,timeout=8)
                 assert scheduled.returncode==0,scheduled.stderr
-                assert scheduled.stdout.strip()=='',scheduled.stdout
+                # git reset prints a benign checkout status; require no V220 event action.
+                assert 'V220_EVENT_' not in scheduled.stdout,scheduled.stdout
     # Missing report history: do not mistake it for a fresh report.
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)
         subprocess.run(['git','init','-q'],cwd=root,check=True)
+        subprocess.run(['git','branch','-M','main'],cwd=root,check=True)
+        subprocess.run(['git','remote','add','origin',str(root)],cwd=root,check=True)
+        subprocess.run(['git','-c','user.name=Fixture','-c','user.email=test@example.invalid',
+                        'commit','--allow-empty','-qm','initial'],cwd=root,check=True)
         p=subprocess.run(['bash','-c',guard],cwd=root,
                          env={**os.environ,'GITHUB_EVENT_NAME':'workflow_run'},
                          capture_output=True,text=True,timeout=8)
