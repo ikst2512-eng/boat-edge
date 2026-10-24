@@ -730,7 +730,8 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
                                           env={**env,'GITHUB_EVENT_NAME':event},
                                           capture_output=True,text=True,timeout=8)
                 assert scheduled.returncode==0,scheduled.stderr
-                assert scheduled.stdout.strip()=='',scheduled.stdout
+                # git reset prints a benign checkout status; require no V220 event action.
+                assert 'V220_EVENT_' not in scheduled.stdout,scheduled.stdout
     # Missing report history: do not mistake it for a fresh report.
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)
