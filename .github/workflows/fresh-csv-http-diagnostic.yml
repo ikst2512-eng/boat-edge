@@ -1,0 +1,21 @@
+name: Formal Fresh CSV HTTP Evidence (read only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect five upstream CSV responses without results
+        run: python3 scripts/fresh_csv_http_diagnostic.py
+      - name: Preserve evidence even when source is unavailable
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formal-fresh-csv-http-evidence
+          path: fresh_csv_diagnostic.json
+          if-no-files-found: error
+          retention-days: 30
