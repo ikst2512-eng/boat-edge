@@ -114,5 +114,18 @@ class EnrichmentValidatorTests(unittest.TestCase):
             self.check({"course_stats": rows, "source_audit": {"course_stats": source}}, False)
 
 
+    def test_refuse_overwrite_existing_entry(self):
+        original = dict(RACE, actual_entry=[1, 2, 3, 4, 5, 6])
+        payload = {"actual_entry": [1, 3, 2, 4, 5, 6], "source_audit": {"actual_entry": AUDIT}}
+        with self.assertRaisesRegex(ValueError, "replacement forbidden"):
+            applicator.apply(original, payload, now=NOW)
+
+    def test_refuse_overwrite_existing_audit(self):
+        original = dict(RACE, source_audit={"actual_entry": dict(AUDIT)})
+        payload = {"actual_entry": [1, 3, 2, 4, 5, 6], "source_audit": {"actual_entry": AUDIT}}
+        with self.assertRaisesRegex(ValueError, "replacement forbidden"):
+            applicator.apply(original, payload, now=NOW)
+
+
 if __name__ == "__main__":
     unittest.main()
