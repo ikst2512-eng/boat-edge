@@ -19,6 +19,17 @@ class SourceAuditTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 summarize(Path(td), datetime(2026, 10, 25, 1, 0))
 
+    def test_invalid_deadline_clock_is_not_accepted(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            now = datetime(2026, 10, 25, 20, 0, tzinfo=JST)
+            for index, value in enumerate(("20:99", "20:-1", "20:10:00"), 1):
+                race = {"meta": {"deadline": value}}
+                (base / f"20261025-01-0{index}.json").write_text(json.dumps(race), encoding="utf-8")
+            out = summarize(base, now)
+            self.assertEqual(out["input_state"], "RACE_FILES_UNUSABLE")
+            self.assertEqual(out["invalid_file_count"], 3)
+
     def test_missing_day_files_distinct_from_no_urgent_races(self):
         with tempfile.TemporaryDirectory() as td:
             now = datetime(2026, 10, 25, 1, 0, tzinfo=JST)
