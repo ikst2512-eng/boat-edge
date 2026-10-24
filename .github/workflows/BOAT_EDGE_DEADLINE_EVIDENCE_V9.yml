@@ -1,5 +1,7 @@
 name: BOAT EDGE Deadline Evidence V9 (research, manual)
 on:
+  schedule:
+    - cron: '45 22 * * *' # 07:45 JST daily, next local morning
   workflow_dispatch:
     inputs:
       jst_date:
@@ -30,10 +32,16 @@ jobs:
         shell: bash
         env:
           DAY: ${{ inputs.jst_date }}
+          EVENT: ${{ github.event_name }}
           VENUES: ${{ inputs.venues }}
           ALL_RACES: ${{ inputs.all_races }}
         run: |
           set -euo pipefail
+          if [[ "$EVENT" == "schedule" ]]; then
+            DAY="$(TZ=Asia/Tokyo date +%Y%m%d)"
+            VENUES="$(printf '%02d ' {1..24})"
+            ALL_RACES="false"
+          fi
           test "$DAY" = "$(TZ=Asia/Tokyo date +%Y%m%d)"
           read -r -a VENUE_ARR <<< "$VENUES"
           ARGS=()
