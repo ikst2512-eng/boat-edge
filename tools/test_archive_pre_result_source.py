@@ -35,6 +35,17 @@ class ArchiveTests(unittest.TestCase):
             self.assertEqual(json.loads((Path(temp)/"20261025-04-01.beforeinfo.audit.json").read_text())["sha256"],manifest["sha256"])
             with self.assertRaises(FileExistsError): archive(RACE,temp,now=BEFORE,opener=Opener())
 
+    def test_reject_non_html_without_creating_evidence(self):
+        class BadOpener:
+            def open(self, request, timeout):
+                class BadResponse(Response):
+                    def read(self, n): return b'{"result":"not a prerace document"}'
+                return BadResponse(request.full_url)
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(ValueError, "not_html_document"):
+                archive(RACE, temp, now=BEFORE, opener=BadOpener())
+            self.assertEqual(list(Path(temp).iterdir()), [])
+
     def test_reject_after_deadline(self):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaises(ValueError):
