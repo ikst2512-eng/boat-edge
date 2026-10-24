@@ -36,6 +36,10 @@ def validate(race, addition, now=None):
     meta = race.get("meta") or {}
     if not re.fullmatch(r"\d{8}-\d{2}-\d{2}", key):
         reasons.append("invalid_race_key")
+    else:
+        expected_date = key[:4] + "-" + key[4:6] + "-" + key[6:8]
+        if meta.get("date") != expected_date or str(meta.get("venue_code", key.split("-")[1])) != key.split("-")[1] or str(meta.get("race_no", int(key.split("-")[2]))) != str(int(key.split("-")[2])):
+            reasons.append("race_metadata_mismatch")
     if meta.get("phase") != "PRE_RESULT" or any(meta.get(k) is not False for k in ("results_seen", "unlock", "scoring")):
         reasons.append("race_not_locked_pre_result")
     if not isinstance(addition, dict) or not addition:
@@ -93,7 +97,10 @@ def validate(race, addition, now=None):
         verify_source("actual_entry")
     if "course_stats" in addition:
         rows = addition["course_stats"]
-        ids = {str(r.get("registration_no")) for r in race.get("racers", []) if isinstance(r, dict)}
+        racer_list = race.get("racers", [])
+        ids = {str(r.get("registration_no")) for r in racer_list if isinstance(r, dict)}
+        if len(racer_list) != 6 or len(ids) != 6 or "None" in ids:
+            reasons.append("race_roster_not_six_unique")
         if not isinstance(rows, list) or len(rows) != 6:
             reasons.append("course_stats_incomplete")
         else:
