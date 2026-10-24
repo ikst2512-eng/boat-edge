@@ -701,6 +701,8 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
     with tempfile.TemporaryDirectory() as td:
         root=Path(td)
         subprocess.run(['git','init','-q'],cwd=root,check=True)
+        subprocess.run(['git','branch','-M','main'],cwd=root,check=True)
+        subprocess.run(['git','remote','add','origin',str(root)],cwd=root,check=True)
         report=root/'data/site_ops_v220/gate1c_current.json'
         report.parent.mkdir(parents=True)
         for label,age_min in (('fresh',2),('stale',45)):
@@ -713,11 +715,15 @@ def test_v220_event_stale_report_gate_uses_original_git_commit_age():
             subprocess.run(['git','-c','user.name=Fixture',
                             '-c','user.email=test@example.invalid',
                             'commit','-qm',label],cwd=root,env=env,check=True)
-            p=subprocess.run(['bash','-c',guard],cwd=root,env=env,
+            subprocess.run(['git','update-ref','refs/remotes/origin/main','HEAD'],cwd=root,check=True)
+            subprocess.run(['git','branch','-M','main'],cwd=root,check=True)
+        subprocess.run(['git','remote','add','origin',str(root)],cwd=root,check=True)
+        p=subprocess.run(['bash','-c',guard],cwd=root,env=env,
                              capture_output=True,text=True,timeout=8)
             assert p.returncode==0,(label,p.stderr)
             if label=='fresh':
-                assert 'V220_EVENT_REPORT_FRESH_SKIP' in p.stdout,p.stdout
+                assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
+                # A recent report is not sufficient without matching V215 evidence.
                 assert 'STALE_REFRESH' not in p.stdout,p.stdout
             else:
                 assert 'V220_EVENT_REPORT_STALE_REFRESH_EXISTING_OWNER' in p.stdout,p.stdout
