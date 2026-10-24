@@ -33,7 +33,11 @@ def summarize(race_dir: Path, now: datetime):
                 return "observation_time_missing" if reason != "not_observed" else reason
             try:
                 observed = datetime.fromisoformat(clock)
-                if observed.tzinfo is None or observed > now or (now - observed).total_seconds() > 600:
+                if observed.tzinfo is None:
+                    return "observation_time_invalid"
+                if observed > deadline:
+                    return "post_deadline_observation"
+                if observed > now or (now - observed).total_seconds() > 600:
                     return "stale_observation"
             except (TypeError, ValueError):
                 return "observation_time_invalid"
