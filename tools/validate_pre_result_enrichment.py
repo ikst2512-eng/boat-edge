@@ -10,6 +10,7 @@ Usage:
 import argparse
 import datetime as dt
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -105,9 +106,11 @@ def validate(race, addition, now=None):
                 reg = str(row.get("registration_no"))
                 course = row.get("course")
                 seen_ids.add(reg)
-                seen_courses.add(course)
+                if type(course) is int and 1 <= course <= 6:
+                    seen_courses.add(course)
                 nums = [row.get(k) for k in ("first_rate", "second_rate", "third_rate")]
-                if type(course) is not int or not 1 <= course <= 6 or any(type(x) not in (int, float) or not 0 <= x <= 100 for x in nums) or all(isinstance(x, (int, float)) for x in nums) and sum(nums) > 100.01:
+                valid_numbers = all(type(x) in (int, float) and math.isfinite(x) and 0 <= x <= 100 for x in nums)
+                if type(course) is not int or not 1 <= course <= 6 or not valid_numbers or (valid_numbers and sum(nums) > 100.01):
                     reasons.append("course_stats_invalid_values")
             if len(seen_ids) != 6 or seen_ids != ids or len(seen_courses) != 6:
                 reasons.append("course_stats_racer_or_course_mismatch")
