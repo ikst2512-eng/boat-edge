@@ -34,6 +34,8 @@ def summarize(race_dir: Path, now: datetime):
         # because this read-only report was generated now.
         def source_reason(role):
             row = audit.get(role) or {}
+            if not isinstance(row, dict):
+                return "observation_structure_invalid"
             reason = row.get("availability_reason", "not_observed")
             clock = row.get("observed_at")
             if not clock:
@@ -42,6 +44,7 @@ def summarize(race_dir: Path, now: datetime):
                 observed = datetime.fromisoformat(clock)
                 if observed.tzinfo is None:
                     return "observation_time_invalid"
+                observed = observed.astimezone(JST)
                 if observed > deadline:
                     return "post_deadline_observation"
                 if observed > now or (now - observed).total_seconds() > 600:
