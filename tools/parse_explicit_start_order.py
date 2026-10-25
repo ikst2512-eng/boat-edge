@@ -52,9 +52,16 @@ class Tables(HTMLParser):
             self.depth=max(0,self.depth-1)
 
 def parse_explicit_start_order(raw):
-    try:
-        html=raw.decode("utf-8")
-    except (UnicodeDecodeError,AttributeError):
+    if not isinstance(raw, bytes):
+        return None
+    html=None
+    for encoding in ("utf-8-sig","cp932"):
+        try:
+            html=raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    if html is None:
         return None
     tables=Tables()
     tables.feed(html)
