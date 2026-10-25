@@ -25,9 +25,10 @@ for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
             deadline_passed = deadline <= now
         except (ValueError, TypeError, AttributeError):
             deadline_passed = None
-        counts["deadline_passed" if deadline_passed else
-               "deadline_future" if deadline_passed is False else
-               "deadline_unknown"] += 1
+        deadline_bucket = ("deadline_passed" if deadline_passed is True else
+                           "deadline_future" if deadline_passed is False else
+                           "deadline_unknown")
+        counts[deadline_bucket] += 1
         if model_input.get("core7_ready") is True:
             counts["core7_ready_on_saved_race"] += 1
             continue
@@ -39,12 +40,7 @@ for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
                 reasons.append(f"{role}:{item.get('availability_reason') or item.get('status') or 'unknown'}")
         if not reasons:
             reasons.append("sources_ok_but_core7_not_ready")
-        if deadline_passed is True:
-            counts["not_core7_ready_deadline_passed"] += 1
-        elif deadline_passed is False:
-            counts["not_core7_ready_deadline_future"] += 1
-        else:
-            counts["not_core7_ready_deadline_unknown"] += 1
+        counts["not_ready_" + deadline_bucket] += 1
         for reason in reasons:
             counts[reason] += 1
             examples.setdefault(reason, path.stem)
@@ -58,6 +54,7 @@ report = {
     "model_status_updated_at": status.get("updated_at"),
     "model_source_rows": status.get("source_rows"),
     "model_core7": status.get("core7"),
+    "saved_ready_count_may_differ_from_current_collector": True,
     "saved_race_counts": dict(sorted(counts.items())),
     "example_race_keys": examples,
     "counts_are_diagnostic_not_unique_missed_eligible_races": True,
