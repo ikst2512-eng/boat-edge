@@ -31,6 +31,21 @@ jobs:
         run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12
       - name: Prepare public entry sidecars
         run: python tools/prepare_public_entry_sidecars.py
+      - name: Summarize verified capture and publication counts
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw=$(find artifacts/pre-result-captures -maxdepth 1 -name '*.beforeinfo.audit.json' -type f 2>/dev/null | wc -l || true)
+          entries=$(find artifacts/verified-entry-snapshots -maxdepth 1 -name '*.json' -type f 2>/dev/null | wc -l || true)
+          sidecars=$(find data/site_verified_entries -maxdepth 1 -name '*.json' -type f 2>/dev/null | wc -l || true)
+          {
+            echo '## PRE_RESULT pipeline'
+            echo "Captured official source audits: $raw"
+            echo "Validated entry snapshots: $entries"
+            echo "Total sidecar files in checkout: $sidecars"
+            echo 'A zero count is not a success signal; check eligible races and parser compatibility.'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Publish only new sidecars
         shell: bash
         run: |
