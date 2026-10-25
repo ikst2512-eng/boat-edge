@@ -9,6 +9,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Run diagnostic regression tests
+        run: python3 -m unittest discover -s tests -p 'test_fresh_core7_diagnostic.py' -v
       - name: Inspect five upstream CSV responses without results
         run: python3 scripts/fresh_csv_http_diagnostic.py
       - name: Diagnose saved race CORE7 blockers without changing source state
