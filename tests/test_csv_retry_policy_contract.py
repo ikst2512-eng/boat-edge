@@ -10,7 +10,7 @@ class CsvRetryPolicy(unittest.TestCase):
   end=text.index("          def idx(role):",start)
   block=text[start:end]
   self.assertIn("for role,url in SOURCES.items():",block)
-  self.assertIn("if (pending_codes and (err or source_is_sparse(role,rows) or missing_pending_codes(rows))):",block)
+  self.assertIn("if (pending_codes and (err or source_is_sparse(role,rows) or missing_pending_codes(rows) or preview_source_is_incomplete(role,rows))):",block)
   self.assertIn("for delay in (2,5):",block)
   self.assertIn("retry_count",block)
   self.assertNotIn('if role=="original_exhibition" and (err',block)
@@ -30,6 +30,13 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn("def missing_pending_codes(rows):",text)
   self.assertIn("or missing_pending_codes(rows))):",text)
   self.assertIn('"predeadline_race_rows_missing":len(missing_pending_codes(rows))',text)
+ def test_incomplete_six_boat_previews_trigger_retry(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn("def preview_source_is_incomplete(role,rows):",text)
+  self.assertIn('role=="stt"',text)
+  self.assertIn('role=="tkz"',text)
+  self.assertIn('role=="original_exhibition"',text)
+  self.assertIn('"pending_value_incomplete":preview_source_is_incomplete(role,rows)',text)
  def test_publication_wait_separated_from_core7_failure(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn('"source_availability"',text)
