@@ -11,11 +11,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Inspect five upstream CSV responses without results
         run: python3 scripts/fresh_csv_http_diagnostic.py
+      - name: Diagnose saved race CORE7 blockers without changing source state
+        run: python3 scripts/fresh_core7_blockers.py
       - name: Preserve evidence even when source is unavailable
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: formal-fresh-csv-http-evidence
-          path: fresh_csv_diagnostic.json
+          path: |
+            fresh_csv_diagnostic.json
+            fresh_core7_blockers.json
           if-no-files-found: error
           retention-days: 30
