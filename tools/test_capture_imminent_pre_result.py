@@ -78,6 +78,21 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(enriched["actual_entry"], [2,1,3,4,5,6])
             self.assertNotIn("actual_entry", json.loads((races / "20261025-04-01.json").read_text()))
 
+    def test_one_failed_race_does_not_block_other_capture(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            races=root/"races"
+            races.mkdir()
+            for key,deadline in (("20261025-04-01","10:48"),("20261025-04-02","10:52")):
+                (races/(key+".json")).write_text(json.dumps(race(key,deadline)))
+            def fake_capture(item,output):
+                if item["race_key"].endswith("-01"):
+                    raise OSError("simulated network error")
+                return {"sha256":"a"*64}
+            result=batch(races,root/"capture",now=NOW,capture=fake_capture)
+            self.assertEqual(len(result["failed"]),1)
+            self.assertEqual([r["key"] for r in result["captured"]],["20261025-04-02"])
+
     def test_no_data_no_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = batch(tmp, Path(tmp) / "captures", now=NOW)
