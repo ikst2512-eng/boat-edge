@@ -6,6 +6,8 @@ on:
       - 'tests/test_deadline_v9_capture.py'
       - 'tests/test_deadline_v11_verify.py'
       - 'tests/test_deadline_v12_schedule.py'
+      - 'tests/test_deadline_v13_classify.py'
+      - 'scripts/deadline_v9/classify_pages.py'
       - '.github/workflows/BOAT_EDGE_DEADLINE_EVIDENCE_V9.yml'
       - '.github/workflows/BOAT_EDGE_DEADLINE_V9_TESTS.yml'
   workflow_dispatch:
@@ -24,5 +26,7 @@ jobs:
         run: python -m unittest discover -s tests -p test_deadline_v11_verify.py -v
       - name: Check scheduled capture safety guards
         run: python -m unittest discover -s tests -p test_deadline_v12_schedule.py -v
+      - name: Verify V13 classification fail-closed
+        run: python -m unittest discover -s tests -p test_deadline_v13_classify.py -v
       - name: Run offline tests (no network calls)
         run: python -m unittest discover -s tests -p test_deadline_v9_capture.py -v
