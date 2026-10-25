@@ -1,6 +1,9 @@
 name: Formal Fresh CSV HTTP Evidence (read only)
 on:
   workflow_dispatch:
+  schedule:
+    # Hourly at hh:17 JST from 09:17 through 22:17; no result access.
+    - cron: '17 0-13 * * *'
   pull_request:
     paths:
       - 'scripts/fresh_csv_http_diagnostic.py'
@@ -18,13 +21,13 @@ jobs:
       - name: Run diagnostic regression tests
         run: python3 -m unittest discover -s tests -p 'test_fresh_core7_diagnostic.py' -v
       - name: Inspect five upstream CSV responses without results
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: python3 scripts/fresh_csv_http_diagnostic.py
       - name: Diagnose saved race CORE7 blockers without changing source state
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: python3 scripts/fresh_core7_blockers.py
       - name: Preserve evidence even when source is unavailable
-        if: github.event_name == 'workflow_dispatch' && always()
+        if: github.event_name != 'pull_request' && always()
         uses: actions/upload-artifact@v4
         with:
           name: formal-fresh-csv-http-evidence
