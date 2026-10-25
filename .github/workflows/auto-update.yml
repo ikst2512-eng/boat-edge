@@ -744,7 +744,7 @@ jobs:
               # Retry temporary 404/network/empty responses for EVERY CSV role,
               # not only original exhibition. Never replace a populated source
               # with an empty/failed retry; preserve its raw digest as evidence.
-              if err or source_is_sparse(role,rows) or missing_pending_codes(rows):
+              if (pending_codes and (err or source_is_sparse(role,rows) or missing_pending_codes(rows))):
                   for delay in (2,5):
                       time.sleep(delay)
                       retry_count+=1
