@@ -34,12 +34,13 @@ def classify(root,report_file):
     out=[]
     for rec in report['captures']:
         venue=rec['venue_code'];race=rec['race_number_requested'];sha=rec['sha256']
-        status='INTEGRITY_UNVERIFIED';deadline=None
+        status='INTEGRITY_UNVERIFIED';deadline=None;changed_notice=False
         if base['status']=='CAPTURE_INTEGRITY_PASS_RESEARCH_ONLY':
             raw=(root/'snapshots'/report['date_jst']/venue/(sha+'.html')).read_bytes()
             parser=TableReader()
             parser.feed(raw.decode('utf-8',errors='replace'))
             page=' '.join(parser.text)
+            changed_notice='締切予定時刻が変更' in page
             if 'データがありません' in page:
                 status='NO_RACE_DATA'
             else:
@@ -55,7 +56,7 @@ def classify(root,report_file):
                     deadline=datetime.strptime(report['date_jst']+clock,'%Y%m%d%H:%M').replace(tzinfo=JST)
                     observed=datetime.fromisoformat(rec['capture_finished_at_jst'])
                     status='NOT_PRE_DEADLINE' if observed>=deadline else 'PRE_DEADLINE_CANDIDATE_RESEARCH_ONLY'
-        out.append({'venue_code':venue,'race_number':race,'deadline_display_jst':deadline.strftime('%H:%M') if deadline else None,'status':status,'formal_eligible':False})
+        out.append({'venue_code':venue,'race_number':race,'deadline_display_jst':deadline.strftime('%H:%M') if deadline else None,'status':status,'deadline_change_notice':changed_notice,'formal_eligible':False})
     return {'schema':'V13_RESEARCH_ONLY','capture_integrity':base['status'],'classifications':out,
             'counts':{k:sum(x['status']==k for x in out) for k in sorted(set(x['status'] for x in out))},
             'formal_eligible':False,'results_seen':False,'scoring':'NOT_RUN','unlock':'LOCKED'}
