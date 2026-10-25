@@ -34,7 +34,7 @@ class Tables(HTMLParser):
             # infer from filename, class, color, image position or URL.
             labels=[attrs.get(k,"") for k in ("alt","aria-label") if attrs.get(k)]
             nums=[explicit_boat_label(v) for v in labels]
-            if len(nums)==1 and nums[0] is not None:
+            if nums and all(n is not None for n in nums) and len(set(nums))==1:
                 self.cell.append(str(nums[0]))
     def handle_data(self,data):
         if self.cell is not None:self.cell.append(data)
