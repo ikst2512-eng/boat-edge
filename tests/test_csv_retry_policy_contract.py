@@ -24,6 +24,8 @@ class CsvRetryPolicy(unittest.TestCase):
  def test_partial_csv_rows_trigger_retry(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("pending_codes=set()",text)
+  self.assertIn("0 <= (cutoff-check_time).total_seconds()/60 <= 45",text)
+  self.assertIn('"near_deadline_targets":len(pending_codes)',text)
   self.assertIn("if not source_write_allowed(DATA,race_key,deadline,datetime.now(JST)):",text)
   self.assertIn("def missing_pending_codes(rows):",text)
   self.assertIn("or missing_pending_codes(rows):",text)
