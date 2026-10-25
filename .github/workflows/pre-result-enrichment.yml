@@ -35,7 +35,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run pre-result enrichment tests
-        run: |\n          python -m unittest discover -s tools -p 'test_*pre_result*.py' -v\n          python -m unittest discover -s tools -p 'test_parse_explicit_start_order.py' -v
+        run: |
+          python -m unittest discover -s tools -p 'test_*pre_result*.py' -v
+          python -m unittest discover -s tools -p 'test_parse_explicit_start_order.py' -v
           python -m unittest discover -s tools -p 'test_build_verified_entry_candidate.py' -v
           python -m unittest discover -s tools -p 'test_ingest_verified_start_order.py' -v
           python -m unittest discover -s tools -p 'test_capture_imminent_pre_result.py' -v

@@ -57,6 +57,13 @@ jobs:
             echo '{"status":"LOCKED","reason":"NO_CAPTURE_REPORT","formal_eligible":false}' > artifacts/integrity.json
             exit 2
           fi
+      - name: Classify no-data and late race pages (research only)
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f artifacts/report.json ]]; then
+            python scripts/deadline_v9/classify_pages.py --root artifacts --report artifacts/report.json --output artifacts/page_classification.json
+          fi
       - name: Retain capture evidence
         if: always()
         uses: actions/upload-artifact@v4
