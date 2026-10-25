@@ -1,0 +1,35 @@
+name: Formal Fresh CSV HTTP Evidence (read only)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/fresh_csv_http_diagnostic.py'
+      - 'scripts/fresh_core7_blockers.py'
+      - 'tests/test_fresh_core7_diagnostic.py'
+      - '.github/workflows/fresh-csv-http-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run diagnostic regression tests
+        run: python3 -m unittest discover -s tests -p 'test_fresh_core7_diagnostic.py' -v
+      - name: Inspect five upstream CSV responses without results
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 scripts/fresh_csv_http_diagnostic.py
+      - name: Diagnose saved race CORE7 blockers without changing source state
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 scripts/fresh_core7_blockers.py
+      - name: Preserve evidence even when source is unavailable
+        if: github.event_name == 'workflow_dispatch' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formal-fresh-csv-http-evidence
+          path: |
+            fresh_csv_diagnostic.json
+            fresh_core7_blockers.json
+          if-no-files-found: error
+          retention-days: 30
