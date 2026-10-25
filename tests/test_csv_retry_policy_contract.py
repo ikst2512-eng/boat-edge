@@ -21,6 +21,11 @@ class CsvRetryPolicy(unittest.TestCase):
   block=text[start:end]
   self.assertIn("if new_rows and not new_err:",block)
   self.assertIn("prior_codes <= next_codes",block)
+ def test_retry_cannot_replace_with_incomplete_values(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn("and not preview_source_is_incomplete(role,new_rows)",text)
+  self.assertIn("preview_source_is_incomplete(role,rows)",text)
+  self.assertIn("prior_codes <= next_codes",text)
  def test_partial_csv_rows_trigger_retry(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("pending_codes=set()",text)
