@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run diagnostic regression tests
         run: python3 -m unittest discover -s tests -p 'test_fresh_core7_diagnostic.py' -v
+      - name: Run CSV HTTP classification regression
+        run: python3 -m unittest discover -s tests -p 'test_fresh_csv_http_contract.py' -v
       - name: Inspect five upstream CSV responses without results
         if: github.event_name != 'pull_request'
         run: python3 scripts/fresh_csv_http_diagnostic.py
