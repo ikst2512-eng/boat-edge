@@ -19,8 +19,8 @@ class CsvRetryPolicy(unittest.TestCase):
   start=text.index("          def source_is_sparse(role,rows):")
   end=text.index("          def idx(role):",start)
   block=text[start:end]
-  self.assertIn("if new_rows and (not rows or",block)
-  self.assertIn("len(new_rows)>len(rows)",block)
+  self.assertIn("if new_rows and not new_err:",block)
+  self.assertIn("prior_codes <= next_codes",block)
  def test_partial_csv_rows_trigger_retry(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("pending_codes=set()",text)
