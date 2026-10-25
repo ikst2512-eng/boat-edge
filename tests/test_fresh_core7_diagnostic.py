@@ -28,7 +28,7 @@ class Core7DiagnosticTests(unittest.TestCase):
                                  "stt": {"status": "missing", "availability_reason": "race_row_absent"},
                                  "tkz": {"status": "ok"}, "sui": {"status": "ok"},
                                  "original_exhibition": {"status": "ok"}},
-                "current_model_input": {"core7_ready": False}}
+                "current_model_input": {"core7_ready": False, "source_presence": {"race_cards": True, "stt": False, "tkz": True, "sui": True, "original_exhibition": True}}}
             complete = {
                 "meta": {"deadline": "23:59"},
                 "source_audit": {k: {"status": "ok"} for k in
@@ -41,6 +41,7 @@ class Core7DiagnosticTests(unittest.TestCase):
             report = json.loads((base / "fresh_core7_blockers.json").read_text(encoding="utf-8"))
             counts = report["saved_race_counts"]
             self.assertEqual(counts["stt:race_row_absent"], 1)
+            self.assertEqual(report["not_ready_source_presence_gaps"]["stt"], 1)
             self.assertEqual(counts["core7_ready_on_saved_race"], 1)
             self.assertEqual(counts["races_not_core7_ready"], 1)
             self.assertEqual(counts["not_ready_deadline_passed"], 1)
