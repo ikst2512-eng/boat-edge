@@ -28,7 +28,7 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn('"near_deadline_targets":len(pending_codes)',text)
   self.assertIn("if not source_write_allowed(DATA,race_key,deadline,check_time):",text)
   self.assertIn("def missing_pending_codes(rows):",text)
-  self.assertIn("or missing_pending_codes(rows):",text)
+  self.assertIn("or missing_pending_codes(rows))):",text)
   self.assertIn('"predeadline_race_rows_missing":len(missing_pending_codes(rows))',text)
  def test_publication_wait_separated_from_core7_failure(self):
   text=WORKFLOW.read_text(encoding="utf-8")
