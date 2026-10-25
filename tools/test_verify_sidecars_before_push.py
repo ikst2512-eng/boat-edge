@@ -32,4 +32,28 @@ class FinalGateTests(unittest.TestCase):
  def test_unrelated_staged(self):
   with self.assertRaisesRegex(ValueError,"unexpected_staged_path"):
    verify_staged(["data/races/"+KEY+".json"],now=BEFORE)
+ def test_at_exact_deadline(self):
+  with self.assertRaisesRegex(ValueError,"deadline_expired"):
+   self.run_gate(dt.datetime(2026,10,25,10,52,tzinfo=JST))
+ def test_capture_at_deadline_rejected(self):
+  side_path=self.root/self.name
+  side=json.loads(side_path.read_text())
+  side["source_audit"]["actual_entry"]["fetched_at"]="2026-10-25T10:52:00+09:00"
+  side_path.write_text(json.dumps(side))
+  with self.assertRaisesRegex(ValueError,"invalid_capture_time"):
+   self.run_gate(BEFORE)
+ def test_capture_without_timezone_rejected(self):
+  side_path=self.root/self.name
+  side=json.loads(side_path.read_text())
+  side["source_audit"]["actual_entry"]["fetched_at"]="2026-10-25T10:40:00"
+  side_path.write_text(json.dumps(side))
+  with self.assertRaisesRegex(ValueError,"invalid_capture_time"):
+   self.run_gate(BEFORE)
+ def test_result_seen_rejected(self):
+  race_path=self.root/"data/races"/(KEY+".json")
+  race=json.loads(race_path.read_text())
+  race["meta"]["results_seen"]=True
+  race_path.write_text(json.dumps(race))
+  with self.assertRaisesRegex(ValueError,"unsafe_race_phase"):
+   self.run_gate(BEFORE)
 if __name__=="__main__":unittest.main()
