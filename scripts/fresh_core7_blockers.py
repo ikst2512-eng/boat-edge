@@ -14,6 +14,7 @@ health_path = root / "health.json"
 health = json.loads(health_path.read_text(encoding="utf-8")) if health_path.exists() else {}
 counts = collections.Counter()
 examples = {}
+source_presence_gaps = collections.Counter()
 for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
     try:
         race = json.loads(path.read_text(encoding="utf-8"))
@@ -42,6 +43,11 @@ for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
                 reasons.append(f"{role}:{item.get('availability_reason') or item.get('status') or 'unknown'}")
         if not reasons:
             reasons.append("sources_ok_but_core7_not_ready")
+        presence = model_input.get("source_presence") or {}
+        if isinstance(presence, dict):
+            for role in ("race_cards", "stt", "tkz", "sui", "original_exhibition"):
+                if presence.get(role) is not True:
+                    source_presence_gaps[role] += 1
         counts["not_ready_" + deadline_bucket] += 1
         for reason in reasons:
             counts[reason] += 1
@@ -71,6 +77,7 @@ report = {
     "urgent_and_post_enrichment_denominators_must_not_be_added": True,
     "saved_ready_count_may_differ_from_current_collector": True,
     "saved_race_counts": dict(sorted(counts.items())),
+    "not_ready_source_presence_gaps": dict(sorted(source_presence_gaps.items())),
     "example_race_keys": examples,
     "counts_are_diagnostic_not_unique_missed_eligible_races": True,
     "source_audit_ok_is_not_full_core7_validation": True,
