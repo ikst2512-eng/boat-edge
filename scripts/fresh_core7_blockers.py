@@ -10,6 +10,8 @@ now = datetime.now(JST)
 ymd = now.strftime("%Y%m%d")
 root = Path("data")
 status = json.loads((root / "model_status.json").read_text(encoding="utf-8"))
+health_path = root / "health.json"
+health = json.loads(health_path.read_text(encoding="utf-8")) if health_path.exists() else {}
 counts = collections.Counter()
 examples = {}
 for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
@@ -54,6 +56,19 @@ report = {
     "model_status_updated_at": status.get("updated_at"),
     "model_source_rows": status.get("source_rows"),
     "model_core7": status.get("core7"),
+    "health_updated_at": health.get("updated_at"),
+    "urgent_15m": {
+        "targets": health.get("beforeinfo_urgent_15m_targets"),
+        "ok": health.get("beforeinfo_urgent_15m_ok"),
+        "published_wait": health.get("beforeinfo_urgent_15m_published_wait"),
+        "error": health.get("beforeinfo_urgent_15m_error"),
+        "original_complete_initial": health.get("original_exhibition_urgent_15m_complete"),
+        "original_missing_initial": health.get("original_exhibition_urgent_15m_missing"),
+        "original_complete_post_enrichment": health.get("original_exhibition_post_enrichment_15m_complete"),
+        "original_missing_post_enrichment": health.get("original_exhibition_post_enrichment_15m_missing"),
+        "post_enrichment_targets": health.get("original_exhibition_post_enrichment_15m_targets"),
+    },
+    "urgent_and_post_enrichment_denominators_must_not_be_added": True,
     "saved_ready_count_may_differ_from_current_collector": True,
     "saved_race_counts": dict(sorted(counts.items())),
     "example_race_keys": examples,
