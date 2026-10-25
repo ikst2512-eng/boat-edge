@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Compile pre-result Python scripts
+        run: python -m compileall -q tools
       - name: Verify pre-result pipeline
         run: python -m unittest discover -s tools -p 'test_*pre_result*.py' -v
       - name: Verify entry extraction and publication path
