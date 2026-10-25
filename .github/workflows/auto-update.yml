@@ -738,13 +738,35 @@ jobs:
               present={str(r.get("レースコード","")).strip() for r in rows}
               return pending_codes-present
 
+          def preview_source_is_incomplete(role,rows):
+              if not pending_codes or role=="race_cards":
+                  return False
+              by_code={str(r.get("レースコード","")).strip():r for r in rows}
+              for code in pending_codes:
+                  row=by_code.get(code)
+                  if row is None:
+                      continue  # separately counted by missing_pending_codes
+                  if role=="original_exhibition":
+                      if not any(str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")) or any(not str(row.get(f"艇{b}_値1") or "").strip() for b in range(1,7)):
+                          return True
+                  elif role=="stt":
+                      if any(not str(row.get(f"艇{b}_スタート展示") or "").strip()
+                             or not str(row.get(f"艇{b}_コース") or "").strip()
+                             for b in range(1,7)):
+                          return True
+                  elif role=="tkz":
+                      if any(not str(row.get(f"艇{b}_展示タイム") or "").strip()
+                             for b in range(1,7)):
+                          return True
+              return False
+
           for role,url in SOURCES.items():
               rows,digest,err=fetch_csv(role,url)
               retry_count=0
               # Retry temporary 404/network/empty responses for EVERY CSV role,
               # not only original exhibition. Never replace a populated source
               # with an empty/failed retry; preserve its raw digest as evidence.
-              if (pending_codes and (err or source_is_sparse(role,rows) or missing_pending_codes(rows))):
+              if (pending_codes and (err or source_is_sparse(role,rows) or missing_pending_codes(rows) or preview_source_is_incomplete(role,rows))):
                   for delay in (2,5):
                       time.sleep(delay)
                       retry_count+=1
@@ -758,11 +780,12 @@ jobs:
                           if (not rows or
                               (prior_codes <= next_codes and len(new_rows)>=len(rows))):
                               rows,digest,err=new_rows,new_digest,new_err
-                      if not err and not source_is_sparse(role,rows) and not missing_pending_codes(rows):
+                      if not err and not source_is_sparse(role,rows) and not missing_pending_codes(rows) and not preview_source_is_incomplete(role,rows):
                           break
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err,
                              "retry_count":retry_count,
                              "near_deadline_targets":len(pending_codes),
+                             "pending_value_incomplete":preview_source_is_incomplete(role,rows),
                              "predeadline_race_rows_missing":len(missing_pending_codes(rows)),
                              "observed_at":datetime.now(JST).isoformat(timespec="seconds")}
               if err and err!="not_published":
