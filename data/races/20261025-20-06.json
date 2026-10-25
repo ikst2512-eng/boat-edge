@@ -8,7 +8,7 @@
     "event": "MNBR若松5thひめちゃん杯",
     "race_no": 6,
     "deadline": "20:25",
-    "updated_at": "2026-10-25T15:58:32+09:00",
+    "updated_at": "2026-10-25T20:19:53+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261025&jcd=20&rno=6",
-      "fetched_at": "2026-10-25T16:00:05+09:00",
-      "sha256": "24f765c85928a6f24ecf822528f873a3629b7d1dcd24f19f500374a3dbacaecf",
+      "fetched_at": "2026-10-25T20:19:45+09:00",
+      "sha256": "64475e9d6d9048400b8318c3b1eeacad8ab4c9c1480de623583d24e1138a123e",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=20&rno=6",
+      "fetched_at": "2026-10-25T20:19:53+09:00",
+      "sha256": "cd7d94cb9a1ae740a7bf3a1e20475eecba0771184fa751c4ab4b0526243f41d0",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
@@ -329,7 +335,78 @@
       "raw_text": "6 5381 / B1 有山 望 大阪/奈良 22歳/50.5kg F2 L0 0.17 3.51 10.98 20.73 0.00 0.00 0.00 9 29.60 50.22 18 23.29 34.25 9 2 7 7 6"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.88,
+        "tilt": 0.0,
+        "raw_text": "1 亀山 雅幸 52.2kg 6.88 0.0 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 7.02,
+        "tilt": 0.0,
+        "raw_text": "2 高山 秀雄 52.2kg 7.02 0.0 R 2"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.89,
+        "tilt": 0.0,
+        "raw_text": "3 外崎 悟 52.0kg 6.89 0.0 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.99,
+        "tilt": 0.0,
+        "raw_text": "4 中岡 健人 56.1kg 6.99 0.0 R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 7.08,
+        "tilt": -0.5,
+        "raw_text": "5 萬 正嗣 56.5kg 7.08 -0.5 R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.91,
+        "tilt": -0.5,
+        "raw_text": "6 有山 望 50.5kg 6.91 -0.5 R"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": "F.09"
+      },
+      {
+        "lane": 2,
+        "st": ".01"
+      },
+      {
+        "lane": 3,
+        "st": ".09"
+      },
+      {
+        "lane": 4,
+        "st": ".01"
+      },
+      {
+        "lane": 5,
+        "st": ".11"
+      },
+      {
+        "lane": 6,
+        "st": ".03"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 5.0,
+      "wave_cm": 5.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
