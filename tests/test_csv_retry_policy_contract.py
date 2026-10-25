@@ -26,7 +26,7 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn("pending_codes=set()",text)
   self.assertIn("0 <= (cutoff-check_time).total_seconds()/60 <= 45",text)
   self.assertIn('"near_deadline_targets":len(pending_codes)',text)
-  self.assertIn("if not source_write_allowed(DATA,race_key,deadline,datetime.now(JST)):",text)
+  self.assertIn("if not source_write_allowed(DATA,race_key,deadline,check_time):",text)
   self.assertIn("def missing_pending_codes(rows):",text)
   self.assertIn("or missing_pending_codes(rows):",text)
   self.assertIn('"predeadline_race_rows_missing":len(missing_pending_codes(rows))',text)
