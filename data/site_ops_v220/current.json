@@ -1,85 +1,54 @@
 {
-  "active_window_races": 14,
+  "active_window_races": 6,
   "current_windows": [
     {
-      "deadline_jst": "16:04",
-      "key": "20261025-22-11",
-      "missing_evidence": [],
-      "venue": "福岡"
-    },
-    {
-      "deadline_jst": "16:06",
-      "key": "20261025-05-12",
-      "missing_evidence": [],
-      "venue": "多摩川"
-    },
-    {
-      "deadline_jst": "16:10",
-      "key": "20261025-24-03",
-      "missing_evidence": [],
-      "venue": "大村"
-    },
-    {
-      "deadline_jst": "16:12",
-      "key": "20261025-09-12",
+      "deadline_jst": "20:25",
+      "key": "20261025-20-06",
       "missing_evidence": [
         "beforeinfo_unavailable",
         "frozen_prediction_missing_or_invalid",
         "odds_evidence_missing",
+        "race_card_stale",
         "scratch_unverified_or_blocked"
       ],
-      "venue": "津"
-    },
-    {
-      "deadline_jst": "16:14",
-      "key": "20261025-04-12",
-      "missing_evidence": [
-        "frozen_prediction_missing_or_invalid"
-      ],
-      "venue": "平和島"
-    },
-    {
-      "deadline_jst": "16:16",
-      "key": "20261025-01-03",
-      "missing_evidence": [
-        "beforeinfo_unavailable",
-        "frozen_prediction_missing_or_invalid",
-        "scratch_unverified_or_blocked"
-      ],
-      "venue": "桐生"
+      "venue": "若松"
     }
   ],
   "data_sources": {
-    "collector_freshness": "CURRENT",
-    "odds_index_freshness": "CURRENT",
-    "predeadline_observations": 53,
+    "collector_freshness": "STALE_OR_UNVERIFIED",
+    "odds_index_freshness": "STALE_OR_UNVERIFIED",
+    "predeadline_observations": 59,
     "site_autovalidation": "EVIDENCE_BLOCKED_OR_MISSING"
   },
   "day_jst": "20261025",
-  "decision_window_races": 6,
+  "decision_window_races": 1,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
   "issues": [
+    "collector_index_stale",
+    "odds_index_stale",
     "predeadline_incomplete",
-    "predeadline_race_odds_gap"
+    "predeadline_race_odds_gap",
+    "predeadline_v216_observation_stale"
   ],
   "next_race": {
-    "deadline_jst": "16:02",
-    "race_key": "20261025-08-12",
-    "venue": "常滑",
-    "watch_from_jst": "15:47"
+    "deadline_jst": "20:25",
+    "race_key": "20261025-20-06",
+    "venue": "若松",
+    "watch_from_jst": "20:10"
   },
   "official_beforeinfo_urgent_15m": {
-    "error": 1,
-    "health_updated_at": "2026-10-25T15:58:32+09:00",
-    "ok": 3,
-    "partial_six_boat_source": 1,
-    "published_wait": 1,
-    "status": "OBSERVED",
-    "targets": 5
+    "error": null,
+    "health_updated_at": null,
+    "ok": null,
+    "partial_six_boat_source": null,
+    "published_wait": null,
+    "status": "UNVERIFIED_OR_STALE",
+    "targets": null
   },
   "paper_wager_authorized_by_this_runner": false,
   "recovery_dispatch_candidates": [
+    "BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml",
     "auto-update.yml",
     "site-odds.yml"
   ],
@@ -122,47 +91,47 @@
     },
     "today": {
       "day_jst": "20261025",
-      "early_missing_later_snapshot_present": 28,
+      "early_missing_later_snapshot_present": 31,
       "integrity_note": "A missing snapshot without observed source gaps is not proof of eligibility. Last V215 observation in the V229 2-10m window is not proof the V229 freeze job actually ran. Historical at-freeze record does not imply current-source SHA parity.",
-      "matured_observed_races": 47,
-      "not_found_after_deadline": 19,
-      "not_found_last_seen_inside_2_to_10m_window": 6,
-      "not_found_last_seen_outside_2_to_10m_window": 13,
+      "matured_observed_races": 59,
+      "not_found_after_deadline": 24,
+      "not_found_last_seen_inside_2_to_10m_window": 9,
+      "not_found_last_seen_outside_2_to_10m_window": 15,
       "not_found_last_seen_unverified": 0,
-      "not_found_with_observed_gaps": 19,
+      "not_found_with_observed_gaps": 24,
       "not_found_without_gaps_inside_2_to_10m_window": 0,
       "not_found_without_observed_gaps": 0,
       "observed_gaps_for_currently_missing": {
-        "beforeinfo_not_ok": 19,
-        "official_dom_proof_missing": 2,
-        "pre_result_odds_120_incomplete": 2,
-        "pre_result_odds_stale": 3,
-        "pre_result_odds_unverified": 7,
-        "race_card_stale": 10,
-        "scratch_missing_or_blocked": 19
+        "beforeinfo_not_ok": 24,
+        "official_dom_proof_missing": 3,
+        "pre_result_odds_120_incomplete": 3,
+        "pre_result_odds_stale": 4,
+        "pre_result_odds_unverified": 8,
+        "race_card_stale": 13,
+        "scratch_missing_or_blocked": 24
       },
-      "observed_races": 53,
-      "pending_before_deadline": 2,
-      "predeadline_snapshot_with_matching_audit": 32,
+      "observed_races": 59,
+      "pending_before_deadline": 0,
+      "predeadline_snapshot_with_matching_audit": 35,
       "scope": "OBSERVED_PREDEADLINE_WINDOWS_ONLY_NOT_ALL_RACES",
-      "sha_consistent_predeadline_snapshots": 31,
+      "sha_consistent_predeadline_snapshots": 34,
       "snapshot_or_audit_unverified": 0,
-      "snapshot_present": 32,
+      "snapshot_present": 35,
       "source_changed_after_freeze": 1,
       "source_missing_after_freeze": 0,
       "status": "OBSERVED_WINDOW_COUNTS",
-      "v229_atomic_evidence_matched": 31,
-      "v229_attestation_record_matched": 32
+      "v229_atomic_evidence_matched": 34,
+      "v229_attestation_record_matched": 35
     }
   },
   "status": "NEEDS_ATTENTION",
   "urgent_beforeinfo_only_recovery_keys": [],
   "urgent_odds_only_recovery_keys": [],
   "v216_observation_freshness": {
-    "age_minutes": 0.2,
+    "age_minutes": 74.0,
     "eligibility_proven": false,
-    "last_observed_at": "2026-10-25T07:00:57.842007+00:00",
+    "last_observed_at": "2026-10-25T10:03:49.481894+00:00",
     "missing_during_race_window": false,
-    "stale_during_race_window": false
+    "stale_during_race_window": true
   }
 }
