@@ -31,6 +31,12 @@ def verify_staged(paths, now=None):
         if now >= cutoff:
             raise ValueError("deadline_expired:"+name)
         audit=sidecar.get("source_audit",{}).get("actual_entry",{})
+        order=sidecar.get("actual_entry")
+        if not isinstance(order,list) or len(order)!=6 or any(type(v) is not int or v<1 or v>6 for v in order) or len(set(order))!=6:
+            raise ValueError("invalid_actual_entry")
+        expected_url=f"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd={day}&jcd={venue}&rno={int(race)}"
+        if audit.get("status")!="ok" or audit.get("source")!=expected_url or not isinstance(audit.get("sha256"),str) or not re.fullmatch(r"[a-f0-9]{64}",audit["sha256"]):
+            raise ValueError("invalid_entry_provenance")
         fetched=dt.datetime.fromisoformat(audit["fetched_at"])
         if fetched.tzinfo is None or fetched>=cutoff:
             raise ValueError("invalid_capture_time")
