@@ -53,6 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_urgent_cohort_contract.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_core7_card_gap_diagnostic.py' -v
 
       - name: CORE7欠損診断の回帰テスト
         shell: bash
