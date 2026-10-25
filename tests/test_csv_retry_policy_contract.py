@@ -28,6 +28,12 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn("def missing_pending_codes(rows):",text)
   self.assertIn("or missing_pending_codes(rows):",text)
   self.assertIn('"predeadline_race_rows_missing":len(missing_pending_codes(rows))',text)
+ def test_publication_wait_separated_from_core7_failure(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn('"source_availability"',text)
+  self.assertIn('"NOT_PUBLISHED" if info["error"]=="not_published"',text)
+  self.assertIn('"WAIT_FIVE_SOURCE_PUBLICATION" if all_unpublished',text)
+  self.assertIn('"WAIT_CORE7_100"',text)
  def test_deadline_and_formal_guards_remain(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("source_write_allowed(DATA,race_key,clock,datetime.now(JST))",text)
