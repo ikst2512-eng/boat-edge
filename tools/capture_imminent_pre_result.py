@@ -84,6 +84,10 @@ def main():
     if not 1 <= args.maximum <= 24:
         p.error("maximum must be from 1 to 24")
     report = batch(args.races, args.output, maximum=args.maximum, enriched_output=args.enriched_output)
+    # Preserve race-level capture/parse failures in a durable Actions artifact.
+    report_path = args.output.parent / "capture-report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     # Capture errors remain in the report; verified races can still publish.
     return 0
