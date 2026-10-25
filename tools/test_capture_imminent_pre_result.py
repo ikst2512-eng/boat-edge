@@ -1,6 +1,7 @@
 """Offline tests of bounded scheduled PRE_RESULT capture selection."""
 import datetime as dt
 import json
+import hashlib
 from pathlib import Path
 import sys
 import tempfile
@@ -49,6 +50,33 @@ class BatchTests(unittest.TestCase):
             p = Path(tmp) / "20261025-04-02.json"
             p.write_text(json.dumps(race("20261025-04-01", "10:52")))
             self.assertIsNone(eligible(p, NOW))
+
+    def test_verified_html_produces_separate_enriched_artifact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            races = root / "races"
+            races.mkdir()
+            item = race("20261025-04-01", "10:52")
+            item["racers"] = [{"lane": i, "registration_no": str(4000+i)} for i in range(1,7)]
+            (races / "20261025-04-01.json").write_text(json.dumps(item))
+            html = ("<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>"
+                    + "".join(f"<tr><td>{i}</td><td>{[2,1,3,4,5,6][i-1]}</td><td>.12</td></tr>" for i in range(1,7))
+                    + "</table></html>").encode()
+            def capture(item, directory):
+                directory = Path(directory)
+                directory.mkdir(parents=True, exist_ok=True)
+                (directory / (item["race_key"] + ".beforeinfo.html")).write_bytes(html)
+                audit = {"race_key":item["race_key"],"kind":"official_beforeinfo_html","status":"ok",
+                         "source":"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=04&rno=1",
+                         "fetched_at":"2026-10-25T10:34:00+09:00",
+                         "sha256":hashlib.sha256(html).hexdigest(),"bytes":len(html)}
+                (directory / (item["race_key"] + ".beforeinfo.audit.json")).write_text(json.dumps(audit))
+                return audit
+            report = batch(races, root / "raw", now=NOW, capture=capture, enriched_output=root / "enriched")
+            self.assertEqual(len(report["enriched"]), 1, report)
+            enriched = json.loads((root / "enriched" / "20261025-04-01.json").read_text())
+            self.assertEqual(enriched["actual_entry"], [2,1,3,4,5,6])
+            self.assertNotIn("actual_entry", json.loads((races / "20261025-04-01.json").read_text()))
 
     def test_no_data_no_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
