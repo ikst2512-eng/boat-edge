@@ -1118,11 +1118,13 @@ jobs:
                   "missing_pending_races":info["predeadline_race_rows_missing"]}
               for role,info in fetched.items()
           }
-          all_unpublished=all(v["state"]=="NOT_PUBLISHED"
-                              for v in status["source_availability"].values())
+          preview_roles=("stt","tkz","sui","original_exhibition")
+          previews_unpublished=all(
+              status["source_availability"][role]["state"]=="NOT_PUBLISHED"
+              for role in preview_roles)
           status["collector_gate"]=(
               "CORE7_100_READY_WAIT_FORMAL_PIPELINE" if len(eligible)>=100 else
-              "WAIT_FIVE_SOURCE_PUBLICATION" if all_unpublished else
+              "WAIT_PREVIEW_CSV_PUBLICATION" if previews_unpublished else
               "WAIT_CORE7_100")
           status["formal_validation_connected"]=False
           status["formal_note"]="SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
