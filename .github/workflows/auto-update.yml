@@ -53,6 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_urgent_cohort_contract.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_core7_card_gap_diagnostic.py' -v
 
       - name: CORE7欠損診断の回帰テスト
         shell: bash
@@ -823,6 +824,8 @@ jobs:
               return ok
 
           eligible=[]
+          core7_card_gap=0
+          core7_card_gap_examples=[]
           merged_count=0
           protected_count=0
           # The upstream race-card CSV may lag behind official race cards.
@@ -1035,6 +1038,11 @@ jobs:
                 "original_exhibition":oe is not None or oe_preserved,
               }
               courses=[num(row_get(stt,f"艇{b}_コース"),int) for b in range(1,7)] if stt else []
+              # Observation only: official card can be present while the CSV card is absent.
+              # Do NOT promote this race or change the CORE7 gate.
+              if card_available and rc is None and all(source_presence.values()):
+                  core7_card_gap+=1
+                  if len(core7_card_gap_examples)<12:core7_card_gap_examples.append(race_key)
               core7=(
                 all(source_presence.values())
                 and all(core7_boat(rc,stt,tkz,b) for b in range(1,7))
@@ -1065,6 +1073,9 @@ jobs:
                      "formal_first100_ready":False,
                      "first":eligible[0] if eligible else None,
                      "last":eligible[-1] if eligible else None},
+            "core7_card_csv_gap_diagnostic":{"count":core7_card_gap,
+                "sample_race_keys":core7_card_gap_examples,
+                "scope":"MUTABLE_PREDEADLINE_ONLY_NOT_FORMAL_ELIGIBILITY"},
             "site_races_merged":merged_count,
             "site_snapshot_immutable_races":protected_count,
             "guards":{"results_seen":False,"unlock":False,"scoring":False,
