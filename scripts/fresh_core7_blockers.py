@@ -18,6 +18,16 @@ for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
         audit = race.get("source_audit") or {}
         model_input = race.get("current_model_input") or {}
         reasons = []
+        deadline_text = (race.get("meta") or {}).get("deadline")
+        try:
+            hh, minute = (int(x) for x in deadline_text.split(":"))
+            deadline = now.replace(hour=hh, minute=minute, second=0, microsecond=0)
+            deadline_passed = deadline <= now
+        except (ValueError, TypeError, AttributeError):
+            deadline_passed = None
+        counts["deadline_passed" if deadline_passed else
+               "deadline_future" if deadline_passed is False else
+               "deadline_unknown"] += 1
         if model_input.get("core7_ready") is True:
             counts["core7_ready_on_saved_race"] += 1
             continue
@@ -29,6 +39,12 @@ for path in sorted((root / "races").glob(f"{ymd}-??-??.json")):
                 reasons.append(f"{role}:{item.get('availability_reason') or item.get('status') or 'unknown'}")
         if not reasons:
             reasons.append("sources_ok_but_core7_not_ready")
+        if deadline_passed is True:
+            counts["not_core7_ready_deadline_passed"] += 1
+        elif deadline_passed is False:
+            counts["not_core7_ready_deadline_future"] += 1
+        else:
+            counts["not_core7_ready_deadline_unknown"] += 1
         for reason in reasons:
             counts[reason] += 1
             examples.setdefault(reason, path.stem)
@@ -46,6 +62,7 @@ report = {
     "example_race_keys": examples,
     "counts_are_diagnostic_not_unique_missed_eligible_races": True,
     "source_audit_ok_is_not_full_core7_validation": True,
+    "deadline_passed_is_not_proof_of_first_save_timing": True,
     "formal_unlock_authorized": False,
     "results_accessed": False,
 }
