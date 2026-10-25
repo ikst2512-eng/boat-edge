@@ -7,7 +7,7 @@ Read-only; callers must independently verify the source capture first.
 from html.parser import HTMLParser
 import re
 
-BOAT_LABEL=re.compile(r'(?:[1-6]|[1-6]号艇)\\Z')
+BOAT_LABEL=re.compile(r'(?:[1-6]|[1-6]号艇)\Z')
 
 def explicit_boat_label(value):
     cleaned=' '.join(value.split())
