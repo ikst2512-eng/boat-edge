@@ -8,7 +8,7 @@
     "event": "KBCラジオ杯",
     "race_no": 1,
     "deadline": "08:35",
-    "updated_at": "2026-10-26T04:56:49+09:00",
+    "updated_at": "2026-10-26T06:55:26+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261026&jcd=21&rno=1",
-      "fetched_at": "2026-10-26T04:57:29+09:00",
-      "sha256": "cb165b4a11b5759f52d8b9b4cca0904a724a38db8dddd0dfe27720856f7720ad",
+      "fetched_at": "2026-10-26T06:57:30+09:00",
+      "sha256": "e4d214b64c8e98ad63a6757d7923726157967446dbaa8e9b2807566027bb3630",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261026&jcd=21&rno=1",
+      "fetched_at": "2026-10-26T06:56:05+09:00",
+      "sha256": "f3e24bbee5e3eb42f024093b9a96fee06592253a004c670543161bcaf54e91af",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T04:59:36+09:00",
+      "observed_at": "2026-10-26T06:58:24+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T04:59:37+09:00",
+      "observed_at": "2026-10-26T06:58:24+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T04:59:37+09:00",
+      "observed_at": "2026-10-26T06:58:24+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T04:59:37+09:00",
+      "observed_at": "2026-10-26T06:58:24+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -319,7 +325,53 @@
       "raw_text": "6 5464 / B2 宮田 栞 福岡/福岡 19歳/49.4kg F0 L0 - 1.42 0.00 1.35 1.25 0.00 0.00 43 35.54 50.41 158 35.48 53.23 7 4 8 3 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 石原 翼 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 楠原 翔太 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 松山 裕基 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 渡邊 伸太郎 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 三馬 崇史 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 宮田 栞 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
