@@ -705,13 +705,32 @@ jobs:
                                  for r in rows)
               return False
 
+          # A nonempty CSV can still omit upcoming races. Inspect only
+          # pre-deadline saved race IDs; NEVER backfill elapsed/frozen races.
+          pending_codes=set()
+          for candidate_path in RACES.glob(f"{ymd}-??-??.json"):
+              race_key=candidate_path.stem
+              try:
+                  saved=json.loads(candidate_path.read_text(encoding="utf-8"))
+                  deadline=(saved.get("meta") or {}).get("deadline")
+                  if not source_write_allowed(DATA,race_key,deadline,datetime.now(JST)):
+                      continue
+                  parts=race_key.split("-")
+                  pending_codes.add("".join(parts))
+              except (OSError,ValueError,TypeError,UnicodeError):
+                  continue
+
+          def missing_pending_codes(rows):
+              present={str(r.get("レースコード","")).strip() for r in rows}
+              return pending_codes-present
+
           for role,url in SOURCES.items():
               rows,digest,err=fetch_csv(role,url)
               retry_count=0
               # Retry temporary 404/network/empty responses for EVERY CSV role,
               # not only original exhibition. Never replace a populated source
               # with an empty/failed retry; preserve its raw digest as evidence.
-              if err or source_is_sparse(role,rows):
+              if err or source_is_sparse(role,rows) or missing_pending_codes(rows):
                   for delay in (2,5):
                       time.sleep(delay)
                       retry_count+=1
@@ -720,10 +739,11 @@ jobs:
                                        len(new_rows)>len(rows) or
                                        (len(new_rows)==len(rows) and not new_err)):
                           rows,digest,err=new_rows,new_digest,new_err
-                      if not err and not source_is_sparse(role,rows):
+                      if not err and not source_is_sparse(role,rows) and not missing_pending_codes(rows):
                           break
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err,
                              "retry_count":retry_count,
+                             "predeadline_race_rows_missing":len(missing_pending_codes(rows)),
                              "observed_at":datetime.now(JST).isoformat(timespec="seconds")}
               if err and err!="not_published":
                   errors.append({"role":role,"error":err})
