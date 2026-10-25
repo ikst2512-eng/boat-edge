@@ -85,7 +85,7 @@ def main():
         p.error("maximum must be from 1 to 24")
     report = batch(args.races, args.output, maximum=args.maximum, enriched_output=args.enriched_output)
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    return 1 if report["failed"] else 0
+    # Continue publishing independently verified races even if another fetch failed.\n    return 0
 
 
 if __name__ == "__main__":
