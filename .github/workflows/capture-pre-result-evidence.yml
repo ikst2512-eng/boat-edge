@@ -31,11 +31,13 @@ jobs:
       - name: Run all pre-result unit and integration tests
         run: python -m unittest discover -s tools -p 'test_*.py' -v
       - name: Capture imminent official sources
+        if: github.event_name != 'push'
         run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12
       - name: Prepare public entry sidecars
+        if: github.event_name != 'push'
         run: python tools/prepare_public_entry_sidecars.py
       - name: Summarize verified capture and publication counts
-        if: always()
+        if: always() && github.event_name != 'push'
         shell: bash
         run: |
           set -euo pipefail
@@ -50,6 +52,7 @@ jobs:
             echo 'A zero count is not a success signal; check eligible races and parser compatibility.'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Publish only new sidecars
+        if: github.event_name != 'push'
         shell: bash
         run: |
           set -euo pipefail
@@ -65,7 +68,7 @@ jobs:
           git commit -m 'Publish verified pre-deadline entry sidecars'
           git push origin HEAD:main
       - name: Upload immutable evidence artifacts
-        if: always()
+        if: always() && github.event_name != 'push'
         uses: actions/upload-artifact@v4
         with:
           name: prerace-evidence-${{ github.run_id }}
