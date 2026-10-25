@@ -1,80 +1,81 @@
 {
-  "checked_at": "2026-10-25T06:52:58.174373+00:00",
+  "checked_at": "2026-10-25T07:00:57.842007+00:00",
   "current_window": [
     {
-      "deadline": "15:55",
-      "minutes_left": 2.0,
-      "race_key": "20261025-06-11",
-      "reason": "verified_shadow_ready",
-      "source_gaps": [],
-      "venue": "浜名湖"
-    },
-    {
-      "deadline": "16:02",
-      "minutes_left": 9.0,
-      "race_key": "20261025-08-12",
-      "reason": "verified_shadow_ready",
-      "source_gaps": [],
-      "venue": "常滑"
-    },
-    {
       "deadline": "16:04",
-      "minutes_left": 11.0,
+      "minutes_left": 3.0,
       "race_key": "20261025-22-11",
-      "reason": "snapshot_missing",
-      "source_gaps": [
-        "beforeinfo_not_ok",
-        "scratch_missing_or_blocked"
-      ],
+      "reason": "verified_shadow_ready",
+      "source_gaps": [],
       "venue": "福岡"
     },
     {
       "deadline": "16:06",
-      "minutes_left": 13.0,
+      "minutes_left": 5.0,
       "race_key": "20261025-05-12",
-      "reason": "snapshot_missing",
+      "reason": "verified_shadow_ready",
       "source_gaps": [],
       "venue": "多摩川"
+    },
+    {
+      "deadline": "16:10",
+      "minutes_left": 9.0,
+      "race_key": "20261025-24-03",
+      "reason": "verified_shadow_ready",
+      "source_gaps": [],
+      "venue": "大村"
+    },
+    {
+      "deadline": "16:12",
+      "minutes_left": 11.0,
+      "race_key": "20261025-09-12",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "beforeinfo_not_ok",
+        "scratch_missing_or_blocked",
+        "pre_result_odds_stale",
+        "pre_result_odds_120_incomplete",
+        "official_dom_proof_missing"
+      ],
+      "venue": "津"
+    },
+    {
+      "deadline": "16:14",
+      "minutes_left": 13.0,
+      "race_key": "20261025-04-12",
+      "reason": "snapshot_missing",
+      "source_gaps": [],
+      "venue": "平和島"
     }
   ],
   "day_jst": "20261025",
   "day_latest_reasons": {
     "snapshot_missing": 27,
-    "verified_shadow_ready": 23
+    "verified_shadow_ready": 26
   },
-  "day_observed_races": 50,
-  "day_verified_races": 23,
+  "day_observed_races": 53,
+  "day_verified_races": 26,
   "next_race": {
-    "deadline": "15:55",
-    "race_key": "20261025-06-11",
-    "venue": "浜名湖",
-    "watch_start": "15:40"
+    "deadline": "16:02",
+    "race_key": "20261025-08-12",
+    "venue": "常滑",
+    "watch_start": "15:47"
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
     "snapshot_missing": 2,
-    "verified_shadow_ready": 2
+    "verified_shadow_ready": 3
   },
   "schedule_source_today": true,
   "scheduled_races": 168,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 3,
-    "race_card_ok": 4,
-    "snapshot_exists": 2
+    "beforeinfo_ok": 5,
+    "race_card_ok": 6,
+    "snapshot_exists": 4
   },
   "upcoming": [
-    {
-      "beforeinfo_status": "ok",
-      "deadline": "15:55",
-      "race_card_status": "ok",
-      "race_key": "20261025-06-11",
-      "scratch_status": "uncertified",
-      "snapshot_exists": true,
-      "venue": "浜名湖",
-      "watch_start": "15:40"
-    },
     {
       "beforeinfo_status": "ok",
       "deadline": "16:02",
@@ -86,12 +87,12 @@
       "watch_start": "15:47"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "16:04",
       "race_card_status": "ok",
       "race_key": "20261025-22-11",
-      "scratch_status": "missing",
-      "snapshot_exists": false,
+      "scratch_status": "uncertified",
+      "snapshot_exists": true,
       "venue": "福岡",
       "watch_start": "15:49"
     },
@@ -101,17 +102,17 @@
       "race_card_status": "ok",
       "race_key": "20261025-05-12",
       "scratch_status": "uncertified",
-      "snapshot_exists": false,
+      "snapshot_exists": true,
       "venue": "多摩川",
       "watch_start": "15:51"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "16:10",
       "race_card_status": "ok",
       "race_key": "20261025-24-03",
-      "scratch_status": "missing",
-      "snapshot_exists": false,
+      "scratch_status": "uncertified",
+      "snapshot_exists": true,
       "venue": "大村",
       "watch_start": "15:55"
     },
@@ -126,11 +127,11 @@
       "watch_start": "15:57"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "16:14",
       "race_card_status": "ok",
       "race_key": "20261025-04-12",
-      "scratch_status": "missing",
+      "scratch_status": "uncertified",
       "snapshot_exists": false,
       "venue": "平和島",
       "watch_start": "15:59"
@@ -144,7 +145,17 @@
       "snapshot_exists": false,
       "venue": "桐生",
       "watch_start": "16:01"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "16:23",
+      "race_card_status": "ok",
+      "race_key": "20261025-06-12",
+      "scratch_status": "missing",
+      "snapshot_exists": false,
+      "venue": "浜名湖",
+      "watch_start": "16:08"
     }
   ],
-  "window_races": 4
+  "window_races": 5
 }
