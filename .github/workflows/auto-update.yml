@@ -714,7 +714,20 @@ jobs:
               try:
                   saved=json.loads(candidate_path.read_text(encoding="utf-8"))
                   deadline=(saved.get("meta") or {}).get("deadline")
-                  if not source_write_allowed(DATA,race_key,deadline,datetime.now(JST)):
+                  check_time=datetime.now(JST)
+                  if not source_write_allowed(DATA,race_key,deadline,check_time):
+                      continue
+                  # Only near-term races can benefit from immediate retries.
+                  # A full-day set of 144 races is not evidence of a partial
+                  # CSV publication failure at 02:00 before exhibitions.
+                  if not isinstance(deadline,str):
+                      continue
+                  try:
+                      hh,minute=map(int,deadline.split(":"))
+                      cutoff=check_time.replace(hour=hh,minute=minute,second=0,microsecond=0)
+                  except (ValueError,TypeError):
+                      continue
+                  if not 0 <= (cutoff-check_time).total_seconds()/60 <= 45:
                       continue
                   parts=race_key.split("-")
                   pending_codes.add("".join(parts))
@@ -749,6 +762,7 @@ jobs:
                           break
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err,
                              "retry_count":retry_count,
+                             "near_deadline_targets":len(pending_codes),
                              "predeadline_race_rows_missing":len(missing_pending_codes(rows)),
                              "observed_at":datetime.now(JST).isoformat(timespec="seconds")}
               if err and err!="not_published":
