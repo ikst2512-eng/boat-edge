@@ -18,12 +18,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Capture imminent official sources (no prediction, no scoring)
-        run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --maximum 12
+        run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12
       - name: Upload immutable captured raw HTML and audits
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: prerace-evidence-${{ github.run_id }}
-          path: artifacts/pre-result-captures/
+          path: |\n            artifacts/pre-result-captures/\n            artifacts/verified-entry-snapshots/
           if-no-files-found: ignore
           retention-days: 14
