@@ -735,10 +735,15 @@ jobs:
                       time.sleep(delay)
                       retry_count+=1
                       new_rows,new_digest,new_err=fetch_csv(role,url)
-                      if new_rows and (not rows or
-                                       len(new_rows)>len(rows) or
-                                       (len(new_rows)==len(rows) and not new_err)):
-                          rows,digest,err=new_rows,new_digest,new_err
+                      # A retry is preferable only when it restores more
+                      # pending race IDs, or retains coverage while adding rows.
+                      # Never discard good rows for an equal-length replacement.
+                      if new_rows and not new_err:
+                          prior_codes={str(r.get("レースコード","")).strip() for r in rows}
+                          next_codes={str(r.get("レースコード","")).strip() for r in new_rows}
+                          if (not rows or
+                              (prior_codes <= next_codes and len(new_rows)>=len(rows))):
+                              rows,digest,err=new_rows,new_digest,new_err
                       if not err and not source_is_sparse(role,rows) and not missing_pending_codes(rows):
                           break
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err,
