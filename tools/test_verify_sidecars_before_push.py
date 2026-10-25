@@ -17,7 +17,7 @@ class FinalGateTests(unittest.TestCase):
   self.name="data/site_verified_entries/"+KEY+".json"
   race={"race_key":KEY,"meta":{"date":"2026-10-25","deadline":"10:52","phase":"PRE_RESULT","results_seen":False,"unlock":False,"scoring":False}}
   (self.root/"data/races"/(KEY+".json")).write_text(json.dumps(race))
-  side={"race_key":KEY,"actual_entry":[2,1,3,4,5,6],"source_audit":{"actual_entry":{"fetched_at":"2026-10-25T10:40:00+09:00"}}}
+  side={"race_key":KEY,"actual_entry":[2,1,3,4,5,6],"source_audit":{"actual_entry":{"fetched_at":"2026-10-25T10:40:00+09:00","status":"ok","source":"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=04&rno=1","sha256":"a"*64}}}
   (self.root/self.name).write_text(json.dumps(side))
  def tearDown(self):self.t.cleanup()
  def run_gate(self,now):
@@ -35,6 +35,20 @@ class FinalGateTests(unittest.TestCase):
  def test_at_exact_deadline(self):
   with self.assertRaisesRegex(ValueError,"deadline_expired"):
    self.run_gate(dt.datetime(2026,10,25,10,52,tzinfo=JST))
+ def test_invalid_boat_permutation_rejected(self):
+  side_path=self.root/self.name
+  side=json.loads(side_path.read_text())
+  side["actual_entry"]=[1,1,3,4,5,6]
+  side_path.write_text(json.dumps(side))
+  with self.assertRaisesRegex(ValueError,"invalid_actual_entry"):
+   self.run_gate(BEFORE)
+ def test_unverified_source_rejected(self):
+  side_path=self.root/self.name
+  side=json.loads(side_path.read_text())
+  side["source_audit"]["actual_entry"]["source"]="https://example.com/"
+  side_path.write_text(json.dumps(side))
+  with self.assertRaisesRegex(ValueError,"invalid_entry_provenance"):
+   self.run_gate(BEFORE)
  def test_capture_at_deadline_rejected(self):
   side_path=self.root/self.name
   side=json.loads(side_path.read_text())
