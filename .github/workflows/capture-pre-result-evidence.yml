@@ -1,5 +1,12 @@
 name: Capture official PRE_RESULT evidence
 on:
+  push:
+    paths:
+      - 'tools/*pre_result*.py'
+      - 'tools/*start_order*.py'
+      - 'tools/*entry*.py'
+      - 'tools/verify_sidecars_before_push.py'
+      - '.github/workflows/capture-pre-result-evidence.yml'
   schedule:
     - cron: '*/10 0-14 * * *'
   workflow_dispatch:
@@ -21,14 +28,8 @@ jobs:
           python-version: '3.12'
       - name: Compile pre-result Python scripts
         run: python -m compileall -q tools
-      - name: Verify pre-result pipeline
-        run: python -m unittest discover -s tools -p 'test_*pre_result*.py' -v
-      - name: Verify entry extraction and publication path
-        run: |
-          python -m unittest discover -s tools -p 'test_parse_explicit_start_order.py' -v
-          python -m unittest discover -s tools -p 'test_build_verified_entry_candidate.py' -v
-          python -m unittest discover -s tools -p 'test_ingest_verified_start_order.py' -v
-          python -m unittest discover -s tools -p 'test_prepare_public_entry_sidecars.py' -v
+      - name: Run all pre-result unit and integration tests
+        run: python -m unittest discover -s tools -p 'test_*.py' -v
       - name: Capture imminent official sources
         run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12
       - name: Prepare public entry sidecars
