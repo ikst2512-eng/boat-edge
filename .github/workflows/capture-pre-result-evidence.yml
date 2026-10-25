@@ -4,7 +4,7 @@ on:
     - cron: '*/10 0-14 * * *'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: official-prerace-evidence
   cancel-in-progress: false
@@ -19,6 +19,30 @@ jobs:
           python-version: '3.12'
       - name: Capture imminent official sources (no prediction, no scoring)
         run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12
+      - name: Prepare create-only verified public entry sidecars
+        run: python tools/prepare_public_entry_sidecars.py
+      - name: Publish sidecars without modifying original races
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d data/site_verified_entries ]; then exit 0; fi
+          git add -- data/site_verified_entries/
+          if git diff --cached --quiet; then exit 0; fi
+          if git diff --cached --name-only | grep -Ev '^data/site_verified_entries/[0-9]{8}-[0-9]{2}-[0-9]{2}\.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prerace-evidence-${{ github.run_id }}
+          path: |\n            artifacts/pre-result-captures/\n            artifacts/verified-entry-snapshots/
+          if-no-files-found: ignore
+          retention-days: 14
+; then
+            echo "Unexpected staged file"; exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Publish verified pre-deadline entry sidecars"
+          git push origin HEAD:main
       - name: Upload immutable captured raw HTML and audits
         if: always()
         uses: actions/upload-artifact@v4
