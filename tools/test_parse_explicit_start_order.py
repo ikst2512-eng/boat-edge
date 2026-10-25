@@ -25,6 +25,13 @@ class StartOrderTests(unittest.TestCase):
         body=''.join(f'<tr><td>{i}</td><td><img alt="{order[i-1]}号艇" src="figure.png"></td><td>.12</td></tr>' for i in range(1,7))
         raw=('<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>'+body+'</table></html>').encode()
         self.assertEqual(parse(raw),order)
+    def test_cp932_encoded_official_labels(self):
+        order=[2,1,3,4,5,6]
+        body=''.join(f'<tr><td>{i}</td><td>{order[i-1]}号艇</td><td>.12</td></tr>' for i in range(1,7))
+        html='<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>'+body+'</table></html>'
+        self.assertEqual(parse(html.encode('cp932')),order)
+    def test_invalid_bytes_fail_closed(self):
+        self.assertIsNone(parse(b'\\x81'))
     def test_image_filename_does_not_count(self):
         body=''.join(f'<tr><td>{i}</td><td><img src="boat_{i}.png"></td><td>.12</td></tr>' for i in range(1,7))
         raw=('<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>'+body+'</table></html>').encode()
