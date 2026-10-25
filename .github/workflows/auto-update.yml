@@ -59,6 +59,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools -p 'test_core7_gap_diagnostic.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_csv_retry_policy_contract.py' -v
 
       - name: PRE_RESULT耐障害取得
         shell: bash
