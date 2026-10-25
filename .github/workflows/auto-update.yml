@@ -694,28 +694,35 @@ jobs:
               except Exception as e:
                   return [],None,repr(e)
 
-          for role,url in SOURCES.items():
-              rows,digest,err=fetch_csv(role,url)
-              # Transient HTTP/network failures and source publication lag are
-              # common near the deadline. Retry boundedly in the same run.
-              if role=="original_exhibition" and (err or not rows or
-                  not any(str(r.get("レースコード","")).strip().startswith(ymd)
-                          and any(str(r.get(k) or "").strip()
-                                  for k in ("計測項目1","計測項目2","計測項目3"))
-                          for r in rows)):
-                  for delay in (2,5):
-                      time.sleep(delay)
-                      retry_rows,retry_digest,retry_err=fetch_csv(role,url)
-                      if retry_rows:
-                          rows,digest,err=retry_rows,retry_digest,retry_err
-                          if any(str(r.get("レースコード","")).strip().startswith(ymd)
+          def source_is_sparse(role,rows):
+              if not rows:
+                  return True
+              if role=="original_exhibition":
+                  return not any(str(r.get("レースコード","")).strip().startswith(ymd)
                                  and any(str(r.get(k) or "").strip()
                                          for k in ("計測項目1","計測項目2","計測項目3"))
-                                 for r in rows):
-                              break
-                      if retry_digest is not None:
-                          rows,digest,err=retry_rows,retry_digest,retry_err
+                                 for r in rows)
+              return False
+
+          for role,url in SOURCES.items():
+              rows,digest,err=fetch_csv(role,url)
+              retry_count=0
+              # Retry temporary 404/network/empty responses for EVERY CSV role,
+              # not only original exhibition. Never replace a populated source
+              # with an empty/failed retry; preserve its raw digest as evidence.
+              if err or source_is_sparse(role,rows):
+                  for delay in (2,5):
+                      time.sleep(delay)
+                      retry_count+=1
+                      new_rows,new_digest,new_err=fetch_csv(role,url)
+                      if new_rows and (not rows or
+                                       len(new_rows)>len(rows) or
+                                       (len(new_rows)==len(rows) and not new_err)):
+                          rows,digest,err=new_rows,new_digest,new_err
+                      if not err and not source_is_sparse(role,rows):
+                          break
               fetched[role]={"rows":rows,"sha256":digest,"url":url,"error":err,
+                             "retry_count":retry_count,
                              "observed_at":datetime.now(JST).isoformat(timespec="seconds")}
               if err and err!="not_published":
                   errors.append({"role":role,"error":err})
