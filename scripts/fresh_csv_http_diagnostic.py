@@ -42,18 +42,23 @@ for role, url in sources.items():
             entry["retrieved_at_jst"] = datetime.now(JST).isoformat(timespec="seconds")
         entry["bytes"] = len(raw)
         entry["sha256"] = hashlib.sha256(raw).hexdigest()
-        rows = list(csv.DictReader(io.StringIO(raw.decode("utf-8-sig"))))
+        reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig")))
+        rows = list(reader)
         entry["rows"] = len(rows)
-        entry["race_code_rows"] = sum(bool((r.get("レースコード") or "").strip()) for r in rows)
+        entry["race_code_rows"] = sum(bool(str(r.get("レースコード") or "").strip()) for r in rows)
         entry["current_day_race_code_rows"] = sum(
             str(r.get("レースコード") or "").strip().startswith(now.strftime("%Y%m%d"))
             for r in rows)
-        entry["csv_headers"] = list(rows[0]) if rows else []
+        entry["csv_headers"] = list(reader.fieldnames or [])
     except HTTPError as exc:
         entry["http_status"] = exc.code
         entry["error_type"] = "HTTP_NOT_PUBLISHED" if exc.code == 404 else "HTTP_ERROR"
     except (URLError, TimeoutError, UnicodeError, csv.Error, OSError) as exc:
         entry["error_type"] = type(exc).__name__
+    entry["availability_class"] = ("published_with_rows" if entry["http_status"] == 200 and entry["rows"] > 0 else
+                                   "published_empty" if entry["http_status"] == 200 else
+                                   "not_published_http_404" if entry["http_status"] == 404 else
+                                   "http_or_transport_error")
     report["sources"][role] = entry
 Path("fresh_csv_diagnostic.json").write_text(
     json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
