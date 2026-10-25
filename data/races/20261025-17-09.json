@@ -8,7 +8,7 @@
     "event": "第47回報知エキサイトカップBTS尾道開設6周年",
     "race_no": 9,
     "deadline": "14:03",
-    "updated_at": "2026-10-25T10:45:27+09:00",
+    "updated_at": "2026-10-25T13:59:10+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261025&jcd=17&rno=9",
-      "fetched_at": "2026-10-25T10:47:56+09:00",
-      "sha256": "9243cf5e86e592050b2326270468f3be882d3fe71fbff884336cdd018c4a83c4",
+      "fetched_at": "2026-10-25T13:58:59+09:00",
+      "sha256": "0cc15f409ef7f914f461861a923bf8d747388d108d8ed751245128872a31cf80",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=17&rno=9",
+      "fetched_at": "2026-10-25T13:59:10+09:00",
+      "sha256": "c24c2392b4ad77de4a54506cfbe3941cb71e91206e82a3b0764c027476ba679b",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
@@ -342,7 +348,78 @@
       "raw_text": "6 4792 / B1 杉村 賢也 東京/東京 36歳/52.0kg F0 L0 0.15 4.30 15.79 36.84 5.20 20.00 40.00 37 0.00 0.00 26 0.00 0.00 2 7 1 6 8 5 11 3 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.87,
+        "tilt": -0.5,
+        "raw_text": "1 向井田 佑紀 51.0kg 6.87 -0.5 R 4"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.95,
+        "tilt": -0.5,
+        "raw_text": "2 塩田 雄一 52.0kg 6.95 -0.5 R 5"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.88,
+        "tilt": -0.5,
+        "raw_text": "3 富山 弘幸 53.4kg 6.88 -0.5 R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.9,
+        "tilt": 0.0,
+        "raw_text": "4 安田 政彦 52.2kg 6.90 0.0 R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.87,
+        "tilt": 0.0,
+        "raw_text": "5 大澤 誠也 55.1kg 6.87 0.0 R 3"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.82,
+        "tilt": 0.0,
+        "raw_text": "6 杉村 賢也 52.0kg 6.82 0.0 R 5"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": "F.02"
+      },
+      {
+        "lane": 2,
+        "st": ".03"
+      },
+      {
+        "lane": 3,
+        "st": "F.01"
+      },
+      {
+        "lane": 4,
+        "st": ".05"
+      },
+      {
+        "lane": 5,
+        "st": ".11"
+      },
+      {
+        "lane": 6,
+        "st": ".00"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
