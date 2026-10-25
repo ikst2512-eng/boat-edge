@@ -21,6 +21,13 @@ class CsvRetryPolicy(unittest.TestCase):
   block=text[start:end]
   self.assertIn("if new_rows and (not rows or",block)
   self.assertIn("len(new_rows)>len(rows)",block)
+ def test_partial_csv_rows_trigger_retry(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn("pending_codes=set()",text)
+  self.assertIn("if not source_write_allowed(DATA,race_key,deadline,datetime.now(JST)):",text)
+  self.assertIn("def missing_pending_codes(rows):",text)
+  self.assertIn("or missing_pending_codes(rows):",text)
+  self.assertIn('"predeadline_race_rows_missing":len(missing_pending_codes(rows))',text)
  def test_deadline_and_formal_guards_remain(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("source_write_allowed(DATA,race_key,clock,datetime.now(JST))",text)
