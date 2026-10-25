@@ -36,6 +36,11 @@ class StartOrderTests(unittest.TestCase):
         body=''.join(f'<tr><td>{i}</td><td><img src="boat_{i}.png"></td><td>.12</td></tr>' for i in range(1,7))
         raw=('<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>'+body+'</table></html>').encode()
         self.assertIsNone(parse(raw))
+    def test_consistent_alt_and_aria_labels(self):
+        order=[2,1,3,4,5,6]
+        body=''.join(f'<tr><td>{i}</td><td><img alt="{order[i-1]}号艇" aria-label="{order[i-1]}号艇" src="x.png"></td><td>.12</td></tr>' for i in range(1,7))
+        raw=('<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>'+body+'</table></html>').encode()
+        self.assertEqual(parse(raw),order)
     def test_conflicting_image_labels_are_rejected(self):
         body=''.join(f'<tr><td>{i}</td><td><img alt="{i}号艇" aria-label="6号艇" src="x.png"></td><td>.12</td></tr>' for i in range(1,7))
         raw=('<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>'+body+'</table></html>').encode()
