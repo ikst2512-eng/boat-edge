@@ -18,6 +18,8 @@ on:
       - tools/test_capture_imminent_pre_result.py
       - tools/prepare_public_entry_sidecars.py
       - tools/test_prepare_public_entry_sidecars.py
+      - tools/verify_sidecars_before_push.py
+      - tools/test_verify_sidecars_before_push.py
       - tools/apply_pre_result_enrichment.py
       - .github/workflows/pre-result-enrichment.yml
   workflow_dispatch:
@@ -38,3 +40,4 @@ jobs:
           python -m unittest discover -s tools -p 'test_ingest_verified_start_order.py' -v
           python -m unittest discover -s tools -p 'test_capture_imminent_pre_result.py' -v
           python -m unittest discover -s tools -p 'test_prepare_public_entry_sidecars.py' -v
+          python -m unittest discover -s tools -p 'test_verify_sidecars_before_push.py' -v
