@@ -8,7 +8,7 @@
     "event": "SUZUKIスピードカップ",
     "race_no": 8,
     "deadline": "14:06",
-    "updated_at": "2026-10-25T10:45:27+09:00",
+    "updated_at": "2026-10-25T13:59:45+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,17 +19,23 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261025&jcd=06&rno=8",
-      "fetched_at": "2026-10-25T10:47:42+09:00",
-      "sha256": "c01e43f886324a6f955eb08e0fe438d1865308615d411839c59c70fdacc4be20",
+      "fetched_at": "2026-10-25T13:59:36+09:00",
+      "sha256": "01a4fded8a69525b4bd6bea9334eccad127628adf84ba39790337c1ff4114160",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=06&rno=8",
+      "fetched_at": "2026-10-25T13:59:45+09:00",
+      "sha256": "c0f7d2ecd4c9f0706e9e1ea87aed10b1196f1ab29753b1600650046ac10659c7",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
@@ -331,7 +337,78 @@
       "raw_text": "6 4903 / A1 吉田 凌太朗 愛知/愛知 33歳/52.0kg F1 L0 0.15 6.32 46.15 61.54 6.60 55.00 65.00 55 50.00 63.71 37 60.00 90.00 8 12 8 8 12 6 10 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.8,
+        "tilt": 0.0,
+        "raw_text": "1 村上 遼 52.0kg 6.80 0.0 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.84,
+        "tilt": -0.5,
+        "raw_text": "2 横川 聖志 55.1kg 6.84 -0.5 R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.8,
+        "tilt": 0.0,
+        "raw_text": "3 川上 聡介 56.4kg 6.80 0.0 R 4"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.79,
+        "tilt": 0.0,
+        "raw_text": "4 三木 晴斗 52.7kg 6.79 0.0 R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.78,
+        "tilt": 0.0,
+        "raw_text": "5 富永 修一 52.2kg 6.78 0.0 R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.86,
+        "tilt": 0.0,
+        "raw_text": "6 吉田 凌太朗 52.0kg 6.86 0.0 R"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".12"
+      },
+      {
+        "lane": 2,
+        "st": ".12"
+      },
+      {
+        "lane": 3,
+        "st": ".21"
+      },
+      {
+        "lane": 4,
+        "st": ".10"
+      },
+      {
+        "lane": 5,
+        "st": ".04"
+      },
+      {
+        "lane": 6,
+        "st": ".21"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
