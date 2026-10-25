@@ -34,8 +34,9 @@ class CsvRetryPolicy(unittest.TestCase):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn('"source_availability"',text)
   self.assertIn('"NOT_PUBLISHED" if info["error"]=="not_published"',text)
-  self.assertIn('"WAIT_FIVE_SOURCE_PUBLICATION" if all_unpublished',text)
+  self.assertIn('"WAIT_PREVIEW_CSV_PUBLICATION" if previews_unpublished',text)
   self.assertIn('"WAIT_CORE7_100"',text)
+  self.assertIn('preview_roles=("stt","tkz","sui","original_exhibition")',text)
  def test_deadline_and_formal_guards_remain(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("source_write_allowed(DATA,race_key,clock,datetime.now(JST))",text)
