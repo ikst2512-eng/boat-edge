@@ -1081,7 +1081,24 @@ jobs:
           if obsolete_site_freeze.exists():
               obsolete_site_freeze.unlink()
 
-          status["collector_gate"]="CORE7_100_READY_WAIT_FORMAL_PIPELINE" if len(eligible)>=100 else "WAIT_CORE7_100"
+          # Distinguish an upstream CSV not-yet-published state from genuine
+          # insufficient CORE7 rows. A null SHA with no exception means
+          # the CSV endpoint returned HTTP 404 (not_published).
+          status["source_availability"]={
+              role:{"rows":len(info["rows"]),"state":(
+                  "FETCH_ERROR" if info["error"] and info["error"]!="not_published" else
+                  "NOT_PUBLISHED" if info["error"]=="not_published" else
+                  "EMPTY_RESPONSE" if not info["rows"] else "AVAILABLE"),
+                  "retry_count":info["retry_count"],
+                  "missing_pending_races":info["predeadline_race_rows_missing"]}
+              for role,info in fetched.items()
+          }
+          all_unpublished=all(v["state"]=="NOT_PUBLISHED"
+                              for v in status["source_availability"].values())
+          status["collector_gate"]=(
+              "CORE7_100_READY_WAIT_FORMAL_PIPELINE" if len(eligible)>=100 else
+              "WAIT_FIVE_SOURCE_PUBLICATION" if all_unpublished else
+              "WAIT_CORE7_100")
           status["formal_validation_connected"]=False
           status["formal_note"]="SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
           # Audit after CSV enrichment, not before it. The first collector
