@@ -87,7 +87,7 @@ def main():
     # Preserve race-level capture/parse failures in a durable Actions artifact.
     report_path = args.output.parent / "capture-report.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     # Capture errors remain in the report; verified races can still publish.
     return 0
