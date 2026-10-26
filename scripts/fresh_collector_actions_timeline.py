@@ -13,7 +13,7 @@ token = os.getenv("GH_READONLY_TOKEN", "")
 report = {"schema": "BOAT_EDGE_COLLECTOR_ACTIONS_TIMELINE_V1",
           "window_start_utc": START.isoformat(), "window_end_utc": END.isoformat(),
           "results_accessed": False, "formal_unlock_authorized": False,
-          "runs": [], "error": None}
+          "runs": [], "upstream_v71_runs": [], "error": None}
 try:
     if not repo or not token:
         raise RuntimeError("MISSING_GITHUB_READ_ACCESS")
@@ -34,6 +34,27 @@ try:
                     "updated_at", "head_sha", "head_branch", "html_url", "run_attempt")})
         if not runs or min(datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) for r in runs) < START:
             break
+    # Compare independent V71 source producer starts within the same fixed window.
+    # This does not infer causality from timing alone.
+    producer_url = f"https://api.github.com/repos/{repo}/actions/runs?per_page=100"
+    for page in range(1, 6):
+        req = Request(producer_url + f"&page={page}", headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"})
+        with urlopen(req, timeout=20) as resp:
+            data = json.load(resp)
+        runs = data.get("workflow_runs", [])
+        for r in runs:
+            created = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
+            if START <= created <= END and r.get("name") == "BOAT EDGE 3連単オッズ更新 V71":
+                report["upstream_v71_runs"].append({k: r.get(k) for k in (
+                    "id", "event", "status", "conclusion", "created_at", "run_started_at",
+                    "updated_at", "head_sha", "html_url")})
+        if not runs or min(datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) for r in runs) < START:
+            break
+    report["upstream_v71_runs"].sort(key=lambda r: r["created_at"])
+    report["matched_upstream_v71_runs"] = len(report["upstream_v71_runs"])
     report["runs"].sort(key=lambda r: r["created_at"])
     report["matched_runs"] = len(report["runs"])
 except Exception as exc:
