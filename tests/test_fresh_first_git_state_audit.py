@@ -27,7 +27,7 @@ class FirstGitStateAuditTests(unittest.TestCase):
                      "current_model_input": {"core7_ready": False}
                  })), \
                  patch.object(mod, "git", side_effect=[
-                     "newestcommit\\nfirstcommit",
+                     "newestcommit\nfirstcommit",
                      "2026-10-26T08:56:00+09:00"
                  ]), \
                  patch.object(mod.subprocess, "run") as run:
