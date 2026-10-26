@@ -67,6 +67,8 @@ def audit_directory(root):
         s = json.loads(q.read_text(encoding="utf-8")) if q.is_file() else None
         row = inspect_site_evidence(e, s)
         row["v232_cohort_file_present"] = (cohorts / p.name).is_file()
+        row["v122_snapshot_file_present"] = (root / "data/site_prediction_snapshots" / p.name).is_file()
+        row["v125_audit_file_present"] = (root / "data/site_prediction_audit" / p.name).is_file()
         rows.append(row)
     counts = {name: sum(name in row["missing_comparison_requirements"] for row in rows)
               for name in REQUIRED_PAIR}
@@ -88,7 +90,14 @@ def audit_directory(root):
     v232_present = len(rows) - v232_missing
     v232_unscored = cohort_unscored
     v234_without_v232 = sum(r["scored_record_present"] and not r["v232_cohort_file_present"] for r in rows)
+    missing_v232 = [r for r in rows if not r["v232_cohort_file_present"]]
+    snapshot_counts = {
+        "v229_without_v232_with_v122_snapshot": sum(r["v122_snapshot_file_present"] for r in missing_v232),
+        "v229_without_v232_without_v122_snapshot": sum(not r["v122_snapshot_file_present"] for r in missing_v232),
+        "v229_without_v232_with_v125_audit": sum(r["v125_audit_file_present"] for r in missing_v232),
+    }
     return {"rows": rows, "checked": len(rows), "by_race_date": by_date,
+            "v232_absence_snapshot_evidence": snapshot_counts,
             "v229_without_v232": v232_missing,
             "v229_with_v232": v232_present,
             "v232_without_v234": v232_unscored,
