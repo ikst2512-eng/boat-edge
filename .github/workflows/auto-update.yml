@@ -1216,7 +1216,8 @@ jobs:
               role:{"rows":len(info["rows"]),"state":(
                   "FETCH_ERROR" if info["error"] and info["error"]!="not_published" else
                   "NOT_PUBLISHED" if info["error"]=="not_published" else
-                  "EMPTY_RESPONSE" if not info["rows"] else "AVAILABLE"),
+                  "EMPTY_RESPONSE" if not info["rows"] else
+                  "PARTIAL_PENDING" if info["predeadline_race_rows_missing"] else "AVAILABLE"),
                   "retry_count":info["retry_count"],
                   "missing_pending_races":info["predeadline_race_rows_missing"]}
               for role,info in fetched.items()
