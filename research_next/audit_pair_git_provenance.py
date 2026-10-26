@@ -58,14 +58,18 @@ def verify(root, manifest):
             if not isinstance(commit, str) or not GIT_SHA.fullmatch(commit):
                 raise ValueError("INVALID_GIT_SHA")
             # Read bytes from immutable Git tree, not mutable working tree.
-            if any(token in path.lower() for token in ("result", "payout", "outcome", "formal")):\n                raise ValueError("FORBIDDEN_RESULT_OR_FORMAL_PATH")\n            raw = git(root, "show", commit + ":" + path)
+            if any(token in path.lower() for token in ("result", "payout", "outcome", "formal")):
+                raise ValueError("FORBIDDEN_RESULT_OR_FORMAL_PATH")
+            raw = git(root, "show", commit + ":" + path)
             if hashlib.sha256(raw).hexdigest() != digest:
                 raise ValueError("GIT_TREE_BYTES_SHA_MISMATCH")
             first = git(root, "log", "--follow", "--diff-filter=A",
                         "--format=%H", commit, "--", path).decode().splitlines()
             if len(first) != 1 or first[0] != commit:
                 raise ValueError("NOT_FIRST_GIT_ADD")
-            committed = datetime.fromisoformat(git(root, "show", "-s", "--format=%cI", commit).decode().strip())\n            if committed.utcoffset() is None:\n                raise ValueError("NAIVE_GIT_TIMESTAMP")
+            committed = datetime.fromisoformat(git(root, "show", "-s", "--format=%cI", commit).decode().strip())
+            if committed.utcoffset() is None:
+                raise ValueError("NAIVE_GIT_TIMESTAMP")
             if committed >= deadline:
                 raise ValueError("NOT_PREDEADLINE_GIT_TIME")
             if field == "prediction":
