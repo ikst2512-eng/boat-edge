@@ -145,7 +145,20 @@ jobs:
                   for path in sorted(root.rglob("*")):
                       if path.is_file() and path.name != "audit_result.json":
                           archive.write(path, path.relative_to(root).as_posix())
-              result = audit(zipped, os.environ["EXPECTED_RUN_ID"], os.environ["EXPECTED_GIT_SHA"])
+              try:
+                  result = audit(zipped, os.environ["EXPECTED_RUN_ID"], os.environ["EXPECTED_GIT_SHA"])
+              except Exception as exc:
+                  result = {
+                      "verdict": "NOT_CERTIFIED",
+                      "issues": ["AUDIT_EXCEPTION"],
+                      "error_type": type(exc).__name__,
+                      "capture_count": 0,
+                      "classification_counts": {},
+                      "run_id": os.environ["EXPECTED_RUN_ID"],
+                      "git_sha": os.environ["EXPECTED_GIT_SHA"],
+                      "formal_eligible": False,
+                      "unlock": "LOCKED",
+                  }
           (root / "audit_result.json").write_text(
               json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf8"
           )
