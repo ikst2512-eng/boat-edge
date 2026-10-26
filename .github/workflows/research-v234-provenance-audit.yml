@@ -68,6 +68,18 @@ jobs:
         run: |
           python scripts/boat_edge_v234_model_provenance_audit.py > artifacts/v234-audit/model_sha_coverage.json
           python -c "import json; d=json.load(open('artifacts/v234-audit/model_sha_coverage.json')); print('V234_MODEL_SHA_COVERAGE',json.dumps(d['coverage_counts'],sort_keys=True))"
+      - name: Audit prospective V232-model evidence pairs without enrollment
+        run: |
+          python - <<'PY_PAIR'
+          import json
+          from collections import Counter
+          from pathlib import Path
+          from scripts.boat_edge_v232_model_receipt_pair_gate import verify
+          keys=sorted(p.stem for p in Path('data/site_autopilot/v232_cohort').glob('20??????-??-??.json'))
+          reasons=Counter(verify(Path('.'), key)['reason'] for key in keys)
+          print('V232_MODEL_PAIR_READ_ONLY',json.dumps({'checked':len(keys),'reason_counts':dict(reasons)},sort_keys=True))
+          assert not any(verify(Path('.'), key)['eligible'] for key in keys), 'UNEXPECTED_AUTOMATIC_ELIGIBILITY'
+          PY_PAIR
       - name: Verify scored results against V234 summary and Wilson intervals
         run: |
           python scripts/boat_edge_v234_confidence_audit.py > artifacts/v234-audit/confidence.json
