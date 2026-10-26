@@ -13,9 +13,16 @@ class SiteEvidenceTriage(unittest.TestCase):
              "deadline_jst":"2026-10-11T16:47:00+09:00",
              "winning_combo":"3-5-1"})
         self.assertTrue(x["site_evidence_fields"]["first_git_commit"])
+        self.assertTrue(x["scored_record_present"])
         self.assertFalse(x["comparison_eligible"])
         self.assertFalse(x["actual_result_read_for_scoring"])
         self.assertFalse(x["formal_fresh_eligible"])
+    def test_missing_score_is_not_missing_git_proof(self):
+        x = inspect_site_evidence({"race_key": "20261011-01-07", "race_sha256": "a"*64})
+        self.assertFalse(x["scored_record_present"])
+        self.assertIn("first_git_commit", x["missing_source_fields"])
+        self.assertFalse(x["comparison_eligible"])
+
     def test_key_mismatch_refused(self):
         with self.assertRaisesRegex(ValueError,"RACE_KEY_MISMATCH"):
             inspect_site_evidence({"race_key":"one"},{"race_key":"two"})
