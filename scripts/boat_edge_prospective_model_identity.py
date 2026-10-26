@@ -23,7 +23,7 @@ def git(root, *args):
     return p.stdout
 
 
-def create(root, race_key, model_path, deadline_jst, now=None):
+def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=()):
     root = Path(root).resolve()
     if not KEY.fullmatch(race_key):
         raise ValueError("INVALID_RACE_KEY")
@@ -47,6 +47,22 @@ def create(root, race_key, model_path, deadline_jst, now=None):
     local = source.read_bytes()
     if local != original:
         raise ValueError("MODEL_DIFFERS_FROM_HEAD")
+    dependencies = {}
+    for item in dependency_paths:
+        dependency = Path(item)
+        if (dependency.is_absolute() or ".." in dependency.parts or not dependency.parts
+                or dependency.as_posix() == rel.as_posix()
+                or dependency.as_posix() in dependencies):
+            raise ValueError("INVALID_DEPENDENCY_PATH")
+        dep_file = root / dependency
+        if dep_file.is_symlink() or not dep_file.is_file():
+            raise ValueError("DEPENDENCY_MISSING_OR_SYMLINK")
+        if not git(root, "ls-files", "--error-unmatch", "--", dependency.as_posix()):
+            raise ValueError("DEPENDENCY_NOT_TRACKED")
+        committed = git(root, "show", f"{sha}:{dependency.as_posix()}")
+        if dep_file.read_bytes() != committed:
+            raise ValueError("DEPENDENCY_DIFFERS_FROM_HEAD")
+        dependencies[dependency.as_posix()] = hashlib.sha256(committed).hexdigest()
     return {
         "schema": "BOAT_EDGE_PROSPECTIVE_MODEL_IDENTITY_V1",
         "scope": "SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
@@ -57,6 +73,8 @@ def create(root, race_key, model_path, deadline_jst, now=None):
         "model_source_scope": "SINGLE_FILE_ONLY_DEPENDENCIES_NOT_ATTESTED",
         "model_git_sha": sha,
         "model_source_sha256": hashlib.sha256(original).hexdigest(),
+        "declared_dependency_sha256": dict(sorted(dependencies.items())),
+        "dependency_set_complete_independently_verified": False,
         "git_first_add_before_deadline_independently_verified": False,
         "prediction_eligibility_granted": False,
         "accuracy_improvement_proven": False,
@@ -80,6 +98,7 @@ if __name__ == "__main__":
     p.add_argument("--race-key", required=True)
     p.add_argument("--model-path", required=True)
     p.add_argument("--deadline-jst", required=True)
+    p.add_argument("--dependency-path", action="append", default=[])
     args = p.parse_args()
-    record = create(args.root, args.race_key, args.model_path, args.deadline_jst)
+    record = create(args.root, args.race_key, args.model_path, args.deadline_jst, dependency_paths=args.dependency_path)
     print(save_once(args.root, record))
