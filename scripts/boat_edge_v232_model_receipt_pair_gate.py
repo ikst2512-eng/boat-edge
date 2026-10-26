@@ -47,6 +47,19 @@ def verify(root, key):
         blob=_git(root,"show",f"{sha}:{modelpath.as_posix()}")
         if blob is None or hashlib.sha256(blob).hexdigest()!=receipt.get("model_source_sha256"):
             raise ValueError("MODEL_SOURCE_SHA_MISMATCH")
+        deps=receipt.get("declared_dependency_sha256")
+        if not isinstance(deps,dict) or receipt.get("dependency_set_complete_independently_verified") is not False:
+            raise ValueError("DEPENDENCY_DECLARATION_INVALID")
+        for name,digest in deps.items():
+            if not isinstance(name,str) or not isinstance(digest,str):
+                raise ValueError("DEPENDENCY_ENTRY_INVALID")
+            dep=Path(name)
+            if dep.is_absolute() or ".." in dep.parts or not dep.parts or dep.as_posix()==modelpath.as_posix():
+                raise ValueError("DEPENDENCY_PATH_INVALID")
+            depblob=_git(root,"show",f"{sha}:{dep.as_posix()}")
+            if depblob is None or hashlib.sha256(depblob).hexdigest()!=digest:
+                raise ValueError("DEPENDENCY_SHA_MISMATCH")
+        # An enumerated subset of dependencies is not a complete model binding.
         # Require both immutable first Git adds before deadline. Exact SHA of the
         # current file must match its initial committed bytes; no edited history.
         for p in paths:
