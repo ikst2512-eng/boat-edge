@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from datetime import datetime, timedelta
 
+SHA = re.compile(r"^[0-9a-f]{64}$")
+MODEL = "BOAT_EDGE_V332_LIVE_LOCAL_SHA_RESEARCH_ONLY"
 KEY = re.compile(r"^20[0-9]{6}-(?:0[1-9]|1[0-9]|2[0-4])-(?:0[1-9]|1[0-2])$")
 JST = timedelta(hours=9)
 
@@ -40,6 +42,15 @@ def inspect(root, day):
                 raise ValueError("NOT_PREDEADLINE_LOCAL_RECEIPT")
             if record.get("evidence_level") != "LOCAL_RECEIPT_RAW_SHA_ONLY" or record.get("scoring_authorized") is not False:
                 raise ValueError("RESEARCH_GUARDS_INVALID")
+            if (record.get("model_id") != MODEL or
+                    not isinstance(record.get("race_source_sha256"), str) or
+                    not SHA.fullmatch(record["race_source_sha256"]) or
+                    not isinstance(record.get("candidate_sha256"), str) or
+                    not SHA.fullmatch(record["candidate_sha256"]) or
+                    not isinstance(record.get("candidate"), dict) or
+                    record.get("results_read") is not False or
+                    record.get("formal_fresh_read") is not False):
+                raise ValueError("INCOMPLETE_V332_LOCAL_EVIDENCE")
             result["local_receipt_valid"] += 1
         except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
             result["invalid"].append({"race_key": key, "reason": str(exc)})
