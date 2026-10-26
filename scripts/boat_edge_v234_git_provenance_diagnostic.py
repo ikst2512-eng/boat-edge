@@ -49,6 +49,8 @@ def classify(root, path):
     if hashlib.sha256(first_blob).digest() != hashlib.sha256(path.read_bytes()).digest():
         return "frozen_bytes_changed_after_first_commit", commit
     if first < saved:
+        if (saved - first).total_seconds() < 1 and first.replace(microsecond=0) == saved.replace(microsecond=0):
+            return "git_second_precision_subsecond_ambiguity_not_eligible", commit
         return "git_creation_precedes_claimed_snapshot", commit
     if first >= deadline:
         return "first_git_commit_at_or_after_deadline", commit
