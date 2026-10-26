@@ -5,6 +5,7 @@ Run before deadline; sidecar is NOT an eligible prediction until independently
 committed to Git before deadline. Never backfill historical cohorts.
 """
 import argparse
+import ast
 import datetime as dt
 import hashlib
 import json
@@ -21,6 +22,31 @@ def git(root, *args):
     if p.returncode:
         raise ValueError("GIT_PROVENANCE_COMMAND_FAILED")
     return p.stdout
+
+
+def local_import_paths(root, source):
+    """Resolve only direct local Python imports; unresolved imports remain blockers."""
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+    found = set()
+    for node in ast.walk(tree):
+        names = []
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            names = [node.module or ""]
+            if node.level:
+                raise ValueError("RELATIVE_IMPORT_REQUIRES_MANUAL_CLOSURE")
+        for name in names:
+            if not name:
+                continue
+            stem = name.split(".")[0]
+            candidate = source.parent / (stem + ".py")
+            candidate2 = root / "scripts" / (stem + ".py")
+            if candidate.is_file():
+                found.add(candidate.relative_to(root).as_posix())
+            elif candidate2.is_file():
+                found.add(candidate2.relative_to(root).as_posix())
+    return found
 
 
 def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=()):
@@ -48,6 +74,10 @@ def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=
     if local != original:
         raise ValueError("MODEL_DIFFERS_FROM_HEAD")
     dependencies = {}
+    detected_imports = local_import_paths(root, source)
+    requested = set(dependency_paths)
+    if not detected_imports.issubset(requested):
+        raise ValueError("DIRECT_LOCAL_DEPENDENCIES_NOT_DECLARED")
     for item in dependency_paths:
         dependency = Path(item)
         if (dependency.is_absolute() or ".." in dependency.parts or not dependency.parts
@@ -74,6 +104,7 @@ def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=
         "model_git_sha": sha,
         "model_source_sha256": hashlib.sha256(original).hexdigest(),
         "declared_dependency_sha256": dict(sorted(dependencies.items())),
+        "direct_local_imports_checked": sorted(detected_imports),
         "dependency_set_complete_independently_verified": False,
         "git_first_add_before_deadline_independently_verified": False,
         "prediction_eligibility_granted": False,
