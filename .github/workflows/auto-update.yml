@@ -894,6 +894,12 @@ jobs:
               return ok
 
           eligible=[]
+          core7_failure_counts={}
+          core7_failure_examples={}
+          def record_core7_failure(reason,race_key):
+              core7_failure_counts[reason]=core7_failure_counts.get(reason,0)+1
+              sample=core7_failure_examples.setdefault(reason,[])
+              if len(sample)<8:sample.append(race_key)
           core7_card_gap=0
           core7_card_gap_examples=[]
           merged_count=0
@@ -1118,6 +1124,18 @@ jobs:
                 and all(core7_boat(rc,stt,tkz,b) for b in range(1,7))
                 and sorted(courses)==[1,2,3,4,5,6]
               )
+              # Report precise, non-exclusive CORE7 blockers, without
+              # treating official beforeinfo as proof of absent CSV fields.
+              if not core7:
+                  for role,present in source_presence.items():
+                      if not present:record_core7_failure("missing_"+role,race_key)
+                  if all(source_presence.values()):
+                      if sorted(courses)!=[1,2,3,4,5,6]:
+                          record_core7_failure("invalid_six_course_permutation",race_key)
+                      failed_boats=[b for b in range(1,7)
+                                    if not core7_boat(rc,stt,tkz,b)]
+                      if failed_boats:
+                          record_core7_failure("invalid_core7_boat_fields",race_key)
               doc["current_model_input"]={
                 "model":"V1.21.33-SCENARIO-DIVERSE-CONFIRM",
                 "source_presence":source_presence,
@@ -1143,6 +1161,11 @@ jobs:
                      "formal_first100_ready":False,
                      "first":eligible[0] if eligible else None,
                      "last":eligible[-1] if eligible else None},
+            "core7_failure_diagnostic":{
+                "counts":dict(sorted(core7_failure_counts.items())),
+                "examples":core7_failure_examples,
+                "scope":"MUTABLE_RACE_SOURCE_AND_VALUE_BLOCKERS_NOT_FORMAL",
+                "counts_are_nonexclusive":True},
             "core7_card_csv_gap_diagnostic":{"count":core7_card_gap,
                 "sample_race_keys":core7_card_gap_examples,
                 "scope":"MUTABLE_PREDEADLINE_ONLY_NOT_FORMAL_ELIGIBILITY"},
