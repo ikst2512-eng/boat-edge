@@ -45,6 +45,12 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(calls, ["20261025-04-01"])
             self.assertEqual(len(result["captured"]), 1)
 
+    def test_early_placeholder_window_is_excluded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"20261025-04-01.json"
+            path.write_text(json.dumps(race("20261025-04-01","11:05")))
+            self.assertIsNone(eligible(path,NOW))
+
     def test_mismatched_filename_is_skipped(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "20261025-04-02.json"
