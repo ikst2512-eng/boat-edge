@@ -8,7 +8,7 @@
     "event": "第18回鳥羽一郎杯争奪戦",
     "race_no": 7,
     "deadline": "13:25",
-    "updated_at": "2026-10-26T10:51:41+09:00",
+    "updated_at": "2026-10-26T11:30:31+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261026&jcd=09&rno=7",
-      "fetched_at": "2026-10-26T10:54:28+09:00",
-      "sha256": "903ff17bcf10a22bc0f143f6224f8df6efe3616389d9d36ac4caf0e2796f6b44",
+      "fetched_at": "2026-10-26T11:33:24+09:00",
+      "sha256": "f17259d7d06cd3c87264d33d1fe49ad0fea71f274adc6f45ccccf4114cb82051",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261026&jcd=09&rno=7",
+      "fetched_at": "2026-10-26T11:31:47+09:00",
+      "sha256": "c5edebb4351d93688092b2e20a82b75860b9c2ac15c40bc45a56e7af0868e46d",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:55:20+09:00",
+      "observed_at": "2026-10-26T11:34:06+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "cef4106d6b6add05eac5755c15a35650cf56e0aae1d0d2badbe5bbb1b3d54692"
+      "sha256": "c808ea8e5a479fb757935e232581071c77f32e47f1bd5fa9e8638f66ce4fea92"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:55:27+09:00",
+      "observed_at": "2026-10-26T11:34:13+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "50e37b3cb406774aebeeb71785e6b6f7502f85cefcd394361e3483275692ba26"
+      "sha256": "1c2fb37d1809df1a87c611830db280a898171f8617d6a8b0f02c612d0f0a426a"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:55:35+09:00",
+      "observed_at": "2026-10-26T11:34:20+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "dbf46cf63c3d1a05fda60afe04989087b0e9854214e3e77ddf96653e597ba91f"
+      "sha256": "acf1e1a7a854cb01e8d17adfb40ccabbcde2ecb82e3716e9a6fce150d8b5607f"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:55:13+09:00",
+      "observed_at": "2026-10-26T11:33:59+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "0713f465c00d85527dde8da739330cbf3c21c63243a310157bc992ea8460f436"
+      "sha256": "b4c3e4eb54d1559a3b767af35686492b19c90c3e359c2e52cc7449b21d8b5470"
     }
   },
   "racers": [
@@ -226,10 +232,11 @@
       "series_tokens": [
         "1",
         "7",
-        "5"
+        "5",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "4 2538 / B1 高橋 二朗 東京/千葉 77歳/52.0kg F0 L0 0.21 3.15 5.05 16.16 4.40 20.00 44.00 23 33.52 48.30 23 36.76 48.65 1 7 5 2R"
+      "raw_text": "4 2538 / B1 高橋 二朗 東京/千葉 77歳/52.0kg F0 L0 0.21 3.15 5.05 16.16 4.40 20.00 44.00 23 33.52 48.30 23 36.76 48.65 1 7 5 2 2R"
     },
     {
       "lane": 5,
@@ -312,7 +319,53 @@
       "raw_text": "6 4044 / A1 湯川 浩司 大阪/大阪 47歳/52.0kg F0 L0 0.14 6.49 39.58 64.58 6.81 57.69 65.38 70 34.30 48.79 67 38.05 53.66 8 12 9 12R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 別府 昌樹 55.4kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 信濃 由行 53.0kg R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 平田 健之佑 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 高橋 二朗 52.0kg R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 廣瀬 篤哉 57.2kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 湯川 浩司 52.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
