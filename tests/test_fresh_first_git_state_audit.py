@@ -28,6 +28,8 @@ class FirstGitStateAuditTests(unittest.TestCase):
                  })), \
                  patch.object(mod, "git", side_effect=[
                      "newestcommit\nfirstcommit",
+                     "latestcommit",
+                     "2026-10-26T08:58:00+09:00",
                      "2026-10-26T08:56:00+09:00"
                  ]), \
                  patch.object(mod.subprocess, "run") as run:
@@ -40,7 +42,9 @@ class FirstGitStateAuditTests(unittest.TestCase):
             self.assertEqual(result["first_state_commit"], "firstcommit")
             self.assertTrue(result["first_state_committed_before_deadline"])
             self.assertFalse(result["formal_eligible"])
-            self.assertEqual(result["proof_scope"], "GIT_STATE_ADDITION_ONLY_NOT_CSV_OR_PREDICTION_FREEZE")
+            self.assertEqual(result["latest_state_change_commit"], "latestcommit")
+            self.assertFalse(result["state_file_write_time_independently_proven"])
+            self.assertEqual(result["proof_scope"], "GIT_STATE_HISTORY_METADATA_ONLY_NOT_CSV_OR_PREDICTION_FREEZE")
 
 if __name__ == "__main__":
     unittest.main()
