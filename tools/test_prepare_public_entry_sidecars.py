@@ -37,6 +37,26 @@ class PublicationTests(unittest.TestCase):
         sidecar=json.loads((self.root/"published"/(KEY+".json")).read_text())
         self.assertEqual(sidecar["actual_entry"],[2,1,3,4,5,6])
         self.assertEqual(self.run_prepare()["prepared"],[])
+    def test_second_attempt_publishes_matching_proof(self):
+        original=self.root/"raw"/(KEY+".beforeinfo.html")
+        original.write_bytes(b"<html>official placeholder</html>")
+        second=self.root/"raw"/(KEY+".attempt2.beforeinfo")
+        (self.root/"raw"/(KEY+".attempt2.beforeinfo.html")).write_bytes(RAW)
+        (self.root/"raw"/(KEY+".attempt2.beforeinfo.audit.json")).write_text(json.dumps(AUDIT))
+        result=self.run_prepare()
+        self.assertEqual(result["prepared"],[KEY],result)
+        self.assertEqual(original.read_bytes(),b"<html>official placeholder</html>")
+    def test_two_equally_matching_captures_fail_closed(self):
+        (self.root/"raw"/(KEY+".attempt2.beforeinfo.html")).write_bytes(RAW)
+        (self.root/"raw"/(KEY+".attempt2.beforeinfo.audit.json")).write_text(json.dumps(AUDIT))
+        self.assertEqual(self.run_prepare()["prepared"],[])
+    def test_second_attempt_tampered_audit_is_rejected(self):
+        (self.root/"raw"/(KEY+".beforeinfo.html")).write_bytes(b"<html>placeholder</html>")
+        (self.root/"raw"/(KEY+".attempt2.beforeinfo.html")).write_bytes(RAW)
+        bad=dict(AUDIT,sha256="0"*64)
+        (self.root/"raw"/(KEY+".attempt2.beforeinfo.audit.json")).write_text(json.dumps(bad))
+        self.assertEqual(self.run_prepare()["prepared"],[])
+
     def test_post_deadline_is_blocked(self):
         result=self.run_prepare(NOW+dt.timedelta(minutes=10))
         self.assertEqual(result["prepared"],[])
