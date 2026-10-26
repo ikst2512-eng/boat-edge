@@ -17,6 +17,7 @@ class GitProvenanceDiagnosticTests(unittest.TestCase):
                       "evidence_committed_at": "2026-10-25T11:51:00+09:00"}
             p.write_text(json.dumps(record))
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid", "commit", "--allow-empty", "-qm", "initial"], cwd=root, check=True)
             self.assertEqual(classify(root, p)[0], "no_git_creation_commit")
             record["evidence_committed_at"] = "2026-10-25T12:01:00+09:00"
             p.write_text(json.dumps(record))
