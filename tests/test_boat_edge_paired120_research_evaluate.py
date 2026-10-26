@@ -12,7 +12,9 @@ from boat_edge_paired120_research_evaluate import evaluate
 def record():
     triples = ["-".join(map(str,t)) for t in itertools.permutations(range(1,7),3)]
     return {"race_key":"20261026-01-01","input_sha256":"a"*64,
-            "model_sha256":"b"*64,"first_git_sha":"c"*40,\n            "actual_entry_verified":True,"model_unseen_attested":True,\n            "git_receipt_independently_verified":True,
+            "model_sha256":"b"*64,"first_git_sha":"c"*40,
+            "actual_entry_verified":True,"model_unseen_attested":True,
+            "git_receipt_independently_verified":True,
             "first_git_at":"2026-10-26T09:00:00+09:00",
             "deadline_at":"2026-10-26T10:00:00+09:00",
             "actual_trifecta":triples[0],
