@@ -30,6 +30,9 @@ class Tests(unittest.TestCase):
         self.assertEqual(record["sources"]["stt"]["match_kind"], "ONE")
         self.assertFalse(record["sources"]["stt"]["same_bytes_as_saved_audit"])
         self.assertFalse(record["formal_eligible"])
+        self.assertFalse(record["sources"]["race_cards"]["sha_comparison_applicable"])
+        self.assertIsNone(record["sources"]["race_cards"]["same_bytes_as_saved_audit"])
+        self.assertTrue(record["sources"]["stt"]["sha_comparison_applicable"])
     def test_invalid_key(self):
         with self.assertRaises(ValueError): mod.compare("../unsafe")
 
