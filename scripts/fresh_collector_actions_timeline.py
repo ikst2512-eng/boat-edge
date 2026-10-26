@@ -66,6 +66,19 @@ try:
             metadata = json.load(resp)
         report["workflow_status"][filename] = {k: metadata.get(k) for k in (
             "id", "name", "state", "path", "created_at", "updated_at")}
+    # Read API state of both existing schedulers; no change or dispatch.
+    report["workflow_states"] = {}
+    for workflow in ("auto-update.yml", "site-odds.yml"):
+        req = Request(f"https://api.github.com/repos/{repo}/actions/workflows/{workflow}", headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"})
+        with urlopen(req, timeout=20) as resp:
+            meta = json.load(resp)
+        report["workflow_states"][workflow] = {
+            "id": meta.get("id"), "state": meta.get("state"),
+            "path": meta.get("path"), "created_at": meta.get("created_at"),
+            "updated_at": meta.get("updated_at")}
     report["runs"].sort(key=lambda r: r["created_at"])
     report["matched_runs"] = len(report["runs"])
 except Exception as exc:
