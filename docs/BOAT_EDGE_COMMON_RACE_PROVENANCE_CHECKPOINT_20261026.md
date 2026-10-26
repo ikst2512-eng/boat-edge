@@ -81,3 +81,9 @@ Main branch contents API returned 404 for both `data/research_local_v332/` and `
 Operational blocker classification: `RESEARCH_V332_NO_VERIFIABLE_PREDEADLINE_REPOSITORY_ARTIFACT`. Do not infer no actual capture from main absence alone. Before any future paired validation, locate an **authorized** original same-race capture and its independent server-time receipt, ensure it precedes the exact deadline, hash original input/model/prediction bytes and establish model-version linkage. Preserve all protection gates; V336's manual dry-run must not be changed to unattended provider scraping, and past results must not be backfilled.
 
 Status stays HOLD; common comparison denominator unknown; scoring prohibited.
+
+## 2026-10-27 research-only evidence gate hardening
+
+- GitHub Actions run [40347837624](https://github.com/ikst2512-eng/boat-edge/actions/runs/40347837624) completed successfully for `d18a4bc59764c131ef651dfa3a5df47237d60c1d`, running the full `research_next/test_*.py` unit-test discover step. This validates synthetic checks, not real-race eligibility.
+- Paired input/model/prediction evidence roles must reference three distinct files per side; assigning one blob to all three roles is now explicitly rejected (`ALIASED_INPUT_MODEL_PREDICTION`). The corresponding tests were updated on research branch. This is an integrity guard only and does not establish independent timing or model execution.
+- No new V332 race freeze, external publication receipt, source authorization, or scoreable common cohort has been observed in this work. Main and Formal Fresh unchanged. Keep scoring HOLD.
