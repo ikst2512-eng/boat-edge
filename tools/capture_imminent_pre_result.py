@@ -84,7 +84,12 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
                     report["skipped"].append({"key": key, "reason": "verified_not_published", "attempt": attempt})
                 break
             except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-                report["skipped"].append({"key": key, "reason": "entry_not_verified", "attempt": attempt, "detail": str(exc)[:160]})
+                reason = str(exc)
+                report["skipped"].append({"key": key, "reason": "entry_not_verified", "attempt": attempt, "detail": reason[:160]})
+                # Only a verified official HTML capture with no explicit entry may be retried.
+                # Audit failures, malformed sources, and unsafe race state fail closed.
+                if reason != "actual_entry_not_explicit_or_ambiguous":
+                    report["failed"].append({"key": key, "attempt": attempt, "reason": "verification_failed"})
                 break
     return report
 
