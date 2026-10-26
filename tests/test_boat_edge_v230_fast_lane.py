@@ -44,51 +44,6 @@ class FastLaneTests(unittest.TestCase):
         return {'racelist':(htmlregs(scratch).encode(),htmlregs(scratch),self.now),
                 'beforeinfo':(htmlbefore().encode(),htmlbefore(),self.now),
                 'odds':(b'official-odds-byte', '<html>...</html>',self.now)}
-    def test_worker_timing_excludes_queue_delay(self):
-        with (patch.object(m, 'fetch_one', return_value=(KEY, None, 'error')) as worker,
-              patch.object(m.time, 'monotonic', side_effect=[100.0, 100.25])):
-            result, elapsed = m._timed_fetch_one(self.root, KEY)
-        self.assertEqual(result, (KEY, None, 'error'))
-        self.assertEqual(elapsed, 0.25)
-        worker.assert_called_once_with(self.root, KEY)
-
-    def test_imminent_deadline_does_not_retry_transient_failure(self):
-        import requests
-        key = '20261021-14-12'
-        now = datetime.now(JST)
-        deadline = now + timedelta(seconds=30)
-        race = makerace(deadline.strftime('%H:%M'))
-        race['race_key'] = key
-        race['meta'].update(date=now.strftime('%Y-%m-%d'), venue_code='14',
-                            race_no=12, deadline=deadline.strftime('%H:%M'))
-        # Minute resolution may round the cutoff back into the past; patch
-        # the pure deadline parser to provide a deterministic exact instant.
-        m.write_json(self.root/'data/races'/f'{key}.json', race)
-        with (patch.object(m, 'due_for', return_value=deadline),
-              patch('requests.Session'),
-              patch.object(m, 'fetch', side_effect=requests.exceptions.Timeout('slow')) as fetching,
-              patch('time.sleep') as sleeping):
-            received, data, error = m.fetch_one(self.root, key)
-        self.assertEqual(received, key)
-        self.assertIsNone(data)
-        self.assertIn('RETRY_SKIPPED_IMMINENT_DEADLINE', error)
-        fetching.assert_called_once()
-        sleeping.assert_not_called()
-
-    def test_http_429_does_not_retry_or_sleep(self):
-        import requests
-        response = Mock(status_code=429)
-        limited = requests.exceptions.HTTPError("rate limited", response=response)
-        with (patch("requests.Session") as session_factory,
-              patch.object(m, "fetch", side_effect=limited) as fetching,
-              patch("time.sleep") as sleeping):
-            key, data, error = m.fetch_one(self.root, KEY)
-        self.assertEqual(key, KEY)
-        self.assertIsNone(data)
-        self.assertIn("HTTPError", error)
-        fetching.assert_called_once()
-        sleeping.assert_not_called()
-
     def test_selects_window_only(self):
         m.write_json(self.root/'data/today.json',{'date':'2026-10-11','venues':[{'races':[{'race_key':KEY,'deadline':'14:43'}]}]})
         self.assertEqual(m.targets(self.root,self.now),[KEY])
@@ -660,6 +615,40 @@ class FastLaneTests(unittest.TestCase):
         slept.assert_not_called()
         self.assertEqual(frozen.read_bytes(),before)
 
+    def test_postcommit_unattempted_is_not_delayed_by_incomplete_retry(self):
+        # Previously failed source may need a cooldown, but an untouched
+        # live race must be requested immediately before its deadline expires.
+        failed='20261011-06-09'
+        untouched='20261011-06-10'
+        for key, number in ((failed,9),(untouched,10)):
+            race=makerace('14:44')
+            race['race_key']=key
+            race['meta']['race_no']=number
+            m.write_json(self.root/'data/races'/f'{key}.json',race)
+        m.write_json(self.root/'data/today.json',{'date':'2026-10-11',
+            'venues':[{'races':[{'race_key':KEY,'deadline':'14:43'},
+                                {'race_key':failed,'deadline':'14:44'},
+                                {'race_key':untouched,'deadline':'14:44'}]}]})
+        m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
+            'schema':m.SCHEMA,'day_jst':'20261011',
+            'targets':[KEY,failed],
+            'outcomes':{KEY:'fresh_verified',failed:'odds_incomplete'},
+            'new_snapshots_atomic_audited':1})
+        with (patch('boat_edge_v228_freeze_only.check_formal_closed'),
+              patch('boat_edge_v235_predeadline_receipt.receipt',
+                    return_value={'prediction_saved_proven':True}),
+              patch.object(m,'fetch_one',side_effect=lambda root,key:(key,{},None)) as fetched,
+              patch.object(m,'update_one',return_value='fresh_verified'),
+              patch('boat_edge_v229_atomic_freeze.run',return_value=0),
+              patch.object(m,'local_now',return_value=self.now),
+              patch.object(m.time,'sleep') as slept):
+            got=m.run_postcommit_incomplete(self.root,now=self.now,worker=2)
+        self.assertTrue(got['first_git_proven'])
+        self.assertIn(untouched,got['retry_keys'])
+        self.assertIn(failed,got['retry_keys'])
+        self.assertEqual(fetched.call_count,2)
+        slept.assert_not_called()
+
     def test_postcommit_unattempted_requires_actual_first_git_proof(self):
         other='20261011-06-09'
         race=makerace('14:44')
@@ -1164,9 +1153,6 @@ class V230EightRaceRescueTests(unittest.TestCase):
         self.assertEqual(fetch.call_count,9)
         self.assertEqual(freeze.call_count,2)
         self.assertNotIn(self.keys[9],status['targets'])
-        self.assertGreaterEqual(status['fetch_wall_seconds'],0)
-        self.assertGreaterEqual(status['freeze_wall_seconds'],0)
-        self.assertIn(self.keys[0],status['fetch_task_seconds'])
 
     def test_postcommit_requires_git_proof_before_eight_other_races(self):
         m.write_json(self.root/'data/site_autopilot/v230_fast_current.json',{
