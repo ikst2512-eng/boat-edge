@@ -23,6 +23,7 @@ def inspect_site_evidence(evidence, scored=None):
         raise ValueError("RACE_KEY_REQUIRED")
     if scored is not None and scored.get("race_key") != key:
         raise ValueError("RACE_KEY_MISMATCH")
+    scored_record_present = scored is not None
     source = {
         "race_source_sha256": bool(evidence.get("race_sha256")),
         "capture_timestamp": bool(evidence.get("snapshot_saved_at")),
@@ -39,7 +40,8 @@ def inspect_site_evidence(evidence, scored=None):
     paired["model_unseen_independently_verified"] = False
     missing_source = sorted(k for k, present in source.items() if not present)
     missing_pair = sorted(k for k, present in paired.items() if not present)
-    return {"race_key": key, "site_evidence_fields": source,
+    return {"race_key": key, "scored_record_present": scored_record_present,
+            "site_evidence_fields": source,
             "missing_source_fields": missing_source,
             "missing_comparison_requirements": missing_pair,
             "comparison_requirements_observed": paired,
@@ -65,10 +67,15 @@ def audit_directory(root):
         rows.append(inspect_site_evidence(e, s))
     counts = {name: sum(name in row["missing_comparison_requirements"] for row in rows)
               for name in REQUIRED_PAIR}
+    missing_scored_records = sum(not row["scored_record_present"] for row in rows)
     source_counts = {name: sum(name in row["missing_source_fields"] for row in rows)
                      for name in ("race_source_sha256", "capture_timestamp",
                                   "first_git_commit", "deadline", "post_result_label_exists")}
-    return {"rows": rows, "checked": len(rows), "comparison_eligible": 0,
+    return {"rows": rows, "checked": len(rows),
+            "scored_record_absent_in_v234": missing_scored_records,
+            "scored_record_present_in_v234": len(rows) - missing_scored_records,
+            "missing_scored_does_not_prove_git_absent": True,
+            "comparison_eligible": 0,
             "missing_comparison_counts": counts, "missing_source_counts": source_counts,
             "research_only": True, "formal_fresh_eligible": False}
 
