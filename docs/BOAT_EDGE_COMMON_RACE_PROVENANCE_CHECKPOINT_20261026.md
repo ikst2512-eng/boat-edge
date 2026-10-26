@@ -39,3 +39,7 @@ For `20261025-06-08`, three tracked documents were independently opened: `data/s
 - V332 evaluator-path freeze still not found, so this race remains **NOT COMPARABLE**. Matching recorded hashes establish consistency of reported identifiers, not independent rehashing of original inputs or equivalence of two models.
 
 Branch head `1f822ca1d99054774e11ea702c169d513aa5abf7`: combined commit status API returned no statuses and PR-triggered run lookup returned no runs. Neither result establishes that all GitHub Actions were absent or that CI passed. Local/synthetic test claims must be kept separate from native CI.
+
+## 2026-10-26 integration check (reconstructed local runner)
+
+The exact displayed audit logic and synthetic Git integration fixture from the research branch were manually reconstructed in an isolated execution environment because direct GitHub network access from that environment was unavailable. Ran `python -m unittest -v test_pair_git_integration` and `python -m py_compile *.py`; the one integration test passed and the syntax check completed. The fixture exercised a locally created Git commit, matching original bytes, model digest tampering, input digest tampering, late reported freeze, and the permanent real-scoring HOLD flag. **This does not establish byte-for-byte equivalence of locally reconstructed files to GitHub blobs, native GitHub Actions CI success, trusted predeadline publication, or real-race model performance.** Do not promote based on these tests.
