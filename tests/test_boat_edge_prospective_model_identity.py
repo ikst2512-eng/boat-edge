@@ -11,16 +11,23 @@ class ProspectiveIdentityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "model.py").write_text("MODEL=1\n")
+            (root / "dep.py").write_text("DEP=1\n")
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            subprocess.run(["git", "add", "model.py"], cwd=root, check=True)
+            subprocess.run(["git", "add", "model.py", "dep.py"], cwd=root, check=True)
             subprocess.run(["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid",
                             "commit", "-qm", "initial"], cwd=root, check=True)
             now = dt.datetime(2026, 10, 26, tzinfo=dt.timezone.utc)
             due = "2026-10-27T10:00:00+09:00"
-            record = create(root, "20261027-21-02", "model.py", due, now=now)
+            record = create(root, "20261027-21-02", "model.py", due, now=now, dependency_paths=["dep.py"])
             self.assertFalse(record["prediction_eligibility_granted"])
             self.assertEqual(record["model_source_scope"], "SINGLE_FILE_ONLY_DEPENDENCIES_NOT_ATTESTED")
             self.assertEqual(len(record["model_source_sha256"]), 64)
+            self.assertEqual(len(record["declared_dependency_sha256"]["dep.py"]), 64)
+            self.assertFalse(record["dependency_set_complete_independently_verified"])
+            (root / "dep.py").write_text("DEP=2\n")
+            with self.assertRaisesRegex(ValueError, "DEPENDENCY_DIFFERS_FROM_HEAD"):
+                create(root, "20261027-21-03", "model.py", due, now=now, dependency_paths=["dep.py"])
+            (root / "dep.py").write_text("DEP=1\n")
             save_once(root, record)
             with self.assertRaises(FileExistsError):
                 save_once(root, record)
