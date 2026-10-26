@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
     def test_join_and_false_formal_claim(self):
         key = "20261026-21-02"
         data = ("レースコード,値\n202610262101,x\n202610262102,y\n").encode()
-        state = {"race_key": key, "source_audit": {"stt": {"status": "missing", "sha256": "other"}}}
+        state = {"race_key": key, "meta": {"deadline": "23:59"}, "source_audit": {"stt": {"status": "missing", "sha256": "other"}}}
         with patch.object(mod.Path, "is_file", return_value=True), \
              patch.object(mod.Path, "read_text", return_value=json.dumps(state)):
             record = mod.compare(key, opener=lambda *a, **k: Response(data))
