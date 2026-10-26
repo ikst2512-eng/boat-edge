@@ -7,8 +7,8 @@
     "venue": "常滑",
     "event": "スポーツ報知杯争奪第17回ビクトリーカップ",
     "race_no": 7,
-    "deadline": "13:19",
-    "updated_at": "2026-10-26T10:23:38+09:00",
+    "deadline": "13:20",
+    "updated_at": "2026-10-26T10:51:41+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261026&jcd=08&rno=7",
-      "fetched_at": "2026-10-26T10:26:55+09:00",
-      "sha256": "2ed49d6eada4e770e50840e6f73f1a9ecbcc302179e76095493d8db7a20d02f4",
+      "fetched_at": "2026-10-26T10:54:19+09:00",
+      "sha256": "46ee881ff0ecf034984c1b018111f4539059b3621b791d738b41c394eed6a04b",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261026&jcd=08&rno=7",
+      "fetched_at": "2026-10-26T10:53:07+09:00",
+      "sha256": "f5e9f1693bd6daa5ed47a29c086e3a95d938e31efa0724c931fcb1b031485992",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:27:26+09:00",
+      "observed_at": "2026-10-26T10:55:20+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "55394b1d18be39b3a4a0f8da4b5b66f9a28fbd2c03b9e938d145e4477178f624"
+      "sha256": "cef4106d6b6add05eac5755c15a35650cf56e0aae1d0d2badbe5bbb1b3d54692"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:27:33+09:00",
+      "observed_at": "2026-10-26T10:55:27+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "39a3f55f91cb0b2597a79e92cafe7ccf4c66fb761dde0195dd7a69b050ae0669"
+      "sha256": "50e37b3cb406774aebeeb71785e6b6f7502f85cefcd394361e3483275692ba26"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:27:40+09:00",
+      "observed_at": "2026-10-26T10:55:35+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "4d562bb7a36ae13af18615b4c00a5a7bd18d792e6c26ec15f608251418b3b4b7"
+      "sha256": "dbf46cf63c3d1a05fda60afe04989087b0e9854214e3e77ddf96653e597ba91f"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T10:27:19+09:00",
+      "observed_at": "2026-10-26T10:55:13+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "10098e0aadac4e40a725f2815249dc4cc12201317cc190e45159be6b07644d32"
+      "sha256": "0713f465c00d85527dde8da739330cbf3c21c63243a310157bc992ea8460f436"
     }
   },
   "racers": [
@@ -219,10 +225,11 @@
         "trio_rate": 58.67
       },
       "series_tokens": [
-        "8"
+        "8",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "4 3277 / B1 齋藤 勇 東京/東京 60歳/52.3kg F0 L0 0.18 4.87 28.28 43.43 4.92 30.77 46.15 53 55.56 66.67 67 37.33 58.67 8 1R"
+      "raw_text": "4 3277 / B1 齋藤 勇 東京/東京 60歳/52.3kg F0 L0 0.18 4.87 28.28 43.43 4.92 30.77 46.15 53 55.56 66.67 67 37.33 58.67 8 1 1R"
     },
     {
       "lane": 5,
@@ -303,7 +310,53 @@
       "raw_text": "6 5071 / B1 野見山 拓己 福岡/福岡 32歳/52.2kg F1 L0 0.13 4.75 24.14 44.83 5.22 33.33 55.56 24 38.89 50.00 27 23.19 43.48 4 11"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 日笠 勝弘 51.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 鈴木 成美 45.5kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 飯島 昌弘 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 齋藤 勇 52.3kg R 1"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 田中 信一郎 53.6kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 野見山 拓己 52.2kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
