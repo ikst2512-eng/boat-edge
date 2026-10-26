@@ -5,6 +5,7 @@ reconstruction. Git commit timestamps alone are not independent clock proof.
 """
 from __future__ import annotations
 from collections import Counter
+from datetime import timedelta
 from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
@@ -35,6 +36,8 @@ def classify(root):
             if blob.returncode:reason='FIRST_ADD_BLOB_UNAVAILABLE'
             elif __import__('hashlib').sha256(blob.stdout).hexdigest()!=sha(p):reason='CURRENT_BYTES_DIFFER_FROM_FIRST_ADD'
             elif not due or not saved or not created:reason='TIME_FIELDS_INVALID'
+            elif created < saved:reason='FIRST_ADD_BEFORE_DECLARED_SNAPSHOT_SAVE'
+            elif created >= due:reason='FIRST_ADD_AT_OR_AFTER_DEADLINE'
             elif not saved<=created<due:reason='FIRST_ADD_COMMIT_TIME_OUTSIDE_FREEZE_WINDOW'
             else:reason='GIT_FIRST_ADD_GATE_PASSES'
         counts[reason]+=1
