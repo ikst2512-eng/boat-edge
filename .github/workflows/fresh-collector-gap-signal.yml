@@ -1,5 +1,10 @@
 name: BOAT EDGE Collector Gap Signal (read only)
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/fresh-collector-gap-signal.yml'
+      - 'scripts/fresh_collector_run_gap_monitor.py'
+      - 'tests/test_fresh_collector_run_gap_monitor.py'
   workflow_dispatch:
   schedule:
     - cron: '37 * * * *'
