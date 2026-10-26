@@ -760,7 +760,13 @@ jobs:
                           return True
               return False
 
-          for role,url in SOURCES.items():
+          # The original six-boat exhibition is publication-late and deadline-sensitive.
+          # Probe it first, so earlier per-source retry sleeps cannot defer its first
+          # HTTP observation until a race is close to the immutable deadline.
+          csv_priority=("original_exhibition","stt","tkz","sui","race_cards")
+          assert set(csv_priority)==set(SOURCES)
+          for role in csv_priority:
+              url=SOURCES[role]
               rows,digest,err=fetch_csv(role,url)
               retry_count=0
               # Retry temporary 404/network/empty responses for EVERY CSV role,
