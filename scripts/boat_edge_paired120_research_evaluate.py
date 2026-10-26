@@ -45,6 +45,13 @@ def _validated(rows, name):
                 raise ValueError("MISSING_EVIDENCE_SHA:" + field)
         if len(rec["input_sha256"]) != 64 or len(rec["model_sha256"]) != 64:
             raise ValueError("REQUIRE_SHA256_FOR_INPUT_AND_MODEL")
+        # A self-declared timestamp/hash is not independent Git attestation.
+        if rec.get("actual_entry_verified") is not True:
+            raise ValueError("ACTUAL_ENTRY_PROOF_REQUIRED")
+        if rec.get("model_unseen_attested") is not True:
+            raise ValueError("UNSEEN_MODEL_ATTESTATION_REQUIRED")
+        if rec.get("git_receipt_independently_verified") is not True:
+            raise ValueError("INDEPENDENT_GIT_RECEIPT_REQUIRED")
         if _time(rec.get("first_git_at")) >= _time(rec.get("deadline_at")):
             raise ValueError("NOT_GIT_FROZEN_BEFORE_DEADLINE")
         ranking = rec.get("ranked_120")
@@ -124,6 +131,7 @@ def evaluate(data):
     return {"research_only": True, "formal_fresh_eligible": False,
             "git_provenance_independently_authenticated": False,
             "unseen_status_independently_proven": False,
+            "asserted_evidence_not_independent_authentication": True,
             "common_races": len(common), "baseline": old, "candidate": new,
             "paired_significance": paired_tests,
             "topk_rate_delta": None if old is None else {
