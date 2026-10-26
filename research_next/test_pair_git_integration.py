@@ -27,12 +27,21 @@ class LocalGitIntegration(unittest.TestCase):
                 dst = root / path
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.write_bytes(raw)
-            self.run_git(root, "add", "freeze")
+            for side in ("baseline", "candidate"):
+                self.run_git(root, "add", f"freeze/{side}/input.json", f"freeze/{side}/model.py")
+            with patch.dict("os.environ", {
+                "GIT_AUTHOR_DATE": "2026-10-25T13:45:00+09:00",
+                "GIT_COMMITTER_DATE": "2026-10-25T13:45:00+09:00",
+            }):
+                self.run_git(root, "commit", "-qm", "freeze inputs and models")
+            source_commit = self.run_git(root, "rev-parse", "HEAD")
+            for side in ("baseline", "candidate"):
+                self.run_git(root, "add", f"freeze/{side}/prediction.json")
             with patch.dict("os.environ", {
                 "GIT_AUTHOR_DATE": "2026-10-25T13:50:00+09:00",
                 "GIT_COMMITTER_DATE": "2026-10-25T13:50:00+09:00",
             }):
-                self.run_git(root, "commit", "-qm", "synthetic fixture")
+                self.run_git(root, "commit", "-qm", "freeze paired predictions")
             commit = self.run_git(root, "rev-parse", "HEAD")
             pair = {}
             for side in ("baseline", "candidate"):
@@ -42,7 +51,7 @@ class LocalGitIntegration(unittest.TestCase):
                     item[field] = {
                         "path": path,
                         "sha256": hashlib.sha256(contents[path]).hexdigest(),
-                        "first_commit": commit,
+                        "first_commit": commit if field == "prediction" else source_commit,
                     }
                 item["prediction_saved_at_jst"] = "2026-10-25T13:49:00+09:00"
                 pair[side] = item
