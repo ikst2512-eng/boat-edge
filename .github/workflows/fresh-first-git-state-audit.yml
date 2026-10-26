@@ -5,6 +5,7 @@ on:
       - 'scripts/fresh_first_git_state_audit.py'
       - 'scripts/fresh_race_csv_state_compare.py'
       - 'scripts/fresh_upcoming_state_targets.py'
+      - 'scripts/fresh_collector_actions_timeline.py'
       - 'tests/test_fresh_first_git_state_audit.py'
       - 'tests/test_fresh_race_csv_state_compare.py'
       - 'tests/test_fresh_upcoming_state_targets.py'
@@ -12,6 +13,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -53,6 +55,10 @@ jobs:
                   "races": []
               }) + "\\n", encoding="utf-8")
           PY
+      - name: Inspect collector Actions timeline around 14:24 to 15:15 JST
+        env:
+          GH_READONLY_TOKEN: ${{ github.token }}
+        run: python3 scripts/fresh_collector_actions_timeline.py
       - name: Preserve non-formal provenance audit
         if: always()
         uses: actions/upload-artifact@v4
@@ -63,5 +69,6 @@ jobs:
             fresh_race_csv_state_comparison.json
             fresh_upcoming_state_targets.json
             fresh_upcoming_csv_state_comparison.json
+            fresh_collector_actions_timeline.json
           if-no-files-found: warn
           retention-days: 30
