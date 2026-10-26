@@ -36,6 +36,15 @@ class PairProvenanceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "FORBIDDEN_RESULT_OR_FORMAL_PATH"):
                 mod.verify(pathlib.Path("."), data)
 
+    def test_score_path_alias_rejected_before_git_read(self):
+        item = {"input": {"path": "data/site_scored/secret.json", "sha256": "a"*64, "first_commit": "b"*40},
+                "prediction": {}, "model": {}, "prediction_saved_at_jst": "2026-10-25T13:30:00+09:00"}
+        data = {"scope": "RESEARCH_ONLY_PRE_OUTCOME_PAIR", "race_key": "20261025-06-08",
+                "deadline_jst": "2026-10-25T14:06:00+09:00", "baseline": item, "candidate": item}
+        with patch.object(mod, "git", side_effect=AssertionError("FORBIDDEN_GIT_READ")):
+            with self.assertRaisesRegex(ValueError, "FORBIDDEN_RESULT_OR_FORMAL_PATH"):
+                mod.verify(pathlib.Path("."), data)
+
     def test_race_key_must_match_day(self):
         with self.assertRaisesRegex(ValueError, "DEADLINE_RACE_MISMATCH"):
             mod.verify(pathlib.Path("."), {
