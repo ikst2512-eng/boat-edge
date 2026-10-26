@@ -18,23 +18,32 @@ def prepare(races, raw_dir, enriched_dir, target, now=None):
     for src in sorted(Path(enriched_dir).glob("*.json")):
         key=src.stem
         race_file=Path(races)/(key+".json")
-        html_file=Path(raw_dir)/(key+".beforeinfo.html")
-        audit_file=Path(raw_dir)/(key+".beforeinfo.audit.json")
         destination=target/(key+".json")
         if destination.exists():
             report["skipped"].append({"key":key,"reason":"already_published"})
             continue
         try:
             race=json.loads(race_file.read_text(encoding="utf-8"))
-            html=html_file.read_bytes()
-            audit=json.loads(audit_file.read_text(encoding="utf-8"))
             proposed=json.loads(src.read_text(encoding="utf-8"))
             deadline=dt.datetime.fromisoformat(race["meta"]["date"]+"T"+race["meta"]["deadline"]+":00+09:00")
             if now>=deadline or now.tzinfo is None:
                 raise ValueError("past_deadline")
-            expected=ingest(race,html,audit,now=now)
-            if expected!=proposed:
-                raise ValueError("snapshot_not_verified")
+            matches=[]
+            for suffix in ("", ".attempt2"):
+                html_file=Path(raw_dir)/(key+suffix+".beforeinfo.html")
+                audit_file=Path(raw_dir)/(key+suffix+".beforeinfo.audit.json")
+                if not html_file.is_file() or not audit_file.is_file():
+                    continue
+                try:
+                    verified=ingest(race,html_file.read_bytes(),
+                                    json.loads(audit_file.read_text(encoding="utf-8")),now=now)
+                except (OSError,ValueError,KeyError,TypeError,json.JSONDecodeError):
+                    continue
+                if verified==proposed:
+                    matches.append(verified)
+            if len(matches)!=1:
+                raise ValueError("capture_provenance_not_unique")
+            expected=matches[0]
             # Publishing a derived sidecar, not modifying data/races or model state.
             destination.parent.mkdir(parents=True,exist_ok=True)
             with destination.open("x",encoding="utf-8") as output:
