@@ -30,6 +30,7 @@ def audit(root):
         ):
             candidates.append(file.relative_to(root).as_posix())
     return {
+        "inspected_freeze_chain": {"workflow": ".github/workflows/V235.yml", "freeze_entrypoint": "scripts/boat_edge_v229_atomic_freeze.py", "embedded_source": "scripts/boat_edge_v228_freeze_only.py", "historical_execution_independently_proven": False},
         "snapshot_writer_candidates_not_confirmed": candidates,
         "snapshot_writer_unique_independently_verified": False,
         "schema":"BOAT_EDGE_V232_READ_ONLY_SOURCE_LINEAGE_INVENTORY_V1",
