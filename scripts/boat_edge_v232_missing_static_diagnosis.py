@@ -13,6 +13,7 @@ def classify(root):
     base=root/'data/site_autopilot'
     counts=Counter()
     samples={}
+    dates={}
     for evidence in sorted((base/'v229_evidence').glob('20??????-??-??.json')):
         key=evidence.stem
         if (base/'v232_cohort'/evidence.name).is_file():
@@ -56,9 +57,11 @@ def classify(root):
             else:
                 reason='STATIC_EVIDENCE_PRESENT_EXECUTION_WINDOW_UNPROVEN'
         counts[reason]+=1
+        day=key[:8]
+        dates.setdefault(day,{})[reason]=dates.setdefault(day,{}).get(reason,0)+1
         if len(samples.get(reason,[]))<4:samples.setdefault(reason,[]).append(key)
     return {'checked':sum(counts.values()),'reasons':dict(sorted(counts.items())),
-            'examples':samples,'historical_v232_eligibility_proven':False,
+            'examples':samples,'by_race_date':dict(sorted(dates.items())),'historical_v232_eligibility_proven':False,
             'historical_execution_time_verified':False,'research_only':True,
             'result_data_read':False,'formal_fresh_eligible':False}
 
