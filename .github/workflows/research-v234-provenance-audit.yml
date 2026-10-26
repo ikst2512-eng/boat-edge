@@ -7,11 +7,13 @@ on:
       - 'scripts/boat_edge_v234_model_provenance_audit.py'
       - 'scripts/boat_edge_v232_model_receipt_pair_gate.py'
       - 'scripts/boat_edge_prospective_model_identity.py'
+      - 'scripts/boat_edge_model_tree_manifest_audit.py'
       - 'tests/test_boat_edge_v234_git_provenance_diagnostic.py'
       - 'tests/test_boat_edge_v234_confidence_audit.py'
       - 'tests/test_boat_edge_v234_model_provenance_audit.py'
       - 'tests/test_boat_edge_v232_model_receipt_pair_gate.py'
       - 'tests/test_boat_edge_prospective_model_identity.py'
+      - 'tests/test_boat_edge_model_tree_manifest_audit.py'
       - '.github/workflows/research-v234-provenance-audit.yml'
   workflow_dispatch:
 permissions:
@@ -38,6 +40,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_boat_edge_v234_model_provenance_audit.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v232_model_receipt_pair_gate.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_prospective_model_identity.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_model_tree_manifest_audit.py' -v
       - name: Classify real excluded V232 freezes using Git history
         shell: bash
         run: |
