@@ -60,9 +60,9 @@ def archive(race, output_dir, now=None, opener=None, attempt=1):
         # Never reinterpret generic XML, JSON or compressed responses as HTML.
         normalized=raw.lstrip()
         xml_html=re.match(
-            rb"""<\\?xml\\s+version=["']1\\.[01]["'][^?]{0,160}\\?>\\s*
-                (?:<!doctype\\s+html\\b[^>]{0,256}>\\s*)?
-                <html(?:\\s|>)""",
+            rb"""<\?xml\s+version=["']1\.[01]["'][^?]{0,160}\?>\s*
+                (?:<!doctype\s+html\b[^>]{0,256}>\s*)?
+                <html(?:\s|>)""",
             normalized, re.IGNORECASE | re.VERBOSE)
         if not (normalized.lower().startswith((b"<!doctype html", b"<html")) or xml_html):
             # Report only a fixed signature class, never the response body.
