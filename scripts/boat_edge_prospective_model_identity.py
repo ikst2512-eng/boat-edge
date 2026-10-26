@@ -49,6 +49,26 @@ def local_import_paths(root, source):
     return found
 
 
+def transitive_local_imports(root, model):
+    """Walk static local imports transitively, never claim dynamic import closure."""
+    pending = [model]
+    visited = set()
+    discovered = set()
+    while pending:
+        current = pending.pop()
+        relative = current.relative_to(root).as_posix()
+        if relative in visited:
+            continue
+        visited.add(relative)
+        for imported in local_import_paths(root, current):
+            if imported != model.relative_to(root).as_posix():
+                discovered.add(imported)
+            target = root / imported
+            if imported not in visited:
+                pending.append(target)
+    return discovered
+
+
 def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=()):
     root = Path(root).resolve()
     if not KEY.fullmatch(race_key):
@@ -74,10 +94,10 @@ def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=
     if local != original:
         raise ValueError("MODEL_DIFFERS_FROM_HEAD")
     dependencies = {}
-    detected_imports = local_import_paths(root, source)
+    detected_imports = transitive_local_imports(root, source)
     requested = set(dependency_paths)
     if not detected_imports.issubset(requested):
-        raise ValueError("DIRECT_LOCAL_DEPENDENCIES_NOT_DECLARED")
+        raise ValueError("TRANSITIVE_LOCAL_DEPENDENCIES_NOT_DECLARED")
     for item in dependency_paths:
         dependency = Path(item)
         if (dependency.is_absolute() or ".." in dependency.parts or not dependency.parts
@@ -104,7 +124,7 @@ def create(root, race_key, model_path, deadline_jst, now=None, dependency_paths=
         "model_git_sha": sha,
         "model_source_sha256": hashlib.sha256(original).hexdigest(),
         "declared_dependency_sha256": dict(sorted(dependencies.items())),
-        "direct_local_imports_checked": sorted(detected_imports),
+        "transitive_local_imports_checked": sorted(detected_imports),
         "dependency_set_complete_independently_verified": False,
         "git_first_add_before_deadline_independently_verified": False,
         "prediction_eligibility_granted": False,
