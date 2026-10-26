@@ -13,7 +13,9 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: official-prerace-evidence
+  # Push runs only test fixtures; they must not replace pending live captures.
+  # Schedule and dispatch retain the shared serialized publication lane.
+  group: ${{ github.event_name == 'push' && format('official-prerace-check-{0}', github.ref) || 'official-prerace-evidence' }}
   cancel-in-progress: false
 jobs:
   capture:
