@@ -125,6 +125,10 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v230_fast_lane.py' -v
+      - name: Preserve V235 first-Git-before-postcommit ordering (read-only)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_v235_postcommit_step_order.py' -v
       - name: Prove V235 08:20 window and source-bound Git first-add SHA (no result access)
         env:
           PYTHONDONTWRITEBYTECODE: '1'
