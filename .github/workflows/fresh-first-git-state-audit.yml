@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/fresh_first_git_state_audit.py'
       - 'scripts/fresh_race_csv_state_compare.py'
+      - 'scripts/fresh_upcoming_state_targets.py'
       - 'tests/test_fresh_first_git_state_audit.py'
       - 'tests/test_fresh_race_csv_state_compare.py'
       - '.github/workflows/fresh-first-git-state-audit.yml'
@@ -28,6 +29,8 @@ jobs:
         run: python3 scripts/fresh_first_git_state_audit.py
       - name: Compare observed CSV row keys with saved race source audits
         run: python3 scripts/fresh_race_csv_state_compare.py
+      - name: Inspect prospective near-deadline state audit freshness
+        run: python3 scripts/fresh_upcoming_state_targets.py
       - name: Preserve non-formal provenance audit
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,5 +39,6 @@ jobs:
           path: |
             fresh_first_git_state_audit.json
             fresh_race_csv_state_comparison.json
+            fresh_upcoming_state_targets.json
           if-no-files-found: warn
           retention-days: 30
