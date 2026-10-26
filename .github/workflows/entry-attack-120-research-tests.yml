@@ -9,6 +9,7 @@ on:
       - 'scripts/boat_edge_paired120_significance.py'
       - 'scripts/boat_edge_research_git_receipt.py'
       - 'scripts/boat_edge_site_evidence_triage.py'
+      - 'scripts/boat_edge_v232_missing_static_diagnosis.py'
       - 'scripts/boat_edge_v232_v234_readonly_triage.py'
       - 'scripts/boat_edge_v232_git_gap_readonly.py'
       - 'tests/test_boat_edge_entry_attack_mixture_research.py'
@@ -16,6 +17,7 @@ on:
       - 'tests/test_boat_edge_paired120_significance.py'
       - 'tests/test_boat_edge_research_git_receipt.py'
       - 'tests/test_boat_edge_site_evidence_triage.py'
+      - 'tests/test_boat_edge_v232_missing_static_diagnosis.py'
       - 'tests/test_boat_edge_v232_v234_readonly_triage.py'
       - 'tests/test_boat_edge_v232_git_gap_readonly.py'
       - '.github/workflows/entry-attack-120-research-tests.yml'
@@ -39,6 +41,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_boat_edge_paired120_significance.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_research_git_receipt.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_site_evidence_triage.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v232_missing_static_diagnosis.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v232_v234_readonly_triage.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v232_git_gap_readonly.py' -v
       - name: Read-only SITE evidence coverage counts (no result scoring)
@@ -60,3 +63,5 @@ jobs:
           PY
       - name: Break down V232 Git first-add failures (read only)
         run: PYTHONPATH=scripts python scripts/boat_edge_v232_git_gap_readonly.py
+      - name: Classify missing V232 static evidence without retrospective enrollment
+        run: PYTHONPATH=scripts python scripts/boat_edge_v232_missing_static_diagnosis.py
