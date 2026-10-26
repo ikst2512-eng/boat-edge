@@ -801,12 +801,17 @@ jobs:
                           no_regression=all(
                               not complete_row(role,prior_by[code]) or complete_row(role,next_by[code])
                               for code in prior_codes if code in next_by)
+                          # An individual partial row may become complete while
+                          # another pending row remains partial. Adopt genuine
+                          # per-race improvement without waiting for all races.
+                          newly_complete=sum(
+                              complete_row(role,next_by[code]) and
+                              not complete_row(role,prior_by[code])
+                              for code in prior_codes if code in next_by)
                           if (not rows or
                               (prior_codes <= next_codes and len(new_rows)>=len(rows)
                                and no_regression
-                               and (len(new_rows)>len(rows)
-                                    or (preview_source_is_incomplete(role,rows)
-                                        and not preview_source_is_incomplete(role,new_rows))))):
+                               and (len(new_rows)>len(rows) or newly_complete>0))):
                               rows,digest,err=new_rows,new_digest,new_err
                       if not err and not source_is_sparse(role,rows) and not missing_pending_codes(rows) and not preview_source_is_incomplete(role,rows):
                           break
