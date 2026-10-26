@@ -20,6 +20,14 @@ class ScheduleSafety(unittest.TestCase):
         self.assertIn('Path("artifacts/page_classification.json").write_text(', self.wf)
         self.assertIn('"formal_eligible": False', self.wf)
         self.assertIn('"unlock": "LOCKED"', self.wf)
+    def test_run_provenance_recorded_before_artifact_upload(self):
+        self.assertIn('Record research capture provenance', self.wf)
+        self.assertIn('artifacts/run_provenance.json', self.wf)
+        self.assertIn('HEAD_SHA: ${{ github.sha }}', self.wf)
+        self.assertIn('RUN_ID: ${{ github.run_id }}', self.wf)
+        self.assertIn('"formal_eligible": False', self.wf)
+        self.assertLess(self.wf.index('Record research capture provenance'),
+                        self.wf.index('Retain capture evidence'))
     def test_manual_12r_retained(self):
         self.assertIn('workflow_dispatch:',self.wf)
         self.assertIn('all_races:',self.wf)
