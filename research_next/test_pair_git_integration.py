@@ -83,6 +83,34 @@ class LocalGitIntegration(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "MODEL_OR_INPUT_GIT_AFTER_PREDICTION"):
                 audit.verify(root, manifest)
             manifest["candidate"]["model"] = old_model
+            # The original first-add commit remains valid, but an intervening
+            # modification must invalidate a later frozen prediction.
+            modified = root / "freeze/candidate/model.py"
+            modified.write_bytes(b"changed-before-future-prediction")
+            self.run_git(root, "add", "freeze/candidate/model.py")
+            with patch.dict("os.environ", {
+                "GIT_AUTHOR_DATE": "2026-10-25T13:56:00+09:00",
+                "GIT_COMMITTER_DATE": "2026-10-25T13:56:00+09:00",
+            }):
+                self.run_git(root, "commit", "-qm", "modified model")
+            future_prediction = root / "freeze/candidate/prediction_later.json"
+            future_prediction.write_bytes(b"later prediction")
+            self.run_git(root, "add", "freeze/candidate/prediction_later.json")
+            with patch.dict("os.environ", {
+                "GIT_AUTHOR_DATE": "2026-10-25T13:57:00+09:00",
+                "GIT_COMMITTER_DATE": "2026-10-25T13:57:00+09:00",
+            }):
+                self.run_git(root, "commit", "-qm", "later prediction")
+            future_commit = self.run_git(root, "rev-parse", "HEAD")
+            old_prediction = manifest["candidate"]["prediction"]
+            manifest["candidate"]["prediction"] = {
+                "path": "freeze/candidate/prediction_later.json",
+                "sha256": hashlib.sha256(b"later prediction").hexdigest(),
+                "first_commit": future_commit,
+            }
+            with self.assertRaisesRegex(ValueError, "MODEL_OR_INPUT_CHANGED_BEFORE_PREDICTION"):
+                audit.verify(root, manifest)
+            manifest["candidate"]["prediction"] = old_prediction
             manifest["candidate"]["model"]["sha256"] = "0" * 64
             with self.assertRaisesRegex(ValueError, "GIT_TREE_BYTES_SHA_MISMATCH"):
                 audit.verify(root, manifest)
