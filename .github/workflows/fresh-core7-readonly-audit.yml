@@ -28,8 +28,13 @@ jobs:
           set -o pipefail
           DATE="$(TZ=Asia/Tokyo date +%F)"
           echo "### SITE CORE7 persisted-state consistency ($DATE)" >> "$GITHUB_STEP_SUMMARY"
+          set +e
           python3 scripts/audit_core7_saved_state.py --date "$DATE" | tee /tmp/core7-audit.json
+          audit_status=${PIPESTATUS[0]}
+          set -e
           cat /tmp/core7-audit.json >> "$GITHUB_STEP_SUMMARY"
+          echo "Audit exit status: $audit_status" >> "$GITHUB_STEP_SUMMARY"
+          exit "$audit_status"
       - name: Safety notice
         if: always()
         run: |
