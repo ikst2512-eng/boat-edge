@@ -64,6 +64,27 @@ jobs:
         run: |
           if [[ -f artifacts/report.json ]]; then
             python scripts/deadline_v9/classify_pages.py --root artifacts --report artifacts/report.json --output artifacts/page_classification.json
+          else
+            mkdir -p artifacts
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          result = {
+              "schema": "V13_RESEARCH_ONLY",
+              "capture_integrity": "LOCKED",
+              "classifications": [],
+              "counts": {},
+              "reason": "NO_CAPTURE_REPORT",
+              "formal_eligible": False,
+              "results_seen": False,
+              "scoring": "NOT_RUN",
+              "unlock": "LOCKED",
+          }
+          Path("artifacts/page_classification.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf8"
+          )
+          PY
+            exit 2
           fi
       - name: Retain capture evidence
         if: always()
