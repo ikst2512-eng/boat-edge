@@ -51,7 +51,9 @@ def check(root, manifest):
                 report["errors"].append("SHA_MISMATCH")
     baseline, candidate = manifest.get("baseline"), manifest.get("candidate")
     if isinstance(baseline, dict) and isinstance(candidate, dict):
-        if baseline.get("input", {}).get("sha256") != candidate.get("input", {}).get("sha256"):
+        b_input = baseline.get("input")
+        c_input = candidate.get("input")
+        if isinstance(b_input, dict) and isinstance(c_input, dict) and b_input.get("sha256") != c_input.get("sha256"):
             report["errors"].append("INPUT_NOT_IDENTICAL")
     if not report["errors"]:
         report["local_byte_integrity"] = "PASS"
