@@ -71,7 +71,15 @@ def audit_directory(root):
     source_counts = {name: sum(name in row["missing_source_fields"] for row in rows)
                      for name in ("race_source_sha256", "capture_timestamp",
                                   "first_git_commit", "deadline", "post_result_label_exists")}
-    return {"rows": rows, "checked": len(rows),
+    by_date = {}
+    for row in rows:
+        day = row["race_key"][:8]
+        bucket = by_date.setdefault(day, {"v229_evidence": 0, "v234_scored_present": 0,
+                                          "v234_scored_absent": 0})
+        bucket["v229_evidence"] += 1
+        bucket["v234_scored_present" if row["scored_record_present"]
+               else "v234_scored_absent"] += 1
+    return {"rows": rows, "checked": len(rows), "by_race_date": by_date,
             "scored_record_absent_in_v234": missing_scored_records,
             "scored_record_present_in_v234": len(rows) - missing_scored_records,
             "missing_scored_does_not_prove_git_absent": True,
