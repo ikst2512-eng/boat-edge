@@ -47,6 +47,7 @@ def verify(root, manifest):
         if not isinstance(item, dict):
             raise ValueError("MISSING_SIDE_" + side)
         committed_by_field = {}
+        saved = timestamp(item["prediction_saved_at_jst"])
         for field in ("input", "prediction", "model"):
             artifact = item.get(field)
             if not isinstance(artifact, dict):
@@ -76,11 +77,12 @@ def verify(root, manifest):
             committed_by_field[field] = committed
             if field == "prediction":
                 # A self-declared freeze time cannot substitute for the Git check.
-                saved = timestamp(item["prediction_saved_at_jst"])
                 if saved >= deadline or saved > committed:
                     raise ValueError("INVALID_PREDICTION_FREEZE_TIME")
             if field == "input":
                 inputs.append(digest)
+        if committed_by_field["input"] > saved or committed_by_field["model"] > saved:
+            raise ValueError("MODEL_OR_INPUT_GIT_AFTER_PREDICTION")
         if committed_by_field["input"] > committed_by_field["prediction"] or committed_by_field["model"] > committed_by_field["prediction"]:
             raise ValueError("MODEL_OR_INPUT_GIT_AFTER_PREDICTION")
         # Earlier timestamps are insufficient: the exact input/model revisions
