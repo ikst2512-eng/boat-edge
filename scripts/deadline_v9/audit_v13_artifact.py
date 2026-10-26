@@ -15,7 +15,10 @@ def audit(path, expected_run_id=None, expected_sha=None):
     if expected_sha is None:
         issues.append("MISSING_EXPECTED_GIT_SHA")
     with zipfile.ZipFile(path) as archive:
-        names = set(archive.namelist())
+        entries = archive.namelist()
+        names = set(entries)
+        if len(entries) != len(names):
+            issues.append("DUPLICATE_ZIP_MEMBER")
 
         def read_json(name):
             if name not in names:
@@ -42,6 +45,9 @@ def audit(path, expected_run_id=None, expected_sha=None):
         for record in captures:
             try:
                 key = (record["venue_code"], record["race_number_requested"])
+                if (not isinstance(key[0], str) or not isinstance(key[1], int)
+                        or isinstance(key[1], bool)):
+                    raise ValueError("invalid capture key")
                 expected_keys.append(key)
                 name = "snapshots/{}/{}/{}.html".format(
                     report["date_jst"], record["venue_code"], record["sha256"])
