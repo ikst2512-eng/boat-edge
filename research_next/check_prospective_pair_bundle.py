@@ -21,6 +21,7 @@ def check(root, manifest):
         if not isinstance(item, dict):
             report["errors"].append("MISSING_" + side.upper())
             continue
+        role_paths = []
         for kind in ("input", "model", "prediction"):
             src = item.get(kind)
             if not isinstance(src, dict):
@@ -31,6 +32,7 @@ def check(root, manifest):
                     or len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest)):
                 report["errors"].append("INVALID_REFERENCE")
                 continue
+            role_paths.append(name)
             p = Path(name)
             if (p.is_absolute() or ".." in p.parts or
                     any(word in name.lower() for word in
@@ -49,6 +51,8 @@ def check(root, manifest):
                 continue
             if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
                 report["errors"].append("SHA_MISMATCH")
+        if len(role_paths) == 3 and len(set(role_paths)) != 3:
+            report["errors"].append("ALIASED_INPUT_MODEL_PREDICTION")
     baseline, candidate = manifest.get("baseline"), manifest.get("candidate")
     if isinstance(baseline, dict) and isinstance(candidate, dict):
         b_input = baseline.get("input")
