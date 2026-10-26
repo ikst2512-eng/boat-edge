@@ -777,11 +777,36 @@ jobs:
                       if new_rows and not new_err:
                           prior_codes={str(r.get("レースコード","")).strip() for r in rows}
                           next_codes={str(r.get("レースコード","")).strip() for r in new_rows}
+                          # Incremental publication must be adoptable even
+                          # while other imminent races are still unpublished.
+                          # Keep all previously observed race IDs, and never
+                          # regress a complete six-boat observation to partial.
+                          prior_by={str(r.get("レースコード","")).strip():r for r in rows}
+                          next_by={str(r.get("レースコード","")).strip():r for r in new_rows}
+                          def complete_row(role,row):
+                              if role=="original_exhibition":
+                                  labels=[str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")]
+                                  n=sum(bool(x) for x in labels)
+                                  if not n:return False
+                                  return all(str(row.get(f"艇{b}_値{i}") or "").strip()
+                                             for b in range(1,7) for i in range(1,n+1))
+                              if role=="stt":
+                                  return all(str(row.get(f"艇{b}_スタート展示") or "").strip()
+                                             and str(row.get(f"艇{b}_コース") or "").strip()
+                                             for b in range(1,7))
+                              if role=="tkz":
+                                  return all(str(row.get(f"艇{b}_展示タイム") or "").strip()
+                                             for b in range(1,7))
+                              return True
+                          no_regression=all(
+                              not complete_row(role,prior_by[code]) or complete_row(role,next_by[code])
+                              for code in prior_codes if code in next_by)
                           if (not rows or
                               (prior_codes <= next_codes and len(new_rows)>=len(rows)
-                               and not preview_source_is_incomplete(role,new_rows)
-                               and (preview_source_is_incomplete(role,rows)
-                                    or len(new_rows)>len(rows)))):
+                               and no_regression
+                               and (len(new_rows)>len(rows)
+                                    or (preview_source_is_incomplete(role,rows)
+                                        and not preview_source_is_incomplete(role,new_rows))))):
                               rows,digest,err=new_rows,new_digest,new_err
                       if not err and not source_is_sparse(role,rows) and not missing_pending_codes(rows) and not preview_source_is_incomplete(role,rows):
                           break
