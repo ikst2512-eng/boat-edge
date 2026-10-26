@@ -24,6 +24,11 @@ def race(key, deadline, locked=True):
 
 
 class BatchTests(unittest.TestCase):
+    def test_workflow_only_captures_and_publishes_from_main(self):
+        workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
+        self.assertEqual(workflow.count("if: github.event_name != 'push' && github.ref == 'refs/heads/main'"), 3)
+        self.assertIn("if: always() && github.event_name != 'push' && github.ref == 'refs/heads/main'", workflow)
+
     def test_only_imminent_locked_races_are_captured(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp) / "races"
