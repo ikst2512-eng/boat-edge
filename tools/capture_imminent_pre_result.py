@@ -69,7 +69,7 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
                         audit = capture(race, output, attempt=attempt)
                     report["captured"].append({"key": key, "attempt": attempt, "sha256": audit["sha256"]})
                 except (OSError, ValueError, TimeoutError) as exc:
-                    report["failed"].append({"key": key, "attempt": attempt, "reason": type(exc).__name__})
+                    report["failed"].append({"key": key, "attempt": attempt, "reason": type(exc).__name__, "capture_error_code": str(exc) if isinstance(exc, ValueError) and str(exc) in {"redirect_not_allowed", "unexpected_response", "invalid_body_size", "not_html_document", "unexpected_content_type", "deadline_passed_during_fetch", "not_before_deadline", "invalid_race_key", "race_identity_mismatch", "not_locked_pre_result", "capture_already_exists"} else "unclassified"})
                     break
             if not raw_path.is_file() or not audit_path.is_file():
                 break

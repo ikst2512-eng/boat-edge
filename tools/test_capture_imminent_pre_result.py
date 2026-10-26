@@ -177,6 +177,23 @@ class BatchTests(unittest.TestCase):
             self.assertTrue(any(x["reason"]=="verification_failed" for x in result["failed"]))
             self.assertFalse((rawdir/"20261025-04-01.attempt2.beforeinfo.html").exists())
 
+    def test_capture_failure_uses_allowlisted_code_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            races=root/"races"
+            races.mkdir()
+            item=race("20261025-04-01","10:52")
+            (races/(item["race_key"]+".json")).write_text(json.dumps(item))
+            def known(item, output):
+                raise ValueError("redirect_not_allowed")
+            report=batch(races,root/"raw",now=NOW,capture=known)
+            self.assertEqual(report["failed"][0]["capture_error_code"],"redirect_not_allowed")
+            def unknown(item, output):
+                raise ValueError("secret response body")
+            report=batch(races,root/"raw",now=NOW,capture=unknown)
+            self.assertEqual(report["failed"][0]["capture_error_code"],"unclassified")
+            self.assertNotIn("secret",json.dumps(report))
+
     def test_no_data_no_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = batch(tmp, Path(tmp) / "captures", now=NOW)
