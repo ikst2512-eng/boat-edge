@@ -60,6 +60,13 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn('"official_ready_csv_missing"',text)
   self.assertIn('"does_not_grant_core7_or_formal_readiness":True',text)
   self.assertIn('official.get("status")=="ok"',text)
+ def test_core7_failures_are_diagnosed_without_unlock(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn('"core7_failure_diagnostic"',text)
+  self.assertIn('record_core7_failure("missing_"+role,race_key)',text)
+  self.assertIn('record_core7_failure("invalid_core7_boat_fields",race_key)',text)
+  self.assertIn('record_core7_failure("invalid_six_course_permutation",race_key)',text)
+  self.assertIn('"counts_are_nonexclusive":True',text)
  def test_deadline_and_formal_guards_remain(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("source_write_allowed(DATA,race_key,clock,datetime.now(JST))",text)
