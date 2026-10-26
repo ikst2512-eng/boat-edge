@@ -80,6 +80,14 @@ def compare(key, opener=urlopen, now=None):
         item["same_bytes_as_saved_audit"] = (item["csv_sha256"] == old.get("sha256") if role != "race_cards" and item["csv_sha256"] and old.get("sha256") else None)
         item["postdeadline_observation_not_formal_proof"] = not (now < deadline) if deadline else True
         item["saved_observed_at"] = old.get("observed_at") or old.get("fetched_at")
+        item["live_row_present_saved_state_missing_predeadline"] = bool(
+            role != "race_cards" and item["matching_rows"] == 1
+            and item["observed_before_deadline_at_fetch"] is True
+            and old.get("status") != "ok"
+            and state.get("meta", {}).get("phase") == "PRE_RESULT"
+            and state.get("meta", {}).get("results_seen") is False
+        )
+        item["diagnostic_only_no_backfill"] = True
         result["sources"][role] = item
     return result
 
