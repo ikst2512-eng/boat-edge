@@ -83,6 +83,15 @@ def verify(root, manifest):
                 inputs.append(digest)
         if committed_by_field["input"] > committed_by_field["prediction"] or committed_by_field["model"] > committed_by_field["prediction"]:
             raise ValueError("MODEL_OR_INPUT_GIT_AFTER_PREDICTION")
+        # Earlier timestamps are insufficient: the exact input/model revisions
+        # must be reachable from the frozen prediction's Git commit.
+        pred_commit = item["prediction"]["first_commit"]
+        for predecessor in ("input", "model"):
+            prior_commit = item[predecessor]["first_commit"]
+            try:
+                git(root, "merge-base", "--is-ancestor", prior_commit, pred_commit)
+            except ValueError:
+                raise ValueError("MODEL_OR_INPUT_NOT_ANCESTOR_OF_PREDICTION") from None
     if inputs[0] != inputs[1]:
         raise ValueError("DIFFERENT_INPUT_BYTES")
     return {
