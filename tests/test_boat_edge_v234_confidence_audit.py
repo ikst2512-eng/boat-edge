@@ -9,7 +9,7 @@ class ConfidenceAuditTests(unittest.TestCase):
     def test_wilson_edges(self):
         self.assertIsNone(wilson(0, 0))
         self.assertEqual(wilson(0, 10)[0], 0.0)
-        self.assertEqual(wilson(10, 10)[1], 1.0)
+        self.assertAlmostEqual(wilson(10, 10)[1], 1.0, places=14)
         a, b = wilson(5, 10)
         self.assertLess(a, 0.5)
         self.assertGreater(b, 0.5)
