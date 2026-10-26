@@ -2,6 +2,7 @@
 import importlib.util
 import pathlib
 import unittest
+from unittest.mock import patch
 
 MODULE = pathlib.Path(__file__).with_name("audit_pair_git_provenance.py")
 spec = importlib.util.spec_from_file_location("audit_pair_git_provenance", MODULE)
@@ -25,6 +26,15 @@ class PairProvenanceTests(unittest.TestCase):
     def test_no_implicit_utc_self_report(self):
         with self.assertRaisesRegex(ValueError, "JST_TIMESTAMP_REQUIRED"):
             mod.timestamp("2026-10-25T14:06:00+00:00")
+
+    def test_forbidden_result_path_rejected_before_git_read(self):
+        item = {"input": {"path": "data/site_results/secret.json", "sha256": "a"*64, "first_commit": "b"*40},
+                "prediction": {}, "model": {}, "prediction_saved_at_jst": "2026-10-25T13:30:00+09:00"}
+        data = {"scope": "RESEARCH_ONLY_PRE_OUTCOME_PAIR", "race_key": "20261025-06-08",
+                "deadline_jst": "2026-10-25T14:06:00+09:00", "baseline": item, "candidate": item}
+        with patch.object(mod, "git", side_effect=AssertionError("FORBIDDEN_GIT_READ")):
+            with self.assertRaisesRegex(ValueError, "FORBIDDEN_RESULT_OR_FORMAL_PATH"):
+                mod.verify(pathlib.Path("."), data)
 
     def test_race_key_must_match_day(self):
         with self.assertRaisesRegex(ValueError, "DEADLINE_RACE_MISMATCH"):
