@@ -10,6 +10,10 @@ import zipfile
 
 def audit(path, expected_run_id=None, expected_sha=None):
     issues = []
+    if expected_run_id is None:
+        issues.append("MISSING_EXPECTED_RUN_ID")
+    if expected_sha is None:
+        issues.append("MISSING_EXPECTED_GIT_SHA")
     with zipfile.ZipFile(path) as archive:
         names = set(archive.namelist())
 
@@ -111,8 +115,8 @@ def audit(path, expected_run_id=None, expected_sha=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("artifact_zip")
-    parser.add_argument("--run-id")
-    parser.add_argument("--git-sha")
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--git-sha", required=True)
     args = parser.parse_args()
     result = audit(args.artifact_zip, args.run_id, args.git_sha)
     print(json.dumps(result, ensure_ascii=False, indent=2))
