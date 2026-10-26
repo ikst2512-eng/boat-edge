@@ -73,3 +73,11 @@ Research-only model comparison remains HOLD, with independently eligible common-
 ## Latest research CI confirmation (2026-10-26)
 
 GitHub Actions run [40322199398](https://github.com/ikst2512-eng/boat-edge/actions/runs/40322199398), head `f6b4d1035b0f68048c941f20f367a6696ad672bf`, completed with `success`. The `unit-tests` job and its `python -m unittest discover -s research_next -p 'test_*.py' -v` step both concluded `success`; this head adds `research_next/test_verify_v332_candidate_digest.py` with five synthetic canonical-SHA checks. The job verifies source-level tests only; it does **not** establish a collected V332 predeadline race, an independently attested publication timestamp, or a shared exact input snapshot between real models. V332 live freeze is still blocked for real comparison without prospective permitted collection and independent evidence.
+
+## Latest path audit — 2026-10-26 (research-only, no outcomes read)
+
+Main branch contents API returned 404 for both `data/research_local_v332/` and `data/source_captures/20261026/`. This is an exact path observation, **not** a global claim about local untracked research files or Actions artifacts. The latest listed research-branch GitHub Actions success remains [40322199398](https://github.com/ikst2512-eng/boat-edge/actions/runs/40322199398), head `f6b4d1035b0f68048c941f20f367a6696ad672bf`, for synthetic `test_*.py`. None of these checks establish a first-published predeadline V332 prediction.
+
+Operational blocker classification: `RESEARCH_V332_NO_VERIFIABLE_PREDEADLINE_REPOSITORY_ARTIFACT`. Do not infer no actual capture from main absence alone. Before any future paired validation, locate an **authorized** original same-race capture and its independent server-time receipt, ensure it precedes the exact deadline, hash original input/model/prediction bytes and establish model-version linkage. Preserve all protection gates; V336's manual dry-run must not be changed to unattended provider scraping, and past results must not be backfilled.
+
+Status stays HOLD; common comparison denominator unknown; scoring prohibited.
