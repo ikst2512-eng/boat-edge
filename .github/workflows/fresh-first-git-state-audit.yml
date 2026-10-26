@@ -34,6 +34,25 @@ jobs:
         run: python3 scripts/fresh_race_csv_state_compare.py
       - name: Inspect prospective near-deadline state audit freshness
         run: python3 scripts/fresh_upcoming_state_targets.py
+      - name: Inspect live CSV target rows for up to 3 upcoming races (read only)
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+          targets = json.loads(Path("fresh_upcoming_state_targets.json").read_text(encoding="utf-8")).get("targets", [])
+          keys = [x["race_key"] for x in targets[:3]]
+          if keys:
+              subprocess.run(["python3", "scripts/fresh_race_csv_state_compare.py", *keys,
+                              "--output", "fresh_upcoming_csv_state_comparison.json"], check=True)
+          else:
+              Path("fresh_upcoming_csv_state_comparison.json").write_text(json.dumps({
+                  "schema": "BOAT_EDGE_UPCOMING_CSV_COMPARISON_EMPTY_V1",
+                  "reason": "NO_UPCOMING_PRE_RESULT_TARGETS",
+                  "results_accessed": False, "formal_unlock_authorized": False,
+                  "races": []
+              }) + "\\n", encoding="utf-8")
+          PY
       - name: Preserve non-formal provenance audit
         if: always()
         uses: actions/upload-artifact@v4
@@ -43,5 +62,6 @@ jobs:
             fresh_first_git_state_audit.json
             fresh_race_csv_state_comparison.json
             fresh_upcoming_state_targets.json
+            fresh_upcoming_csv_state_comparison.json
           if-no-files-found: warn
           retention-days: 30
