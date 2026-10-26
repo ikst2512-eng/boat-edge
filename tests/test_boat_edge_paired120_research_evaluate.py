@@ -12,7 +12,7 @@ from boat_edge_paired120_research_evaluate import evaluate
 def record():
     triples = ["-".join(map(str,t)) for t in itertools.permutations(range(1,7),3)]
     return {"race_key":"20261026-01-01","input_sha256":"a"*64,
-            "model_sha256":"b"*64,"first_git_sha":"c"*40,
+            "model_sha256":"b"*64,"first_git_sha":"c"*40,\n            "actual_entry_verified":True,"model_unseen_attested":True,\n            "git_receipt_independently_verified":True,
             "first_git_at":"2026-10-26T09:00:00+09:00",
             "deadline_at":"2026-10-26T10:00:00+09:00",
             "actual_trifecta":triples[0],
@@ -39,6 +39,17 @@ class Paired120(unittest.TestCase):
         b=copy.deepcopy(a);b["input_sha256"]="e"*64
         with self.assertRaisesRegex(ValueError,"COMMON_INPUT"):
             evaluate({"baseline":[a],"candidate":[b]})
+
+    def test_missing_independent_evidence_rejected(self):
+        for field, code in (
+            ("actual_entry_verified", "ACTUAL_ENTRY_PROOF_REQUIRED"),
+            ("model_unseen_attested", "UNSEEN_MODEL_ATTESTATION_REQUIRED"),
+            ("git_receipt_independently_verified", "INDEPENDENT_GIT_RECEIPT_REQUIRED"),
+        ):
+            a = record()
+            a[field] = False
+            with self.assertRaisesRegex(ValueError, code):
+                evaluate({"baseline": [a], "candidate": [record()]})
 
     def test_invalid_rank_and_probabilities(self):
         a=record()
