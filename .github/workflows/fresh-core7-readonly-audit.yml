@@ -1,0 +1,41 @@
+name: Fresh SITE CORE7 saved-state audit (read only)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */2 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fresh-core7-readonly-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify synthetic audit contracts
+        run: python3 -m unittest discover -s tests -p 'test_audit_core7_saved_state.py' -v
+      - name: Compare saved SITE CORE7 status to per-race JSON
+        shell: bash
+        run: |
+          set -o pipefail
+          DATE="$(TZ=Asia/Tokyo date +%F)"
+          echo "### SITE CORE7 persisted-state consistency ($DATE)" >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          python3 scripts/audit_core7_saved_state.py --date "$DATE" | tee /tmp/core7-audit.json
+          audit_status=${PIPESTATUS[0]}
+          set -e
+          cat /tmp/core7-audit.json >> "$GITHUB_STEP_SUMMARY"
+          echo "Audit exit status: $audit_status" >> "$GITHUB_STEP_SUMMARY"
+          exit "$audit_status"
+      - name: Safety notice
+        if: always()
+        run: |
+          echo 'Read-only SITE consistency only. NEVER formal Fresh eligibility, historical backfill, result retrieval, scoring or unlock.' >> "$GITHUB_STEP_SUMMARY"
