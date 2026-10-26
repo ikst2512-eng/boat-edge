@@ -10,9 +10,9 @@ class ProspectiveIdentityTests(unittest.TestCase):
     def test_transitive_import_requires_declared_dependency(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            (root / "model.py").write_text("import dep\n")
-            (root / "dep.py").write_text("import nested\n")
-            (root / "nested.py").write_text("NESTED=1\n")
+            (root / "model.py").write_text("import dep" + chr(10))
+            (root / "dep.py").write_text("import nested" + chr(10))
+            (root / "nested.py").write_text("NESTED=1" + chr(10))
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             subprocess.run(["git", "add", "model.py", "dep.py", "nested.py"], cwd=root, check=True)
             subprocess.run(["git", "-c", "user.name=test", "-c",
