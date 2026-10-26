@@ -1,0 +1,35 @@
+import datetime as dt
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from scripts.boat_edge_prospective_model_identity import create, save_once
+
+
+class ProspectiveIdentityTests(unittest.TestCase):
+    def test_future_only_clean_git_and_write_once(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "model.py").write_text("MODEL=1\n")
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "add", "model.py"], cwd=root, check=True)
+            subprocess.run(["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                            "commit", "-qm", "initial"], cwd=root, check=True)
+            now = dt.datetime(2026, 10, 26, tzinfo=dt.timezone.utc)
+            due = "2026-10-27T10:00:00+09:00"
+            record = create(root, "20261027-21-02", "model.py", due, now=now)
+            self.assertFalse(record["prediction_eligibility_granted"])
+            self.assertEqual(len(record["model_source_sha256"]), 64)
+            save_once(root, record)
+            with self.assertRaises(FileExistsError):
+                save_once(root, record)
+            (root / "model.py").write_text("MODEL=2\n")
+            with self.assertRaisesRegex(ValueError, "MODEL_DIFFERS_FROM_HEAD"):
+                create(root, "20261027-21-03", "model.py", due, now=now)
+            with self.assertRaisesRegex(ValueError, "LIVE_PREDEADLINE_ONLY"):
+                create(root, "20261027-21-03", "model.py", due,
+                       now=dt.datetime(2026, 10, 27, 1, 0, tzinfo=dt.timezone.utc))
+
+
+if __name__ == "__main__":
+    unittest.main()
