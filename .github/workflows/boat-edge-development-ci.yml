@@ -120,6 +120,11 @@ jobs:
           PYTHONPATH: scripts
           PYTHONDONTWRITEBYTECODE: '1'
         run: python3 -m unittest discover -s tests -p 'test_boat_edge_v228_freeze_only.py' -v
+      - name: Verify read-only C1 dropoff race-key classification
+        env:
+          PYTHONPATH: .
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -m unittest discover -s tests -p 'test_boat_edge_c1_dropoff_triage.py' -v
       - name: Verify V235 other-race postcommit source and Git-index stage before main
         env:
           PYTHONPATH: scripts
