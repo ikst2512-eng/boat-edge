@@ -19,6 +19,7 @@ class ProspectiveIdentityTests(unittest.TestCase):
             due = "2026-10-27T10:00:00+09:00"
             record = create(root, "20261027-21-02", "model.py", due, now=now)
             self.assertFalse(record["prediction_eligibility_granted"])
+            self.assertEqual(record["model_source_scope"], "SINGLE_FILE_ONLY_DEPENDENCIES_NOT_ATTESTED")
             self.assertEqual(len(record["model_source_sha256"]), 64)
             save_once(root, record)
             with self.assertRaises(FileExistsError):
