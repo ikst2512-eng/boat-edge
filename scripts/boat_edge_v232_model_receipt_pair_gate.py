@@ -28,7 +28,7 @@ def verify(root, key):
             raise ValueError("KEY_MISMATCH")
         if receipt.get("schema")!="BOAT_EDGE_PROSPECTIVE_MODEL_IDENTITY_V1":
             raise ValueError("RECEIPT_SCHEMA")
-        if receipt.get("prediction_eligibility_granted") is not False or receipt.get("formal_fresh_unlocked") is not False:
+        if (receipt.get("prediction_eligibility_granted") is not False or receipt.get("formal_fresh_unlocked") is not False or receipt.get("git_first_add_before_deadline_independently_verified") is not False):
             raise ValueError("RECEIPT_GUARD")
         due=_time(freeze["deadline_jst"])
         if _time(receipt["deadline_jst"])!=due:
@@ -56,7 +56,7 @@ def verify(root, key):
             if initial!=p.read_bytes(): raise ValueError("POST_FREEZE_BYTES_CHANGED")
             # Git's second-resolution timestamp is ambiguous if it predates a
             # microsecond-resolution record. Do not silently add tolerance.
-            if not recorded<=_time(when)<due and p==paths[1]:
+            if p==paths[1] and not recorded<=_time(when)<due:
                 raise ValueError("RECEIPT_GIT_TIME_INVALID")
             if p==paths[0] and not _time(freeze["snapshot_saved_at"])<=_time(when)<due:
                 raise ValueError("FREEZE_GIT_TIME_INVALID")
