@@ -18,14 +18,29 @@ class PairedBundleTests(unittest.TestCase):
             path = Path(d) / "snapshot.bin"
             path.write_bytes(b"synthetic pre-result only")
             sha = hashlib.sha256(path.read_bytes()).hexdigest()
-            refs = {name: {"path": "snapshot.bin", "sha256": sha}
-                    for name in ("input", "model", "prediction")}
+            refs = {}
+            for name in ("input", "model", "prediction"):
+                filename = name + ".bin"
+                (Path(d) / filename).write_bytes(b"synthetic pre-result only")
+                refs[name] = {"path": filename, "sha256": sha}
             manifest = {"scope": "RESEARCH_PRE_RESULT_ONLY",
                         "baseline": dict(refs), "candidate": dict(refs)}
             result = check(d, manifest)
             self.assertEqual(result["local_byte_integrity"], "PASS")
             self.assertFalse(result["ready_for_scoring"])
             self.assertIn("INDEPENDENT_PREDEADLINE_RECEIPT_MISSING", result["errors"])
+
+    def test_aliased_roles_are_not_proof(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "only.bin"
+            p.write_bytes(b"fake combined evidence")
+            ref = {"path": "only.bin", "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+            manifest = {"scope": "RESEARCH_PRE_RESULT_ONLY",
+                        "baseline": {"input": ref, "model": ref, "prediction": ref},
+                        "candidate": {"input": ref, "model": ref, "prediction": ref}}
+            result = check(d, manifest)
+            self.assertIn("ALIASED_INPUT_MODEL_PREDICTION", result["errors"])
+            self.assertFalse(result["ready_for_scoring"])
 
     def test_modified_bytes_rejected(self):
         with tempfile.TemporaryDirectory() as d:
