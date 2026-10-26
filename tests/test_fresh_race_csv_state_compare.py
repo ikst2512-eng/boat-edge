@@ -20,8 +20,8 @@ class Response:
 
 class Tests(unittest.TestCase):
     def test_join_and_false_formal_claim(self):
-        key = "20261026-21-02"
-        data = ("レースコード,値\n202610262101,x\n202610262102,y\n").encode()
+        key = "20991026-21-02"
+        data = ("レースコード,値\n209910262101,x\n209910262102,y\n").encode()
         state = {"race_key": key, "meta": {"deadline": "23:59", "phase": "PRE_RESULT", "results_seen": False}, "source_audit": {"stt": {"status": "missing", "sha256": "other"}}}
         with patch.object(mod.Path, "is_file", return_value=True), \
              patch.object(mod.Path, "read_text", return_value=json.dumps(state)):
