@@ -3,7 +3,9 @@ on:
   pull_request:
     paths:
       - 'scripts/fresh_first_git_state_audit.py'
+      - 'scripts/fresh_race_csv_state_compare.py'
       - 'tests/test_fresh_first_git_state_audit.py'
+      - 'tests/test_fresh_race_csv_state_compare.py'
       - '.github/workflows/fresh-first-git-state-audit.yml'
   workflow_dispatch:
 permissions:
@@ -18,15 +20,21 @@ jobs:
           fetch-depth: 0
       - name: Run first-addition auditor regressions
         run: python3 -m unittest discover -s tests -p 'test_fresh_first_git_state_audit.py' -v
+      - name: Test CSV per-race matching with synthetic inputs
+        run: python3 -m unittest discover -s tests -p 'test_fresh_race_csv_state_compare.py' -v
       - name: Verify full Git history is present
         run: test "$(git rev-parse --is-shallow-repository)" = false
       - name: Audit original race-state Git additions without results
         run: python3 scripts/fresh_first_git_state_audit.py
+      - name: Compare observed CSV row keys with saved race source audits
+        run: python3 scripts/fresh_race_csv_state_compare.py
       - name: Preserve non-formal provenance audit
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fresh-first-git-state-audit
-          path: fresh_first_git_state_audit.json
+          path: |
+            fresh_first_git_state_audit.json
+            fresh_race_csv_state_comparison.json
           if-no-files-found: warn
           retention-days: 30
