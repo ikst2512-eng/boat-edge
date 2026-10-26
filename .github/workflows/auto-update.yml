@@ -61,6 +61,7 @@ jobs:
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools -p 'test_core7_gap_diagnostic.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_csv_retry_policy_contract.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_fresh_csv_value_recovery.py' -v
 
       - name: PRE_RESULT耐障害取得
         shell: bash
@@ -738,6 +739,27 @@ jobs:
               present={str(r.get("レースコード","")).strip() for r in rows}
               return pending_codes-present
 
+          def original_complete(row):
+              if not isinstance(row,dict):
+                  return False
+              # The upstream source may publish fewer than three measurements.
+              # Require every advertised measurement for every boat, not
+              # imaginary columns that the source never promised.
+              labels=[str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")]
+              count=sum(bool(label) for label in labels)
+              if count==0 or labels[:count]!=[label for label in labels if label]:
+                  return False
+              for boat in range(1,7):
+                  for n in range(1,count+1):
+                      raw=str(row.get(f"艇{boat}_値{n}") or "").strip()
+                      try:
+                          value=float(raw)
+                      except (ValueError,TypeError):
+                          return False
+                      if not math.isfinite(value):
+                          return False
+              return True
+
           def preview_source_is_incomplete(role,rows):
               if not pending_codes or role=="race_cards":
                   return False
@@ -747,7 +769,7 @@ jobs:
                   if row is None:
                       continue  # separately counted by missing_pending_codes
                   if role=="original_exhibition":
-                      if not any(str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")) or any(not str(row.get(f"艇{b}_値1") or "").strip() for b in range(1,7)):
+                      if not original_complete(row):
                           return True
                   elif role=="stt":
                       if any(not str(row.get(f"艇{b}_スタート展示") or "").strip()
@@ -791,11 +813,7 @@ jobs:
                           next_by={str(r.get("レースコード","")).strip():r for r in new_rows}
                           def complete_row(role,row):
                               if role=="original_exhibition":
-                                  labels=[str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")]
-                                  n=sum(bool(x) for x in labels)
-                                  if not n:return False
-                                  return all(str(row.get(f"艇{b}_値{i}") or "").strip()
-                                             for b in range(1,7) for i in range(1,n+1))
+                                  return original_complete(row)
                               if role=="stt":
                                   return all(str(row.get(f"艇{b}_スタート展示") or "").strip()
                                              and str(row.get(f"艇{b}_コース") or "").strip()
@@ -833,27 +851,6 @@ jobs:
           def idx(role):
               return {str(r.get("レースコード","")).strip():r for r in fetched[role]["rows"] if r.get("レースコード")}
           I={role:idx(role) for role in SOURCES}
-
-          def original_complete(row):
-              if not isinstance(row,dict):
-                  return False
-              # The upstream source may publish fewer than three measurements.
-              # Require every advertised measurement for every boat, not
-              # imaginary columns that the source never promised.
-              labels=[str(row.get(k) or "").strip() for k in ("計測項目1","計測項目2","計測項目3")]
-              count=sum(bool(label) for label in labels)
-              if count==0 or labels[:count]!=[label for label in labels if label]:
-                  return False
-              for boat in range(1,7):
-                  for n in range(1,count+1):
-                      raw=str(row.get(f"艇{boat}_値{n}") or "").strip()
-                      try:
-                          value=float(raw)
-                      except (ValueError,TypeError):
-                          return False
-                      if not math.isfinite(value):
-                          return False
-              return True
 
           def num(v,typ=float):
               if v is None:return None
@@ -1063,7 +1060,7 @@ jobs:
                   # must not replace a usable official six-boat start table.
                   courses=[x["course"] for x in actual]
                   if (len(actual)==6 and all(type(c) is int for c in courses)
-                          and sorted(courses)==[1,2,3,4,5,6]):
+                          and len(courses)==6 and set(courses)==set(range(1,7))):
                       official_st=before.get("start_exhibition")
                       old_st={r["lane"]:r for r in
                           (official_st if isinstance(official_st,list) else [])
@@ -1128,7 +1125,7 @@ jobs:
               core7=(
                 all(source_presence.values())
                 and all(core7_boat(rc,stt,tkz,b) for b in range(1,7))
-                and sorted(courses)==[1,2,3,4,5,6]
+                and len(courses)==6 and set(courses)==set(range(1,7))
               )
               # Report precise, non-exclusive CORE7 blockers, without
               # treating official beforeinfo as proof of absent CSV fields.
@@ -1136,7 +1133,7 @@ jobs:
                   for role,present in source_presence.items():
                       if not present:record_core7_failure("missing_"+role,race_key)
                   if all(source_presence.values()):
-                      if sorted(courses)!=[1,2,3,4,5,6]:
+                      if len(courses)!=6 or set(courses)!=set(range(1,7)):
                           record_core7_failure("invalid_six_course_permutation",race_key)
                       failed_boats=[b for b in range(1,7)
                                     if not core7_boat(rc,stt,tkz,b)]
