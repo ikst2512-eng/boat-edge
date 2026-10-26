@@ -219,7 +219,7 @@ def audit(root, day, expected=None, now=None, deadlines=None):
     source_time_anomalies = []
     for row in valid_rows:
         deadline = row.get("deadline")
-        if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\\d|2[0-3]):[0-5]\\d", deadline):
+        if not isinstance(deadline, str) or not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", deadline):
             continue
         due = datetime.strptime(day + deadline, "%Y%m%d%H:%M").replace(tzinfo=JST)
         for field, fetched_at in row.get("source_fetched_at", {}).items():
