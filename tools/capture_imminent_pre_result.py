@@ -92,8 +92,10 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
                 if reason != "actual_entry_not_explicit_or_ambiguous":
                     report["failed"].append({"key": key, "attempt": attempt, "reason": "verification_failed"})
                     break
-                if not new_capture and attempt == 1:
-                    continue  # Revisit a previously archived placeholder once.
+                if attempt == 1:
+                    # One bounded second fetch in this same ephemeral Actions run.
+                    # Preserve attempt 1 evidence; a future run cannot assume artifacts persist.
+                    continue
                 break
     return report
 
