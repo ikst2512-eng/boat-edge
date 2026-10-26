@@ -10,7 +10,7 @@ class ProspectiveIdentityTests(unittest.TestCase):
     def test_future_only_clean_git_and_write_once(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            (root / "model.py").write_text("MODEL=1\n")
+            (root / "model.py").write_text("import dep\nMODEL=1\n")
             (root / "dep.py").write_text("DEP=1\n")
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             subprocess.run(["git", "add", "model.py", "dep.py"], cwd=root, check=True)
@@ -18,6 +18,8 @@ class ProspectiveIdentityTests(unittest.TestCase):
                             "commit", "-qm", "initial"], cwd=root, check=True)
             now = dt.datetime(2026, 10, 26, tzinfo=dt.timezone.utc)
             due = "2026-10-27T10:00:00+09:00"
+            with self.assertRaisesRegex(ValueError, "DIRECT_LOCAL_DEPENDENCIES_NOT_DECLARED"):
+                create(root, "20261027-21-02", "model.py", due, now=now)
             record = create(root, "20261027-21-02", "model.py", due, now=now, dependency_paths=["dep.py"])
             self.assertFalse(record["prediction_eligibility_granted"])
             self.assertEqual(record["model_source_scope"], "SINGLE_FILE_ONLY_DEPENDENCIES_NOT_ATTESTED")
@@ -31,7 +33,7 @@ class ProspectiveIdentityTests(unittest.TestCase):
             save_once(root, record)
             with self.assertRaises(FileExistsError):
                 save_once(root, record)
-            (root / "model.py").write_text("MODEL=2\n")
+            (root / "model.py").write_text("import dep\nMODEL=2\n")
             with self.assertRaisesRegex(ValueError, "MODEL_DIFFERS_FROM_HEAD"):
                 create(root, "20261027-21-03", "model.py", due, now=now)
             with self.assertRaisesRegex(ValueError, "LIVE_PREDEADLINE_ONLY"):
