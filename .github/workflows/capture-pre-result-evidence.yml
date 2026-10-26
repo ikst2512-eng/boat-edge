@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '*/10 0-14 * * *'
   workflow_dispatch:
+  # Backup wake only from the existing successful main source collector.
+  workflow_run:
+    workflows: ['BOAT EDGE 自動更新']
+    types: [completed]
 permissions:
   contents: write
 concurrency:
@@ -17,6 +21,11 @@ concurrency:
   cancel-in-progress: false
 jobs:
   capture:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:

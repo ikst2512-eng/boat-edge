@@ -24,6 +24,16 @@ def race(key, deadline, locked=True):
 
 
 class BatchTests(unittest.TestCase):
+    def test_workflow_collector_fallback_is_fail_closed(self):
+        workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
+        self.assertIn("workflow_run:", workflow)
+        self.assertIn("workflows: ['BOAT EDGE 自動更新']", workflow)
+        self.assertIn("types: [completed]", workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", workflow)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", workflow)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", workflow)
+        self.assertIn("group: official-prerace-evidence", workflow)
+
     def test_workflow_only_captures_and_publishes_from_main(self):
         workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
         self.assertEqual(workflow.count("if: github.event_name != 'push' && github.ref == 'refs/heads/main'"), 3)
