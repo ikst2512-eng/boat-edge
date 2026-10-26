@@ -55,6 +55,11 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn('"WAIT_PREVIEW_CSV_PUBLICATION" if previews_unpublished',text)
   self.assertIn('"WAIT_CORE7_100"',text)
   self.assertIn('preview_roles=("stt","tkz","sui","original_exhibition")',text)
+ def test_official_csv_split_is_diagnostic_only(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn('"official_ready_csv_missing"',text)
+  self.assertIn('"does_not_grant_core7_or_formal_readiness":True',text)
+  self.assertIn('official.get("status")=="ok"',text)
  def test_deadline_and_formal_guards_remain(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("source_write_allowed(DATA,race_key,clock,datetime.now(JST))",text)
