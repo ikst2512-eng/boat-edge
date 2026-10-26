@@ -60,7 +60,8 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
             if raw_path.exists() != audit_path.exists():
                 report["failed"].append({"key": key, "attempt": attempt, "reason": "partial_capture"})
                 break
-            if not raw_path.exists():
+            new_capture = not raw_path.exists()
+            if new_capture:
                 try:
                     if attempt == 1:
                         audit = capture(race, output)
@@ -90,6 +91,9 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
                 # Audit failures, malformed sources, and unsafe race state fail closed.
                 if reason != "actual_entry_not_explicit_or_ambiguous":
                     report["failed"].append({"key": key, "attempt": attempt, "reason": "verification_failed"})
+                    break
+                if not new_capture and attempt == 1:
+                    continue  # Revisit a previously archived placeholder once.
                 break
     return report
 
