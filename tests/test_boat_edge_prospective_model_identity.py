@@ -7,6 +7,27 @@ from scripts.boat_edge_prospective_model_identity import create, save_once
 
 
 class ProspectiveIdentityTests(unittest.TestCase):
+    def test_transitive_import_requires_declared_dependency(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "model.py").write_text("import dep\\n")
+            (root / "dep.py").write_text("import nested\\n")
+            (root / "nested.py").write_text("NESTED=1\\n")
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "add", "model.py", "dep.py", "nested.py"], cwd=root, check=True)
+            subprocess.run(["git", "-c", "user.name=test", "-c",
+                            "user.email=test@example.invalid", "commit", "-qm", "initial"],
+                           cwd=root, check=True)
+            now = dt.datetime(2026, 10, 26, tzinfo=dt.timezone.utc)
+            due = "2026-10-27T10:00:00+09:00"
+            with self.assertRaisesRegex(ValueError, "TRANSITIVE_LOCAL_DEPENDENCIES_NOT_DECLARED"):
+                create(root, "20261027-21-04", "model.py", due, now=now,
+                       dependency_paths=["dep.py"])
+            row = create(root, "20261027-21-04", "model.py", due, now=now,
+                         dependency_paths=["dep.py", "nested.py"])
+            self.assertEqual(set(row["transitive_local_imports_checked"]), {"dep.py", "nested.py"})
+            self.assertFalse(row["dependency_set_complete_independently_verified"])
+
     def test_future_only_clean_git_and_write_once(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
