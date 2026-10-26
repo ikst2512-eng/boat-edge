@@ -1165,6 +1165,27 @@ jobs:
           # Distinguish an upstream CSV not-yet-published state from genuine
           # insufficient CORE7 rows. A null SHA with no exception means
           # the CSV endpoint returned HTTP 404 (not_published).
+          # Read-only cause accounting: distinguish official-beforeinfo
+          # availability from independent preview CSV availability.
+          official_csv_split=[]
+          for race_path in sorted(RACES.glob(f"{ymd}-??-??.json")):
+              try:
+                  race_doc=json.loads(race_path.read_text(encoding="utf-8"))
+                  audits=race_doc.get("source_audit") or {}
+                  official=audits.get("beforeinfo") or {}
+                  presence=(race_doc.get("current_model_input") or {}).get("source_presence") or {}
+                  if (official.get("status")=="ok" and
+                      any(presence.get(k) is not True for k in
+                          ("stt","tkz","sui","original_exhibition"))):
+                      official_csv_split.append(race_path.stem)
+              except (OSError,ValueError,TypeError,UnicodeError):
+                  continue
+          status["official_ready_csv_missing"]={
+              "count":len(official_csv_split),
+              "sample_race_keys":official_csv_split[:12],
+              "site_diagnostic_only":True,
+              "does_not_grant_core7_or_formal_readiness":True,
+          }
           status["source_availability"]={
               role:{"rows":len(info["rows"]),"state":(
                   "FETCH_ERROR" if info["error"] and info["error"]!="not_published" else
