@@ -117,10 +117,15 @@ def evaluate(data):
         paired_a.append(x)
         paired_b.append(y)
     old, new = _metrics(paired_a), _metrics(paired_b)
+    paired_tests = None
+    if paired_a:
+        from boat_edge_paired120_significance import paired_significance
+        paired_tests = paired_significance(paired_a, paired_b)
     return {"research_only": True, "formal_fresh_eligible": False,
             "git_provenance_independently_authenticated": False,
             "unseen_status_independently_proven": False,
             "common_races": len(common), "baseline": old, "candidate": new,
+            "paired_significance": paired_tests,
             "topk_rate_delta": None if old is None else {
                 str(k): new["topk_rate"][str(k)]-old["topk_rate"][str(k)] for k in TOPS},
             "improvement_proven": False}
