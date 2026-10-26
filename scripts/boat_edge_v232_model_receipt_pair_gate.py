@@ -28,6 +28,8 @@ def verify(root, key):
             raise ValueError("KEY_MISMATCH")
         if receipt.get("schema")!="BOAT_EDGE_PROSPECTIVE_MODEL_IDENTITY_V1":
             raise ValueError("RECEIPT_SCHEMA")
+        if receipt.get("model_source_scope") != "SINGLE_FILE_ONLY_DEPENDENCIES_NOT_ATTESTED":
+            raise ValueError("MODEL_SOURCE_SCOPE_UNDECLARED")
         if (receipt.get("prediction_eligibility_granted") is not False or receipt.get("formal_fresh_unlocked") is not False or receipt.get("git_first_add_before_deadline_independently_verified") is not False):
             raise ValueError("RECEIPT_GUARD")
         due=_time(freeze["deadline_jst"])
