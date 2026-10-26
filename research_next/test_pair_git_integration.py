@@ -57,6 +57,24 @@ class LocalGitIntegration(unittest.TestCase):
             self.assertFalse(accepted["comparable_for_real_race_scoring"])
             self.assertFalse(accepted["independent_publication_time_proven"])
             self.assertFalse(accepted["model_outcome_blindness_proven"])
+            late_model = root / "freeze/candidate/model_after_prediction.py"
+            late_model.write_bytes(b"post-prediction-model")
+            self.run_git(root, "add", "freeze/candidate/model_after_prediction.py")
+            with patch.dict("os.environ", {
+                "GIT_AUTHOR_DATE": "2026-10-25T13:55:00+09:00",
+                "GIT_COMMITTER_DATE": "2026-10-25T13:55:00+09:00",
+            }):
+                self.run_git(root, "commit", "-qm", "later model")
+            late_commit = self.run_git(root, "rev-parse", "HEAD")
+            old_model = manifest["candidate"]["model"]
+            manifest["candidate"]["model"] = {
+                "path": "freeze/candidate/model_after_prediction.py",
+                "sha256": hashlib.sha256(b"post-prediction-model").hexdigest(),
+                "first_commit": late_commit,
+            }
+            with self.assertRaisesRegex(ValueError, "MODEL_OR_INPUT_GIT_AFTER_PREDICTION"):
+                audit.verify(root, manifest)
+            manifest["candidate"]["model"] = old_model
             manifest["candidate"]["model"]["sha256"] = "0" * 64
             with self.assertRaisesRegex(ValueError, "GIT_TREE_BYTES_SHA_MISMATCH"):
                 audit.verify(root, manifest)
