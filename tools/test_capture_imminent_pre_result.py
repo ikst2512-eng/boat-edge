@@ -134,6 +134,31 @@ class BatchTests(unittest.TestCase):
             third=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
             self.assertEqual(third["captured"],[])
 
+    def test_invalid_audit_never_triggers_retry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            races=root/"races"
+            races.mkdir()
+            item=race("20261025-04-01","10:52")
+            (races/"20261025-04-01.json").write_text(json.dumps(item))
+            rawdir=root/"raw"
+            rawdir.mkdir()
+            name="20261025-04-01.beforeinfo"
+            raw=b"<html><body>pending</body></html>"
+            (rawdir/(name+".html")).write_bytes(raw)
+            audit={"race_key":item["race_key"],"kind":"official_beforeinfo_html",
+                "status":"ok","source":"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=04&rno=1",
+                "fetched_at":"2026-10-25T10:34:00+09:00","sha256":"0"*64,"bytes":len(raw)}
+            (rawdir/(name+".audit.json")).write_text(json.dumps(audit))
+            calls=[]
+            def capture(item,output,attempt=1):
+                calls.append(attempt)
+                raise AssertionError("capture must not be called on bad audit")
+            result=batch(races,rawdir,now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(calls,[])
+            self.assertTrue(any(x["reason"]=="verification_failed" for x in result["failed"]))
+            self.assertFalse((rawdir/"20261025-04-01.attempt2.beforeinfo.html").exists())
+
     def test_no_data_no_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = batch(tmp, Path(tmp) / "captures", now=NOW)
