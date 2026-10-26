@@ -37,7 +37,11 @@ def inspect_site_evidence(evidence, scored=None):
     paired["both_first_git_frozen_before_deadline"] = False
     paired["actual_entry_six_boats_verified"] = False
     paired["model_unseen_independently_verified"] = False
+    missing_source = sorted(k for k, present in source.items() if not present)
+    missing_pair = sorted(k for k, present in paired.items() if not present)
     return {"race_key": key, "site_evidence_fields": source,
+            "missing_source_fields": missing_source,
+            "missing_comparison_requirements": missing_pair,
             "comparison_requirements_observed": paired,
             "comparison_eligible": False, "actual_result_read_for_scoring": False,
             "formal_fresh_eligible": False,
@@ -59,7 +63,13 @@ def audit_directory(root):
         # value is exported or used in predictive calculations.
         s = json.loads(q.read_text(encoding="utf-8")) if q.is_file() else None
         rows.append(inspect_site_evidence(e, s))
+    counts = {name: sum(name in row["missing_comparison_requirements"] for row in rows)
+              for name in REQUIRED_PAIR}
+    source_counts = {name: sum(name in row["missing_source_fields"] for row in rows)
+                     for name in ("race_source_sha256", "capture_timestamp",
+                                  "first_git_commit", "deadline", "post_result_label_exists")}
     return {"rows": rows, "checked": len(rows), "comparison_eligible": 0,
+            "missing_comparison_counts": counts, "missing_source_counts": source_counts,
             "research_only": True, "formal_fresh_eligible": False}
 
 
