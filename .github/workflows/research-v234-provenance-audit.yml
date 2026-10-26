@@ -8,11 +8,13 @@ on:
       - 'scripts/boat_edge_v232_model_receipt_pair_gate.py'
       - 'scripts/boat_edge_v232_source_lineage_audit.py'
       - 'scripts/boat_edge_v235_freeze_chain_audit.py'
+      - 'scripts/boat_edge_v234_race_git_chain_link.py'
       - 'scripts/boat_edge_prospective_model_identity.py'
       - 'scripts/boat_edge_model_tree_manifest_audit.py'
       - 'tests/test_boat_edge_v234_git_provenance_diagnostic.py'
       - 'tests/test_boat_edge_v234_confidence_audit.py'
       - 'tests/test_boat_edge_v234_model_provenance_audit.py'
+      - 'tests/test_boat_edge_v234_race_git_chain_link.py'
       - 'tests/test_boat_edge_v232_model_receipt_pair_gate.py'
       - 'tests/test_boat_edge_prospective_model_identity.py'
       - 'tests/test_boat_edge_model_tree_manifest_audit.py'
@@ -40,6 +42,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_boat_edge_v234_confidence_audit.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v234_git_provenance_diagnostic.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v234_model_provenance_audit.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_race_git_chain_link.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v232_model_receipt_pair_gate.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_prospective_model_identity.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_model_tree_manifest_audit.py' -v
@@ -99,6 +102,10 @@ jobs:
         run: |
           python scripts/boat_edge_v235_freeze_chain_audit.py > artifacts/v234-audit/freeze_chain.json
           python -c "import json; d=json.load(open('artifacts/v234-audit/freeze_chain.json')); print('FREEZE_CHAIN_STATIC_GIT',json.dumps({'sha':d['git_sha'],'ok':d['static_chain_hashes_verified'],'errors':d['chain_source_errors']},sort_keys=True)); assert d['static_chain_hashes_verified']"
+      - name: Link latest 20 saved races to immutable snapshot first-add source tree
+        run: |
+          python scripts/boat_edge_v234_race_git_chain_link.py --limit 20 > artifacts/v234-audit/race_git_chain.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/race_git_chain.json')); print('RACE_GIT_CHAIN',json.dumps({'sample':d['sample_size'],'counts':d['reason_counts'],'eligibility':d['prospective_eligibility_established']},sort_keys=True)); assert d['prospective_eligibility_established'] is False"
       - name: Audit prospective V232-model evidence pairs without enrollment
         run: |
           python - <<'PY_PAIR'
