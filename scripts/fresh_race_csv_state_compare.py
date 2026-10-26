@@ -33,7 +33,14 @@ def compare(key, opener=urlopen, now=None):
     if state.get("race_key") != key:
         raise ValueError("state race identity mismatch")
     code = key.replace("-", "")
+    deadline_text = (state.get("meta") or {}).get("deadline")
+    try:
+        deadline = datetime.strptime(key[:8] + " " + str(deadline_text), "%Y%m%d %H:%M").replace(tzinfo=JST)
+    except ValueError:
+        deadline = None
     result = {"race_key": key, "observed_at_jst": now.isoformat(),
+              "deadline_jst": deadline.isoformat() if deadline else None,
+              "observed_before_deadline": now < deadline if deadline else None,
               "scope": "OBSERVATION_AT_RUN_TIME_NOT_HISTORICAL_CSV_PROOF",
               "formal_eligible": False, "sources": {}}
     for role in ROLES:
@@ -64,7 +71,10 @@ def compare(key, opener=urlopen, now=None):
         item["saved_status"] = old.get("status")
         item["saved_availability_reason"] = old.get("availability_reason")
         item["saved_sha256"] = old.get("sha256")
-        item["same_bytes_as_saved_audit"] = (item["csv_sha256"] == old.get("sha256") if item["csv_sha256"] and old.get("sha256") else None)
+        item["saved_digest_source_type"] = "official_racelist_html" if role == "race_cards" else "preview_csv"
+        item["sha_comparison_applicable"] = role != "race_cards"
+        item["same_bytes_as_saved_audit"] = (item["csv_sha256"] == old.get("sha256") if role != "race_cards" and item["csv_sha256"] and old.get("sha256") else None)
+        item["postdeadline_observation_not_formal_proof"] = not (now < deadline) if deadline else True
         item["saved_observed_at"] = old.get("observed_at") or old.get("fetched_at")
         result["sources"][role] = item
     return result
