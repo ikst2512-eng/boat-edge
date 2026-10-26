@@ -35,6 +35,14 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/v234-audit
           python scripts/boat_edge_v234_git_provenance_diagnostic.py > artifacts/v234-audit/git_provenance.json
+          python - <<'PY_TIMING'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('artifacts/v234-audit/git_provenance.json').read_text())
+          for name, rows in sorted(d['records'].items()):
+              offsets=[r['timing']['committer_minus_saved_seconds'] for r in rows if r['timing'].get('timing_available')]
+              print('V234_GIT_TIMING',name,'count',len(rows),'offset_seconds_min_max', (min(offsets),max(offsets)) if offsets else None)
+          PY_TIMING
           python -c "import json; d=json.load(open('artifacts/v234-audit/git_provenance.json')); print('V234_PROVENANCE_COUNTS',json.dumps({'total':d['unscored_freezes'],'reasons':d['reason_counts']},sort_keys=True))"
           python - <<'PY'
           import json,os
