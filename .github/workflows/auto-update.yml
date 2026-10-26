@@ -609,10 +609,10 @@ jobs:
             # A detected venue does not certify that urgent pre-deadline
             # exhibition is usable. Distinguish missing official sources from
             # healthy discovery without inventing any absent six-boat rows.
-            "status":("source_incomplete" if active and (urgent_wait or urgent_error)
+            "status":("source_incomplete" if active and (urgent_wait or urgent_error or urgent_original_missing)
                       else "ok" if active else "source_unavailable"),
             "predeadline_readiness_status":(
-                "INCOMPLETE_URGENT_SOURCE" if urgent_wait or urgent_error else
+                "INCOMPLETE_URGENT_SOURCE" if urgent_wait or urgent_error or urgent_original_missing else
                 "READY_URGENT_SOURCE" if urgent_keys else "NO_URGENT_RACES"),
             "discovery_mode":discovery_mode,
             "active_venues":len(active),

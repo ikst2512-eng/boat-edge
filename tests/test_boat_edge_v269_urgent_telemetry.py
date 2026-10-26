@@ -66,11 +66,12 @@ status_expr=next(value for key,value in zip(
 readiness_expr=next(value for key,value in zip(
     health_expr.body[0].value.keys, health_expr.body[0].value.values
 ) if isinstance(key,ast.Constant) and key.value=='predeadline_readiness_status')
-def test_status(active,urgent_wait,urgent_error,urgent_keys):
+def test_status(active,urgent_wait,urgent_error,urgent_keys,urgent_original_missing=0):
     vars=locals()
     return (eval(compile(ast.Expression(status_expr),'<health>', 'eval'),vars),
             eval(compile(ast.Expression(readiness_expr),'<health>', 'eval'),vars))
 assert test_status({'06'},0,0,['20261015-06-01']) == ('ok','READY_URGENT_SOURCE')
+assert test_status({'06'},0,0,['20261015-06-01'],1) == ('source_incomplete','INCOMPLETE_URGENT_SOURCE')
 assert test_status({'06'},0,2,['20261015-06-01']) == ('source_incomplete','INCOMPLETE_URGENT_SOURCE')
 assert test_status({'06'},1,0,['20261015-06-01']) == ('source_incomplete','INCOMPLETE_URGENT_SOURCE')
 assert test_status({'06'},0,0,[]) == ('ok','NO_URGENT_RACES')

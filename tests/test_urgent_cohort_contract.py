@@ -21,6 +21,12 @@ class UrgentExhibitionCohortContract(unittest.TestCase):
             self.assertNotRegex(workflow, r'health\["' + re.escape(field) + r'"\]\s*=')
 
 
+    def test_urgent_readiness_requires_original_exhibition(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/auto-update.yml").read_text(encoding="utf-8")
+        self.assertIn("urgent_wait or urgent_error or urgent_original_missing", workflow)
+        self.assertIn('"original_exhibition_urgent_15m_missing":urgent_original_missing', workflow)
+        self.assertIn('"READY_URGENT_SOURCE" if urgent_keys else "NO_URGENT_RACES"', workflow)
+
     def test_predeadline_availability_reason_has_distinct_states(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/auto-update.yml").read_text(encoding="utf-8")
         for state in ("available", "http_404", "fetch_error", "incomplete_race_row", "race_row_absent"):
