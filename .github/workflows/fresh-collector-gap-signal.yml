@@ -1,0 +1,28 @@
+name: BOAT EDGE Collector Gap Signal (read only)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 * * * *'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify monitor fixture behavior
+        run: python3 -m unittest discover -s tests -p 'test_fresh_collector_run_gap_monitor.py' -v
+      - name: Inspect collector run-start gaps without dispatch
+        env:
+          GH_READONLY_TOKEN: ${{ github.token }}
+        run: python3 scripts/fresh_collector_run_gap_monitor.py
+      - name: Preserve observation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-collector-gap-signal
+          path: fresh_collector_run_gap_monitor.json
+          if-no-files-found: warn
+          retention-days: 14
