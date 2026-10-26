@@ -1,21 +1,21 @@
 {
-  "updated_at": "2026-10-27T08:20:37+09:00",
+  "updated_at": "2026-10-27T08:53:35+09:00",
   "target_date": "2026-10-27",
   "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
   "formal_parent_sha256": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
   "candidate_sha256": "30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
   "source_rows": {
-    "original_exhibition": 0,
-    "stt": 0,
-    "tkz": 0,
-    "sui": 0,
+    "original_exhibition": 2,
+    "stt": 2,
+    "tkz": 2,
+    "sui": 2,
     "race_cards": 168
   },
   "source_sha256": {
-    "original_exhibition": null,
-    "stt": null,
-    "tkz": null,
-    "sui": null,
+    "original_exhibition": "5d7a8f85f09294bb8b83b7cfe2a4e7076cfabd158cc78f6698bca6bf34dfbf11",
+    "stt": "d728e3ff752f0ed3cbc13bbdfeb4a08a808ba4df6ae20ff6a74cfb0d13147a2b",
+    "tkz": "5df57eb0ca7d128b305098598099b40174cd61fcc978b0eb0580833056f32717",
+    "sui": "edbf0c8c89591435abf4119a1e30e6360d9badacacad158e8bd4163dd4c6de32",
     "race_cards": "e0cf92719670410a5f77d6a96d9f45a237c8ee005330ee7c4ad91d75e0408a44"
   },
   "core7": {
@@ -28,10 +28,10 @@
   },
   "core7_failure_diagnostic": {
     "counts": {
-      "missing_original_exhibition": 168,
-      "missing_stt": 168,
-      "missing_sui": 168,
-      "missing_tkz": 168
+      "missing_original_exhibition": 166,
+      "missing_stt": 166,
+      "missing_sui": 166,
+      "missing_tkz": 166
     },
     "examples": {
       "missing_stt": [
@@ -83,8 +83,8 @@
     "sample_race_keys": [],
     "scope": "MUTABLE_PREDEADLINE_ONLY_NOT_FORMAL_ELIGIBILITY"
   },
-  "site_races_merged": 168,
-  "site_snapshot_immutable_races": 0,
+  "site_races_merged": 166,
+  "site_snapshot_immutable_races": 2,
   "guards": {
     "results_seen": false,
     "unlock": false,
@@ -97,33 +97,35 @@
   },
   "errors": [],
   "official_ready_csv_missing": {
-    "count": 0,
-    "sample_race_keys": [],
+    "count": 1,
+    "sample_race_keys": [
+      "20261027-23-02"
+    ],
     "site_diagnostic_only": true,
     "does_not_grant_core7_or_formal_readiness": true
   },
   "source_availability": {
     "original_exhibition": {
-      "rows": 0,
-      "state": "NOT_PUBLISHED",
+      "rows": 2,
+      "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 3
     },
     "stt": {
-      "rows": 0,
-      "state": "NOT_PUBLISHED",
+      "rows": 2,
+      "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 3
     },
     "tkz": {
-      "rows": 0,
-      "state": "NOT_PUBLISHED",
+      "rows": 2,
+      "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 3
     },
     "sui": {
-      "rows": 0,
-      "state": "NOT_PUBLISHED",
+      "rows": 2,
+      "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 3
     },
@@ -134,7 +136,7 @@
       "missing_pending_races": 0
     }
   },
-  "collector_gate": "WAIT_PREVIEW_CSV_PUBLICATION",
+  "collector_gate": "WAIT_CORE7_100",
   "formal_validation_connected": false,
   "formal_note": "SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
 }
