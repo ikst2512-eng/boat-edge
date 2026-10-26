@@ -31,6 +31,8 @@ class PairedBundleTests(unittest.TestCase):
                 (Path(d) / filename).write_bytes(b"synthetic pre-result only")
                 refs[name] = {"path": filename, "sha256": sha}
             manifest = {"scope": "RESEARCH_PRE_RESULT_ONLY",
+                        "race_key": "20261027-06-08",
+                        "deadline_jst": "2026-10-27T14:06:00+09:00",
                         "baseline": dict(refs), "candidate": dict(refs)}
             result = check(d, manifest)
             self.assertEqual(result["local_byte_integrity"], "PASS")
