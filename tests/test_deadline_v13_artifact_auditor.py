@@ -13,13 +13,13 @@ spec.loader.exec_module(module)
 
 
 class V13ArtifactAuditorTest(unittest.TestCase):
-    def check(self, files):
+    def check(self, files, run_id="123", git_sha="a" * 40):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "evidence.zip"
             with zipfile.ZipFile(path, "w") as archive:
                 for name, obj in files.items():
                     archive.writestr(name, json.dumps(obj) if not isinstance(obj, bytes) else obj)
-            return module.audit(path)
+            return module.audit(path, run_id, git_sha)
 
     def fixture(self):
         import hashlib
@@ -46,6 +46,16 @@ class V13ArtifactAuditorTest(unittest.TestCase):
 
     def test_valid_research_only(self):
         self.assertEqual(self.check(self.fixture())["verdict"], "PASS_RESEARCH_ONLY")
+
+    def test_missing_independent_run_identity_fails_closed(self):
+        result = self.check(self.fixture(), run_id=None, git_sha=None)
+        self.assertEqual(result["verdict"], "NOT_CERTIFIED")
+        self.assertIn("MISSING_EXPECTED_RUN_ID", result["issues"])
+        self.assertIn("MISSING_EXPECTED_GIT_SHA", result["issues"])
+
+    def test_mismatched_independent_sha_fails_closed(self):
+        result = self.check(self.fixture(), git_sha="b" * 40)
+        self.assertIn("GIT_SHA_MISMATCH", result["issues"])
 
     def test_missing_provenance_fails_closed(self):
         data = self.fixture()
