@@ -55,6 +55,7 @@ def audit_directory(root):
     base = root / "data/site_autopilot"
     evidence = base / "v229_evidence"
     scored = base / "v234_scored"
+    cohort = base / "v232_cohort"
     cohorts = base / "v232_cohort"
     rows = []
     if not evidence.is_dir():
@@ -85,7 +86,15 @@ def audit_directory(root):
     v232_missing = sum(not row["v232_cohort_file_present"] for row in rows)
     missing_both = sum(not row["v232_cohort_file_present"] and not row["scored_record_present"] for row in rows)
     cohort_unscored = sum(row["v232_cohort_file_present"] and not row["scored_record_present"] for row in rows)
+    v232_present = sum(r["v232_cohort_present"] for r in rows)
+    v232_missing = len(rows) - v232_present
+    v232_unscored = sum(r["v232_cohort_present"] and not r["scored_record_present"] for r in rows)
+    v234_without_v232 = sum(r["scored_record_present"] and not r["v232_cohort_present"] for r in rows)
     return {"rows": rows, "checked": len(rows), "by_race_date": by_date,
+            "v229_without_v232": v232_missing,
+            "v229_with_v232": v232_present,
+            "v232_without_v234": v232_unscored,
+            "v234_without_v232": v234_without_v232,
             "v232_cohort_absent": v232_missing,
             "v232_and_v234_both_absent": missing_both,
             "v232_present_v234_absent": cohort_unscored,
