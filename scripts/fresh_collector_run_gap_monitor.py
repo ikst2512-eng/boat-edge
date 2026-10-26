@@ -27,11 +27,24 @@ def main():
     try:
         repo = os.environ["GITHUB_REPOSITORY"]
         token = os.environ["GH_READONLY_TOKEN"]
-        req = Request(f"https://api.github.com/repos/{repo}/actions/workflows/auto-update.yml/runs?per_page=100",
-                      headers={"Authorization": "Bearer "+token, "Accept": "application/vnd.github+json"})
-        with urlopen(req, timeout=20) as resp:
-            runs = json.load(resp)["workflow_runs"]
+        runs = []
+        complete = False
+        oldest_needed = now - timedelta(minutes=90)
+        for page in range(1, 11):
+            req = Request(f"https://api.github.com/repos/{repo}/actions/workflows/auto-update.yml/runs?per_page=100&page={page}",
+                          headers={"Authorization": "Bearer "+token, "Accept": "application/vnd.github+json"})
+            with urlopen(req, timeout=20) as resp:
+                batch = json.load(resp)["workflow_runs"]
+            runs.extend(batch)
+            if not batch or min(datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")) for x in batch) < oldest_needed:
+                complete = True
+                break
+        result["pagination_complete_for_window"] = complete
+        result["runs_examined"] = len(runs)
         result.update(classify(runs, now))
+        if not complete:
+            result["possible_schedule_gap"] = None
+            result["error"] = "RUN_HISTORY_PAGINATION_INCOMPLETE_NO_GAP_ASSERTION"
     except Exception as exc:
         result["error"] = type(exc).__name__ + ": " + str(exc)
     Path("fresh_collector_run_gap_monitor.json").write_text(json.dumps(result, indent=2)+"\n")
