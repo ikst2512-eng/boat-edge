@@ -27,6 +27,11 @@ class CsvRetryPolicy(unittest.TestCase):
   self.assertIn("not complete_row(role,prior_by[code]) or complete_row(role,next_by[code])",text)
   self.assertIn("preview_source_is_incomplete(role,rows)",text)
   self.assertIn("prior_codes <= next_codes",text)
+ def test_partial_race_can_improve_independently(self):
+  text=WORKFLOW.read_text(encoding="utf-8")
+  self.assertIn("newly_complete=sum(",text)
+  self.assertIn("len(new_rows)>len(rows) or newly_complete>0",text)
+  self.assertIn("no_regression=all(",text)
  def test_partial_csv_rows_trigger_retry(self):
   text=WORKFLOW.read_text(encoding="utf-8")
   self.assertIn("pending_codes=set()",text)
