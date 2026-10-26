@@ -48,8 +48,10 @@ def compare(key, opener=urlopen, now=None):
         item = {"url": req.full_url, "http_status": None, "csv_sha256": None,
                 "total_rows": None, "matching_rows": None, "match_kind": None}
         try:
+            item["fetch_started_at_jst"] = datetime.now(JST).isoformat()
             with opener(req, timeout=20) as response:
                 raw = response.read()
+                item["fetch_completed_at_jst"] = datetime.now(JST).isoformat()
                 item["http_status"] = getattr(response, "status", 200)
             item["csv_sha256"] = hashlib.sha256(raw).hexdigest()
             reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig")))
@@ -61,12 +63,14 @@ def compare(key, opener=urlopen, now=None):
                 item["matching_rows"] = len(hits)
                 item["match_kind"] = ("NONE" if not hits else "ONE" if len(hits) == 1 else "DUPLICATE")
             item["total_rows"] = len(rows)
+            item["parse_completed_at_jst"] = datetime.now(JST).isoformat()
         except HTTPError as e:
             item["http_status"] = e.code
             item["match_kind"] = "NOT_PUBLISHED" if e.code == 404 else "HTTP_ERROR"
         except (URLError, TimeoutError, UnicodeError, csv.Error, OSError) as e:
             item["match_kind"] = "FETCH_OR_PARSE_ERROR"
             item["error_type"] = type(e).__name__
+        item["observed_before_deadline_at_fetch"] = (datetime.fromisoformat(item["fetch_completed_at_jst"]) < deadline if deadline and item.get("fetch_completed_at_jst") else None)
         old = (state.get("source_audit") or {}).get("race_card" if role == "race_cards" else role) or {}
         item["saved_status"] = old.get("status")
         item["saved_availability_reason"] = old.get("availability_reason")
