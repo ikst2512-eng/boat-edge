@@ -14,6 +14,7 @@ class GapMonitorTests(unittest.TestCase):
         out=mod.classify(runs,now)
         self.assertTrue(out["possible_schedule_gap"])
         self.assertTrue(out["no_scheduled_run_in_window"])
+        self.assertTrue(out["scheduled_run_count_below_three_in_90m"])
         self.assertGreater(out["largest_run_start_gap_seconds"],1200)
     def test_normal_runs(self):
         now=datetime(2026,10,26,6,0,tzinfo=timezone.utc)
@@ -26,5 +27,6 @@ class GapMonitorTests(unittest.TestCase):
               {"created_at":(now-timedelta(minutes=2)).isoformat(), "event":"workflow_dispatch"}]
         out=mod.classify(runs,now)
         self.assertEqual(out["scheduled_runs_in_window"],1)
+        self.assertTrue(out["scheduled_run_count_below_three_in_90m"])
         self.assertFalse(out["no_scheduled_run_in_window"])
 if __name__=="__main__": unittest.main()
