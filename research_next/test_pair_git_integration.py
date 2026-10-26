@@ -55,8 +55,18 @@ class LocalGitIntegration(unittest.TestCase):
             accepted = audit.verify(root, manifest)
             self.assertEqual(accepted["local_git_object_consistency"], "PASS")
             self.assertFalse(accepted["comparable_for_real_race_scoring"])
+            self.assertFalse(accepted["independent_publication_time_proven"])
+            self.assertFalse(accepted["model_outcome_blindness_proven"])
+            manifest["candidate"]["model"]["sha256"] = "0" * 64
+            with self.assertRaisesRegex(ValueError, "GIT_TREE_BYTES_SHA_MISMATCH"):
+                audit.verify(root, manifest)
+            manifest["candidate"]["model"]["sha256"] = hashlib.sha256(contents["freeze/candidate/model.py"]).hexdigest()
             manifest["candidate"]["input"]["sha256"] = "0" * 64
             with self.assertRaisesRegex(ValueError, "GIT_TREE_BYTES_SHA_MISMATCH"):
+                audit.verify(root, manifest)
+            manifest["candidate"]["input"]["sha256"] = hashlib.sha256(contents["freeze/candidate/input.json"]).hexdigest()
+            manifest["candidate"]["prediction_saved_at_jst"] = "2026-10-25T14:07:00+09:00"
+            with self.assertRaisesRegex(ValueError, "INVALID_PREDICTION_FREEZE_TIME"):
                 audit.verify(root, manifest)
 
 
