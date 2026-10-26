@@ -7,9 +7,16 @@ from check_prospective_pair_bundle import check
 
 
 class PairedBundleTests(unittest.TestCase):
+    def test_missing_race_identity_blocks_integrity_pass(self):
+        with tempfile.TemporaryDirectory() as d:
+            report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY"})
+            self.assertIn("RACE_KEY_REQUIRED", report["errors"])
+            self.assertIn("VALID_RACE_DEADLINE_REQUIRED", report["errors"])
+            self.assertNotIn("local_byte_integrity", report)
+
     def test_missing_baseline_never_scores(self):
         with tempfile.TemporaryDirectory() as d:
-            result = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY", "candidate": {}})
+            result = check(d, {"race_key": "20261027-06-08", "deadline_jst": "2026-10-27T14:06:00+09:00", "scope": "RESEARCH_PRE_RESULT_ONLY", "candidate": {}})
             self.assertFalse(result["ready_for_scoring"])
             self.assertIn("MISSING_BASELINE", result["errors"])
 
@@ -56,7 +63,7 @@ class PairedBundleTests(unittest.TestCase):
             def side(input_name):
                 return {"input": refs[input_name], "model": refs["model.bin"],
                         "prediction": refs["prediction.bin"]}
-            report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY",
+            report = check(d, {"race_key": "20261027-06-08", "deadline_jst": "2026-10-27T14:06:00+09:00", "scope": "RESEARCH_PRE_RESULT_ONLY",
                                "baseline": side("left"), "candidate": side("right")})
             self.assertIn("INPUT_NOT_IDENTICAL", report["errors"])
             self.assertFalse(report["ready_for_scoring"])
@@ -65,7 +72,7 @@ class PairedBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             src = {"path": "../outside.bin", "sha256": "0" * 64}
             side = {"input": src, "model": src, "prediction": src}
-            report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY",
+            report = check(d, {"race_key": "20261027-06-08", "deadline_jst": "2026-10-27T14:06:00+09:00", "scope": "RESEARCH_PRE_RESULT_ONLY",
                                "baseline": side, "candidate": side})
             self.assertIn("UNSAFE_REFERENCE", report["errors"])
             self.assertFalse(report["ready_for_scoring"])
