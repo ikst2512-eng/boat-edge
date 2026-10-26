@@ -63,7 +63,7 @@ class ArchiveTests(unittest.TestCase):
                 self.assertEqual(list(Path(temp).iterdir()),[])
 
     def test_xml_declared_xhtml_root_is_archived_unchanged(self):
-        body=b'<?xml version="1.0" encoding="UTF-8"?>\\n<!DOCTYPE html>\\n<html><body>pre-result</body></html>'
+        body=b'<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n<html><body>pre-result</body></html>'
         class XhtmlOpener:
             def open(self,request,timeout):
                 class XhtmlResponse(Response):
