@@ -35,6 +35,7 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/v234-audit
           python scripts/boat_edge_v234_git_provenance_diagnostic.py > artifacts/v234-audit/git_provenance.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/git_provenance.json')); print('V234_PROVENANCE_COUNTS',json.dumps({'total':d['unscored_freezes'],'reasons':d['reason_counts']},sort_keys=True))"
           python - <<'PY'
           import json,os
           from pathlib import Path
