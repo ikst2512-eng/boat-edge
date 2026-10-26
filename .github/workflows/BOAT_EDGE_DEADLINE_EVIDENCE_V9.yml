@@ -86,6 +86,39 @@ jobs:
           PY
             exit 2
           fi
+      - name: Record research capture provenance
+        if: always()
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          HEAD_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+        run: |
+          mkdir -p artifacts
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          provenance = {
+              "schema": "V13_RESEARCH_RUN_PROVENANCE",
+              "run_id": os.environ["RUN_ID"],
+              "run_attempt": os.environ["RUN_ATTEMPT"],
+              "git_sha": os.environ["HEAD_SHA"],
+              "event": os.environ["EVENT_NAME"],
+              "workflow_ref": os.environ["WORKFLOW_REF"],
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+              "formal_eligible": False,
+              "results_seen": False,
+              "scoring": "NOT_RUN",
+              "unlock": "LOCKED",
+          }
+          Path("artifacts/run_provenance.json").write_text(
+              json.dumps(provenance, ensure_ascii=False, indent=2) + "\n", encoding="utf8"
+          )
+          PY
       - name: Retain capture evidence
         if: always()
         uses: actions/upload-artifact@v4
