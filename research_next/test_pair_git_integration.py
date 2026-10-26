@@ -57,6 +57,14 @@ class LocalGitIntegration(unittest.TestCase):
             self.assertFalse(accepted["comparable_for_real_race_scoring"])
             self.assertFalse(accepted["independent_publication_time_proven"])
             self.assertFalse(accepted["model_outcome_blindness_proven"])
+            real_git = audit.git
+            def disconnected_history(check_root, *args):
+                if args[:2] == ("merge-base", "--is-ancestor"):
+                    raise ValueError("GIT_PROOF_UNAVAILABLE")
+                return real_git(check_root, *args)
+            with patch.object(audit, "git", side_effect=disconnected_history):
+                with self.assertRaisesRegex(ValueError, "MODEL_OR_INPUT_NOT_ANCESTOR_OF_PREDICTION"):
+                    audit.verify(root, manifest)
             late_model = root / "freeze/candidate/model_after_prediction.py"
             late_model.write_bytes(b"post-prediction-model")
             self.run_git(root, "add", "freeze/candidate/model_after_prediction.py")
