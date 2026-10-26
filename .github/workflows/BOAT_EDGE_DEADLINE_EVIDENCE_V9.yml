@@ -119,11 +119,45 @@ jobs:
               json.dumps(provenance, ensure_ascii=False, indent=2) + "\n", encoding="utf8"
           )
           PY
+      - name: Audit V13 capture artifact against Actions identity (research only)
+        if: always()
+        shell: bash
+        env:
+          EXPECTED_RUN_ID: ${{ github.run_id }}
+          EXPECTED_GIT_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p artifacts
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          import tempfile
+          import zipfile
+          from pathlib import Path
+
+          sys.path.insert(0, "scripts/deadline_v9")
+          from audit_v13_artifact import audit
+
+          root = Path("artifacts")
+          with tempfile.TemporaryDirectory() as tmp:
+              zipped = Path(tmp) / "capture.zip"
+              with zipfile.ZipFile(zipped, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                  for path in sorted(root.rglob("*")):
+                      if path.is_file() and path.name != "audit_result.json":
+                          archive.write(path, path.relative_to(root).as_posix())
+              result = audit(zipped, os.environ["EXPECTED_RUN_ID"], os.environ["EXPECTED_GIT_SHA"])
+          (root / "audit_result.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf8"
+          )
+          print(json.dumps(result, ensure_ascii=False))
+          if result["verdict"] != "PASS_RESEARCH_ONLY":
+              sys.exit(2)
+          PY
       - name: Retain capture evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: deadline-v9-${{ inputs.jst_date }}-${{ github.run_id }}
+          name: deadline-v9-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/
           if-no-files-found: warn
           retention-days: 30
