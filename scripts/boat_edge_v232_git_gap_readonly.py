@@ -36,6 +36,8 @@ def classify(root):
             if blob.returncode:reason='FIRST_ADD_BLOB_UNAVAILABLE'
             elif __import__('hashlib').sha256(blob.stdout).hexdigest()!=sha(p):reason='CURRENT_BYTES_DIFFER_FROM_FIRST_ADD'
             elif not due or not saved or not created:reason='TIME_FIELDS_INVALID'
+            elif created < saved and created.replace(microsecond=0)==saved.replace(microsecond=0):
+                reason='SAME_SECOND_GIT_TIMESTAMP_PRECISION_AMBIGUITY'
             elif created < saved:reason='FIRST_ADD_BEFORE_DECLARED_SNAPSHOT_SAVE'
             elif created >= due:reason='FIRST_ADD_AT_OR_AFTER_DEADLINE'
             elif not saved<=created<due:reason='FIRST_ADD_COMMIT_TIME_OUTSIDE_FREEZE_WINDOW'
@@ -44,6 +46,7 @@ def classify(root):
         if len(examples.get(reason,[]))<5:examples.setdefault(reason,[]).append(p.stem)
     return {'research_only':True,'no_result_read':True,'formal_fresh_eligible':False,
             'git_commit_time_independently_attested':False,
+            'same_second_is_not_order_proof':True,
             'unscored_v232_checked':sum(counts.values()),
             'reasons':dict(sorted(counts.items())),'examples':examples}
 
