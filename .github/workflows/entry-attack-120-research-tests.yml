@@ -1,0 +1,26 @@
+name: Entry attack 120 research tests
+on:
+  push:
+    branches:
+      - research/entry-attack-mixture-120-20261026
+    paths:
+      - 'scripts/boat_edge_entry_attack_mixture_research.py'
+      - 'scripts/boat_edge_paired120_research_evaluate.py'
+      - 'tests/test_boat_edge_entry_attack_mixture_research.py'
+      - 'tests/test_boat_edge_paired120_research_evaluate.py'
+      - '.github/workflows/entry-attack-120-research-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run isolated entry and attack research tests
+        run: |
+          python -m unittest discover -s tests -p 'test_boat_edge_entry_attack_mixture_research.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_paired120_research_evaluate.py' -v
