@@ -1,0 +1,58 @@
+name: Research V234 provenance audit (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v234_git_provenance_diagnostic.py'
+      - 'scripts/boat_edge_v234_confidence_audit.py'
+      - 'tests/test_boat_edge_v234_git_provenance_diagnostic.py'
+      - 'tests/test_boat_edge_v234_confidence_audit.py'
+      - '.github/workflows/research-v234-provenance-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: research-v234-audit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  read-only-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate fixture tests
+        run: |
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_confidence_audit.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_git_provenance_diagnostic.py' -v
+      - name: Classify real excluded V232 freezes using Git history
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/v234-audit
+          python scripts/boat_edge_v234_git_provenance_diagnostic.py > artifacts/v234-audit/git_provenance.json
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads(Path('artifacts/v234-audit/git_provenance.json').read_text())
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('## Research V234 provenance audit (not formal Fresh)\n')
+              f.write('Unscored frozen SITE records: '+str(d['unscored_freezes'])+'\n\n')
+              for key, n in sorted(d['reason_counts'].items()):
+                  f.write('- '+key+': '+str(n)+'\n')
+              f.write('\nNo retrospective enrollment, no outcome claim.\n')
+          PY
+      - name: Verify scored results against V234 summary and Wilson intervals
+        run: |
+          python scripts/boat_edge_v234_confidence_audit.py > artifacts/v234-audit/confidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-v234-provenance-${{ github.run_id }}
+          path: artifacts/v234-audit/
+          if-no-files-found: warn
+          retention-days: 14
