@@ -11,10 +11,14 @@ def classify(runs, now, window_minutes=90, max_gap_minutes=20):
     points = sorted(datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
                     for r in runs if r.get("created_at"))
     recent = [x for x in points if start <= x <= now]
+    scheduled = [r for r in runs if r.get("event") == "schedule" and r.get("created_at")
+                 and start <= datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) <= now]
     # Historical absence cannot prove a missed cron; the host may throttle it.
     intervals = [int((b-a).total_seconds()) for a,b in zip(recent,recent[1:])]
     age = int((now-recent[-1]).total_seconds()) if recent else window_minutes*60
-    return {"runs_in_window": len(recent), "largest_run_start_gap_seconds": max(intervals, default=None),
+    return {"runs_in_window": len(recent), "scheduled_runs_in_window": len(scheduled),
+            "no_scheduled_run_in_window": not scheduled,
+            "largest_run_start_gap_seconds": max(intervals, default=None),
             "last_start_age_seconds": age,
             "possible_schedule_gap": age > max_gap_minutes*60 or any(v > max_gap_minutes*60 for v in intervals),
             "meaning": "READ_ONLY_MISSING_RUN_SIGNAL_NOT_SCHEDULER_ROOT_CAUSE"}
