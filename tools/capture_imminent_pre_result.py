@@ -9,6 +9,7 @@ import argparse
 import datetime as dt
 import json
 from pathlib import Path
+from build_verified_entry_candidate import candidate
 
 from archive_pre_result_source import JST, archive
 from ingest_verified_start_order import ingest
@@ -48,31 +49,43 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
     report = {"checked": len(matches), "captured": [], "enriched": [], "skipped": [], "failed": []}
     for deadline, race, path in matches[:maximum]:
         key = race["race_key"]
-        raw_path = Path(output) / (key + ".beforeinfo.html")
-        audit_path = Path(output) / (key + ".beforeinfo.audit.json")
-        if raw_path.exists() or audit_path.exists():
-            report["skipped"].append({"key": key, "reason": "already_captured"})
-        else:
-            try:
-                audit = capture(race, output)
-                report["captured"].append({"key": key, "sha256": audit["sha256"]})
-            except (OSError, ValueError, TimeoutError) as exc:
-                report["failed"].append({"key": key, "reason": type(exc).__name__})
-                continue
-        if enriched_output is None or not raw_path.is_file() or not audit_path.is_file():
-            continue
-        dest = Path(enriched_output) / (key + ".json")
-        if dest.exists():
+        dest = Path(enriched_output) / (key + ".json") if enriched_output is not None else None
+        if dest is not None and dest.exists():
             report["skipped"].append({"key": key, "reason": "already_enriched"})
             continue
-        try:
-            raw = raw_path.read_bytes()
-            manifest = json.loads(audit_path.read_text(encoding="utf-8"))
-            snapshot = ingest(race, raw, manifest)
-            write_new_snapshot(dest, snapshot)
-            report["enriched"].append({"key": key, "sha256": manifest["sha256"]})
-        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-            report["skipped"].append({"key": key, "reason": "entry_not_verified", "detail": type(exc).__name__})
+        for attempt in (1, 2):
+            suffix = "" if attempt == 1 else f".attempt{attempt}"
+            raw_path = Path(output) / (key + suffix + ".beforeinfo.html")
+            audit_path = Path(output) / (key + suffix + ".beforeinfo.audit.json")
+            if raw_path.exists() != audit_path.exists():
+                report["failed"].append({"key": key, "attempt": attempt, "reason": "partial_capture"})
+                break
+            if not raw_path.exists():
+                try:
+                    if attempt == 1:
+                        audit = capture(race, output)
+                    else:
+                        audit = capture(race, output, attempt=attempt)
+                    report["captured"].append({"key": key, "attempt": attempt, "sha256": audit["sha256"]})
+                except (OSError, ValueError, TimeoutError) as exc:
+                    report["failed"].append({"key": key, "attempt": attempt, "reason": type(exc).__name__})
+                    break
+            if not raw_path.is_file() or not audit_path.is_file():
+                break
+            try:
+                raw = raw_path.read_bytes()
+                manifest = json.loads(audit_path.read_text(encoding="utf-8"))
+                candidate(raw, manifest, race, now=now)
+                if dest is not None:
+                    snapshot = ingest(race, raw, manifest, now=now)
+                    write_new_snapshot(dest, snapshot)
+                    report["enriched"].append({"key": key, "attempt": attempt, "sha256": manifest["sha256"]})
+                else:
+                    report["skipped"].append({"key": key, "reason": "verified_not_published", "attempt": attempt})
+                break
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+                report["skipped"].append({"key": key, "reason": "entry_not_verified", "attempt": attempt, "detail": str(exc)[:160]})
+                break
     return report
 
 
