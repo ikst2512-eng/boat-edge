@@ -24,6 +24,11 @@ def race(key, deadline, locked=True):
 
 
 class BatchTests(unittest.TestCase):
+    def test_workflow_only_captures_and_publishes_from_main(self):
+        workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
+        self.assertEqual(workflow.count("if: github.event_name != 'push' && github.ref == 'refs/heads/main'"), 3)
+        self.assertIn("if: always() && github.event_name != 'push'", workflow)
+
     def test_only_imminent_locked_races_are_captured(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp) / "races"
@@ -98,6 +103,69 @@ class BatchTests(unittest.TestCase):
             result=batch(races,root/"capture",now=NOW,capture=fake_capture)
             self.assertEqual(len(result["failed"]),1)
             self.assertEqual([r["key"] for r in result["captured"]],["20261025-04-02"])
+
+    def test_placeholder_then_second_attempt_preserves_first(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            races=root/"races"
+            races.mkdir()
+            item=race("20261025-04-01","10:52")
+            item["racers"]=[{"lane": i, "registration_no":str(4000+i)} for i in range(1,7)]
+            (races/"20261025-04-01.json").write_text(json.dumps(item))
+            blank=b"<html><body>not yet published</body></html>"
+            valid=("<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>"+
+                   "".join(f"<tr><td>{i}</td><td>{i}</td><td>.12</td></tr>" for i in range(1,7))+
+                   "</table></html>").encode()
+            def capture(item, output, attempt=1):
+                output=Path(output)
+                output.mkdir(exist_ok=True)
+                suffix="" if attempt==1 else f".attempt{attempt}"
+                name=item["race_key"]+suffix+".beforeinfo"
+                raw=blank if attempt==1 else valid
+                (output/(name+".html")).write_bytes(raw)
+                audit={"race_key":item["race_key"],"kind":"official_beforeinfo_html",
+                    "status":"ok","source":"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=04&rno=1",
+                    "fetched_at":"2026-10-25T10:34:00+09:00","sha256":hashlib.sha256(raw).hexdigest(),
+                    "bytes":len(raw)}
+                (output/(name+".audit.json")).write_text(json.dumps(audit))
+                return audit
+            first=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(len(first["enriched"]),1,first)
+            self.assertEqual(first["enriched"][0]["attempt"],2)
+            self.assertEqual([x["attempt"] for x in first["captured"]],[1,2])
+            original=(root/"raw"/"20261025-04-01.beforeinfo.html").read_bytes()
+            self.assertEqual(original,blank)
+            second=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(second["captured"],[])
+            self.assertEqual(second["enriched"],[])
+            self.assertEqual((root/"raw"/"20261025-04-01.beforeinfo.html").read_bytes(),original)
+            third=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(third["captured"],[])
+
+    def test_invalid_audit_never_triggers_retry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            races=root/"races"
+            races.mkdir()
+            item=race("20261025-04-01","10:52")
+            (races/"20261025-04-01.json").write_text(json.dumps(item))
+            rawdir=root/"raw"
+            rawdir.mkdir()
+            name="20261025-04-01.beforeinfo"
+            raw=b"<html><body>pending</body></html>"
+            (rawdir/(name+".html")).write_bytes(raw)
+            audit={"race_key":item["race_key"],"kind":"official_beforeinfo_html",
+                "status":"ok","source":"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=04&rno=1",
+                "fetched_at":"2026-10-25T10:34:00+09:00","sha256":"0"*64,"bytes":len(raw)}
+            (rawdir/(name+".audit.json")).write_text(json.dumps(audit))
+            calls=[]
+            def capture(item,output,attempt=1):
+                calls.append(attempt)
+                raise AssertionError("capture must not be called on bad audit")
+            result=batch(races,rawdir,now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(calls,[])
+            self.assertTrue(any(x["reason"]=="verification_failed" for x in result["failed"]))
+            self.assertFalse((rawdir/"20261025-04-01.attempt2.beforeinfo.html").exists())
 
     def test_no_data_no_capture(self):
         with tempfile.TemporaryDirectory() as tmp:

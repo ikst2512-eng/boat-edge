@@ -23,7 +23,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise ValueError("redirect_not_allowed")
 
 
-def archive(race, output_dir, now=None, opener=None):
+def archive(race, output_dir, now=None, opener=None, attempt=1):
+    if type(attempt) is not int or not 1 <= attempt <= 2:
+        raise ValueError("invalid_attempt")
     meta = race.get("meta") or {}
     key = race.get("race_key", "")
     if not re.fullmatch(r"\d{8}-(?:0[1-9]|1[0-9]|2[0-4])-(?:0[1-9]|1[0-2])", key):
@@ -40,8 +42,9 @@ def archive(race, output_dir, now=None, opener=None):
     url = f"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd={date}&jcd={venue}&rno={int(no)}"
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    rawpath = output_dir / (key + ".beforeinfo.html")
-    manifestpath = output_dir / (key + ".beforeinfo.audit.json")
+    suffix = "" if attempt == 1 else f".attempt{attempt}"
+    rawpath = output_dir / (key + suffix + ".beforeinfo.html")
+    manifestpath = output_dir / (key + suffix + ".beforeinfo.audit.json")
     if rawpath.exists() or manifestpath.exists():
         raise FileExistsError("capture_already_exists")
     request = urllib.request.Request(url, headers={"User-Agent": "BOAT-EDGE-PreResult-Audit/1.0", "Accept": "text/html"})
