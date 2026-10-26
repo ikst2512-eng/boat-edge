@@ -66,6 +66,10 @@ class LocalGitIntegration(unittest.TestCase):
             self.assertFalse(accepted["comparable_for_real_race_scoring"])
             self.assertFalse(accepted["independent_publication_time_proven"])
             self.assertFalse(accepted["model_outcome_blindness_proven"])
+            manifest["candidate"]["prediction_saved_at_jst"] = "2026-10-25T13:44:00+09:00"
+            with self.assertRaisesRegex(ValueError, "MODEL_OR_INPUT_GIT_AFTER_PREDICTION"):
+                audit.verify(root, manifest)
+            manifest["candidate"]["prediction_saved_at_jst"] = "2026-10-25T13:49:00+09:00"
             real_git = audit.git
             def disconnected_history(check_root, *args):
                 if args[:2] == ("merge-base", "--is-ancestor"):
