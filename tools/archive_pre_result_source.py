@@ -55,7 +55,16 @@ def archive(race, output_dir, now=None, opener=None, attempt=1):
         raw = response.read(2_000_001)
         if not raw or len(raw) > 2_000_000:
             raise ValueError("invalid_body_size")
-        if not raw.lstrip().lower().startswith((b"<!doctype html", b"<html")):
+        # Accept XML-declared XHTML only if the declaration is immediately
+        # followed by a genuine HTML root (optional bounded HTML doctype).
+        # Never reinterpret generic XML, JSON or compressed responses as HTML.
+        normalized=raw.lstrip()
+        xml_html=re.match(
+            rb"""<\?xml\s+version=["']1\.[01]["'][^?]{0,160}\?>\s*
+                (?:<!doctype\s+html\b[^>]{0,256}>\s*)?
+                <html(?:\s|>)""",
+            normalized, re.IGNORECASE | re.VERBOSE)
+        if not (normalized.lower().startswith((b"<!doctype html", b"<html")) or xml_html):
             # Report only a fixed signature class, never the response body.
             prefix=raw.lstrip()[:32].lower()
             if raw.startswith(b"\\x1f\\x8b"):
@@ -70,7 +79,7 @@ def archive(race, output_dir, now=None, opener=None, attempt=1):
                 reason="body_unknown_signature"
             raise ValueError(reason)
         content_type = response.headers.get("Content-Type", "") if hasattr(response, "headers") else ""
-        if content_type and "text/html" not in content_type.lower():
+        if content_type and not any(t in content_type.lower() for t in ("text/html", "application/xhtml+xml")):
             raise ValueError("unexpected_content_type")
     captured_at = now if now is not None else dt.datetime.now(JST)
     if captured_at >= deadline:
