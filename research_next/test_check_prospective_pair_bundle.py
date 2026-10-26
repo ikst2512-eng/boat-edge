@@ -14,6 +14,22 @@ class PairedBundleTests(unittest.TestCase):
             self.assertIn("VALID_RACE_DEADLINE_REQUIRED", report["errors"])
             self.assertNotIn("local_byte_integrity", report)
 
+    def test_malformed_race_id_fails_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            for bad in (None, 123, "", "20261027-99-99"):
+                report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY",
+                                   "race_key": bad, "deadline_jst": "2026-10-27T14:06:00+09:00"})
+                self.assertIn("RACE_KEY_REQUIRED", report["errors"])
+                self.assertFalse(report["ready_for_scoring"])
+
+    def test_deadline_wrong_timezone_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY",
+                               "race_key": "20261027-06-08",
+                               "deadline_jst": "2026-10-27T05:06:00+00:00"})
+            self.assertIn("VALID_RACE_DEADLINE_REQUIRED", report["errors"])
+            self.assertFalse(report["ready_for_scoring"])
+
     def test_missing_baseline_never_scores(self):
         with tempfile.TemporaryDirectory() as d:
             result = check(d, {"race_key": "20261027-06-08", "deadline_jst": "2026-10-27T14:06:00+09:00", "scope": "RESEARCH_PRE_RESULT_ONLY", "candidate": {}})
