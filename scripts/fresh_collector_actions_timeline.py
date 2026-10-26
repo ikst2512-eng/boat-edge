@@ -55,6 +55,17 @@ try:
             break
     report["upstream_v71_runs"].sort(key=lambda r: r["created_at"])
     report["matched_upstream_v71_runs"] = len(report["upstream_v71_runs"])
+    # API workflow metadata distinguishes disabled workflows from missing schedule events.
+    report["workflow_status"] = {}
+    for filename in ("auto-update.yml",):
+        req = Request(f"https://api.github.com/repos/{repo}/actions/workflows/{filename}", headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"})
+        with urlopen(req, timeout=20) as resp:
+            metadata = json.load(resp)
+        report["workflow_status"][filename] = {k: metadata.get(k) for k in (
+            "id", "name", "state", "path", "created_at", "updated_at")}
     report["runs"].sort(key=lambda r: r["created_at"])
     report["matched_runs"] = len(report["runs"])
 except Exception as exc:
