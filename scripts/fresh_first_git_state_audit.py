@@ -28,12 +28,14 @@ def audit(key):
     state = json.loads(local.read_text(encoding="utf-8"))
     if state.get("race_key") != key:
         raise ValueError("Race identity mismatch")
-    history = git("log", "--all", "--diff-filter=A", "--format=%H", "--", path).splitlines()
+    history = git("log", "HEAD", "--diff-filter=A", "--format=%H", "--", path).splitlines()
     if not history:
         return {"race_key": key, "status": "FIRST_ADDITION_NOT_FOUND",
                 "formal_eligible": False}
     # Never substitute a subsequent modification for the original Git addition.
     addition = history[-1]
+    latest_change = git("log", "HEAD", "-1", "--format=%H", "--", path)
+    latest_change_at = git("show", "-s", "--format=%cI", latest_change) if latest_change else None
     commit_iso = git("show", "-s", "--format=%cI", addition)
     first_time = datetime.fromisoformat(commit_iso)
     date = key[:8]
@@ -57,6 +59,12 @@ def audit(key):
     return {
         "race_key": key, "status": "FIRST_STATE_ADDITION_FOUND",
         "first_state_commit": addition,
+        "latest_state_change_commit": latest_change or None,
+        "latest_state_git_committer_at": latest_change_at,
+        "state_meta_updated_at": (state.get("meta") or {}).get("updated_at"),
+        "current_source_observed_times": {role: (record.get("observed_at") or record.get("fetched_at")) for role, record in ((state.get("source_audit") or {}).items()) if isinstance(record, dict)},
+        "state_file_write_time_independently_proven": False,
+        "git_server_receive_time_independently_proven": False,
         "first_state_git_committer_at": first_time.isoformat(),
         "first_state_blob_sha256": hashlib.sha256(original_bytes.stdout).hexdigest(),
         "initial_state_deadline": stored_deadline,
@@ -66,7 +74,7 @@ def audit(key):
         "initial_source_presence": ((original.get("current_model_input") or {}).get("source_presence") or {}),
         "initial_core7_ready": ((original.get("current_model_input") or {}).get("core7_ready")),
         "latest_core7_ready": ((state.get("current_model_input") or {}).get("core7_ready")),
-        "proof_scope": "GIT_STATE_ADDITION_ONLY_NOT_CSV_OR_PREDICTION_FREEZE",
+        "proof_scope": "GIT_STATE_HISTORY_METADATA_ONLY_NOT_CSV_OR_PREDICTION_FREEZE",
         "formal_eligible": False,
     }
 
