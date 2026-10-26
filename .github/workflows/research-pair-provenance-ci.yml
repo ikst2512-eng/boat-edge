@@ -1,0 +1,36 @@
+name: Research pair provenance audit CI
+on:
+  push:
+    branches:
+      - audit/common-race-provenance-20261026
+    paths:
+      - 'research_next/audit_pair_git_provenance.py'
+      - 'research_next/test_audit_pair_git_provenance.py'
+      - 'research_next/test_pair_git_integration.py'
+      - '.github/workflows/research-pair-provenance-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-pair-provenance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  synthetic-provenance-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile research-only gate and tests
+        run: python -m py_compile research_next/audit_pair_git_provenance.py research_next/test_audit_pair_git_provenance.py research_next/test_pair_git_integration.py
+      - name: Run synthetic provenance unit and Git integration checks
+        run: python -m unittest discover -s research_next -p 'test_*pair*.py' -v
+      - name: Explicitly state scope
+        run: echo 'Synthetic provenance checks only; no outcomes, no Formal Fresh, no production deployment.'
