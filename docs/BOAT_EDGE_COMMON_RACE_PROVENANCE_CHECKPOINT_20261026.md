@@ -52,3 +52,20 @@ The exact displayed audit logic and synthetic Git integration fixture from the r
 - Dedicated research audit CI: no successful run has been verified through available tooling. The pull-request-run lookup returning an empty set is not an exhaustive Actions query; unsupported direct workflow-list requests cannot establish whether runs took place.
 
 **Decision: HOLD.** Do not backfill V332 files for completed races, turn on unattended BOATERS/競艇日和 capture, read formal outcomes, or promote local fixture tests to real-race performance evidence. A valid next prospective case requires independent before-deadline publication receipt, frozen exact input/model/prediction bytes and linkage, and a permitted collection path. Treat the Git-only monitor as a screening tool, not an eligibility certificate.
+
+## 2026-10-26 prospective paired-race acceptance protocol
+
+A future race is **screenable**, not yet scoreable, only when the following independently checkable chain exists **before the published race deadline**:
+
+1. The exact original `data/races/<key>.json` bytes, their SHA256, and each model's complete executable version/configuration/weights digest are fixed; a model label or a single file hash is insufficient.
+2. Each model's exact pre-result prediction bytes are fixed and paired to the same original input SHA, with manifest links to those immutable bytes.
+3. A third-party timestamp independent of Git author/committer fields (for example, a GitHub Actions run receipt with server-assigned `created_at`, linked run ID and checked upload artifacts) independently establishes that **all three** evidence types existed before the deadline. A later audit upload of an earlier-dated manifest does **not** qualify.
+4. First-Git additions, SHA bytes, ancestor relation, prediction-commit tree bytes and fixed versions are checked without opening outcome or Formal Fresh files.
+5. Run and artifact retention, repository permissions, and source-rights requirements are reviewed. Existing V336 is an explicit no-capture dry-run and must not be repurposed into unattended BOATERS/競艇日和 scraping.
+
+**Strict HOLD if any element is missing**. Even a local digest PASS is only internal integrity, not independent predeadline publication, actual model usage or result-blindness. Keep outcome evaluation separate and disabled until prospective cohort acceptance. No retroactive V332 freezes.
+
+### Current CI evidence and scope
+The GitHub Actions runs listing for research branch `audit/common-race-provenance-20261026` was queried directly. `Research pair provenance audit CI` run [40277222242](https://github.com/ikst2512-eng/boat-edge/actions/runs/40277222242) passed on head `3e35ef618ae0ef1779c8c9b1fc20675a011d958d`. The later `Next research framework tests` run [40321573921](https://github.com/ikst2512-eng/boat-edge/actions/runs/40321573921) passed on head `c1c35027ac2f5ba690ff169e004dde83b4d7f4d3`; its `unit-tests` job ran `python -m unittest discover -s research_next -p 'test_*.py' -v`. There is no demonstrated native CI run on a newer branch head. These are synthetic/software tests, **not forecast skill evidence**.
+
+Research-only model comparison remains HOLD, with independently eligible common-race denominator unknown. Formal Fresh lock and production data are unchanged.
