@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
     def test_join_and_false_formal_claim(self):
         key = "20261026-21-02"
         data = ("レースコード,値\n202610262101,x\n202610262102,y\n").encode()
-        state = {"race_key": key, "meta": {"deadline": "23:59"}, "source_audit": {"stt": {"status": "missing", "sha256": "other"}}}
+        state = {"race_key": key, "meta": {"deadline": "23:59", "phase": "PRE_RESULT", "results_seen": False}, "source_audit": {"stt": {"status": "missing", "sha256": "other"}}}
         with patch.object(mod.Path, "is_file", return_value=True), \
              patch.object(mod.Path, "read_text", return_value=json.dumps(state)):
             record = mod.compare(key, opener=lambda *a, **k: Response(data))
@@ -30,6 +30,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(record["sources"]["stt"]["match_kind"], "ONE")
         self.assertFalse(record["sources"]["stt"]["same_bytes_as_saved_audit"])
         self.assertFalse(record["formal_eligible"])
+        self.assertTrue(record["sources"]["stt"]["live_row_present_saved_state_missing_predeadline"])
+        self.assertTrue(record["sources"]["stt"]["diagnostic_only_no_backfill"])
         self.assertIsNotNone(record["sources"]["stt"]["fetch_started_at_jst"])
         self.assertIsNotNone(record["sources"]["stt"]["fetch_completed_at_jst"])
         self.assertIsNotNone(record["sources"]["stt"]["parse_completed_at_jst"])
