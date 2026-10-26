@@ -55,6 +55,7 @@ def audit_directory(root):
     base = root / "data/site_autopilot"
     evidence = base / "v229_evidence"
     scored = base / "v234_scored"
+    cohorts = base / "v232_cohort"
     rows = []
     if not evidence.is_dir():
         return {"rows": [], "checked": 0, "comparison_eligible": 0}
@@ -64,7 +65,9 @@ def audit_directory(root):
         # Scored record is read only for metadata presence; no winning-combo
         # value is exported or used in predictive calculations.
         s = json.loads(q.read_text(encoding="utf-8")) if q.is_file() else None
-        rows.append(inspect_site_evidence(e, s))
+        row = inspect_site_evidence(e, s)
+        row["v232_cohort_file_present"] = (cohorts / p.name).is_file()
+        rows.append(row)
     counts = {name: sum(name in row["missing_comparison_requirements"] for row in rows)
               for name in REQUIRED_PAIR}
     missing_scored_records = sum(not row["scored_record_present"] for row in rows)
@@ -79,7 +82,13 @@ def audit_directory(root):
         bucket["v229_evidence"] += 1
         bucket["v234_scored_present" if row["scored_record_present"]
                else "v234_scored_absent"] += 1
+    v232_missing = sum(not row["v232_cohort_file_present"] for row in rows)
+    missing_both = sum(not row["v232_cohort_file_present"] and not row["scored_record_present"] for row in rows)
+    cohort_unscored = sum(row["v232_cohort_file_present"] and not row["scored_record_present"] for row in rows)
     return {"rows": rows, "checked": len(rows), "by_race_date": by_date,
+            "v232_cohort_absent": v232_missing,
+            "v232_and_v234_both_absent": missing_both,
+            "v232_present_v234_absent": cohort_unscored,
             "scored_record_absent_in_v234": missing_scored_records,
             "scored_record_present_in_v234": len(rows) - missing_scored_records,
             "missing_scored_does_not_prove_git_absent": True,
