@@ -1,0 +1,32 @@
+name: Fresh First Git State Audit (read only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/fresh_first_git_state_audit.py'
+      - 'tests/test_fresh_first_git_state_audit.py'
+      - '.github/workflows/fresh-first-git-state-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run first-addition auditor regressions
+        run: python3 -m unittest discover -s tests -p 'test_fresh_first_git_state_audit.py' -v
+      - name: Verify full Git history is present
+        run: test "$(git rev-parse --is-shallow-repository)" = false
+      - name: Audit original race-state Git additions without results
+        run: python3 scripts/fresh_first_git_state_audit.py
+      - name: Preserve non-formal provenance audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-first-git-state-audit
+          path: fresh_first_git_state_audit.json
+          if-no-files-found: warn
+          retention-days: 30
