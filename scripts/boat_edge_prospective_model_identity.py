@@ -54,6 +54,7 @@ def create(root, race_key, model_path, deadline_jst, now=None):
         "deadline_jst": deadline.isoformat(),
         "recorded_at": now.isoformat(),
         "model_path": rel.as_posix(),
+        "model_source_scope": "SINGLE_FILE_ONLY_DEPENDENCIES_NOT_ATTESTED",
         "model_git_sha": sha,
         "model_source_sha256": hashlib.sha256(original).hexdigest(),
         "git_first_add_before_deadline_independently_verified": False,
