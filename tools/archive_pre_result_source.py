@@ -56,7 +56,19 @@ def archive(race, output_dir, now=None, opener=None, attempt=1):
         if not raw or len(raw) > 2_000_000:
             raise ValueError("invalid_body_size")
         if not raw.lstrip().lower().startswith((b"<!doctype html", b"<html")):
-            raise ValueError("not_html_document")
+            # Report only a fixed signature class, never the response body.
+            prefix=raw.lstrip()[:32].lower()
+            if raw.startswith(b"\\x1f\\x8b"):
+                reason="body_gzip_signature"
+            elif prefix.startswith((b"{", b"[")):
+                reason="body_json_signature"
+            elif prefix.startswith(b"<?xml"):
+                reason="body_xml_signature"
+            elif raw.startswith(b"\\xef\\xbb\\xbf"):
+                reason="body_utf8_bom"
+            else:
+                reason="body_unknown_signature"
+            raise ValueError(reason)
         content_type = response.headers.get("Content-Type", "") if hasattr(response, "headers") else ""
         if content_type and "text/html" not in content_type.lower():
             raise ValueError("unexpected_content_type")

@@ -42,9 +42,25 @@ class ArchiveTests(unittest.TestCase):
                     def read(self, n): return b'{"result":"not a prerace document"}'
                 return BadResponse(request.full_url)
         with tempfile.TemporaryDirectory() as temp:
-            with self.assertRaisesRegex(ValueError, "not_html_document"):
+            with self.assertRaisesRegex(ValueError, "body_json_signature"):
                 archive(RACE, temp, now=BEFORE, opener=BadOpener())
             self.assertEqual(list(Path(temp).iterdir()), [])
+
+    def test_rejected_body_signatures_are_redacted(self):
+        samples=[(b"\\x1f\\x8bcompressed", "body_gzip_signature"),
+                 (b"<?xml version='1.0'?>", "body_xml_signature"),
+                 (b"\\xef\\xbb\\xbf<html>bom</html>", "body_utf8_bom"),
+                 (b"not-html-secret-content", "body_unknown_signature")]
+        for payload,code in samples:
+            class BadOpener:
+                def open(self,request,timeout):
+                    class BadResponse(Response):
+                        def read(self,n): return payload
+                    return BadResponse(request.full_url)
+            with tempfile.TemporaryDirectory() as temp:
+                with self.assertRaisesRegex(ValueError,"^"+code+"$"):
+                    archive(RACE,temp,now=BEFORE,opener=BadOpener())
+                self.assertEqual(list(Path(temp).iterdir()),[])
 
     def test_reject_after_deadline(self):
         with tempfile.TemporaryDirectory() as temp:
