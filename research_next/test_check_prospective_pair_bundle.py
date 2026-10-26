@@ -42,6 +42,34 @@ class PairedBundleTests(unittest.TestCase):
             self.assertIn("ALIASED_INPUT_MODEL_PREDICTION", result["errors"])
             self.assertFalse(result["ready_for_scoring"])
 
+    def test_input_digest_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            refs = {}
+            for name, content in (("left", b"race input one"), ("right", b"race input two")):
+                p = Path(d) / (name + ".bin")
+                p.write_bytes(content)
+                refs[name] = {"path": p.name, "sha256": hashlib.sha256(content).hexdigest()}
+            for name in ("model.bin", "prediction.bin"):
+                p = Path(d) / name
+                p.write_bytes(name.encode())
+                refs[name] = {"path": name, "sha256": hashlib.sha256(name.encode()).hexdigest()}
+            def side(input_name):
+                return {"input": refs[input_name], "model": refs["model.bin"],
+                        "prediction": refs["prediction.bin"]}
+            report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY",
+                               "baseline": side("left"), "candidate": side("right")})
+            self.assertIn("INPUT_NOT_IDENTICAL", report["errors"])
+            self.assertFalse(report["ready_for_scoring"])
+
+    def test_traversal_rejected_without_reading(self):
+        with tempfile.TemporaryDirectory() as d:
+            src = {"path": "../outside.bin", "sha256": "0" * 64}
+            side = {"input": src, "model": src, "prediction": src}
+            report = check(d, {"scope": "RESEARCH_PRE_RESULT_ONLY",
+                               "baseline": side, "candidate": side})
+            self.assertIn("UNSAFE_REFERENCE", report["errors"])
+            self.assertFalse(report["ready_for_scoring"])
+
     def test_modified_bytes_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "snapshot.bin"
