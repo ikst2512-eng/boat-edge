@@ -4,8 +4,10 @@ on:
     paths:
       - 'scripts/boat_edge_v234_git_provenance_diagnostic.py'
       - 'scripts/boat_edge_v234_confidence_audit.py'
+      - 'scripts/boat_edge_v234_model_provenance_audit.py'
       - 'tests/test_boat_edge_v234_git_provenance_diagnostic.py'
       - 'tests/test_boat_edge_v234_confidence_audit.py'
+      - 'tests/test_boat_edge_v234_model_provenance_audit.py'
       - '.github/workflows/research-v234-provenance-audit.yml'
   workflow_dispatch:
 permissions:
@@ -29,6 +31,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_boat_edge_v234_confidence_audit.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_v234_git_provenance_diagnostic.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_model_provenance_audit.py' -v
       - name: Classify real excluded V232 freezes using Git history
         shell: bash
         run: |
@@ -55,6 +58,10 @@ jobs:
                   f.write('- '+key+': '+str(n)+'\n')
               f.write('\nNo retrospective enrollment, no outcome claim.\n')
           PY
+      - name: Report model source SHA coverage (never backfill)
+        run: |
+          python scripts/boat_edge_v234_model_provenance_audit.py > artifacts/v234-audit/model_sha_coverage.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/model_sha_coverage.json')); print('V234_MODEL_SHA_COVERAGE',json.dumps(d['coverage_counts'],sort_keys=True))"
       - name: Verify scored results against V234 summary and Wilson intervals
         run: |
           python scripts/boat_edge_v234_confidence_audit.py > artifacts/v234-audit/confidence.json
