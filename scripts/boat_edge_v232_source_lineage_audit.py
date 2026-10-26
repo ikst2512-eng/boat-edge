@@ -15,7 +15,23 @@ def audit(root):
     root=Path(root)
     source=(root/"scripts/boat_edge_v232_pre_result_cohort.py").read_text(encoding="utf-8")
     missing=[name for name,path in INPUTS.items() if path not in source]
+    # A text reference to a snapshot directory does not identify its unique
+    # writer. List candidate scripts for code review without granting lineage.
+    candidates=[]
+    for file in sorted((root/"scripts").glob("*.py")):
+        if file.name=="boat_edge_v232_source_lineage_audit.py":
+            continue
+        try:
+            body=file.read_text(encoding="utf-8")
+        except (OSError,UnicodeError):
+            continue
+        if "site_prediction_snapshots" in body and any(
+            token in body for token in ("write_text(", "write_bytes(", "open('x'", 'open("x"', "os.replace(", ".replace(")
+        ):
+            candidates.append(file.relative_to(root).as_posix())
     return {
+        "snapshot_writer_candidates_not_confirmed": candidates,
+        "snapshot_writer_unique_independently_verified": False,
         "schema":"BOAT_EDGE_V232_READ_ONLY_SOURCE_LINEAGE_INVENTORY_V1",
         "scope":"SITE_RESEARCH_ONLY_NOT_FORMAL_FRESH",
         "source_script":"scripts/boat_edge_v232_pre_result_cohort.py",
