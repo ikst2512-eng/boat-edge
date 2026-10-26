@@ -99,6 +99,41 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(len(result["failed"]),1)
             self.assertEqual([r["key"] for r in result["captured"]],["20261025-04-02"])
 
+    def test_placeholder_then_second_attempt_preserves_first(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            races=root/"races"
+            races.mkdir()
+            item=race("20261025-04-01","10:52")
+            item["racers"]=[{"lane": i, "registration_no":str(4000+i)} for i in range(1,7)]
+            (races/"20261025-04-01.json").write_text(json.dumps(item))
+            blank=b"<html><body>not yet published</body></html>"
+            valid=("<html><table><tr><th>コース</th><th>並び</th><th>ST</th></tr>"+
+                   "".join(f"<tr><td>{i}</td><td>{i}</td><td>.12</td></tr>" for i in range(1,7))+
+                   "</table></html>").encode()
+            def capture(item, output, attempt=1):
+                output=Path(output)
+                output.mkdir(exist_ok=True)
+                suffix="" if attempt==1 else f".attempt{attempt}"
+                name=item["race_key"]+suffix+".beforeinfo"
+                raw=blank if attempt==1 else valid
+                (output/(name+".html")).write_bytes(raw)
+                audit={"race_key":item["race_key"],"kind":"official_beforeinfo_html",
+                    "status":"ok","source":"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261025&jcd=04&rno=1",
+                    "fetched_at":"2026-10-25T10:34:00+09:00","sha256":hashlib.sha256(raw).hexdigest(),
+                    "bytes":len(raw)}
+                (output/(name+".audit.json")).write_text(json.dumps(audit))
+                return audit
+            first=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(first["enriched"],[])
+            original=(root/"raw"/"20261025-04-01.beforeinfo.html").read_bytes()
+            second=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(len(second["enriched"]),1,second)
+            self.assertEqual(second["enriched"][0]["attempt"],2)
+            self.assertEqual((root/"raw"/"20261025-04-01.beforeinfo.html").read_bytes(),original)
+            third=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
+            self.assertEqual(third["captured"],[])
+
     def test_no_data_no_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = batch(tmp, Path(tmp) / "captures", now=NOW)
