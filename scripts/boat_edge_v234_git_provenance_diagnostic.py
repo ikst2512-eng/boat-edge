@@ -55,6 +55,38 @@ def classify(root, path):
     return "git_provenance_valid_check_other_gate", commit
 
 
+def timing_detail(root, path):
+    """Report first Git introduction vs declared snapshot and deadline, without granting eligibility."""
+    rel = path.relative_to(root).as_posix()
+    try:
+        row = json.loads(path.read_text(encoding="utf-8"))
+        saved = dt.datetime.fromisoformat(row["snapshot_saved_at"].replace("Z", "+00:00"))
+        deadline = dt.datetime.fromisoformat(row["deadline_jst"].replace("Z", "+00:00"))
+        recorded = dt.datetime.fromisoformat(row["evidence_committed_at"].replace("Z", "+00:00"))
+        if any(x.tzinfo is None for x in (saved, deadline, recorded)):
+            return {"timing_available": False}
+        log = git(root, "log", "--diff-filter=A", "--reverse", "--format=%H|%aI|%cI", "--", rel)
+        if not log:
+            return {"timing_available": False}
+        parts = log.decode().strip().splitlines()[0].split("|")
+        if len(parts) != 3:
+            return {"timing_available": False}
+        commit, author_raw, committer_raw = parts
+        author = dt.datetime.fromisoformat(author_raw)
+        committed = dt.datetime.fromisoformat(committer_raw)
+        return {"timing_available": True, "first_commit": commit,
+                "saved_at": saved.isoformat(), "deadline_at": deadline.isoformat(),
+                "recorded_at": recorded.isoformat(),
+                "first_git_author_at": author.isoformat(),
+                "first_git_committer_at": committed.isoformat(),
+                "committer_minus_saved_seconds": round((committed - saved).total_seconds(), 3),
+                "deadline_minus_committer_seconds": round((deadline - committed).total_seconds(), 3),
+                "author_committer_seconds": round((committed - author).total_seconds(), 3),
+                "timestamp_only_not_proof_of_remote_receipt": True}
+    except (OSError, ValueError, KeyError, TypeError, UnicodeError):
+        return {"timing_available": False}
+
+
 def audit(root):
     root = root.resolve()
     base = root / "data/site_autopilot/v232_cohort"
@@ -65,7 +97,7 @@ def audit(root):
             continue
         reason, commit = classify(root, p)
         groups[reason] = groups.get(reason, 0) + 1
-        examples.setdefault(reason, []).append({"race_key": p.stem, "first_commit": commit})
+        examples.setdefault(reason, []).append({"race_key": p.stem, "first_commit": commit, "timing": timing_detail(root, p)})
     return {"schema": "BOAT_EDGE_V234_GIT_PROVENANCE_DIAGNOSTIC_V1",
             "scope": "READ_ONLY_SITE_RESEARCH_NOT_FORMAL_FRESH",
             "unscored_freezes": sum(groups.values()),
