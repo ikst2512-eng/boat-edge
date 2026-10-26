@@ -15,7 +15,7 @@ from pathlib import Path
 
 CHAIN=(".github/workflows/V235.yml","scripts/boat_edge_v229_atomic_freeze.py",
        "scripts/boat_edge_v228_freeze_only.py","scripts/boat_edge_v232_pre_result_cohort.py")
-KEY=re.compile(r"20[0-9]{6}-[0-9]{2}-[0-9]{2}\\Z")
+KEY=re.compile(r"^20[0-9]{6}-[0-9]{2}-[0-9]{2}$")
 
 
 def git(root,*args):
