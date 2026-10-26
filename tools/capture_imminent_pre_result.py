@@ -25,7 +25,9 @@ def eligible(path, now):
             return None
         deadline = dt.datetime.fromisoformat(meta["date"] + "T" + meta["deadline"] + ":00+09:00")
         minutes = (deadline - now).total_seconds() / 60
-        if not 3 <= minutes <= 35:
+        # Avoid archiving early placeholder pages before start exhibition is published.
+        # Ten-minute schedules still have two opportunities in this window.
+        if not 3 <= minutes <= 22:
             return None
         key = race.get("race_key", "")
         if path.stem != key:
