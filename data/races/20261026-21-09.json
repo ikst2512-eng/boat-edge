@@ -8,7 +8,7 @@
     "event": "KBCラジオ杯",
     "race_no": 9,
     "deadline": "12:27",
-    "updated_at": "2026-10-26T09:38:46+09:00",
+    "updated_at": "2026-10-26T10:07:21+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261026&jcd=21&rno=9",
-      "fetched_at": "2026-10-26T09:41:48+09:00",
-      "sha256": "84e85268ff79c7040021f84a717e1c0903b717997b48b111f7daa47998603494",
+      "fetched_at": "2026-10-26T10:09:11+09:00",
+      "sha256": "0b30ec6cc7de3671fb097eb469b1a06b55fd8031424acd5426f3fcabc852f868",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261026&jcd=21&rno=9",
+      "fetched_at": "2026-10-26T10:08:40+09:00",
+      "sha256": "5ad448e7bdd7d10897c801c3c55103bd88f86dbb69f96a1a12065f36de04f588",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T09:42:20+09:00",
+      "observed_at": "2026-10-26T10:11:06+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "47edbb72da217e74e170cd8dbef194000007bd55820507b9e70a71e2d44ae558"
+      "sha256": "56a57bcaa1ebc616e54f0e2704f6ad5ede589fd711754c8c471b4fc7e16a9597"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T09:42:27+09:00",
+      "observed_at": "2026-10-26T10:11:13+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "120b5944aa3347b87919cbda64366c0c36638d135cce78b4ff45d9e6dc5185ff"
+      "sha256": "6b25ae0503e71b2530e1f35ef13e2f96efe5516fb2d4afe2690ef33ff289b8cc"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T09:42:34+09:00",
+      "observed_at": "2026-10-26T10:11:20+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "7cca4aa29b3c601ece49b40728e7bef140e2a2a992a78ce4ddef0dbb40e0e87b"
+      "sha256": "4ef466997617f7120f1716c30b13a3df039fcaa10b593c894b366be438ad9c39"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/26.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-26T09:42:41+09:00",
+      "observed_at": "2026-10-26T10:10:59+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "fd0f036f9cb86ed7d2d73f12327fb42461e162f5f9c55a784c272709713c7a57"
+      "sha256": "ef487ebbc63f5d426cf7f64f21698f3b39e206ddf6997f1dd8afa15d391da20e"
     }
   },
   "racers": [
@@ -232,10 +238,11 @@
         "5",
         "4",
         "9",
-        "1"
+        "1",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "4 5329 / B1 金子 龍斗 兵庫/兵庫 22歳/50.0kg F1 L0 0.16 4.58 28.40 41.98 3.91 27.27 27.27 40 27.27 47.93 160 29.52 44.76 5 4 9 1 4R"
+      "raw_text": "4 5329 / B1 金子 龍斗 兵庫/兵庫 22歳/50.0kg F1 L0 0.16 4.58 28.40 41.98 3.91 27.27 27.27 40 27.27 47.93 160 29.52 44.76 5 4 9 1 4 4R"
     },
     {
       "lane": 5,
@@ -322,7 +329,53 @@
       "raw_text": "6 4073 / A1 大橋 純一郎 静岡/静岡 45歳/52.0kg F0 L0 0.15 6.60 54.69 70.31 5.72 35.85 56.60 20 22.69 41.18 133 31.03 45.69 5 9 4 11 9 3 3R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 田中 孝明 57.2kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 山崎 祥 52.0kg R 2"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 三馬 崇史 52.8kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 金子 龍斗 50.0kg R 4"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 松尾 基成 54.8kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 大橋 純一郎 52.0kg R 3"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
