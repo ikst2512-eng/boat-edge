@@ -9,7 +9,10 @@ class CsvRetryPolicy(unittest.TestCase):
   start=text.index("          def source_is_sparse(role,rows):")
   end=text.index("          def idx(role):",start)
   block=text[start:end]
-  self.assertIn("for role,url in SOURCES.items():",block)
+  self.assertIn("for role in csv_priority:",block)
+  self.assertIn("url=SOURCES[role]",block)
+  self.assertIn('csv_priority=("original_exhibition","stt","tkz","sui","race_cards")',block)
+  self.assertIn("assert set(csv_priority)==set(SOURCES)",block)
   self.assertIn("if (pending_codes and (err or source_is_sparse(role,rows) or missing_pending_codes(rows) or preview_source_is_incomplete(role,rows))):",block)
   self.assertIn("for delay in (2,5):",block)
   self.assertIn("retry_count",block)
