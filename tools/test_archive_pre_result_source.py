@@ -62,6 +62,32 @@ class ArchiveTests(unittest.TestCase):
                     archive(RACE,temp,now=BEFORE,opener=BadOpener())
                 self.assertEqual(list(Path(temp).iterdir()),[])
 
+    def test_xml_declared_xhtml_root_is_archived_unchanged(self):
+        body=b'<?xml version="1.0" encoding="UTF-8"?>\\n<!DOCTYPE html>\\n<html><body>pre-result</body></html>'
+        class XhtmlOpener:
+            def open(self,request,timeout):
+                class XhtmlResponse(Response):
+                    headers={"Content-Type":"application/xhtml+xml"}
+                    def read(self,n): return body
+                return XhtmlResponse(request.full_url)
+        with tempfile.TemporaryDirectory() as temp:
+            audit=archive(RACE,temp,now=BEFORE,opener=XhtmlOpener())
+            self.assertEqual(audit["sha256"],hashlib.sha256(body).hexdigest())
+            self.assertEqual((Path(temp)/"20261025-04-01.beforeinfo.html").read_bytes(),body)
+
+    def test_generic_xml_is_still_rejected(self):
+        body=b'<?xml version="1.0"?><response><html>not-a-document</html></response>'
+        class XmlOpener:
+            def open(self,request,timeout):
+                class XmlResponse(Response):
+                    headers={"Content-Type":"application/xml"}
+                    def read(self,n): return body
+                return XmlResponse(request.full_url)
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(ValueError,"body_xml_signature"):
+                archive(RACE,temp,now=BEFORE,opener=XmlOpener())
+            self.assertEqual(list(Path(temp).iterdir()),[])
+
     def test_reject_after_deadline(self):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaises(ValueError):
