@@ -87,11 +87,20 @@ def verify(root, manifest):
         # must be reachable from the frozen prediction's Git commit.
         pred_commit = item["prediction"]["first_commit"]
         for predecessor in ("input", "model"):
-            prior_commit = item[predecessor]["first_commit"]
+            prior = item[predecessor]
+            prior_commit = prior["first_commit"]
             try:
                 git(root, "merge-base", "--is-ancestor", prior_commit, pred_commit)
             except ValueError:
                 raise ValueError("MODEL_OR_INPUT_NOT_ANCESTOR_OF_PREDICTION") from None
+            # An ancestor may have been modified or deleted before prediction.
+            # Require the precise claimed bytes in the prediction commit tree.
+            try:
+                in_prediction_tree = git(root, "show", pred_commit + ":" + prior["path"])
+            except ValueError:
+                raise ValueError("MODEL_OR_INPUT_NOT_PRESENT_AT_PREDICTION") from None
+            if hashlib.sha256(in_prediction_tree).hexdigest() != prior["sha256"]:
+                raise ValueError("MODEL_OR_INPUT_CHANGED_BEFORE_PREDICTION")
     if inputs[0] != inputs[1]:
         raise ValueError("DIFFERENT_INPUT_BYTES")
     return {
