@@ -8,10 +8,12 @@ on:
       - 'scripts/boat_edge_paired120_research_evaluate.py'
       - 'scripts/boat_edge_paired120_significance.py'
       - 'scripts/boat_edge_research_git_receipt.py'
+      - 'scripts/boat_edge_site_evidence_triage.py'
       - 'tests/test_boat_edge_entry_attack_mixture_research.py'
       - 'tests/test_boat_edge_paired120_research_evaluate.py'
       - 'tests/test_boat_edge_paired120_significance.py'
       - 'tests/test_boat_edge_research_git_receipt.py'
+      - 'tests/test_boat_edge_site_evidence_triage.py'
       - '.github/workflows/entry-attack-120-research-tests.yml'
   workflow_dispatch:
 permissions:
@@ -30,3 +32,4 @@ jobs:
           python -m unittest discover -s tests -p 'test_boat_edge_paired120_research_evaluate.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_paired120_significance.py' -v
           python -m unittest discover -s tests -p 'test_boat_edge_research_git_receipt.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_site_evidence_triage.py' -v
