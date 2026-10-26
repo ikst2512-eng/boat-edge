@@ -2,6 +2,15 @@ name: Fresh SITE CORE7 saved-state audit (read only)
 
 on:
   workflow_dispatch:
+    inputs:
+      snapshot_sha:
+        description: 'Optional immutable 40-hex Git commit containing historical model_status and race state'
+        required: false
+        type: string
+      target_date:
+        description: 'Date YYYY-MM-DD (required with snapshot_sha)'
+        required: false
+        type: string
   schedule:
     - cron: "17 */2 * * *"
 
@@ -17,16 +26,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Validate historical snapshot arguments
+        shell: bash
+        env:
+          SNAPSHOT_SHA: ${{ inputs.snapshot_sha }}
+          TARGET_DATE: ${{ inputs.target_date }}
+        run: |
+          if [[ -n "$SNAPSHOT_SHA" || -n "$TARGET_DATE" ]]; then
+            [[ "$SNAPSHOT_SHA" =~ ^[a-fA-F0-9]{40}$ ]] || exit 1
+            [[ "$TARGET_DATE" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]$ ]] || exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ inputs.snapshot_sha || github.sha }}
       - name: Verify synthetic audit contracts
         run: python3 -m unittest discover -s tests -p 'test_audit_core7_saved_state.py' -v
       - name: Compare saved SITE CORE7 status to per-race JSON
         shell: bash
         run: |
           set -o pipefail
-          DATE="$(TZ=Asia/Tokyo date +%F)"
+          DATE="${{ inputs.target_date }}"
+          if [[ -z "$DATE" ]]; then DATE="$(TZ=Asia/Tokyo date +%F)"; fi
           echo "### SITE CORE7 persisted-state consistency ($DATE)" >> "$GITHUB_STEP_SUMMARY"
           set +e
           python3 scripts/audit_core7_saved_state.py --date "$DATE" | tee /tmp/core7-audit.json
