@@ -67,6 +67,16 @@ class V13ArtifactAuditorTest(unittest.TestCase):
         data["page_classification.json"]["classifications"][0]["race_number"] = 2
         self.assertIn("CLASSIFICATION_KEYS_MISMATCH", self.check(data)["issues"])
 
+    def test_malformed_capture_is_not_certified(self):
+        data = self.fixture()
+        data["report.json"]["captures"][0] = None
+        self.assertIn("INVALID_CAPTURE_RECORD", self.check(data)["issues"])
+
+    def test_unhashable_status_is_not_certified(self):
+        data = self.fixture()
+        data["page_classification.json"]["classifications"][0]["status"] = []
+        self.assertIn("INVALID_CLASSIFICATION_STATUS", self.check(data)["issues"])
+
     def test_unsafe_unlock_fails(self):
         data = self.fixture()
         data["page_classification.json"]["unlock"] = "UNLOCKED"
