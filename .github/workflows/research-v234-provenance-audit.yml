@@ -71,6 +71,24 @@ jobs:
         run: |
           python scripts/boat_edge_v234_model_provenance_audit.py > artifacts/v234-audit/model_sha_coverage.json
           python -c "import json; d=json.load(open('artifacts/v234-audit/model_sha_coverage.json')); print('V234_MODEL_SHA_COVERAGE',json.dumps(d['coverage_counts'],sort_keys=True))"
+      - name: Inspect actual V232 static local import closure without attestation
+        run: |
+          python - <<'PY_IMPORTS'
+          import json
+          from pathlib import Path
+          from scripts.boat_edge_prospective_model_identity import transitive_local_imports
+          root=Path('.').resolve()
+          source=root/'scripts/boat_edge_v232_pre_result_cohort.py'
+          deps=sorted(transitive_local_imports(root,source))
+          report={'source':'scripts/boat_edge_v232_pre_result_cohort.py',
+                  'static_local_python_imports':deps,
+                  'runtime_data_and_dynamic_imports_unverified':True,
+                  'complete_model_attestation':False,
+                  'prediction_eligibility_granted':False}
+          Path('artifacts/v234-audit/v232_static_import_inventory.json').write_text(
+              json.dumps(report,indent=2,sort_keys=True)+'\\n')
+          print('V232_STATIC_IMPORT_INVENTORY',json.dumps(report,sort_keys=True))
+          PY_IMPORTS
       - name: Audit prospective V232-model evidence pairs without enrollment
         run: |
           python - <<'PY_PAIR'
