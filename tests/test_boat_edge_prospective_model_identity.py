@@ -18,7 +18,7 @@ class ProspectiveIdentityTests(unittest.TestCase):
                             "commit", "-qm", "initial"], cwd=root, check=True)
             now = dt.datetime(2026, 10, 26, tzinfo=dt.timezone.utc)
             due = "2026-10-27T10:00:00+09:00"
-            with self.assertRaisesRegex(ValueError, "DIRECT_LOCAL_DEPENDENCIES_NOT_DECLARED"):
+            with self.assertRaisesRegex(ValueError, "TRANSITIVE_LOCAL_DEPENDENCIES_NOT_DECLARED"):
                 create(root, "20261027-21-02", "model.py", due, now=now)
             record = create(root, "20261027-21-02", "model.py", due, now=now, dependency_paths=["dep.py"])
             self.assertFalse(record["prediction_eligibility_granted"])
