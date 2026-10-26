@@ -52,7 +52,7 @@ def audit(path, expected_run_id=None, expected_sha=None):
                 if (hashlib.sha256(raw).hexdigest() != record["sha256"]
                         or len(raw) != record["bytes"]):
                     issues.append("HTML_INTEGRITY_MISMATCH")
-            except (KeyError, TypeError, ValueError):
+            except (KeyError, TypeError, ValueError, AttributeError):
                 issues.append("INVALID_CAPTURE_RECORD")
         if len(expected_keys) != len(set(expected_keys)):
             issues.append("DUPLICATE_CAPTURE")
@@ -71,8 +71,12 @@ def audit(path, expected_run_id=None, expected_sha=None):
                 issues.append("INVALID_CLASSIFICATIONS")
             keys = [(row.get("venue_code"), row.get("race_number")) for row in rows
                     if isinstance(row, dict)]
-            counts = dict(collections.Counter(row.get("status") for row in rows
-                                              if isinstance(row, dict)))
+            try:
+                counts = dict(collections.Counter(row.get("status") for row in rows
+                                                  if isinstance(row, dict)))
+            except TypeError:
+                issues.append("INVALID_CLASSIFICATION_STATUS")
+                counts = {}
             if (len(keys) != len(rows)
                     or collections.Counter(keys) != collections.Counter(expected_keys)):
                 issues.append("CLASSIFICATION_KEYS_MISMATCH")
