@@ -77,6 +77,25 @@ class V13ArtifactAuditorTest(unittest.TestCase):
         data["page_classification.json"]["classifications"][0]["status"] = []
         self.assertIn("INVALID_CLASSIFICATION_STATUS", self.check(data)["issues"])
 
+    def test_duplicate_zip_member_fails_closed(self):
+        import warnings
+        files = self.fixture()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "duplicate.zip"
+            with zipfile.ZipFile(path, "w") as archive:
+                for name, obj in files.items():
+                    archive.writestr(name, json.dumps(obj) if not isinstance(obj, bytes) else obj)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    archive.writestr("report.json", json.dumps(files["report.json"]))
+            result = module.audit(path, "123", "a" * 40)
+        self.assertIn("DUPLICATE_ZIP_MEMBER", result["issues"])
+
+    def test_unhashable_race_key_fails_closed(self):
+        files = self.fixture()
+        files["report.json"]["captures"][0]["venue_code"] = []
+        self.assertIn("INVALID_CAPTURE_RECORD", self.check(files)["issues"])
+
     def test_unsafe_unlock_fails(self):
         data = self.fixture()
         data["page_classification.json"]["unlock"] = "UNLOCKED"
