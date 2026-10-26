@@ -1,7 +1,8 @@
 name: BOAT EDGE Deadline Evidence V9 (research, manual)
 on:
   schedule:
-    - cron: '45 22 * * *' # 07:45 JST daily, next local morning
+    - cron: '45 22 * * *' # 07:45 JST primary research capture
+    - cron: '15 23 * * *' # 08:15 JST backup if primary schedule is skipped
   workflow_dispatch:
     inputs:
       jst_date:
