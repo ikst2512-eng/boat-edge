@@ -5,6 +5,8 @@ prove independent publication, model execution, or outcome blindness.
 """
 import hashlib
 import json
+import re
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -16,6 +18,16 @@ def check(root, manifest):
     if not isinstance(manifest, dict) or manifest.get("scope") != "RESEARCH_PRE_RESULT_ONLY":
         report["errors"].append("INVALID_SCOPE")
         return report
+    race_key = manifest.get("race_key")
+    deadline = manifest.get("deadline_jst")
+    if not isinstance(race_key, str) or not re.fullmatch(r"20[0-9]{6}-(?:0[1-9]|1[0-9]|2[0-4])-(?:0[1-9]|1[0-2])", race_key):
+        report["errors"].append("RACE_KEY_REQUIRED")
+    try:
+        dt = datetime.fromisoformat(deadline)
+        if dt.utcoffset() != timedelta(hours=9) or dt.strftime("%Y%m%d") != race_key[:8]:
+            raise ValueError("RACE_DEADLINE_MISMATCH")
+    except (TypeError, ValueError, AttributeError):
+        report["errors"].append("VALID_RACE_DEADLINE_REQUIRED")
     for side in ("baseline", "candidate"):
         item = manifest.get(side)
         if not isinstance(item, dict):
