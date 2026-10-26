@@ -59,7 +59,7 @@ def verify(root, manifest):
             if not isinstance(commit, str) or not GIT_SHA.fullmatch(commit):
                 raise ValueError("INVALID_GIT_SHA")
             # Read bytes from immutable Git tree, not mutable working tree.
-            if any(token in path.lower() for token in ("result", "payout", "outcome", "formal")):
+            if any(token in path.lower() for token in ("result", "payout", "outcome", "formal", "score", "finish", "settlement", "winning")):
                 raise ValueError("FORBIDDEN_RESULT_OR_FORMAL_PATH")
             raw = git(root, "show", commit + ":" + path)
             if hashlib.sha256(raw).hexdigest() != digest:
