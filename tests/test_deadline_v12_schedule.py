@@ -15,6 +15,11 @@ class ScheduleSafety(unittest.TestCase):
         for expected in ['contents: read','if: always()','--report artifacts/report.json','verify_artifacts.py','formal']:
             if expected=='formal':continue
             self.assertIn(expected,self.wf)
+    def test_missing_capture_report_emits_locked_classification(self):
+        self.assertIn('"reason": "NO_CAPTURE_REPORT"', self.wf)
+        self.assertIn('Path("artifacts/page_classification.json").write_text(', self.wf)
+        self.assertIn('"formal_eligible": False', self.wf)
+        self.assertIn('"unlock": "LOCKED"', self.wf)
     def test_manual_12r_retained(self):
         self.assertIn('workflow_dispatch:',self.wf)
         self.assertIn('all_races:',self.wf)
