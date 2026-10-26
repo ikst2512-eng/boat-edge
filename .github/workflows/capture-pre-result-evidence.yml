@@ -48,7 +48,11 @@ jobs:
           python -m unittest discover -s tools -p 'test_verify_sidecars_before_push.py' -v
       - name: Capture imminent official sources
         if: github.event_name != 'push' && github.ref == 'refs/heads/main'
-        run: python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          python tools/capture_imminent_pre_result.py --races data/races --output artifacts/pre-result-captures --enriched-output artifacts/verified-entry-snapshots --maximum 12 | tee artifacts/capture-report.json
       - name: Prepare public entry sidecars
         if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         run: python tools/prepare_public_entry_sidecars.py
