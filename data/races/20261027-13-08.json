@@ -7,8 +7,8 @@
     "venue": "尼崎",
     "event": "第73回ボートレースダービー",
     "race_no": 8,
-    "deadline": "14:02",
-    "updated_at": "2026-10-27T11:29:55+09:00",
+    "deadline": "14:04",
+    "updated_at": "2026-10-27T13:53:39+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261027&jcd=13&rno=8",
-      "fetched_at": "2026-10-27T11:33:38+09:00",
-      "sha256": "3fb78cd11fdf5ff7440ad3891752f6192eb84b4eaddd3f7dbcbe25626332c901",
+      "fetched_at": "2026-10-27T13:55:32+09:00",
+      "sha256": "7f334ad687e917a65d45b92be900ab7d6c91ea9d109e33dd47adf441dd169d9e",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261027&jcd=13&rno=8",
+      "fetched_at": "2026-10-27T13:54:15+09:00",
+      "sha256": "d4b4b52404cb61680c9856c01dbbb6b1e90707345c356b0ded924ffd1a5973bc",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/27.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-27T11:33:54+09:00",
+      "observed_at": "2026-10-27T13:56:53+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "b59f63067f70a8a504b9e171df58f8a69d8d41cd24421e13d03faf1c280af614"
+      "sha256": "9a2e1e4773b91558fdc53e0de586d6d0314d0e02b44776c795ed92f7583789e6"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/27.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-27T11:34:02+09:00",
+      "observed_at": "2026-10-27T13:57:00+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "02cab094e262261e44ca2bb4112275a8c0a5d99b04a950e76733c7ed599768c2"
+      "sha256": "27328fbee2ba16928356e89a93bb001d197b9dcf73758423b410dbf20496b74d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/27.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-27T11:34:09+09:00",
+      "observed_at": "2026-10-27T13:57:07+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "6c6ac050f6468bca854f9a05abab82d29757a070037448fc6ea68f7653f8f23c"
+      "sha256": "cb36f77b453d01cf8589552a08ed077eec5b6cf1e660ef4220096da51c5e690d"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/27.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-27T11:33:47+09:00",
+      "observed_at": "2026-10-27T13:56:46+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "224812aae535092f3ac191f03dbc3a6bf5a708eaf28faf795ee4f9ed99e29376"
+      "sha256": "1d10fecb091245076dbc89546255145bac08d54e3f74855a58d1fd35dda2bcbe"
     }
   },
   "racers": [
@@ -139,9 +145,11 @@
         "quinella_rate": 42.75,
         "trio_rate": 52.9
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "3"
+      ],
       "early_race": 3,
-      "raw_text": "2 3623 / A1 深川 真二 佐賀/佐賀 52歳/51.5kg F1 L0 0.14 7.15 59.82 75.89 6.97 63.16 65.79 48 31.72 46.90 21 42.75 52.90 3R"
+      "raw_text": "2 3623 / A1 深川 真二 佐賀/佐賀 52歳/51.5kg F1 L0 0.14 7.15 59.82 75.89 6.97 63.16 65.79 48 31.72 46.90 21 42.75 52.90 3 3R"
     },
     {
       "lane": 3,
@@ -290,7 +298,78 @@
       "raw_text": "6 4848 / A1 仲谷 颯仁 福岡/福岡 32歳/52.2kg F1 L0 0.15 7.49 53.49 71.32 7.04 58.33 66.67 54 41.30 52.90 49 32.89 46.98"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.81,
+        "tilt": 0.0,
+        "raw_text": "1 吉川 貴仁 52.0kg 6.81 0.0 R 1"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.91,
+        "tilt": -0.5,
+        "raw_text": "2 深川 真二 51.5kg 6.91 -0.5 R 3"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.8,
+        "tilt": 0.0,
+        "raw_text": "3 井上 忠政 52.0kg 6.80 0.0 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.75,
+        "tilt": 0.0,
+        "raw_text": "4 前田 滉 51.5kg 6.75 0.0 R 2"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.79,
+        "tilt": 0.0,
+        "raw_text": "5 桐生 順平 52.0kg 6.79 0.0 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.83,
+        "tilt": -0.5,
+        "raw_text": "6 仲谷 颯仁 52.2kg 6.83 -0.5 R"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": "F.07"
+      },
+      {
+        "lane": 2,
+        "st": "F.10"
+      },
+      {
+        "lane": 3,
+        "st": "F.11"
+      },
+      {
+        "lane": 4,
+        "st": "F.02"
+      },
+      {
+        "lane": 5,
+        "st": "F.01"
+      },
+      {
+        "lane": 6,
+        "st": "F.05"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 0.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
