@@ -1,37 +1,138 @@
 {
-  "atomic_pre_result_audit": true,
-  "first_audited_at": "2026-10-27T02:34:58.967182+00:00",
-  "last_audited_at": "2026-10-27T02:34:58.967182+00:00",
-  "latest_snapshot_saved_at": "2026-10-27T02:34:58.951189+00:00",
-  "latest_snapshot_sha256": "53e17f6b1a52d9d3bf443df913a19b1ff0c1efecbe0f22466dcf1c4af6ed9b4c",
-  "pass": true,
+  "schema_version": "boat-edge-final15m-audit-v125",
   "race_key": "20261027-08-04",
+  "first_audited_at": "2026-10-27T02:34:58.967182+00:00",
+  "last_audited_at": "2026-10-27T04:58:37.505897+00:00",
+  "latest_snapshot_sha256": "53e17f6b1a52d9d3bf443df913a19b1ff0c1efecbe0f22466dcf1c4af6ed9b4c",
+  "latest_snapshot_saved_at": "2026-10-27T02:34:58.951189+00:00",
   "revision_count": 1,
   "revisions": [
     {
-      "atomic_pre_result_proof_sha256": "09e73a79ba8cec7a6da22fa376f88c0bedbacd4a87d68049942c41ab0b6c87cb",
-      "first_saved_at": "2026-10-27T02:34:58.951179+00:00",
-      "intrinsic_flags": {
-        "final_15m": true,
-        "first_save_predeadline_verified": true,
-        "official_odds_120_bound": true,
-        "pre_result_guards": true,
-        "prediction_kind_ok": true,
-        "race_identity_verified": true,
-        "race_sha_bound": true,
-        "recorded_save_time_verified": true,
-        "schema_v123": true,
-        "snapshot_bytes_verified": true,
-        "v229_new_snapshot_validated": true
-      },
-      "odds_sha256_snapshot": "4ba350131daf389184e84eb833d4783ec34e0507bb34de4f3e7452e02525bb58",
-      "prediction_kind": "SITE_REFERENCE_V122",
-      "race_sha256_snapshot": "7093115a3029e06ddb0bcf8267481416be3e7a0e767a9353aadbc4b5e7846ba1",
+      "snapshot_sha256": "53e17f6b1a52d9d3bf443df913a19b1ff0c1efecbe0f22466dcf1c4af6ed9b4c",
       "saved_at": "2026-10-27T02:34:58.951189+00:00",
-      "snapshot_sha256": "53e17f6b1a52d9d3bf443df913a19b1ff0c1efecbe0f22466dcf1c4af6ed9b4c"
+      "first_saved_at": "2026-10-27T02:34:58.951179+00:00",
+      "minutes_to_deadline": 6.02,
+      "prediction_kind": "SITE_REFERENCE_V122",
+      "selection_policy": "V122_SCENARIO_AWARE_PROBABILITY_FIRST",
+      "used_inputs": [
+        "当地3か月コース",
+        "展示ST",
+        "展示タイム"
+      ],
+      "race_sha256_snapshot": "7093115a3029e06ddb0bcf8267481416be3e7a0e767a9353aadbc4b5e7846ba1",
+      "odds_sha256_snapshot": "4ba350131daf389184e84eb833d4783ec34e0507bb34de4f3e7452e02525bb58",
+      "grade": "C",
+      "mode_ticket_counts": {
+        "hit": 10,
+        "balance": 10,
+        "hole": 12,
+        "narrow": 3,
+        "tail": 10
+      },
+      "hit_mode_top10": [
+        {
+          "rank": 1,
+          "combo": "1-2-6",
+          "p": 12.706795977492762,
+          "odds": 163.3
+        },
+        {
+          "rank": 2,
+          "combo": "1-6-2",
+          "p": 12.653725012749407,
+          "odds": 326.6
+        },
+        {
+          "rank": 3,
+          "combo": "1-2-3",
+          "p": 12.368242842088577,
+          "odds": 27.2
+        },
+        {
+          "rank": 4,
+          "combo": "1-2-4",
+          "p": 12.258809546219988,
+          "odds": 43.5
+        },
+        {
+          "rank": 5,
+          "combo": "1-3-2",
+          "p": 12.248276619134215,
+          "odds": 34.0
+        },
+        {
+          "rank": 6,
+          "combo": "2-1-6",
+          "p": 7.810105234070618,
+          "odds": 93.3
+        },
+        {
+          "rank": 7,
+          "combo": "2-1-3",
+          "p": 7.601795373989068,
+          "odds": 22.2
+        },
+        {
+          "rank": 8,
+          "combo": "2-1-4",
+          "p": 7.534480799003456,
+          "odds": 27.4
+        },
+        {
+          "rank": 9,
+          "combo": "6-1-2",
+          "p": 7.485460986455742,
+          "odds": 133.3
+        },
+        {
+          "rank": 10,
+          "combo": "2-6-1",
+          "p": 7.3323076087961505,
+          "odds": 176.5
+        }
+      ],
+      "intrinsic_flags": {
+        "schema_v123": true,
+        "final_15m": true,
+        "pre_result_guards": true,
+        "race_sha_present": true,
+        "odds_sha_present_or_missing_source": true,
+        "minutes_in_window": true,
+        "ranking_policy_ok": true,
+        "prediction_kind_ok": true,
+        "top10_nonempty": true
+      },
+      "pass": true,
+      "atomic_pre_result_proof_sha256": "09e73a79ba8cec7a6da22fa376f88c0bedbacd4a87d68049942c41ab0b6c87cb"
     }
   ],
-  "schema_version": "boat-edge-final15m-audit-v125",
+  "current_state_info": {
+    "race_sha256_current": "7093115a3029e06ddb0bcf8267481416be3e7a0e767a9353aadbc4b5e7846ba1",
+    "odds_sha256_current": "4ba350131daf389184e84eb833d4783ec34e0507bb34de4f3e7452e02525bb58",
+    "race_still_matches_latest_snapshot": true,
+    "odds_still_matches_latest_snapshot": true,
+    "note": "Current-source mismatch after snapshot time is informational only; snapshot-time hashes remain the evidence."
+  },
+  "latest_intrinsic_flags": {
+    "schema_v123": true,
+    "final_15m": true,
+    "pre_result_guards": true,
+    "race_sha_present": true,
+    "odds_sha_present_or_missing_source": true,
+    "minutes_in_window": true,
+    "ranking_policy_ok": true,
+    "prediction_kind_ok": true,
+    "top10_nonempty": true
+  },
+  "pass": true,
+  "settlement": {
+    "available": false,
+    "winning_combo": null,
+    "hit_any": null,
+    "mode_hits": {},
+    "payout": null
+  },
+  "atomic_pre_result_audit": true,
   "scope": "SITE_ONLY_NOT_FORMAL_FRESH",
   "source_evidence_file": "data/site_autopilot/v229_evidence/20261027-08-04.json"
 }
