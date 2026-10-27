@@ -8,7 +8,7 @@
     "event": "トータリゼータエンジニアリング杯",
     "race_no": 3,
     "deadline": "09:27",
-    "updated_at": "2026-10-28T05:23:52+09:00",
+    "updated_at": "2026-10-28T07:16:23+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261028&jcd=23&rno=3",
-      "fetched_at": "2026-10-28T05:25:25+09:00",
-      "sha256": "2ae4d5469b864638d67865702295bac2c89f5dee8aa2e1d695c7f7476cef2aca",
+      "fetched_at": "2026-10-28T07:18:40+09:00",
+      "sha256": "712134092527350faef86cc58c6df592142b42594bfcd81a11e45a84f75ffc8d",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261028&jcd=23&rno=3",
+      "fetched_at": "2026-10-28T07:17:03+09:00",
+      "sha256": "27c678e24c36e3a058b706c117bd6a40369945d2126da7667beac794761278ad",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:30+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:30+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:30+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:29+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -302,7 +308,53 @@
       "raw_text": "6 5459 / B2 田中 きら 山口/山口 20歳/44.5kg F0 L0 - 1.06 0.00 0.00 1.11 0.00 0.00 64 38.89 66.67 58 28.87 42.96 3"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 渡邉 優美 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 宇土 泰就 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 伏島 祐介 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 濱野谷 憲吾 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 牧山 敦也 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 田中 きら R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

@@ -8,7 +8,7 @@
     "event": "トータリゼータエンジニアリング杯",
     "race_no": 1,
     "deadline": "08:35",
-    "updated_at": "2026-10-28T05:23:52+09:00",
+    "updated_at": "2026-10-28T07:16:23+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261028&jcd=23&rno=1",
-      "fetched_at": "2026-10-28T05:25:21+09:00",
-      "sha256": "87591436acb1eae53c73b3e31c5557be2f215b9519ef8289ffaa8270080bebb9",
+      "fetched_at": "2026-10-28T07:18:38+09:00",
+      "sha256": "a0d3008b50ab09e540dddb8ef447b6fbdb2170b8d7328022d60b27b8378f1dc7",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261028&jcd=23&rno=1",
+      "fetched_at": "2026-10-28T07:17:01+09:00",
+      "sha256": "2fc20cb2ac49992a46595f217d3c86bce23a5ccfebe065fdc7cd67ae55ab5995",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:30+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:30+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:30+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/28.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-28T05:26:29+09:00",
+      "observed_at": "2026-10-28T07:19:12+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -301,7 +307,53 @@
       "raw_text": "6 3584 / B1 佐々木 英樹 広島/広島 53歳/53.0kg F0 L0 0.17 4.71 27.66 44.68 5.57 39.29 57.14 26 20.00 33.33 37 35.37 55.78 7 11 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 山田 丈 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 佐藤 世那 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 渡辺 崇 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 桂林 寛 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 寺田 夢生 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 佐々木 英樹 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
