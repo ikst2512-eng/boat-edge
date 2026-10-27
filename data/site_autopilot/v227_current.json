@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-27T08:22:13.215846+00:00",
+  "checked_at": "2026-10-27T13:38:46.173683+00:00",
   "day_jst": "20261027",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -68,52 +68,19 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [
-      "collector_index_stale",
-      "odds_index_stale",
-      "predeadline_incomplete",
-      "predeadline_race_odds_gap",
-      "predeadline_v216_observation_stale"
-    ],
-    "current_window": [
-      {
-        "deadline_jst": "17:29",
-        "issues": [
-          "出走表期限切れ",
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 6.8,
-        "race_key": "20261027-15-06",
-        "venue": "丸亀"
-      },
-      {
-        "deadline_jst": "17:37",
-        "issues": [
-          "出走表期限切れ",
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 14.8,
-        "race_key": "20261027-07-06",
-        "venue": "蒲郡"
-      }
-    ],
+    "collector_health_issues": [],
+    "current_window": [],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 50,
+    "readiness_observed_races": 54,
     "readiness_reasons": {
       "no_raw_ev_candidate_8_25x": 1,
-      "snapshot_missing": 33,
-      "verified_shadow_ready": 16
+      "snapshot_missing": 35,
+      "verified_shadow_ready": 18
     },
-    "readiness_shadow_verified_races": 16,
+    "readiness_shadow_verified_races": 18,
     "schedule_today": true,
-    "snapshot_files_today": 22,
-    "status": "NEEDS_ATTENTION",
+    "snapshot_files_today": 24,
+    "status": "WAITING_FOR_PREDEADLINE",
     "v226_source_guard_active": true
   }
 }
