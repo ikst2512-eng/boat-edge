@@ -1,41 +1,23 @@
 {
-  "checked_at": "2026-10-28T08:33:32.533871+00:00",
+  "checked_at": "2026-10-28T08:36:04.722758+00:00",
   "current_window": [
     {
-      "deadline": "17:37",
-      "minutes_left": 3.5,
-      "race_key": "20261028-07-06",
-      "reason": "snapshot_missing",
-      "source_gaps": [
-        "race_card_stale",
-        "beforeinfo_not_ok",
-        "scratch_missing_or_blocked",
-        "pre_result_odds_unverified"
-      ],
-      "venue": "蒲郡"
-    },
-    {
       "deadline": "17:46",
-      "minutes_left": 12.5,
+      "minutes_left": 9.9,
       "race_key": "20261028-01-06",
-      "reason": "snapshot_missing",
-      "source_gaps": [
-        "race_card_stale",
-        "beforeinfo_not_ok",
-        "scratch_missing_or_blocked",
-        "pre_result_odds_unverified"
-      ],
+      "reason": "verified_shadow_ready",
+      "source_gaps": [],
       "venue": "桐生"
     }
   ],
   "day_jst": "20261028",
   "day_latest_reasons": {
     "no_raw_ev_candidate_8_25x": 3,
-    "snapshot_missing": 14,
-    "verified_shadow_ready": 14
+    "snapshot_missing": 13,
+    "verified_shadow_ready": 15
   },
   "day_observed_races": 31,
-  "day_verified_races": 14,
+  "day_verified_races": 15,
   "next_race": {
     "deadline": "17:37",
     "race_key": "20261028-07-06",
@@ -44,20 +26,20 @@
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
-    "snapshot_missing": 2
+    "verified_shadow_ready": 1
   },
   "schedule_source_today": true,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 0,
+    "beforeinfo_ok": 2,
     "race_card_ok": 2,
-    "snapshot_exists": 0
+    "snapshot_exists": 1
   },
   "upcoming": [
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "17:37",
       "race_card_status": "ok",
       "race_key": "20261028-07-06",
@@ -67,12 +49,12 @@
       "watch_start": "17:22"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "17:46",
       "race_card_status": "ok",
       "race_key": "20261028-01-06",
-      "scratch_status": "blocked",
-      "snapshot_exists": false,
+      "scratch_status": "uncertified",
+      "snapshot_exists": true,
       "venue": "桐生",
       "watch_start": "17:31"
     },
@@ -137,5 +119,5 @@
       "watch_start": "18:28"
     }
   ],
-  "window_races": 2
+  "window_races": 1
 }
