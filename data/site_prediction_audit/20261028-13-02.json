@@ -2,7 +2,7 @@
   "schema_version": "boat-edge-final15m-audit-v125",
   "race_key": "20261028-13-02",
   "first_audited_at": "2026-10-28T01:54:21.134683+00:00",
-  "last_audited_at": "2026-10-28T02:06:14.581418+00:00",
+  "last_audited_at": "2026-10-28T09:29:46.963842+00:00",
   "latest_snapshot_sha256": "f15b78c09042f11c525c60a9efe6070d1615de652ed78207313cc76aa9c90a0a",
   "latest_snapshot_saved_at": "2026-10-28T01:54:21.129674+00:00",
   "revision_count": 1,
@@ -126,11 +126,17 @@
   },
   "pass": true,
   "settlement": {
-    "available": false,
-    "winning_combo": null,
-    "hit_any": null,
-    "mode_hits": {},
-    "payout": null
+    "available": true,
+    "winning_combo": "1-2-3",
+    "hit_any": true,
+    "mode_hits": {
+      "hit": true,
+      "balance": true,
+      "hole": true,
+      "narrow": true,
+      "tail": true
+    },
+    "payout": 600
   },
   "atomic_pre_result_audit": true,
   "scope": "SITE_ONLY_NOT_FORMAL_FRESH",
