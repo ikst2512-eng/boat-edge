@@ -1,21 +1,21 @@
 {
-  "updated_at": "2026-10-28T17:34:36+09:00",
+  "updated_at": "2026-10-28T19:30:46+09:00",
   "target_date": "2026-10-28",
   "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
   "formal_parent_sha256": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
   "candidate_sha256": "30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
   "source_rows": {
-    "original_exhibition": 101,
-    "stt": 106,
-    "tkz": 106,
-    "sui": 106,
+    "original_exhibition": 112,
+    "stt": 117,
+    "tkz": 117,
+    "sui": 117,
     "race_cards": 132
   },
   "source_sha256": {
-    "original_exhibition": "bb118f540b92236f46318142d725ff43136c03f22baa75019c042d80ec3ab603",
-    "stt": "37d905163c59b1fc417b8f08281cd6b8c944de9224d00163814208a8fc3ea34b",
-    "tkz": "83603118a1bc13e895c14714e2a34a6fc96ea2c7a8e392b24f1ae4b19da20733",
-    "sui": "1b5316bc13d5cea75f9782e6ed9d2d3ca0250203c1c98ebe574c138b5f3825b1",
+    "original_exhibition": "4b8f20d7289b0b806eb3a7fd9e74b3d6fd53f0e86aa49271d1b67c22c746092c",
+    "stt": "f1dddb22b153973e7c93af76c972a95bac0d211789d4b9d10166b1baf38d2a4c",
+    "tkz": "4745ca5db5d6636a804c4861b81f93a62f063749b22f10d405aceb1e6811294d",
+    "sui": "5c4323cbe9e9b5f1fdbdaa12d6457032b4832933e5fd610528c8871f43926bd6",
     "race_cards": "eaccee494652d4e9c25abcebbe1464a630ab45003d3adb2e1ae50fe2927bd322"
   },
   "core7": {
@@ -28,51 +28,51 @@
   },
   "core7_failure_diagnostic": {
     "counts": {
-      "missing_original_exhibition": 19,
-      "missing_stt": 19,
-      "missing_sui": 19,
-      "missing_tkz": 19
+      "missing_original_exhibition": 8,
+      "missing_stt": 8,
+      "missing_sui": 8,
+      "missing_tkz": 8
     },
     "examples": {
       "missing_stt": [
-        "20261028-01-06",
-        "20261028-01-07",
-        "20261028-01-08",
-        "20261028-01-09",
         "20261028-01-10",
         "20261028-01-11",
         "20261028-01-12",
-        "20261028-07-07"
+        "20261028-07-10",
+        "20261028-07-11",
+        "20261028-07-12",
+        "20261028-15-11",
+        "20261028-15-12"
       ],
       "missing_tkz": [
-        "20261028-01-06",
-        "20261028-01-07",
-        "20261028-01-08",
-        "20261028-01-09",
         "20261028-01-10",
         "20261028-01-11",
         "20261028-01-12",
-        "20261028-07-07"
+        "20261028-07-10",
+        "20261028-07-11",
+        "20261028-07-12",
+        "20261028-15-11",
+        "20261028-15-12"
       ],
       "missing_sui": [
-        "20261028-01-06",
-        "20261028-01-07",
-        "20261028-01-08",
-        "20261028-01-09",
         "20261028-01-10",
         "20261028-01-11",
         "20261028-01-12",
-        "20261028-07-07"
+        "20261028-07-10",
+        "20261028-07-11",
+        "20261028-07-12",
+        "20261028-15-11",
+        "20261028-15-12"
       ],
       "missing_original_exhibition": [
-        "20261028-01-06",
-        "20261028-01-07",
-        "20261028-01-08",
-        "20261028-01-09",
         "20261028-01-10",
         "20261028-01-11",
         "20261028-01-12",
-        "20261028-07-07"
+        "20261028-07-10",
+        "20261028-07-11",
+        "20261028-07-12",
+        "20261028-15-11",
+        "20261028-15-12"
       ]
     },
     "scope": "MUTABLE_RACE_SOURCE_AND_VALUE_BLOCKERS_NOT_FORMAL",
@@ -83,8 +83,8 @@
     "sample_race_keys": [],
     "scope": "MUTABLE_PREDEADLINE_ONLY_NOT_FORMAL_ELIGIBILITY"
   },
-  "site_races_merged": 20,
-  "site_snapshot_immutable_races": 112,
+  "site_races_merged": 8,
+  "site_snapshot_immutable_races": 124,
   "guards": {
     "results_seen": false,
     "unlock": false,
@@ -97,45 +97,45 @@
   },
   "errors": [],
   "official_ready_csv_missing": {
-    "count": 24,
+    "count": 26,
     "sample_race_keys": [
       "20261028-01-06",
+      "20261028-01-10",
       "20261028-03-01",
       "20261028-03-02",
       "20261028-07-04",
+      "20261028-07-10",
       "20261028-08-02",
       "20261028-08-03",
       "20261028-08-07",
       "20261028-09-02",
       "20261028-09-03",
-      "20261028-10-02",
-      "20261028-10-06",
-      "20261028-10-10"
+      "20261028-10-02"
     ],
     "site_diagnostic_only": true,
     "does_not_grant_core7_or_formal_readiness": true
   },
   "source_availability": {
     "original_exhibition": {
-      "rows": 101,
+      "rows": 112,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 4
     },
     "stt": {
-      "rows": 106,
+      "rows": 117,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 4
     },
     "tkz": {
-      "rows": 106,
+      "rows": 117,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 4
     },
     "sui": {
-      "rows": 106,
+      "rows": 117,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
       "missing_pending_races": 4
