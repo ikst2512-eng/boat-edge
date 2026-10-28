@@ -1,59 +1,67 @@
 {
-  "checked_at": "2026-10-28T08:19:20.296823+00:00",
+  "checked_at": "2026-10-28T08:33:32.533871+00:00",
   "current_window": [
     {
-      "deadline": "17:28",
-      "minutes_left": 8.7,
-      "race_key": "20261028-15-06",
-      "reason": "verified_shadow_ready",
-      "source_gaps": [],
-      "venue": "丸亀"
+      "deadline": "17:37",
+      "minutes_left": 3.5,
+      "race_key": "20261028-07-06",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "race_card_stale",
+        "beforeinfo_not_ok",
+        "scratch_missing_or_blocked",
+        "pre_result_odds_unverified"
+      ],
+      "venue": "蒲郡"
+    },
+    {
+      "deadline": "17:46",
+      "minutes_left": 12.5,
+      "race_key": "20261028-01-06",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "race_card_stale",
+        "beforeinfo_not_ok",
+        "scratch_missing_or_blocked",
+        "pre_result_odds_unverified"
+      ],
+      "venue": "桐生"
     }
   ],
   "day_jst": "20261028",
   "day_latest_reasons": {
     "no_raw_ev_candidate_8_25x": 3,
-    "snapshot_missing": 12,
+    "snapshot_missing": 14,
     "verified_shadow_ready": 14
   },
-  "day_observed_races": 29,
+  "day_observed_races": 31,
   "day_verified_races": 14,
   "next_race": {
-    "deadline": "17:28",
-    "race_key": "20261028-15-06",
-    "venue": "丸亀",
-    "watch_start": "17:13"
+    "deadline": "17:37",
+    "race_key": "20261028-07-06",
+    "venue": "蒲郡",
+    "watch_start": "17:22"
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
-    "verified_shadow_ready": 1
+    "snapshot_missing": 2
   },
   "schedule_source_today": true,
   "scheduled_races": 132,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 1,
-    "race_card_ok": 1,
-    "snapshot_exists": 1
+    "beforeinfo_ok": 0,
+    "race_card_ok": 2,
+    "snapshot_exists": 0
   },
   "upcoming": [
-    {
-      "beforeinfo_status": "ok",
-      "deadline": "17:28",
-      "race_card_status": "ok",
-      "race_key": "20261028-15-06",
-      "scratch_status": "uncertified",
-      "snapshot_exists": true,
-      "venue": "丸亀",
-      "watch_start": "17:13"
-    },
     {
       "beforeinfo_status": "published_wait",
       "deadline": "17:37",
       "race_card_status": "ok",
       "race_key": "20261028-07-06",
-      "scratch_status": "missing",
+      "scratch_status": "blocked",
       "snapshot_exists": false,
       "venue": "蒲郡",
       "watch_start": "17:22"
@@ -63,7 +71,7 @@
       "deadline": "17:46",
       "race_card_status": "ok",
       "race_key": "20261028-01-06",
-      "scratch_status": "missing",
+      "scratch_status": "blocked",
       "snapshot_exists": false,
       "venue": "桐生",
       "watch_start": "17:31"
@@ -73,7 +81,7 @@
       "deadline": "17:55",
       "race_card_status": "ok",
       "race_key": "20261028-15-07",
-      "scratch_status": "missing",
+      "scratch_status": "blocked",
       "snapshot_exists": false,
       "venue": "丸亀",
       "watch_start": "17:40"
@@ -117,7 +125,17 @@
       "snapshot_exists": false,
       "venue": "蒲郡",
       "watch_start": "18:18"
+    },
+    {
+      "beforeinfo_status": "published_wait",
+      "deadline": "18:43",
+      "race_card_status": "ok",
+      "race_key": "20261028-01-08",
+      "scratch_status": "missing",
+      "snapshot_exists": false,
+      "venue": "桐生",
+      "watch_start": "18:28"
     }
   ],
-  "window_races": 1
+  "window_races": 2
 }
