@@ -8,7 +8,7 @@
     "event": "スポーツ報知杯争奪第17回ビクトリーカップ",
     "race_no": 1,
     "deadline": "10:20",
-    "updated_at": "2026-10-30T06:13:52+09:00",
+    "updated_at": "2026-10-30T08:02:20+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261030&jcd=08&rno=1",
-      "fetched_at": "2026-10-30T06:16:15+09:00",
-      "sha256": "90b8a0a86d985df730dfdc3830242fa55bc1e0279b07dbf2b90e5058c2fd6130",
+      "fetched_at": "2026-10-30T08:03:59+09:00",
+      "sha256": "c3378713007482c5e35e812dea0a327dcddb7ba01eba4ed53d23729cb647b9e2",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261030&jcd=08&rno=1",
+      "fetched_at": "2026-10-30T08:03:08+09:00",
+      "sha256": "bfc7f16ffa8b888a6e1555b38128e569b09d3b06a669fbfd8a1b3c587c2e46e0",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/30.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-30T06:16:48+09:00",
+      "observed_at": "2026-10-30T08:05:43+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/30.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-30T06:16:48+09:00",
+      "observed_at": "2026-10-30T08:05:50+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/30.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-30T06:16:48+09:00",
+      "observed_at": "2026-10-30T08:05:57+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/30.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-30T06:16:48+09:00",
+      "observed_at": "2026-10-30T08:05:36+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -338,7 +344,53 @@
       "raw_text": "6 4161 / B1 黒柳 浩孝 愛知/愛知 44歳/53.0kg F0 L0 0.16 5.38 35.71 52.68 5.82 37.78 55.56 27 33.33 44.44 57 44.29 62.86 1 2 8 8 2 12 2 10 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 荒井 翔伍 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 宮嵜 隆太郎 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 石村 日奈那 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 横田 茂 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 池田 美優 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 黒柳 浩孝 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
