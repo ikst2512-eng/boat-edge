@@ -1,0 +1,130 @@
+name: Research V234 provenance audit (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/boat_edge_v234_git_provenance_diagnostic.py'
+      - 'scripts/boat_edge_v234_confidence_audit.py'
+      - 'scripts/boat_edge_v234_model_provenance_audit.py'
+      - 'scripts/boat_edge_v232_model_receipt_pair_gate.py'
+      - 'scripts/boat_edge_v232_source_lineage_audit.py'
+      - 'scripts/boat_edge_v235_freeze_chain_audit.py'
+      - 'scripts/boat_edge_v234_race_git_chain_link.py'
+      - 'scripts/boat_edge_prospective_model_identity.py'
+      - 'scripts/boat_edge_model_tree_manifest_audit.py'
+      - 'tests/test_boat_edge_v234_git_provenance_diagnostic.py'
+      - 'tests/test_boat_edge_v234_confidence_audit.py'
+      - 'tests/test_boat_edge_v234_model_provenance_audit.py'
+      - 'tests/test_boat_edge_v234_race_git_chain_link.py'
+      - 'tests/test_boat_edge_v232_model_receipt_pair_gate.py'
+      - 'tests/test_boat_edge_prospective_model_identity.py'
+      - 'tests/test_boat_edge_model_tree_manifest_audit.py'
+      - '.github/workflows/research-v234-provenance-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: research-v234-audit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  read-only-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate fixture tests
+        run: |
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_confidence_audit.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_git_provenance_diagnostic.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_model_provenance_audit.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v234_race_git_chain_link.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_v232_model_receipt_pair_gate.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_prospective_model_identity.py' -v
+          python -m unittest discover -s tests -p 'test_boat_edge_model_tree_manifest_audit.py' -v
+      - name: Classify real excluded V232 freezes using Git history
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/v234-audit
+          python scripts/boat_edge_v234_git_provenance_diagnostic.py > artifacts/v234-audit/git_provenance.json
+          python - <<'PY_TIMING'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('artifacts/v234-audit/git_provenance.json').read_text())
+          for name, rows in sorted(d['records'].items()):
+              offsets=[r['timing']['committer_minus_saved_seconds'] for r in rows if r['timing'].get('timing_available')]
+              print('V234_GIT_TIMING',name,'count',len(rows),'offset_seconds_min_max', (min(offsets),max(offsets)) if offsets else None)
+          PY_TIMING
+          python -c "import json; d=json.load(open('artifacts/v234-audit/git_provenance.json')); print('V234_PROVENANCE_COUNTS',json.dumps({'total':d['unscored_freezes'],'reasons':d['reason_counts']},sort_keys=True))"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads(Path('artifacts/v234-audit/git_provenance.json').read_text())
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('## Research V234 provenance audit (not formal Fresh)\n')
+              f.write('Unscored frozen SITE records: '+str(d['unscored_freezes'])+'\n\n')
+              for key, n in sorted(d['reason_counts'].items()):
+                  f.write('- '+key+': '+str(n)+'\n')
+              f.write('\nNo retrospective enrollment, no outcome claim.\n')
+          PY
+      - name: Report model source SHA coverage (never backfill)
+        run: |
+          python scripts/boat_edge_v234_model_provenance_audit.py > artifacts/v234-audit/model_sha_coverage.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/model_sha_coverage.json')); print('V234_MODEL_SHA_COVERAGE',json.dumps(d['coverage_counts'],sort_keys=True))"
+      - name: Inspect actual V232 static local import closure without attestation
+        run: |
+          python - <<'PY_IMPORTS'
+          import json
+          from pathlib import Path
+          from scripts.boat_edge_prospective_model_identity import transitive_local_imports
+          root=Path('.').resolve()
+          source=root/'scripts/boat_edge_v232_pre_result_cohort.py'
+          deps=sorted(transitive_local_imports(root,source))
+          report={'source':'scripts/boat_edge_v232_pre_result_cohort.py',
+                  'static_local_python_imports':deps,
+                  'runtime_data_and_dynamic_imports_unverified':True,
+                  'complete_model_attestation':False,
+                  'prediction_eligibility_granted':False}
+          Path('artifacts/v234-audit/v232_static_import_inventory.json').write_text(
+              json.dumps(report,indent=2,sort_keys=True)+'\\n')
+          print('V232_STATIC_IMPORT_INVENTORY',json.dumps(report,sort_keys=True))
+          PY_IMPORTS
+      - name: Enumerate V232 upstream data lineage separately from model proof
+        run: |
+          python scripts/boat_edge_v232_source_lineage_audit.py > artifacts/v234-audit/v232_source_lineage.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/v232_source_lineage.json')); print('V232_SOURCE_LINEAGE',json.dumps(d,sort_keys=True)); assert not d['source_reference_missing']"
+      - name: Verify V235 V229 V228 V232 chain source bytes against Git HEAD
+        run: |
+          python scripts/boat_edge_v235_freeze_chain_audit.py > artifacts/v234-audit/freeze_chain.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/freeze_chain.json')); print('FREEZE_CHAIN_STATIC_GIT',json.dumps({'sha':d['git_sha'],'ok':d['static_chain_hashes_verified'],'errors':d['chain_source_errors']},sort_keys=True)); assert d['static_chain_hashes_verified']"
+      - name: Link latest 20 saved races to immutable snapshot first-add source tree
+        run: |
+          python scripts/boat_edge_v234_race_git_chain_link.py --limit 20 > artifacts/v234-audit/race_git_chain.json
+          python -c "import json; d=json.load(open('artifacts/v234-audit/race_git_chain.json')); print('RACE_GIT_CHAIN',json.dumps({'sample':d['sample_size'],'counts':d['reason_counts'],'eligibility':d['prospective_eligibility_established']},sort_keys=True)); assert d['prospective_eligibility_established'] is False"
+      - name: Audit prospective V232-model evidence pairs without enrollment
+        run: |
+          python - <<'PY_PAIR'
+          import json
+          from collections import Counter
+          from pathlib import Path
+          from scripts.boat_edge_v232_model_receipt_pair_gate import verify
+          keys=sorted(p.stem for p in Path('data/site_autopilot/v232_cohort').glob('20??????-??-??.json'))
+          reasons=Counter(verify(Path('.'), key)['reason'] for key in keys)
+          print('V232_MODEL_PAIR_READ_ONLY',json.dumps({'checked':len(keys),'reason_counts':dict(reasons)},sort_keys=True))
+          assert not any(verify(Path('.'), key)['eligible'] for key in keys), 'UNEXPECTED_AUTOMATIC_ELIGIBILITY'
+          PY_PAIR
+      - name: Verify scored results against V234 summary and Wilson intervals
+        run: |
+          python scripts/boat_edge_v234_confidence_audit.py > artifacts/v234-audit/confidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-v234-provenance-${{ github.run_id }}
+          path: artifacts/v234-audit/
+          if-no-files-found: warn
+          retention-days: 14
