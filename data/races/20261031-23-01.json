@@ -8,7 +8,7 @@
     "event": "トータリゼータエンジニアリング杯",
     "race_no": 1,
     "deadline": "08:43",
-    "updated_at": "2026-10-31T05:53:58+09:00",
+    "updated_at": "2026-10-31T07:25:54+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261031&jcd=23&rno=1",
-      "fetched_at": "2026-10-31T05:54:55+09:00",
-      "sha256": "e935d0543d6fe20e2e4ae9cf7fcb9f793a3612cc18e25feba077d119536854b7",
+      "fetched_at": "2026-10-31T07:29:03+09:00",
+      "sha256": "92766ba0eb16927ad6ba70b5b03b5ed35d7a40456fd0f7723978f190e03f9d90",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261031&jcd=23&rno=1",
+      "fetched_at": "2026-10-31T07:26:33+09:00",
+      "sha256": "62dfa042b583a634ea548a6998a408a5521bd5b679561e9d4873371f6484352b",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T05:56:56+09:00",
+      "observed_at": "2026-10-31T07:29:14+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T05:56:56+09:00",
+      "observed_at": "2026-10-31T07:29:14+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T05:56:56+09:00",
+      "observed_at": "2026-10-31T07:29:14+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T05:56:56+09:00",
+      "observed_at": "2026-10-31T07:29:14+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -329,7 +335,53 @@
       "raw_text": "6 5459 / B2 田中 きら 山口/山口 20歳/44.5kg F0 L0 - 1.06 0.00 0.00 1.11 0.00 0.00 64 38.89 66.67 58 28.87 42.96 3 3 4 9 1 8 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 武富 智亮 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 佐口 達也 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 森林 太 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 赤峰 和也 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 小池 公生 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 田中 きら R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
