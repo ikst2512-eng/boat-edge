@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-29T23:01:58.468510+00:00",
+  "checked_at": "2026-10-30T00:25:18.185643+00:00",
   "day_jst": "20261030",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -70,15 +70,48 @@
   "site": {
     "collector_health_issues": [
       "collector_index_stale",
-      "odds_index_stale"
+      "odds_index_stale",
+      "predeadline_incomplete",
+      "predeadline_race_odds_gap",
+      "predeadline_v216_observation_stale"
     ],
-    "current_window": [],
+    "current_window": [
+      {
+        "deadline_jst": "09:27",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "最新オッズ120通り未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 1.7,
+        "race_key": "20261030-14-03",
+        "venue": "鳴門"
+      },
+      {
+        "deadline_jst": "09:35",
+        "issues": [
+          "出走表期限切れ",
+          "直前情報未取得または期限切れ",
+          "欠場照合未確認",
+          "最新オッズ120通り未確認",
+          "締切前予想未保存"
+        ],
+        "minutes_left": 9.7,
+        "race_key": "20261030-23-03",
+        "venue": "唐津"
+      }
+    ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 0,
-    "readiness_reasons": {},
-    "readiness_shadow_verified_races": 0,
+    "readiness_observed_races": 2,
+    "readiness_reasons": {
+      "snapshot_missing": 1,
+      "verified_shadow_ready": 1
+    },
+    "readiness_shadow_verified_races": 1,
     "schedule_today": true,
-    "snapshot_files_today": 0,
+    "snapshot_files_today": 1,
     "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }

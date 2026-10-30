@@ -19,16 +19,16 @@
     "acceptance_99_percent_proven": false,
     "day_jst": "20261030",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 0,
+    "first_git_original_sha_proven": 1,
     "independently_source_eligible_denominator": null,
     "legacy_v229_first_git_proven_separately": 0,
     "legacy_v229_keys": [],
     "legacy_v229_unverified_reasons": {},
-    "matured_snapshot_files": 0,
+    "matured_snapshot_files": 1,
     "original_not_verified": 0,
     "pending_snapshot_files": 0,
     "scope": "ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES",
-    "snapshot_files_seen": 0,
+    "snapshot_files_seen": 1,
     "unverified_reasons": {}
   },
   "note": "Observed V215 races and all saved SITE snapshots are distinct numerator cohorts. Every positive original proof requires V125 receipt and first Git SHA bytes. Neither cohort proves a source-eligible denominator; no 99% claim until eligibility and exclusions are independently reconciled.",
@@ -273,27 +273,40 @@
   "today": {
     "acceptance_99_percent_proven": false,
     "archived_catalog_git_commit": null,
-    "catalog_matured_by_hour_jst": {},
-    "catalog_matured_not_observed": 0,
-    "catalog_matured_not_observed_by_hour_jst": {},
-    "catalog_matured_not_observed_missing_keys": [],
+    "catalog_matured_by_hour_jst": {
+      "08": 3,
+      "09": 3
+    },
+    "catalog_matured_not_observed": 4,
+    "catalog_matured_not_observed_by_hour_jst": {
+      "08": 1,
+      "09": 3
+    },
+    "catalog_matured_not_observed_missing_keys": [
+      "20261030-14-01",
+      "20261030-14-02",
+      "20261030-18-02",
+      "20261030-23-02"
+    ],
     "catalog_matured_not_observed_saved": 0,
     "catalog_matured_not_observed_saved_keys": [],
-    "catalog_matured_observed_missing_keys": [],
-    "catalog_matured_races": 0,
-    "catalog_matured_without_snapshot": 0,
+    "catalog_matured_observed_missing_keys": [
+      "20261030-23-01"
+    ],
+    "catalog_matured_races": 6,
+    "catalog_matured_without_snapshot": 5,
     "day_jst": "20261030",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 0,
+    "first_git_original_sha_proven": 1,
     "independently_source_eligible_denominator": null,
-    "matured_races": 0,
-    "missing_after_deadline": 0,
-    "observation_history_sha256": "247def88e0f8f80fcf00adb04ab15792d3a54801cfdb56b8cd1df94e33c20d28",
+    "matured_races": 2,
+    "missing_after_deadline": 1,
+    "observation_history_sha256": "a102e248185d5ccfc6aa6c38358a3aa8a7edaf1306f56fb30d11d682bf361e45",
     "observation_history_status": "VERIFIED",
-    "observed_races": 0,
+    "observed_races": 2,
     "original_not_verified": 0,
     "scope": "OBSERVED_MATURED_RACES_ONLY",
-    "snapshots_present": 0,
+    "snapshots_present": 1,
     "unverified_reasons": {}
   }
 }
