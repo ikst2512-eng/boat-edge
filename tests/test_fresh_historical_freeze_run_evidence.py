@@ -56,6 +56,18 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
         self.assertEqual([x["id"] for x in v["uncertain_without_updated_at"]], [13])
         self.assertFalse(v["overlap_is_confirmed_by_job_times"])
 
+    def test_nearby_run_starts_are_not_misclassified_as_window_starts(self):
+        def fake(url, token):
+            return {"workflow_runs": [
+                {"id": 21, "run_started_at": "2026-10-31T01:45:00Z",
+                 "updated_at": "2026-10-31T01:47:00Z", "event": "schedule"},
+                {"id": 22, "run_started_at": "2026-10-31T02:06:00Z",
+                 "updated_at": "2026-10-31T02:08:00Z", "event": "schedule"}]}
+        out = audit.collect("owner/repo", "token", "20261031-23-06", fake)
+        v = out["workflows"]["v229"]
+        self.assertEqual([x["id"] for x in v["nearby_starts_plus_minus_20m"]], [21, 22])
+        self.assertEqual(v["runs_started_in_window"], [])
+
     def test_truncated_page_fails_closed(self):
         def fake(url, token):
             return {"workflow_runs": [{"id": i} for i in range(100)]}

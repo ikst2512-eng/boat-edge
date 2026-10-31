@@ -56,7 +56,7 @@ def collect(repo, token, race_key, get_json, pages=10):
               "results_accessed": False, "formal_unlock_authorized": False,
               "workflows": {}, "evidence_complete": True}
     for name, workflow in WORKFLOWS.items():
-        found, overlaps, uncertain, covered = [], [], [], False
+        found, overlaps, uncertain, nearby, covered = [], [], [], [], False
         # Query by created date, then inspect actual start separately. Late
         # starts may arise from earlier queued runs, which this scan includes
         # only if created on this day or the prior day.
@@ -80,6 +80,8 @@ def collect(repo, token, race_key, get_json, pages=10):
                     "run_started_at", "updated_at", "html_url", "head_sha")}
                 if start_utc <= stamp <= end_utc:
                     found.append(evidence)
+                if start_utc - timedelta(minutes=20) <= stamp <= end_utc + timedelta(minutes=20):
+                    nearby.append(evidence)
                 if stamp <= end_utc:
                     finished = run.get("updated_at")
                     if not finished:
@@ -94,11 +96,13 @@ def collect(repo, token, race_key, get_json, pages=10):
                 break
         found.sort(key=lambda x: (x["run_started_at"], x["id"]))
         overlaps.sort(key=lambda x: (x["run_started_at"], x["id"]))
+        nearby.sort(key=lambda x: (x["run_started_at"], x["id"]))
         result["workflows"][name] = {
             "workflow": workflow,
             "configured_cron_slots_jst_not_dispatch_proof": configured_schedule_slots(start, end, name),
             "runs_started_in_window": found,
             "possible_overlaps_by_updated_at": overlaps,
+            "nearby_starts_plus_minus_20m": nearby,
             "uncertain_without_updated_at": uncertain,
             "overlap_is_confirmed_by_job_times": False,
             "pagination_exhausted": covered,
