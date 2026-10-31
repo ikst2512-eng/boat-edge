@@ -94,6 +94,7 @@ jobs:
               failures = report.get("failed", [])
               t12 = report.get("t12_receipts", [])
               t12_cutoff = sum(1 for item in t12 if item.get("timestamp_cutoff_ok") is True)
+              t12_entry = sum(1 for item in t12 if item.get("t12_start_entry_verified") is True)
               reasons = collections.Counter(
                   f.get("capture_error_code") or f.get("reason") or "unspecified"
                   for f in failures
