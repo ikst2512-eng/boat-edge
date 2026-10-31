@@ -36,8 +36,8 @@ class BatchTests(unittest.TestCase):
 
     def test_early_morning_t12_schedule_coverage(self):
         workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
-        self.assertIn("cron: '*/10 22-23 * * *'", workflow)
-        self.assertIn("cron: '*/10 0-14 * * *'", workflow)
+        self.assertIn("cron: '*/5 22-23 * * *'", workflow)
+        self.assertIn("cron: '*/5 0-14 * * *'", workflow)
         # A 08:20 JST race can enter the collector's 3-22 minute window
         # when the schedule wakes at 08:00 or 08:10 JST.
         morning = dt.datetime(2026,10,25,8,10,tzinfo=JST)
@@ -45,6 +45,14 @@ class BatchTests(unittest.TestCase):
             p = Path(tmp)/"20261025-04-01.json"
             p.write_text(json.dumps(race("20261025-04-01", "08:20")))
             self.assertIsNotNone(eligible(p, morning))
+
+    def test_five_minute_cadence_has_two_nominal_t12_opportunities(self):
+        # Deadline at :22 gives eligible scheduled attempts at :05 and :10,
+        # before the :10 T-12 cutoff; real schedule execution is not guaranteed.
+        deadline = dt.datetime(2026, 10, 25, 8, 22, tzinfo=JST)
+        wake_times = [dt.datetime(2026, 10, 25, 8, m, tzinfo=JST) for m in range(0, 25, 5)]
+        valid = [wake for wake in wake_times if 12 <= (deadline - wake).total_seconds() / 60 <= 22]
+        self.assertGreaterEqual(len(valid), 2)
 
     def test_workflow_only_captures_and_publishes_from_main(self):
         workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
