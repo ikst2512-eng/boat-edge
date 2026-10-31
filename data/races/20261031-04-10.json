@@ -8,7 +8,7 @@
     "event": "第1回FC東京杯",
     "race_no": 10,
     "deadline": "15:15",
-    "updated_at": "2026-10-31T12:42:14+09:00",
+    "updated_at": "2026-10-31T14:58:54+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261031&jcd=04&rno=10",
-      "fetched_at": "2026-10-31T12:44:27+09:00",
-      "sha256": "c1ea0e24b6af7ae237fac6b871b4274cfa62c9e79ed6f39c877dec5fb0862757",
+      "fetched_at": "2026-10-31T15:00:52+09:00",
+      "sha256": "8b799e5449ab2fc0090dc3135bd4cfc46abfad8cf1734ce8b882a526d6730245",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261031&jcd=04&rno=10",
+      "fetched_at": "2026-10-31T14:59:31+09:00",
+      "sha256": "d4fd40bdbd283ab605d5c930bd1f7ffabe9fd6c41085232bd6757254f0425e5b",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T12:45:30+09:00",
+      "observed_at": "2026-10-31T15:01:19+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "6824bc05b44416b6e7878f74a3a58c3e76c493c3e4533fc5e534700fd18f047a"
+      "sha256": "e018ace680ada6ad1ceb233df858127feec8fcb761064c10a16347487ae1ccef"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T12:45:37+09:00",
+      "observed_at": "2026-10-31T15:01:26+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "ffa07d56e3a234eef5058d96da60ed3f8420bf562cf19900343f86e29af96b38"
+      "sha256": "a0f1e92f9f074566f49fddd45b665215764e177b75c5840b867104c432db9cc6"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T12:45:44+09:00",
+      "observed_at": "2026-10-31T15:01:33+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "a3cab305322211c527402fd4e3524b9b106c478395f1850779dc6977c645a038"
+      "sha256": "548cc23ee2458a0a3cfe877d0eae46d552eeb3e098cfef958cdd1203275d1ba8"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T12:45:23+09:00",
+      "observed_at": "2026-10-31T15:01:12+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "72238af2408149288e2a63db61eca40c0293ec041668a2e4a3c6b042037968aa"
+      "sha256": "4f5737c2d6daa1a41d5c07600dda1ebef930eef0ff6fb2171f9a41a4e4f37c19"
     }
   },
   "racers": [
@@ -175,9 +181,11 @@
         "quinella_rate": 34.15,
         "trio_rate": 58.54
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "6"
+      ],
       "early_race": 6,
-      "raw_text": "3 4579 / A2 中嶋 健一郎 三重/三重 37歳/52.2kg F0 L0 0.16 6.05 39.06 59.38 6.13 43.75 68.75 70 16.67 26.92 16 34.15 58.54 6R"
+      "raw_text": "3 4579 / A2 中嶋 健一郎 三重/三重 37歳/52.2kg F0 L0 0.16 6.05 39.06 59.38 6.13 43.75 68.75 70 16.67 26.92 16 34.15 58.54 6 6R"
     },
     {
       "lane": 4,
@@ -249,9 +257,11 @@
         "quinella_rate": 42.86,
         "trio_rate": 55.1
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "5"
+      ],
       "early_race": 5,
-      "raw_text": "5 5268 / B1 山本 幸也 福岡/福岡 26歳/56.0kg F1 L0 0.20 3.75 18.68 29.67 1.88 0.00 0.00 72 29.21 48.31 35 42.86 55.10 5R"
+      "raw_text": "5 5268 / B1 山本 幸也 福岡/福岡 26歳/56.0kg F1 L0 0.20 3.75 18.68 29.67 1.88 0.00 0.00 72 29.21 48.31 35 42.86 55.10 5 5R"
     },
     {
       "lane": 6,
@@ -292,7 +302,78 @@
       "raw_text": "6 4134 / A2 杉山 貴博 東京/千葉 46歳/53.8kg F0 L0 0.16 5.98 45.60 62.40 6.90 51.61 70.97 26 38.37 61.63 59 24.71 41.18 4 4R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.7,
+        "tilt": 0.0,
+        "raw_text": "1 葛原 大陽 52.8kg 6.70 0.0 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.7,
+        "tilt": 0.0,
+        "raw_text": "2 塩崎 優司 52.7kg 6.70 0.0 R 2"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.72,
+        "tilt": 0.0,
+        "raw_text": "3 中嶋 健一郎 52.2kg 6.72 0.0 R 6"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.66,
+        "tilt": 0.0,
+        "raw_text": "4 佐々木 大河 52.6kg 6.66 0.0 R 3"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.68,
+        "tilt": 0.0,
+        "raw_text": "5 山本 幸也 56.0kg 6.68 0.0 R 5"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.72,
+        "tilt": 0.0,
+        "raw_text": "6 杉山 貴博 53.8kg 6.72 0.0 R 4"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".22"
+      },
+      {
+        "lane": 2,
+        "st": ".12"
+      },
+      {
+        "lane": 3,
+        "st": ".20"
+      },
+      {
+        "lane": 4,
+        "st": ".19"
+      },
+      {
+        "lane": 5,
+        "st": ".15"
+      },
+      {
+        "lane": 6,
+        "st": ".24"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
