@@ -915,7 +915,7 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                               and density["race_title_px"] is not None and density["race_title_px"] <= 25
                               and density["hero_title_px"] is not None and density["hero_title_px"] <= 22)
                 print("COMPACT_UI_DENSITY", json.dumps({"ok": density_ok, **density}, ensure_ascii=False))
-                if site_url == "local":
+                if url == "local":
                     assert density_ok, "local compact UI regression"
 
 
