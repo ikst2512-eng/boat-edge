@@ -22,7 +22,7 @@ def verify(raw_bytes, manifest, race):
     meta=race.get("meta") or {}
     if key!=manifest.get("race_key") or not isinstance(key,str) or len(key.split("-"))!=3:
         errors.append("race_key_mismatch")
-        return {"ok":False,"errors":errors,"t12_capture_ok":False,"t12_status":"NOT_VERIFIED"}
+        return {"ok":False,"errors":errors,"t12_timestamp_cutoff_ok":False,"t12_status":"NOT_VERIFIED"}
     day,venue,rno=key.split("-")
     try:
         expected=f"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd={day}&jcd={venue}&rno={int(rno)}"
@@ -55,7 +55,7 @@ def verify(raw_bytes, manifest, race):
     return {
         "ok": ok, "errors": errors, "race_key": key,
         "sha256": digest if ok else None,
-        "t12_capture_ok": bool(ok and t12_time_verified),
+        "t12_timestamp_cutoff_ok": bool(ok and t12_time_verified),
         "t12_status": "TIMESTAMP_ONLY_NOT_EXHIBITION_PROOF" if ok and t12_time_verified else "NOT_VERIFIED",
     }
 
