@@ -17,11 +17,12 @@ JST=dt.timezone(dt.timedelta(hours=9))
 
 def verify(raw_bytes, manifest, race):
     errors=[]
+    t12_time_verified=False
     key=race.get("race_key","")
     meta=race.get("meta") or {}
     if key!=manifest.get("race_key") or not isinstance(key,str) or len(key.split("-"))!=3:
         errors.append("race_key_mismatch")
-        return {"ok":False,"errors":errors}
+        return {"ok":False,"errors":errors,"t12_capture_ok":False,"t12_status":"NOT_VERIFIED"}
     day,venue,rno=key.split("-")
     try:
         expected=f"https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd={day}&jcd={venue}&rno={int(rno)}"
@@ -29,6 +30,10 @@ def verify(raw_bytes, manifest, race):
         fetched=dt.datetime.fromisoformat(str(manifest["fetched_at"]))
         if fetched.tzinfo is None or fetched>=deadline or fetched.astimezone(JST).date()!=deadline.date():
             errors.append("capture_not_predeadline")
+        else:
+            # A before-deadline capture is NOT automatically a T-12 capture.
+            # Evidence must be recorded no later than the 12-minute cutoff.
+            t12_time_verified = fetched <= deadline - dt.timedelta(minutes=12)
         if meta["date"]!=f"{day[:4]}-{day[4:6]}-{day[6:8]}" or str(meta["venue_code"])!=venue or int(meta["race_no"])!=int(rno):
             errors.append("race_identity_mismatch")
         if manifest.get("source")!=expected:
@@ -46,7 +51,13 @@ def verify(raw_bytes, manifest, race):
         errors.append("sha256_mismatch")
     if not raw_bytes.lstrip().lower().startswith((b"<!doctype html",b"<html")):
         errors.append("not_html_document")
-    return {"ok":not errors,"errors":errors,"race_key":key,"sha256":digest if not errors else None}
+    ok = not errors
+    return {
+        "ok": ok, "errors": errors, "race_key": key,
+        "sha256": digest if ok else None,
+        "t12_capture_ok": bool(ok and t12_time_verified),
+        "t12_status": "TIMESTAMP_ONLY_NOT_EXHIBITION_PROOF" if ok and t12_time_verified else "NOT_VERIFIED",
+    }
 
 
 def main():
