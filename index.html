@@ -3490,7 +3490,18 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
   be03RefreshVisibleDeadline();refreshAll(true);
 }});
 
-refreshAll();
+// Archive deep links are read-only navigation, not result authorization.
+function openArchivedRaceFromUrl(){
+  const key=new URLSearchParams(location.search).get("race");
+  if(!key)return;
+  if(!/^20\d{6}-(0[1-9]|1\d|2[0-4])-(0[1-9]|1[0-2])$/.test(key)){
+    be03RaceLoadNotice("過去レースの指定が不正です。",true);
+    return;
+  }
+  const jcd=key.slice(9,11);
+  loadRace("data/races/"+key+".json",jcd);
+}
+refreshAll().then(openArchivedRaceFromUrl);
 startPassiveRefresh();
 /* V108: hidden legacy-home 30s redraw disabled */
 /* V108: hidden direct-mode 1s redraw disabled */
