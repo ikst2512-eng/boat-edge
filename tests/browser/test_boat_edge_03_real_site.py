@@ -898,6 +898,27 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                 response = page.goto(target + "?e2e=03", wait_until="domcontentloaded", timeout=45000)
                 assert response and response.status == 200, "index not served"
 
+                # Layout acceptance for owner-requested compact presentation.
+                # Report the published state separately: a PR checkout cannot
+                # require the current Pages deployment to contain its new CSS.
+                density = page.evaluate("""() => {
+                    const px = selector => {
+                        const el = document.querySelector(selector);
+                        return el ? Number.parseFloat(getComputedStyle(el).fontSize) : null;
+                    };
+                    return {brand_px:px('.brandtext'),race_title_px:px('.race-summary h1'),
+                            hero_title_px:px('.hero-main h1'),
+                            viewport_width:innerWidth,
+                            document_width:document.documentElement.scrollWidth};
+                }""")
+                density_ok = (density["brand_px"] is not None and density["brand_px"] <= 17
+                              and density["race_title_px"] is not None and density["race_title_px"] <= 25
+                              and density["hero_title_px"] is not None and density["hero_title_px"] <= 22)
+                print("COMPACT_UI_DENSITY", json.dumps({"ok": density_ok, **density}, ensure_ascii=False))
+                if site_url == "local":
+                    assert density_ok, "local compact UI regression"
+
+
                 # Read ONLY the current PRE_RESULT race catalog (no result files).
                 catalog_response = context.request.get(
                     target.rsplit("/", 1)[0] + "/data/today.json",
