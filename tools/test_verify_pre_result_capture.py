@@ -13,6 +13,24 @@ AUDIT={"race_key":"20261025-04-01","status":"ok","kind":"official_beforeinfo_htm
 class VerifyCaptureTests(unittest.TestCase):
     def test_valid(self):
         self.assertTrue(verify(RAW,AUDIT,RACE)["ok"])
+    def test_exact_t12_boundary_is_timestamp_only(self):
+        result=verify(RAW,AUDIT,RACE)
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["t12_timestamp_cutoff_ok"])
+        self.assertEqual(result["t12_status"],"TIMESTAMP_ONLY_NOT_EXHIBITION_PROOF")
+    def test_one_minute_before_deadline_not_t12(self):
+        result=verify(RAW,dict(AUDIT,fetched_at="2026-10-25T10:51:00+09:00"),RACE)
+        self.assertTrue(result["ok"])
+        self.assertFalse(result["t12_timestamp_cutoff_ok"])
+        self.assertEqual(result["t12_status"],"NOT_VERIFIED")
+    def test_one_second_after_t12_cutoff_not_t12(self):
+        result=verify(RAW,dict(AUDIT,fetched_at="2026-10-25T10:40:01+09:00"),RACE)
+        self.assertTrue(result["ok"])
+        self.assertFalse(result["t12_timestamp_cutoff_ok"])
+    def test_tampered_capture_never_t12(self):
+        result=verify(RAW+b"!",AUDIT,RACE)
+        self.assertFalse(result["ok"])
+        self.assertFalse(result["t12_timestamp_cutoff_ok"])
     def test_tampered_html(self):
         self.assertIn("sha256_mismatch",verify(RAW+b"!",AUDIT,RACE)["errors"])
     def test_wrong_race(self):
