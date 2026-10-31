@@ -1080,6 +1080,58 @@ body{background:
   .direct-worlds{grid-template-columns:1fr 1fr}
 }
 
+
+/* Owner-requested compact reading density (BOATERS-inspired, original styling).
+   Preserve touch hit areas and avoid shrinking already-small provenance labels. */
+:root{--radius:12px;--shadow:0 2px 9px rgba(31,94,255,.06)}
+.topbar{padding:7px 10px;gap:7px}
+.brand{gap:7px}.mark{width:29px;height:29px;border-radius:8px}
+.mark:before,.mark:after{left:5px;right:5px}.mark:before{top:9px}.mark:after{top:16px}
+.brandtext{font-size:15px}.brandtext small{font-size:10px}
+.hero{padding:10px 10px 4px}.hero-grid,.grid-2,.worlds{gap:8px}
+.hero-main,.hero-side,.race-summary{padding:10px}
+.hero-main h1{font-size:20px;margin:6px 0}
+.hero-main p{font-size:12px;line-height:1.45}
+.hero-stat{padding:8px}.hero-stat .value{font-size:16px}
+.section{padding:6px 10px 9px}.title{margin-bottom:6px}.title h2{font-size:15px}
+.kpi{padding:9px}.kpi .value{font-size:19px}
+.deadline-card{min-width:160px;padding:9px;border-radius:11px}
+.deadline-time{font-size:21px}.deadline-place{font-size:13px}
+.venue{padding:8px}.vname{font-size:13px}
+.race-shell{padding:8px}.race-summary h1,.deadline-big{font-size:23px}
+.race-subtitle{font-size:11px;line-height:1.4;margin-top:3px}
+.race-nav{padding-top:7px;gap:5px}.race-tabs{gap:5px;padding:0 9px 7px}
+.race-tabs button{padding:7px 11px;font-size:12px}
+.alert{padding:9px 11px;border-radius:10px}
+.decision{padding:11px}.decision-main{font-size:22px}.decision-grade{font-size:21px}
+.world{padding:10px}.world h3{font-size:18px}.world-prob{font-size:22px}
+.ticket{padding:7px 0}.combo{font-size:16px}
+.boats{gap:6px}.boat{padding:8px;border-radius:10px}
+.boat-name{font-size:12px;margin:6px 0 3px}
+.boat-sub{font-size:11px}.boat-metrics{gap:5px;margin-top:6px}
+.metric{padding:6px;border-radius:8px}.metric .m-value{font-size:12px}
+.strip{gap:6px}.strip-card{padding:8px}.strip-card .value{font-size:16px}
+th,td{padding:7px 6px;font-size:11px}
+.auditbox{padding:10px}.direct-hero{padding:10px;border-radius:12px}
+.direct-title{font-size:17px}.direct-count{font-size:20px}
+.direct-card{padding:8px;border-radius:10px}
+@media(max-width:760px){
+  body{padding-bottom:65px}
+  .topbar{padding:6px 8px}.header-actions{gap:4px}
+  .live-pill{padding:6px 8px;font-size:10px;gap:4px}
+  .primary-btn,.ghost-btn{padding:7px 9px;font-size:11px}
+  .hero{padding:7px 8px 2px}.section{padding:5px 8px 8px}
+  .race-shell{padding:6px}.race-head{top:45px}
+  .race-summary h1,.deadline-big{font-size:20px}
+  .race-tabs button,.racechip,.primary-btn,.ghost-btn{min-height:40px}
+  .race-tabs button{padding:8px 10px}
+  .racechip{min-width:48px;padding:7px 5px}
+  .deadline-card{min-width:142px}
+  .boats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .boat{min-width:0}
+  .decision-grid{gap:7px}
+}
+
 </style>
 <!-- BOAT_EDGE_FINAL_UI_V48 -->
 <link rel="stylesheet" href="./assets/boat_edge_final_v48.css">
