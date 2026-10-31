@@ -5,7 +5,8 @@ import unittest
 class V351ScheduledEvidence(unittest.TestCase):
     def test_read_only_scheduled_evidence(self):
         workflow = Path(".github/workflows/boat-edge-v350-actions-evidence.yml").read_text()
-        self.assertIn("cron: '23 3 * * *'", workflow)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("cron: '23 3 * * *'", workflow)
         self.assertIn("MAX_PAGES: ${{ github.event_name == 'schedule' && '20' || inputs.max_pages || '3' }}", workflow)
         self.assertIn("actions: read", workflow)
         self.assertIn("contents: read", workflow)

@@ -1,5 +1,12 @@
 # BOAT EDGE — 完成までの固定実行順（優先順位ロック）
 
+## Owner-approved override — 2026-11-01 (site/integration track)
+
+The owner's latest explicit instruction supersedes the older gate-first sequence **for BOAT EDGE CLEAN main integration and site completion**. Current order: (1) safely retire the old website, redundant site code and duplicated PRs, (2) fix historical-race display, (3) consolidate existing navigation and BOATERS-inspired, original single-page prediction views (result above prediction, escape rate, top-three rate, winning methods, scenarios, leader-dependent placing rates), (4) test, CI, merge to main and verify actual Render production, (5) update an evidence-backed work status. Reuse existing fixes and workflows rather than creating a second automation pipeline. This override does not authorize copying third-party materials or unsupported numerical claims. Formal Fresh isolation, no result leakage, data provenance, and safe deploy/rollback remain mandatory. 02 accuracy research and data collection remain with their respective owners; main integration must not overwrite their independent PRs.
+
+The 2026-10-16 gate sequence below remains as historical and specialized data-reliability acceptance criteria, not a blocker on explicitly reprioritized site and integration work. Do not mark its outstanding evidence gates complete without independent real-race evidence.
+
+
 **Owner directive: 2026-10-16 JST / 現在の唯一の実行順序台帳。**
 
 ## 最終成果物（これ以外を目標にしない）
