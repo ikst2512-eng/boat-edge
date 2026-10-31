@@ -34,6 +34,18 @@ class BatchTests(unittest.TestCase):
         self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", workflow)
         self.assertIn("group: official-prerace-evidence", workflow)
 
+    def test_early_morning_t12_schedule_coverage(self):
+        workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
+        self.assertIn("cron: '*/10 22-23 * * *'", workflow)
+        self.assertIn("cron: '*/10 0-14 * * *'", workflow)
+        # A 08:20 JST race can enter the collector's 3-22 minute window
+        # when the schedule wakes at 08:00 or 08:10 JST.
+        morning = dt.datetime(2026,10,25,8,10,tzinfo=JST)
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp)/"20261025-04-01.json"
+            p.write_text(json.dumps(race("20261025-04-01", "08:20")))
+            self.assertIsNotNone(eligible(p, morning))
+
     def test_workflow_only_captures_and_publishes_from_main(self):
         workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/capture-pre-result-evidence.yml').read_text()
         self.assertEqual(workflow.count("if: github.event_name != 'push' && github.ref == 'refs/heads/main'"), 3)
