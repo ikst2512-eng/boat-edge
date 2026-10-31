@@ -1,9 +1,6 @@
 name: Formal Fresh CSV HTTP Evidence (read only)
 on:
   workflow_dispatch:
-  schedule:
-    # Hourly at hh:17 JST from 09:17 through 22:17; no result access.
-    - cron: '17 0-13 * * *'
   pull_request:
     paths:
       - 'scripts/fresh_csv_http_diagnostic.py'
