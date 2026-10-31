@@ -97,12 +97,49 @@ def collect(repo, token, race_key, get_json, pages=10):
         found.sort(key=lambda x: (x["run_started_at"], x["id"]))
         overlaps.sort(key=lambda x: (x["run_started_at"], x["id"]))
         nearby.sort(key=lambda x: (x["run_started_at"], x["id"]))
+        # Inspect actual job boundaries for nearby runs. Workflow updated_at
+        # alone cannot prove a job was running during the freeze window.
+        job_evidence = []
+        for candidate in nearby[:30]:
+            run_id = candidate.get("id")
+            if type(run_id) is not int:
+                raise ValueError("INVALID_RUN_ID")
+            url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100&page=1"
+            response = get_json(url, token)
+            jobs = response.get("jobs")
+            total = response.get("total_count")
+            if not isinstance(jobs, list) or type(total) is not int or total != len(jobs):
+                # Ambiguous pagination: reject completeness, never count as absent.
+                result["evidence_complete"] = False
+                job_evidence.append({"run_id": run_id, "complete": False, "jobs": []})
+                continue
+            detailed = []
+            for job in jobs:
+                started = job.get("started_at")
+                ended = job.get("completed_at")
+                if not started or not ended:
+                    detailed.append({"id": job.get("id"), "timing_complete": False,
+                                     "overlaps_window": None})
+                    result["evidence_complete"] = False
+                    continue
+                js = datetime.fromisoformat(started.replace("Z", "+00:00"))
+                je = datetime.fromisoformat(ended.replace("Z", "+00:00"))
+                if je < js:
+                    raise ValueError("INVALID_JOB_TIMING")
+                detailed.append({"id": job.get("id"), "name": job.get("name"),
+                                 "conclusion": job.get("conclusion"), "started_at": started,
+                                 "completed_at": ended, "timing_complete": True,
+                                 "overlaps_window": js <= end_utc and je >= start_utc})
+            job_evidence.append({"run_id": run_id, "complete": True, "jobs": detailed})
+        if len(nearby) > 30:
+            result["evidence_complete"] = False
         result["workflows"][name] = {
             "workflow": workflow,
             "configured_cron_slots_jst_not_dispatch_proof": configured_schedule_slots(start, end, name),
             "runs_started_in_window": found,
             "possible_overlaps_by_updated_at": overlaps,
             "nearby_starts_plus_minus_20m": nearby,
+            "nearby_job_timing": job_evidence,
             "uncertain_without_updated_at": uncertain,
             "overlap_is_confirmed_by_job_times": False,
             "pagination_exhausted": covered,
