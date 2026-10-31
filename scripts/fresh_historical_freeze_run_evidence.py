@@ -26,6 +26,21 @@ def window(date: str, hhmm: str):
     deadline = datetime.fromisoformat(date + "T" + hhmm + ":00").replace(tzinfo=JST)
     return deadline - timedelta(minutes=10), deadline - timedelta(minutes=2)
 
+# These are the minutes in each existing workflow's UTC cron definition.
+# A cron opportunity is not evidence that GitHub Actions actually dispatched.
+CRON_MINUTES = {"v229": tuple(range(1, 60, 5)), "v216": tuple(range(4, 60, 5))}
+
+def configured_schedule_slots(start, end, workflow_name):
+    first = start.astimezone(timezone.utc).replace(second=0, microsecond=0)
+    last = end.astimezone(timezone.utc)
+    slots = []
+    while first <= last:
+        if first.minute in CRON_MINUTES[workflow_name]:
+            if workflow_name != "v229" or first.hour in (*range(0, 15), 23):
+                slots.append(first.astimezone(JST).isoformat())
+        first += timedelta(minutes=1)
+    return slots
+
 def collect(repo, token, race_key, get_json, pages=10):
     if race_key not in RACES:
         raise ValueError("UNAPPROVED_RACE_KEY")
@@ -80,7 +95,9 @@ def collect(repo, token, race_key, get_json, pages=10):
         found.sort(key=lambda x: (x["run_started_at"], x["id"]))
         overlaps.sort(key=lambda x: (x["run_started_at"], x["id"]))
         result["workflows"][name] = {
-            "workflow": workflow, "runs_started_in_window": found,
+            "workflow": workflow,
+            "configured_cron_slots_jst_not_dispatch_proof": configured_schedule_slots(start, end, name),
+            "runs_started_in_window": found,
             "possible_overlaps_by_updated_at": overlaps,
             "uncertain_without_updated_at": uncertain,
             "overlap_is_confirmed_by_job_times": False,
