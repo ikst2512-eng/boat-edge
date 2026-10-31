@@ -84,6 +84,7 @@ jobs:
           else:
               report = json.loads(report_path.read_text(encoding="utf-8"))
               checked = report.get("checked", 0)
+              selection = report.get("selection_diagnostic") or {}
               captured = len(report.get("captured", []))
               enriched = len(report.get("enriched", []))
               failures = report.get("failed", [])
@@ -99,7 +100,7 @@ jobs:
                   for code, count in sorted(reasons.items()):
                       out.write(f"- Failure class `{code}`: {count}\n")
                   if checked == 0:
-                      out.write("\nNo eligible races: not an acquisition success test.\n")
+                      out.write(f"\nNo eligible races: not an acquisition success test. Today files: {selection.get('today_race_files', 'unknown')}; excluded from capture window or safety: {selection.get('excluded_window_or_safety', 'unknown')}; observed: {selection.get('observed_at_jst', 'unknown')}\n")
                   elif enriched == 0:
                       out.write("\n**No verified race entries; gate 1C remains unproven.**\n")
               if checked and not enriched:
