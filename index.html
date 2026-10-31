@@ -1132,6 +1132,10 @@ th,td{padding:7px 6px;font-size:11px}
   .decision-grid{gap:7px}
 }
 
+
+/* Compact data-first view: remove prose-only helpers, preserve alerts, provenance and missing-data states. */
+.hero-main p,.direct-mode .direct-sub,.direct-mode .direct-note[style],
+#homeView .hero-main .kicker{display:none}
 </style>
 <!-- BOAT_EDGE_FINAL_UI_V48 -->
 <link rel="stylesheet" href="./assets/boat_edge_final_v48.css">
@@ -1262,7 +1266,7 @@ th,td{padding:7px 6px;font-size:11px}
 
     <section class="section">
       <div class="title"><h2>締切時間順</h2><span id="deadlineCount">－</span></div>
-      <div class="note" style="margin-bottom:8px">締切が近い順で表示。必要な状態だけを短く表示します。
+      <div class="note" style="margin-bottom:8px">
         <div class="status-key"><span><b>正式</b>＝V1.21.33接続</span><span><b>直前あり</b>＝展示・実進入が取得可能</span><span><b>準備中</b>＝公開待ち</span></div>
       </div>
       <div id="deadlineBoard" class="deadline-board"></div>
@@ -2024,7 +2028,7 @@ function renderModelPanels(){
 
   const text1 = `<b>サイト収集 / 正式検証を分離表示</b><br>
     <b>サイト収集</b>: CORE7 <b>${elig}/${req}R</b> ${collectorReady?statusBadge("green","収集条件OK"):statusBadge("orange","収集中")}<br>
-    <span class="note">このCORE7件数はサイト表示用の収集状況。正式freshのfirst100とは別物です。</span><br><br>
+    <span class="note"></span><br><br>
     <b>正式検証CURRENT</b>: <span class="mono">${formal.current || '正式CURRENT同期待ち'}</span><br>
     stage: <b>${formal.stage || '正式検証同期待ち'}</b><br>
     正式first100: <b>${formal.formalFirst100?.races ?? '－'}R / ${formal.formalFirst100?.racers ?? '－'} racers / ${formal.formalFirst100?.pairs ?? '－'} pairs</b><br>
@@ -2032,7 +2036,7 @@ function renderModelPanels(){
     guards: results_seen=<span class="${fg.results_seen?'bad':'good'}">${fg.results_seen}</span> /
     unlock=<span class="${fg.unlock?'bad':'good'}">${fg.unlock}</span> /
     scoring=<span class="${fg.scoring?'bad':'good'}">${fg.scoring}</span><br>
-    <span class="note">正式予想は検証パイプラインの出力がrace JSONへ接続された場合だけ「正式予想」と表示します。</span>`;
+    <span class="note"></span>`;
 
   document.getElementById("modelStatusBox").innerHTML = text1;
   document.getElementById("globalAuditModel").innerHTML = text1;
@@ -2301,7 +2305,7 @@ function renderInputCompleteness(d, pred){
     <div class="source-chips">
       ${Object.entries(c.present).map(([k,v])=>`<span class="source-chip ${v?'ok':'miss'}">${k} ${v?'✓':'待ち'}</span>`).join("")}
     </div>
-    <div class="note" style="margin-top:8px">${pred.mode==='formal'?'正式CURRENTを優先表示中':'不足分を勝手に補完せず、取得済み情報だけで暫定計算'}</div>
+    <div class="note" style="margin-top:8px">${pred.mode==='formal'?'正式CURRENTを優先表示中':'暫定'}</div>
   `;
 }
 function ageMinutes(iso){
@@ -2628,7 +2632,7 @@ function renderDirectMode(d,pred){
       <div class="direct-card">
         <h3>買い目メモ</h3>
         <div class="direct-tickets">${memo.length?memo.map((t,i)=>`
-          <div class="direct-ticket"><span class="rank">${t.world}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*10)/10+"%":""}</span><span class="memo">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</span></div>`).join(""):`<div class="direct-note">予想タブで買い目をタップすると、ここにまとめて表示します。</div>`}</div>
+          <div class="direct-ticket"><span class="rank">${t.world}</span><span class="combo">${f(t.combo)}</span><span class="prob">${t.probability!=null?Math.round(Number(t.probability)*10)/10+"%":""}</span><span class="memo">${moneyForTicket(t)?moneyForTicket(t).toLocaleString()+"円":""}</span></div>`).join(""):`<div class="direct-note">メモなし</div>`}</div>
       </div>
       <div class="direct-card">
         <h3>すぐ見る</h3>
@@ -2636,7 +2640,7 @@ function renderDirectMode(d,pred){
           <button class="direct-action primary" data-direct-go="pred">買い目詳細</button>
           <button class="direct-action secondary" data-direct-go="before">直前データ</button>
         </div>
-        <div class="direct-note" style="margin-top:8px">直前モードは表示専用。正式モデル・PRE_RESULT監査・買い目計算は変更しません。</div>
+        
       </div>
     </div>`;
   el.querySelectorAll("[data-direct-go]").forEach(b=>b.onclick=()=>{
@@ -2972,7 +2976,7 @@ function renderDataTab(d, pred){
     勝負度: <b>${pred.grade}</b><br>
     展開主役: <b>${pred.reasoning?.leader || "－"}</b><br>
     コメント: ${pred.reasoning?.note || "－"}<br>
-    <span class="note">この画面の点数は比較用。正式CURRENTがある場合は正式予想を優先します。</span>
+    <span class="note"></span>
   `;
 
   document.getElementById("scoreRows").innerHTML = scoreRows.map(s=>`<tr>
