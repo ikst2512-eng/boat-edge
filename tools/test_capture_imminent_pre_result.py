@@ -95,6 +95,9 @@ class BatchTests(unittest.TestCase):
                 return audit
             report = batch(races, root / "raw", now=NOW, capture=capture, enriched_output=root / "enriched")
             self.assertEqual(len(report["enriched"]), 1, report)
+            self.assertEqual(len(report["t12_receipts"]), 1)
+            self.assertTrue(report["t12_receipts"][0]["timestamp_cutoff_ok"])
+            self.assertFalse(report["t12_receipts"][0]["exhibition_six_boats_verified"])
             enriched = json.loads((root / "enriched" / "20261025-04-01.json").read_text())
             self.assertEqual(enriched["actual_entry"], [2,1,3,4,5,6])
             self.assertNotIn("actual_entry", json.loads((races / "20261025-04-01.json").read_text()))
@@ -142,6 +145,8 @@ class BatchTests(unittest.TestCase):
             first=batch(races,root/"raw",now=NOW,capture=capture,enriched_output=root/"enriched")
             self.assertEqual(len(first["enriched"]),1,first)
             self.assertEqual(first["enriched"][0]["attempt"],2)
+            self.assertEqual(len(first["t12_receipts"]),2)
+            self.assertTrue(all(not x["exhibition_six_boats_verified"] for x in first["t12_receipts"]))
             self.assertEqual([x["attempt"] for x in first["captured"]],[1,2])
             original=(root/"raw"/"20261025-04-01.beforeinfo.html").read_bytes()
             self.assertEqual(original,blank)
