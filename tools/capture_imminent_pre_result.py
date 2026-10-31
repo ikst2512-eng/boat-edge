@@ -43,12 +43,21 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
     live_clock = now is None
     now = now or dt.datetime.now(JST)
     matches = []
-    for path in sorted(Path(race_dir).glob(now.strftime("%Y%m%d") + "-*.json")):
+    today_files = sorted(Path(race_dir).glob(now.strftime("%Y%m%d") + "-*.json"))
+    for path in today_files:
         result = eligible(path, now)
         if result:
             matches.append((*result, path))
     matches.sort(key=lambda item: item[0])
-    report = {"checked": len(matches), "captured": [], "enriched": [], "skipped": [], "failed": [], "t12_receipts": []}
+    report = {"checked": len(matches), "captured": [], "enriched": [], "skipped": [], "failed": [], "t12_receipts": [],
+              "selection_diagnostic": {
+                  "observed_at_jst": now.astimezone(JST).isoformat(),
+                  "today_race_files": len(today_files),
+                  "eligible_window_races": len(matches),
+                  "excluded_window_or_safety": len(today_files) - len(matches),
+                  "capacity_not_attempted": max(0, len(matches) - maximum),
+                  "zero_eligible_is_success": False,
+              }}
     for deadline, race, path in matches[:maximum]:
         key = race["race_key"]
         dest = Path(enriched_output) / (key + ".json") if enriched_output is not None else None
