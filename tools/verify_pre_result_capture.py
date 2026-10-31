@@ -15,7 +15,7 @@ from urllib.parse import urlparse,parse_qs
 JST=dt.timezone(dt.timedelta(hours=9))
 
 
-def verify(raw_bytes, manifest, race):
+def verify(raw_bytes, manifest, race, observed_at=None):
     errors=[]
     t12_time_verified=False
     key=race.get("race_key","")
@@ -34,6 +34,12 @@ def verify(raw_bytes, manifest, race):
             # A before-deadline capture is NOT automatically a T-12 capture.
             # Evidence must be recorded no later than the 12-minute cutoff.
             t12_time_verified = fetched <= deadline - dt.timedelta(minutes=12)
+        if observed_at is not None:
+            if (not isinstance(observed_at, dt.datetime) or
+                    observed_at.tzinfo is None or observed_at.utcoffset() is None):
+                errors.append("invalid_observation_time")
+            elif fetched.tzinfo is not None and fetched > observed_at:
+                errors.append("capture_timestamp_in_future")
         if meta["date"]!=f"{day[:4]}-{day[4:6]}-{day[6:8]}" or str(meta["venue_code"])!=venue or int(meta["race_no"])!=int(rno):
             errors.append("race_identity_mismatch")
         if manifest.get("source")!=expected:
