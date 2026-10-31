@@ -14,6 +14,16 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
         self.assertEqual(audit.window("2026-10-31", "11:01")[0].strftime("%H:%M"), "10:51")
         self.assertEqual(audit.window("2026-10-31", "19:14")[1].strftime("%H:%M"), "19:12")
 
+    def test_utc_cron_opportunities_not_dispatch_proof(self):
+        for key, expected in (
+            ("20261031-23-06", {"v229": ["10:51", "10:56"], "v216": ["10:54", "10:59"]}),
+            ("20261031-24-09", {"v229": ["19:06", "19:11"], "v216": ["19:04", "19:09"]}),
+        ):
+            start, end = audit.window(*audit.RACES[key])
+            for workflow in ("v229", "v216"):
+                slots = audit.configured_schedule_slots(start, end, workflow)
+                self.assertEqual([v[11:16] for v in slots], expected[workflow])
+
     def test_actual_start_not_creation_or_completion(self):
         def fake(url, token):
             self.assertIn("created=", url)
