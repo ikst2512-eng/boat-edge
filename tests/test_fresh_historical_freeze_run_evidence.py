@@ -32,6 +32,20 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
         self.assertFalse(out["workflows"]["v229"]["no_run_proven"])
         self.assertFalse(out["formal_unlock_authorized"])
 
+    def test_cross_window_uses_updated_at_only_as_candidate(self):
+        def fake(url, token):
+            return {"workflow_runs": [
+                {"id": 11, "run_started_at": "2026-10-31T01:40:00Z",
+                 "updated_at": "2026-10-31T01:55:00Z"},
+                {"id": 12, "run_started_at": "2026-10-31T01:40:00Z",
+                 "updated_at": "2026-10-31T01:45:00Z"},
+                {"id": 13, "run_started_at": "2026-10-31T01:40:00Z"}]}
+        out = audit.collect("owner/repo", "token", "20261031-23-06", fake)
+        v = out["workflows"]["v229"]
+        self.assertEqual([x["id"] for x in v["possible_overlaps_by_updated_at"]], [11])
+        self.assertEqual([x["id"] for x in v["uncertain_without_updated_at"]], [13])
+        self.assertFalse(v["overlap_is_confirmed_by_job_times"])
+
     def test_truncated_page_fails_closed(self):
         def fake(url, token):
             return {"workflow_runs": [{"id": i} for i in range(100)]}
