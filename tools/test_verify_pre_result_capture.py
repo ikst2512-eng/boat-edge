@@ -31,6 +31,13 @@ class VerifyCaptureTests(unittest.TestCase):
         result=verify(RAW+b"!",AUDIT,RACE)
         self.assertFalse(result["ok"])
         self.assertFalse(result["t12_timestamp_cutoff_ok"])
+    def test_future_dated_receipt_rejected(self):
+        observed=dt.datetime(2026,10,25,10,35,tzinfo=dt.timezone(dt.timedelta(hours=9)))
+        future=dict(AUDIT,fetched_at="2026-10-25T10:40:00+09:00")
+        result=verify(RAW,future,RACE,observed_at=observed)
+        self.assertFalse(result["ok"])
+        self.assertIn("capture_timestamp_in_future",result["errors"])
+        self.assertFalse(result["t12_timestamp_cutoff_ok"])
     def test_tampered_html(self):
         self.assertIn("sha256_mismatch",verify(RAW+b"!",AUDIT,RACE)["errors"])
     def test_wrong_race(self):
