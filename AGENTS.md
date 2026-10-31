@@ -1,5 +1,10 @@
 # BOAT EDGE autonomous development
 
+## Owner-approved reprioritization — 2026-11-01
+
+The owner explicitly reprioritized BOAT EDGE CLEAN integration to: (1) safely remove the old site and unused code, (2) consolidate duplicate PRs and workflows, (3) repair historical race display, (4) integrate the BOATERS-inspired single-page prediction presentation, and (5) verify CI, main, Render production and update the shared work record. This later instruction supersedes the 2026-10-16 gate-order restriction **for site/integration work only**. Do not confuse visual inspiration with permission to copy BOATERS content or proprietary data. Preserve the Formal Fresh lock, immutable pre-deadline evidence and 01/02/03 role boundaries. No new parallel workflow if an existing automation can be reused. Other tracks' prediction and acquisition work remains separate; coordinate rather than overwrite.
+
+
 The user authorizes code changes, tests, GitHub commits and Pages verification
 without repeated ZIP downloads/uploads or routine confirmations. Use the existing
 repository and Pages site. Do not create a replacement website.
