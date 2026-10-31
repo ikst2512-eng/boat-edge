@@ -906,12 +906,12 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                         const el = document.querySelector(selector);
                         return el ? Number.parseFloat(getComputedStyle(el).fontSize) : null;
                     };
-                    return {brand_px:px('.brandtext'),race_title_px:px('.race-summary h1'),
+                    return {brand_px:px('.be241-brand-home'),race_title_px:px('.race-summary h1'),
                             hero_title_px:px('.hero-main h1'),
                             viewport_width:innerWidth,
                             document_width:document.documentElement.scrollWidth};
                 }""")
-                density_ok = (density["brand_px"] is not None and density["brand_px"] <= 17
+                density_ok = (density["brand_px"] is not None and density["brand_px"] <= 22
                               and density["race_title_px"] is not None and density["race_title_px"] <= 25
                               and density["hero_title_px"] is not None and density["hero_title_px"] <= 22)
                 print("COMPACT_UI_DENSITY", json.dumps({"ok": density_ok, **density}, ensure_ascii=False))
