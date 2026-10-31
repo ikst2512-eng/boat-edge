@@ -10,6 +10,7 @@ import datetime as dt
 import json
 from pathlib import Path
 from build_verified_entry_candidate import candidate
+from verify_pre_result_capture import verify as verify_receipt
 
 from archive_pre_result_source import JST, archive
 from ingest_verified_start_order import ingest
@@ -46,7 +47,7 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
         if result:
             matches.append((*result, path))
     matches.sort(key=lambda item: item[0])
-    report = {"checked": len(matches), "captured": [], "enriched": [], "skipped": [], "failed": []}
+    report = {"checked": len(matches), "captured": [], "enriched": [], "skipped": [], "failed": [], "t12_receipts": []}
     for deadline, race, path in matches[:maximum]:
         key = race["race_key"]
         dest = Path(enriched_output) / (key + ".json") if enriched_output is not None else None
@@ -76,6 +77,17 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
             try:
                 raw = raw_path.read_bytes()
                 manifest = json.loads(audit_path.read_text(encoding="utf-8"))
+                receipt = verify_receipt(raw, manifest, race)
+                report["t12_receipts"].append({
+                    "key": key, "attempt": attempt,
+                    "receipt_valid": receipt["ok"],
+                    "timestamp_cutoff_ok": receipt["t12_timestamp_cutoff_ok"],
+                    "status": receipt["t12_status"],
+                    "exhibition_six_boats_verified": False,
+                    "source": "official_beforeinfo_html",
+                })
+                if not receipt["ok"]:
+                    raise ValueError("invalid_captured_receipt")
                 candidate(raw, manifest, race, now=now)
                 if dest is not None:
                     snapshot = ingest(race, raw, manifest, now=now)
