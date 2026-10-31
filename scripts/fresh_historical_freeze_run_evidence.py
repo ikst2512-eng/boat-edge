@@ -41,7 +41,7 @@ def collect(repo, token, race_key, get_json, pages=10):
               "results_accessed": False, "formal_unlock_authorized": False,
               "workflows": {}, "evidence_complete": True}
     for name, workflow in WORKFLOWS.items():
-        found, covered = [], False
+        found, overlaps, uncertain, covered = [], [], [], False
         # Query by created date, then inspect actual start separately. Late
         # starts may arise from earlier queued runs, which this scan includes
         # only if created on this day or the prior day.
@@ -60,16 +60,30 @@ def collect(repo, token, race_key, get_json, pages=10):
                 if not started:
                     continue
                 stamp = datetime.fromisoformat(started.replace("Z", "+00:00"))
+                evidence = {k: run.get(k) for k in (
+                    "id", "status", "conclusion", "event", "created_at",
+                    "run_started_at", "updated_at", "html_url", "head_sha")}
                 if start_utc <= stamp <= end_utc:
-                    found.append({k: run.get(k) for k in (
-                        "id", "status", "conclusion", "event", "created_at",
-                        "run_started_at", "updated_at", "html_url", "head_sha")})
+                    found.append(evidence)
+                if stamp <= end_utc:
+                    finished = run.get("updated_at")
+                    if not finished:
+                        uncertain.append(evidence)
+                    else:
+                        finish_stamp = datetime.fromisoformat(finished.replace("Z", "+00:00"))
+                        if finish_stamp >= start_utc:
+                            # updated_at is not a verified job completion time.
+                            overlaps.append(evidence)
             if len(runs) < 100:
                 covered = True
                 break
         found.sort(key=lambda x: (x["run_started_at"], x["id"]))
+        overlaps.sort(key=lambda x: (x["run_started_at"], x["id"]))
         result["workflows"][name] = {
             "workflow": workflow, "runs_started_in_window": found,
+            "possible_overlaps_by_updated_at": overlaps,
+            "uncertain_without_updated_at": uncertain,
+            "overlap_is_confirmed_by_job_times": False,
             "pagination_exhausted": covered,
             "no_run_proven": False,  # cannot prove scheduling from this alone
         }
