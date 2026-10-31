@@ -8,7 +8,7 @@
     "event": "トータリゼータエンジニアリング杯",
     "race_no": 6,
     "deadline": "11:01",
-    "updated_at": "2026-10-31T08:05:17+09:00",
+    "updated_at": "2026-10-31T08:56:19+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261031&jcd=23&rno=6",
-      "fetched_at": "2026-10-31T08:07:21+09:00",
-      "sha256": "226f98ccde1b766dc900aa50839ed515b04f568022bce95f03bed773e4fa686f",
+      "fetched_at": "2026-10-31T08:58:51+09:00",
+      "sha256": "a1a2a464cfdb3079e799af7161fdd51ab1fdd22e712415eb14c90502e6e18ac3",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261031&jcd=23&rno=6",
+      "fetched_at": "2026-10-31T08:57:16+09:00",
+      "sha256": "f5c208d4dfd4908208dc9156c2dcc38bfc1afeaf8da010809a44da21675853e1",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:08:49+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:10+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "df8bdb802f02480a00229ddf2cf1ef74ee29d4d671b92555fe1ae48738748f69"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:08:56+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:17+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "984a80a7f704f32c38a7d3189bb6f81cdc4bc736736401fa51714b4dec98ebb6"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:09:03+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:24+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "83c2cec96671f8886442b70a80330099f291d3a67a6967d78cc41a8182c227bd"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:08:42+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:03+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "ed291faa67e9daf9d2693c3c68f513d4aa76901e2a3d6f802c18c3f6966fb075"
     }
   },
   "racers": [
@@ -275,10 +281,11 @@
         "4",
         "9",
         "1",
-        "8"
+        "8",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "5 5459 / B2 田中 きら 山口/山口 20歳/44.0kg F0 L0 - 1.06 0.00 0.00 1.11 0.00 0.00 64 38.89 66.67 58 28.87 42.96 3 3 4 9 1 8 1R"
+      "raw_text": "5 5459 / B2 田中 きら 山口/山口 20歳/44.0kg F0 L0 - 1.06 0.00 0.00 1.11 0.00 0.00 64 38.89 66.67 58 28.87 42.96 3 3 4 9 1 8 1 1R"
     },
     {
       "lane": 6,
@@ -323,7 +330,53 @@
       "raw_text": "6 4711 / A2 前出 達吉 福井/石川 36歳/52.0kg F1 L0 0.16 6.11 43.48 66.96 5.04 28.00 44.00 43 30.77 38.46 27 28.38 40.54 11 4 9 6 5"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 林 美憲 52.6kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 明石 正之 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 蒲原 健太 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 渡辺 崇 55.7kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 田中 きら 44.0kg R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 前出 達吉 52.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 3.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

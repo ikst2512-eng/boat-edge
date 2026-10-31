@@ -8,7 +8,7 @@
     "event": "第50回報知新聞社杯",
     "race_no": 1,
     "deadline": "10:59",
-    "updated_at": "2026-10-31T08:05:17+09:00",
+    "updated_at": "2026-10-31T08:56:19+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261031&jcd=03&rno=1",
-      "fetched_at": "2026-10-31T08:06:52+09:00",
-      "sha256": "92bcf2be1460295695c473cc4fa9e63a8330aa118bb65d3c0b43318191aa7aaf",
+      "fetched_at": "2026-10-31T08:59:00+09:00",
+      "sha256": "0573a6d2cb9ec682c94765a8b5aeca317aefa7b990ecaba128b5692e5bb7905c",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261031&jcd=03&rno=1",
+      "fetched_at": "2026-10-31T08:57:15+09:00",
+      "sha256": "4aee6efe525246b3b8325b425a0ce45acdd1fea95bd732f3c8315c304ebc9b15",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:08:49+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:10+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "df8bdb802f02480a00229ddf2cf1ef74ee29d4d671b92555fe1ae48738748f69"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:08:56+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:17+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "984a80a7f704f32c38a7d3189bb6f81cdc4bc736736401fa51714b4dec98ebb6"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:09:03+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:24+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "83c2cec96671f8886442b70a80330099f291d3a67a6967d78cc41a8182c227bd"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/10/31.csv",
       "fetched_at": null,
-      "observed_at": "2026-10-31T08:08:42+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-10-31T09:00:03+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "ed291faa67e9daf9d2693c3c68f513d4aa76901e2a3d6f802c18c3f6966fb075"
     }
   },
   "racers": [
@@ -324,7 +330,53 @@
       "raw_text": "6 4345 / A2 西舘 健 東京/神奈川 41歳/54.5kg F1 L0 0.15 5.04 34.04 50.00 5.33 35.83 51.67 17 38.61 51.49 40 37.37 54.55 2 8 8 1 11 10R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 高橋 勲 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 香川 颯太 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 丸山 祐也 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 藤本 元輝 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 木下 虎之輔 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 西舘 健 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
