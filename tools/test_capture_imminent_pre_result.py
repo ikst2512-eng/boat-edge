@@ -59,6 +59,9 @@ class BatchTests(unittest.TestCase):
             result = batch(directory, Path(tmp) / "captures", now=NOW, capture=fake_capture)
             self.assertEqual(calls, ["20261025-04-01"])
             self.assertEqual(len(result["captured"]), 1)
+            self.assertEqual(result["selection_diagnostic"]["today_race_files"], 5)
+            self.assertEqual(result["selection_diagnostic"]["eligible_window_races"], 1)
+            self.assertEqual(result["selection_diagnostic"]["excluded_window_or_safety"], 4)
 
     def test_early_placeholder_window_is_excluded(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -204,6 +207,8 @@ class BatchTests(unittest.TestCase):
             report = batch(tmp, Path(tmp) / "captures", now=NOW)
             self.assertEqual(report["checked"], 0)
             self.assertEqual(report["captured"], [])
+            self.assertEqual(report["selection_diagnostic"]["today_race_files"], 0)
+            self.assertFalse(report["selection_diagnostic"]["zero_eligible_is_success"])
 
 
 if __name__ == "__main__":
