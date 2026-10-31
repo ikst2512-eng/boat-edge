@@ -6,19 +6,19 @@
       "excluded": {},
       "headsecond_by_frozen_policy": {
         "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES": {
-          "matched_races": 72,
+          "matched_races": 73,
           "miss_categories": {
             "headsecond10": {
               "head_absent": 8,
               "hit": 21,
               "second_absent_given_head": 22,
-              "third_absent_given_head_second": 21
+              "third_absent_given_head_second": 22
             },
             "hit10": {
               "head_absent": 8,
               "hit": 20,
               "second_absent_given_head": 23,
-              "third_absent_given_head_second": 21
+              "third_absent_given_head_second": 22
             }
           }
         },
@@ -45,25 +45,25 @@
           "head_absent": 20,
           "hit": 65,
           "second_absent_given_head": 40,
-          "third_absent_given_head_second": 55
+          "third_absent_given_head_second": 56
         },
         "coverage15": {
           "head_absent": 11,
           "hit": 77,
           "second_absent_given_head": 34,
-          "third_absent_given_head_second": 58
+          "third_absent_given_head_second": 59
         },
         "hit10": {
           "head_absent": 20,
           "hit": 61,
           "second_absent_given_head": 44,
-          "third_absent_given_head_second": 55
+          "third_absent_given_head_second": 56
         },
         "scenario7plus3": {
           "head_absent": 20,
           "hit": 63,
           "second_absent_given_head": 45,
-          "third_absent_given_head_second": 52
+          "third_absent_given_head_second": 53
         }
       },
       "races": [
@@ -2660,9 +2660,24 @@
           "race_key": "20261030-15-07",
           "reported_head_hit": true,
           "winning_combo": "1-6-4"
+        },
+        {
+          "actual_head": "6",
+          "candidate_policy": "PREDECLARED_DISTINCT_HEAD_SECOND_TICKET_MEMBERSHIP_EXISTING_FROZEN_MODES",
+          "categories": {
+            "balance10": "third_absent_given_head_second",
+            "coverage15": "third_absent_given_head_second",
+            "headsecond10": "third_absent_given_head_second",
+            "hit10": "third_absent_given_head_second",
+            "scenario7plus3": "third_absent_given_head_second"
+          },
+          "date_jst": "20261031",
+          "race_key": "20261031-09-03",
+          "reported_head_hit": false,
+          "winning_combo": "6-2-4"
         }
       ],
-      "races_verified": 180
+      "races_verified": 181
     },
     "v240": {
       "excluded": {},
@@ -3491,5 +3506,5 @@
   "real_or_paper_wagers_placed": 0,
   "schema": "BOAT_EDGE_V253_SITE_ONLY_FROZEN_TICKET_MISS_DIAGNOSTICS_V1",
   "scope": "POST_RESULT_SITE_RESEARCH_ONLY_NO_FORMAL_FRESH_ACCESS",
-  "site_verified_reference_races": 570
+  "site_verified_reference_races": 582
 }
