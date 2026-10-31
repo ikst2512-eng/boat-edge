@@ -75,7 +75,7 @@ jobs:
   selected-race-to-prediction:
     needs: v229-source-first-add
     if: needs.v229-source-first-add.outputs.live_candidate == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
