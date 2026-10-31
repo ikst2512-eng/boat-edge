@@ -26,6 +26,8 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
 
     def test_actual_start_not_creation_or_completion(self):
         def fake(url, token):
+            if "/jobs?" in url:
+                return {"total_count": 0, "jobs": []}
             self.assertIn("created=", url)
             return {"workflow_runs": [
                 {"id": 1, "run_started_at": "2026-10-31T01:53:00Z",
@@ -44,6 +46,8 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
 
     def test_cross_window_uses_updated_at_only_as_candidate(self):
         def fake(url, token):
+            if "/jobs?" in url:
+                return {"total_count": 0, "jobs": []}
             return {"workflow_runs": [
                 {"id": 11, "run_started_at": "2026-10-31T01:40:00Z",
                  "updated_at": "2026-10-31T01:55:00Z"},
@@ -58,6 +62,8 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
 
     def test_nearby_run_starts_are_not_misclassified_as_window_starts(self):
         def fake(url, token):
+            if "/jobs?" in url:
+                return {"total_count": 0, "jobs": []}
             return {"workflow_runs": [
                 {"id": 21, "run_started_at": "2026-10-31T01:45:00Z",
                  "updated_at": "2026-10-31T01:47:00Z", "event": "schedule"},
@@ -68,8 +74,39 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
         self.assertEqual([x["id"] for x in v["nearby_starts_plus_minus_20m"]], [21, 22])
         self.assertEqual(v["runs_started_in_window"], [])
 
+    def test_actual_job_times_confirm_overlap_or_nonoverlap(self):
+        def fake(url, token):
+            if "/jobs?" in url:
+                return {"total_count": 2, "jobs": [
+                    {"id": 51, "name": "audit", "conclusion": "success",
+                     "started_at": "2026-10-31T01:48:00Z",
+                     "completed_at": "2026-10-31T01:54:00Z"},
+                    {"id": 52, "started_at": "2026-10-31T01:40:00Z",
+                     "completed_at": "2026-10-31T01:45:00Z"}]}
+            return {"workflow_runs": [
+                {"id": 50, "run_started_at": "2026-10-31T01:48:00Z",
+                 "updated_at": "2026-10-31T01:55:00Z"}]}
+        out = audit.collect("owner/repo", "token", "20261031-23-06", fake)
+        evidence = out["workflows"]["v229"]["nearby_job_timing"][0]
+        self.assertEqual([j["overlaps_window"] for j in evidence["jobs"]], [True, False])
+        self.assertTrue(out["evidence_complete"])
+
+    def test_unknown_job_finish_does_not_prove_no_overlap(self):
+        def fake(url, token):
+            if "/jobs?" in url:
+                return {"total_count": 1, "jobs": [
+                    {"id": 1, "started_at": "2026-10-31T01:48:00Z",
+                     "completed_at": None}]}
+            return {"workflow_runs": [{"id": 1,
+                "run_started_at": "2026-10-31T01:48:00Z"}]}
+        out = audit.collect("owner/repo", "token", "20261031-23-06", fake)
+        self.assertFalse(out["evidence_complete"])
+        self.assertIsNone(out["workflows"]["v216"]["nearby_job_timing"][0]["jobs"][0]["overlaps_window"])
+
     def test_truncated_page_fails_closed(self):
         def fake(url, token):
+            if "/jobs?" in url:
+                return {"total_count": 0, "jobs": []}
             return {"workflow_runs": [{"id": i} for i in range(100)]}
         out = audit.collect("owner/repo", "token", "20261031-24-09", fake, pages=1)
         self.assertFalse(out["evidence_complete"])
