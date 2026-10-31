@@ -40,6 +40,7 @@ def eligible(path, now):
 
 
 def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_output=None):
+    live_clock = now is None
     now = now or dt.datetime.now(JST)
     matches = []
     for path in sorted(Path(race_dir).glob(now.strftime("%Y%m%d") + "-*.json")):
@@ -77,7 +78,7 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
             try:
                 raw = raw_path.read_bytes()
                 manifest = json.loads(audit_path.read_text(encoding="utf-8"))
-                receipt = verify_receipt(raw, manifest, race)
+                receipt = verify_receipt(raw, manifest, race, observed_at=(dt.datetime.now(JST) if live_clock else now))
                 report["t12_receipts"].append({
                     "key": key, "attempt": attempt,
                     "receipt_valid": receipt["ok"],
