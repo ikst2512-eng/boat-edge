@@ -6,6 +6,8 @@ on:
       - 'scripts/fresh_race_csv_state_compare.py'
       - 'scripts/fresh_upcoming_state_targets.py'
       - 'scripts/fresh_collector_actions_timeline.py'
+      - 'scripts/fresh_historical_freeze_run_evidence.py'
+      - 'tests/test_fresh_historical_freeze_run_evidence.py'
       - 'tests/test_fresh_first_git_state_audit.py'
       - 'tests/test_fresh_race_csv_state_compare.py'
       - 'tests/test_fresh_upcoming_state_targets.py'
@@ -28,6 +30,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_fresh_race_csv_state_compare.py' -v
       - name: Test future-only PRE_RESULT target selection
         run: python3 -m unittest discover -s tests -p 'test_fresh_upcoming_state_targets.py' -v
+      - name: Test historical workflow-start audit with synthetic inputs
+        run: python3 -m unittest discover -s tests -p 'test_fresh_historical_freeze_run_evidence.py' -v
       - name: Verify full Git history is present
         run: test "$(git rev-parse --is-shallow-repository)" = false
       - name: Audit original race-state Git additions without results
@@ -59,6 +63,12 @@ jobs:
         env:
           GH_READONLY_TOKEN: ${{ github.token }}
         run: python3 scripts/fresh_collector_actions_timeline.py
+      - name: Inspect two missing 2026-10-31 races' V229/V216 workflow starts
+        env:
+          GH_READONLY_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/fresh_historical_freeze_run_evidence.py \
+            --race-key 20261031-23-06 --race-key 20261031-24-09
       - name: Preserve non-formal provenance audit
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,5 +80,6 @@ jobs:
             fresh_upcoming_state_targets.json
             fresh_upcoming_csv_state_comparison.json
             fresh_collector_actions_timeline.json
+            historical_freeze_run_evidence.json
           if-no-files-found: warn
           retention-days: 30
