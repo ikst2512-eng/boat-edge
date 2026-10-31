@@ -10,6 +10,7 @@ import datetime as dt
 import json
 from pathlib import Path
 from build_verified_entry_candidate import candidate
+from parse_explicit_start_order import parse_explicit_start_order
 from verify_pre_result_capture import verify as verify_receipt
 
 from archive_pre_result_source import JST, archive
@@ -88,11 +89,14 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
                 raw = raw_path.read_bytes()
                 manifest = json.loads(audit_path.read_text(encoding="utf-8"))
                 receipt = verify_receipt(raw, manifest, race, observed_at=(dt.datetime.now(JST) if live_clock else now))
+                explicit_entry = parse_explicit_start_order(raw) if receipt["ok"] else None
                 report["t12_receipts"].append({
                     "key": key, "attempt": attempt,
                     "receipt_valid": receipt["ok"],
                     "timestamp_cutoff_ok": receipt["t12_timestamp_cutoff_ok"],
                     "status": receipt["t12_status"],
+                    "start_entry_six_boats_verified": explicit_entry is not None,
+                    "t12_start_entry_verified": bool(receipt["t12_timestamp_cutoff_ok"] and explicit_entry is not None),
                     "exhibition_six_boats_verified": False,
                     "source": "official_beforeinfo_html",
                 })
