@@ -87,12 +87,15 @@ jobs:
               captured = len(report.get("captured", []))
               enriched = len(report.get("enriched", []))
               failures = report.get("failed", [])
+              t12 = report.get("t12_receipts", [])
+              t12_cutoff = sum(1 for item in t12 if item.get("timestamp_cutoff_ok") is True)
               reasons = collections.Counter(
                   f.get("capture_error_code") or f.get("reason") or "unspecified"
                   for f in failures
               )
               with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as out:
                   out.write(f"\nEligible races: {checked}; captures: {captured}; verified six-boat entries: {enriched}; failures: {len(failures)}\n")
+                  out.write(f"\\nT-12 timestamp-only receipts: {t12_cutoff}/{len(t12)}; six-boat exhibition E2E: NOT VERIFIED\\n")
                   for code, count in sorted(reasons.items()):
                       out.write(f"- Failure class `{code}`: {count}\n")
                   if checked == 0:
