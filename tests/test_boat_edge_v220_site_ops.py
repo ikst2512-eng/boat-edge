@@ -70,6 +70,10 @@ def test_all():
         put(root,f'data/site_odds/{KEY}.json',{**odds,'trifecta_odds':{**combos,'1-2-3':0}})
         assert 'odds_120_incomplete' in mod.compute(root,middle)['current_windows'][0]['missing_evidence']
         put(root,f'data/site_odds/{KEY}.json',odds)
+        # Once V216 actually reports a fresh observation, recovery must stop.
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'day_observed_races':1,
+             'checked_at':(middle-timedelta(minutes=1)).isoformat()})
         complete=mod.compute(root,middle)
         assert complete['status']=='MONITORING_PREDEADLINE' and complete['issues']==[]
         assert complete['recovery_dispatch_candidates']==[]
