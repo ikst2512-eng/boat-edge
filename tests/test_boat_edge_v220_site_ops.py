@@ -889,6 +889,9 @@ def test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m():
         root=Path(tmp);sample(root)
         now=NOW+timedelta(minutes=25)  # 08:30, deadline 08:35
         race,scratch,odds=fully_proven_pre_result_fixture(root,now)
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'day_observed_races':1,
+             'checked_at':(now-timedelta(minutes=1)).isoformat()})
         card=race['source_audit']['race_card']
         stamp=card['fetched_at']
         ready=mod.compute(root,now)
