@@ -24,6 +24,11 @@ class HistoricalFreezeRunEvidenceTests(unittest.TestCase):
                 slots = audit.configured_schedule_slots(start, end, workflow)
                 self.assertEqual([v[11:16] for v in slots], expected[workflow])
 
+    def test_v125_recovery_cron_is_independently_observed(self):
+        self.assertEqual(audit.WORKFLOWS["v125"], "site-v125.yml")
+        start, end = audit.window(*audit.RACES["20261031-24-09"])
+        self.assertEqual([t[11:16] for t in audit.configured_schedule_slots(start, end, "v125")], ["19:08"])
+
     def test_actual_start_not_creation_or_completion(self):
         def fake(url, token):
             if "/jobs?" in url:
