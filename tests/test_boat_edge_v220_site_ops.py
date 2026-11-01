@@ -1666,12 +1666,14 @@ def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
         corrupted=mod.compute(root,now)
         assert 'predeadline_v216_observation_missing' in corrupted['issues'],corrupted
         assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in corrupted['recovery_dispatch_candidates']
-        # An empty synthetic same-day placeholder without a timestamp cannot
-        # independently establish that a V216 execution was expected/delayed.
+        # An empty same-day placeholder is not a completed observation.
+        # A verified in-window race warrants guarded observer recovery only.
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':DAY,'day_observed_races':0})
         unknown=mod.compute(root,now)
-        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in unknown['recovery_dispatch_candidates']
+        assert 'predeadline_v216_observation_missing' in unknown['issues']
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in unknown['recovery_dispatch_candidates']
+        assert unknown['v216_observation_freshness']['eligibility_proven'] is False
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':DAY,'checked_at':last})
         early=mod.compute(root,due-timedelta(minutes=20))
