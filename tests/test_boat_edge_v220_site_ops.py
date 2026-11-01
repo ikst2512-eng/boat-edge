@@ -211,7 +211,7 @@ def test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector():
         gaps=initial['current_windows'][0]['missing_evidence']
         assert gaps==['frozen_prediction_missing_or_invalid',
                       'scratch_unverified_or_blocked'],gaps
-        assert initial['recovery_dispatch_candidates']==['auto-update.yml'],initial
+        assert initial['recovery_dispatch_candidates']==['BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml','auto-update.yml'],initial
         put(root,f'data/site_scratches_v182/{KEY}.json',{
             'race_key':KEY,'blocked':False,
             'checked_at':(at-timedelta(minutes=16)).isoformat(),
