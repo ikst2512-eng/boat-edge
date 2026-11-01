@@ -81,6 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v229_*.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_v229_duplicate_remote_guard.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v229_atomic_freeze.py
           git diff --check
       - name: First freeze and audit same-run site-only evidence; never read results
@@ -138,8 +139,15 @@ jobs:
               exit 0
             fi
             if (( attempt == 4 )); then break; fi
+            # On a duplicate first-writer add/add conflict, do not replay or
+            # overwrite any prediction evidence. Existing main wins.
             if ! git pull --rebase origin main; then
               git rebase --abort || true
+              git fetch origin main
+              if python3 scripts/v229_duplicate_remote_guard.py; then
+                echo V229_IDENTICAL_FIRST_WRITER_ALREADY_ON_MAIN
+                exit 0
+              fi
               echo V229_REBASE_CONFLICT_NO_PRODUCTION_CLAIM >&2
               exit 1
             fi
