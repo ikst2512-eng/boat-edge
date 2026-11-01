@@ -169,6 +169,10 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(len(first["enriched"]),1,first)
             self.assertEqual(first["enriched"][0]["attempt"],2)
             self.assertEqual(len(first["t12_receipts"]),2)
+            for receipt in first["t12_receipts"]:
+                self.assertEqual(receipt["deadline_jst"], "2026-10-25T10:52:00+09:00")
+                self.assertTrue(receipt["fetched_at"].endswith("+09:00"))
+                self.assertRegex(receipt["source_sha256"], r"^[0-9a-f]{64}$")
             self.assertTrue(all(not x["exhibition_six_boats_verified"] for x in first["t12_receipts"]))
             self.assertEqual([x["attempt"] for x in first["captured"]],[1,2])
             original=(root/"raw"/"20261025-04-01.beforeinfo.html").read_bytes()
