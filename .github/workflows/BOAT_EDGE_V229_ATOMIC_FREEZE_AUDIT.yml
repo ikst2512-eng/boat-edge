@@ -138,6 +138,8 @@ jobs:
               exit 0
             fi
             if (( attempt == 4 )); then break; fi
+            # On a duplicate first-writer add/add conflict, do not replay or
+            # overwrite any prediction evidence. Existing main wins.
             if ! git pull --rebase origin main; then
               git rebase --abort || true
               echo V229_REBASE_CONFLICT_NO_PRODUCTION_CLAIM >&2
