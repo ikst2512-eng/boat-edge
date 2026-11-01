@@ -956,7 +956,19 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     "?.includes('1R') && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
                     arg=first["race_key"], timeout=35000
                 )
-                page.locator("#be207Top.ready").wait_for(state="attached", timeout=35000)
+                try:
+                    page.locator("#be207Top.ready").wait_for(state="attached", timeout=35000)
+                except Exception as exc:
+                    # Fail with real selected-race and UI state, never mask
+                    # missing source as a passing prediction E2E.
+                    diagnostic = page.evaluate("""() => ({
+                        race_key: typeof state !== 'undefined' ? state?.race?.race_key : null,
+                        panel_class: document.querySelector('#be207Top')?.className ?? null,
+                        panel_text: document.querySelector('#be207Top')?.innerText.slice(0, 240) ?? null,
+                        wait_text: document.querySelector('#be391PredictionWait')?.innerText.slice(0, 160) ?? null
+                    })""")
+                    raise AssertionError("PREDICTION_PANEL_NOT_READY " + json.dumps(
+                        diagnostic, ensure_ascii=False)) from exc
                 original_key = page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)")
                 assert original_key == first["race_key"]
                 assert page.locator("#raceView #raceTitle").is_visible()
