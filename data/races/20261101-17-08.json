@@ -8,7 +8,7 @@
     "event": "ルーキーシリーズ第21戦スカパー!・JLC杯",
     "race_no": 8,
     "deadline": "13:26",
-    "updated_at": "2026-11-01T10:33:22+09:00",
+    "updated_at": "2026-11-01T11:07:51+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261101&jcd=17&rno=8",
-      "fetched_at": "2026-11-01T10:36:56+09:00",
-      "sha256": "b9b2dde4ca6c587b812692cd89e1cacc0790c62e0b999ecd1e65e3e18304af63",
+      "fetched_at": "2026-11-01T11:10:19+09:00",
+      "sha256": "972d8610dbcd3d18ce1e96ab236c066078533dde5b9d754741efde11ff4aae15",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261101&jcd=17&rno=8",
+      "fetched_at": "2026-11-01T11:09:24+09:00",
+      "sha256": "7caed50dca1a862913cddaec8effd5b05a8c96a48b9b4a30371e70965e809fe9",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T10:37:38+09:00",
+      "observed_at": "2026-11-01T11:11:52+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "60d6baab5b84fc6abdca8728273ee0e64cdce7b201fcb5413d3d8ddcd3132005"
+      "sha256": "72aa39bc9c78b74917f863f91be8cfa69dd77d39d0e418eca69c210b2040d1c9"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T10:37:45+09:00",
+      "observed_at": "2026-11-01T11:11:59+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "e2b8657052147dd5bf9da3b627b2af69c4e4b189230d7e98f1289f5ea304bc28"
+      "sha256": "28fc0f4f349384a77fcd0b733b0be9d8b42ee8cc81d6489a1585849712523d3d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T10:37:52+09:00",
+      "observed_at": "2026-11-01T11:12:06+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "f058be2f32eaa20275c62bc22270bed90c3d67c6f281183bb5ed970ea2a72391"
+      "sha256": "ada4a2a5823b74e3566247fc0d4f10cbb9dbafe4eccc6bc2162e477769c5e1c9"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T10:37:31+09:00",
+      "observed_at": "2026-11-01T11:11:45+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "e43259b8aea0cd2246acd2fe2d4c24da52db9f9cda1a6628c9c55c012f4f4b36"
+      "sha256": "2d69d8365d48808bd6b1071de1f85f1a885eb9824d43060a09309318baee8005"
     }
   },
   "racers": [
@@ -175,9 +181,11 @@
         "quinella_rate": 60.0,
         "trio_rate": 70.0
       },
-      "series_tokens": [],
+      "series_tokens": [
+        "2"
+      ],
       "early_race": 2,
-      "raw_text": "3 5302 / B1 秋末 秦悟 大阪/大阪 23歳/52.1kg F0 L0 0.17 3.70 17.19 29.69 3.93 14.29 28.57 34 36.36 54.55 25 60.00 70.00 2R"
+      "raw_text": "3 5302 / B1 秋末 秦悟 大阪/大阪 23歳/52.1kg F0 L0 0.17 3.70 17.19 29.69 3.93 14.29 28.57 34 36.36 54.55 25 60.00 70.00 2 2R"
     },
     {
       "lane": 4,
@@ -288,7 +296,53 @@
       "raw_text": "6 5383 / B1 中村 楓 三重/三重 22歳/52.8kg F0 L0 0.17 2.84 7.23 16.87 0.00 0.00 0.00 12 33.33 33.33 37 30.00 50.00"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 品川 二千翔 51.5kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 坂本 一真 51.5kg R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 秋末 秦悟 52.1kg R 2"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 小林 甘寧 53.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 嘉手苅 徹哉 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中村 楓 52.8kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
