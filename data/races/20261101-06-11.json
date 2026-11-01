@@ -8,7 +8,7 @@
     "event": "中京スポーツもみじ杯",
     "race_no": 11,
     "deadline": "15:39",
-    "updated_at": "2026-11-01T11:35:09+09:00",
+    "updated_at": "2026-11-01T14:51:31+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261101&jcd=06&rno=11",
-      "fetched_at": "2026-11-01T11:38:18+09:00",
-      "sha256": "1a032b8a052cbca78cee3b98ce0e0fd31bd0320d6fac33ec501e3b55ed4e7bb8",
+      "fetched_at": "2026-11-01T14:52:54+09:00",
+      "sha256": "bb54e868465ed7ad43b9667890ddbf12e1ba2ba7aff3b59c883da09393fbf7cc",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261101&jcd=06&rno=11",
+      "fetched_at": "2026-11-01T14:52:19+09:00",
+      "sha256": "6a1074043af4f24f0211aad02f0228232621b9843dbb9e6f9f8c7dd644d022b1",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:39:04+09:00",
+      "observed_at": "2026-11-01T14:53:58+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "74365dcaece2f9ccadd69e1b4ce9ead5cfe82ecf7f485fbb8f2b5600ff102672"
+      "sha256": "b32337c50ba0aefdb3e08c3349667faa46852e2c3abc21519e85856145356e85"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:39:11+09:00",
+      "observed_at": "2026-11-01T14:54:05+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "83f7875b1382722ec7df41d8e33e260e024da90fbfaee23603d0ee4ace9138c3"
+      "sha256": "b08c5ce01a4715942e13aa04126aa5d57832a71f855ec48ad16ca78bb53ec28d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:39:18+09:00",
+      "observed_at": "2026-11-01T14:54:12+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "fd4d860d36cbc5e212e10ed7329107d8882187d06c83a0511f6de5f92d3b9af5"
+      "sha256": "b9b33560a2f3f6daa981ea85d0f71bac690c03cac5dde629f10c3a9ecc5862ba"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:38:57+09:00",
+      "observed_at": "2026-11-01T14:53:51+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "55346e69b879b36f13b3253c5ad848d68e15b4adf446d69de984ee7a161955f0"
+      "sha256": "a72e618fe97c793dfd52cf362be8ac01762bcf5cc0a7510d5ac53a4eb71785aa"
     }
   },
   "racers": [
@@ -187,10 +193,11 @@
       "series_tokens": [
         "3",
         "2",
-        "10"
+        "10",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "3 4182 / B1 吉田 和仁 滋賀/京都 43歳/55.4kg F0 L0 0.19 4.82 30.66 45.26 5.15 25.00 40.00 9 31.78 41.09 11 0.00 11.11 3 2 10 4R"
+      "raw_text": "3 4182 / B1 吉田 和仁 滋賀/京都 43歳/55.4kg F0 L0 0.19 4.82 30.66 45.26 5.15 25.00 40.00 9 31.78 41.09 11 0.00 11.11 3 2 10 4 4R"
     },
     {
       "lane": 4,
@@ -228,10 +235,11 @@
         "1",
         "9",
         "5",
-        "11"
+        "11",
+        "7"
       ],
       "early_race": 7,
-      "raw_text": "4 5079 / B1 大石 真央 静岡/静岡 28歳/45.0kg F0 L0 0.17 5.07 27.06 50.59 4.48 20.63 46.03 44 36.57 53.73 24 22.22 33.33 1 9 5 11 7R"
+      "raw_text": "4 5079 / B1 大石 真央 静岡/静岡 28歳/45.0kg F0 L0 0.17 5.07 27.06 50.59 4.48 20.63 46.03 44 36.57 53.73 24 22.22 33.33 1 9 5 11 7 7R"
     },
     {
       "lane": 5,
@@ -269,10 +277,11 @@
         "7",
         "12",
         "4",
-        "9"
+        "9",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "5 4939 / A1 宮之原 輝紀 東京/東京 28歳/52.0kg F0 L0 0.14 7.71 63.03 73.95 6.47 47.37 63.16 26 36.05 54.42 21 11.11 11.11 7 12 4 9 3R"
+      "raw_text": "5 4939 / A1 宮之原 輝紀 東京/東京 28歳/52.0kg F0 L0 0.14 7.71 63.03 73.95 6.47 47.37 63.16 26 36.05 54.42 21 11.11 11.11 7 12 4 9 3 3R"
     },
     {
       "lane": 6,
@@ -309,13 +318,60 @@
       "series_tokens": [
         "4",
         "3",
-        "12"
+        "12",
+        "6"
       ],
       "early_race": 6,
-      "raw_text": "6 5138 / B1 村本 大成 福岡/福岡 26歳/52.0kg F0 L0 0.19 3.72 15.66 36.14 0.00 0.00 0.00 33 23.64 40.00 69 0.00 0.00 4 3 12 6R"
+      "raw_text": "6 5138 / B1 村本 大成 福岡/福岡 26歳/52.0kg F0 L0 0.19 3.72 15.66 36.14 0.00 0.00 0.00 33 23.64 40.00 69 0.00 0.00 4 3 12 6 6R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 前原 大道 52.1kg R 2"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 松井 洪弥 52.0kg R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 吉田 和仁 55.4kg R 4"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 大石 真央 45.0kg R 7"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 宮之原 輝紀 52.0kg R 3"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 村本 大成 52.0kg R 6"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

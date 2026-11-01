@@ -8,7 +8,7 @@
     "event": "第73回ボートレースダービー",
     "race_no": 10,
     "deadline": "15:08",
-    "updated_at": "2026-11-01T11:35:09+09:00",
+    "updated_at": "2026-11-01T14:51:31+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261101&jcd=13&rno=10",
-      "fetched_at": "2026-11-01T11:36:57+09:00",
-      "sha256": "eee432addedf4152873aabece5457a4a18ddac8110c00981446569c42bf7de33",
+      "fetched_at": "2026-11-01T14:52:54+09:00",
+      "sha256": "dc8f3190271a12cbdaee969cb9ed8bd2c6bcd6a4455a017b0ffd05506600b145",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261101&jcd=13&rno=10",
+      "fetched_at": "2026-11-01T14:52:09+09:00",
+      "sha256": "1047deb97bd94eeed81ea8200b51dcb82420b074f7beaea3852b266f31ba5252",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:39:04+09:00",
+      "observed_at": "2026-11-01T14:53:58+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "74365dcaece2f9ccadd69e1b4ce9ead5cfe82ecf7f485fbb8f2b5600ff102672"
+      "sha256": "b32337c50ba0aefdb3e08c3349667faa46852e2c3abc21519e85856145356e85"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:39:11+09:00",
+      "observed_at": "2026-11-01T14:54:05+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "83f7875b1382722ec7df41d8e33e260e024da90fbfaee23603d0ee4ace9138c3"
+      "sha256": "b08c5ce01a4715942e13aa04126aa5d57832a71f855ec48ad16ca78bb53ec28d"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:39:18+09:00",
+      "observed_at": "2026-11-01T14:54:12+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "fd4d860d36cbc5e212e10ed7329107d8882187d06c83a0511f6de5f92d3b9af5"
+      "sha256": "b9b33560a2f3f6daa981ea85d0f71bac690c03cac5dde629f10c3a9ecc5862ba"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/01.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-01T11:38:57+09:00",
+      "observed_at": "2026-11-01T14:53:51+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "55346e69b879b36f13b3253c5ad848d68e15b4adf446d69de984ee7a161955f0"
+      "sha256": "a72e618fe97c793dfd52cf362be8ac01762bcf5cc0a7510d5ac53a4eb71785aa"
     }
   },
   "racers": [
@@ -152,10 +158,11 @@
         "11",
         "3",
         "9",
-        "10"
+        "10",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "2 4719 / A1 上條 暢嵩 大阪/大阪 32歳/52.0kg F0 L0 0.14 7.45 46.15 63.25 6.44 30.77 48.72 46 30.08 48.87 52 29.86 47.92 5 10 12 11 3 9 10 3R"
+      "raw_text": "2 4719 / A1 上條 暢嵩 大阪/大阪 32歳/52.0kg F0 L0 0.14 7.45 46.15 63.25 6.44 30.77 48.72 46 30.08 48.87 52 29.86 47.92 5 10 12 11 3 9 10 3 3R"
     },
     {
       "lane": 3,
@@ -239,10 +246,11 @@
         "7",
         "12",
         "9",
-        "11"
+        "11",
+        "5"
       ],
       "early_race": 5,
-      "raw_text": "4 4013 / A1 中島 孝平 福井/福井 46歳/52.0kg F0 L0 0.14 7.24 47.50 67.50 7.30 45.45 68.18 23 50.35 62.41 33 34.46 52.70 1 8 7 12 9 11 5R"
+      "raw_text": "4 4013 / A1 中島 孝平 福井/福井 46歳/52.0kg F0 L0 0.14 7.24 47.50 67.50 7.30 45.45 68.18 23 50.35 62.41 33 34.46 52.70 1 8 7 12 9 11 5 5R"
     },
     {
       "lane": 5,
@@ -283,10 +291,11 @@
         "5",
         "11",
         "11",
-        "10"
+        "10",
+        "6"
       ],
       "early_race": 6,
-      "raw_text": "5 4320 / A1 峰 竜太 佐賀/佐賀 41歳/52.0kg F0 L0 0.13 8.95 64.71 82.35 7.96 45.83 66.67 21 28.47 50.69 43 39.01 54.61 12 4 9 5 11 11 10 6R"
+      "raw_text": "5 4320 / A1 峰 竜太 佐賀/佐賀 41歳/52.0kg F0 L0 0.13 8.95 64.71 82.35 7.96 45.83 66.67 21 28.47 50.69 43 39.01 54.61 12 4 9 5 11 11 10 6 6R"
     },
     {
       "lane": 6,
@@ -326,13 +335,85 @@
         "11",
         "10",
         "11",
-        "12"
+        "12",
+        "4"
       ],
       "early_race": 4,
-      "raw_text": "6 3876 / A1 中辻 崇人 福岡/福岡 49歳/52.3kg F0 L0 0.15 7.22 59.76 75.61 7.00 43.75 68.75 3 34.03 47.92 45 35.92 53.52 6 3 11 10 11 12 4R"
+      "raw_text": "6 3876 / A1 中辻 崇人 福岡/福岡 49歳/52.3kg F0 L0 0.15 7.22 59.76 75.61 7.00 43.75 68.75 3 34.03 47.92 45 35.92 53.52 6 3 11 10 11 12 4 4R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.74,
+        "tilt": -0.5,
+        "raw_text": "1 桐生 順平 52.0kg 6.74 -0.5 R 2"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.77,
+        "tilt": 0.0,
+        "raw_text": "2 上條 暢嵩 52.0kg 6.77 0.0 R 3"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.77,
+        "tilt": -0.5,
+        "raw_text": "3 大峯 豊 52.0kg 6.77 -0.5 R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.8,
+        "tilt": -0.5,
+        "raw_text": "4 中島 孝平 52.0kg 6.80 -0.5 R 5"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.71,
+        "tilt": -0.5,
+        "raw_text": "5 峰 竜太 52.0kg 6.71 -0.5 R 6"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.77,
+        "tilt": -0.5,
+        "raw_text": "6 中辻 崇人 52.3kg 6.77 -0.5 R 4"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".05"
+      },
+      {
+        "lane": 2,
+        "st": ".24"
+      },
+      {
+        "lane": 3,
+        "st": ".06"
+      },
+      {
+        "lane": 4,
+        "st": ".02"
+      },
+      {
+        "lane": 5,
+        "st": ".08"
+      },
+      {
+        "lane": 6,
+        "st": ".09"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 0.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
