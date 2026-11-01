@@ -81,6 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_boat_edge_v229_*.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_v229_duplicate_remote_guard.py' -v
           PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/boat_edge_v229_atomic_freeze.py
           git diff --check
       - name: First freeze and audit same-run site-only evidence; never read results
