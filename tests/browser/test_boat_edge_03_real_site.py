@@ -1211,7 +1211,7 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     "race_switch": "PASS", "mode_switch": "PASS", "actual_dom": True,
                     "initial_prediction": "STOPPED_WITH_REASON" if first_stopped else "TOPK_VISIBLE",
                     "topk_evidence": "NOT_CERTIFIED_STOPPED" if first_stopped else "TOP3_TOP5_TOP10_PASS",
-                    "second_prediction_condition": second_panel.locator(".be207-condition strong").inner_text(),
+                    "second_prediction_condition": (second_panel.locator(".be207-condition strong").inner_text() if second_panel.locator(".be207-condition strong").count() else "WAITING_NO_FROZEN_FORECAST"),
                     "guard_blocked_requests": len(blocked),
                     "page_errors": errors[:10],
                 })
