@@ -440,11 +440,12 @@ def compute(root,now):
     # or claim an independently source-eligible denominator.
     audit_age=age_minutes(readiness.get('checked_at'),now)
     audit_day_ok=str(readiness.get('day_jst'))==day
+    # The first in-window observer wake may be entirely absent. A same-day
+    # empty placeholder is not proof that V216 ran; allow only guarded V216
+    # recovery (not source eligibility) when today's catalog has a real
+    # deadline in its 2-15m window. V220 handles active/cooldown suppression.
     audit_missing=(bool(urgent) and schedule_ok and
-                   (not audit_day_ok or
-                    (audit_age is None and
-                     type(readiness.get('day_observed_races')) is int and
-                     readiness['day_observed_races']>0)))
+                   (not audit_day_ok or audit_age is None))
     audit_stale=(bool(urgent) and schedule_ok and audit_day_ok
                  and audit_age is not None and audit_age>12)
     if audit_missing:
