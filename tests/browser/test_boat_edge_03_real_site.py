@@ -1034,12 +1034,23 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
                     arg=second["race_key"], timeout=35000
                 )
-                page.wait_for_function(
-                    "(key) => document.querySelector('#be207Top.ready')"
-                    " && document.querySelector('#raceTitle')?.textContent"
-                    "?.includes('2R')",
-                    arg=second["race_key"], timeout=35000
-                )
+                try:
+                    page.wait_for_function(
+                        "(key) => document.querySelector('#be207Top.ready')"
+                        " && document.querySelector('#raceTitle')?.textContent"
+                        "?.includes('2R') &&"
+                        " (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
+                        arg=second["race_key"], timeout=35000
+                    )
+                except Exception as exc:
+                    detail = page.evaluate("""() => ({
+                        race_key: typeof state !== 'undefined' ? state?.race?.race_key : null,
+                        panel_class: document.querySelector('#be207Top')?.className ?? null,
+                        panel_text: document.querySelector('#be207Top')?.innerText.slice(0, 240) ?? null,
+                        wait_text: document.querySelector('#be391PredictionWait')?.innerText.slice(0, 160) ?? null
+                    })""")
+                    raise AssertionError("SECOND_RACE_PREDICTION_NOT_READY " +
+                                         json.dumps(detail, ensure_ascii=False)) from exc
                 assert page.locator("#raceView #raceTitle").is_visible()
                 second_panel = page.locator("#be207Top")
                 assert second_panel.locator(".be207-condition").inner_text().strip()
