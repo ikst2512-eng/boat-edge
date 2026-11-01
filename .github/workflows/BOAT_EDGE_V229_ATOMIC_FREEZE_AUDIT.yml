@@ -142,6 +142,11 @@ jobs:
             # overwrite any prediction evidence. Existing main wins.
             if ! git pull --rebase origin main; then
               git rebase --abort || true
+              git fetch origin main
+              if python3 scripts/v229_duplicate_remote_guard.py; then
+                echo V229_IDENTICAL_FIRST_WRITER_ALREADY_ON_MAIN
+                exit 0
+              fi
               echo V229_REBASE_CONFLICT_NO_PRODUCTION_CLAIM >&2
               exit 1
             fi
