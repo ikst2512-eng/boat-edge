@@ -92,6 +92,9 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
                 explicit_entry = parse_explicit_start_order(raw) if receipt["ok"] else None
                 report["t12_receipts"].append({
                     "key": key, "attempt": attempt,
+                    "deadline_jst": deadline.isoformat(),
+                    "fetched_at": manifest.get("fetched_at"),
+                    "source_sha256": receipt.get("sha256"),
                     "receipt_valid": receipt["ok"],
                     "timestamp_cutoff_ok": receipt["t12_timestamp_cutoff_ok"],
                     "status": receipt["t12_status"],
