@@ -16,6 +16,7 @@ JST = timezone(timedelta(hours=9))
 WORKFLOWS = {
     "v229": "BOAT_EDGE_V229_ATOMIC_FREEZE_AUDIT.yml",
     "v216": "BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml",
+    "v125": "site-v125.yml",
 }
 RACES = {
     "20261031-23-06": ("2026-10-31", "11:01"),
@@ -28,7 +29,7 @@ def window(date: str, hhmm: str):
 
 # These are the minutes in each existing workflow's UTC cron definition.
 # A cron opportunity is not evidence that GitHub Actions actually dispatched.
-CRON_MINUTES = {"v229": tuple(range(1, 60, 5)), "v216": tuple(range(4, 60, 5))}
+CRON_MINUTES = {"v229": tuple(range(1, 60, 5)), "v216": tuple(range(4, 60, 5)), "v125": tuple(range(3, 60, 5))}
 
 def configured_schedule_slots(start, end, workflow_name):
     first = start.astimezone(timezone.utc).replace(second=0, microsecond=0)
