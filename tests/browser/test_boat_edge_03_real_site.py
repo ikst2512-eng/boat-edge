@@ -956,7 +956,19 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     "?.includes('1R') && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
                     arg=first["race_key"], timeout=35000
                 )
-                page.locator("#be207Top.ready").wait_for(state="attached", timeout=35000)
+                try:
+                    page.locator("#be207Top.ready").wait_for(state="attached", timeout=35000)
+                except Exception as exc:
+                    # Fail with real selected-race and UI state, never mask
+                    # missing source as a passing prediction E2E.
+                    diagnostic = page.evaluate("""() => ({
+                        race_key: typeof state !== 'undefined' ? state?.race?.race_key : null,
+                        panel_class: document.querySelector('#be207Top')?.className ?? null,
+                        panel_text: document.querySelector('#be207Top')?.innerText.slice(0, 240) ?? null,
+                        wait_text: document.querySelector('#be391PredictionWait')?.innerText.slice(0, 160) ?? null
+                    })""")
+                    raise AssertionError("PREDICTION_PANEL_NOT_READY " + json.dumps(
+                        diagnostic, ensure_ascii=False)) from exc
                 original_key = page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)")
                 assert original_key == first["race_key"]
                 assert page.locator("#raceView #raceTitle").is_visible()
@@ -1022,16 +1034,26 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     " && (typeof state !== 'undefined' ? state?.race?.race_key : null) === key",
                     arg=second["race_key"], timeout=35000
                 )
+                # Historical/closed races with no frozen forecast must show
+                # the race-specific wait notice, not fabricated Top3/5/10.
                 page.wait_for_function(
-                    "(key) => document.querySelector('#be207Top.ready')"
-                    " && document.querySelector('#raceTitle')?.textContent"
-                    "?.includes('2R')",
+                    "(key) => (typeof state !== 'undefined' ? state?.race?.race_key : null) === key"
+                    " && (document.querySelector('#be207Top.ready')"
+                    " || (document.querySelector('#be391PredictionWait')?.dataset.raceKey === key"
+                    " && document.querySelector('#be391PredictionWait')?.textContent.includes('予想表示待ち')))",
                     arg=second["race_key"], timeout=35000
                 )
                 assert page.locator("#raceView #raceTitle").is_visible()
                 second_panel = page.locator("#be207Top")
-                assert second_panel.locator(".be207-condition").inner_text().strip()
-                assert second_panel.locator(".be207-budget").inner_text().strip()
+                if second_panel.count() and "ready" in (second_panel.get_attribute("class") or ""):
+                    assert second_panel.locator(".be207-condition").inner_text().strip()
+                    assert second_panel.locator(".be207-budget").inner_text().strip()
+                else:
+                    waiting = page.locator("#be391PredictionWait")
+                    assert waiting.is_visible()
+                    assert waiting.get_attribute("data-race-key") == second["race_key"]
+                    assert "締切済み" in waiting.inner_text() or "取得待ち" in waiting.inner_text()
+                    assert page.locator("#be207Top .be207-ticket").count() == 0
                 assert page.evaluate("(typeof state !== 'undefined' ? state?.race?.race_key : null)") == second["race_key"]
                 # 03: exercise the actual public/checkout 30s refresh handler.
                 # Route only this selected race's ?live= request, never an
@@ -1189,7 +1211,7 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     "race_switch": "PASS", "mode_switch": "PASS", "actual_dom": True,
                     "initial_prediction": "STOPPED_WITH_REASON" if first_stopped else "TOPK_VISIBLE",
                     "topk_evidence": "NOT_CERTIFIED_STOPPED" if first_stopped else "TOP3_TOP5_TOP10_PASS",
-                    "second_prediction_condition": second_panel.locator(".be207-condition strong").inner_text(),
+                    "second_prediction_condition": (second_panel.locator(".be207-condition strong").inner_text() if second_panel.locator(".be207-condition strong").count() else "WAITING_NO_FROZEN_FORECAST"),
                     "guard_blocked_requests": len(blocked),
                     "page_errors": errors[:10],
                 })
@@ -1205,7 +1227,9 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     page.wait_for_function(
                         """key => state?.race?.race_key === key &&
                             document.querySelector('#raceView.active') &&
-                            document.querySelector('#be207Top.ready') &&
+                            (document.querySelector('#be207Top.ready') ||
+                             (document.querySelector('#be391PredictionWait')?.dataset.raceKey === key &&
+                              document.querySelector('#be391PredictionWait')?.textContent.includes('予想表示待ち'))) &&
                             !document.querySelector('#raceView.be03-race-loading') &&
                             !document.querySelector('#be03RaceLoadNotice') &&
                             !document.querySelector('#be03PassiveRefreshNotice')""",
@@ -1213,9 +1237,15 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     )
                     assert page.locator("#raceTitle").inner_text().find(
                         str(expected["race_no"]) + "R") >= 0
-                    assert page.locator("#be207Top .be207-condition").inner_text().strip()
-                    assert page.locator("#be207Top .be207-stop").count() or (
-                        page.locator("#be207Top .be207-ticket").count() >= 3)
+                    if page.locator("#be207Top.ready").count():
+                        assert page.locator("#be207Top .be207-condition").inner_text().strip()
+                        assert page.locator("#be207Top .be207-stop").count() or (
+                            page.locator("#be207Top .be207-ticket").count() >= 3)
+                    else:
+                        notice = page.locator("#be391PredictionWait")
+                        assert notice.get_attribute("data-race-key") == expected["race_key"]
+                        assert notice.is_visible()
+                        assert page.locator("#be207Top .be207-ticket").count() == 0
                 report["race_bounce"] = "FIRST_SECOND_FIRST_SECOND_NO_STALE_RECEIPTS_PASS"
                 assert not errors, "JavaScript error on repeat race navigation: " + repr(errors)
                 print("BOAT_EDGE_03_REAL_BROWSER_PASS " + json.dumps(report, ensure_ascii=False), flush=True)
