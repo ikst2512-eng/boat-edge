@@ -70,6 +70,10 @@ def test_all():
         put(root,f'data/site_odds/{KEY}.json',{**odds,'trifecta_odds':{**combos,'1-2-3':0}})
         assert 'odds_120_incomplete' in mod.compute(root,middle)['current_windows'][0]['missing_evidence']
         put(root,f'data/site_odds/{KEY}.json',odds)
+        # Once V216 actually reports a fresh observation, recovery must stop.
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'day_observed_races':1,
+             'checked_at':(middle-timedelta(minutes=1)).isoformat()})
         complete=mod.compute(root,middle)
         assert complete['status']=='MONITORING_PREDEADLINE' and complete['issues']==[]
         assert complete['recovery_dispatch_candidates']==[]
@@ -207,7 +211,7 @@ def test_gate1c_scratch_only_missing_or_stale_recovers_existing_collector():
         gaps=initial['current_windows'][0]['missing_evidence']
         assert gaps==['frozen_prediction_missing_or_invalid',
                       'scratch_unverified_or_blocked'],gaps
-        assert initial['recovery_dispatch_candidates']==['auto-update.yml'],initial
+        assert initial['recovery_dispatch_candidates']==['BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml','auto-update.yml'],initial
         put(root,f'data/site_scratches_v182/{KEY}.json',{
             'race_key':KEY,'blocked':False,
             'checked_at':(at-timedelta(minutes=16)).isoformat(),
@@ -885,6 +889,9 @@ def test_v410_recover_only_strictly_source_ready_unfrozen_v229_in_2_to_10m():
         root=Path(tmp);sample(root)
         now=NOW+timedelta(minutes=25)  # 08:30, deadline 08:35
         race,scratch,odds=fully_proven_pre_result_fixture(root,now)
+        put(root,'data/site_paper_sim/readiness_v215_current.json',
+            {'day_jst':DAY,'day_observed_races':1,
+             'checked_at':(now-timedelta(minutes=1)).isoformat()})
         card=race['source_audit']['race_card']
         stamp=card['fetched_at']
         ready=mod.compute(root,now)
@@ -1666,12 +1673,14 @@ def test_v216_stale_window_recovery_is_bounded_and_fail_closed():
         corrupted=mod.compute(root,now)
         assert 'predeadline_v216_observation_missing' in corrupted['issues'],corrupted
         assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in corrupted['recovery_dispatch_candidates']
-        # An empty synthetic same-day placeholder without a timestamp cannot
-        # independently establish that a V216 execution was expected/delayed.
+        # An empty same-day placeholder is not a completed observation.
+        # A verified in-window race warrants guarded observer recovery only.
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':DAY,'day_observed_races':0})
         unknown=mod.compute(root,now)
-        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' not in unknown['recovery_dispatch_candidates']
+        assert 'predeadline_v216_observation_missing' in unknown['issues']
+        assert 'BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml' in unknown['recovery_dispatch_candidates']
+        assert unknown['v216_observation_freshness']['eligibility_proven'] is False
         put(root,'data/site_paper_sim/readiness_v215_current.json',
             {'day_jst':DAY,'checked_at':last})
         early=mod.compute(root,due-timedelta(minutes=20))
