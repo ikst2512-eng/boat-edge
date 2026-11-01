@@ -1227,7 +1227,9 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     page.wait_for_function(
                         """key => state?.race?.race_key === key &&
                             document.querySelector('#raceView.active') &&
-                            document.querySelector('#be207Top.ready') &&
+                            (document.querySelector('#be207Top.ready') ||
+                             (document.querySelector('#be391PredictionWait')?.dataset.raceKey === key &&
+                              document.querySelector('#be391PredictionWait')?.textContent.includes('予想表示待ち'))) &&
                             !document.querySelector('#raceView.be03-race-loading') &&
                             !document.querySelector('#be03RaceLoadNotice') &&
                             !document.querySelector('#be03PassiveRefreshNotice')""",
@@ -1235,9 +1237,15 @@ def exercise(engine: str, url: str, shots: Path, expected_final_race=None):
                     )
                     assert page.locator("#raceTitle").inner_text().find(
                         str(expected["race_no"]) + "R") >= 0
-                    assert page.locator("#be207Top .be207-condition").inner_text().strip()
-                    assert page.locator("#be207Top .be207-stop").count() or (
-                        page.locator("#be207Top .be207-ticket").count() >= 3)
+                    if page.locator("#be207Top.ready").count():
+                        assert page.locator("#be207Top .be207-condition").inner_text().strip()
+                        assert page.locator("#be207Top .be207-stop").count() or (
+                            page.locator("#be207Top .be207-ticket").count() >= 3)
+                    else:
+                        notice = page.locator("#be391PredictionWait")
+                        assert notice.get_attribute("data-race-key") == expected["race_key"]
+                        assert notice.is_visible()
+                        assert page.locator("#be207Top .be207-ticket").count() == 0
                 report["race_bounce"] = "FIRST_SECOND_FIRST_SECOND_NO_STALE_RECEIPTS_PASS"
                 assert not errors, "JavaScript error on repeat race navigation: " + repr(errors)
                 print("BOAT_EDGE_03_REAL_BROWSER_PASS " + json.dumps(report, ensure_ascii=False), flush=True)
