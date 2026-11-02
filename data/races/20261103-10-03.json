@@ -8,7 +8,7 @@
     "event": "新東通信杯",
     "race_no": 3,
     "deadline": "09:43",
-    "updated_at": "2026-11-03T04:39:51+09:00",
+    "updated_at": "2026-11-03T07:22:34+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261103&jcd=10&rno=3",
-      "fetched_at": "2026-11-03T04:41:16+09:00",
-      "sha256": "829d731a5cb6275f7ce317427d1e5ad86187c4a9cef0db27b852331a25492911",
+      "fetched_at": "2026-11-03T07:23:57+09:00",
+      "sha256": "ddcd412d6066fa5273b84455f32129cb4f9f2490588241bbb30b94ba02652629",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261103&jcd=10&rno=3",
+      "fetched_at": "2026-11-03T07:23:19+09:00",
+      "sha256": "bd3c614763ea931e0ec459efb0d764c097879c92f547328736f0f28fd3113051",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -286,7 +292,53 @@
       "raw_text": "6 5473 / B2 竹田 采実 福井/石川 26歳/52.3kg F0 L0 - 0.00 0.00 0.00 0.00 0.00 0.00 61 31.10 45.73 16 35.57 50.34"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 松井 賢治 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 田中 孝明 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 石岡 将太 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 渡邊 伸太郎 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 村田 浩司 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 竹田 采実 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

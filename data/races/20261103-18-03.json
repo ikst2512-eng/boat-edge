@@ -8,7 +8,7 @@
     "event": "マスターズリーグ第7戦",
     "race_no": 3,
     "deadline": "09:27",
-    "updated_at": "2026-11-03T04:39:51+09:00",
+    "updated_at": "2026-11-03T07:22:34+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261103&jcd=18&rno=3",
-      "fetched_at": "2026-11-03T04:41:37+09:00",
-      "sha256": "25c2f7b4507732e7f9e19003ec4d20012203aa0084491a346b5bf2b6031e68d6",
+      "fetched_at": "2026-11-03T07:24:21+09:00",
+      "sha256": "008324e426142813a7abe46909fc69e1a472cf235921d0244cf9334a2b955dad",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261103&jcd=18&rno=3",
+      "fetched_at": "2026-11-03T07:23:13+09:00",
+      "sha256": "78ec4bd072d072e37aabb42924e70b40146c2ee9b35ea7cbf395923f2df4c6f7",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,7 +59,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -62,7 +68,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T04:42:52+09:00",
+      "observed_at": "2026-11-03T07:25:48+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -343,7 +349,53 @@
       "raw_text": "6 4042 / A2 丸岡 正典 大阪/大阪 47歳/51.5kg F0 L0 0.17 7.09 51.35 73.87 6.47 41.18 58.82 31 29.20 49.64 14 35.19 52.79 3 12 6 5 9 2 6 6 11 10R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 柳瀬 興志 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 志道 吉和 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 松田 憲幸 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 折下 寛法 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 山崎 義明 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 丸岡 正典 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
