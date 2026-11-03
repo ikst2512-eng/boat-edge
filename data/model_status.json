@@ -1,37 +1,37 @@
 {
-  "updated_at": "2026-11-03T10:55:57+09:00",
+  "updated_at": "2026-11-03T12:36:05+09:00",
   "target_date": "2026-11-03",
   "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
   "formal_parent_sha256": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
   "candidate_sha256": "30c0c7b595f775366454c581776912c290ffc1b20317cdd2ad48c120030a41f1",
   "source_rows": {
-    "original_exhibition": 25,
-    "stt": 25,
-    "tkz": 25,
-    "sui": 25,
+    "original_exhibition": 54,
+    "stt": 54,
+    "tkz": 54,
+    "sui": 54,
     "race_cards": 156
   },
   "source_sha256": {
-    "original_exhibition": "b134a4f9c3ce662bedb85aae19ab88c865e04f8e8791ccc8d13dc232b3d78155",
-    "stt": "647c5e7bf3a1c1cd0abd5c6e2224d00ec3eb6e0af596d6c296ecbd8bb620b0c8",
-    "tkz": "db82b68e619ee716c63a2b65deac5ab5271015aae8db7a40028c687a7ce5f10b",
-    "sui": "2260909c35a7b3e85740cbd06697ea6c6e94436c29ce87a26fceac9ee24eecc6",
+    "original_exhibition": "8e3968328cefb0abc8154ff5a3dd66cab82475feb46266cb70c1743e15b13b4e",
+    "stt": "0a106166fed4d7b40f4888d5fc92344768ff7939899902877bc6b061470bcb0a",
+    "tkz": "ad537ac60c34b4518bcdcf995194c20d3bd944dff2c45de42b22dc3e8427a5d5",
+    "sui": "835637581a632119842a71200d2ab11d0f7b33e3123ab96d474e5cc5ef6e8941",
     "race_cards": "fcf4abb36ede612ac5ffbebacebc86d2978b0d4798d897ace9f628267baac1a6"
   },
   "core7": {
-    "eligible_count": 2,
+    "eligible_count": 0,
     "required_count": 100,
     "core7_100_ready": false,
     "formal_first100_ready": false,
-    "first": "202611030902",
-    "last": "202611032106"
+    "first": null,
+    "last": null
   },
   "core7_failure_diagnostic": {
     "counts": {
-      "missing_original_exhibition": 131,
-      "missing_stt": 131,
-      "missing_sui": 131,
-      "missing_tkz": 131
+      "missing_original_exhibition": 102,
+      "missing_stt": 102,
+      "missing_sui": 102,
+      "missing_tkz": 102
     },
     "examples": {
       "missing_stt": [
@@ -83,8 +83,8 @@
     "sample_race_keys": [],
     "scope": "MUTABLE_PREDEADLINE_ONLY_NOT_FORMAL_ELIGIBILITY"
   },
-  "site_races_merged": 133,
-  "site_snapshot_immutable_races": 23,
+  "site_races_merged": 102,
+  "site_snapshot_immutable_races": 54,
   "guards": {
     "results_seen": false,
     "unlock": false,
@@ -97,39 +97,46 @@
   },
   "errors": [],
   "official_ready_csv_missing": {
-    "count": 3,
+    "count": 10,
     "sample_race_keys": [
+      "20261103-02-02",
+      "20261103-04-05",
       "20261103-06-02",
+      "20261103-09-02",
       "20261103-10-06",
-      "20261103-21-02"
+      "20261103-10-09",
+      "20261103-17-06",
+      "20261103-21-02",
+      "20261103-21-06",
+      "20261103-22-05"
     ],
     "site_diagnostic_only": true,
     "does_not_grant_core7_or_formal_readiness": true
   },
   "source_availability": {
     "original_exhibition": {
-      "rows": 25,
+      "rows": 54,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
-      "missing_pending_races": 12
+      "missing_pending_races": 13
     },
     "stt": {
-      "rows": 25,
+      "rows": 54,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
-      "missing_pending_races": 12
+      "missing_pending_races": 13
     },
     "tkz": {
-      "rows": 25,
+      "rows": 54,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
-      "missing_pending_races": 12
+      "missing_pending_races": 13
     },
     "sui": {
-      "rows": 25,
+      "rows": 54,
       "state": "PARTIAL_PENDING",
       "retry_count": 2,
-      "missing_pending_races": 12
+      "missing_pending_races": 13
     },
     "race_cards": {
       "rows": 156,

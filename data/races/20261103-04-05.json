@@ -8,7 +8,7 @@
     "event": "第1回FC東京杯",
     "race_no": 5,
     "deadline": "12:44",
-    "updated_at": "2026-11-03T10:52:22+09:00",
+    "updated_at": "2026-11-03T12:33:00+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,59 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261103&jcd=04&rno=5",
-      "fetched_at": "2026-11-03T10:54:44+09:00",
-      "sha256": "fcc0f51e99d5b21d25dc40655c68d3a87ef2ef4402072b32be7e19fb237ff8bf",
+      "fetched_at": "2026-11-03T12:35:50+09:00",
+      "sha256": "5cee3c15cab8be581ef5c6cbf1225125cc40270f7f49adc53a4421783071eb30",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261103&jcd=04&rno=5",
-      "fetched_at": "2026-11-03T10:53:36+09:00",
-      "sha256": "bc91876dbe5999da6dd716eb1d7fe6074d98bd4480ebb264d8eb388d9c1c96c7",
+      "fetched_at": "2026-11-03T12:33:39+09:00",
+      "sha256": "974ac90d12232098e60409a609fdaa6cc64e98df30dc0424f70d9418f4438342",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T10:56:12+09:00",
+      "observed_at": "2026-11-03T12:36:20+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "647c5e7bf3a1c1cd0abd5c6e2224d00ec3eb6e0af596d6c296ecbd8bb620b0c8"
+      "sha256": "0a106166fed4d7b40f4888d5fc92344768ff7939899902877bc6b061470bcb0a"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T10:56:19+09:00",
+      "observed_at": "2026-11-03T12:36:27+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "db82b68e619ee716c63a2b65deac5ab5271015aae8db7a40028c687a7ce5f10b"
+      "sha256": "ad537ac60c34b4518bcdcf995194c20d3bd944dff2c45de42b22dc3e8427a5d5"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T10:56:26+09:00",
+      "observed_at": "2026-11-03T12:36:34+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "2260909c35a7b3e85740cbd06697ea6c6e94436c29ce87a26fceac9ee24eecc6"
+      "sha256": "835637581a632119842a71200d2ab11d0f7b33e3123ab96d474e5cc5ef6e8941"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T10:56:05+09:00",
+      "observed_at": "2026-11-03T12:36:13+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "b134a4f9c3ce662bedb85aae19ab88c865e04f8e8791ccc8d13dc232b3d78155"
+      "sha256": "8e3968328cefb0abc8154ff5a3dd66cab82475feb46266cb70c1743e15b13b4e"
     }
   },
   "racers": [
@@ -236,10 +236,11 @@
         "7",
         "3",
         "8",
-        "4"
+        "4",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "4 3538 / B2 菊池 峰晴 群馬/栃木 58歳/52.0kg F0 L0 0.21 3.63 11.90 28.57 4.35 11.54 42.31 45 20.00 37.65 40 25.93 40.74 7 3 8 4 1R"
+      "raw_text": "4 3538 / B2 菊池 峰晴 群馬/栃木 58歳/52.0kg F0 L0 0.21 3.63 11.90 28.57 4.35 11.54 42.31 45 20.00 37.65 40 25.93 40.74 7 3 8 4 1 1R"
     },
     {
       "lane": 5,
@@ -329,46 +330,71 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 田中 和也 52.3kg R"
+        "exhibition_time": 6.67,
+        "tilt": 0.0,
+        "raw_text": "1 田中 和也 52.3kg 6.67 0.0 R"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 土性 雅也 53.3kg R"
+        "exhibition_time": 6.75,
+        "tilt": -0.5,
+        "raw_text": "2 土性 雅也 53.3kg 6.75 -0.5 R"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 松本 弓雄 52.8kg R"
+        "exhibition_time": 6.78,
+        "tilt": 0.0,
+        "raw_text": "3 松本 弓雄 52.8kg 6.78 0.0 R"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 菊池 峰晴 52.0kg R"
+        "exhibition_time": 6.78,
+        "tilt": -0.5,
+        "raw_text": "4 菊池 峰晴 52.0kg 6.78 -0.5 R 1"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 花田 和明 52.7kg R"
+        "exhibition_time": 6.76,
+        "tilt": -0.5,
+        "raw_text": "5 花田 和明 52.7kg 6.76 -0.5 R"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 杉江 浩明 52.0kg R"
+        "exhibition_time": 6.7,
+        "tilt": -0.5,
+        "raw_text": "6 杉江 浩明 52.0kg 6.70 -0.5 R"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".23"
+      },
+      {
+        "lane": 5,
+        "st": "F.01"
+      },
+      {
+        "lane": 2,
+        "st": ".23"
+      },
+      {
+        "lane": 3,
+        "st": ".08"
+      },
+      {
+        "lane": 4,
+        "st": ".02"
+      },
+      {
+        "lane": 6,
+        "st": ".00"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 1.0,
+      "wind_speed_ms": 4.0,
       "wave_cm": 3.0
     }
   },
