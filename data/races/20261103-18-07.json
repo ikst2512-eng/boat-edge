@@ -8,7 +8,7 @@
     "event": "マスターズリーグ第7戦",
     "race_no": 7,
     "deadline": "11:23",
-    "updated_at": "2026-11-03T07:22:34+09:00",
+    "updated_at": "2026-11-03T08:58:09+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261103&jcd=18&rno=7",
-      "fetched_at": "2026-11-03T07:24:24+09:00",
-      "sha256": "6fdef2ef88c6a359049b2810c8fd247588749d48f676e726ea1ec48b522d03fe",
+      "fetched_at": "2026-11-03T08:59:46+09:00",
+      "sha256": "0223c16af384486fdce0becf5ee211538f4a5d89476f13170e041d1fbb1a99db",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261103&jcd=18&rno=7",
+      "fetched_at": "2026-11-03T08:59:17+09:00",
+      "sha256": "ae61dbd5dabe54eec6264356585563c064f61580c400cafca68a2d5e56e61ee1",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:01+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "e67f948f593635e95c0ca2a64af774647d9a1f5b023ad38e2a418ed68274d7f6"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:08+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "cd98228985592fcd8a1a1b8d06d850079efe577b2e673c150d646498e3177102"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:15+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "6d618fd34039ce4a2da7f0f027b901a11cf92ef9136e90ebd8e30f9eefc19816"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:01:54+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "b64e155dd824233ae49ba0d1f49247efe4422ec0f87fc486f92d8ce433310e9e"
     }
   },
   "racers": [
@@ -120,7 +126,7 @@
       "name": "松尾 宣邦",
       "class": "B1",
       "age": 57,
-      "weight_kg": 53.0,
+      "weight_kg": 53.2,
       "branch": "福岡",
       "birthplace": "福岡",
       "F": 0,
@@ -154,10 +160,11 @@
         "4",
         "2",
         "7",
-        "3"
+        "3",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "2 3434 / B1 松尾 宣邦 福岡/福岡 57歳/53.0kg F0 L0 0.18 4.48 25.42 40.68 4.33 22.22 44.44 30 39.86 55.94 72 33.61 51.23 3 8 4 8 4 2 7 3 1R"
+      "raw_text": "2 3434 / B1 松尾 宣邦 福岡/福岡 57歳/53.2kg F0 L0 0.18 4.48 25.42 40.68 4.33 22.22 44.44 30 39.86 55.94 72 33.61 51.23 3 8 4 8 4 2 7 3 1 1R"
     },
     {
       "lane": 3,
@@ -210,7 +217,7 @@
       "name": "宮地 博士",
       "class": "B1",
       "age": 47,
-      "weight_kg": 52.3,
+      "weight_kg": 52.5,
       "branch": "長崎",
       "birthplace": "長崎",
       "F": 0,
@@ -247,7 +254,7 @@
         "7"
       ],
       "early_race": null,
-      "raw_text": "4 3964 / B1 宮地 博士 長崎/長崎 47歳/52.3kg F0 L0 0.20 3.70 11.82 27.27 3.48 6.45 25.81 29 35.57 52.35 55 34.30 53.31 4 11 8 1 10 8 3 7"
+      "raw_text": "4 3964 / B1 宮地 博士 長崎/長崎 47歳/52.5kg F0 L0 0.20 3.70 11.82 27.27 3.48 6.45 25.81 29 35.57 52.35 55 34.30 53.31 4 11 8 1 10 8 3 7"
     },
     {
       "lane": 5,
@@ -289,10 +296,11 @@
         "8",
         "6",
         "1",
-        "9"
+        "9",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "5 3807 / B1 岡部 哲 埼玉/埼玉 52歳/50.5kg F0 L0 0.17 5.04 28.18 49.09 5.40 30.00 60.00 22 27.42 41.94 74 34.47 51.49 4 8 3 9 8 6 1 9 1R"
+      "raw_text": "5 3807 / B1 岡部 哲 埼玉/埼玉 52歳/50.5kg F0 L0 0.17 5.04 28.18 49.09 5.40 30.00 60.00 22 27.42 41.94 74 34.47 51.49 4 8 3 9 8 6 1 9 1 1R"
     },
     {
       "lane": 6,
@@ -341,7 +349,53 @@
       "raw_text": "6 3978 / A2 齊藤 仁 東京/東京 49歳/51.0kg F0 L0 0.16 6.16 34.75 62.71 6.19 37.50 56.25 26 39.06 52.34 24 35.04 48.72 7 11 4 12 8 2 11 2 11 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 松田 憲幸 52.2kg R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 松尾 宣邦 53.2kg R 1"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 渡 修平 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 宮地 博士 52.5kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 岡部 哲 50.5kg R 1"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 齊藤 仁 51.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

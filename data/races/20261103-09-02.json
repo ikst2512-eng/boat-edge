@@ -8,7 +8,7 @@
     "event": "津オールレディース マクール杯",
     "race_no": 2,
     "deadline": "10:57",
-    "updated_at": "2026-11-03T07:22:34+09:00",
+    "updated_at": "2026-11-03T08:58:09+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261103&jcd=09&rno=2",
-      "fetched_at": "2026-11-03T07:23:29+09:00",
-      "sha256": "3d16ce8e4e4edcd4257d43249763737e656f742cd5a5b468e24d9f7b52c54a4f",
+      "fetched_at": "2026-11-03T09:01:37+09:00",
+      "sha256": "3a46100261f7e4ea8704d51d81968259d5122e4a0424ad6ac6bcea3cf5cb2b58",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261103&jcd=09&rno=2",
+      "fetched_at": "2026-11-03T08:59:07+09:00",
+      "sha256": "99df4f988cd9ed0d68697c7d0d2e8421c22f30941f92e4d9b39522514cbcf034",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:01+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "e67f948f593635e95c0ca2a64af774647d9a1f5b023ad38e2a418ed68274d7f6"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:08+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "cd98228985592fcd8a1a1b8d06d850079efe577b2e673c150d646498e3177102"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:15+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "6d618fd34039ce4a2da7f0f027b901a11cf92ef9136e90ebd8e30f9eefc19816"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:01:54+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "b64e155dd824233ae49ba0d1f49247efe4422ec0f87fc486f92d8ce433310e9e"
     }
   },
   "racers": [
@@ -319,7 +325,53 @@
       "raw_text": "6 3579 / B1 中里 優子 埼玉/東京 53歳/47.7kg F0 L0 0.20 5.12 31.76 48.24 4.67 33.33 33.33 23 32.79 47.54 70 33.85 46.88 7 5 10 1 12"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 吉田 杏美 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 岩崎 芳美 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 池田 紫乃 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 堀内 亜海 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 野田 彩加 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中里 優子 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

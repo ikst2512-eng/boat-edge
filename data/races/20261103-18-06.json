@@ -8,7 +8,7 @@
     "event": "マスターズリーグ第7戦",
     "race_no": 6,
     "deadline": "10:50",
-    "updated_at": "2026-11-03T07:22:34+09:00",
+    "updated_at": "2026-11-03T08:58:09+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261103&jcd=18&rno=6",
-      "fetched_at": "2026-11-03T07:24:24+09:00",
-      "sha256": "0cebb4d18ee45e4465f98f5d1f812e0bb0c8d91670f8e75de34208006f414843",
+      "fetched_at": "2026-11-03T08:59:47+09:00",
+      "sha256": "122d26809518905cbbbe56337aa82d4556ce80625471c8b167b92731e0ff0e35",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261103&jcd=18&rno=6",
+      "fetched_at": "2026-11-03T08:59:06+09:00",
+      "sha256": "14e5a725573f73a51b464febe4f7e12c1c97f2628340a71ab0bf1bb421db792a",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:01+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "e67f948f593635e95c0ca2a64af774647d9a1f5b023ad38e2a418ed68274d7f6"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:08+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "cd98228985592fcd8a1a1b8d06d850079efe577b2e673c150d646498e3177102"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:02:15+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "6d618fd34039ce4a2da7f0f027b901a11cf92ef9136e90ebd8e30f9eefc19816"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/03.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-03T07:25:48+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-03T09:01:54+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "b64e155dd824233ae49ba0d1f49247efe4422ec0f87fc486f92d8ce433310e9e"
     }
   },
   "racers": [
@@ -75,7 +81,7 @@
       "name": "高橋 真吾",
       "class": "B1",
       "age": 54,
-      "weight_kg": 57.5,
+      "weight_kg": 57.7,
       "branch": "埼玉",
       "birthplace": "東京",
       "F": 0,
@@ -109,10 +115,11 @@
         "10",
         "1",
         "9",
-        "4"
+        "4",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "1 3793 / B1 高橋 真吾 埼玉/東京 54歳/57.5kg F0 L0 0.16 4.87 35.05 46.39 0.00 0.00 0.00 59 36.36 54.55 19 37.34 50.21 6 2 11 4 10 1 9 4 1R"
+      "raw_text": "1 3793 / B1 高橋 真吾 埼玉/東京 54歳/57.7kg F0 L0 0.16 4.87 35.05 46.39 0.00 0.00 0.00 59 36.36 54.55 19 37.34 50.21 6 2 11 4 10 1 9 4 1 1R"
     },
     {
       "lane": 2,
@@ -120,7 +127,7 @@
       "name": "三嶌 誠司",
       "class": "A2",
       "age": 58,
-      "weight_kg": 52.1,
+      "weight_kg": 52.5,
       "branch": "香川",
       "birthplace": "香川",
       "F": 0,
@@ -158,7 +165,7 @@
         "10"
       ],
       "early_race": 10,
-      "raw_text": "2 3541 / A2 三嶌 誠司 香川/香川 58歳/52.1kg F0 L0 0.17 6.75 49.15 73.73 5.90 40.00 70.00 23 34.72 48.61 33 37.08 47.92 1 7 7 11 3 12 7 3 10 10R"
+      "raw_text": "2 3541 / A2 三嶌 誠司 香川/香川 58歳/52.5kg F0 L0 0.17 6.75 49.15 73.73 5.90 40.00 70.00 23 34.72 48.61 33 37.08 47.92 1 7 7 11 3 12 7 3 10 10R"
     },
     {
       "lane": 3,
@@ -166,7 +173,7 @@
       "name": "樋口 範政",
       "class": "B1",
       "age": 47,
-      "weight_kg": 53.9,
+      "weight_kg": 54.2,
       "branch": "愛知",
       "birthplace": "愛知",
       "F": 0,
@@ -199,10 +206,11 @@
         "2",
         "8",
         "4",
-        "7"
+        "7",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "3 4081 / B1 樋口 範政 愛知/愛知 47歳/53.9kg F0 L0 0.19 5.80 39.32 58.97 4.73 23.08 46.15 48 34.90 50.34 57 35.42 52.50 1 6 5 2 8 4 7 1R"
+      "raw_text": "3 4081 / B1 樋口 範政 愛知/愛知 47歳/54.2kg F0 L0 0.19 5.80 39.32 58.97 4.73 23.08 46.15 48 34.90 50.34 57 35.42 52.50 1 6 5 2 8 4 7 1 1R"
     },
     {
       "lane": 4,
@@ -300,7 +308,7 @@
       "name": "吉川 昭男",
       "class": "A2",
       "age": 53,
-      "weight_kg": 52.6,
+      "weight_kg": 53.2,
       "branch": "滋賀",
       "birthplace": "滋賀",
       "F": 0,
@@ -338,10 +346,56 @@
         "12"
       ],
       "early_race": 11,
-      "raw_text": "6 3582 / A2 吉川 昭男 滋賀/滋賀 53歳/52.6kg F0 L0 0.17 6.63 53.98 65.49 6.44 50.00 75.00 33 54.35 75.36 40 35.12 49.59 2 11 9 7 11 3 11 2 12 11R"
+      "raw_text": "6 3582 / A2 吉川 昭男 滋賀/滋賀 53歳/53.2kg F0 L0 0.17 6.63 53.98 65.49 6.44 50.00 75.00 33 54.35 75.36 40 35.12 49.59 2 11 9 7 11 3 11 2 12 11R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 高橋 真吾 57.7kg R 1"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 三嶌 誠司 52.5kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 樋口 範政 54.2kg R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 今出 晋二 56.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 宮迫 暢彦 52.0kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 吉川 昭男 53.2kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 2.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
