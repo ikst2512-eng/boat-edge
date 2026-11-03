@@ -1,33 +1,17 @@
 {
-  "checked_at": "2026-11-03T01:52:27.157500+00:00",
+  "checked_at": "2026-11-03T01:54:27.110460+00:00",
   "current_window": [
     {
-      "deadline": "10:55",
-      "minutes_left": 2.5,
-      "race_key": "20261103-17-02",
-      "reason": "snapshot_missing",
-      "source_gaps": [
-        "race_card_stale",
-        "beforeinfo_not_ok",
-        "scratch_missing_or_blocked"
-      ],
-      "venue": "宮島"
-    },
-    {
       "deadline": "10:57",
-      "minutes_left": 4.5,
+      "minutes_left": 2.5,
       "race_key": "20261103-09-02",
-      "reason": "snapshot_missing",
-      "source_gaps": [
-        "race_card_stale",
-        "beforeinfo_not_ok",
-        "scratch_missing_or_blocked"
-      ],
+      "reason": "verified_shadow_ready",
+      "source_gaps": [],
       "venue": "津"
     },
     {
       "deadline": "11:00",
-      "minutes_left": 7.5,
+      "minutes_left": 5.5,
       "race_key": "20261103-21-06",
       "reason": "snapshot_missing",
       "source_gaps": [
@@ -39,7 +23,7 @@
     },
     {
       "deadline": "11:05",
-      "minutes_left": 12.5,
+      "minutes_left": 10.5,
       "race_key": "20261103-06-02",
       "reason": "snapshot_missing",
       "source_gaps": [
@@ -48,15 +32,27 @@
         "scratch_missing_or_blocked"
       ],
       "venue": "浜名湖"
+    },
+    {
+      "deadline": "11:08",
+      "minutes_left": 13.5,
+      "race_key": "20261103-10-06",
+      "reason": "snapshot_missing",
+      "source_gaps": [
+        "race_card_stale",
+        "beforeinfo_not_ok",
+        "scratch_missing_or_blocked"
+      ],
+      "venue": "三国"
     }
   ],
   "day_jst": "20261103",
   "day_latest_reasons": {
     "snapshot_missing": 6,
-    "verified_shadow_ready": 1
+    "verified_shadow_ready": 2
   },
-  "day_observed_races": 7,
-  "day_verified_races": 1,
+  "day_observed_races": 8,
+  "day_verified_races": 2,
   "next_race": {
     "deadline": "10:55",
     "race_key": "20261103-17-02",
@@ -65,16 +61,17 @@
   },
   "not_a_purchase_or_proven_accuracy": true,
   "reason_counts": {
-    "snapshot_missing": 4
+    "snapshot_missing": 3,
+    "verified_shadow_ready": 1
   },
   "schedule_source_today": true,
   "scheduled_races": 156,
   "schema": "BOAT_EDGE_V215_PRE_RESULT_READINESS_V1",
   "scope": "PRE_RESULT_SITE_DIAGNOSTIC_NOT_FORMAL_FRESH",
   "source_counts_in_window": {
-    "beforeinfo_ok": 0,
-    "race_card_ok": 4,
-    "snapshot_exists": 0
+    "beforeinfo_ok": 1,
+    "race_card_ok": 5,
+    "snapshot_exists": 1
   },
   "upcoming": [
     {
@@ -88,12 +85,12 @@
       "watch_start": "10:40"
     },
     {
-      "beforeinfo_status": "published_wait",
+      "beforeinfo_status": "ok",
       "deadline": "10:57",
       "race_card_status": "ok",
       "race_key": "20261103-09-02",
-      "scratch_status": "missing",
-      "snapshot_exists": false,
+      "scratch_status": "uncertified",
+      "snapshot_exists": true,
       "venue": "津",
       "watch_start": "10:42"
     },
