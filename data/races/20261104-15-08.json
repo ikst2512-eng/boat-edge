@@ -8,7 +8,7 @@
     "event": "楽天銀行賞",
     "race_no": 8,
     "deadline": "18:41",
-    "updated_at": "2026-11-04T15:26:12+09:00",
+    "updated_at": "2026-11-04T18:30:50+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261104&jcd=15&rno=8",
-      "fetched_at": "2026-11-04T15:27:56+09:00",
-      "sha256": "0c25f1aec53d9a25c125cad1f0d84c9389e411ea5a398cb74c8cda27318252a4",
+      "fetched_at": "2026-11-04T18:31:56+09:00",
+      "sha256": "b3a593c20d7eb3c521b826242629565356aad23eb2358d2318e8e85d5d9140b4",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "ok",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261104&jcd=15&rno=8",
+      "fetched_at": "2026-11-04T18:31:28+09:00",
+      "sha256": "4ff66ec4866acc2fc2d63b1028ea8d5e6f4e78a7308aa0246dd8f761cae7bb58",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
+      }
     },
     "stt": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/04.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-04T15:28:30+09:00",
+      "observed_at": "2026-11-04T18:32:31+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "2d48be29bd213ea706571d4af90a392e2306d9acd5c0d374b5153e088065eafb"
+      "sha256": "98e5fea6bb280f296f348e09c84b61774dd526c5ec831ac42c84f9beec9c0e76"
     },
     "tkz": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/04.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-04T15:28:37+09:00",
+      "observed_at": "2026-11-04T18:32:38+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "666921bd11fcf92d1aeae0ebbc2d25b5e27ad36fd74854dfae9245d0099d1ed6"
+      "sha256": "b031108f83092cb4916efe8e7c9fcb40f936194ffe55724d2be1738262fdb681"
     },
     "sui": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/04.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-04T15:28:44+09:00",
+      "observed_at": "2026-11-04T18:32:45+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "4ba044db50e71c774b1a3eedf72b50fed7f61f2a4ec3d09d2ef08a4601796a8f"
+      "sha256": "2d9360edeae6543cb3ee2009fe90c5f79b9833d39ac22aeea8ade407c8ce89a9"
     },
     "original_exhibition": {
       "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/04.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-04T15:28:23+09:00",
+      "observed_at": "2026-11-04T18:32:24+09:00",
       "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": "b98c38e34d50ef497282e2ded03611f98febab5dc19627e1fe55f20e47eb3c9b"
+      "sha256": "625d2a038e16dbb7658229d7de652a00394cae9f310111b074b7ab4da3c6f21a"
     }
   },
   "racers": [
@@ -105,10 +111,11 @@
         "4",
         "12",
         "5",
-        "11"
+        "11",
+        "3"
       ],
       "early_race": 3,
-      "raw_text": "1 4366 / A1 前沢 丈史 東京/茨城 41歳/55.9kg F0 L0 0.14 6.24 37.36 67.03 6.00 45.45 59.09 35 33.33 55.56 1 37.29 57.63 4 12 5 11 3R"
+      "raw_text": "1 4366 / A1 前沢 丈史 東京/茨城 41歳/55.9kg F0 L0 0.14 6.24 37.36 67.03 6.00 45.45 59.09 35 33.33 55.56 1 37.29 57.63 4 12 5 11 3 3R"
     },
     {
       "lane": 2,
@@ -186,10 +193,11 @@
       "series_tokens": [
         "3",
         "9",
-        "4"
+        "4",
+        "1"
       ],
       "early_race": 1,
-      "raw_text": "3 3072 / B1 西田 靖 東京/神奈川 65歳/52.0kg F0 L0 0.17 4.13 24.00 36.00 5.57 42.86 42.86 36 16.67 33.33 8 40.00 52.73 3 9 4 1R"
+      "raw_text": "3 3072 / B1 西田 靖 東京/神奈川 65歳/52.0kg F0 L0 0.17 4.13 24.00 36.00 5.57 42.86 42.86 36 16.67 33.33 8 40.00 52.73 3 9 4 1 1R"
     },
     {
       "lane": 4,
@@ -307,13 +315,85 @@
       "series_tokens": [
         "1",
         "6",
-        "4"
+        "4",
+        "2"
       ],
       "early_race": 2,
-      "raw_text": "6 4325 / B1 新出 浩司 大阪/大阪 43歳/52.6kg F0 L0 0.19 4.65 16.25 47.50 4.23 17.95 35.90 56 15.38 26.92 60 27.12 35.59 1 6 4 2R"
+      "raw_text": "6 4325 / B1 新出 浩司 大阪/大阪 43歳/52.6kg F0 L0 0.19 4.65 16.25 47.50 4.23 17.95 35.90 56 15.38 26.92 60 27.12 35.59 1 6 4 2 2R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": 6.74,
+        "tilt": -0.5,
+        "raw_text": "1 前沢 丈史 55.9kg 6.74 -0.5 R 3"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": 6.87,
+        "tilt": 0.0,
+        "raw_text": "2 佐々木 和伸 53.7kg 6.87 0.0 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": 6.77,
+        "tilt": -0.5,
+        "raw_text": "3 西田 靖 52.0kg 6.77 -0.5 R 1"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": 6.8,
+        "tilt": 0.0,
+        "raw_text": "4 渡邉 英児 52.3kg 6.80 0.0 リング×2 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": 6.89,
+        "tilt": -0.5,
+        "raw_text": "5 高井 駿弥 50.0kg 6.89 -0.5 リング×2 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": 6.96,
+        "tilt": 0.0,
+        "raw_text": "6 新出 浩司 52.6kg 6.96 0.0 R 2"
+      }
+    ],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".11"
+      },
+      {
+        "lane": 2,
+        "st": ".12"
+      },
+      {
+        "lane": 3,
+        "st": ".01"
+      },
+      {
+        "lane": 4,
+        "st": ".05"
+      },
+      {
+        "lane": 5,
+        "st": ".03"
+      },
+      {
+        "lane": 6,
+        "st": "F.10"
+      }
+    ],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 1.0,
+      "wave_cm": 1.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
