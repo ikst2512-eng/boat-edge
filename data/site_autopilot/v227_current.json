@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-05T03:27:07.815586+00:00",
+  "checked_at": "2026-11-05T07:58:42.814528+00:00",
   "day_jst": "20261105",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -69,12 +69,15 @@
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
     "collector_health_issues": [
+      "collector_index_stale",
+      "odds_index_stale",
       "predeadline_incomplete",
-      "predeadline_race_odds_gap"
+      "predeadline_race_odds_gap",
+      "predeadline_v216_observation_stale"
     ],
     "current_window": [
       {
-        "deadline_jst": "12:29",
+        "deadline_jst": "17:01",
         "issues": [
           "出走表期限切れ",
           "直前情報未取得または期限切れ",
@@ -82,12 +85,12 @@
           "最新オッズ120通り未確認",
           "締切前予想未保存"
         ],
-        "minutes_left": 1.9,
-        "race_key": "20261105-21-09",
-        "venue": "芦屋"
+        "minutes_left": 2.3,
+        "race_key": "20261105-01-05",
+        "venue": "桐生"
       },
       {
-        "deadline_jst": "12:33",
+        "deadline_jst": "17:10",
         "issues": [
           "出走表期限切れ",
           "直前情報未取得または期限切れ",
@@ -95,46 +98,21 @@
           "最新オッズ120通り未確認",
           "締切前予想未保存"
         ],
-        "minutes_left": 5.9,
-        "race_key": "20261105-11-06",
-        "venue": "びわこ"
-      },
-      {
-        "deadline_jst": "12:39",
-        "issues": [
-          "出走表期限切れ",
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 11.9,
-        "race_key": "20261105-17-06",
-        "venue": "宮島"
-      },
-      {
-        "deadline_jst": "12:41",
-        "issues": [
-          "出走表期限切れ",
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 13.9,
-        "race_key": "20261105-10-09",
-        "venue": "三国"
+        "minutes_left": 11.3,
+        "race_key": "20261105-15-05",
+        "venue": "丸亀"
       }
     ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 17,
+    "readiness_observed_races": 28,
     "readiness_reasons": {
-      "snapshot_missing": 9,
-      "verified_shadow_ready": 8
+      "no_raw_ev_candidate_8_25x": 1,
+      "snapshot_missing": 15,
+      "verified_shadow_ready": 12
     },
-    "readiness_shadow_verified_races": 8,
+    "readiness_shadow_verified_races": 12,
     "schedule_today": true,
-    "snapshot_files_today": 11,
+    "snapshot_files_today": 17,
     "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
