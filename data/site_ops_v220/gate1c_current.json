@@ -19,16 +19,16 @@
     "acceptance_99_percent_proven": false,
     "day_jst": "20261105",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 3,
+    "first_git_original_sha_proven": 11,
     "independently_source_eligible_denominator": null,
     "legacy_v229_first_git_proven_separately": 0,
     "legacy_v229_keys": [],
     "legacy_v229_unverified_reasons": {},
-    "matured_snapshot_files": 3,
+    "matured_snapshot_files": 11,
     "original_not_verified": 0,
     "pending_snapshot_files": 0,
     "scope": "ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES",
-    "snapshot_files_seen": 3,
+    "snapshot_files_seen": 11,
     "unverified_reasons": {}
   },
   "note": "Observed V215 races and all saved SITE snapshots are distinct numerator cohorts. Every positive original proof requires V125 receipt and first Git SHA bytes. Neither cohort proves a source-eligible denominator; no 99% claim until eligibility and exclusions are independently reconciled.",
@@ -267,21 +267,36 @@
       "day_jst": "20261105",
       "eligible_save_rate_percent": null,
       "independently_source_eligible_denominator": null,
-      "receipts_matured": 0,
-      "receipts_seen": 0,
+      "receipts_matured": 4,
+      "receipts_seen": 4,
       "sampling_complete_for_all_scheduled_races": false,
       "scope": "SAMPLED_FIRST_GIT_SOURCE_READY_ONLY",
-      "source_ready_first_git_proven": 0,
+      "source_ready_first_git_proven": 4,
       "source_ready_missing_prediction_diagnostics": [],
       "source_ready_missing_prediction_keys": [],
       "source_ready_original_unverified": 0,
-      "source_ready_prediction_input_parity_diagnostics": [],
-      "source_ready_prediction_input_parity_reasons": {},
-      "source_ready_prediction_input_parity_unverified": 0,
+      "source_ready_prediction_input_parity_diagnostics": [
+        {
+          "prediction_saved_at": "2026-11-05T03:00:08.304423+00:00",
+          "race_key": "20261105-10-08",
+          "reason": "source_ready_observation_after_prediction",
+          "source_ready_observed_at": "2026-11-05T03:01:28.114852+00:00"
+        },
+        {
+          "prediction_saved_at": "2026-11-05T02:59:06.835231+00:00",
+          "race_key": "20261105-11-05",
+          "reason": "source_ready_observation_after_prediction",
+          "source_ready_observed_at": "2026-11-05T03:01:28.114852+00:00"
+        }
+      ],
+      "source_ready_prediction_input_parity_reasons": {
+        "source_ready_observation_after_prediction": 2
+      },
+      "source_ready_prediction_input_parity_unverified": 2,
       "source_ready_prediction_unverified_reasons": {},
       "source_ready_unverified_reasons": {},
-      "source_ready_with_exact_race_odds_sha": 0,
-      "source_ready_with_proven_prediction": 0,
+      "source_ready_with_exact_race_odds_sha": 2,
+      "source_ready_with_proven_prediction": 4,
       "source_ready_without_proven_prediction": 0
     }
   },
@@ -294,14 +309,16 @@
       "08": 2,
       "09": 5,
       "10": 15,
-      "11": 17
+      "11": 18,
+      "12": 8
     },
     "catalog_matured_not_observed": 32,
     "catalog_matured_not_observed_by_hour_jst": {
       "08": 0,
       "09": 4,
       "10": 11,
-      "11": 17
+      "11": 17,
+      "12": 0
     },
     "catalog_matured_not_observed_missing_keys": [
       "20261105-03-01",
@@ -343,22 +360,23 @@
       "20261105-10-01",
       "20261105-10-02",
       "20261105-11-01",
-      "20261105-21-01"
+      "20261105-21-01",
+      "20261105-21-08"
     ],
-    "catalog_matured_races": 39,
-    "catalog_matured_without_snapshot": 36,
+    "catalog_matured_races": 48,
+    "catalog_matured_without_snapshot": 37,
     "day_jst": "20261105",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 3,
+    "first_git_original_sha_proven": 11,
     "independently_source_eligible_denominator": null,
-    "matured_races": 7,
-    "missing_after_deadline": 4,
-    "observation_history_sha256": "3eb60658e716baf6dee35ea6120201fbc41506928a599ed711dc02694840bcec",
+    "matured_races": 16,
+    "missing_after_deadline": 5,
+    "observation_history_sha256": "d8595b471703b70fd311f2aeb0fe85dd1ec00c6189a100ab0ed22e1661fbbc7c",
     "observation_history_status": "VERIFIED",
-    "observed_races": 7,
+    "observed_races": 17,
     "original_not_verified": 0,
     "scope": "OBSERVED_MATURED_RACES_ONLY",
-    "snapshots_present": 3,
+    "snapshots_present": 11,
     "unverified_reasons": {}
   }
 }
