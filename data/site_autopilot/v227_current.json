@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-06T03:39:28.672794+00:00",
+  "checked_at": "2026-11-06T08:59:22.288592+00:00",
   "day_jst": "20261106",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -69,72 +69,49 @@
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
     "collector_health_issues": [
-      "predeadline_incomplete"
+      "collector_index_stale",
+      "odds_index_stale",
+      "predeadline_incomplete",
+      "predeadline_race_odds_gap",
+      "predeadline_v216_observation_stale"
     ],
     "current_window": [
       {
-        "deadline_jst": "12:40",
+        "deadline_jst": "18:04",
         "issues": [
-          "締切前予想未保存"
-        ],
-        "minutes_left": 0.5,
-        "race_key": "20261106-14-05",
-        "venue": "鳴門"
-      },
-      {
-        "deadline_jst": "12:43",
-        "issues": [
+          "出走表期限切れ",
           "直前情報未取得または期限切れ",
           "欠場照合未確認",
+          "最新オッズ120通り未確認",
           "締切前予想未保存"
         ],
-        "minutes_left": 3.5,
-        "race_key": "20261106-03-05",
-        "venue": "江戸川"
+        "minutes_left": 4.6,
+        "race_key": "20261106-15-07",
+        "venue": "丸亀"
       },
       {
-        "deadline_jst": "12:47",
+        "deadline_jst": "18:13",
         "issues": [
+          "出走表期限切れ",
           "直前情報未取得または期限切れ",
           "欠場照合未確認",
+          "最新オッズ120通り未確認",
           "締切前予想未保存"
         ],
-        "minutes_left": 7.5,
-        "race_key": "20261106-11-06",
-        "venue": "びわこ"
-      },
-      {
-        "deadline_jst": "12:52",
-        "issues": [
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 12.5,
-        "race_key": "20261106-17-07",
-        "venue": "宮島"
-      },
-      {
-        "deadline_jst": "12:53",
-        "issues": [
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 13.5,
-        "race_key": "20261106-05-06",
-        "venue": "多摩川"
+        "minutes_left": 13.6,
+        "race_key": "20261106-12-07",
+        "venue": "住之江"
       }
     ],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 27,
+    "readiness_observed_races": 44,
     "readiness_reasons": {
-      "snapshot_missing": 15,
-      "verified_shadow_ready": 12
+      "snapshot_missing": 27,
+      "verified_shadow_ready": 17
     },
-    "readiness_shadow_verified_races": 12,
+    "readiness_shadow_verified_races": 17,
     "schedule_today": true,
-    "snapshot_files_today": 13,
+    "snapshot_files_today": 19,
     "status": "NEEDS_ATTENTION",
     "v226_source_guard_active": true
   }
