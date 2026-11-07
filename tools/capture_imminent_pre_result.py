@@ -49,7 +49,10 @@ def batch(race_dir, output, now=None, maximum=12, capture=archive, enriched_outp
         result = eligible(path, now)
         if result:
             matches.append((*result, path))
-    matches.sort(key=lambda item: item[0])
+    # Protect pre-T12 evidence when many deadlines overlap: the earliest
+    # races already inside 12 minutes cannot become T-12 verified later.
+    # Still process them if spare capacity remains; never expand the batch.
+    matches.sort(key=lambda item: (0 if (item[0] - now).total_seconds() >= 12 * 60 else 1, item[0]))
     report = {"checked": len(matches), "captured": [], "enriched": [], "skipped": [], "failed": [], "t12_receipts": [],
               "selection_diagnostic": {
                   "observed_at_jst": now.astimezone(JST).isoformat(),

@@ -83,6 +83,26 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(result["selection_diagnostic"]["eligible_window_races"], 1)
             self.assertEqual(result["selection_diagnostic"]["excluded_window_or_safety"], 4)
 
+    def test_capacity_prioritizes_t12_eligible_races(self):
+        # A delayed scheduled wake must not spend every slot on races
+        # already inside T-12 while fresh proof opportunities remain.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            races = root / "races"
+            races.mkdir()
+            for i in range(1, 7):
+                deadline = "10:40" if i <= 3 else "10:52"
+                item = race(f"20261025-04-{i:02d}", deadline)
+                (races / (item["race_key"] + ".json")).write_text(json.dumps(item))
+            calls = []
+            def failing_capture(item, output):
+                calls.append(item["race_key"])
+                raise ValueError("not_html_document")
+            result = batch(races, root / "raw", now=NOW, maximum=3,
+                           capture=failing_capture)
+            self.assertEqual(calls, [f"20261025-04-{i:02d}" for i in range(4, 7)])
+            self.assertEqual(result["selection_diagnostic"]["capacity_not_attempted"], 3)
+
     def test_early_placeholder_window_is_excluded(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/"20261025-04-01.json"
