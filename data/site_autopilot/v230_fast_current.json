@@ -1,45 +1,46 @@
 {
   "day_jst": "20261107",
   "fetch_task_seconds": {
-    "20261107-02-04": 24.857,
-    "20261107-10-08": 27.839,
-    "20261107-23-08": 27.819
+    "20261107-14-04": 26.248
   },
-  "fetch_wall_seconds": 27.989,
-  "freeze_wall_seconds": 0.05,
+  "fetch_wall_seconds": 26.249,
+  "freeze_wall_seconds": 0.036,
   "imminent_retry_snapshots": 0,
   "imminent_retry_targets": [],
   "network_error": 0,
-  "new_snapshots_atomic_audited": 0,
+  "new_snapshots_atomic_audited": 2,
   "odds_incomplete": 0,
   "outcomes": {
-    "20261107-02-04": "source_blocked",
-    "20261107-10-08": "fresh_verified",
-    "20261107-23-08": "fresh_verified"
+    "20261107-03-04": "fresh_verified",
+    "20261107-11-05": "fresh_verified",
+    "20261107-14-04": "window_passed"
   },
-  "priority_applied": false,
-  "priority_failure_fallback_snapshots": 0,
-  "priority_failure_fallback_targets": [],
-  "priority_race_key": null,
-  "priority_zero_freeze_reason": "NOT_APPLICABLE",
+  "priority_applied": true,
+  "priority_failure_fallback_snapshots": 2,
+  "priority_failure_fallback_targets": [
+    "20261107-03-04",
+    "20261107-11-05"
+  ],
+  "priority_race_key": "20261107-14-04",
+  "priority_zero_freeze_reason": "FIRST_FREEZE_ZERO_SNAPSHOTS",
   "schema": "BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1",
-  "source_blocked": 1,
+  "source_blocked": 0,
   "source_refreshed": 2,
   "target_diagnostic": {
     "duplicate_catalog_race": 0,
-    "eligible": 3,
+    "eligible": 5,
     "invalid_deadline_or_key": 0,
     "outside_2_to_19_min_window": 127,
     "race_identity_mismatch": 0,
     "race_missing_or_unsafe": 0,
     "racers_not_six": 0,
-    "snapshot_exists": 2,
+    "snapshot_exists": 0,
     "today_mismatch": 0
   },
   "targets": [
-    "20261107-23-08",
-    "20261107-10-08",
-    "20261107-02-04"
+    "20261107-14-04",
+    "20261107-03-04",
+    "20261107-11-05"
   ],
   "v235_precommit_second_freeze_snapshots": 0
 }
