@@ -8,7 +8,7 @@
     "event": "マンスリーBOATRACE杯",
     "race_no": 7,
     "deadline": "13:28",
-    "updated_at": "2026-11-08T11:47:55+09:00",
+    "updated_at": "2026-11-08T13:18:28+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,22 +19,22 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261108&jcd=02&rno=7",
-      "fetched_at": "2026-11-08T11:49:38+09:00",
-      "sha256": "867a84d5558d3a9ae3097b33b3e82dad37d45b7895d00df78be6ecc07aa43e82",
+      "fetched_at": "2026-11-08T13:18:19+09:00",
+      "sha256": "aafc517e8b1e01bb5d648550b29590ddf9821f7359c83f9999ed79e5959559d4",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261108&jcd=02&rno=7",
-      "fetched_at": "2026-11-08T11:49:04+09:00",
-      "sha256": "bd4b7f6c851742245c28568d7704b43e1c95640ceb186fd44e62498f3c4fb6dd",
+      "fetched_at": "2026-11-08T13:18:28+09:00",
+      "sha256": "a61e5fbb6604a9b409295b0a2d3f22af472fa37f0af8eb178006d7e0ae9fc1a7",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
@@ -324,46 +324,71 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "1 若林 将 52.6kg R 2"
+        "exhibition_time": 6.55,
+        "tilt": 0.0,
+        "raw_text": "1 若林 将 52.6kg 6.55 0.0 R 2"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "2 伊達 正利 54.2kg R"
+        "exhibition_time": 6.67,
+        "tilt": -0.5,
+        "raw_text": "2 伊達 正利 54.2kg 6.67 -0.5 R 3"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "3 山田 和佐 54.2kg R 1"
+        "exhibition_time": 6.6,
+        "tilt": -0.5,
+        "raw_text": "3 山田 和佐 54.2kg 6.60 -0.5 R 1"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "4 松本 浩貴 52.5kg R"
+        "exhibition_time": 6.62,
+        "tilt": -0.5,
+        "raw_text": "4 松本 浩貴 52.5kg 6.62 -0.5 R"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "5 関口 智久 53.4kg ギヤ R"
+        "exhibition_time": 6.66,
+        "tilt": -0.5,
+        "raw_text": "5 関口 智久 53.4kg 6.66 -0.5 ギヤ R"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
-        "tilt": null,
-        "raw_text": "6 木山 和幸 50.5kg R"
+        "exhibition_time": 6.71,
+        "tilt": 0.0,
+        "raw_text": "6 木山 和幸 50.5kg 6.71 0.0 R"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".04"
+      },
+      {
+        "lane": 2,
+        "st": ".04"
+      },
+      {
+        "lane": 3,
+        "st": ".01"
+      },
+      {
+        "lane": 4,
+        "st": "F.26"
+      },
+      {
+        "lane": 5,
+        "st": "F.22"
+      },
+      {
+        "lane": 6,
+        "st": "F.18"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
-      "wind_speed_ms": 5.0,
+      "wind_speed_ms": 4.0,
       "wave_cm": 3.0
     }
   },
