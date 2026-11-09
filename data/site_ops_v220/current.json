@@ -1,6 +1,19 @@
 {
-  "active_window_races": 4,
-  "current_windows": [],
+  "active_window_races": 11,
+  "current_windows": [
+    {
+      "deadline_jst": "09:13",
+      "key": "20261109-21-02",
+      "missing_evidence": [
+        "beforeinfo_unavailable",
+        "frozen_prediction_missing_or_invalid",
+        "odds_evidence_missing",
+        "race_card_stale",
+        "scratch_unverified_or_blocked"
+      ],
+      "venue": "芦屋"
+    }
+  ],
   "data_sources": {
     "collector_freshness": "STALE_OR_UNVERIFIED",
     "odds_index_freshness": "STALE_OR_UNVERIFIED",
@@ -8,17 +21,21 @@
     "site_autovalidation": "EVIDENCE_BLOCKED_OR_MISSING"
   },
   "day_jst": "20261109",
-  "decision_window_races": 0,
+  "decision_window_races": 1,
   "formal_results_read_by_this_runner": false,
   "formal_unlock_or_scoring_authorized": false,
   "issues": [
-    "collector_index_stale"
+    "collector_index_stale",
+    "odds_index_stale",
+    "predeadline_incomplete",
+    "predeadline_race_odds_gap",
+    "predeadline_v216_observation_stale"
   ],
   "next_race": {
-    "deadline_jst": "08:35",
-    "race_key": "20261109-23-01",
+    "deadline_jst": "09:01",
+    "race_key": "20261109-23-02",
     "venue": "唐津",
-    "watch_from_jst": "08:20"
+    "watch_from_jst": "08:46"
   },
   "official_beforeinfo_urgent_15m": {
     "error": null,
@@ -31,7 +48,9 @@
   },
   "paper_wager_authorized_by_this_runner": false,
   "recovery_dispatch_candidates": [
-    "auto-update.yml"
+    "BOAT_EDGE_V216_SOURCE_DIAGNOSTIC.yml",
+    "auto-update.yml",
+    "site-odds.yml"
   ],
   "research_model_production_promotion": false,
   "scheduled_races": 132,
@@ -101,10 +120,10 @@
   "urgent_beforeinfo_only_recovery_keys": [],
   "urgent_odds_only_recovery_keys": [],
   "v216_observation_freshness": {
-    "age_minutes": 4.8,
+    "age_minutes": 69.4,
     "eligibility_proven": false,
-    "last_observed_at": "2026-11-08T22:44:14.667031+00:00",
+    "last_observed_at": "2026-11-08T22:50:43.281949+00:00",
     "missing_during_race_window": false,
-    "stale_during_race_window": false
+    "stale_during_race_window": true
   }
 }
