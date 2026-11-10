@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-10T10:25:16.075719+00:00",
+  "checked_at": "2026-11-10T13:00:40.757938+00:00",
   "day_jst": "20261110",
   "follow_up_order": [
     "直前公式データと欠場照合",
@@ -68,38 +68,18 @@
   "schema": "BOAT_EDGE_V227_SITE_AI_SELF_DRIVE_STATUS_V1",
   "scope": "SITE_DIAGNOSTICS_ONLY_NO_FORMAL_RESULT_OR_PAYOUT_READ",
   "site": {
-    "collector_health_issues": [
-      "collector_index_stale",
-      "odds_index_stale",
-      "predeadline_incomplete",
-      "predeadline_race_odds_gap",
-      "predeadline_v216_observation_stale"
-    ],
-    "current_window": [
-      {
-        "deadline_jst": "19:36",
-        "issues": [
-          "出走表期限切れ",
-          "直前情報未取得または期限切れ",
-          "欠場照合未確認",
-          "最新オッズ120通り未確認",
-          "締切前予想未保存"
-        ],
-        "minutes_left": 10.7,
-        "race_key": "20261110-19-10",
-        "venue": "下関"
-      }
-    ],
+    "collector_health_issues": [],
+    "current_window": [],
     "live_odds_parity_status": "TWO_LIVE_RACES_120_PARITY_PASS",
-    "readiness_observed_races": 32,
+    "readiness_observed_races": 36,
     "readiness_reasons": {
-      "snapshot_missing": 18,
-      "verified_shadow_ready": 14
+      "snapshot_missing": 21,
+      "verified_shadow_ready": 15
     },
-    "readiness_shadow_verified_races": 14,
+    "readiness_shadow_verified_races": 15,
     "schedule_today": true,
-    "snapshot_files_today": 19,
-    "status": "NEEDS_ATTENTION",
+    "snapshot_files_today": 20,
+    "status": "WAITING_FOR_PREDEADLINE",
     "v226_source_guard_active": true
   }
 }
