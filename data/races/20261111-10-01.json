@@ -8,7 +8,7 @@
     "event": "近畿・関東・九州支部集結!モーニングバトル",
     "race_no": 1,
     "deadline": "08:47",
-    "updated_at": "2026-11-11T03:09:32+09:00",
+    "updated_at": "2026-11-11T07:00:35+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261111&jcd=10&rno=1",
-      "fetched_at": "2026-11-11T03:10:19+09:00",
-      "sha256": "a9e9e33838cad7b4e3bf00feae9810533568750006c3feefcc87398b796e0a8a",
+      "fetched_at": "2026-11-11T07:02:38+09:00",
+      "sha256": "604784a0dc5f52c8487fd1c8a73a16806b3433485d2d92ec2be3f3db70ca6fb8",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261111&jcd=10&rno=1",
+      "fetched_at": "2026-11-11T07:01:13+09:00",
+      "sha256": "02d04244e7f2331fcbba89c0bd80cbf01e0024b84950b9f6529da7353f062e11",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,18 +59,18 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
-      "availability_reason": "http_404",
-      "source_error": null,
+      "observed_at": "2026-11-11T07:03:38+09:00",
+      "availability_reason": "fetch_error",
+      "source_error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv')",
       "sha256": null
     }
   },
@@ -300,7 +306,53 @@
       "raw_text": "6 3606 / B1 川北 浩貴 滋賀/滋賀 54歳/52.5kg F0 L0 0.16 5.43 32.99 50.52 5.67 38.78 59.18 58 30.29 44.57 12 37.66 50.00 3 11"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 枝尾 賢 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 萩原 丈太朗 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 浦野 海 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 高橋 二朗 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 板倉 敦史 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 川北 浩貴 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

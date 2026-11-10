@@ -8,7 +8,7 @@
     "event": "BTS宮崎開設12周年記念",
     "race_no": 3,
     "deadline": "09:27",
-    "updated_at": "2026-11-11T03:09:32+09:00",
+    "updated_at": "2026-11-11T07:00:35+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261111&jcd=21&rno=3",
-      "fetched_at": "2026-11-11T03:11:36+09:00",
-      "sha256": "96b6aa5c3d8b491bb7f00404edec9c8fb7e5acbda976c5ba1fac928337b718ce",
+      "fetched_at": "2026-11-11T07:01:35+09:00",
+      "sha256": "04a027b6b813ebd1266d6d1b198b3fa2ae96a26ff9bda2a5c01a7b290a3ed5c6",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261111&jcd=21&rno=3",
+      "fetched_at": "2026-11-11T07:01:13+09:00",
+      "sha256": "85d77469ca7e5c3970c9190545a2c50d0e8c76166af681db6e98c9cb80f8e50f",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,18 +59,18 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
-      "availability_reason": "http_404",
-      "source_error": null,
+      "observed_at": "2026-11-11T07:03:38+09:00",
+      "availability_reason": "fetch_error",
+      "source_error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv')",
       "sha256": null
     }
   },
@@ -322,7 +328,53 @@
       "raw_text": "6 5484 / B2 中村 勘一 福岡/福岡 20歳/52.0kg F0 L0 - 0.00 0.00 0.00 0.00 0.00 0.00 28 38.28 58.59 136 39.13 53.62 5 2 9 7 9R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 濱崎 直矢 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 酒井 陽祐 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 今井 貴士 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 藤田 康生 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 石倉 洋行 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 中村 勘一 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null

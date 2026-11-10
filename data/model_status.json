@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-11T03:12:21+09:00",
+  "updated_at": "2026-11-11T07:03:38+09:00",
   "target_date": "2026-11-11",
   "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
   "formal_parent_sha256": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
@@ -95,7 +95,12 @@
     "payouts_accessed": false,
     "combined_api_v1_accessed": false
   },
-  "errors": [],
+  "errors": [
+    {
+      "role": "original_exhibition",
+      "error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv')"
+    }
+  ],
   "official_ready_csv_missing": {
     "count": 0,
     "sample_race_keys": [],
@@ -105,7 +110,7 @@
   "source_availability": {
     "original_exhibition": {
       "rows": 0,
-      "state": "NOT_PUBLISHED",
+      "state": "FETCH_ERROR",
       "retry_count": 0,
       "missing_pending_races": 0
     },
@@ -134,7 +139,7 @@
       "missing_pending_races": 0
     }
   },
-  "collector_gate": "WAIT_PREVIEW_CSV_PUBLICATION",
+  "collector_gate": "WAIT_CORE7_100",
   "formal_validation_connected": false,
   "formal_note": "SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
 }

@@ -8,7 +8,7 @@
     "event": "BTS宮崎開設12周年記念",
     "race_no": 2,
     "deadline": "09:01",
-    "updated_at": "2026-11-11T03:09:32+09:00",
+    "updated_at": "2026-11-11T07:00:35+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261111&jcd=21&rno=2",
-      "fetched_at": "2026-11-11T03:11:34+09:00",
-      "sha256": "b2016ad3e36f3e2c1a25175ab0588404877f5412d992bf2768514ce3e0170ac0",
+      "fetched_at": "2026-11-11T07:01:35+09:00",
+      "sha256": "79b00f65f65f39d9f4e8b70a317b216d1dbe3baefd13347a9e6f48f54c163781",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261111&jcd=21&rno=2",
+      "fetched_at": "2026-11-11T07:01:14+09:00",
+      "sha256": "8c15fecf2000be0dc3dc305c77d588b54f0daaacc4c4a4070090e52c15ee3287",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,18 +59,18 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
+      "observed_at": "2026-11-11T07:03:38+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T03:12:21+09:00",
-      "availability_reason": "http_404",
-      "source_error": null,
+      "observed_at": "2026-11-11T07:03:38+09:00",
+      "availability_reason": "fetch_error",
+      "source_error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv')",
       "sha256": null
     }
   },
@@ -323,7 +329,53 @@
       "raw_text": "6 4270 / B1 岸本 雄貴 三重/三重 44歳/54.1kg F0 L0 0.18 5.19 34.04 53.19 0.00 0.00 0.00 9 25.40 39.68 134 39.72 55.32 2 10 6 6 10"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 松村 康太 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 鈴木 雄登 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 藤田 俊祐 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 渡邉 翼 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 安部 慎一 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 岸本 雄貴 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
