@@ -8,7 +8,7 @@
     "event": "ヴィーナスS第17戦是政プリンセスカップ",
     "race_no": 1,
     "deadline": "10:30",
-    "updated_at": "2026-11-11T07:00:35+09:00",
+    "updated_at": "2026-11-11T08:07:47+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,23 +19,29 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261111&jcd=05&rno=1",
-      "fetched_at": "2026-11-11T07:03:01+09:00",
-      "sha256": "ab7eca67f19ddfde0587676c7a3b41b302ba708e70345b9d758d31314c2d102c",
+      "fetched_at": "2026-11-11T08:09:38+09:00",
+      "sha256": "f21ad52d9a0d6c1d4b89fb53b7cdaf63bda5536fb093647eb196d1e18d786d78",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261111&jcd=05&rno=1",
+      "fetched_at": "2026-11-11T08:08:33+09:00",
+      "sha256": "2dca99421bd5bd8543c05ba3bf414b689cfc4114182440aa30fcf2b71c58b350",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T07:03:38+09:00",
+      "observed_at": "2026-11-11T08:11:09+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -44,7 +50,7 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T07:03:38+09:00",
+      "observed_at": "2026-11-11T08:11:16+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -53,18 +59,18 @@
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T07:03:38+09:00",
+      "observed_at": "2026-11-11T08:11:23+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
     },
     "original_exhibition": {
-      "status": "missing",
+      "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-11T07:03:38+09:00",
-      "availability_reason": "fetch_error",
-      "source_error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/11.csv')",
+      "observed_at": "2026-11-11T08:11:02+09:00",
+      "availability_reason": "http_404",
+      "source_error": null,
       "sha256": null
     }
   },
@@ -337,7 +343,53 @@
       "raw_text": "6 5373 / B2 諏訪 玲奈 岡山/岡山 24歳/45.0kg F0 L0 0.20 3.13 6.45 20.97 2.63 0.00 12.50 42 42.74 56.45 25 37.78 56.30 2 1 9 9 3 11 4 8 9R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 前原 哉 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 白石 有美 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 羽田 妃希 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 畑田 希咲 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 平田 さやか R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 諏訪 玲奈 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
