@@ -19,16 +19,16 @@
     "acceptance_99_percent_proven": false,
     "day_jst": "20261111",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 1,
+    "first_git_original_sha_proven": 10,
     "independently_source_eligible_denominator": null,
     "legacy_v229_first_git_proven_separately": 0,
     "legacy_v229_keys": [],
     "legacy_v229_unverified_reasons": {},
-    "matured_snapshot_files": 1,
+    "matured_snapshot_files": 10,
     "original_not_verified": 0,
-    "pending_snapshot_files": 0,
+    "pending_snapshot_files": 1,
     "scope": "ALL_SAVED_SITE_SNAPSHOT_FILES_NOT_ALL_RACES",
-    "snapshot_files_seen": 1,
+    "snapshot_files_seen": 11,
     "unverified_reasons": {}
   },
   "note": "Observed V215 races and all saved SITE snapshots are distinct numerator cohorts. Every positive original proof requires V125 receipt and first Git SHA bytes. Neither cohort proves a source-eligible denominator; no 99% claim until eligibility and exclusions are independently reconciled.",
@@ -291,21 +291,36 @@
       "day_jst": "20261111",
       "eligible_save_rate_percent": null,
       "independently_source_eligible_denominator": null,
-      "receipts_matured": 1,
-      "receipts_seen": 1,
+      "receipts_matured": 5,
+      "receipts_seen": 5,
       "sampling_complete_for_all_scheduled_races": false,
       "scope": "SAMPLED_FIRST_GIT_SOURCE_READY_ONLY",
-      "source_ready_first_git_proven": 1,
+      "source_ready_first_git_proven": 5,
       "source_ready_missing_prediction_diagnostics": [],
       "source_ready_missing_prediction_keys": [],
       "source_ready_original_unverified": 0,
-      "source_ready_prediction_input_parity_diagnostics": [],
-      "source_ready_prediction_input_parity_reasons": {},
-      "source_ready_prediction_input_parity_unverified": 0,
+      "source_ready_prediction_input_parity_diagnostics": [
+        {
+          "prediction_saved_at": "2026-11-11T01:57:24.842516+00:00",
+          "race_key": "20261111-10-06",
+          "reason": "source_ready_observation_after_prediction",
+          "source_ready_observed_at": "2026-11-11T01:59:41.323874+00:00"
+        },
+        {
+          "prediction_saved_at": "2026-11-11T01:58:40.337277+00:00",
+          "race_key": "20261111-17-03",
+          "reason": "source_ready_observation_after_prediction",
+          "source_ready_observed_at": "2026-11-11T01:59:41.323874+00:00"
+        }
+      ],
+      "source_ready_prediction_input_parity_reasons": {
+        "source_ready_observation_after_prediction": 2
+      },
+      "source_ready_prediction_input_parity_unverified": 2,
       "source_ready_prediction_unverified_reasons": {},
       "source_ready_unverified_reasons": {},
-      "source_ready_with_exact_race_odds_sha": 1,
-      "source_ready_with_proven_prediction": 1,
+      "source_ready_with_exact_race_odds_sha": 3,
+      "source_ready_with_proven_prediction": 5,
       "source_ready_without_proven_prediction": 0
     }
   },
@@ -317,43 +332,59 @@
     "catalog_matured_by_hour_jst": {
       "08": 2,
       "09": 5,
-      "10": 3
+      "10": 13,
+      "11": 13
     },
-    "catalog_matured_not_observed": 8,
+    "catalog_matured_not_observed": 16,
     "catalog_matured_not_observed_by_hour_jst": {
       "08": 0,
       "09": 5,
-      "10": 3
+      "10": 7,
+      "11": 4
     },
     "catalog_matured_not_observed_missing_keys": [
+      "20261111-04-01",
+      "20261111-05-01",
+      "20261111-05-03",
+      "20261111-09-03",
       "20261111-10-02",
       "20261111-10-03",
       "20261111-10-04",
+      "20261111-10-07",
+      "20261111-14-01",
       "20261111-17-01",
+      "20261111-17-04",
       "20261111-21-02",
       "20261111-21-03",
       "20261111-21-04",
-      "20261111-21-05"
+      "20261111-21-05",
+      "20261111-21-06"
     ],
     "catalog_matured_not_observed_saved": 0,
     "catalog_matured_not_observed_saved_keys": [],
     "catalog_matured_observed_missing_keys": [
-      "20261111-10-01"
+      "20261111-04-02",
+      "20261111-05-02",
+      "20261111-09-01",
+      "20261111-10-01",
+      "20261111-14-02",
+      "20261111-21-07",
+      "20261111-22-01"
     ],
-    "catalog_matured_races": 10,
-    "catalog_matured_without_snapshot": 9,
+    "catalog_matured_races": 33,
+    "catalog_matured_without_snapshot": 23,
     "day_jst": "20261111",
     "eligible_save_rate_percent": null,
-    "first_git_original_sha_proven": 1,
+    "first_git_original_sha_proven": 10,
     "independently_source_eligible_denominator": null,
-    "matured_races": 2,
-    "missing_after_deadline": 1,
-    "observation_history_sha256": "92d0e54d257f254c4209fe6ca8bd0534a3c2e32f911831adbf049f7bfa282fa8",
+    "matured_races": 17,
+    "missing_after_deadline": 7,
+    "observation_history_sha256": "51c14e3dc89d46f25431bd7b23e8ab8b5731e0ca18478bd0035a281952b29b3d",
     "observation_history_status": "VERIFIED",
-    "observed_races": 2,
+    "observed_races": 20,
     "original_not_verified": 0,
     "scope": "OBSERVED_MATURED_RACES_ONLY",
-    "snapshots_present": 1,
+    "snapshots_present": 10,
     "unverified_reasons": {}
   }
 }
