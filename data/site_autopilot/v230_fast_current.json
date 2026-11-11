@@ -1,26 +1,32 @@
 {
   "day_jst": "20261111",
   "fetch_task_seconds": {
-    "20261111-17-03": 28.52
+    "20261111-04-02": 27.119,
+    "20261111-14-02": 30.044,
+    "20261111-16-02": 27.285,
+    "20261111-22-02": 27.105
   },
-  "fetch_wall_seconds": 28.658,
-  "freeze_wall_seconds": 0.044,
+  "fetch_wall_seconds": 30.095,
+  "freeze_wall_seconds": 0.037,
   "imminent_retry_snapshots": 0,
   "imminent_retry_targets": [],
   "network_error": 0,
-  "new_snapshots_atomic_audited": 1,
+  "new_snapshots_atomic_audited": 0,
   "odds_incomplete": 0,
   "outcomes": {
-    "20261111-17-03": "fresh_verified"
+    "20261111-04-02": "source_blocked",
+    "20261111-14-02": "source_blocked",
+    "20261111-16-02": "fresh_verified",
+    "20261111-22-02": "fresh_verified"
   },
-  "priority_applied": true,
+  "priority_applied": false,
   "priority_failure_fallback_snapshots": 0,
   "priority_failure_fallback_targets": [],
-  "priority_race_key": "20261111-17-03",
+  "priority_race_key": null,
   "priority_zero_freeze_reason": "NOT_APPLICABLE",
   "schema": "BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1",
-  "source_blocked": 0,
-  "source_refreshed": 1,
+  "source_blocked": 2,
+  "source_refreshed": 2,
   "target_diagnostic": {
     "duplicate_catalog_race": 0,
     "eligible": 4,
@@ -33,7 +39,10 @@
     "today_mismatch": 0
   },
   "targets": [
-    "20261111-17-03"
+    "20261111-16-02",
+    "20261111-22-02",
+    "20261111-14-02",
+    "20261111-04-02"
   ],
   "v235_precommit_second_freeze_snapshots": 0
 }
