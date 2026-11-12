@@ -8,7 +8,7 @@
     "event": "スポーツ報知杯",
     "race_no": 7,
     "deadline": "13:43",
-    "updated_at": "2026-11-12T13:24:07+09:00",
+    "updated_at": "2026-11-12T13:28:40+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,22 +19,22 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261112&jcd=16&rno=7",
-      "fetched_at": "2026-11-12T13:26:36+09:00",
-      "sha256": "621df427d49432ef5662389c8fff80d6363714ce670d3e2fb4107688843f5f11",
+      "fetched_at": "2026-11-12T13:28:30+09:00",
+      "sha256": "8f248e689ddab71461a87bcf6d4c6f10d4095cdde57cf125bdeb4cdfc9b446c0",
       "error": null
     },
     "beforeinfo": {
-      "status": "published_wait",
+      "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261112&jcd=16&rno=7",
-      "fetched_at": "2026-11-12T13:24:48+09:00",
-      "sha256": "b25bd52f46a0c841673f75d00215f7485d7c554f6a4458cd529287142963e52c",
+      "fetched_at": "2026-11-12T13:28:40+09:00",
+      "sha256": "b5dae304af60f10fb383c07c0adab0244936c9b19bed87bf82f0b792b91f50ae",
       "error": null,
       "six_boat_coverage": {
-        "exhibition_lanes": 0,
-        "start_exhibition_lanes": 0,
-        "exhibition_complete": false,
-        "start_exhibition_complete": false,
-        "six_boat_complete": false
+        "exhibition_lanes": 6,
+        "start_exhibition_lanes": 6,
+        "exhibition_complete": true,
+        "start_exhibition_complete": true,
+        "six_boat_complete": true
       }
     },
     "stt": {
@@ -313,42 +313,67 @@
     "racers": [
       {
         "lane": 1,
-        "exhibition_time": null,
+        "exhibition_time": 6.62,
         "tilt": -0.5,
-        "raw_text": "1 上田 紗奈 45.0kg -0.5 R"
+        "raw_text": "1 上田 紗奈 45.0kg 6.62 -0.5 R"
       },
       {
         "lane": 2,
-        "exhibition_time": null,
+        "exhibition_time": 6.68,
         "tilt": 0.0,
-        "raw_text": "2 森野 正弘 54.1kg 0.0 キャブ R"
+        "raw_text": "2 森野 正弘 54.1kg 6.68 0.0 キャブ R"
       },
       {
         "lane": 3,
-        "exhibition_time": null,
+        "exhibition_time": 6.64,
         "tilt": -0.5,
-        "raw_text": "3 三村 岳人 52.0kg -0.5 R 1"
+        "raw_text": "3 三村 岳人 52.0kg 6.64 -0.5 R 1"
       },
       {
         "lane": 4,
-        "exhibition_time": null,
+        "exhibition_time": 6.54,
         "tilt": 3.0,
-        "raw_text": "4 大崎 翔 52.3kg 3.0 R"
+        "raw_text": "4 大崎 翔 52.3kg 6.54 3.0 R"
       },
       {
         "lane": 5,
-        "exhibition_time": null,
+        "exhibition_time": 6.63,
         "tilt": -0.5,
-        "raw_text": "5 日隈 茜 47.8kg -0.5 新 ギヤ R 2"
+        "raw_text": "5 日隈 茜 47.8kg 6.63 -0.5 新 ギヤ R 2"
       },
       {
         "lane": 6,
-        "exhibition_time": null,
+        "exhibition_time": 6.72,
         "tilt": -0.5,
-        "raw_text": "6 岩津 徹郎 53.8kg -0.5 R"
+        "raw_text": "6 岩津 徹郎 53.8kg 6.72 -0.5 R"
       }
     ],
-    "start_exhibition": [],
+    "start_exhibition": [
+      {
+        "lane": 1,
+        "st": ".02"
+      },
+      {
+        "lane": 2,
+        "st": ".03"
+      },
+      {
+        "lane": 3,
+        "st": ".10"
+      },
+      {
+        "lane": 5,
+        "st": ".01"
+      },
+      {
+        "lane": 4,
+        "st": ".01"
+      },
+      {
+        "lane": 6,
+        "st": ".05"
+      }
+    ],
     "weather": {
       "air_temp_c": null,
       "water_temp_c": null,
