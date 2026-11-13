@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T06:42:54+09:00",
+  "updated_at": "2026-11-14T07:18:36+09:00",
   "target_date": "2026-11-14",
   "model": "V1.21.33-SCENARIO-DIVERSE-CONFIRM",
   "formal_parent_sha256": "11e6d19c1f2bbcaac98adbf82cf0043c9752c7f79f55728d619b1de9c1a747db",
@@ -95,16 +95,7 @@
     "payouts_accessed": false,
     "combined_api_v1_accessed": false
   },
-  "errors": [
-    {
-      "role": "tkz",
-      "error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/tkz/2026/11/14.csv')"
-    },
-    {
-      "role": "sui",
-      "error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/sui/2026/11/14.csv')"
-    }
-  ],
+  "errors": [],
   "official_ready_csv_missing": {
     "count": 0,
     "sample_race_keys": [],
@@ -126,13 +117,13 @@
     },
     "tkz": {
       "rows": 0,
-      "state": "FETCH_ERROR",
+      "state": "NOT_PUBLISHED",
       "retry_count": 0,
       "missing_pending_races": 0
     },
     "sui": {
       "rows": 0,
-      "state": "FETCH_ERROR",
+      "state": "NOT_PUBLISHED",
       "retry_count": 0,
       "missing_pending_races": 0
     },
@@ -143,7 +134,7 @@
       "missing_pending_races": 0
     }
   },
-  "collector_gate": "WAIT_CORE7_100",
+  "collector_gate": "WAIT_PREVIEW_CSV_PUBLICATION",
   "formal_validation_connected": false,
   "formal_note": "SITE CORE7 IS NOT THE FORMAL FRESH FIRST100"
 }
