@@ -8,7 +8,7 @@
     "event": "近畿・関東・九州支部集結!モーニングバトル",
     "race_no": 1,
     "deadline": "08:35",
-    "updated_at": "2026-11-14T01:46:06+09:00",
+    "updated_at": "2026-11-14T06:39:34+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,50 +19,56 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261114&jcd=10&rno=1",
-      "fetched_at": "2026-11-14T01:46:56+09:00",
-      "sha256": "fe181229561b839fbe34f5e538ba1535f5b49d3146b9c7125f232003dd7d7bdb",
+      "fetched_at": "2026-11-14T06:42:22+09:00",
+      "sha256": "632f2828fe8faa985887302709fed4c7f6a6c06ad501e77d05421e9a7c467616",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261114&jcd=10&rno=1",
+      "fetched_at": "2026-11-14T06:40:13+09:00",
+      "sha256": "848af85e936dcafda2f75871bd35b1d42d4d20769b6017e7df62a3e1d7d2b5f0",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T01:49:19+09:00",
+      "observed_at": "2026-11-14T06:42:54+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T01:49:19+09:00",
-      "availability_reason": "http_404",
-      "source_error": null,
+      "observed_at": "2026-11-14T06:42:54+09:00",
+      "availability_reason": "fetch_error",
+      "source_error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/tkz/2026/11/14.csv')",
       "sha256": null
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T01:49:19+09:00",
-      "availability_reason": "http_404",
-      "source_error": null,
+      "observed_at": "2026-11-14T06:42:54+09:00",
+      "availability_reason": "fetch_error",
+      "source_error": "HTTPError('503 Server Error: Service Unavailable for url: https://boatracecsv.github.io/data/previews/sui/2026/11/14.csv')",
       "sha256": null
     },
     "original_exhibition": {
       "status": "not_published",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T01:49:19+09:00",
+      "observed_at": "2026-11-14T06:42:54+09:00",
       "availability_reason": "http_404",
       "source_error": null,
       "sha256": null
@@ -329,7 +335,53 @@
       "raw_text": "6 4234 / B1 野相 弘司 福岡/福岡 43歳/56.8kg F0 L0 0.17 4.25 23.75 36.25 5.00 0.00 50.00 47 20.25 35.44 32 31.82 44.16 5 2 7 8 12 8 5R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 吉田 一郎 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 松下 誉士 R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 廣瀬 篤哉 R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 板倉 敦史 R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 冨成 謙児 R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 野相 弘司 R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": null,
+      "wave_cm": null
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
