@@ -8,7 +8,7 @@
     "event": "第25回府中市長杯",
     "race_no": 2,
     "deadline": "11:18",
-    "updated_at": "2026-11-14T07:15:13+09:00",
+    "updated_at": "2026-11-14T10:44:51+09:00",
     "phase": "PRE_RESULT",
     "collector_version": "BOAT_EDGE_V18",
     "results_seen": false,
@@ -19,53 +19,59 @@
     "race_card": {
       "status": "ok",
       "source": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261114&jcd=04&rno=2",
-      "fetched_at": "2026-11-14T07:16:31+09:00",
-      "sha256": "13f5a3a9619a22c618d72be0a291825f3537b9961425e9c0ae3bbd868ce041d8",
+      "fetched_at": "2026-11-14T10:47:38+09:00",
+      "sha256": "307bf73347935ee2696cde448950ad6ad3376c02e127e876b25e73d1eb72648d",
       "error": null
     },
     "beforeinfo": {
-      "status": "not_in_window",
-      "source": null,
-      "fetched_at": null,
-      "sha256": null,
+      "status": "published_wait",
+      "source": "https://www.boatrace.jp/owpc/pc/race/beforeinfo?hd=20261114&jcd=04&rno=2",
+      "fetched_at": "2026-11-14T10:45:39+09:00",
+      "sha256": "7bdbb691246c0d67b10b5d3cf0e6252752d926065b9413a2c81d56f558a71384",
       "error": null,
-      "six_boat_coverage": null
+      "six_boat_coverage": {
+        "exhibition_lanes": 0,
+        "start_exhibition_lanes": 0,
+        "exhibition_complete": false,
+        "start_exhibition_complete": false,
+        "six_boat_complete": false
+      }
     },
     "stt": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/stt/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T07:18:36+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-14T10:49:14+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "a40b50388bb97437e7c59a4de27cb2cf87989e66ffd051da8820b21940819037"
     },
     "tkz": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/tkz/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T07:18:36+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-14T10:49:21+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "b685f3c9de12fb63d44793edb89c963a4086098dd2d09663d02ccc73dcd9aab8"
     },
     "sui": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/sui/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T07:18:36+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-14T10:49:28+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "f3067d683b0c2e2d0ff5a2daa80a1e6eb60460280a7be29daee2a3011c0a4ceb"
     },
     "original_exhibition": {
-      "status": "not_published",
+      "status": "missing",
       "source": "https://boatracecsv.github.io/data/previews/original_exhibition/2026/11/14.csv",
       "fetched_at": null,
-      "observed_at": "2026-11-14T07:18:36+09:00",
-      "availability_reason": "http_404",
+      "observed_at": "2026-11-14T10:49:07+09:00",
+      "availability_reason": "race_row_absent",
       "source_error": null,
-      "sha256": null
+      "sha256": "8488fca09fdeaef440698e31abffced8535967a4294400368a06434f099c8c17"
     }
   },
   "racers": [
@@ -247,7 +253,7 @@
       "name": "佐野 優都",
       "class": "B1",
       "age": 20,
-      "weight_kg": 50.5,
+      "weight_kg": 51.5,
       "branch": "徳島",
       "birthplace": "高知",
       "F": 0,
@@ -283,7 +289,7 @@
         "11"
       ],
       "early_race": 10,
-      "raw_text": "5 5388 / B1 佐野 優都 徳島/高知 20歳/50.5kg F0 L0 0.14 3.26 11.76 23.53 0.00 0.00 0.00 13 31.18 47.31 22 35.05 51.55 6 1 8 5 9 4 11 10R"
+      "raw_text": "5 5388 / B1 佐野 優都 徳島/高知 20歳/51.5kg F0 L0 0.14 3.26 11.76 23.53 0.00 0.00 0.00 13 31.18 47.31 22 35.05 51.55 6 1 8 5 9 4 11 10R"
     },
     {
       "lane": 6,
@@ -330,7 +336,53 @@
       "raw_text": "6 5141 / A1 大澤 風葵 群馬/群馬 25歳/52.0kg F0 L0 0.14 6.57 53.76 68.82 5.47 36.67 53.33 70 20.22 31.46 74 26.74 53.49 4 12 1 6 5 11 10 9R"
     }
   ],
-  "beforeinfo": {},
+  "beforeinfo": {
+    "racers": [
+      {
+        "lane": 1,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "1 中嶋 世奈 49.2kg リング×2 電気 R"
+      },
+      {
+        "lane": 2,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "2 盛本 真輔 52.0kg R"
+      },
+      {
+        "lane": 3,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "3 川原 正明 52.0kg R"
+      },
+      {
+        "lane": 4,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "4 森 弘行 52.0kg R"
+      },
+      {
+        "lane": 5,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "5 佐野 優都 51.5kg R"
+      },
+      {
+        "lane": 6,
+        "exhibition_time": null,
+        "tilt": null,
+        "raw_text": "6 大澤 風葵 52.0kg R"
+      }
+    ],
+    "start_exhibition": [],
+    "weather": {
+      "air_temp_c": null,
+      "water_temp_c": null,
+      "wind_speed_ms": 2.0,
+      "wave_cm": 3.0
+    }
+  },
   "validation": {
     "result_unlock_token": null,
     "result": null
