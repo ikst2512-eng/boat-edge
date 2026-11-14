@@ -1,49 +1,48 @@
 {
   "day_jst": "20261114",
   "fetch_task_seconds": {
-    "20261114-02-03": 26.937
+    "20261114-03-03": 25.737,
+    "20261114-09-04": 26.74,
+    "20261114-10-08": 27.76,
+    "20261114-16-03": 28.763
   },
-  "fetch_wall_seconds": 26.938,
-  "freeze_wall_seconds": 0.064,
+  "fetch_wall_seconds": 28.827,
+  "freeze_wall_seconds": 0.054,
   "imminent_retry_snapshots": 0,
   "imminent_retry_targets": [],
   "network_error": 0,
-  "new_snapshots_atomic_audited": 3,
+  "new_snapshots_atomic_audited": 1,
   "odds_incomplete": 0,
   "outcomes": {
-    "20261114-02-03": "window_passed",
-    "20261114-04-03": "fresh_verified",
-    "20261114-08-04": "fresh_verified",
-    "20261114-22-03": "fresh_verified"
+    "20261114-03-03": "source_blocked",
+    "20261114-09-04": "fresh_verified",
+    "20261114-10-08": "source_blocked",
+    "20261114-16-03": "fresh_verified"
   },
-  "priority_applied": true,
-  "priority_failure_fallback_snapshots": 3,
-  "priority_failure_fallback_targets": [
-    "20261114-22-03",
-    "20261114-08-04",
-    "20261114-04-03"
-  ],
-  "priority_race_key": "20261114-02-03",
-  "priority_zero_freeze_reason": "FIRST_FREEZE_ZERO_SNAPSHOTS",
+  "priority_applied": false,
+  "priority_failure_fallback_snapshots": 0,
+  "priority_failure_fallback_targets": [],
+  "priority_race_key": null,
+  "priority_zero_freeze_reason": "NOT_APPLICABLE",
   "schema": "BOAT_EDGE_V230_OFFICIAL_IMMINENT_REFRESH_V1",
-  "source_blocked": 0,
-  "source_refreshed": 3,
+  "source_blocked": 2,
+  "source_refreshed": 2,
   "target_diagnostic": {
     "duplicate_catalog_race": 0,
-    "eligible": 8,
+    "eligible": 4,
     "invalid_deadline_or_key": 0,
-    "outside_2_to_19_min_window": 160,
+    "outside_2_to_19_min_window": 161,
     "race_identity_mismatch": 0,
     "race_missing_or_unsafe": 0,
     "racers_not_six": 0,
-    "snapshot_exists": 0,
+    "snapshot_exists": 3,
     "today_mismatch": 0
   },
   "targets": [
-    "20261114-02-03",
-    "20261114-22-03",
-    "20261114-08-04",
-    "20261114-04-03"
+    "20261114-16-03",
+    "20261114-03-03",
+    "20261114-09-04",
+    "20261114-10-08"
   ],
   "v235_precommit_second_freeze_snapshots": 0
 }
